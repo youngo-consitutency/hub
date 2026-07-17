@@ -1,0 +1,87 @@
+{
+  "groups": [
+    { "slug": "ace", "name": "ACE", "monogram": "AC", "focusLine": "Action for Climate Empowerment — education, training, public participation", "cadenceNote": "Biweekly Thursdays 15:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-ace", "groupUrl": "https://groups.google.com/g/youngo-ace", "driveUrl": "https://drive.google.com/drive/folders/example-ace" },
+    { "slug": "finance", "name": "Finance", "monogram": "FI", "focusLine": "Climate finance, NCQG follow-up, and youth access to funds", "cadenceNote": "Weekly Fridays 12:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW", "groupUrl": "https://groups.google.com/g/youngo-finance" },
+    { "slug": "adaptation", "name": "Adaptation", "monogram": "AD", "focusLine": "Adaptation, loss and damage, and locally led resilience", "cadenceNote": "Biweekly Mondays 14:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-adaptation" },
+    { "slug": "health", "name": "Health", "monogram": "HE", "focusLine": "Climate and health intersections, WHO-UNFCCC engagement", "cadenceNote": "Monthly first Wednesday 16:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-health", "groupUrl": "https://groups.google.com/g/youngo-health" }
+  ],
+  "events": [
+    { "slug": "constituency-call-live", "title": "Constituency call", "type": "constituency_call", "startOffsetMin": -20, "durationMin": 90, "meetingUrl": "https://zoom.us/j/example", "description": "Weekly coordination: COP31 logistics, WG round-robin, AOB." },
+    { "slug": "constituency-call-last-week", "title": "Constituency call (last week)", "type": "constituency_call", "dayOffset": -4, "hourUtc": 13, "durationMin": 90, "recordingUrl": "https://youtu.be/example-recording", "description": "Recording available: COP31 prep timeline and WG round-robin." },
+    { "slug": "ace-drafting-session", "title": "ACE WG drafting session", "type": "wg_call", "dayOffset": 1, "hourUtc": 15, "durationMin": 60, "wg": "ace", "meetingUrl": "https://meet.google.com/example-ace" },
+    { "slug": "finance-wg-forum", "title": "Finance WG forum", "type": "wgf", "dayOffset": 3, "hourUtc": 12, "durationMin": 90, "wg": "finance", "meetingUrl": "https://zoom.us/j/example-fin" },
+    { "slug": "adaptation-call", "title": "Adaptation WG call", "type": "wg_call", "dayOffset": 5, "hourUtc": 14, "durationMin": 60, "wg": "adaptation", "meetingUrl": "https://meet.google.com/example-ada" },
+    { "slug": "cop31-onboarding-webinar", "title": "COP31 first-timers onboarding", "type": "webinar", "dayOffset": 6, "hourUtc": 17, "durationMin": 75, "meetingUrl": "https://zoom.us/j/example-onb", "description": "How badges, plenaries, and YOUNGO coordination work at a COP." },
+    { "slug": "health-wg-call", "title": "Health WG monthly call", "type": "wg_call", "dayOffset": 9, "hourUtc": 16, "durationMin": 60, "wg": "health", "meetingUrl": "https://meet.google.com/example-hea" }
+  ],
+  "submissions": [
+    { "slug": "ace-dialogue-topics", "title": "Call for input: ACE dialogue topics", "status": "drafting", "deadlineInDays": 1.75, "wg": "ace", "draftUrl": "https://docs.google.com/document/d/example-ace-draft", "unfcccUrl": "https://unfccc.int/topics/education-youth/ace", "contributeNote": "Comment directly in the draft; join Thursday's drafting session to discuss." },
+    { "slug": "gst-youth-inputs", "title": "Global Stocktake: youth inputs synthesis", "status": "open", "deadlineInDays": 12, "wg": "finance", "draftUrl": "https://docs.google.com/document/d/example-gst", "contributeNote": "Open for section leads — add your name in the doc header." },
+    { "slug": "adaptation-gga-indicators", "title": "GGA indicators technical submission", "status": "internal_review", "deadlineInDays": 6, "wg": "adaptation", "draftUrl": "https://docs.google.com/document/d/example-gga", "contributeNote": "Final review pass — flag blocking comments only." },
+    { "slug": "sb64-youth-statement", "title": "SB64 closing youth statement", "status": "submitted", "deadlineDaysAgo": 20, "wg": null, "finalUrl": "https://unfccc.int/documents/example-sb64-statement" }
+  ],
+  "council": [
+    { "slug": "social-media-policy", "title": "Adopt YOUNGO social media policy", "status": "objection_window", "objectionInDays": 3, "proposer": "Focal points", "summary": "Codifies who can post from constituency accounts and the review flow for statements.", "proposalUrl": "https://docs.google.com/document/d/example-smp", "respondNote": "Raise objections by replying to the mailing-list thread or in Sunday's spokes call.", "log": [ { "status": "proposed", "daysAgo": 14, "note": "Circulated on the list by focal points" }, { "status": "open_for_input", "daysAgo": 10, "note": "Two-week comment window opened" }, { "status": "objection_window", "daysAgo": 2, "note": "Comments integrated; silence procedure started" } ] },
+    { "slug": "coy20-endorsement-process", "title": "COY20 host endorsement process", "status": "open_for_input", "inputInDays": 9, "proposer": "COY task force", "summary": "Criteria and timeline for endorsing the COY20 host city bid ahead of COP31.", "proposalUrl": "https://docs.google.com/document/d/example-coy20", "respondNote": "Add comments in the doc; regional caucuses collect positions this week.", "log": [ { "status": "proposed", "daysAgo": 6, "note": "Draft criteria shared by the task force" }, { "status": "open_for_input", "daysAgo": 4, "note": "Input window opened, closes in two weeks" } ] },
+    { "slug": "wg-restructure-2026", "title": "Working group restructure 2026", "status": "adopted", "decidedDaysAgo": 32, "proposer": "Focal points", "summary": "Merged dormant WGs and set the two-admin minimum per active WG.", "finalUrl": "https://docs.google.com/document/d/example-restructure", "outcomeNote": "Adopted by consensus at the June spokes council.", "log": [ { "status": "proposed", "daysAgo": 70 }, { "status": "open_for_input", "daysAgo": 60 }, { "status": "objection_window", "daysAgo": 40 }, { "status": "adopted", "daysAgo": 32, "note": "No objections sustained" } ] }
+  ],
+  "coys": [
+    { "slug": "lcoy-kenya-2026", "type": "lcoy", "title": "LCOY Kenya 2026", "country": "Kenya", "city": "Nairobi", "region": "africa", "startsOn": "2026-09-12", "endsOn": "2026-09-14", "status": "registration_open", "registerUrl": "https://example.org/lcoy-kenya", "organizerName": "LCOY Kenya team", "organizerOrg": "Kenya YOUNGO focal group", "reviewStatus": "approved" },
+    { "slug": "rcoy-africa-2026", "type": "rcoy", "title": "RCOY Africa 2026", "country": "Ghana", "city": "Accra", "region": "africa", "startsOn": "2026-10-03", "endsOn": "2026-10-05", "status": "applications_open", "registerUrl": "https://example.org/rcoy-africa", "organizerName": "RCOY Africa organizing committee", "reviewStatus": "approved" },
+    { "slug": "lcoy-brazil-2026", "type": "lcoy", "title": "LCOY Brazil 2026", "country": "Brazil", "city": "São Paulo", "region": "lac", "startsOn": "2026-08-21", "endsOn": "2026-08-23", "status": "registration_open", "registerUrl": "https://example.org/lcoy-brazil", "reviewStatus": "approved" },
+    { "slug": "coy20", "type": "coy", "title": "COY20", "country": "Türkiye", "city": "Antalya", "region": "weog", "startsOn": "2026-11-02", "endsOn": "2026-11-05", "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
+    { "slug": "lcoy-pending-example", "type": "lcoy", "title": "LCOY Pending (should never render)", "country": "Nowhere", "region": "eca", "status": "announced", "reviewStatus": "pending" }
+  ],
+  "announcements": [
+    { "title": "COP31 badge nominations open Monday", "body": "Focal points will circulate the nomination form on the mailing list — one badge pool per region.", "pinned": true, "daysAgo": 1 },
+    { "title": "New here? Start with a working group", "body": "Browse the groups page and join one WhatsApp channel — that is where the work happens.", "pinned": false, "daysAgo": 3 }
+  ],
+  "directory": [
+    { "group": "focal_points", "roleTitle": "Global focal points", "description": "Constituency coordination, UNFCCC liaison, DMP facilitation.", "publicEmail": "focalpoints@youngoclimate.org" },
+    { "group": "wg_contacts", "roleTitle": "ACE contact point", "description": "Entry point for the ACE working group.", "publicEmail": "ace@youngoclimate.org", "wg": "ace" },
+    { "group": "wg_contacts", "roleTitle": "Finance contact point", "description": "Entry point for the Finance working group.", "publicEmail": "finance@youngoclimate.org", "wg": "finance" },
+    { "group": "liaisons", "roleTitle": "COY liaison", "description": "LCOY/RCOY endorsement questions and organizer support.", "publicEmail": "coy@youngoclimate.org" },
+    { "group": "operations", "roleTitle": "Comms team", "description": "Social accounts, newsletter, and the Hub itself.", "publicEmail": "comms@youngoclimate.org" }
+  ],
+  "gys": {
+    "current": {
+      "year": 2025,
+      "edition": "COY20",
+      "title": "The Global Youth Statement 2025",
+      "tagline": "A Generation’s Blueprint for Climate Action",
+      "quote": "We are not just demanding a future, we are designing it.",
+      "location": "Belém, Brazil",
+      "targetSession": "COP30",
+      "publishedOn": "2025-11-06",
+      "intro": "The Global Youth Statement (GYS) is the world’s largest youth-led negotiation document — an evidence-based collection of the collective demands of children and youth worldwide, presented to the UNFCCC and Parties by YOUNGO, the official Children and Youth Constituency. Coordinated each year through LCOYs, RCOYs, and thematic working groups, it turns grassroots youth perspectives into negotiation-ready policy asks.",
+      "note": "The 2025 edition, formulated at COY20 in Belém, embodies the spirit of “Harvesting Hope” and Mutirão (collective action), with every demand mapped directly to official COP30 agenda items.",
+      "stats": [
+        { "value": "30,000+", "label": "youth voices" },
+        { "value": "150+", "label": "countries" },
+        { "value": "80,000+", "label": "hours of work" },
+        { "value": "20+", "label": "thematic areas" }
+      ],
+      "editions": ["Full Statement", "Summary for Policymakers", "Advocacy Toolkit"],
+      "fullUrl": "https://bit.ly/GYS2025EDITION",
+      "releaseUrl": "https://landportal.org/news/2026/01/youngo-releases-2025-global-youth-statement-calling-urgent-and-equitable-climate"
+    },
+    "priorities": [
+      { "title": "Fossil fuel phase-out", "body": "Science-aligned NDCs and a full, fair, and fast phase-out of fossil fuels." },
+      { "title": "Meaningful youth inclusion", "body": "Intergenerational equity and the meaningful inclusion of children and youth in climate policymaking." },
+      { "title": "Conflict & climate", "body": "Recognising the climate impacts of military conflict and calling for global ceasefires." },
+      { "title": "Climate finance", "body": "Reforming climate finance so it is rooted in justice and accessible to the most vulnerable communities." },
+      { "title": "Adaptation", "body": "Prioritising climate adaptation as a critical moral and political imperative." }
+    ],
+    "process": [
+      { "step": "Collection of inputs", "body": "Gathering submissions from working groups, LCOYs, NGOs, and individuals across the world." },
+      { "step": "Hackathons", "body": "50+ thematic policy hackathons refine and align children and youth positions." },
+      { "step": "Synthesis & editing", "body": "Inputs consolidated for clarity, balance, and alignment with UNFCCC decisions." },
+      { "step": "Advocacy & handover", "body": "The final document is disseminated and recognised across Parties, observers, and negotiation platforms." }
+    ],
+    "archive": [
+      { "year": 2024, "edition": "COY19", "host": "ahead of COP29, Baku", "links": [{ "label": "Statement (NADs)", "url": "https://cdn.prod.website-files.com/65fec76b4b8a99e1c56af7ec/67ebe12619efc40d74fdadd9_The%20Global%20Youth%20Statement%20NADs%2003102024%20_compressed.pdf" }] },
+      { "year": 2022, "edition": "COY17", "host": "ahead of COP27, Egypt", "links": [{ "label": "Statement", "url": "https://coy17eg.com/globalyouthstatement/" }] },
+      { "year": 2021, "edition": "COY16", "host": "ahead of COP26, Glasgow", "links": [{ "label": "Statement (PDF)", "url": "https://unfccc.int/sites/default/files/resource/YOUNGO_COY16_Global%20Youth%20Statement_October%202021.pdf" }, { "label": "Host site", "url": "https://ukcoy16.org/global-youth-statement" }] }
+    ]
+  }
+}
