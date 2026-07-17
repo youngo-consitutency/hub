@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+data/og/
+data/gys-signups.json
+data/hub-accounts.json
+data/hub-sessions.json
+data/password-reset-tokens.json
+data/ngo-seats.json
+data/wg-progress.json
+data/wg-activities.json
+data/ngo-requests.json
+*.local
