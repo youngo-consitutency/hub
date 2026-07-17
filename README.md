@@ -10,6 +10,38 @@ What’s happening · what can I contribute to · where can I go · who do I con
   <a href="https://youngoclimate.org/">youngoclimate.org</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/02-home.png" alt="YOUNGO Hub home feed (dark)" width="900" />
+</p>
+<p align="center"><sub>Home — live constituency call, this week, and closing deadlines</sub></p>
+
+---
+
+## Screenshots
+
+Captured from [staging](https://web-staging-31ab.up.railway.app). Refresh anytime with:
+
+```bash
+npm run screenshots   # optional: APP_ORIGIN=https://…
+```
+
+| Membership policy gate | Sign in |
+| :---: | :---: |
+| <img src="docs/screenshots/01-membership-policy.png" alt="Membership policy gate" width="420" /> | <img src="docs/screenshots/08-join-signin.png" alt="Sign in" width="420" /> |
+
+| Onboarding + FAQ (verified) | Working groups |
+| :---: | :---: |
+| <img src="docs/screenshots/03-onboarding-faq.png" alt="Onboarding and FAQ" width="420" /> | <img src="docs/screenshots/04-groups.png" alt="Working groups" width="420" /> |
+
+| Calendar | Capacity Building library |
+| :---: | :---: |
+| <img src="docs/screenshots/05-calendar.png" alt="Calendar" width="420" /> | <img src="docs/screenshots/06-library.png" alt="Library" width="420" /> |
+
+<p align="center">
+  <img src="docs/screenshots/07-home-light.png" alt="Home feed light theme" width="900" />
+</p>
+<p align="center"><sub>Same home feed in light mode</sub></p>
+
 ---
 
 ## Why this exists
