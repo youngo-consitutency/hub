@@ -113,11 +113,16 @@ export function Admin() {
                   <Button sm variant="secondary" onClick={() => verify(a.id)}>Verify</Button>
                 )}
                 <Button sm variant="ghost" onClick={() => setRole(a.id, 'ngo_admin')}>NGO admin</Button>
+                <a className="btn btn-ghost btn-sm" href="/staff/points">Award points</a>
               </div>
             </div>
           ))}
         </div>
       </Section>
+      <p className="metaMuted" style={{ marginTop: 8 }}>
+        Contribution points for badge support and UNFCCC submissions are managed at{' '}
+        <a className="inlineLink" href="/staff/points">/staff/points</a>.
+      </p>
 
       <Section label="Governance audit (latest 50)">
         <div className="stackSm">

@@ -3,7 +3,7 @@ import { apiGet, apiPost, apiPatch } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { usePath } from '../lib/router.js'
 import { A, Button, Section, Empty, ErrorCard } from '../components/ui.jsx'
-import { Building2, UserPlus, Copy, Check } from 'lucide-react'
+import { Award, BadgeCheck, Building2, UserPlus, Copy, Check } from 'lucide-react'
 
 export function NgoPortal() {
   const { account, setAccount } = useAccount()
@@ -98,10 +98,66 @@ export function NgoPortal() {
       <p className="metaMuted" style={{ marginBottom: 6 }}>Accredited NGO</p>
       <h1 className="rowGap"><Building2 size={24} strokeWidth={1.75} aria-hidden /> NGO platform</h1>
       <p className="meta" style={{ marginTop: 6 }}>
-        {account?.organizationName || 'Your organisation'} — deadlines, requests, and team seats.
+        {account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.
       </p>
       {acceptMsg && <p className="meta" style={{ color: 'var(--accent)' }}>{acceptMsg}</p>}
       {error && <ErrorCard message={error} onRetry={load} />}
+
+      {data?.points && (
+        <Section label="Contribution points">
+          <div className="card">
+            <div className="rowBetween" style={{ alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <p className="metaMuted rowGap"><Award size={16} strokeWidth={1.75} aria-hidden /> Recognition ledger</p>
+                <p className="mono" style={{ fontSize: 32, fontWeight: 600, marginTop: 4 }}>{data.points.balance}</p>
+                <p className="meta">points for verified contributions</p>
+              </div>
+              <div style={{ maxWidth: 280 }}>
+                {data.points.recognition?.current ? (
+                  <p className="meta rowGap">
+                    <BadgeCheck size={16} strokeWidth={1.75} aria-hidden color="var(--accent)" />
+                    <strong>{data.points.recognition.current.label}</strong>
+                  </p>
+                ) : (
+                  <p className="meta">No recognition tier yet — staff awards points after verified badge or UNFCCC submission support.</p>
+                )}
+                {data.points.recognition?.next && (
+                  <p className="metaMuted" style={{ marginTop: 6 }}>
+                    {data.points.recognition.pointsToNext} pts to {data.points.recognition.next.label}
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="metaMuted" style={{ marginTop: 12 }}>
+              Points are awarded by YOUNGO staff (admins, Focal Points, Membership Team) when your organisation
+              supports pool badges, endorses documents, or contributes to UNFCCC submissions — not self-claimed.
+            </p>
+            {data.points.recognition?.earned?.length > 0 && (
+              <div className="rowGap" style={{ marginTop: 10, flexWrap: 'wrap' }}>
+                {data.points.recognition.earned.map((t) => (
+                  <span key={t.id} className="chip chip-accent">{t.label}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {(data.points.ledger || []).length > 0 && (
+            <div className="stackSm" style={{ marginTop: 12 }}>
+              {data.points.ledger.map((entry) => (
+                <div key={entry.id} className="card cardTight rowBetween">
+                  <div>
+                    <strong>{entry.title}</strong>
+                    <p className="meta">{entry.reasonLabel} · {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : ''}</p>
+                  </div>
+                  <span className="mono" style={{ color: entry.points > 0 ? 'var(--accent)' : 'var(--danger)', fontWeight: 600 }}>
+                    {entry.points > 0 ? `+${entry.points}` : entry.points}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
 
       <Section label="Deadlines for NGOs">
         <div className="stackSm">
@@ -138,11 +194,15 @@ export function NgoPortal() {
             <span>Type</span>
             <select className="input" value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}>
               <option value="endorse">Endorse document</option>
-              <option value="submit">Submit on behalf of NGO</option>
+              <option value="submit">UNFCCC / constituency submission</option>
+              <option value="badge_support">Support badge allocation</option>
               <option value="represent">Represent NGO</option>
               <option value="deadline">Deadline</option>
               <option value="other">Other</option>
             </select>
+            <p className="metaMuted" style={{ marginTop: 4 }}>
+              Logging a request tracks work; contribution points are awarded separately by staff after verification.
+            </p>
           </label>
           <label className="field">
             <span>Title</span>

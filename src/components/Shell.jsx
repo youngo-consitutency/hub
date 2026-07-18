@@ -9,7 +9,7 @@ import {
   Home, CalendarDays, FileText, Gavel, MapPin, Users, AtSign,
   Search, MoreHorizontal, Settings2, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
-  ClipboardCheck, PenTool, MessageSquare, Network,
+  ClipboardCheck, PenTool, MessageSquare, Network, Award,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -61,6 +61,7 @@ export function Shell({ children }) {
     if (['admin', 'focal_point'].includes(account?.role)) {
       sections.push({ section: 'Representation', items: [
         { href: '/focal', label: 'Focal Point', icon: Network },
+        { href: '/staff/points', label: 'NGO points', icon: Award },
       ]})
     }
     if (account?.isNgo || account?.role === 'admin' || account?.role === 'ngo_admin') {
@@ -75,9 +76,12 @@ export function Shell({ children }) {
     }
     if (access.teamRoles?.includes('membership_team')) {
       const section = sections.find((item) => item.section === 'Your workspaces')
-      const item = { href: '/team/membership', label: 'Membership Team', icon: ClipboardCheck }
-      if (section) section.items.push(item)
-      else sections.push({ section: 'Your workspaces', items: [item] })
+      const items = [
+        { href: '/team/membership', label: 'Membership Team', icon: ClipboardCheck },
+        { href: '/staff/points', label: 'NGO points', icon: Award },
+      ]
+      if (section) section.items.push(...items.filter((i) => !section.items.some((x) => x.href === i.href)))
+      else sections.push({ section: 'Your workspaces', items })
     }
     if (access.teamRoles?.includes('gys_policy_team')) {
       const section = sections.find((item) => item.section === 'Your workspaces')

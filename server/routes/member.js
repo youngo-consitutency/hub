@@ -36,6 +36,18 @@ import {
 } from '../lib/messages.js'
 import { scoreQuiz, QUIZ, COURSE_MODULES, COURSE_VERSION, PASS_SCORE } from '../../src/content/membershipCourse.js'
 import { cookieValue, SESSION_COOKIE, rateLimit } from '../lib/security.js'
+import {
+  POINT_REASONS,
+  RECOGNITION_TIERS,
+  awardOrgPoints,
+  canAwardPoints,
+  getOrgPointsBalance,
+  listOrgPointBalances,
+  listOrgPointsLedger,
+  listRecentPointAwards,
+  reasonFromNgoRequestKind,
+  tiersForBalance,
+} from '../lib/points.js'
 
 export const memberRouter = Router()
 
@@ -362,15 +374,117 @@ memberRouter.get('/ngo/requests', async (req, res) => {
   if (!account) return
   const items = await listNgoRequests(req.orgAccountId)
   const seats = await listNgoSeats(req.orgAccountId)
+  const balance = await getOrgPointsBalance(req.orgAccountId)
+  const pointsLedger = await listOrgPointsLedger(req.orgAccountId, { limit: 25 })
   res.json({
     items,
     seats,
     orgAccountId: req.orgAccountId,
+    points: {
+      balance,
+      recognition: tiersForBalance(balance),
+      ledger: pointsLedger,
+      tiers: RECOGNITION_TIERS,
+      reasons: Object.values(POINT_REASONS).filter((r) => r.code !== 'adjustment'),
+    },
     deadlines: [
       { title: 'Side event applications (placeholder)', kind: 'deadline', note: 'Connect live UNFCCC calendars later.' },
       { title: 'COP/SB nomination windows (placeholder)', kind: 'deadline', note: 'Membership Team will publish real dates.' },
       { title: 'Submission deadlines tracked in hub Submissions', kind: 'deadline', href: '/submissions' },
     ],
+  })
+})
+
+memberRouter.get('/ngo/points', async (req, res) => {
+  const account = await requireOrgScope(req, res)
+  if (!account) return
+  const balance = await getOrgPointsBalance(req.orgAccountId)
+  const ledger = await listOrgPointsLedger(req.orgAccountId, { limit: Number(req.query.limit) || 50 })
+  res.json({
+    orgAccountId: req.orgAccountId,
+    balance,
+    recognition: tiersForBalance(balance),
+    ledger,
+    tiers: RECOGNITION_TIERS,
+    reasons: Object.values(POINT_REASONS),
+  })
+})
+
+// Staff: award contribution points (admin, focal point, membership team)
+async function requirePointsAwarder(req, res) {
+  const account = await requireAccount(req, res)
+  if (!account) return null
+  if (!(await canAwardPoints(account))) {
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
+      },
+    })
+    return null
+  }
+  return account
+}
+
+memberRouter.get('/staff/points', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  const [orgs, recent] = await Promise.all([
+    listOrgPointBalances(),
+    listRecentPointAwards({ limit: 40 }),
+  ])
+  res.json({
+    orgs,
+    recent,
+    reasons: Object.values(POINT_REASONS),
+    tiers: RECOGNITION_TIERS,
+    defaults: Object.fromEntries(
+      Object.values(POINT_REASONS).map((r) => [r.code, r.defaultPoints]),
+    ),
+  })
+})
+
+memberRouter.post('/staff/points/award', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  const b = req.body || {}
+  try {
+    const result = await awardOrgPoints({
+      orgAccountId: b.orgAccountId,
+      points: b.points,
+      reasonCode: b.reasonCode,
+      title: b.title,
+      note: b.note,
+      relatedType: b.relatedType || null,
+      relatedId: b.relatedId || null,
+      awardedBy: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.points_awarded',
+      targetType: 'ngo_points',
+      targetId: result.entry.id,
+      after: result,
+      reason: b.note || null,
+      requestId: req.requestId,
+    })
+    res.status(201).json(result)
+  } catch (err) {
+    const status = err.code === 'not_found' ? 404 : 400
+    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+  }
+})
+
+memberRouter.get('/staff/points/reasons', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  res.json({
+    reasons: Object.values(POINT_REASONS),
+    fromRequestKind: {
+      endorse: reasonFromNgoRequestKind('endorse'),
+      submit: reasonFromNgoRequestKind('submit'),
+      represent: reasonFromNgoRequestKind('represent'),
+    },
   })
 })
 

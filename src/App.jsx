@@ -30,6 +30,7 @@ import { FocalPoint } from './pages/FocalPoint.jsx'
 import { Messages } from './pages/Messages.jsx'
 import { MembershipTeam } from './pages/MembershipTeam.jsx'
 import { GysPolicyTeam } from './pages/GysPolicyTeam.jsx'
+import { StaffPoints } from './pages/StaffPoints.jsx'
 import { Empty } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
 
@@ -51,6 +52,7 @@ const ROUTES = [
   [/^\/cp\/(.+)$/, CpManage],
   [/^\/team\/membership$/, MembershipTeam],
   [/^\/team\/gys$/, GysPolicyTeam],
+  [/^\/staff\/points$/, StaffPoints],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],
@@ -113,6 +115,16 @@ function AppRoutes() {
   // Role gates (soft): show empty-ish message for wrong role
   if (path.startsWith('/admin') && account && account.role !== 'admin') {
     return <Shell><Empty icon={Lock} title="Admin only" body="Set ADMIN_EMAILS to your email on Railway." /></Shell>
+  }
+  if (path.startsWith('/staff/points') && account) {
+    const canAward = account.role === 'admin'
+      || account.role === 'focal_point'
+      || account.teamRoles?.includes('membership_team')
+      || account.access?.teamRoles?.includes('membership_team')
+      || account.access?.capabilities?.includes('points.award')
+    if (!canAward) {
+      return <Shell><Empty icon={Lock} title="Staff only" body="Contribution points are awarded by admins, Focal Points, or Membership Team." /></Shell>
+    }
   }
   if (path.startsWith('/focal') && account && !['admin', 'focal_point'].includes(account.role)) {
     return <Shell><Empty icon={Lock} title="Focal Points only" body="This workspace is for constituency Focal Points and admins." /></Shell>

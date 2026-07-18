@@ -1,0 +1,28 @@
+[
+  {
+    "id": "f74bd48e-b524-4219-bef8-af46be339290",
+    "org_account_id": "org-points-test-1",
+    "points": 15,
+    "reason_code": "unfccc_submission",
+    "title": "Co-supported GGA indicators submission",
+    "note": null,
+    "related_type": null,
+    "related_id": null,
+    "awarded_by": "staff-1",
+    "status": "posted",
+    "created_at": "2026-07-18T13:59:48.410Z"
+  },
+  {
+    "id": "f7b35081-a485-4d18-8ba8-fcc40eb0c5f0",
+    "org_account_id": "org-points-test-1",
+    "points": 10,
+    "reason_code": "badge_support",
+    "title": "Supported COP badge pool allocation",
+    "note": null,
+    "related_type": null,
+    "related_id": null,
+    "awarded_by": "staff-1",
+    "status": "posted",
+    "created_at": "2026-07-18T13:59:48.408Z"
+  }
+]
