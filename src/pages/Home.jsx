@@ -2,7 +2,7 @@ import { useApi } from '../lib/api.js'
 import { A, Button, Async, Section, Empty } from '../components/ui.jsx'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Radio, CalendarOff, Megaphone, Users } from 'lucide-react'
+import { Radio, CalendarOff, Megaphone, Users, Trophy } from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
@@ -70,6 +70,16 @@ export function Home() {
         <Async query={groups} skeletons={2} empty={(d) => d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" body="Groups will appear here once they’re set up." /> : null}>
           {(data) => <div className="grid2">{data.items.slice(0, 2).map((g) => <GroupCard key={g.slug} group={g} />)}</div>}
         </Async>
+      </Section>
+
+      <Section label="NGO recognition" action={<A href="/recognition" className="metaMuted">Board →</A>}>
+        <A href="/recognition" className="card cardTight rowGap">
+          <Trophy size={18} strokeWidth={1.75} aria-hidden color="var(--accent)" />
+          <div>
+            <h3>See which organisations are supporting badges &amp; submissions</h3>
+            <p className="meta" style={{ marginTop: 4 }}>Staff-verified contribution points for UNFCCC-facing work.</p>
+          </div>
+        </A>
       </Section>
     </div>
   )

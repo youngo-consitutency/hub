@@ -36,6 +36,19 @@ import {
 } from '../lib/messages.js'
 import { scoreQuiz, QUIZ, COURSE_MODULES, COURSE_VERSION, PASS_SCORE } from '../../src/content/membershipCourse.js'
 import { cookieValue, SESSION_COOKIE, rateLimit } from '../lib/security.js'
+import {
+  POINT_REASONS,
+  RECOGNITION_TIERS,
+  awardOrgPoints,
+  canAwardPoints,
+  getOrgPointsBalance,
+  listAwardSuggestions,
+  listOrgPointBalances,
+  listOrgPointsLedger,
+  listRecentPointAwards,
+  reasonFromNgoRequestKind,
+  tiersForBalance,
+} from '../lib/points.js'
 
 export const memberRouter = Router()
 
@@ -362,15 +375,155 @@ memberRouter.get('/ngo/requests', async (req, res) => {
   if (!account) return
   const items = await listNgoRequests(req.orgAccountId)
   const seats = await listNgoSeats(req.orgAccountId)
+  const balance = await getOrgPointsBalance(req.orgAccountId)
+  const pointsLedger = await listOrgPointsLedger(req.orgAccountId, { limit: 25 })
   res.json({
     items,
     seats,
     orgAccountId: req.orgAccountId,
+    points: {
+      balance,
+      recognition: tiersForBalance(balance),
+      ledger: pointsLedger,
+      tiers: RECOGNITION_TIERS,
+      reasons: Object.values(POINT_REASONS).filter((r) => r.code !== 'adjustment'),
+    },
     deadlines: [
       { title: 'Side event applications (placeholder)', kind: 'deadline', note: 'Connect live UNFCCC calendars later.' },
       { title: 'COP/SB nomination windows (placeholder)', kind: 'deadline', note: 'Membership Team will publish real dates.' },
       { title: 'Submission deadlines tracked in hub Submissions', kind: 'deadline', href: '/submissions' },
     ],
+  })
+})
+
+memberRouter.get('/ngo/points', async (req, res) => {
+  const account = await requireOrgScope(req, res)
+  if (!account) return
+  const balance = await getOrgPointsBalance(req.orgAccountId)
+  const ledger = await listOrgPointsLedger(req.orgAccountId, { limit: Number(req.query.limit) || 50 })
+  res.json({
+    orgAccountId: req.orgAccountId,
+    balance,
+    recognition: tiersForBalance(balance),
+    ledger,
+    tiers: RECOGNITION_TIERS,
+    reasons: Object.values(POINT_REASONS),
+  })
+})
+
+// Staff: award contribution points (admin, focal point, membership team)
+async function requirePointsAwarder(req, res) {
+  const account = await requireAccount(req, res)
+  if (!account) return null
+  if (!(await canAwardPoints(account))) {
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
+      },
+    })
+    return null
+  }
+  return account
+}
+
+memberRouter.get('/staff/points', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  const [orgs, recent, suggestions] = await Promise.all([
+    listOrgPointBalances(),
+    listRecentPointAwards({ limit: 40 }),
+    listAwardSuggestions({ limit: 40 }),
+  ])
+  res.json({
+    orgs,
+    recent,
+    suggestions,
+    reasons: Object.values(POINT_REASONS),
+    tiers: RECOGNITION_TIERS,
+    defaults: Object.fromEntries(
+      Object.values(POINT_REASONS).map((r) => [r.code, r.defaultPoints]),
+    ),
+  })
+})
+
+memberRouter.post('/staff/points/award', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  const b = req.body || {}
+  try {
+    const result = await awardOrgPoints({
+      orgAccountId: b.orgAccountId,
+      points: b.points,
+      reasonCode: b.reasonCode,
+      title: b.title,
+      note: b.note,
+      relatedType: b.relatedType || (b.requestId ? 'ngo_request' : null),
+      relatedId: b.relatedId || b.requestId || null,
+      awardedBy: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.points_awarded',
+      targetType: 'ngo_points',
+      targetId: result.entry.id,
+      after: result,
+      reason: b.note || null,
+      requestId: req.requestId,
+    })
+    res.status(201).json(result)
+  } catch (err) {
+    const status = err.code === 'not_found' ? 404 : 400
+    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+  }
+})
+
+/** One-click award from a done NGO request suggestion. */
+memberRouter.post('/staff/points/award-suggestion', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  const b = req.body || {}
+  if (!b.requestId || !b.orgAccountId) {
+    return res.status(400).json({ error: { code: 'validation', message: 'requestId and orgAccountId required.' } })
+  }
+  try {
+    const reasonCode = b.reasonCode || reasonFromNgoRequestKind(b.kind || 'other')
+    const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
+    const result = await awardOrgPoints({
+      orgAccountId: b.orgAccountId,
+      points: b.points ?? reason.defaultPoints,
+      reasonCode,
+      title: b.title || reason.label,
+      note: b.note || 'Awarded from completed NGO request',
+      relatedType: 'ngo_request',
+      relatedId: String(b.requestId),
+      awardedBy: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.points_awarded_from_request',
+      targetType: 'ngo_request',
+      targetId: String(b.requestId),
+      after: result,
+      requestId: req.requestId,
+    })
+    res.status(201).json(result)
+  } catch (err) {
+    const status = err.code === 'not_found' ? 404 : 400
+    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+  }
+})
+
+memberRouter.get('/staff/points/reasons', async (req, res) => {
+  const account = await requirePointsAwarder(req, res)
+  if (!account) return
+  res.json({
+    reasons: Object.values(POINT_REASONS),
+    fromRequestKind: {
+      endorse: reasonFromNgoRequestKind('endorse'),
+      submit: reasonFromNgoRequestKind('submit'),
+      represent: reasonFromNgoRequestKind('represent'),
+    },
   })
 })
 
@@ -396,10 +549,27 @@ memberRouter.post('/ngo/requests', async (req, res) => {
 memberRouter.patch('/ngo/requests/:id', async (req, res) => {
   const account = await requireOrgScope(req, res, 'requests')
   if (!account) return
-  const item = await updateNgoRequestStatus(req.params.id, String(req.body?.status || 'done'), req.orgAccountId)
+  const nextStatus = String(req.body?.status || 'done')
+  const item = await updateNgoRequestStatus(req.params.id, nextStatus, req.orgAccountId)
   if (!item) return res.status(404).json({ error: { code: 'not_found', message: 'Request not found.' } })
   await recordAudit({ actorId: account.id, action: 'ngo.request_status_changed', targetType: 'ngo_request', targetId: item.id, after: item, reason: req.body?.reason, requestId: req.requestId })
-  res.json({ item })
+  // When marked done, surface a staff award suggestion (points stay human-verified).
+  let awardSuggestion = null
+  if (nextStatus === 'done') {
+    const reasonCode = reasonFromNgoRequestKind(item.kind)
+    const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
+    awardSuggestion = {
+      requestId: item.id,
+      orgAccountId: req.orgAccountId,
+      kind: item.kind,
+      title: item.title,
+      suggestedReasonCode: reasonCode,
+      suggestedReasonLabel: reason.label,
+      suggestedPoints: reason.defaultPoints,
+      message: 'Request marked done. Staff can award contribution points from /staff/points.',
+    }
+  }
+  res.json({ item, awardSuggestion })
 })
 
 memberRouter.get('/ngo/seats', async (req, res) => {

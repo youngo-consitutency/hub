@@ -59,7 +59,8 @@ YOUNGO is a **platform and network**, not a single NGO. Work happens across Work
 | **Messages** | Verified members can chat with CPs / mandate holders, not arbitrary member-to-member DMs |
 | **Onboarding** | Membership policy → account → course → verified member |
 | **Library** | Capacity Building guides (open access) |
-| **NGO platform** | Deadlines, endorse/submit requests, multi-user seats |
+| **NGO platform** | Deadlines, endorse/submit requests, multi-user seats, contribution points |
+| **NGO points** | Staff-awarded points for badge support & UNFCCC submission help (tiers on NGO portal) |
 | **Admin** | Members & orgs (never passwords), roles, reset links |
 
 ---
