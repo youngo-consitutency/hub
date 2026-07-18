@@ -9,7 +9,7 @@ import {
   Home, CalendarDays, FileText, Gavel, MapPin, Users, AtSign,
   Search, MoreHorizontal, Settings2, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
-  ClipboardCheck, PenTool, MessageSquare, Network, Award,
+  ClipboardCheck, PenTool, MessageSquare, Network, Award, Trophy,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -54,6 +54,7 @@ export function Shell({ children }) {
         { section: 'Community', items: [
           { href: '/groups', label: 'Working groups', icon: Users },
           { href: '/directory', label: 'Directory', icon: AtSign },
+          { href: '/recognition', label: 'NGO recognition', icon: Trophy },
           { href: '/messages', label: 'Messages', icon: MessageSquare },
         ]},
       )

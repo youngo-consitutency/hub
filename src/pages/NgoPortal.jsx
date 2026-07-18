@@ -79,7 +79,12 @@ export function NgoPortal() {
 
   const markDone = async (id) => {
     try {
-      await apiPatch(`/member/ngo/requests/${id}`, { status: 'done' })
+      const res = await apiPatch(`/member/ngo/requests/${id}`, { status: 'done' })
+      if (res?.awardSuggestion) {
+        setAcceptMsg(
+          `Marked done. Staff can award ~${res.awardSuggestion.suggestedPoints} pts (${res.awardSuggestion.suggestedReasonLabel}) from the NGO points queue.`,
+        )
+      }
       load()
     } catch (err) {
       setError(err.message)

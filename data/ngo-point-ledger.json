@@ -1,5 +1,44 @@
 [
   {
+    "id": "d7f031c0-38c7-45c5-9e7c-f1760ad3f239",
+    "org_account_id": "org-points-test-1",
+    "points": 10,
+    "reason_code": "badge_support",
+    "title": "Helped with pool badge allocation",
+    "note": null,
+    "related_type": "ngo_request",
+    "related_id": "req-suggest-1",
+    "awarded_by": "staff-1",
+    "status": "posted",
+    "created_at": "2026-07-18T14:31:30.760Z"
+  },
+  {
+    "id": "2d825df7-4f36-4677-8bde-f936b3e1f470",
+    "org_account_id": "org-points-test-1",
+    "points": 15,
+    "reason_code": "unfccc_submission",
+    "title": "Co-supported GGA indicators submission",
+    "note": null,
+    "related_type": null,
+    "related_id": null,
+    "awarded_by": "staff-1",
+    "status": "posted",
+    "created_at": "2026-07-18T14:31:30.739Z"
+  },
+  {
+    "id": "e17b0f5d-b712-454b-901d-6fb914c75924",
+    "org_account_id": "org-points-test-1",
+    "points": 10,
+    "reason_code": "badge_support",
+    "title": "Supported COP badge pool allocation",
+    "note": null,
+    "related_type": null,
+    "related_id": null,
+    "awarded_by": "staff-1",
+    "status": "posted",
+    "created_at": "2026-07-18T14:31:30.736Z"
+  },
+  {
     "id": "f74bd48e-b524-4219-bef8-af46be339290",
     "org_account_id": "org-points-test-1",
     "points": 15,

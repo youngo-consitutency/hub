@@ -31,6 +31,7 @@ import { Messages } from './pages/Messages.jsx'
 import { MembershipTeam } from './pages/MembershipTeam.jsx'
 import { GysPolicyTeam } from './pages/GysPolicyTeam.jsx'
 import { StaffPoints } from './pages/StaffPoints.jsx'
+import { Recognition } from './pages/Recognition.jsx'
 import { Empty } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
 
@@ -39,6 +40,7 @@ const PRE_VERIFY = [
   /^\/onboarding/,
   /^\/library/,
   /^\/gallery/,
+  /^\/recognition/,
 ]
 
 const ROUTES = [
@@ -53,6 +55,7 @@ const ROUTES = [
   [/^\/team\/membership$/, MembershipTeam],
   [/^\/team\/gys$/, GysPolicyTeam],
   [/^\/staff\/points$/, StaffPoints],
+  [/^\/recognition$/, Recognition],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],

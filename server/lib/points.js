@@ -331,3 +331,104 @@ export function reasonFromNgoRequestKind(kind) {
     default: return 'other'
   }
 }
+
+/**
+ * Done NGO requests that have not yet received a linked points award.
+ * Staff use these as one-click award suggestions (still human-verified).
+ */
+export async function listAwardSuggestions({ limit = 40 } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 40, 1), 100)
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT r.id,
+              r.org_account_id,
+              r.kind,
+              r.title,
+              r.body,
+              r.status,
+              r.created_at,
+              r.deadline_at,
+              o.name AS org_name,
+              o.organization_name,
+              o.email AS org_email
+       FROM ngo_requests r
+       JOIN hub_accounts o ON o.id = r.org_account_id
+       WHERE r.status = 'done'
+         AND NOT EXISTS (
+           SELECT 1 FROM ngo_point_ledger l
+           WHERE l.related_type = 'ngo_request'
+             AND l.related_id = r.id::text
+             AND l.status = 'posted'
+         )
+       ORDER BY r.created_at DESC
+       LIMIT $1`,
+      [safeLimit],
+    )
+    return rows.map((r) => {
+      const reasonCode = reasonFromNgoRequestKind(r.kind)
+      const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
+      return {
+        requestId: r.id,
+        orgAccountId: r.org_account_id,
+        orgName: r.organization_name || r.org_name,
+        orgEmail: r.org_email,
+        kind: r.kind,
+        title: r.title,
+        body: r.body,
+        createdAt: r.created_at,
+        deadlineAt: r.deadline_at,
+        suggestedReasonCode: reasonCode,
+        suggestedReasonLabel: reason.label,
+        suggestedPoints: reason.defaultPoints,
+      }
+    })
+  }
+
+  // Fixture fallback: scan local JSON request + ledger files
+  const reqPath = path.join(dataDir, 'ngo-requests.json')
+  const requests = readJson(reqPath, [])
+  const ledger = readJson(ledgerPath, [])
+  const awardedIds = new Set(
+    ledger
+      .filter((e) => (e.related_type || e.relatedType) === 'ngo_request' && (e.status || 'posted') === 'posted')
+      .map((e) => String(e.related_id || e.relatedId)),
+  )
+  return requests
+    .filter((r) => r.status === 'done' && !awardedIds.has(String(r.id)))
+    .slice(0, safeLimit)
+    .map((r) => {
+      const reasonCode = reasonFromNgoRequestKind(r.kind)
+      const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
+      return {
+        requestId: r.id,
+        orgAccountId: r.org_account_id || r.orgAccountId,
+        orgName: r.org_name || r.organization_name || r.org_account_id,
+        orgEmail: null,
+        kind: r.kind,
+        title: r.title,
+        body: r.body,
+        createdAt: r.created_at || r.createdAt,
+        deadlineAt: r.deadline_at || r.deadlineAt,
+        suggestedReasonCode: reasonCode,
+        suggestedReasonLabel: reason.label,
+        suggestedPoints: reason.defaultPoints,
+      }
+    })
+}
+
+/** Public board: org display name + points only (no emails). */
+export async function listPublicRecognitionBoard({ limit = 50 } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 100)
+  const orgs = await listOrgPointBalances()
+  return orgs
+    .filter((o) => o.balance > 0)
+    .slice(0, safeLimit)
+    .map((o, index) => ({
+      rank: index + 1,
+      name: o.name || 'Organisation',
+      balance: o.balance,
+      tier: o.recognition?.current?.label || null,
+      tierId: o.recognition?.current?.id || null,
+    }))
+}

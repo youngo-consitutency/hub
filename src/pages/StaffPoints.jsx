@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
-import { Button, Empty, ErrorCard, Section, Skeletons } from '../components/ui.jsx'
-import { Award, BadgeCheck, Plus } from 'lucide-react'
+import { A, Button, Empty, ErrorCard, Section, Skeletons } from '../components/ui.jsx'
+import { Award, BadgeCheck, Plus, Sparkles } from 'lucide-react'
 
 const EMPTY_FORM = {
   orgAccountId: '',
@@ -9,6 +9,7 @@ const EMPTY_FORM = {
   points: '',
   title: '',
   note: '',
+  requestId: '',
 }
 
 export function StaffPoints() {
@@ -16,6 +17,7 @@ export function StaffPoints() {
   const [error, setError] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [status, setStatus] = useState('idle')
+  const [busyId, setBusyId] = useState(null)
   const [flash, setFlash] = useState(null)
 
   const load = () => {
@@ -51,6 +53,9 @@ export function StaffPoints() {
         points: form.points === '' ? undefined : Number(form.points),
         title: form.title,
         note: form.note || null,
+        requestId: form.requestId || undefined,
+        relatedType: form.requestId ? 'ngo_request' : undefined,
+        relatedId: form.requestId || undefined,
       })
       setFlash(
         `Awarded ${result.entry.points} pts · new balance ${result.balance}`
@@ -63,6 +68,42 @@ export function StaffPoints() {
       setError(err.message)
       setStatus('idle')
     }
+  }
+
+  const awardSuggestion = async (s) => {
+    setBusyId(s.requestId)
+    setFlash(null)
+    setError(null)
+    try {
+      const result = await apiPost('/member/staff/points/award-suggestion', {
+        requestId: s.requestId,
+        orgAccountId: s.orgAccountId,
+        kind: s.kind,
+        reasonCode: s.suggestedReasonCode,
+        points: s.suggestedPoints,
+        title: s.title,
+      })
+      setFlash(
+        `Awarded ${result.entry.points} pts to ${s.orgName} · balance ${result.balance}`,
+      )
+      load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const prefillFromSuggestion = (s) => {
+    setForm({
+      orgAccountId: s.orgAccountId,
+      reasonCode: s.suggestedReasonCode,
+      points: String(s.suggestedPoints),
+      title: s.title,
+      note: `From completed request ${s.requestId}`,
+      requestId: s.requestId,
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (error && !data) return <ErrorCard message={error} onRetry={load} />
@@ -84,8 +125,60 @@ export function StaffPoints() {
       )}
       {error && <ErrorCard message={error} onRetry={load} />}
 
+      <p className="metaMuted" style={{ marginBottom: 12 }}>
+        Public board: <A href="/recognition" className="inlineLink">/recognition</A>
+      </p>
+
+      <Section
+        label={`Suggested awards (${data.suggestions?.length || 0})`}
+        action={data.suggestions?.length ? <span className="metaMuted">From completed NGO requests</span> : null}
+      >
+        {!data.suggestions?.length
+          ? (
+            <Empty
+              icon={Sparkles}
+              title="No pending suggestions"
+              body="When an NGO marks a badge or UNFCCC request as done, it appears here for one-click award."
+            />
+          )
+          : (
+            <div className="stackSm">
+              {data.suggestions.map((s) => (
+                <div key={s.requestId} className="card cardTight">
+                  <div className="rowBetween" style={{ gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <strong>{s.orgName || 'Organisation'}</strong>
+                      <p className="meta" style={{ marginTop: 4 }}>{s.title}</p>
+                      <p className="metaMuted">
+                        {s.suggestedReasonLabel} · default {s.suggestedPoints} pts
+                        {s.createdAt ? ` · done ${new Date(s.createdAt).toLocaleDateString()}` : ''}
+                      </p>
+                    </div>
+                    <div className="rowGap" style={{ flexWrap: 'wrap' }}>
+                      <Button sm variant="ghost" onClick={() => prefillFromSuggestion(s)}>Edit</Button>
+                      <Button
+                        sm
+                        variant="primary"
+                        disabled={busyId === s.requestId}
+                        onClick={() => awardSuggestion(s)}
+                      >
+                        {busyId === s.requestId ? 'Awarding…' : `Award +${s.suggestedPoints}`}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+      </Section>
+
       <Section label="Award points">
         <form className="card stack" onSubmit={award}>
+          {form.requestId && (
+            <p className="meta" style={{ color: 'var(--accent)' }}>
+              Linked to request <code className="mono">{form.requestId.slice(0, 8)}…</code>
+            </p>
+          )}
           <label className="field">
             <span>Organisation *</span>
             <select

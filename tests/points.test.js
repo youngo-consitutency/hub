@@ -4,10 +4,15 @@ import {
   POINT_REASONS,
   awardOrgPoints,
   getOrgPointsBalance,
+  listAwardSuggestions,
   listOrgPointsLedger,
+  listPublicRecognitionBoard,
   reasonFromNgoRequestKind,
   tiersForBalance,
 } from '../server/lib/points.js'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const ORG = 'org-points-test-1'
 
@@ -69,5 +74,45 @@ describe('NGO contribution points', () => {
       () => awardOrgPoints({ orgAccountId: ORG, reasonCode: 'adjustment', title: 'noop', points: 0 }),
       /non-zero/,
     )
+  })
+
+  it('suggests awards for done requests and drops them after linked award', async () => {
+    const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data')
+    mkdirSync(dataDir, { recursive: true })
+    const requestId = 'req-suggest-1'
+    writeFileSync(path.join(dataDir, 'ngo-requests.json'), JSON.stringify([{
+      id: requestId,
+      org_account_id: ORG,
+      kind: 'badge_support',
+      title: 'Helped with pool badge allocation',
+      status: 'done',
+      created_at: new Date().toISOString(),
+    }], null, 2))
+
+    const before = await listAwardSuggestions({ limit: 50 })
+    assert.ok(before.some((s) => s.requestId === requestId))
+
+    await awardOrgPoints({
+      orgAccountId: ORG,
+      reasonCode: 'badge_support',
+      title: 'Helped with pool badge allocation',
+      points: 10,
+      relatedType: 'ngo_request',
+      relatedId: requestId,
+      awardedBy: 'staff-1',
+    })
+
+    const after = await listAwardSuggestions({ limit: 50 })
+    assert.ok(!after.some((s) => s.requestId === requestId))
+  })
+
+  it('builds a public recognition board without emails', async () => {
+    const board = await listPublicRecognitionBoard({ limit: 20 })
+    assert.ok(Array.isArray(board))
+    for (const row of board) {
+      assert.ok(row.rank >= 1)
+      assert.ok(row.balance > 0)
+      assert.equal(row.email, undefined)
+    }
   })
 })
