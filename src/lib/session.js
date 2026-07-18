@@ -19,7 +19,8 @@ export function getCachedAccount() {
 }
 
 export function setSession({ token, account }) {
-  localStorage.setItem(TOKEN_KEY, token)
+  if (token) localStorage.setItem(TOKEN_KEY, token)
+  else localStorage.removeItem(TOKEN_KEY)
   if (account) localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account))
 }
 
@@ -29,5 +30,5 @@ export function clearSession() {
 }
 
 export function isSignedIn() {
-  return Boolean(getSessionToken())
+  return Boolean(getSessionToken() || getCachedAccount())
 }

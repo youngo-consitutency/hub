@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
-import { publicAccount, findAccountByEmail } from './accounts.js'
+import { publicAccount, findAccountByEmail, findAccountById } from './accounts.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -67,8 +67,12 @@ export async function setAccountFields(id, fields) {
 
 export async function completeCourse(accountId, { score }) {
   const now = new Date().toISOString()
+  const account = await findAccountById(accountId)
+  const membershipStatus = account?.membershipTrack === 'constituency_work' ? 'awaiting_onboarding' : 'course_passed'
   return setAccountFields(accountId, {
     member_status: 'verified',
+    hub_access_status: 'active',
+    membership_status: membershipStatus,
     course_passed_at: now,
     course_score: score,
     verified_at: now,
@@ -81,8 +85,10 @@ export async function listAccountsForAdmin() {
   if (pool) {
     const { rows } = await pool.query(
       `SELECT id, email, name, first_name, last_name, entity_type, organization_name,
-              organization_type, is_unfccc_admitted, member_status, role, region, country,
+              organization_type, is_unfccc_admitted, member_status, role, team_roles, region, country,
               nationality, wg_interests, course_passed_at, course_score, verified_at,
+              membership_track, constituency_work_status, hub_access_status, membership_status,
+              onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
               created_at, last_login_at, phone
        FROM hub_accounts
        ORDER BY created_at DESC
@@ -301,31 +307,52 @@ function publicSeat(row) {
     name: row.name || null,
     seatRole: row.seat_role ?? row.seatRole,
     status: row.status,
-    inviteToken: row.invite_token ?? row.inviteToken ?? null,
+    inviteExpiresAt: row.invite_expires_at ?? row.inviteExpiresAt ?? null,
     createdAt: row.created_at ?? row.createdAt,
     acceptedAt: row.accepted_at ?? row.acceptedAt ?? null,
   }
 }
 
-/** Resolve which org account this user manages (own org or active seat). */
-export async function resolveOrgAccountId(account) {
+/** Resolve organization scope and seat-level permissions. */
+export async function resolveOrgContext(account, requestedOrgId = null) {
   if (!account) return null
-  if (account.entityType === 'organization') return account.id
-  if (account.role === 'admin') return account.id // admin may pass orgId separately
+  if (account.role === 'admin') {
+    if (!requestedOrgId) return null
+    return { orgAccountId: String(requestedOrgId), seatRole: 'admin', canManageRequests: true, canManageSeats: true }
+  }
+  if (account.entityType === 'organization') {
+    return { orgAccountId: account.id, seatRole: 'owner', canManageRequests: true, canManageSeats: true }
+  }
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
-      `SELECT org_account_id FROM ngo_seats
+      `SELECT org_account_id, seat_role FROM ngo_seats
        WHERE member_account_id = $1 AND status = 'active'
        ORDER BY accepted_at DESC NULLS LAST
        LIMIT 1`,
       [account.id]
     )
-    return rows[0]?.org_account_id || null
+    if (!rows[0]) return null
+    return {
+      orgAccountId: rows[0].org_account_id,
+      seatRole: rows[0].seat_role,
+      canManageRequests: ['owner', 'representative'].includes(rows[0].seat_role),
+      canManageSeats: rows[0].seat_role === 'owner',
+    }
   }
   const seats = readJson(seatsPath, [])
   const seat = seats.find((s) => s.member_account_id === account.id && s.status === 'active')
-  return seat?.org_account_id || null
+  if (!seat) return null
+  return {
+    orgAccountId: seat.org_account_id,
+    seatRole: seat.seat_role,
+    canManageRequests: ['owner', 'representative'].includes(seat.seat_role),
+    canManageSeats: seat.seat_role === 'owner',
+  }
+}
+
+export async function resolveOrgAccountId(account) {
+  return (await resolveOrgContext(account))?.orgAccountId || null
 }
 
 export async function listNgoSeats(orgAccountId) {
@@ -350,9 +377,9 @@ export async function listNgoSeats(orgAccountId) {
     .map(publicSeat)
 }
 
-export async function ensureOwnerSeat(orgAccount) {
+export async function ensureOwnerSeat(orgAccount, client = null) {
   if (!orgAccount || orgAccount.entityType !== 'organization') return null
-  const pool = getPool()
+  const pool = client || getPool()
   if (pool) {
     const existing = await pool.query(
       `SELECT * FROM ngo_seats WHERE org_account_id = $1 AND seat_role = 'owner' LIMIT 1`,
@@ -395,6 +422,8 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
     throw err
   }
   const token = randomUUID().replace(/-/g, '')
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const role = ['owner', 'representative', 'viewer'].includes(seatRole) ? seatRole : 'representative'
   const pool = getPool()
   if (pool) {
@@ -407,31 +436,25 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
     const memberName = name || existingUser.rows[0]?.name || null
     try {
       const { rows } = await pool.query(
-        `INSERT INTO ngo_seats (org_account_id, member_account_id, email, name, seat_role, status, invite_token, accepted_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `INSERT INTO ngo_seats (org_account_id, member_account_id, email, name, seat_role, status, invite_token_hash, invite_expires_at, accepted_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          ON CONFLICT (org_account_id, email) DO UPDATE SET
            seat_role = EXCLUDED.seat_role,
            status = CASE WHEN ngo_seats.status = 'revoked' THEN 'invited' ELSE ngo_seats.status END,
-           invite_token = COALESCE(ngo_seats.invite_token, EXCLUDED.invite_token),
+           invite_token_hash = CASE WHEN ngo_seats.status = 'active' THEN NULL ELSE EXCLUDED.invite_token_hash END,
+           invite_expires_at = CASE WHEN ngo_seats.status = 'active' THEN NULL ELSE EXCLUDED.invite_expires_at END,
            name = COALESCE(EXCLUDED.name, ngo_seats.name),
            member_account_id = COALESCE(ngo_seats.member_account_id, EXCLUDED.member_account_id)
          RETURNING *`,
         [
           orgAccountId, memberId, normalized, memberName, role,
           memberId ? 'active' : 'invited',
-          memberId ? null : token,
+          memberId ? null : tokenHash,
+          memberId ? null : expiresAt,
           memberId ? new Date().toISOString() : null,
         ]
       )
-      // If linked existing user, promote role lightly
-      if (memberId) {
-        await pool.query(
-          `UPDATE hub_accounts SET role = CASE WHEN role = 'admin' THEN role ELSE 'ngo_admin' END
-           WHERE id = $1 AND entity_type = 'individual'`,
-          [memberId]
-        )
-      }
-      return { seat: publicSeat(rows[0]), invitedBy }
+      return { seat: publicSeat(rows[0]), inviteToken: memberId ? null : token, invitedBy }
     } catch (e) {
       if (e.message?.includes('unique')) {
         const err = new Error('That email already has a seat.')
@@ -458,16 +481,18 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
     name: name || user?.name || null,
     seat_role: role,
     status: user ? 'active' : 'invited',
-    invite_token: user ? null : token,
+    invite_token_hash: user ? null : tokenHash,
+    invite_expires_at: user ? null : expiresAt,
     created_at: new Date().toISOString(),
     accepted_at: user ? new Date().toISOString() : null,
   }
   list.push(row)
   writeJson(seatsPath, list)
-  return { seat: publicSeat(row), invitedBy }
+  return { seat: publicSeat(row), inviteToken: user ? null : token, invitedBy }
 }
 
 export async function acceptNgoInvite(token, account) {
+  const tokenHash = createHash('sha256').update(String(token)).digest('hex')
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
@@ -476,27 +501,30 @@ export async function acceptNgoInvite(token, account) {
          member_account_id = $2,
          name = COALESCE(name, $3),
          accepted_at = now(),
-         invite_token = NULL
-       WHERE invite_token = $1 AND status = 'invited'
+         invite_token = NULL,
+         invite_token_hash = NULL,
+         invite_expires_at = NULL
+       WHERE (invite_token_hash = $1 OR invite_token = $4) AND status = 'invited'
+         AND (invite_expires_at IS NULL OR invite_expires_at > now())
+         AND lower(email) = lower($5)
        RETURNING *`,
-      [token, account.id, account.name]
+      [tokenHash, account.id, account.name, token, account.email]
     )
     if (!rows[0]) return null
-    await pool.query(
-      `UPDATE hub_accounts SET role = CASE WHEN role IN ('admin','wg_contact') THEN role ELSE 'ngo_admin' END
-       WHERE id = $1`,
-      [account.id]
-    )
     return publicSeat(rows[0])
   }
   const list = readJson(seatsPath, [])
-  const row = list.find((s) => s.invite_token === token && s.status === 'invited')
+  const row = list.find((s) => (s.invite_token_hash === tokenHash || s.invite_token === token) && s.status === 'invited')
   if (!row) return null
+  if (row.invite_expires_at && new Date(row.invite_expires_at) <= new Date()) return null
+  if (String(row.email).toLowerCase() !== String(account.email).toLowerCase()) return null
   row.status = 'active'
   row.member_account_id = account.id
   row.name = row.name || account.name
   row.accepted_at = new Date().toISOString()
   row.invite_token = null
+  row.invite_token_hash = null
+  row.invite_expires_at = null
   writeJson(seatsPath, list)
   return publicSeat(row)
 }
@@ -505,7 +533,7 @@ export async function revokeNgoSeat(seatId, orgAccountId) {
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
-      `UPDATE ngo_seats SET status = 'revoked', invite_token = NULL
+      `UPDATE ngo_seats SET status = 'revoked', invite_token = NULL, invite_token_hash = NULL, invite_expires_at = NULL
        WHERE id = $1 AND org_account_id = $2 AND seat_role != 'owner'
        RETURNING *`,
       [seatId, orgAccountId]
@@ -517,20 +545,24 @@ export async function revokeNgoSeat(seatId, orgAccountId) {
   if (!row || row.seat_role === 'owner') return null
   row.status = 'revoked'
   row.invite_token = null
+  row.invite_token_hash = null
+  row.invite_expires_at = null
   writeJson(seatsPath, list)
   return publicSeat(row)
 }
 
 export async function getSeatByToken(token) {
+  const tokenHash = createHash('sha256').update(String(token)).digest('hex')
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
       `SELECT s.*, o.organization_name, o.name AS org_display
        FROM ngo_seats s
        JOIN hub_accounts o ON o.id = s.org_account_id
-       WHERE s.invite_token = $1 AND s.status = 'invited'
+       WHERE (s.invite_token_hash = $1 OR s.invite_token = $2) AND s.status = 'invited'
+         AND (s.invite_expires_at IS NULL OR s.invite_expires_at > now())
        LIMIT 1`,
-      [token]
+      [tokenHash, token]
     )
     if (!rows[0]) return null
     return {
@@ -539,7 +571,8 @@ export async function getSeatByToken(token) {
     }
   }
   const list = readJson(seatsPath, [])
-  const row = list.find((s) => s.invite_token === token && s.status === 'invited')
+  const row = list.find((s) => (s.invite_token_hash === tokenHash || s.invite_token === token) && s.status === 'invited')
+  if (row?.invite_expires_at && new Date(row.invite_expires_at) <= new Date()) return null
   return publicSeat(row)
 }
 

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import * as store from '../lib/store.js'
+import { rateLimit } from '../lib/security.js'
 
 export const publicRouter = Router()
 
@@ -71,7 +72,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 // Public GYS 2026 participation signup. Honeypot + length caps in lieu of a captcha
 // (05 §4.7). Logs non-PII only (country/org) per 05 §7 — never names/emails.
-publicRouter.post('/gys/signup', async (req, res) => {
+publicRouter.post('/gys/signup', rateLimit({ name: 'gys-signup', max: 8, windowMs: 60 * 60_000 }), async (req, res) => {
   const b = req.body || {}
   if (b.website) return res.status(201).json({ ok: true }) // honeypot: bots fill this; feign success
 

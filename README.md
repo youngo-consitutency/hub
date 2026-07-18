@@ -56,6 +56,7 @@ YOUNGO is a **platform and network**, not a single NGO. Work happens across Work
 | **Calendar** | Constituency + WG calls (ICS subscribe) |
 | **Submissions / Council / COYs** | Track opens, decisions, and conferences of youth |
 | **Working groups** | Catalog → workspace onboarding → WhatsApp & CPs |
+| **Messages** | Verified members can chat with CPs / mandate holders, not arbitrary member-to-member DMs |
 | **Onboarding** | Membership policy → account → course → verified member |
 | **Library** | Capacity Building guides (open access) |
 | **NGO platform** | Deadlines, endorse/submit requests, multi-user seats |
@@ -87,7 +88,8 @@ YOUNGO is a **platform and network**, not a single NGO. Work happens across Work
 2. **Join YOUNGO** — individual or organisation (UNFCCC admitted / non-admitted).
 3. **Pass the membership course** — hub unlocks.
 4. **Join WG workspaces** — presentation + rules, then channels & contacts.
-5. **Come back to Onboarding anytime** — course review, library, FAQ.
+5. **Message CPs / mandate holders** when you need help or coordination.
+6. **Come back to Onboarding anytime** — course review, library, FAQ.
 
 Password reset is built in (forgot-password + one-time links; admin can mint links).
 
@@ -98,11 +100,14 @@ Password reset is built in (forgot-password + one-time links; admin can mint lin
 | Role | Unlocks |
 | --- | --- |
 | **Member** (verified) | Full hub: feed, calendar, groups, directory… |
+| **Focal Point** | Constituency-wide mandate holder: UNFCCC Secretariat representation, mandate-holder coordination, progress overview |
 | **WG Contact Point** | `/cp/:wg` — joiners, approve roles, log activities |
 | **NGO admin / seat** | `/ngo` — requests, deadlines, invite representatives |
 | **Admin** | `/admin` — directory, verify, roles, password reset links |
 
 Admins are promoted from `ADMIN_EMAILS` (comma-separated) on login / bootstrap.
+
+Messaging is intentionally role-aware: verified members can start conversations only with contact points or mandate holders (`focal_point`, `wg_contact`, `ngo_admin`, `admin`, or active WG `contact` / `lead`). Focal Points and other mandate holders can start conversations with each other for shared tasks, UNFCCC-facing coordination, calls, and constituency progress tracking. Once a permitted conversation exists, either participant can reply.
 
 ---
 
@@ -112,7 +117,7 @@ Admins are promoted from `ADMIN_EMAILS` (comma-separated) on login / bootstrap.
 | --- | --- |
 | UI | React 19 + Vite 8 · **Verdant** design tokens |
 | API | Express · same origin as static build on Railway |
-| Auth | Email + password (scrypt) · bearer sessions |
+| Auth | Email + password (scrypt) · hashed sessions in HttpOnly cookies |
 | Data | **Postgres** when `DATABASE_URL` is set · fixtures for local demo content |
 | Deploy | Railway (Nixpacks) · `preDeployCommand: npm run migrate` |
 
@@ -120,7 +125,7 @@ Admins are promoted from `ADMIN_EMAILS` (comma-separated) on login / bootstrap.
 youngo-hub/
 ├── src/                 React client (pages, gates, Verdant CSS)
 ├── server/              Express API (auth, member, public, ICS)
-├── migrations/          Postgres schema (001…008+)
+├── migrations/          Postgres schema (001…009+)
 ├── data/fixtures.json   Demo calendar / WGs / feed content
 ├── src/content/         Policy, course, WG onboarding copy
 ├── scripts/             migrate · bootstrap-admin
@@ -161,7 +166,7 @@ Without `DATABASE_URL`, accounts fall back to local JSON under `data/` (dev only
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Postgres connection (Railway injects this) |
-| `APP_ORIGIN` | Public origin for reset / invite links |
+| `APP_ORIGIN` | Required production origin for CORS and reset / invite links |
 | `ADMIN_EMAILS` | Comma-separated admins (auto-promote + bootstrap) |
 | `PORT` | HTTP port (Railway injects) |
 
@@ -208,6 +213,12 @@ Component gallery (dev): `/gallery`.
 - [x] WG workspace onboarding
 - [x] NGO seats (invite / accept / revoke)
 - [x] Admin directory & password reset
+- [x] Member messaging backend (CP / mandate-holder conversations)
+- [x] Scoped role assignments and capability-based authorization
+- [x] Membership lifecycle states (course, onboarding, activation, renewal, exit)
+- [x] GYS contribution review workflow with versioned status history
+- [x] Governance audit log, expiring NGO invites, and session hardening
+- [ ] **Align & update the onboarding process with the YOUNGO Onboarding Taskforce** (course content, verification steps, Membership Team handoff, and official cycles)
 - [ ] Live Google Calendar API (owner console access)
 - [ ] Full feed content in Postgres (not only fixtures)
 - [ ] SMTP for reset / invite emails

@@ -6,6 +6,7 @@ import { publicRouter } from './routes/public.js'
 import { icsRouter } from './routes/ics.js'
 import { authRouter } from './routes/auth.js'
 import { memberRouter } from './routes/member.js'
+import { requestSecurity } from './lib/security.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -14,7 +15,10 @@ const app = express()
 const PORT = process.argv[2] || process.env.PORT || 8787
 
 app.disable('x-powered-by')
-app.use(cors({ origin: process.env.APP_ORIGIN || true }))
+app.set('trust proxy', 1)
+app.use(requestSecurity)
+const allowedOrigin = process.env.APP_ORIGIN || (process.env.NODE_ENV === 'production' ? false : true)
+app.use(cors({ origin: allowedOrigin, credentials: true }))
 app.use(express.json({ limit: '256kb' }))
 
 app.get('/healthz', (req, res) => {

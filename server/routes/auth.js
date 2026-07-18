@@ -9,19 +9,25 @@ import {
   publicAccount,
 } from '../lib/accounts.js'
 import { ensureAdminRole, ensureOwnerSeat } from '../lib/lifecycle.js'
+import { getPool } from '../lib/db.js'
 import {
   createPasswordResetToken,
   consumePasswordResetToken,
   resetLink,
 } from '../lib/passwordReset.js'
+import { cookieValue, SESSION_COOKIE, setSessionCookie, clearSessionCookie, rateLimit } from '../lib/security.js'
 
 export const authRouter = Router()
 
 function bearerToken(req) {
   const h = req.headers.authorization || ''
   if (h.startsWith('Bearer ')) return h.slice(7).trim()
-  return String(req.headers['x-session-token'] || '').trim() || null
+  return String(req.headers['x-session-token'] || '').trim() || cookieValue(req, SESSION_COOKIE) || null
 }
+
+const loginLimit = rateLimit({ name: 'login', max: 10, windowMs: 15 * 60_000 })
+const registerLimit = rateLimit({ name: 'register', max: 8, windowMs: 60 * 60_000 })
+const resetLimit = rateLimit({ name: 'password-reset', max: 6, windowMs: 15 * 60_000 })
 
 // No caching for auth endpoints
 authRouter.use((req, res, next) => {
@@ -43,7 +49,7 @@ authRouter.get('/me', async (req, res) => {
   }
 })
 
-authRouter.post('/register', async (req, res) => {
+authRouter.post('/register', registerLimit, async (req, res) => {
   try {
     const result = validateRegistration(req.body)
     if (result.honeypot) return res.status(201).json({ ok: true }) // feign success for bots
@@ -53,10 +59,27 @@ authRouter.post('/register', async (req, res) => {
       })
     }
 
-    let account = await createAccount(result.data)
-    const session = await createSession(account.id)
-    if (account.entityType === 'organization') {
-      await ensureOwnerSeat(account)
+    const pool = getPool()
+    let account
+    let session
+    if (pool) {
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        account = await createAccount(result.data, client)
+        if (account.entityType === 'organization') await ensureOwnerSeat(account, client)
+        session = await createSession(account.id, client)
+        await client.query('COMMIT')
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
+    } else {
+      account = await createAccount(result.data)
+      if (account.entityType === 'organization') await ensureOwnerSeat(account)
+      session = await createSession(account.id)
     }
     account = await ensureAdminRole(account)
     console.log(JSON.stringify({
@@ -66,7 +89,8 @@ authRouter.post('/register', async (req, res) => {
       country: account.country,
       at: new Date().toISOString(),
     }))
-    res.status(201).json({ ok: true, account, token: session.token, expiresAt: session.expiresAt })
+    setSessionCookie(res, session.token, session.expiresAt)
+    res.status(201).json({ ok: true, token: session.token, account, expiresAt: session.expiresAt })
   } catch (err) {
     if (err.code === 'email_taken') {
       return res.status(409).json({
@@ -82,7 +106,7 @@ authRouter.post('/register', async (req, res) => {
   }
 })
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', loginLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.status(200).json({ ok: true }) // honeypot
@@ -111,7 +135,8 @@ authRouter.post('/login', async (req, res) => {
       track: account.membershipTrack,
       at: new Date().toISOString(),
     }))
-    res.json({ ok: true, account, token: session.token, expiresAt: session.expiresAt })
+    setSessionCookie(res, session.token, session.expiresAt)
+    res.json({ ok: true, token: session.token, account, expiresAt: session.expiresAt })
   } catch (err) {
     console.error('auth/login failed:', err.message)
     res.status(500).json({ error: { code: 'server_error', message: 'Could not sign you in — please try again.' } })
@@ -121,6 +146,7 @@ authRouter.post('/login', async (req, res) => {
 authRouter.post('/logout', async (req, res) => {
   try {
     await destroySession(bearerToken(req))
+    clearSessionCookie(res)
     res.json({ ok: true })
   } catch (err) {
     console.error('auth/logout failed:', err.message)
@@ -131,7 +157,7 @@ authRouter.post('/logout', async (req, res) => {
 const GENERIC_FORGOT =
   'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
 
-authRouter.post('/forgot-password', async (req, res) => {
+authRouter.post('/forgot-password', resetLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true, message: GENERIC_FORGOT })
@@ -162,7 +188,7 @@ authRouter.post('/forgot-password', async (req, res) => {
   }
 })
 
-authRouter.post('/reset-password', async (req, res) => {
+authRouter.post('/reset-password', resetLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true })

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { A, Button } from './ui.jsx'
+import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
 import { usePath, navigate } from '../lib/router.js'
 import { apiPost } from '../lib/api.js'
@@ -7,34 +7,30 @@ import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
   Home, CalendarDays, FileText, Gavel, MapPin, Users, AtSign,
-  Search, Moon, Sun, MoreHorizontal, Settings2, ScrollText, LogOut,
+  Search, MoreHorizontal, Settings2, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
+  ClipboardCheck, PenTool, MessageSquare, Network,
 } from 'lucide-react'
 
 function isActive(path, href) {
   return href === '/' ? path === '/' : path.startsWith(href)
 }
 
-function useTheme() {
-  const [theme, setTheme] = useState(() =>
-    localStorage.getItem('theme') ||
-    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'))
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-  return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))]
-}
-
 export function Shell({ children }) {
   const path = usePath()
-  const [theme, toggleTheme] = useTheme()
   const [sheet, setSheet] = useState(false)
   const { account } = useAccount()
+  const access = account?.access || { teamRoles: account?.teamRoles || [], wgAssignments: [], manageAllWgs: account?.role === 'admin' }
   useEffect(() => { setSheet(false) }, [path])
 
-  const ThemeIcon = theme === 'dark' ? Sun : Moon
-  const verified = account?.isVerified || account?.role === 'admin'
+  useEffect(() => {
+    const workspace = path.startsWith('/cp') ? 'wg'
+      : path.startsWith('/team/membership') ? 'membership'
+        : path.startsWith('/team/gys') ? 'gys' : 'member'
+    document.documentElement.dataset.workspace = workspace
+  }, [path])
+
+  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
 
   const nav = useMemo(() => {
     const sections = [
@@ -58,19 +54,36 @@ export function Shell({ children }) {
         { section: 'Community', items: [
           { href: '/groups', label: 'Working groups', icon: Users },
           { href: '/directory', label: 'Directory', icon: AtSign },
+          { href: '/messages', label: 'Messages', icon: MessageSquare },
         ]},
       )
+    }
+    if (['admin', 'focal_point'].includes(account?.role)) {
+      sections.push({ section: 'Representation', items: [
+        { href: '/focal', label: 'Focal Point', icon: Network },
+      ]})
     }
     if (account?.isNgo || account?.role === 'admin' || account?.role === 'ngo_admin') {
       sections.push({ section: 'Organisation', items: [
         { href: '/ngo', label: 'NGO platform', icon: Building2 },
       ]})
     }
-    if (account?.isWgContact || account?.role === 'admin') {
-      sections.push({ section: 'WG CP', items: [
-        { href: '/cp/finance', label: 'Manage Finance WG', icon: Briefcase },
-        { href: '/cp/ace', label: 'Manage ACE WG', icon: Briefcase },
+    if (account?.isWgContact || access.wgAssignments?.length || access.manageAllWgs) {
+      sections.push({ section: 'Your workspaces', items: [
+        { href: '/cp', label: 'WG Contact Point', icon: Briefcase },
       ]})
+    }
+    if (access.teamRoles?.includes('membership_team')) {
+      const section = sections.find((item) => item.section === 'Your workspaces')
+      const item = { href: '/team/membership', label: 'Membership Team', icon: ClipboardCheck }
+      if (section) section.items.push(item)
+      else sections.push({ section: 'Your workspaces', items: [item] })
+    }
+    if (access.teamRoles?.includes('gys_policy_team')) {
+      const section = sections.find((item) => item.section === 'Your workspaces')
+      const item = { href: '/team/gys', label: 'GYS Policy Team', icon: PenTool }
+      if (section) section.items.push(item)
+      else sections.push({ section: 'Your workspaces', items: [item] })
     }
     if (account?.role === 'admin') {
       sections.push({ section: 'Staff', items: [
@@ -78,7 +91,7 @@ export function Shell({ children }) {
       ]})
     }
     return sections
-  }, [account, verified])
+  }, [account, verified, access.manageAllWgs, access.teamRoles?.join(','), access.wgAssignments?.length])
 
   const tabs = verified
     ? [
@@ -93,14 +106,8 @@ export function Shell({ children }) {
       { href: '/library', label: 'Library', icon: Library },
     ]
 
-  const more = [
-    { href: '/coys', label: 'COY tracker', icon: MapPin },
-    { href: '/council', label: 'Council', icon: Gavel },
-    { href: '/gys', label: 'Youth Statement', icon: ScrollText },
-    { href: '/directory', label: 'Directory', icon: AtSign },
-    { href: '/search', label: 'Search', icon: Search },
-    { href: '/library', label: 'Library', icon: Library },
-  ]
+  const tabHrefs = new Set(tabs.map((item) => item.href))
+  const more = nav.flatMap((section) => section.items).filter((item) => !tabHrefs.has(item.href))
 
   const signOut = async () => {
     try { await apiPost('/auth/logout', {}) } catch { /* clear local anyway */ }
@@ -132,12 +139,10 @@ export function Shell({ children }) {
               <span className="metaMuted">
                 {account.isVerified ? 'Verified' : 'Pending course'}
                 {account.role === 'admin' ? ' · Admin' : ''}
+                {account.role === 'focal_point' ? ' · Focal Point' : ''}
               </span>
             </div>
           )}
-          <button className="navItem" onClick={toggleTheme}>
-            <ThemeIcon size={18} strokeWidth={1.75} aria-hidden />{theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          </button>
           <A href="/gallery" className="navItem"><Settings2 size={18} strokeWidth={1.75} aria-hidden />Gallery</A>
           <button className="navItem" onClick={signOut}>
             <LogOut size={18} strokeWidth={1.75} aria-hidden />Sign out
@@ -150,7 +155,6 @@ export function Shell({ children }) {
           <A href={verified ? '/' : '/onboarding'} className="wordmark" style={{ padding: 0 }}><span className="branddot" />YOUNGO Hub</A>
           <div className="rowGap">
             {verified && <A href="/search" className="btn btn-ghost btn-sm" aria-label="Search"><Search size={20} strokeWidth={1.75} aria-hidden /></A>}
-            <Button sm variant="ghost" onClick={toggleTheme} aria-label="Toggle theme"><ThemeIcon size={20} strokeWidth={1.75} aria-hidden /></Button>
           </div>
         </header>
         {!verified && (
@@ -162,11 +166,14 @@ export function Shell({ children }) {
             <A href="/onboarding/course" className="btn btn-primary btn-sm">Course</A>
           </div>
         )}
+        {path.startsWith('/cp') && <div className="workspaceContext workspaceContext-wg"><Briefcase size={16} aria-hidden />WG Contact Point workspace</div>}
+        {path.startsWith('/team/membership') && <div className="workspaceContext workspaceContext-membership"><ClipboardCheck size={16} aria-hidden />Membership Team workspace</div>}
+        {path.startsWith('/team/gys') && <div className="workspaceContext workspaceContext-gys"><PenTool size={16} aria-hidden />Global Youth Statement Policy workspace</div>}
         {children}
       </div>
 
       {sheet && (
-        <div className="sheet" role="menu">
+        <div className="sheet" role="menu" aria-label="More navigation">
           {more.map(({ href, label, icon: Icon }) => (
             <A key={href} href={href} className="navItem" role="menuitem">
               <Icon size={18} strokeWidth={1.75} aria-hidden />{label}

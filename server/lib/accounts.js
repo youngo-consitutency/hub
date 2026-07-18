@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
 import { hashPassword, verifyPassword, newSessionToken, sessionExpiry } from './password.js'
 
@@ -13,6 +13,7 @@ const sessionsPath = path.join(dataDir, 'hub-sessions.json')
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
 const WORD_LIMIT = 250
+const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
 export const REGIONS = [
   'Africa',
@@ -83,13 +84,22 @@ function publicAccount(row) {
     constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
     membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
     memberStatus,
+    hubAccessStatus: row.hub_access_status ?? row.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course'),
+    membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
+    onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
+    renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
+    membershipEndedAt: row.membership_ended_at ?? row.membershipEndedAt ?? null,
+    membershipEndReason: row.membership_end_reason ?? row.membershipEndReason ?? null,
     role,
+    teamRoles: row.team_roles ?? row.teamRoles ?? [],
     wgInterests: row.wg_interests ?? row.wgInterests ?? [],
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified: memberStatus === 'verified',
+    isVerified: memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role),
     isAdmin: role === 'admin',
+    isFocalPoint: role === 'focal_point',
+    isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: (row.entity_type ?? row.entityType) === 'organization',
     isNgoAdmin: role === 'ngo_admin' || (role === 'admin') || (
@@ -429,8 +439,25 @@ export async function findAccountByEmail(email) {
   return list.find((a) => a.email.toLowerCase() === normalized) || null
 }
 
-export async function createAccount(data) {
-  const existing = await findAccountByEmail(data.email)
+export async function findAccountById(id) {
+  const accountId = String(id || '').trim()
+  if (!accountId) return null
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      'SELECT * FROM hub_accounts WHERE id = $1 LIMIT 1',
+      [accountId]
+    )
+    return rows[0] || null
+  }
+  const list = readJson(accountsPath, [])
+  return list.find((a) => a.id === accountId) || null
+}
+
+export async function createAccount(data, client = null) {
+  const existing = client
+    ? (await client.query('SELECT * FROM hub_accounts WHERE lower(email) = lower($1) LIMIT 1', [data.email])).rows[0]
+    : await findAccountByEmail(data.email)
   if (existing) {
     const err = new Error('An account with this email already exists. Sign in instead.')
     err.code = 'email_taken'
@@ -438,14 +465,16 @@ export async function createAccount(data) {
   }
 
   const { salt, hash } = hashPassword(data.password)
-  const pool = getPool()
+  const pool = client || getPool()
 
   const memberStatus = data.memberStatus || 'pending_course'
   const role = data.role || 'member'
   const wgInterests = data.wgInterests || []
 
   if (pool) {
-    const { rows } = await pool.query(
+    let rows
+    try {
+      ({ rows } = await pool.query(
       `INSERT INTO hub_accounts (
         email, password_hash, password_salt, name, first_name, last_name,
         entity_type, membership_track, country, date_of_birth,
@@ -490,7 +519,11 @@ export async function createAccount(data) {
         data.dcpEmail, data.dcpPhone, data.ycpName, data.ycpEmail, data.ycpPhone,
         memberStatus, role, wgInterests,
       ]
-    )
+      ))
+    } catch (error) {
+      if (error.code === '23505') { const duplicate = new Error('An account with this email already exists. Sign in instead.'); duplicate.code = 'email_taken'; throw duplicate }
+      throw error
+    }
     return publicAccount(rows[0])
   }
 
@@ -566,14 +599,15 @@ export async function authenticate(email, password) {
   return row
 }
 
-export async function createSession(accountId) {
+export async function createSession(accountId, client = null) {
   const token = newSessionToken()
+  const storedToken = createHash('sha256').update(token).digest('hex')
   const expiresAt = sessionExpiry(30)
-  const pool = getPool()
+  const pool = client || getPool()
   if (pool) {
     await pool.query(
       'INSERT INTO hub_sessions(token, account_id, expires_at) VALUES ($1, $2, $3)',
-      [token, accountId, expiresAt.toISOString()]
+      [storedToken, accountId, expiresAt.toISOString()]
     )
     await pool.query(
       'UPDATE hub_accounts SET last_login_at = now() WHERE id = $1',
@@ -583,7 +617,7 @@ export async function createSession(accountId) {
   }
   const sessions = readJson(sessionsPath, [])
   sessions.push({
-    token,
+    token: storedToken,
     account_id: accountId,
     created_at: new Date().toISOString(),
     expires_at: expiresAt.toISOString(),
@@ -600,6 +634,7 @@ export async function createSession(accountId) {
 
 export async function getSessionAccount(token) {
   if (!token) return null
+  const storedToken = createHash('sha256').update(token).digest('hex')
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
@@ -607,12 +642,17 @@ export async function getSessionAccount(token) {
        JOIN hub_accounts a ON a.id = s.account_id
        WHERE s.token = $1 AND s.expires_at > now()
        LIMIT 1`,
-      [token]
+      [storedToken]
     )
-    return publicAccount(rows[0] || null)
+    if (rows[0]) return publicAccount(rows[0])
+    const legacy = await pool.query(
+      `SELECT a.* FROM hub_sessions s JOIN hub_accounts a ON a.id=s.account_id
+       WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`, [token]
+    )
+    return publicAccount(legacy.rows[0] || null)
   }
   const sessions = readJson(sessionsPath, [])
-  const session = sessions.find((s) => s.token === token)
+  const session = sessions.find((s) => s.token === storedToken || s.token === token)
   if (!session) return null
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
@@ -622,13 +662,20 @@ export async function getSessionAccount(token) {
 
 export async function destroySession(token) {
   if (!token) return
+  const storedToken = createHash('sha256').update(token).digest('hex')
   const pool = getPool()
   if (pool) {
-    await pool.query('DELETE FROM hub_sessions WHERE token = $1', [token])
+    await pool.query('DELETE FROM hub_sessions WHERE token = $1 OR token = $2', [storedToken, token])
     return
   }
-  const sessions = readJson(sessionsPath, []).filter((s) => s.token !== token)
+  const sessions = readJson(sessionsPath, []).filter((s) => s.token !== token && s.token !== storedToken)
   writeJson(sessionsPath, sessions)
+}
+
+export async function destroyAllSessions(accountId) {
+  const pool = getPool()
+  if (pool) { await pool.query('DELETE FROM hub_sessions WHERE account_id=$1', [accountId]); return }
+  writeJson(sessionsPath, readJson(sessionsPath, []).filter((s) => s.account_id !== accountId))
 }
 
 export { publicAccount }
