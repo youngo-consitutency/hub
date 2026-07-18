@@ -1,0 +1,84 @@
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { getPool } from './db.js'
+
+const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../data')
+const readJson = (name) => { try { const file = path.join(dataDir, name); return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : [] } catch { return [] } }
+
+export async function getAccessProfile(account) {
+  if (!account) return { teamRoles: [], wgAssignments: [], capabilities: [], manageAllWgs: false }
+  const teamRoles = new Set(account.teamRoles || [])
+  const wgAssignments = []
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT scope_type, scope_id, role FROM account_assignments
+       WHERE account_id=$1 AND status='active' AND (ends_at IS NULL OR ends_at > now())`, [account.id]
+    )
+    for (const row of rows) {
+      if (row.scope_type === 'team') teamRoles.add(row.scope_id)
+      if (row.scope_type === 'working_group') wgAssignments.push({ wgSlug: row.scope_id, role: row.role })
+    }
+    const legacy = await pool.query(
+      `SELECT wg_slug, role_in_wg FROM wg_workspace_progress
+       WHERE account_id=$1 AND status='active' AND role_in_wg IN ('contact','lead')`, [account.id]
+    )
+    for (const row of legacy.rows) if (!wgAssignments.some((item) => item.wgSlug === row.wg_slug)) wgAssignments.push({ wgSlug: row.wg_slug, role: row.role_in_wg })
+  } else {
+    for (const row of readJson('wg-progress.json')) {
+      if (row.account_id === account.id && row.status === 'active' && ['contact','lead'].includes(row.role_in_wg)) wgAssignments.push({ wgSlug: row.wg_slug, role: row.role_in_wg })
+    }
+  }
+  if (account.role === 'wg_contact') for (const wgSlug of account.wgInterests || []) if (!wgAssignments.some((item) => item.wgSlug === wgSlug)) wgAssignments.push({ wgSlug, role: 'contact' })
+  if (account.role === 'admin') { teamRoles.add('membership_team'); teamRoles.add('gys_policy_team') }
+  const capabilities = new Set(['hub.read'])
+  if (account.role === 'admin') ['platform.manage','accounts.manage','audit.read','ngo.manage_all'].forEach((x) => capabilities.add(x))
+  if (account.role === 'focal_point') capabilities.add('constituency.coordinate')
+  if (teamRoles.has('membership_team')) { capabilities.add('membership.review'); capabilities.add('messages.receive') }
+  if (teamRoles.has('gys_policy_team')) { capabilities.add('gys.manage'); capabilities.add('messages.receive') }
+  if (['admin','focal_point','wg_contact','ngo_admin'].includes(account.role) || wgAssignments.length) capabilities.add('messages.receive')
+  for (const item of wgAssignments) capabilities.add(`wg.manage:${item.wgSlug}`)
+  return { teamRoles: [...teamRoles], wgAssignments, capabilities: [...capabilities], manageAllWgs: account.role === 'admin', isFocalPoint: account.role === 'focal_point', isMandateHolder: capabilities.has('messages.receive') }
+}
+
+export function hasCapability(access, capability) { return Boolean(access?.capabilities?.includes(capability)) }
+export async function canManageWg(account, wgSlug) { const access = await getAccessProfile(account); return access.manageAllWgs || hasCapability(access, `wg.manage:${wgSlug}`) }
+
+export async function setTeamAssignment({ accountId, teamRole, enabled, assignedBy }) {
+  const pool = getPool()
+  if (!pool) return
+  if (enabled) {
+    await pool.query(
+      `INSERT INTO account_assignments(account_id,scope_type,scope_id,role,status,assigned_by)
+       VALUES($1,'team',$2,'member','active',$3)
+       ON CONFLICT(account_id,scope_type,scope_id,role)
+       DO UPDATE SET status='active', ends_at=NULL, assigned_by=EXCLUDED.assigned_by, updated_at=now()`,
+      [accountId, teamRole, assignedBy || null]
+    )
+  } else {
+    await pool.query(
+      `UPDATE account_assignments SET status='inactive', ends_at=now(), updated_at=now()
+       WHERE account_id=$1 AND scope_type='team' AND scope_id=$2`, [accountId, teamRole]
+    )
+  }
+}
+
+export async function syncWgAssignment({ accountId, wgSlug, role, status, assignedBy }) {
+  const pool = getPool()
+  if (!pool) return
+  if (status === 'active' && ['contact','lead'].includes(role)) {
+    await pool.query(
+      `INSERT INTO account_assignments(account_id,scope_type,scope_id,role,status,assigned_by)
+       VALUES($1,'working_group',$2,$3,'active',$4)
+       ON CONFLICT(account_id,scope_type,scope_id,role)
+       DO UPDATE SET status='active', ends_at=NULL, assigned_by=EXCLUDED.assigned_by, updated_at=now()`,
+      [accountId, wgSlug, role, assignedBy || null]
+    )
+  } else {
+    await pool.query(
+      `UPDATE account_assignments SET status='inactive', ends_at=now(), updated_at=now()
+       WHERE account_id=$1 AND scope_type='working_group' AND scope_id=$2`, [accountId, wgSlug]
+    )
+  }
+}

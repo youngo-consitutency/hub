@@ -32,6 +32,7 @@ export const COURSE_MODULES = [
       'All members must follow the Code of Conduct, Principles, Safeguarding, Child Safeguarding, and Conflict of Interest policies.',
       'You may only speak or act on behalf of YOUNGO if selected through a formal process.',
       'Declare conflicts of interest; under-18s need guardian consent.',
+      'Full official texts live in the YOUNGO Policies & Guidelines Drive folder — open them from Library → Official policies.',
     ],
   },
   {

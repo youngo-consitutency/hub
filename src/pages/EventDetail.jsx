@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import { Async, BackLink, StatusChip, A } from '../components/ui.jsx'
+import { AddToCalendar } from '../components/AddToCalendar.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Video, Users, Landmark, CalendarDays, Link2, Check, Play, CalendarPlus } from 'lucide-react'
+import { Video, Users, Landmark, CalendarDays, Link2, Check, Play } from 'lucide-react'
 
 function CopyLinkButton() {
   const [copied, setCopied] = useState(false)
@@ -81,11 +82,7 @@ export function EventDetail({ slug }) {
                       <Video size={18} strokeWidth={1.75} aria-hidden />{live ? 'Join meeting — live now' : 'Join meeting'}
                     </a>
                   )}
-                {!concluded && (
-                  <a className="btn btn-secondary" href={`/ics/event/${event.slug}.ics`}>
-                    <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />Add to calendar
-                  </a>
-                )}
+                {!concluded && <AddToCalendar event={event} />}
                 <CopyLinkButton />
               </div>
             </>

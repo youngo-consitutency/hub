@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BookOpen, Check, ChevronDown, ScrollText } from 'lucide-react'
+import { BookOpen, Check, ChevronDown, ExternalLink, ScrollText } from 'lucide-react'
 import {
   MANDATE_ANALYSIS,
   POLICY_META,
@@ -11,12 +11,14 @@ import { Button } from './ui.jsx'
 
 /**
  * Full-screen mandatory Membership Policy read (step 1 of access).
- * On completion, calls onComplete — does not unlock the hub by itself.
+ * Landing is summary-first for readability; full legal text is available
+ * in a collapsible section that still requires scroll-to-end.
  */
 export function MembershipMandateGate({ onComplete }) {
   const [scrolledToEnd, setScrolledToEnd] = useState(false)
   const [progress, setProgress] = useState(0)
   const [checked, setChecked] = useState(false)
+  const [showFull, setShowFull] = useState(false)
   const bodyRef = useRef(null)
 
   useEffect(() => {
@@ -31,20 +33,35 @@ export function MembershipMandateGate({ onComplete }) {
     const max = el.scrollHeight - el.clientHeight
     if (max <= 8) {
       setProgress(1)
-      setScrolledToEnd(true)
+      // Full legal text must still be opened when content fits without scroll.
+      if (showFull) setScrolledToEnd(true)
       return
     }
     const ratio = Math.min(1, el.scrollTop / max)
     setProgress(ratio)
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
+    if (showFull && el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
       setScrolledToEnd(true)
     }
-  }, [])
+  }, [showFull])
 
   useEffect(() => {
     const id = requestAnimationFrame(onScroll)
     return () => cancelAnimationFrame(id)
-  }, [onScroll])
+  }, [onScroll, showFull])
+
+  const openFullPolicy = () => {
+    setShowFull(true)
+    // Reset so the user must scroll the legal text (or see short content mark end).
+    setScrolledToEnd(false)
+    setProgress(0)
+    requestAnimationFrame(() => {
+      const el = bodyRef.current
+      if (!el) return
+      const full = el.querySelector('#full-policy')
+      full?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      onScroll()
+    })
+  }
 
   const canContinue = scrolledToEnd && checked
 
@@ -70,12 +87,11 @@ export function MembershipMandateGate({ onComplete }) {
             </span>
             <div style={{ minWidth: 0, flex: 1 }}>
               <p className="metaMuted" style={{ marginBottom: 4 }}>
-                Step 1 of 2 · Required · {POLICY_META.issue}
+                Step 1 of 2 · Required
               </p>
-              <h1 id="mandate-title">Membership mandate</h1>
-              <p id="mandate-desc" className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-                Before you create an account or sign in, read how YOUNGO membership works —
-                who can join, Network vs Constituency Work, rights, renewal, and how membership ends.
+              <h1 id="mandate-title">Before you join</h1>
+              <p id="mandate-desc" className="meta" style={{ marginTop: 6, maxWidth: 520 }}>
+                A short overview of YOUNGO membership. Open the full policy, scroll to the end, then continue.
               </p>
             </div>
           </div>
@@ -110,10 +126,23 @@ export function MembershipMandateGate({ onComplete }) {
 
           <div className="mandateDocMeta card cardTight">
             <p className="meta">
-              <strong>{POLICY_META.name}</strong> · {POLICY_META.issue} · Adopted by {POLICY_META.adoptedBy}
+              <strong>{POLICY_META.name}</strong> · {POLICY_META.issue}
             </p>
             <p className="metaMuted" style={{ marginTop: 4 }}>
-              Adopted {POLICY_META.adoptedOn} · Updated {POLICY_META.updatedOn} · Owner: {POLICY_META.owner}
+              Updated {POLICY_META.updatedOn}
+              {POLICY_META.officialSource && (
+                <>
+                  {' · '}
+                  <a
+                    href={POLICY_META.officialSource.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mandateExtLink"
+                  >
+                    Official doc <ExternalLink size={12} strokeWidth={1.75} aria-hidden style={{ verticalAlign: -1 }} />
+                  </a>
+                </>
+              )}
             </p>
             <p className="metaMuted" style={{ marginTop: 8 }}>
               Translations:{' '}
@@ -126,40 +155,60 @@ export function MembershipMandateGate({ onComplete }) {
             </p>
           </div>
 
-          <div className="mandatePolicy">
-            {POLICY_SECTIONS.map((section) => (
-              <section key={section.id} className="mandateSection" id={`policy-${section.id}`}>
-                <h2>{section.heading}</h2>
-                {section.paragraphs?.map((para, i) => (
-                  <p key={`${section.id}-p-${i}`} className="meta mandatePara">{para}</p>
-                ))}
-                {section.bullets?.map((group) => (
-                  <div key={group.label} className="mandateBulletGroup">
-                    <h3>{group.label}</h3>
-                    <ul>
-                      {group.items.map((item, i) => (
-                        <li key={`${group.label}-${i}`} className="meta">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                {section.paragraphsAfter?.map((para, i) => (
-                  <p key={`${section.id}-pa-${i}`} className="meta mandatePara">{para}</p>
-                ))}
-              </section>
-            ))}
-          </div>
-
-          <p className="metaMuted mandateEndMark">
-            End of policy · version {POLICY_VERSION} · contact{' '}
-            <a href={`mailto:${POLICY_META.contactEmail}`} className="mandateExtLink">
-              {POLICY_META.contactEmail}
-            </a>
-          </p>
+          {!showFull ? (
+            <div className="card mandateExpandCard">
+              <p className="meta" style={{ marginBottom: 12 }}>
+                The full Membership Policy is required before creating an account. It is longer legal text —
+                open it when you are ready to read.
+              </p>
+              <Button type="button" variant="secondary" onClick={openFullPolicy}>
+                <ScrollText size={16} strokeWidth={1.75} aria-hidden />
+                Read full Membership Policy
+              </Button>
+            </div>
+          ) : (
+            <div id="full-policy" className="mandatePolicy">
+              <p className="metaMuted" style={{ marginBottom: 12 }}>
+                Full policy text · scroll to the end to enable the checkbox
+              </p>
+              {POLICY_SECTIONS.map((section) => (
+                <section key={section.id} className="mandateSection" id={`policy-${section.id}`}>
+                  <h2>{section.heading}</h2>
+                  {section.paragraphs?.map((para, i) => (
+                    <p key={`${section.id}-p-${i}`} className="meta mandatePara">{para}</p>
+                  ))}
+                  {section.bullets?.map((group) => (
+                    <div key={group.label} className="mandateBulletGroup">
+                      <h3>{group.label}</h3>
+                      <ul>
+                        {group.items.map((item, i) => (
+                          <li key={`${group.label}-${i}`} className="meta">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                  {section.paragraphsAfter?.map((para, i) => (
+                    <p key={`${section.id}-pa-${i}`} className="meta mandatePara">{para}</p>
+                  ))}
+                </section>
+              ))}
+              <p className="metaMuted mandateEndMark">
+                End of policy · version {POLICY_VERSION} · contact{' '}
+                <a href={`mailto:${POLICY_META.contactEmail}`} className="mandateExtLink">
+                  {POLICY_META.contactEmail}
+                </a>
+              </p>
+            </div>
+          )}
         </div>
 
         <footer className="mandateFooter">
-          {!scrolledToEnd && (
+          {!showFull && (
+            <p className="mandateScrollHint meta">
+              Open the full Membership Policy above to continue
+            </p>
+          )}
+          {showFull && !scrolledToEnd && (
             <p className="mandateScrollHint meta">
               <ChevronDown size={16} strokeWidth={1.75} aria-hidden />
               Scroll to the end of the policy to continue
@@ -180,7 +229,7 @@ export function MembershipMandateGate({ onComplete }) {
 
           <div className="rowBetween" style={{ gap: 12, flexWrap: 'wrap' }}>
             <p className="metaMuted" style={{ flex: 1, minWidth: 160 }}>
-              Next: create an account or sign in to unlock the hub.
+              Next: create an account or sign in.
             </p>
             <Button
               variant="primary"

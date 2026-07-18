@@ -25,8 +25,14 @@ export const POLICY_META = {
     { lang: 'Arabic', href: 'https://docs.google.com/document/d/1Exxxopnb2F7et-P00J4i8PUzW0wJoqfaxnMv5uwRgME/edit?usp=sharing' },
   ],
   related: [
-    { label: 'YOUNGO Governance Policy', href: 'https://docs.google.com/document/d/1ApHSVR0UcgDhNAi2O7JWZ6NC92KyizrEaxrJMmOj-oE/edit?tab=t.0' },
+    { label: 'YOUNGO Governance Policy', href: 'https://docs.google.com/document/d/14O2gGBauihIEzIAR5iENUurJ9nkBZcO5xJTPGjpbeHQ/view' },
+    { label: 'All policies (Drive folder)', href: 'https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA' },
+    { label: 'Library catalog', href: '/library' },
   ],
+  officialSource: {
+    label: 'YOUNGO Membership Policy [UPDATED 2025]',
+    href: 'https://docs.google.com/document/d/19Up9-sErBOLHvFwu1kD_SH-T6N96cLj_9SaE4hb52lc/view',
+  },
 }
 
 /** Plain-language analysis of the membership mandate for first-time visitors. */

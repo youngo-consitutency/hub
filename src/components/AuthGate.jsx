@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import {
-  Building2, Check, KeyRound, Shield, UserPlus, Globe2, Heart, Users,
+  Building2, Check, ExternalLink, KeyRound, Shield, UserPlus, Globe2, Heart, Users,
 } from 'lucide-react'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { POLICY_VERSION } from '../content/membershipPolicy.js'
+import { POLICY_BY_SLUG } from '../content/policies.js'
 import { Button } from './ui.jsx'
 
 const REGIONS = [
@@ -84,7 +85,48 @@ const EMPTY_REGISTER = {
 
 function FieldError({ msg }) {
   if (!msg) return null
-  return <span className="fieldError">{msg}</span>
+  return <span className="fieldError" role="alert">{msg}</span>
+}
+
+/** External policy link that does not toggle the parent checkbox. */
+function PolicyLink({ href, children }) {
+  if (!href) return <span>{children}</span>
+  return (
+    <a
+      href={href}
+      className="policyInlineLink"
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+      <ExternalLink size={12} strokeWidth={1.75} aria-hidden className="policyInlineIcon" />
+    </a>
+  )
+}
+
+function fieldClass(err) {
+  return err ? 'field hasError' : 'field'
+}
+
+function checkClass(err) {
+  return err ? 'authCheck hasError' : 'authCheck'
+}
+
+function scrollToFirstError() {
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.formAlert, .field.hasError, .authCheck.hasError, .fieldError')
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+}
+
+function FormAlert({ children }) {
+  if (!children) return null
+  return (
+    <div className="formAlert" role="alert">
+      {children}
+    </div>
+  )
 }
 
 function ageFromDob(dob) {
@@ -125,8 +167,34 @@ export function AuthGate({ onAuthenticated }) {
   const setReg = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm((f) => ({ ...f, [k]: v }))
+    setFields((prev) => {
+      if (!prev[k] && !(k === 'password' && prev.passwordConfirm) && !(k === 'passwordConfirm' && prev.passwordConfirm)) {
+        return prev
+      }
+      const next = { ...prev }
+      delete next[k]
+      if (k === 'password' || k === 'passwordConfirm') delete next.passwordConfirm
+      return next
+    })
+    if (error) setError(null)
   }
-  const setLog = (k) => (e) => setLogin((f) => ({ ...f, [k]: e.target.value }))
+  const setLog = (k) => (e) => {
+    setLogin((f) => ({ ...f, [k]: e.target.value }))
+    setFields((prev) => {
+      if (!prev[k]) return prev
+      const next = { ...prev }
+      delete next[k]
+      return next
+    })
+    if (error) setError(null)
+  }
+
+  const applyErrors = (err) => {
+    setStatus('idle')
+    setFields(err.fields || {})
+    setError(err.message || 'Please fix the highlighted fields.')
+    scrollToFirstError()
+  }
 
   const toggleMinority = (label) => {
     setForm((f) => {
@@ -164,9 +232,7 @@ export function AuthGate({ onAuthenticated }) {
       const data = await apiPost('/auth/login', login)
       finishAuth(data)
     } catch (err) {
-      setStatus('idle')
-      setFields(err.fields || {})
-      setError(err.message)
+      applyErrors(err)
     }
   }
 
@@ -178,15 +244,30 @@ export function AuthGate({ onAuthenticated }) {
       setStatus('idle')
       setForgotMsg(data.message || 'If an account exists, a reset link was issued.')
     } catch (err) {
-      setStatus('idle')
-      setFields(err.fields || {})
-      setError(err.message)
+      applyErrors(err)
     }
   }
 
   const submitRegister = async (e) => {
     e.preventDefault()
     setStatus('submitting'); setError(null); setFields({})
+
+    // Immediate client-side checks so password mismatch is obvious without hunting.
+    const local = {}
+    if (form.password && form.passwordConfirm && form.password !== form.passwordConfirm) {
+      local.passwordConfirm = 'Passwords do not match.'
+    }
+    if (form.password && form.password.length < 10) {
+      local.password = 'Password must be at least 10 characters.'
+    }
+    if (Object.keys(local).length) {
+      setStatus('idle')
+      setFields(local)
+      setError('Please fix the highlighted fields.')
+      scrollToFirstError()
+      return
+    }
+
     try {
       const payload = {
         ...form,
@@ -205,9 +286,7 @@ export function AuthGate({ onAuthenticated }) {
       const data = await apiPost('/auth/register', payload)
       finishAuth(data)
     } catch (err) {
-      setStatus('idle')
-      setFields(err.fields || {})
-      setError(err.message)
+      applyErrors(err)
     }
   }
 
@@ -262,13 +341,13 @@ export function AuthGate({ onAuthenticated }) {
         <div className="mandateBody authBody">
           {mode === 'forgot' ? (
             <form className="authForm card" onSubmit={submitForgot} noValidate>
-              <label className="field">
+              <FormAlert>{error}</FormAlert>
+              <label className={fieldClass(fields.email)}>
                 <span>Email *</span>
-                <input className="input" type="email" autoComplete="email" value={login.email} onChange={setLog('email')} />
+                <input className="input" type="email" autoComplete="email" value={login.email} onChange={setLog('email')} aria-invalid={!!fields.email} />
                 <FieldError msg={fields.email} />
               </label>
               <input className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={login.website} onChange={setLog('website')} />
-              {error && <p className="meta" style={{ color: 'var(--danger)' }} role="alert">{error}</p>}
               {forgotMsg && <p className="meta" style={{ color: 'var(--accent)' }} role="status">{forgotMsg}</p>}
               <p className="metaMuted">
                 Until email delivery is connected, reset links appear in Railway deploy/runtime logs for operators. Admins can also issue links from Admin.
@@ -282,18 +361,18 @@ export function AuthGate({ onAuthenticated }) {
             </form>
           ) : mode === 'signin' ? (
             <form className="authForm card" onSubmit={submitLogin} noValidate>
-              <label className="field">
+              <FormAlert>{error}</FormAlert>
+              <label className={fieldClass(fields.email)}>
                 <span>Email *</span>
-                <input className="input" type="email" autoComplete="email" value={login.email} onChange={setLog('email')} />
+                <input className="input" type="email" autoComplete="email" value={login.email} onChange={setLog('email')} aria-invalid={!!fields.email} />
                 <FieldError msg={fields.email} />
               </label>
-              <label className="field">
+              <label className={fieldClass(fields.password)}>
                 <span>Password *</span>
-                <input className="input" type="password" autoComplete="current-password" value={login.password} onChange={setLog('password')} />
+                <input className="input" type="password" autoComplete="current-password" value={login.password} onChange={setLog('password')} aria-invalid={!!fields.password} />
                 <FieldError msg={fields.password} />
               </label>
               <input className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={login.website} onChange={setLog('website')} />
-              {error && <p className="meta" style={{ color: 'var(--danger)' }} role="alert">{error}</p>}
               <Button type="submit" variant="primary" glow disabled={status === 'submitting'}>
                 {status === 'submitting' ? 'Signing in…' : 'Sign in & open hub'}
               </Button>
@@ -308,6 +387,7 @@ export function AuthGate({ onAuthenticated }) {
             </form>
           ) : (
             <form className="authForm" onSubmit={submitRegister} noValidate>
+              <FormAlert>{error}</FormAlert>
               {/* Path selector */}
               <section className="card authSection">
                 <h2 className="authSectionTitle"><Users size={18} strokeWidth={1.75} aria-hidden /> Who is registering? *</h2>
@@ -330,34 +410,27 @@ export function AuthGate({ onAuthenticated }) {
                 <>
                   {/* Org intro */}
                   <section className="card authSection authIntro">
-                    <h2 className="authSectionTitle"><Building2 size={18} strokeWidth={1.75} aria-hidden /> Organisational registration</h2>
-                    <p className="meta mandatePara">
-                      YOUNGO is a mandated mechanism for child and youth engagement in the UNFCCC — a <strong>platform and network</strong>, not a single organisation. Admitted and non-admitted child- and/or youth-led NGOs, movements, groups, and networks are encouraged to engage, including in constituency decision-making. If two of your members are active in YOUNGO, you can engage in the YOUNGO Council (Membership Policy).
-                    </p>
-                    <p className="meta mandatePara">
-                      Your members can also join as individuals — share the individual registration on this hub with them.
-                    </p>
+                    <h2 className="authSectionTitle"><Building2 size={18} strokeWidth={1.75} aria-hidden /> Organisation registration</h2>
                     <ul className="authBullet meta">
-                      <li>No membership fees.</li>
-                      <li>After submit, Membership Team aims to reply within a few weeks with an intro pack and onboarding call.</li>
+                      <li>YOUNGO is a platform/network — not a single NGO. No membership fees.</li>
+                      <li>Admitted and non-admitted youth-led groups can register.</li>
+                      <li>Membership Team usually replies within a few weeks.</li>
                     </ul>
                     <p className="metaMuted">
-                      <a className="mandateExtLink" href="https://youngoclimate.org/" target="_blank" rel="noreferrer">youngoclimate.org</a>
-                      {' · '}
-                      <a className="mandateExtLink" href="mailto:youngomembership@gmail.com">youngomembership@gmail.com</a>
+                      Help: <a className="mandateExtLink" href="mailto:youngomembership@gmail.com">youngomembership@gmail.com</a>
                     </p>
                   </section>
 
                   <section className="card authSection">
                     <h2 className="authSectionTitle">Organisation basics</h2>
-                    <label className="field">
-                      <span>Email * <span className="metaMuted">(for this hub account &amp; Membership Team replies)</span></span>
-                      <input className="input" type="email" autoComplete="email" value={form.email} onChange={setReg('email')} />
+                    <label className={fieldClass(fields.email)}>
+                      <span>Email * <span className="metaMuted">(hub account &amp; replies)</span></span>
+                      <input className="input" type="email" autoComplete="email" value={form.email} onChange={setReg('email')} aria-invalid={!!fields.email} />
                       <FieldError msg={fields.email} />
                     </label>
-                    <label className="field">
+                    <label className={fieldClass(fields.organizationName)}>
                       <span>Full legal name of the organisation *</span>
-                      <input className="input" value={form.organizationName} onChange={setReg('organizationName')} />
+                      <input className="input" value={form.organizationName} onChange={setReg('organizationName')} aria-invalid={!!fields.organizationName} />
                       <FieldError msg={fields.organizationName} />
                     </label>
                     <p className="meta" style={{ margin: '10px 0 8px' }}>Is this organisation an <strong>admitted observer NGO</strong> of the UNFCCC? *</p>
@@ -380,14 +453,14 @@ export function AuthGate({ onAuthenticated }) {
                   <section className="card authSection">
                     <h2 className="authSectionTitle"><KeyRound size={18} strokeWidth={1.75} aria-hidden /> YOUNGO Hub password</h2>
                     <div className="formRow">
-                      <label className="field">
+                      <label className={fieldClass(fields.password)}>
                         <span>Password * <span className="metaMuted">(min 10)</span></span>
-                        <input className="input" type="password" autoComplete="new-password" value={form.password} onChange={setReg('password')} />
+                        <input className="input" type="password" autoComplete="new-password" value={form.password} onChange={setReg('password')} aria-invalid={!!fields.password} />
                         <FieldError msg={fields.password} />
                       </label>
-                      <label className="field">
+                      <label className={fieldClass(fields.passwordConfirm)}>
                         <span>Confirm password *</span>
-                        <input className="input" type="password" autoComplete="new-password" value={form.passwordConfirm} onChange={setReg('passwordConfirm')} />
+                        <input className="input" type="password" autoComplete="new-password" value={form.passwordConfirm} onChange={setReg('passwordConfirm')} aria-invalid={!!fields.passwordConfirm} />
                         <FieldError msg={fields.passwordConfirm} />
                       </label>
                     </div>
@@ -537,27 +610,37 @@ export function AuthGate({ onAuthenticated }) {
                   {(admitted || nonAdmitted) && (
                     <section className="card authSection">
                       <h2 className="authSectionTitle"><Shield size={18} strokeWidth={1.75} aria-hidden /> Policies *</h2>
-                      <p className="meta mandatePara">
-                        By submitting, you agree that data is stored under YOUNGO’s Data Protection Policy and processed by the Membership Team for registration, election eligibility, and member support.
+                      <p className="meta" style={{ marginBottom: 10 }}>
+                        Open each policy to read it, then confirm. Official texts open in a new tab.
                       </p>
-                      <label className="authCheck">
+                      <label className={checkClass(fields.acceptAllOrgPolicies || fields.acceptCodeOfConduct || fields.acceptCoiPolicy)}>
                         <input type="checkbox" checked={form.acceptAllOrgPolicies} onChange={setReg('acceptAllOrgPolicies')} />
                         <span>
-                          The organisation agrees to conduct itself consistently with YOUNGO’s Code of Conduct, Conflict of Interest Policy, Data Protection Policy, and YOUNGO Principles. *
+                          The organisation agrees to YOUNGO’s{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>Code of Conduct</PolicyLink>,{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.conflictOfInterest?.href}>Conflict of Interest Policy</PolicyLink>,{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.dataProtection?.href}>Data Protection Policy</PolicyLink>, and{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.principles?.href}>Principles</PolicyLink>. *
                         </span>
                       </label>
                       <FieldError msg={fields.acceptAllOrgPolicies || fields.acceptCodeOfConduct || fields.acceptCoiPolicy} />
+                      <p className="metaMuted" style={{ marginTop: 8 }}>
+                        <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
+                          All policies folder
+                        </PolicyLink>
+                      </p>
                     </section>
                   )}
                 </>
               ) : (
                 <>
-                  {/* Individual intro + form (existing) */}
+                  {/* Individual intro + form */}
                   <section className="card authSection authIntro">
-                    <h2 className="authSectionTitle"><Globe2 size={18} strokeWidth={1.75} aria-hidden /> Join YOUNGO — individual</h2>
-                    <p className="meta mandatePara">
-                      YOUNGO is the official children and youth constituency of the UNFCCC — a platform and network (not a single organisation). No membership fees. After submit, expect Membership Team contact within about 2 weeks plus onboarding.
-                    </p>
+                    <h2 className="authSectionTitle"><Globe2 size={18} strokeWidth={1.75} aria-hidden /> Individual registration</h2>
+                    <ul className="authBullet meta">
+                      <li>Ages 35 and under · no membership fees.</li>
+                      <li>Membership Team usually contacts you within ~2 weeks.</li>
+                    </ul>
                     <p className="metaMuted">
                       Help: <a className="mandateExtLink" href="mailto:youngomembership@gmail.com">youngomembership@gmail.com</a>
                     </p>
@@ -583,46 +666,46 @@ export function AuthGate({ onAuthenticated }) {
                   <section className="card authSection">
                     <h2 className="authSectionTitle">Your details</h2>
                     <div className="formRow">
-                      <label className="field">
+                      <label className={fieldClass(fields.firstName)}>
                         <span>First name *</span>
-                        <input className="input" autoComplete="given-name" value={form.firstName} onChange={setReg('firstName')} />
+                        <input className="input" autoComplete="given-name" value={form.firstName} onChange={setReg('firstName')} aria-invalid={!!fields.firstName} />
                         <FieldError msg={fields.firstName} />
                       </label>
-                      <label className="field">
+                      <label className={fieldClass(fields.lastName)}>
                         <span>Last name *</span>
-                        <input className="input" autoComplete="family-name" value={form.lastName} onChange={setReg('lastName')} />
+                        <input className="input" autoComplete="family-name" value={form.lastName} onChange={setReg('lastName')} aria-invalid={!!fields.lastName} />
                         <FieldError msg={fields.lastName} />
                       </label>
                     </div>
-                    <label className="field">
+                    <label className={fieldClass(fields.email)}>
                       <span>Email *</span>
-                      <input className="input" type="email" autoComplete="email" value={form.email} onChange={setReg('email')} />
+                      <input className="input" type="email" autoComplete="email" value={form.email} onChange={setReg('email')} aria-invalid={!!fields.email} />
                       <FieldError msg={fields.email} />
                     </label>
-                    <label className="field">
+                    <label className={fieldClass(fields.phone)}>
                       <span>Phone (+ country code) *</span>
-                      <input className="input" type="tel" placeholder="+123 456 7890" value={form.phone} onChange={setReg('phone')} />
+                      <input className="input" type="tel" placeholder="+123 456 7890" value={form.phone} onChange={setReg('phone')} aria-invalid={!!fields.phone} />
                       <FieldError msg={fields.phone} />
                     </label>
                     <div className="formRow">
-                      <label className="field">
+                      <label className={fieldClass(fields.gender)}>
                         <span>Gender *</span>
-                        <select className="input" value={form.gender} onChange={setReg('gender')}>
+                        <select className="input" value={form.gender} onChange={setReg('gender')} aria-invalid={!!fields.gender}>
                           <option value="">Select…</option>
                           {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
                         <FieldError msg={fields.gender} />
                       </label>
-                      <label className="field">
+                      <label className={fieldClass(fields.dateOfBirth)}>
                         <span>Date of birth *</span>
-                        <input className="input" type="date" value={form.dateOfBirth} onChange={setReg('dateOfBirth')} />
+                        <input className="input" type="date" value={form.dateOfBirth} onChange={setReg('dateOfBirth')} aria-invalid={!!fields.dateOfBirth} />
                         <FieldError msg={fields.dateOfBirth} />
                       </label>
                     </div>
                     {form.gender === 'Other' && (
-                      <label className="field">
+                      <label className={fieldClass(fields.genderOther)}>
                         <span>Please specify gender *</span>
-                        <input className="input" value={form.genderOther} onChange={setReg('genderOther')} />
+                        <input className="input" value={form.genderOther} onChange={setReg('genderOther')} aria-invalid={!!fields.genderOther} />
                         <FieldError msg={fields.genderOther} />
                       </label>
                     )}
@@ -631,14 +714,14 @@ export function AuthGate({ onAuthenticated }) {
                   <section className="card authSection">
                     <h2 className="authSectionTitle"><KeyRound size={18} strokeWidth={1.75} aria-hidden /> YOUNGO Hub password</h2>
                     <div className="formRow">
-                      <label className="field">
+                      <label className={fieldClass(fields.password)}>
                         <span>Password * <span className="metaMuted">(min 10)</span></span>
-                        <input className="input" type="password" autoComplete="new-password" value={form.password} onChange={setReg('password')} />
+                        <input className="input" type="password" autoComplete="new-password" value={form.password} onChange={setReg('password')} aria-invalid={!!fields.password} />
                         <FieldError msg={fields.password} />
                       </label>
-                      <label className="field">
+                      <label className={fieldClass(fields.passwordConfirm)}>
                         <span>Confirm password *</span>
-                        <input className="input" type="password" autoComplete="new-password" value={form.passwordConfirm} onChange={setReg('passwordConfirm')} />
+                        <input className="input" type="password" autoComplete="new-password" value={form.passwordConfirm} onChange={setReg('passwordConfirm')} aria-invalid={!!fields.passwordConfirm} />
                         <FieldError msg={fields.passwordConfirm} />
                       </label>
                     </div>
@@ -662,23 +745,23 @@ export function AuthGate({ onAuthenticated }) {
                         <FieldError msg={fields.minorityOther} />
                       </label>
                     )}
-                    <label className="field" style={{ marginTop: 12 }}>
+                    <label className={fieldClass(fields.region)} style={{ marginTop: 12 }}>
                       <span>Region (UN classifications) *</span>
-                      <select className="input" value={form.region} onChange={setReg('region')}>
+                      <select className="input" value={form.region} onChange={setReg('region')} aria-invalid={!!fields.region}>
                         <option value="">Select…</option>
                         {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                       </select>
                       <FieldError msg={fields.region} />
                     </label>
                     <div className="formRow">
-                      <label className="field">
+                      <label className={fieldClass(fields.nationality)}>
                         <span>Nationality *</span>
-                        <input className="input" value={form.nationality} onChange={setReg('nationality')} />
+                        <input className="input" value={form.nationality} onChange={setReg('nationality')} aria-invalid={!!fields.nationality} />
                         <FieldError msg={fields.nationality} />
                       </label>
-                      <label className="field">
+                      <label className={fieldClass(fields.country)}>
                         <span>Country of residence *</span>
-                        <input className="input" value={form.countryOfResidence} onChange={setReg('countryOfResidence')} />
+                        <input className="input" value={form.countryOfResidence} onChange={setReg('countryOfResidence')} aria-invalid={!!fields.country} />
                         <FieldError msg={fields.country} />
                       </label>
                     </div>
@@ -744,39 +827,59 @@ export function AuthGate({ onAuthenticated }) {
 
                   <section className="card authSection">
                     <h2 className="authSectionTitle"><Shield size={18} strokeWidth={1.75} aria-hidden /> Agreements *</h2>
-                    <label className="authCheck">
+                    <p className="meta" style={{ marginBottom: 10 }}>
+                      Open each policy link to read it, then tick the box. Links open in a new tab.
+                    </p>
+                    <label className={checkClass(fields.acceptCodeOfConduct)}>
                       <input type="checkbox" checked={form.acceptCodeOfConduct} onChange={setReg('acceptCodeOfConduct')} />
-                      <span>I agree to respect the YOUNGO Code of Conduct. *</span>
+                      <span>
+                        I agree to respect the YOUNGO{' '}
+                        <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>Code of Conduct</PolicyLink>. *
+                      </span>
                     </label>
                     <FieldError msg={fields.acceptCodeOfConduct} />
-                    <label className="authCheck">
+                    <label className={checkClass(fields.acceptDataProtection)}>
                       <input type="checkbox" checked={form.acceptDataProtection} onChange={setReg('acceptDataProtection')} />
-                      <span>I agree to respect the YOUNGO Data Protection Policy. *</span>
+                      <span>
+                        I agree to respect the YOUNGO{' '}
+                        <PolicyLink href={POLICY_BY_SLUG.dataProtection?.href}>Data Protection Policy</PolicyLink>. *
+                      </span>
                     </label>
                     <FieldError msg={fields.acceptDataProtection} />
-                    <label className="authCheck">
+                    <label className={checkClass(fields.acceptPrinciples)}>
                       <input type="checkbox" checked={form.acceptPrinciples} onChange={setReg('acceptPrinciples')} />
-                      <span>I agree to respect the YOUNGO Principles. *</span>
+                      <span>
+                        I agree to respect the YOUNGO{' '}
+                        <PolicyLink href={POLICY_BY_SLUG.principles?.href}>Principles</PolicyLink>. *
+                      </span>
                     </label>
                     <FieldError msg={fields.acceptPrinciples} />
-                    <label className="authCheck">
+                    <label className={checkClass(fields.acceptCoiPolicy)}>
                       <input type="checkbox" checked={form.acceptCoiPolicy} onChange={setReg('acceptCoiPolicy')} />
-                      <span>I agree to respect the YOUNGO Conflict of Interest Policy. *</span>
+                      <span>
+                        I agree to respect the YOUNGO{' '}
+                        <PolicyLink href={POLICY_BY_SLUG.conflictOfInterest?.href}>Conflict of Interest Policy</PolicyLink>. *
+                      </span>
                     </label>
                     <FieldError msg={fields.acceptCoiPolicy} />
+                    <p className="metaMuted" style={{ marginTop: 10 }}>
+                      <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
+                        Browse all YOUNGO policies
+                      </PolicyLink>
+                    </p>
                   </section>
                 </>
               )}
 
               <input className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.hpWebsite} onChange={setReg('hpWebsite')} />
 
-              {error && <p className="meta card cardTight" style={{ color: 'var(--danger)' }} role="alert">{error}</p>}
+              {error && <FormAlert>{error}</FormAlert>}
 
               <div className="authSubmitBar card cardTight">
-                <p className="metaMuted" style={{ flex: 1 }}>
+                <p className="metaMuted" style={{ flex: 1, minWidth: 0 }}>
                   {isOrg
-                    ? 'Submits organisational registration and creates a hub account for the contact on this form.'
-                    : 'Submits individual registration and creates your YOUNGO Hub account.'}
+                    ? 'Creates a hub account for the contact on this form.'
+                    : 'Creates your YOUNGO Hub account.'}
                 </p>
                 <Button
                   type="submit"

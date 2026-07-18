@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
 import { findAccountByEmail } from './accounts.js'
 import { hashPassword } from './password.js'
+import { destroyAllSessions } from './accounts.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -130,6 +131,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
         [rows[0].account_id]
       )
       await client.query('COMMIT')
+      await destroyAllSessions(rows[0].account_id)
       return { accountId: rows[0].account_id }
     } catch (e) {
       await client.query('ROLLBACK')
@@ -159,6 +161,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
   accounts[idx].password_hash = hash
   accounts[idx].password_salt = salt
   writeJson(accountsPath, accounts)
+  await destroyAllSessions(row.account_id)
   return { accountId: row.account_id }
 }
 
