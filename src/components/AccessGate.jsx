@@ -3,6 +3,7 @@ import { FloatingThemeToggle } from './FloatingThemeToggle.jsx'
 import { MembershipMandateGate } from './MembershipMandateGate.jsx'
 import { AuthGate } from './AuthGate.jsx'
 import { ResetPassword } from '../pages/ResetPassword.jsx'
+import { Privacy } from '../pages/Privacy.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { applyTheme, getInitialTheme } from '../lib/theme.js'
 import { apiGet } from '../lib/api.js'
@@ -55,6 +56,17 @@ export function AccessGate({ children }) {
       <>
         <FloatingThemeToggle />
         <ResetPassword />
+      </>
+    )
+  }
+
+  // Readable without an account: consent is not informed if you must first hand
+  // over data to find out what happens to it.
+  if (path.startsWith('/privacy')) {
+    return (
+      <>
+        <FloatingThemeToggle />
+        <Privacy standalone />
       </>
     )
   }

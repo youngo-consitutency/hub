@@ -684,3 +684,46 @@ select.input {
   max-width: 62ch;
   line-height: 1.55;
 }
+
+/* Hub Intelligence: citation-first, role-scoped evidence workspace */
+.intelligencePage { display: flex; flex-direction: column; gap: 18px; }
+.intelligenceHero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.intelligenceIntro { max-width: 70ch; margin-top: 7px; }
+.intelligenceTrust { display: flex; gap: 9px; align-items: center; flex-shrink: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--accent-tint); color: var(--on-accent-tint); font-size: 13px; }
+.intelligenceTrust small { opacity: .76; }
+.intelligenceAsk { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-card); }
+.intelligenceAsk label { font-size: 13px; font-weight: 600; }
+.intelligenceAskRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: stretch; }
+.intelligenceAskRow .btn { min-width: 150px; justify-content: center; }
+.intelligenceResults { display: flex; flex-direction: column; gap: 18px; }
+.intelligenceSynthesis { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.intelligenceResultHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.intelligenceResultHead h2 { margin-top: 4px; font-size: clamp(18px, 2.2vw, 24px); }
+.evidenceConfidence { padding: 5px 8px; border-radius: 999px; font-size: 11px; white-space: nowrap; background: var(--bg-raised); border: 1px solid var(--border); }
+.confidence-medium { background: color-mix(in srgb, var(--success) 12%, var(--bg-raised)); color: var(--success); }
+.confidence-low, .confidence-insufficient { background: var(--warn-tint); color: var(--warn); }
+.intelligenceBullets { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 0; padding-left: 22px; line-height: 1.5; }
+.citationChip { font-family: var(--font-mono); font-size: 11px; text-decoration: none; color: var(--accent); }
+.intelligenceCaveat { margin-top: 16px; padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--warn-tint); color: var(--text-2); font-size: 13px; }
+.intelligenceActions { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.intelligenceActions .meta { display: inline-flex; gap: 5px; align-items: center; }
+.intelligenceError { border-color: var(--danger); color: var(--danger); }
+.intelligenceErrorText { color: var(--danger); }
+.intelligenceEvidenceGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.intelligenceEvidence { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 16px; }
+.intelligenceEvidence:target { box-shadow: 0 0 0 2px var(--accent); }
+.intelligenceEvidenceMeta, .intelligenceEvidenceFoot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.intelligenceEvidenceMeta { font-family: var(--font-mono); text-transform: uppercase; color: var(--text-3); font-size: 10px; letter-spacing: .04em; }
+.intelligenceEvidenceFoot { margin-top: auto; padding-top: 5px; }
+.intelligencePolicy summary { cursor: pointer; font-weight: 600; }
+.intelligencePolicy p { margin-top: 8px; }
+.intelligenceReview { margin-top: 4px; }
+.intelligenceQueueItem { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+@media (max-width: 760px) {
+  .intelligenceHero, .intelligenceResultHead { flex-direction: column; }
+  .intelligenceAskRow { grid-template-columns: 1fr; }
+  .intelligenceAskRow .btn { min-height: 44px; }
+  .intelligenceEvidenceGrid { grid-template-columns: 1fr; }
+  .intelligenceEvidenceFoot { align-items: flex-start; }
+  .intelligenceQueueItem { grid-template-columns: 1fr; align-items: stretch; }
+}

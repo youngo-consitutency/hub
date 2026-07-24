@@ -10,6 +10,7 @@ import {
   Search, MoreHorizontal, Settings2, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
   ClipboardCheck, PenTool, MessageSquare, Network, Award, Trophy,
+  BrainCircuit,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -44,6 +45,7 @@ export function Shell({ children }) {
         { section: 'For you', items: [
           { href: '/', label: 'Home', icon: Home },
           { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+          { href: '/intelligence', label: 'Hub Intelligence', icon: BrainCircuit },
         ]},
         { section: 'Participate', items: [
           { href: '/submissions', label: 'Submissions', icon: FileText },

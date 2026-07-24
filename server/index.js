@@ -6,6 +6,8 @@ import { publicRouter } from './routes/public.js'
 import { icsRouter } from './routes/ics.js'
 import { authRouter } from './routes/auth.js'
 import { memberRouter } from './routes/member.js'
+import { intelligenceRouter } from './routes/intelligence.js'
+import { pushRouter } from './routes/push.js'
 import { requestSecurity } from './lib/security.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -32,6 +34,8 @@ app.use('/api', (req, res, next) => {
 })
 app.use('/api/auth', authRouter)
 app.use('/api/member', memberRouter)
+app.use('/api/intelligence', intelligenceRouter)
+app.use('/api/push', pushRouter)
 app.use('/api', publicRouter)
 app.use('/ics', icsRouter)
 

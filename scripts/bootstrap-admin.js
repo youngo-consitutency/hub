@@ -1,4 +1,5 @@
-// Ensure admin account exists and print a one-time password-reset URL.
+// Ensure admin accounts exist. Reset URLs are opt-in for newly created accounts
+// so routine deploy logs never become a credential channel.
 // Usage: node scripts/bootstrap-admin.js
 // Env: ADMIN_EMAILS (first email is bootstrapped), APP_ORIGIN, DATABASE_URL
 import { randomBytes } from 'node:crypto'
@@ -14,6 +15,7 @@ const emails = String(process.env.ADMIN_EMAILS || 'genaro.gg@unmgcy.org')
   .filter(Boolean)
 
 const origin = process.env.APP_ORIGIN || 'https://web-staging-31ab.up.railway.app'
+const printResetUrls = process.env.PRINT_ADMIN_RESET_URLS === 'true'
 
 async function ensureAccount(email) {
   let row = await findAccountByEmail(email)
@@ -25,7 +27,7 @@ async function ensureAccount(email) {
       verified_at: new Date().toISOString(),
       verified_by: 'bootstrap',
     })
-    return publicAccount({ ...row, role: 'admin', member_status: 'verified' })
+    return { account: publicAccount({ ...row, role: 'admin', member_status: 'verified' }), created: false }
   }
 
   // Minimal individual registration shape for createAccount
@@ -87,7 +89,7 @@ async function ensureAccount(email) {
     verified_at: new Date().toISOString(),
     verified_by: 'bootstrap',
   })
-  return account
+  return { account, created: true }
 }
 
 async function main() {
@@ -97,23 +99,26 @@ async function main() {
   }
   for (const email of emails) {
     console.log(`bootstrap-admin: ensuring ${email}`)
-    const account = await ensureAccount(email)
-    const reset = await createPasswordResetToken(email)
-    if (!reset) {
-      console.error(`bootstrap-admin: could not create reset token for ${email}`)
-      continue
-    }
-    const url = resetLink(origin, reset.rawToken)
-    console.log(JSON.stringify({
+    const { account, created } = await ensureAccount(email)
+    const event = {
       event: 'admin_bootstrap',
       email,
       accountId: account.id,
       role: 'admin',
       memberStatus: 'verified',
-      resetUrl: url,
-      expiresAt: reset.expiresAt,
-      note: 'Open resetUrl once to set your password. Token expires in 1 hour.',
-    }))
+      created,
+      resetUrlEmitted: false,
+    }
+    if (created && printResetUrls) {
+      const reset = await createPasswordResetToken(email)
+      if (!reset) console.error(`bootstrap-admin: could not create reset token for ${email}`)
+      else {
+        event.resetUrl = resetLink(origin, reset.rawToken)
+        event.expiresAt = reset.expiresAt
+        event.resetUrlEmitted = true
+      }
+    }
+    console.log(JSON.stringify(event))
   }
   const pool = getPool()
   if (pool) await pool.end()

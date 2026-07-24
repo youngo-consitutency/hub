@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { validateRegistration } from '../server/lib/accounts.js'
 import { hashPassword, verifyPassword } from '../server/lib/password.js'
 import { POLICY_VERSION } from '../src/content/membershipPolicy.js'
+import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../shared/privacyNotice.js'
 
 function individual(overrides = {}) {
   return {
@@ -28,6 +29,8 @@ function individual(overrides = {}) {
     acceptCoiPolicy: true,
     memberOfAccreditedNgo: false,
     membershipPolicyVersion: POLICY_VERSION,
+    privacyConsent: true,
+    privacyNoticeVersion: PRIVACY_VERSION,
     ...overrides,
   }
 }
@@ -51,6 +54,8 @@ function admittedOrg(overrides = {}) {
     dcpPhone: '+49 30 123456',
     acceptAllOrgPolicies: true,
     membershipPolicyVersion: POLICY_VERSION,
+    privacyConsent: true,
+    privacyNoticeVersion: PRIVACY_VERSION,
     ...overrides,
   }
 }
@@ -71,6 +76,8 @@ function nonAdmittedOrg(overrides = {}) {
     ycpPhone: '+56 9 1111 2222',
     acceptAllOrgPolicies: true,
     membershipPolicyVersion: POLICY_VERSION,
+    privacyConsent: true,
+    privacyNoticeVersion: PRIVACY_VERSION,
     ...overrides,
   }
 }
@@ -79,6 +86,50 @@ describe('password hashing', () => {
   it('verifies a matching password', () => {
     const { salt, hash } = hashPassword('hello-world-99')
     assert.equal(verifyPassword('hello-world-99', salt, hash), true)
+  })
+})
+
+describe('privacy consent', () => {
+  it('refuses an individual who has not consented', () => {
+    const result = validateRegistration(individual({ privacyConsent: false }))
+    assert.equal(result.data, undefined)
+    assert.ok(result.fields.privacyConsent)
+  })
+
+  it('refuses an organisation who has not consented', () => {
+    const result = validateRegistration(admittedOrg({ privacyConsent: false }))
+    assert.equal(result.data, undefined)
+    assert.ok(result.fields.privacyConsent)
+  })
+
+  it('is not satisfied by the separate data protection policy agreement', () => {
+    const result = validateRegistration(individual({
+      privacyConsent: false,
+      acceptDataProtection: true,
+    }))
+    assert.equal(result.data, undefined)
+    assert.ok(result.fields.privacyConsent)
+  })
+
+  it('records the notice version, statement, and timestamp', () => {
+    const result = validateRegistration(individual())
+    assert.ok(result.data, JSON.stringify(result.fields))
+    assert.equal(result.data.privacyConsent, true)
+    assert.equal(result.data.privacyNoticeVersion, PRIVACY_VERSION)
+    assert.equal(result.data.privacyConsentStatement, CONSENT_STATEMENT)
+    assert.ok(Number.isFinite(Date.parse(result.data.privacyConsentAt)))
+  })
+
+  it('rejects consent claimed against a stale notice version', () => {
+    const result = validateRegistration(individual({ privacyNoticeVersion: 'v0-2020-01-01' }))
+    assert.equal(result.data, undefined)
+    assert.ok(result.fields.privacyConsent)
+  })
+
+  it('records the server version when the client sends none', () => {
+    const result = validateRegistration(individual({ privacyNoticeVersion: undefined }))
+    assert.ok(result.data, JSON.stringify(result.fields))
+    assert.equal(result.data.privacyNoticeVersion, PRIVACY_VERSION)
   })
 })
 

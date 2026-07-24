@@ -32,6 +32,8 @@ import { MembershipTeam } from './pages/MembershipTeam.jsx'
 import { GysPolicyTeam } from './pages/GysPolicyTeam.jsx'
 import { StaffPoints } from './pages/StaffPoints.jsx'
 import { Recognition } from './pages/Recognition.jsx'
+import { Intelligence } from './pages/Intelligence.jsx'
+import { Privacy } from './pages/Privacy.jsx'
 import { Empty } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
 
@@ -41,12 +43,14 @@ const PRE_VERIFY = [
   /^\/library/,
   /^\/gallery/,
   /^\/recognition/,
+  /^\/privacy/,
 ]
 
 const ROUTES = [
   [/^\/onboarding\/course$/, Course],
   [/^\/onboarding$/, Onboarding],
   [/^\/library$/, Library],
+  [/^\/privacy$/, Privacy],
   [/^\/workspace\/(.+)$/, Workspace],
   [/^\/messages$/, Messages],
   [/^\/focal$/, FocalPoint],
@@ -56,6 +60,7 @@ const ROUTES = [
   [/^\/team\/gys$/, GysPolicyTeam],
   [/^\/staff\/points$/, StaffPoints],
   [/^\/recognition$/, Recognition],
+  [/^\/intelligence$/, Intelligence],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],

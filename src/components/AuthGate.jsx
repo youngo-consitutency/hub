@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import {
-  Building2, Check, ExternalLink, KeyRound, Shield, UserPlus, Globe2, Heart, Users,
+  Building2, Check, ExternalLink, KeyRound, Shield, ShieldCheck, UserPlus, Globe2, Heart, Users,
 } from 'lucide-react'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { POLICY_VERSION } from '../content/membershipPolicy.js'
 import { POLICY_BY_SLUG } from '../content/policies.js'
+import {
+  PRIVACY_VERSION, CONSENT_STATEMENT, CONSENT_SUMMARY, PRIVACY_META,
+} from '../../shared/privacyNotice.js'
 import { Button } from './ui.jsx'
 
 const REGIONS = [
@@ -62,6 +65,7 @@ const EMPTY_REGISTER = {
   acceptDataProtection: false,
   acceptPrinciples: false,
   acceptCoiPolicy: false,
+  privacyConsent: false,
   // organisation
   organizationName: '',
   isUnfcccAdmitted: '', // 'yes' | 'no'
@@ -102,6 +106,51 @@ function PolicyLink({ href, children }) {
       {children}
       <ExternalLink size={12} strokeWidth={1.75} aria-hidden className="policyInlineIcon" />
     </a>
+  )
+}
+
+/**
+ * Explicit, recorded consent to the Hub Privacy Notice.
+ *
+ * Kept separate from the policy Agreements block on purpose: agreeing to respect
+ * YOUNGO's policies is a different act from agreeing that this platform may hold
+ * your personal data, and only the second one is consent. The summary is shown
+ * inline so the choice is informed even if the full notice is never opened.
+ */
+function PrivacyConsentSection({ checked, onChange, error, isOrg }) {
+  return (
+    <section className="card authSection">
+      <h2 className="authSectionTitle">
+        <ShieldCheck size={18} strokeWidth={1.75} aria-hidden /> Your data and your consent *
+      </h2>
+      <p className="meta" style={{ marginBottom: 10 }}>
+        {isOrg
+          ? 'Before the organisation registers, please read how the YOUNGO Hub handles the contact details on this form.'
+          : 'Before you join, please read how the YOUNGO Hub handles your personal data. This is separate from the Membership Policy you accepted — that explains membership, this explains your data.'}
+      </p>
+      <ul className="authBullet meta" style={{ marginBottom: 12 }}>
+        {CONSENT_SUMMARY.map((point) => (
+          <li key={point}>{point}</li>
+        ))}
+      </ul>
+      <p className="metaMuted" style={{ marginBottom: 12 }}>
+        <PolicyLink href="/privacy">
+          Read the full YOUNGO Hub Privacy Notice (version {PRIVACY_VERSION})
+        </PolicyLink>
+      </p>
+      <label className={checkClass(error)}>
+        <input type="checkbox" checked={checked} onChange={onChange} />
+        <span>{CONSENT_STATEMENT} *</span>
+      </label>
+      <FieldError msg={error} />
+      <p className="metaMuted" style={{ marginTop: 10 }}>
+        You can withdraw this consent at any time by emailing{' '}
+        <a className="mandateExtLink" href={`mailto:${PRIVACY_META.contactEmail}`}>
+          {PRIVACY_META.contactEmail}
+        </a>
+        . Withdrawing closes the Hub account; it does not by itself end YOUNGO membership.
+      </p>
+    </section>
   )
 }
 
@@ -272,6 +321,7 @@ export function AuthGate({ onAuthenticated }) {
       const payload = {
         ...form,
         membershipPolicyVersion: POLICY_VERSION,
+        privacyNoticeVersion: PRIVACY_VERSION,
         memberOfAccreditedNgo: form.memberOfAccreditedNgo === 'yes'
           ? true
           : form.memberOfAccreditedNgo === 'no'
@@ -870,6 +920,13 @@ export function AuthGate({ onAuthenticated }) {
                   </section>
                 </>
               )}
+
+              <PrivacyConsentSection
+                checked={form.privacyConsent}
+                onChange={setReg('privacyConsent')}
+                error={fields.privacyConsent}
+                isOrg={isOrg}
+              />
 
               <input className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.hpWebsite} onChange={setReg('hpWebsite')} />
 

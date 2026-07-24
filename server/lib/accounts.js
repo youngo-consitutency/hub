@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
 import { hashPassword, verifyPassword, newSessionToken, sessionExpiry } from './password.js'
+import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../../shared/privacyNotice.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -83,6 +84,9 @@ function publicAccount(row) {
     under18: Boolean(row.under_18 ?? row.under18),
     constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
     membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
+    privacyConsent: Boolean(row.privacy_consent ?? row.privacyConsent),
+    privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
+    privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     memberStatus,
     hubAccessStatus: row.hub_access_status ?? row.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course'),
     membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
@@ -157,6 +161,36 @@ function requireAgreements(b, fields) {
 }
 
 /**
+ * Explicit consent to the YOUNGO Hub Privacy Notice.
+ *
+ * Deliberately separate from requireAgreements: those are promises to *respect*
+ * YOUNGO policies, which is a different act from agreeing that this platform may
+ * hold your personal data. Consent is only valid against a notice version, so the
+ * version is recorded server-side rather than trusted from the client — a client
+ * claiming an older version must not be able to consent on its behalf.
+ */
+function requirePrivacyConsent(b, fields) {
+  const consented = Boolean(b.privacyConsent)
+  if (!consented) {
+    fields.privacyConsent =
+      'Please read the YOUNGO Hub Privacy Notice and confirm you consent to your data being used as it describes.'
+    return null
+  }
+  const claimed = String(b.privacyNoticeVersion || '').trim()
+  if (claimed && claimed !== PRIVACY_VERSION) {
+    fields.privacyConsent =
+      'The Privacy Notice has been updated since this page was opened. Please reload, read the current notice, and consent again.'
+    return null
+  }
+  return {
+    privacyConsent: true,
+    privacyNoticeVersion: PRIVACY_VERSION,
+    privacyConsentAt: new Date().toISOString(),
+    privacyConsentStatement: CONSENT_STATEMENT,
+  }
+}
+
+/**
  * Validate Join YOUNGO registration — individual or organisational (admitted / non-admitted).
  */
 export function validateRegistration(body) {
@@ -218,6 +252,7 @@ export function validateRegistration(body) {
     }
 
     const agreements = requireAgreements(b, fields)
+    const privacy = requirePrivacyConsent(b, fields)
 
     if (isUnfcccAdmitted === true) {
       // Admitted observer NGO path
@@ -291,6 +326,7 @@ export function validateRegistration(body) {
         guardianEmail: null,
         guardianConsent: false,
         ...agreements,
+        ...privacy,
         coiDeclared: agreements.acceptCoiPolicy,
         coiDetails: null,
         policiesAccepted: true,
@@ -348,6 +384,7 @@ export function validateRegistration(body) {
   if (motivation && motivation.length > 2000) fields.motivation = 'Please keep this under 2000 characters.'
 
   const agreements = requireAgreements(b, fields)
+  const privacy = requirePrivacyConsent(b, fields)
   if (memberOfAccreditedNgo === null) {
     fields.memberOfAccreditedNgo = 'Please answer for statistics.'
   }
@@ -412,6 +449,7 @@ export function validateRegistration(body) {
       guardianEmail: under18 ? guardianEmail : null,
       guardianConsent: under18 ? guardianConsent : false,
       ...agreements,
+      ...privacy,
       coiDeclared: agreements.acceptCoiPolicy,
       coiDetails: null,
       policiesAccepted: true,
@@ -488,7 +526,8 @@ export async function createAccount(data, client = null) {
         member_of_accredited_ngo,
         youth_affiliation, org_operate_in, org_website, org_social, org_mission,
         dcp_email, dcp_phone, ycp_name, ycp_email, ycp_phone,
-        member_status, role, wg_interests
+        member_status, role, wg_interests,
+        privacy_consent, privacy_notice_version, privacy_consent_at, privacy_consent_statement
       ) VALUES (
         $1,$2,$3,$4,$5,$6,
         $7,$8,$9,$10,
@@ -502,7 +541,8 @@ export async function createAccount(data, client = null) {
         $37,
         $38,$39,$40,$41,$42,
         $43,$44,$45,$46,$47,
-        $48,$49,$50
+        $48,$49,$50,
+        $51,$52,$53,$54
       ) RETURNING *`,
       [
         data.email, hash, salt, data.name, data.firstName, data.lastName,
@@ -518,6 +558,8 @@ export async function createAccount(data, client = null) {
         data.youthAffiliation, data.orgOperateIn, data.orgWebsite, data.orgSocial, data.orgMission,
         data.dcpEmail, data.dcpPhone, data.ycpName, data.ycpEmail, data.ycpPhone,
         memberStatus, role, wgInterests,
+        Boolean(data.privacyConsent), data.privacyNoticeVersion || null,
+        data.privacyConsentAt || null, data.privacyConsentStatement || null,
       ]
       ))
     } catch (error) {
@@ -565,6 +607,10 @@ export async function createAccount(data, client = null) {
     accept_data_protection: data.acceptDataProtection,
     accept_principles: data.acceptPrinciples,
     accept_coi_policy: data.acceptCoiPolicy,
+    privacy_consent: Boolean(data.privacyConsent),
+    privacy_notice_version: data.privacyNoticeVersion || null,
+    privacy_consent_at: data.privacyConsentAt || null,
+    privacy_consent_statement: data.privacyConsentStatement || null,
     member_of_accredited_ngo: data.memberOfAccreditedNgo,
     youth_affiliation: data.youthAffiliation,
     org_operate_in: data.orgOperateIn,

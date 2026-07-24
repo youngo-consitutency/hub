@@ -23,11 +23,11 @@ export async function apiGet(path) {
   return res.json()
 }
 
-export async function apiPost(path, body) {
+export async function apiPost(path, body, extraHeaders = {}) {
   const res = await fetch(`/api${path}`, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    headers: authHeaders({ 'Content-Type': 'application/json', ...extraHeaders }),
     body: JSON.stringify(body ?? {}),
   })
   const data = await res.json().catch(() => ({}))

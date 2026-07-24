@@ -11,8 +11,12 @@ import './styles/tokens.css'
 import './styles/app.css'
 import App from './App.jsx'
 import { applyTheme, getInitialTheme } from './lib/theme.js'
+import { initPWA } from './lib/pwa.js'
 
 applyTheme(getInitialTheme())
+
+// Initialize PWA features (service worker, push notifications)
+initPWA(import.meta.env.VITE_VAPID_PUBLIC_KEY || null)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

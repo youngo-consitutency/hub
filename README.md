@@ -61,6 +61,7 @@ YOUNGO is a **platform and network**, not a single NGO. Work happens across Work
 | **Library** | Capacity Building guides (open access) |
 | **NGO platform** | Deadlines, endorse/submit requests, multi-user seats, contribution points |
 | **NGO points** | Staff-awarded points for badge support & UNFCCC submission help (tiers on NGO portal) |
+| **Hub Intelligence** | Role-scoped evidence search, extractive synthesis, citations, field policy, and reviewed research notes |
 | **Admin** | Members & orgs (never passwords), roles, reset links |
 
 ---
@@ -169,6 +170,7 @@ Without `DATABASE_URL`, accounts fall back to local JSON under `data/` (dev only
 | `DATABASE_URL` | Postgres connection (Railway injects this) |
 | `APP_ORIGIN` | Required production origin for CORS and reset / invite links |
 | `ADMIN_EMAILS` | Comma-separated admins (auto-promote + bootstrap) |
+| `PRINT_ADMIN_RESET_URLS` | Emergency opt-in: emit a reset URL only for a newly created bootstrap admin; keep unset during routine deploys |
 | `PORT` | HTTP port (Railway injects) |
 
 ---
@@ -199,6 +201,10 @@ Component gallery (dev): `/gallery`.
 
 ## Product principles
 
+- **Evidence before synthesis:** every Hub Intelligence bullet retains citations and an explicit verification caveat.
+- **Source-side privacy:** raw accounts, credentials, sessions, messages, guardian/minority data, and personal account fields stay outside retrieval.
+- **Controlled writeback:** cited research notes require idempotent proposal, a different admin's approval, and separate application.
+
 - **Fast orientation** — status, deadlines, and next actions above the fold.
 - **Policy-aligned membership** — Network / Constituency Work, age rules, org paths.
 - **Gates with purpose** — policy → account → course → WG workspace, not friction for its own sake.
@@ -218,6 +224,9 @@ Component gallery (dev): `/gallery`.
 - [x] Scoped role assignments and capability-based authorization
 - [x] Membership lifecycle states (course, onboarding, activation, renewal, exit)
 - [x] GYS contribution review workflow with versioned status history
+- [x] Hub Intelligence public/member/mandate/operations evidence scopes
+- [x] Citation-first synthesis UI, private-query audit, field-policy denials, and admin metrics
+- [x] Independently approved cited research-note writeback
 - [x] Governance audit log, expiring NGO invites, and session hardening
 - [ ] **Align & update the onboarding process with the YOUNGO Onboarding Taskforce** (course content, verification steps, Membership Team handoff, and official cycles)
 - [ ] Live Google Calendar API (owner console access)

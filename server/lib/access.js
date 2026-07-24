@@ -32,12 +32,13 @@ export async function getAccessProfile(account) {
   }
   if (account.role === 'wg_contact') for (const wgSlug of account.wgInterests || []) if (!wgAssignments.some((item) => item.wgSlug === wgSlug)) wgAssignments.push({ wgSlug, role: 'contact' })
   if (account.role === 'admin') { teamRoles.add('membership_team'); teamRoles.add('gys_policy_team') }
-  const capabilities = new Set(['hub.read'])
-  if (account.role === 'admin') ['platform.manage','accounts.manage','audit.read','ngo.manage_all','points.award'].forEach((x) => capabilities.add(x))
+  const capabilities = new Set(['hub.read', 'intelligence.query', 'intelligence.writeback.propose'])
+  if (account.role === 'admin') ['platform.manage','accounts.manage','audit.read','ngo.manage_all','points.award','intelligence.operations.read','intelligence.writeback.approve','intelligence.writeback.apply'].forEach((x) => capabilities.add(x))
   if (account.role === 'focal_point') { capabilities.add('constituency.coordinate'); capabilities.add('points.award') }
   if (teamRoles.has('membership_team')) { capabilities.add('membership.review'); capabilities.add('messages.receive'); capabilities.add('points.award') }
   if (teamRoles.has('gys_policy_team')) { capabilities.add('gys.manage'); capabilities.add('messages.receive') }
   if (['admin','focal_point','wg_contact','ngo_admin'].includes(account.role) || wgAssignments.length) capabilities.add('messages.receive')
+  if (capabilities.has('messages.receive')) capabilities.add('intelligence.contacts.read')
   for (const item of wgAssignments) capabilities.add(`wg.manage:${item.wgSlug}`)
   return { teamRoles: [...teamRoles], wgAssignments, capabilities: [...capabilities], manageAllWgs: account.role === 'admin', isFocalPoint: account.role === 'focal_point', isMandateHolder: capabilities.has('messages.receive') }
 }
