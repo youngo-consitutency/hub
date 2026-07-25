@@ -128,8 +128,8 @@ export async function canStartConversation(senderId, recipientId) {
     getMandateProfile(recipientId),
   ])
   if (!sender?.account || !recipient?.account) return { ok: false, code: 'not_found' }
-  if (!sender.account.isVerified && sender.account.role !== 'admin') return { ok: false, code: 'sender_unverified' }
-  if (!recipient.account.isVerified && recipient.account.role !== 'admin') return { ok: false, code: 'recipient_unverified' }
+  if (!sender.account.isVerified) return { ok: false, code: 'sender_unverified' }
+  if (!recipient.account.isVerified) return { ok: false, code: 'recipient_unverified' }
   if (recipient.isMandateHolder) {
     return { ok: true, sender, recipient }
   }
@@ -184,13 +184,14 @@ export async function listMessageContacts(accountId, { q = '' } = {}) {
         .map((p) => ({ type: 'wg', wgSlug: p.wg_slug, role: p.role_in_wg }))
       const mandates = [
         ...(MANDATE_ROLES.has(account.role) ? [{ type: 'platform', role: account.role }] : []),
+        ...(account.teamRoles || []).map((role) => ({ type: 'team', role })),
         ...wgMandates,
       ]
       return { row, account, mandates }
     })
     .filter(({ account, mandates }) => (
       account.id !== accountId &&
-      (account.isVerified || account.role === 'admin') &&
+      account.isVerified &&
       mandates.length > 0
     ))
     .filter(({ account }) => {
@@ -313,17 +314,22 @@ export async function listMessages(conversationId, accountId) {
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
-      `SELECT m.*, a.id AS sender_id, a.email AS sender_email, a.name AS sender_name,
+      `WITH recent AS (
+         SELECT *
+         FROM messages
+         WHERE conversation_id = $1
+         ORDER BY created_at DESC
+         LIMIT 200
+       )
+       SELECT m.*, a.id AS sender_id, a.email AS sender_email, a.name AS sender_name,
               a.first_name AS sender_first_name, a.last_name AS sender_last_name,
               a.entity_type AS sender_entity_type, a.organization_name AS sender_organization_name,
               a.organization_type AS sender_organization_type, a.is_unfccc_admitted AS sender_is_unfccc_admitted,
               a.member_status AS sender_member_status, a.role AS sender_role,
               a.country AS sender_country, a.created_at AS sender_created_at
-       FROM messages m
+       FROM recent m
        JOIN hub_accounts a ON a.id = m.sender_account_id
-       WHERE m.conversation_id = $1
-       ORDER BY m.created_at ASC
-       LIMIT 200`,
+       ORDER BY m.created_at ASC`,
       [conversationId]
     )
     return {

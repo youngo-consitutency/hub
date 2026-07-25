@@ -18,9 +18,9 @@
   --radius-chip: 6px; --radius-control: 8px; --radius-card: 12px; --radius-modal: 16px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 20px; --space-6: 24px; --space-8: 32px;
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-ui: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --wg-accent: #0F766E;          --wg-accent-hover: #115E59;
   --wg-accent-tint: #CCFBF1;     --wg-on-tint: #134E4A;
   --membership-accent: #4338CA;  --membership-accent-hover: #3730A3;

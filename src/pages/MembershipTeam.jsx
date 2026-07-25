@@ -16,8 +16,13 @@ export function MembershipTeam() {
   const [actionError, setActionError] = useState(null)
 
   const setStatus = async (id, status) => {
+    let reason
+    if (status === 'terminated') {
+      reason = window.prompt('Why is this membership being terminated?')?.trim()
+      if (!reason) return
+    }
     setBusy(id)
-    try { setActionError(null); await apiPatch(`/member/team/membership/accounts/${id}/status`, { status }); query.retry() }
+    try { setActionError(null); await apiPatch(`/member/team/membership/accounts/${id}/status`, { status, reason }); query.retry() }
     catch (error) { setActionError(error.message) }
     finally { setBusy(null) }
   }

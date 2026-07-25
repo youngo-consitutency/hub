@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getSessionAccount } from '../lib/accounts.js'
+import { destroyAllSessions, getSessionAccount } from '../lib/accounts.js'
 import {
   completeCourse,
   upsertWgProgress,
@@ -53,6 +53,7 @@ import {
   reasonFromNgoRequestKind,
   tiersForBalance,
 } from '../lib/points.js'
+import { WG_ACTIVITY_KIND_VALUES } from '../../shared/workflows.js'
 
 export const memberRouter = Router()
 
@@ -80,7 +81,7 @@ async function requireAccount(req, res) {
 }
 
 function requireVerified(req, res) {
-  if (!req.account?.isVerified && !['admin', 'focal_point'].includes(req.account?.role)) {
+  if (!req.account?.isVerified) {
     res.status(403).json({
       error: { code: 'not_verified', message: 'Complete the membership course to unlock this feature.' },
     })
@@ -311,7 +312,7 @@ memberRouter.post('/cp/:wg/members/:accountId/role', async (req, res) => {
   const status = String(req.body?.status || 'active')
   if (
     !['member', 'contact', 'lead'].includes(role)
-    || !['interested', 'pending_approval', 'active', 'inactive', 'rejected'].includes(status)
+    || !['interested', 'pending_approval', 'active', 'rejected'].includes(status)
   ) {
     return res.status(400).json({ error: { code: 'validation', message: 'Invalid WG role or status.' } })
   }
@@ -335,7 +336,7 @@ memberRouter.post('/cp/:wg/activities', async (req, res) => {
   if (!b.title || !b.kind) {
     return res.status(400).json({ error: { code: 'validation', message: 'title and kind are required.' } })
   }
-  if (!['meeting', 'consultation', 'deadline', 'update', 'resource'].includes(String(b.kind))) {
+  if (!WG_ACTIVITY_KIND_VALUES.includes(String(b.kind))) {
     return res.status(400).json({ error: { code: 'validation', message: 'Invalid activity kind.' } })
   }
   if (b.startsAt && Number.isNaN(Date.parse(b.startsAt))) {
@@ -696,6 +697,9 @@ memberRouter.patch('/team/membership/accounts/:id/status', async (req, res) => {
   const items = await listAccountsForAdmin()
   const before = items.find((item) => item.id === req.params.id)
   if (!before) return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
+  if (account.role !== 'admin' && ['admin', 'focal_point'].includes(before.role)) {
+    return res.status(403).json({ error: { code: 'forbidden', message: 'Only an admin can change platform staff membership.' } })
+  }
   if (status === 'active' && !before.coursePassedAt && !['admin', 'focal_point'].includes(before.role)) {
     return res.status(409).json({ error: { code: 'course_required', message: 'The member must pass the membership course before activation.' } })
   }
@@ -706,8 +710,13 @@ memberRouter.patch('/team/membership/accounts/:id/status', async (req, res) => {
     return res.status(400).json({ error: { code: 'validation', message: 'Invalid renewal date.' } })
   }
   const now = new Date().toISOString()
+  const accessStatus = ['expired', 'terminated'].includes(status)
+    ? 'suspended'
+    : (['course_passed', 'awaiting_onboarding', 'active', 'renewal_due'].includes(status) ? 'active' : 'pending_course')
   const fields = {
     membership_status: status,
+    hub_access_status: accessStatus,
+    ...(status === 'active' ? { member_status: 'verified', verified_at: before.verifiedAt || now } : {}),
     onboarding_cohort: req.body?.onboardingCohort || before.onboardingCohort || null,
     renewal_due_at: req.body?.renewalDueAt || before.renewalDueAt || null,
     membership_ended_at: ['expired', 'terminated'].includes(status) ? now : null,
@@ -715,6 +724,7 @@ memberRouter.patch('/team/membership/accounts/:id/status', async (req, res) => {
     constituency_work_status: status === 'active' ? 'active' : (status === 'awaiting_onboarding' ? 'pending_onboarding' : before.constituencyWorkStatus),
   }
   const updated = await setAccountFields(req.params.id, fields)
+  if (accessStatus === 'suspended') await destroyAllSessions(req.params.id)
   await recordAudit({ actorId: account.id, action: 'membership.status_changed', targetType: 'account', targetId: req.params.id, before, after: updated, reason: req.body?.reason, requestId: req.requestId })
   res.json({ account: updated })
 })

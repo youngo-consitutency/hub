@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   THEME_STORAGE_KEY,
+  clearThemeOverride,
   resolvedTheme,
   storedTheme,
   systemTheme,
@@ -29,4 +30,11 @@ test('stored theme accepts only supported overrides', () => {
   assert.equal(storedTheme(storage('light')), 'light')
   assert.equal(storedTheme(storage('system')), null)
   assert.equal(storedTheme(storage(null)), null)
+})
+
+test('theme override can return to the system setting', () => {
+  let removedKey
+  const storage = { removeItem: (key) => { removedKey = key } }
+  assert.equal(clearThemeOverride(storage), systemTheme())
+  assert.equal(removedKey, THEME_STORAGE_KEY)
 })

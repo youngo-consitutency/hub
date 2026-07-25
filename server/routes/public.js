@@ -23,7 +23,7 @@ function bearerToken(req) {
 publicRouter.use(async (req, res, next) => {
   try {
     const account = await getSessionAccount(bearerToken(req))
-    if (account?.isVerified || account?.role === 'admin') {
+    if (account?.isVerified) {
       req.publicAccount = account
       res.set('Cache-Control', 'no-store')
     }

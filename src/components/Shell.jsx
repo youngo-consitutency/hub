@@ -31,7 +31,7 @@ export function Shell({ children }) {
     document.documentElement.dataset.workspace = workspace
   }, [path])
 
-  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
+  const verified = Boolean(account?.isVerified)
 
   const nav = useMemo(() => {
     const sections = [
@@ -69,7 +69,7 @@ export function Shell({ children }) {
         { href: '/staff/points', label: 'NGO points', icon: Award },
       ]})
     }
-    if (account?.isNgo || account?.role === 'admin' || account?.role === 'ngo_admin') {
+    if (access.ngo || account?.role === 'admin' || account?.role === 'ngo_admin') {
       sections.push({ section: 'Organisation', items: [
         { href: '/ngo', label: 'NGO platform', icon: Building2 },
       ]})

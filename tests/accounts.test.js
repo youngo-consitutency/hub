@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { validateRegistration } from '../server/lib/accounts.js'
+import { publicAccount, validateRegistration } from '../server/lib/accounts.js'
 import { hashPassword, verifyPassword } from '../server/lib/password.js'
 import { POLICY_VERSION } from '../src/content/membershipPolicy.js'
 import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../shared/privacyNotice.js'
@@ -86,6 +86,30 @@ describe('password hashing', () => {
   it('verifies a matching password', async () => {
     const { salt, hash } = await hashPassword('hello-world-99')
     assert.equal(await verifyPassword('hello-world-99', salt, hash), true)
+  })
+})
+
+describe('hub access status', () => {
+  it('does not treat a suspended verified member as verified', () => {
+    const account = publicAccount({
+      id: 'suspended-member',
+      email: 'suspended@example.org',
+      member_status: 'verified',
+      hub_access_status: 'suspended',
+      role: 'member',
+    })
+    assert.equal(account.isVerified, false)
+  })
+
+  it('does not let a suspended platform role bypass the access status', () => {
+    const account = publicAccount({
+      id: 'suspended-admin',
+      email: 'admin@example.org',
+      member_status: 'verified',
+      hub_access_status: 'suspended',
+      role: 'admin',
+    })
+    assert.equal(account.isVerified, false)
   })
 })
 

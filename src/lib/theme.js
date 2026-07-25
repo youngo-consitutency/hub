@@ -49,6 +49,15 @@ export function saveTheme(theme) {
   return next
 }
 
+export function clearThemeOverride(storage = globalThis.localStorage) {
+  try {
+    storage.removeItem(THEME_STORAGE_KEY)
+  } catch {
+    // Storage may be unavailable in privacy-restricted contexts.
+  }
+  return systemTheme()
+}
+
 export function hasChosenTheme() {
   return Boolean(getSavedTheme())
 }

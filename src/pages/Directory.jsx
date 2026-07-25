@@ -14,7 +14,7 @@ const CONTACT_GROUP = {
 export function Directory() {
   const query = useApi('/directory')
   const { account } = useAccount()
-  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
+  const verified = Boolean(account?.isVerified)
   return (
     <div>
       <PageHeader

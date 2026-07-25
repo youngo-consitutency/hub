@@ -65,6 +65,8 @@ function publicAccount(row) {
   const name = row.name || [first, last].filter(Boolean).join(' ')
   const memberStatus = row.member_status ?? row.memberStatus ?? 'pending_course'
   const role = row.role || 'member'
+  const hubAccessStatus = row.hub_access_status ?? row.hubAccessStatus
+    ?? (memberStatus === 'verified' ? 'active' : 'pending_course')
   return {
     id: row.id,
     email: row.email,
@@ -90,7 +92,7 @@ function publicAccount(row) {
     privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
     privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     memberStatus,
-    hubAccessStatus: row.hub_access_status ?? row.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course'),
+    hubAccessStatus,
     membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
     onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
     renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
@@ -102,7 +104,8 @@ function publicAccount(row) {
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified: memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role),
+    isVerified: hubAccessStatus === 'active'
+      && (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
     isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),

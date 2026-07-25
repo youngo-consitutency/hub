@@ -2,39 +2,41 @@ import { Shell } from './components/Shell.jsx'
 import { AccessGate } from './components/AccessGate.jsx'
 import { AccountProvider, useAccount } from './lib/accountContext.jsx'
 import { usePath, navigate } from './lib/router.js'
-import { useEffect } from 'react'
-import { Home } from './pages/Home.jsx'
-import { Calendar } from './pages/Calendar.jsx'
-import { Submissions } from './pages/Submissions.jsx'
-import { Council } from './pages/Council.jsx'
-import { Coys } from './pages/Coys.jsx'
-import { Groups } from './pages/Groups.jsx'
-import { Directory } from './pages/Directory.jsx'
-import { Search } from './pages/Search.jsx'
-import { Statement } from './pages/Statement.jsx'
-import { EventDetail } from './pages/EventDetail.jsx'
-import { SubmissionDetail } from './pages/SubmissionDetail.jsx'
-import { DecisionDetail } from './pages/DecisionDetail.jsx'
-import { CoyDetail } from './pages/CoyDetail.jsx'
-import { GroupDetail } from './pages/GroupDetail.jsx'
-import { Onboarding } from './pages/Onboarding.jsx'
-import { Course } from './pages/Course.jsx'
-import { Library } from './pages/Library.jsx'
-import { Workspace } from './pages/Workspace.jsx'
-import { CpManage } from './pages/CpManage.jsx'
-import { NgoPortal } from './pages/NgoPortal.jsx'
-import { Admin } from './pages/Admin.jsx'
-import { CpOverview } from './pages/CpOverview.jsx'
-import { FocalPoint } from './pages/FocalPoint.jsx'
-import { Messages } from './pages/Messages.jsx'
-import { MembershipTeam } from './pages/MembershipTeam.jsx'
-import { GysPolicyTeam } from './pages/GysPolicyTeam.jsx'
-import { StaffPoints } from './pages/StaffPoints.jsx'
-import { Recognition } from './pages/Recognition.jsx'
-import { Intelligence } from './pages/Intelligence.jsx'
-import { Privacy } from './pages/Privacy.jsx'
-import { Empty } from './components/ui.jsx'
+import { lazy, Suspense, useEffect } from 'react'
+import { Empty, Skeletons } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
+import { Privacy } from './pages/Privacy.jsx'
+
+const lazyPage = (loader, name) => lazy(() => loader().then((module) => ({ default: module[name] })))
+const Home = lazyPage(() => import('./pages/Home.jsx'), 'Home')
+const Calendar = lazyPage(() => import('./pages/Calendar.jsx'), 'Calendar')
+const Submissions = lazyPage(() => import('./pages/Submissions.jsx'), 'Submissions')
+const Council = lazyPage(() => import('./pages/Council.jsx'), 'Council')
+const Coys = lazyPage(() => import('./pages/Coys.jsx'), 'Coys')
+const Groups = lazyPage(() => import('./pages/Groups.jsx'), 'Groups')
+const Directory = lazyPage(() => import('./pages/Directory.jsx'), 'Directory')
+const Search = lazyPage(() => import('./pages/Search.jsx'), 'Search')
+const Statement = lazyPage(() => import('./pages/Statement.jsx'), 'Statement')
+const EventDetail = lazyPage(() => import('./pages/EventDetail.jsx'), 'EventDetail')
+const SubmissionDetail = lazyPage(() => import('./pages/SubmissionDetail.jsx'), 'SubmissionDetail')
+const DecisionDetail = lazyPage(() => import('./pages/DecisionDetail.jsx'), 'DecisionDetail')
+const CoyDetail = lazyPage(() => import('./pages/CoyDetail.jsx'), 'CoyDetail')
+const GroupDetail = lazyPage(() => import('./pages/GroupDetail.jsx'), 'GroupDetail')
+const Onboarding = lazyPage(() => import('./pages/Onboarding.jsx'), 'Onboarding')
+const Course = lazyPage(() => import('./pages/Course.jsx'), 'Course')
+const Library = lazyPage(() => import('./pages/Library.jsx'), 'Library')
+const Workspace = lazyPage(() => import('./pages/Workspace.jsx'), 'Workspace')
+const CpManage = lazyPage(() => import('./pages/CpManage.jsx'), 'CpManage')
+const NgoPortal = lazyPage(() => import('./pages/NgoPortal.jsx'), 'NgoPortal')
+const Admin = lazyPage(() => import('./pages/Admin.jsx'), 'Admin')
+const CpOverview = lazyPage(() => import('./pages/CpOverview.jsx'), 'CpOverview')
+const FocalPoint = lazyPage(() => import('./pages/FocalPoint.jsx'), 'FocalPoint')
+const Messages = lazyPage(() => import('./pages/Messages.jsx'), 'Messages')
+const MembershipTeam = lazyPage(() => import('./pages/MembershipTeam.jsx'), 'MembershipTeam')
+const GysPolicyTeam = lazyPage(() => import('./pages/GysPolicyTeam.jsx'), 'GysPolicyTeam')
+const StaffPoints = lazyPage(() => import('./pages/StaffPoints.jsx'), 'StaffPoints')
+const Recognition = lazyPage(() => import('./pages/Recognition.jsx'), 'Recognition')
+const Intelligence = lazyPage(() => import('./pages/Intelligence.jsx'), 'Intelligence')
 
 // Paths allowed before membership course verification
 const PRE_VERIFY = [
@@ -104,7 +106,7 @@ function AppRoutes() {
   const Page = match ? match[1] : NotFound
   const slug = match ? (path.match(match[0])?.[1] ?? null) : null
 
-  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
+  const verified = Boolean(account?.isVerified)
 
   useEffect(() => {
     // After first login/register while unverified, land on onboarding if on home
@@ -138,14 +140,13 @@ function AppRoutes() {
   if (
     path.startsWith('/ngo') &&
     account &&
-    !account.isNgo &&
     account.role !== 'admin' &&
     account.role !== 'ngo_admin' &&
     !account.access?.ngo
   ) {
     // Allow accept route for any signed-in user
     if (!path.startsWith('/ngo/accept')) {
-      return <Shell><Empty icon={Lock} title="NGO accounts only" body="Register as an organisation or accept a seat invite." /></Shell>
+      return <Shell><Empty icon={Lock} title="NGO access required" body="An approved organisation seat is required. You can also accept a seat invite." /></Shell>
     }
   }
   if (path.startsWith('/cp/') && account && account.role !== 'admin') {
@@ -171,7 +172,9 @@ function AppRoutes() {
 
   return (
     <Shell>
-      <Page slug={slug && decodeURIComponent(slug)} />
+      <Suspense fallback={<Skeletons n={4} />}>
+        <Page slug={slug && decodeURIComponent(slug)} />
+      </Suspense>
     </Shell>
   )
 }

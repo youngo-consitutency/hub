@@ -8,6 +8,7 @@ import {
   canStartConversation,
   findOrCreateConversation,
   listMessageContacts,
+  listMessages,
 } from '../server/lib/messages.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -55,6 +56,7 @@ beforeEach(() => {
     account('focal-point', 'focal_point'),
     account('wg-contact', 'wg_contact'),
     account('wg-lead'),
+    { ...account('team-member'), team_roles: ['membership_team'] },
   ])
   writeJson(files.progress, [
     {
@@ -126,8 +128,29 @@ describe('member messaging permissions', () => {
     assert.equal(message.senderAccountId, 'wg-contact')
   })
 
+  it('returns the latest 200 messages in chronological order', async () => {
+    const started = await findOrCreateConversation('regular-a', 'wg-contact')
+    const messages = Array.from({ length: 205 }, (_, index) => ({
+      id: `message-${index}`,
+      conversation_id: started.conversation.id,
+      sender_account_id: 'regular-a',
+      body: `Message ${index}`,
+      created_at: new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString(),
+    }))
+    writeJson(files.messages, messages)
+
+    const result = await listMessages(started.conversation.id, 'regular-a')
+    assert.equal(result.items.length, 200)
+    assert.equal(result.items[0].id, 'message-5')
+    assert.equal(result.items.at(-1).id, 'message-204')
+  })
+
   it('lists only contact points and mandate holders as member contacts', async () => {
     const contacts = await listMessageContacts('regular-a')
-    assert.deepEqual(contacts.map((c) => c.id).sort(), ['focal-point', 'wg-contact', 'wg-lead'])
+    assert.deepEqual(contacts.map((c) => c.id).sort(), ['focal-point', 'team-member', 'wg-contact', 'wg-lead'])
+    assert.deepEqual(
+      contacts.find((contact) => contact.id === 'team-member').mandates,
+      [{ type: 'team', role: 'membership_team' }],
+    )
   })
 })
