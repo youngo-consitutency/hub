@@ -3,13 +3,15 @@ import { navigate } from '../lib/router.js'
 import { countdown } from '../lib/time.js'
 import { AlarmClock, RefreshCw, ArrowLeft } from 'lucide-react'
 
-export function A({ href, className, children, ...rest }) {
+export function A({ href, className, children, onClick, target, ...rest }) {
   return (
     <a
       href={href}
       className={className}
+      target={target}
       onClick={(e) => {
-        if (e.metaKey || e.ctrlKey || e.shiftKey) return
+        onClick?.(e)
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0 || target) return
         e.preventDefault()
         navigate(href)
       }}
@@ -23,7 +25,7 @@ export function A({ href, className, children, ...rest }) {
 export function Button({ variant = 'secondary', sm, glow, className = '', ...rest }) {
   const cls = ['btn', `btn-${variant}`, sm && 'btn-sm', glow && 'btn-glow', className]
     .filter(Boolean).join(' ')
-  return <button className={cls} {...rest} />
+  return <button type="button" className={cls} {...rest} />
 }
 
 export function PageHeader({ eyebrow, icon: Icon, title, description, action, children }) {
@@ -92,7 +94,7 @@ export function Section({ label, action, children }) {
     <section className="section">
       {label && (
         <div className="sectionLabel">
-          <span>{label}</span>
+          <h2 className="sectionHeading">{label}</h2>
           {action && <div className="sectionAction">{action}</div>}
         </div>
       )}
@@ -103,7 +105,7 @@ export function Section({ label, action, children }) {
 
 export function Skeletons({ n = 3 }) {
   return (
-    <div className="stack">
+    <div className="stack" role="status" aria-label="Loading content">
       {Array.from({ length: n }).map((_, i) => <div key={i} className="skeleton" />)}
     </div>
   )

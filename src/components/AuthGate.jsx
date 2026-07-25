@@ -10,6 +10,7 @@ import {
   PRIVACY_VERSION, CONSENT_STATEMENT, CONSENT_SUMMARY, PRIVACY_META,
 } from '../../shared/privacyNotice.js'
 import { Button } from './ui.jsx'
+import { Brand } from './Brand.jsx'
 
 const REGIONS = [
   'Africa',
@@ -344,6 +345,7 @@ export function AuthGate({ onAuthenticated }) {
     <div className="mandateGate" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <div className="mandateShell authShell">
         <header className="mandateHeader">
+          <div className="gateBrand"><Brand /></div>
           <div className="rowGap" style={{ alignItems: 'flex-start', paddingBottom: 16 }}>
             <span className="iconTile" aria-hidden>
               {mode === 'register' ? <UserPlus size={22} strokeWidth={1.75} /> : <KeyRound size={22} strokeWidth={1.75} />}

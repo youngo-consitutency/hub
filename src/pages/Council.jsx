@@ -16,9 +16,9 @@ export function Council() {
         title="Council"
         description="Decisions moving through YOUNGO’s decision-making process."
       >
-        <div className="pillRow">
-          <button className={`pill ${state === 'active' ? 'active' : ''}`} onClick={() => setState('active')}>In progress</button>
-          <button className={`pill ${state === 'decided' ? 'active' : ''}`} onClick={() => setState('decided')}>Decided</button>
+        <div className="pillRow" aria-label="Filter Council decisions">
+          <button type="button" aria-pressed={state === 'active'} className={`pill ${state === 'active' ? 'active' : ''}`} onClick={() => setState('active')}>In progress</button>
+          <button type="button" aria-pressed={state === 'decided'} className={`pill ${state === 'decided' ? 'active' : ''}`} onClick={() => setState('decided')}>Decided</button>
         </div>
       </PageHeader>
       <Async query={query} empty={(d) => d.items.length === 0 ? (

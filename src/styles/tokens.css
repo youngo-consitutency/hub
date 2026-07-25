@@ -3,6 +3,7 @@
 :root {
   --bg-page: #F5F9F6;      --bg-card: #FFFFFF;
   --bg-raised: #EEF4F0;    --bg-popover: #FFFFFF;
+  --brand-surface: #FFFFFF;
   --text-1: #122019;       --text-2: #45584C;      --text-3: #5E7064;
   --border: rgba(18,32,25,.10);  --border-strong: rgba(18,32,25,.18);
   --accent: #059669;       --accent-hover: #047857; --on-accent: #FFFFFF;
@@ -31,6 +32,7 @@
 [data-theme="dark"] {
   --bg-page: #0A0F0C;      --bg-card: #111A14;
   --bg-raised: #16221B;    --bg-popover: #1C2B22;
+  --brand-surface: #FFFFFF;
   --text-1: #E8F2EC;       --text-2: #9DB4A6;      --text-3: #6B8073;
   --border: rgba(167,243,208,.08); --border-strong: rgba(167,243,208,.16);
   --accent: #34D399;       --accent-hover: #6EE7B7; --on-accent: #062B1F;

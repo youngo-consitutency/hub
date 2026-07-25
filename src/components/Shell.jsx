@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
-import { usePath, navigate } from '../lib/router.js'
+import { Brand } from './Brand.jsx'
+import { usePath } from '../lib/router.js'
 import { apiPost } from '../lib/api.js'
 import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
@@ -11,6 +12,7 @@ import {
   GraduationCap, Library, Building2, Shield, Briefcase,
   ClipboardCheck, PenTool, MessageSquare, Network, Award, Trophy,
   BrainCircuit,
+  UserCircle,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -34,14 +36,15 @@ export function Shell({ children }) {
   const verified = Boolean(account?.isVerified)
 
   const nav = useMemo(() => {
-    const sections = [
-      {
+    const sections = []
+    if (!verified) {
+      sections.push({
         section: 'Start', items: [
           { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
           { href: '/library', label: 'Library', icon: Library },
         ]
-      },
-    ]
+      })
+    }
     if (verified) {
       sections.push(
         { section: 'For you', items: [
@@ -109,7 +112,7 @@ export function Shell({ children }) {
       { href: '/', label: 'Home', icon: Home },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays },
       { href: '/groups', label: 'Groups', icon: Users },
-      { href: '/onboarding', label: 'Onboard', icon: GraduationCap },
+      { href: '/profile', label: 'Profile', icon: UserCircle },
     ]
     : [
       { href: '/onboarding', label: 'Onboard', icon: GraduationCap },
@@ -128,8 +131,9 @@ export function Shell({ children }) {
 
   return (
     <div className="shell">
+      <a className="skipLink" href="#main-content">Skip to main content</a>
       <nav className="sidebar" aria-label="Primary">
-        <A href={verified ? '/' : '/onboarding'} className="wordmark"><span className="branddot" />YOUNGO Hub</A>
+        <A href={verified ? '/' : '/onboarding'} className="wordmark" aria-label="YOUNGO Hub home"><Brand /></A>
         {verified && (
           <A href="/search" className="navItem"><Search size={18} strokeWidth={1.75} aria-hidden />Search<kbd className="kbd" style={{ marginLeft: 'auto' }}>⌘K</kbd></A>
         )}
@@ -137,24 +141,40 @@ export function Shell({ children }) {
           <div key={group.section}>
             <p className="navSection">{group.section}</p>
             {group.items.map(({ href, label, icon: Icon }) => (
-              <A key={href} href={href} className={`navItem ${isActive(path, href) ? 'active' : ''}`}>
+              <A
+                key={href}
+                href={href}
+                className={`navItem ${isActive(path, href) ? 'active' : ''}`}
+                aria-current={isActive(path, href) ? 'page' : undefined}
+              >
                 <Icon size={18} strokeWidth={1.75} aria-hidden />{label}
               </A>
             ))}
           </div>
         ))}
         <div className="sidebarFooter">
-          {account && (
-            <div className="accountChip" title={account.email}>
+          {account && verified && (
+            <A
+              href="/profile"
+              className={`accountChip ${isActive(path, '/profile') ? 'active' : ''}`}
+              title={account.email}
+              aria-current={isActive(path, '/profile') ? 'page' : undefined}
+            >
               <span className="accountName">{account.name}</span>
               <span className="metaMuted">
                 {account.isVerified ? 'Verified' : 'Pending course'}
                 {account.role === 'admin' ? ' · Admin' : ''}
                 {account.role === 'focal_point' ? ' · Focal Point' : ''}
               </span>
+            </A>
+          )}
+          {account && !verified && (
+            <div className="accountChip" title={account.email}>
+              <span className="accountName">{account.name}</span>
+              <span className="metaMuted">Pending course</span>
             </div>
           )}
-          <button className="navItem" onClick={signOut}>
+          <button type="button" className="navItem" onClick={signOut}>
             <LogOut size={18} strokeWidth={1.75} aria-hidden />Sign out
           </button>
         </div>
@@ -162,30 +182,32 @@ export function Shell({ children }) {
 
       <div className="content">
         <header className="topbar">
-          <A href={verified ? '/' : '/onboarding'} className="wordmark"><span className="branddot" />YOUNGO Hub</A>
+          <A href={verified ? '/' : '/onboarding'} className="wordmark" aria-label="YOUNGO Hub home"><Brand /></A>
           <div className="rowGap">
             {verified && <A href="/search" className="btn btn-ghost btn-sm" aria-label="Search"><Search size={20} strokeWidth={1.75} aria-hidden /></A>}
           </div>
         </header>
-        {!verified && (
-          <div className="noticeBanner noticeBannerWarn">
-            <span className="noticeDot" />
-            <div className="noticeCopy">
-              <p>Complete the membership course to unlock the platform</p>
+        <main id="main-content" tabIndex="-1">
+          {!verified && (
+            <div className="noticeBanner noticeBannerWarn">
+              <span className="noticeDot" />
+              <div className="noticeCopy">
+                <p>Complete the membership course to unlock the platform</p>
+              </div>
+              <A href="/onboarding/course" className="btn btn-primary btn-sm">Course</A>
             </div>
-            <A href="/onboarding/course" className="btn btn-primary btn-sm">Course</A>
-          </div>
-        )}
-        {path.startsWith('/cp') && <div className="workspaceContext workspaceContext-wg"><Briefcase size={16} aria-hidden />WG Contact Point workspace</div>}
-        {path.startsWith('/team/membership') && <div className="workspaceContext workspaceContext-membership"><ClipboardCheck size={16} aria-hidden />Membership Team workspace</div>}
-        {path.startsWith('/team/gys') && <div className="workspaceContext workspaceContext-gys"><PenTool size={16} aria-hidden />Global Youth Statement Policy workspace</div>}
-        {children}
+          )}
+          {path.startsWith('/cp') && <div className="workspaceContext workspaceContext-wg"><Briefcase size={16} aria-hidden />WG Contact Point workspace</div>}
+          {path.startsWith('/team/membership') && <div className="workspaceContext workspaceContext-membership"><ClipboardCheck size={16} aria-hidden />Membership Team workspace</div>}
+          {path.startsWith('/team/gys') && <div className="workspaceContext workspaceContext-gys"><PenTool size={16} aria-hidden />Global Youth Statement Policy workspace</div>}
+          {children}
+        </main>
       </div>
 
       {sheet && (
-        <div className="sheet" role="menu" aria-label="More navigation">
+        <div className="sheet" id="more-navigation" aria-label="More navigation">
           {more.map(({ href, label, icon: Icon }) => (
-            <A key={href} href={href} className="navItem" role="menuitem">
+            <A key={href} href={href} className="navItem">
               <Icon size={18} strokeWidth={1.75} aria-hidden />{label}
             </A>
           ))}
@@ -196,12 +218,23 @@ export function Shell({ children }) {
 
       <nav className="tabbar" aria-label="Primary mobile">
         {tabs.map(({ href, label, icon: Icon }) => (
-          <button key={href} className={`tab ${isActive(path, href) ? 'active' : ''}`} onClick={() => navigate(href)}>
+          <A
+            key={href}
+            href={href}
+            className={`tab ${isActive(path, href) ? 'active' : ''}`}
+            aria-current={isActive(path, href) ? 'page' : undefined}
+          >
             <Icon size={22} strokeWidth={1.75} aria-hidden />{label}
-          </button>
+          </A>
         ))}
         {verified && (
-          <button className={`tab ${sheet ? 'active' : ''}`} onClick={() => setSheet((s) => !s)}>
+          <button
+            type="button"
+            className={`tab ${sheet ? 'active' : ''}`}
+            onClick={() => setSheet((s) => !s)}
+            aria-expanded={sheet}
+            aria-controls="more-navigation"
+          >
             <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />More
           </button>
         )}

@@ -16,9 +16,9 @@ export function Submissions() {
         title="Submissions"
         description="Open drafting processes and YOUNGO’s submitted positions."
       >
-        <div className="pillRow">
-          <button className={`pill ${state === 'open' ? 'active' : ''}`} onClick={() => setState('open')}>Open</button>
-          <button className={`pill ${state === 'archive' ? 'active' : ''}`} onClick={() => setState('archive')}>Archive</button>
+        <div className="pillRow" aria-label="Filter submissions">
+          <button type="button" aria-pressed={state === 'open'} className={`pill ${state === 'open' ? 'active' : ''}`} onClick={() => setState('open')}>Open</button>
+          <button type="button" aria-pressed={state === 'archive'} className={`pill ${state === 'archive' ? 'active' : ''}`} onClick={() => setState('archive')}>Archive</button>
         </div>
       </PageHeader>
       <Async query={query} empty={(d) => d.items.length === 0 ? (

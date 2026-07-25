@@ -53,6 +53,7 @@ mode requires both `DATABASE_URL` and `APP_ORIGIN`.
 
 ```bash
 npm run dev-all       # frontend and API
+npm run content:check # check fixture content
 npm test              # tests
 npm run lint          # lint the code
 npm run build         # build the frontend
@@ -132,10 +133,16 @@ src/                 React frontend
 server/              Express API
 migrations/          PostgreSQL migrations
 data/fixtures.json   Demo public content
+docs/EDITING_CONTENT.md  Plain-language content editing guide
 scripts/             Setup and maintenance scripts
 tests/               Node test suite
 openspec/            Product change notes
 ```
+
+Most public content is still fixture-backed. The
+[`docs/EDITING_CONTENT.md`](docs/EDITING_CONTENT.md) guide explains how to
+change it, and `npm run content:check` catches common mistakes before a pull
+request.
 
 Shared colours and spacing belong in `src/styles/tokens.css`. Reusable UI rules
 belong in `src/styles/app.css`. Check `src/components/ui.jsx` before adding
@@ -159,7 +166,7 @@ details.
 ## Known limitations
 
 - Most public content is still fixture-backed.
-- There is no editor or publishing workflow for that content.
+- Content changes still go through Git; there is no in-app editor yet.
 - Reset and invitation links still need a real email service.
 - Registration asks for more information than it should.
 - PostgreSQL permission checks and simultaneous invite acceptance need more

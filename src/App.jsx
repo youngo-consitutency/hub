@@ -37,6 +37,7 @@ const GysPolicyTeam = lazyPage(() => import('./pages/GysPolicyTeam.jsx'), 'GysPo
 const StaffPoints = lazyPage(() => import('./pages/StaffPoints.jsx'), 'StaffPoints')
 const Recognition = lazyPage(() => import('./pages/Recognition.jsx'), 'Recognition')
 const Intelligence = lazyPage(() => import('./pages/Intelligence.jsx'), 'Intelligence')
+const Profile = lazyPage(() => import('./pages/Profile.jsx'), 'Profile')
 
 // Paths allowed before membership course verification
 const PRE_VERIFY = [
@@ -61,6 +62,7 @@ const ROUTES = [
   [/^\/staff\/points$/, StaffPoints],
   [/^\/recognition$/, Recognition],
   [/^\/intelligence$/, Intelligence],
+  [/^\/profile$/, Profile],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],

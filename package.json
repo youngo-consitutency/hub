@@ -14,10 +14,11 @@
     "start": "node server/index.js",
     "migrate": "node scripts/migrate.js",
     "bootstrap-admin": "node scripts/bootstrap-admin.js",
+    "content:check": "node scripts/check-content.js",
     "screenshots": "node scripts/capture-readme-screenshots.mjs",
     "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
     "lint": "eslint .",
-    "check": "npm run lint && npm test && npm run build"
+    "check": "npm run content:check && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
