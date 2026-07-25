@@ -24,6 +24,15 @@ import { Workspace } from './pages/Workspace.jsx'
 import { CpManage } from './pages/CpManage.jsx'
 import { NgoPortal } from './pages/NgoPortal.jsx'
 import { Admin } from './pages/Admin.jsx'
+import { CpOverview } from './pages/CpOverview.jsx'
+import { FocalPoint } from './pages/FocalPoint.jsx'
+import { Messages } from './pages/Messages.jsx'
+import { MembershipTeam } from './pages/MembershipTeam.jsx'
+import { GysPolicyTeam } from './pages/GysPolicyTeam.jsx'
+import { StaffPoints } from './pages/StaffPoints.jsx'
+import { Recognition } from './pages/Recognition.jsx'
+import { Intelligence } from './pages/Intelligence.jsx'
+import { Privacy } from './pages/Privacy.jsx'
 import { Empty } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
 
@@ -31,14 +40,25 @@ import { Compass, Lock } from 'lucide-react'
 const PRE_VERIFY = [
   /^\/onboarding/,
   /^\/library/,
+  /^\/recognition/,
+  /^\/privacy/,
 ]
 
 const ROUTES = [
   [/^\/onboarding\/course$/, Course],
   [/^\/onboarding$/, Onboarding],
   [/^\/library$/, Library],
+  [/^\/privacy$/, Privacy],
   [/^\/workspace\/(.+)$/, Workspace],
+  [/^\/messages$/, Messages],
+  [/^\/focal$/, FocalPoint],
+  [/^\/cp$/, CpOverview],
   [/^\/cp\/(.+)$/, CpManage],
+  [/^\/team\/membership$/, MembershipTeam],
+  [/^\/team\/gys$/, GysPolicyTeam],
+  [/^\/staff\/points$/, StaffPoints],
+  [/^\/recognition$/, Recognition],
+  [/^\/intelligence$/, Intelligence],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],
@@ -84,7 +104,7 @@ function AppRoutes() {
   const Page = match ? match[1] : NotFound
   const slug = match ? (path.match(match[0])?.[1] ?? null) : null
 
-  const verified = account?.isVerified || account?.role === 'admin'
+  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
 
   useEffect(() => {
     // After first login/register while unverified, land on onboarding if on home
@@ -101,8 +121,28 @@ function AppRoutes() {
   if (path.startsWith('/admin') && account && account.role !== 'admin') {
     return <Shell><Empty icon={Lock} title="Admin only" body="An existing verified account must be promoted with the explicit bootstrap command." /></Shell>
   }
-  // NGO portal: approved organisation owners, invited seat holders, or admin
-  if (path.startsWith('/ngo') && account && account.role !== 'admin' && !account.access?.ngo) {
+  if (path.startsWith('/staff/points') && account) {
+    const canAward = account.role === 'admin'
+      || account.role === 'focal_point'
+      || account.teamRoles?.includes('membership_team')
+      || account.access?.teamRoles?.includes('membership_team')
+      || account.access?.capabilities?.includes('points.award')
+    if (!canAward) {
+      return <Shell><Empty icon={Lock} title="Staff only" body="Contribution points are awarded by admins, Focal Points, or Membership Team." /></Shell>
+    }
+  }
+  if (path.startsWith('/focal') && account && !['admin', 'focal_point'].includes(account.role)) {
+    return <Shell><Empty icon={Lock} title="Focal Points only" body="This workspace is for constituency Focal Points and admins." /></Shell>
+  }
+  // NGO portal: approved organisation owners, invited seat holders, or admin.
+  if (
+    path.startsWith('/ngo') &&
+    account &&
+    !account.isNgo &&
+    account.role !== 'admin' &&
+    account.role !== 'ngo_admin' &&
+    !account.access?.ngo
+  ) {
     // Allow accept route for any signed-in user
     if (!path.startsWith('/ngo/accept')) {
       return <Shell><Empty icon={Lock} title="NGO accounts only" body="Register as an organisation or accept a seat invite." /></Shell>
@@ -110,9 +150,23 @@ function AppRoutes() {
   }
   if (path.startsWith('/cp/') && account && account.role !== 'admin') {
     const requestedWg = path.split('/')[2]
-    if (!account.access?.managedWgs?.includes(requestedWg)) {
+    const managesRequestedWg = account.access?.managedWgs?.includes(requestedWg)
+      || account.access?.wgAssignments?.some((item) => item.wgSlug === requestedWg)
+    if (!managesRequestedWg) {
       return <Shell><Empty icon={Lock} title="WG Contact Points only" body="A contact or lead assignment for this working group is required." /></Shell>
     }
+  }
+  const access = account?.access
+  const hasCpWorkspace = account?.role === 'admin' || account?.isWgContact || access?.wgAssignments?.length > 0
+    || access?.managedWgs?.length > 0
+  if (path === '/cp' && account && access && !hasCpWorkspace) {
+    return <Shell><Empty icon={Lock} title="WG Contact Points only" body="Ask an admin to grant the WG CP role." /></Shell>
+  }
+  if (path.startsWith('/team/membership') && account && access && !access.teamRoles?.includes('membership_team')) {
+    return <Shell><Empty icon={Lock} title="Membership Team only" body="Ask an admin to add this team responsibility to your account." /></Shell>
+  }
+  if (path.startsWith('/team/gys') && account && access && !access.teamRoles?.includes('gys_policy_team')) {
+    return <Shell><Empty icon={Lock} title="GYS Policy Team only" body="Ask an admin to add this team responsibility to your account." /></Shell>
   }
 
   return (

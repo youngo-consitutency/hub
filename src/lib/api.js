@@ -9,7 +9,7 @@ function authHeaders(extra = {}) {
 }
 
 export async function apiGet(path) {
-  const res = await fetch(`/api${path}`, { headers: authHeaders() })
+  const res = await fetch(`/api${path}`, { headers: authHeaders(), credentials: 'same-origin' })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     // Only drop the local session when /me says it is invalid — not on login failures.
@@ -23,10 +23,11 @@ export async function apiGet(path) {
   return res.json()
 }
 
-export async function apiPost(path, body) {
+export async function apiPost(path, body, extraHeaders = {}) {
   const res = await fetch(`/api${path}`, {
     method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    credentials: 'same-origin',
+    headers: authHeaders({ 'Content-Type': 'application/json', ...extraHeaders }),
     body: JSON.stringify(body ?? {}),
   })
   const data = await res.json().catch(() => ({}))
@@ -43,6 +44,7 @@ export async function apiPost(path, body) {
 export async function apiPatch(path, body) {
   const res = await fetch(`/api${path}`, {
     method: 'PATCH',
+    credentials: 'same-origin',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body ?? {}),
   })

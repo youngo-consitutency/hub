@@ -1,0 +1,270 @@
+/**
+ * Service Worker Registration and Push Notification Management
+ * Import this in main.jsx or App.jsx to enable PWA features
+ */
+
+export async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    console.log('[PWA] Service Worker not supported');
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/'
+    });
+
+    console.log('[PWA] Service Worker registered:', registration.scope);
+
+    // Handle updates
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version available
+            if (confirm('A new version of YOUNGO Hub is available. Reload to update?')) {
+              window.location.reload();
+            }
+          }
+        });
+      }
+    });
+
+    // Check for updates periodically
+    setInterval(() => registration.update(), 1000 * 60 * 60); // Every hour
+
+    return registration;
+  } catch (error) {
+    console.error('[PWA] Service Worker registration failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Convert base64 string to Uint8Array for VAPID key
+ */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+/**
+ * Subscribe to push notifications
+ * @param {string} vapidPublicKey - VAPID public key from backend
+ */
+export async function subscribeToPush(vapidPublicKey) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('[Push] Push not supported');
+    return { success: false, error: 'Push not supported' };
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+
+    // Check existing subscription
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      console.log('[Push] Existing subscription found');
+      return { success: true, subscription, isNew: false };
+    }
+
+    // Create new subscription
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+    });
+
+    console.log('[Push] New subscription created:', subscription);
+
+    // Send subscription to backend
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ subscription: subscription.toJSON() })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save subscription on server');
+    }
+
+    return { success: true, subscription, isNew: true };
+  } catch (error) {
+    console.error('[Push] Subscription failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Unsubscribe from push notifications
+ */
+export async function unsubscribeFromPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { success: false, error: 'Push not supported' };
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      // Notify backend
+      await fetch('/api/push/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ endpoint: subscription.endpoint })
+      });
+
+      await subscription.unsubscribe();
+      console.log('[Push] Unsubscribed successfully');
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('[Push] Unsubscribe failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Check current push subscription status
+ */
+export async function getPushSubscriptionStatus() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { supported: false, subscribed: false };
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    const permission = Notification.permission;
+
+    return {
+      supported: true,
+      subscribed: !!subscription,
+      permission,
+      subscription: subscription ? {
+        endpoint: subscription.endpoint,
+        expirationTime: subscription.expirationTime
+      } : null
+    };
+  } catch (error) {
+    console.error('[Push] Status check failed:', error);
+    return { supported: true, subscribed: false, error: error.message };
+  }
+}
+
+/**
+ * Request notification permission
+ */
+export async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    return { granted: false, error: 'Notifications not supported' };
+  }
+
+  if (Notification.permission === 'granted') {
+    return { granted: true };
+  }
+
+  if (Notification.permission === 'denied') {
+    return { granted: false, error: 'Permission denied' };
+  }
+
+  const permission = await Notification.requestPermission();
+  return { granted: permission === 'granted', permission };
+}
+
+/**
+ * Check if app is running in standalone mode (PWA)
+ */
+export function isPWA() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+/**
+ * Check if app can be installed (beforeinstallprompt event)
+ */
+export function setupInstallPrompt(onPrompt) {
+  let deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    onPrompt?.(true);
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    onPrompt?.(false);
+  });
+
+  return {
+    prompt: async () => {
+      if (!deferredPrompt) return { success: false, error: 'No install prompt available' };
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      return { success: outcome === 'accepted' };
+    },
+    isAvailable: () => !!deferredPrompt
+  };
+}
+
+/**
+ * Initialize PWA features
+ * Call this once in your app entry point
+ */
+export async function initPWA(vapidPublicKey) {
+  console.log('[PWA] Initializing...');
+
+  // Register service worker
+  const registration = await registerServiceWorker();
+
+  if (!registration) {
+    console.log('[PWA] Service Worker registration skipped');
+    return;
+  }
+
+  // Check notification permission
+  const permStatus = await requestNotificationPermission();
+  console.log('[PWA] Notification permission:', permStatus);
+
+  // If permission granted and we have VAPID key, subscribe to push
+  if (permStatus.granted && vapidPublicKey) {
+    const subResult = await subscribeToPush(vapidPublicKey);
+    console.log('[PWA] Push subscription:', subResult);
+  }
+
+  // Setup install prompt
+  const installPrompt = setupInstallPrompt((available) => {
+    // Emit custom event for UI to listen to
+    window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }));
+  });
+
+  return {
+    registration,
+    installPrompt,
+    isStandalone: isPWA()
+  };
+}
+
+export default {
+  registerServiceWorker,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getPushSubscriptionStatus,
+  requestNotificationPermission,
+  isPWA,
+  setupInstallPrompt,
+  initPWA
+};

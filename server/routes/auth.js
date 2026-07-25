@@ -7,6 +7,7 @@ import {
   getSessionAccount,
   destroySession,
 } from '../lib/accounts.js'
+import { getPool } from '../lib/db.js'
 import {
   createPasswordResetToken,
   consumePasswordResetToken,
@@ -14,18 +15,13 @@ import {
 } from '../lib/passwordReset.js'
 import { appOrigin } from '../lib/config.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { bearerToken, setSessionCookie, clearSessionCookie } from '../lib/security.js'
 
 export const authRouter = Router()
 const registerLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
 const loginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 })
 const resetRequestLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
 const resetConsumeLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 })
-
-function bearerToken(req) {
-  const h = req.headers.authorization || ''
-  if (h.startsWith('Bearer ')) return h.slice(7).trim()
-  return String(req.headers['x-session-token'] || '').trim() || null
-}
 
 // No caching for auth endpoints
 authRouter.use((req, res, next) => {
@@ -56,8 +52,25 @@ authRouter.post('/register', registerLimit, async (req, res) => {
       })
     }
 
-    const createdAccount = await createAccount(result.data)
-    const session = await createSession(createdAccount.id)
+    const pool = getPool()
+    let session
+    if (pool) {
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        const createdAccount = await createAccount(result.data, client)
+        session = await createSession(createdAccount.id, client)
+        await client.query('COMMIT')
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
+    } else {
+      const createdAccount = await createAccount(result.data)
+      session = await createSession(createdAccount.id)
+    }
     const account = await getSessionAccount(session.token)
     console.log(JSON.stringify({
       event: 'hub_register',
@@ -66,7 +79,8 @@ authRouter.post('/register', registerLimit, async (req, res) => {
       country: account.country,
       at: new Date().toISOString(),
     }))
-    res.status(201).json({ ok: true, account, token: session.token, expiresAt: session.expiresAt })
+    setSessionCookie(res, session.token, session.expiresAt)
+    res.status(201).json({ ok: true, token: session.token, account, expiresAt: session.expiresAt })
   } catch (err) {
     if (err.code === 'email_taken') {
       return res.status(409).json({
@@ -110,7 +124,8 @@ authRouter.post('/login', loginLimit, async (req, res) => {
       track: account.membershipTrack,
       at: new Date().toISOString(),
     }))
-    res.json({ ok: true, account, token: session.token, expiresAt: session.expiresAt })
+    setSessionCookie(res, session.token, session.expiresAt)
+    res.json({ ok: true, token: session.token, account, expiresAt: session.expiresAt })
   } catch (err) {
     console.error('auth/login failed:', err.message)
     res.status(500).json({ error: { code: 'server_error', message: 'Could not sign you in — please try again.' } })
@@ -120,6 +135,7 @@ authRouter.post('/login', loginLimit, async (req, res) => {
 authRouter.post('/logout', async (req, res) => {
   try {
     await destroySession(bearerToken(req))
+    clearSessionCookie(res)
     res.json({ ok: true })
   } catch (err) {
     console.error('auth/logout failed:', err.message)

@@ -16,4 +16,10 @@ export default [
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Service worker runs in its own global scope — `clients`, `skipWaiting`,
+    // and friends are not browser-window globals.
+    files: ['public/sw.js'],
+    languageOptions: { globals: { ...globals.serviceworker } },
+  },
 ]

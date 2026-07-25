@@ -9,6 +9,7 @@ import {
   directoryView,
 } from '../lib/publicViews.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { listPublicRecognitionBoard, RECOGNITION_TIERS } from '../lib/points.js'
 
 export const publicRouter = Router()
 const gysSignupLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 6 })
@@ -33,6 +34,21 @@ publicRouter.use(async (req, res, next) => {
 })
 
 const viewOptions = (req) => ({ includePrivate: Boolean(req.publicAccount) })
+
+/** Public NGO contribution recognition board (names + points only). */
+publicRouter.get('/recognition', async (req, res) => {
+  try {
+    const items = await listPublicRecognitionBoard({ limit: Number(req.query.limit) || 50 })
+    res.json({
+      items,
+      tiers: RECOGNITION_TIERS,
+      note: 'Hub recognition for verified NGO contributions (badge support, UNFCCC submissions). Not an official UNFCCC credential.',
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: { code: 'server_error', message: 'Could not load recognition board.' } })
+  }
+})
 
 publicRouter.get('/feed', (req, res) => {
   res.json(feedView(store.getFeed(), viewOptions(req)))

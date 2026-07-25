@@ -1,6 +1,7 @@
 import { useApi } from '../lib/api.js'
-import { Async, Empty, PageHeader } from '../components/ui.jsx'
+import { A, Async, Empty, PageHeader } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
+import { useAccount } from '../lib/accountContext.jsx'
 import { AtSign } from 'lucide-react'
 
 const CONTACT_GROUP = {
@@ -12,6 +13,8 @@ const CONTACT_GROUP = {
 
 export function Directory() {
   const query = useApi('/directory')
+  const { account } = useAccount()
+  const verified = account?.isVerified || ['admin', 'focal_point'].includes(account?.role)
   return (
     <div>
       <PageHeader
@@ -19,6 +22,16 @@ export function Directory() {
         title="Directory"
         description="Public role addresses and member-only contact details."
       />
+      {verified && (
+        <div className="liveBanner" style={{ marginTop: 12 }}>
+          <span className="liveDot" />
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 500, fontSize: 14 }}>Need to coordinate directly?</p>
+            <p className="meta">Use Messages for contact points and mandate holders.</p>
+          </div>
+          <A href="/messages" className="btn btn-primary btn-sm">Open messages</A>
+        </div>
+      )}
       <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null}>
         {(data) => {
           const groups = {}

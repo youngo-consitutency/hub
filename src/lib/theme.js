@@ -1,13 +1,18 @@
 export const THEME_STORAGE_KEY = 'youngo-hub:theme-override'
+const THEMES = new Set(['light', 'dark'])
 
-export function systemTheme(matchesDark) {
+export function systemTheme(matchesDark = (
+  typeof window !== 'undefined'
+    ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    : true
+)) {
   return matchesDark ? 'dark' : 'light'
 }
 
-export function storedTheme(storage) {
+export function storedTheme(storage = globalThis.localStorage) {
   try {
     const value = storage.getItem(THEME_STORAGE_KEY)
-    return value === 'light' || value === 'dark' ? value : null
+    return THEMES.has(value) ? value : null
   } catch {
     return null
   }
@@ -18,7 +23,32 @@ export function resolvedTheme({ override, matchesDark }) {
 }
 
 export function applyTheme(theme, root = document.documentElement) {
-  root.dataset.theme = theme
+  const next = THEMES.has(theme) ? theme : systemTheme()
+  root.dataset.theme = next
   root.ownerDocument?.querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#0A0F0C' : '#F5F9F6')
+    ?.setAttribute('content', next === 'dark' ? '#0A0F0C' : '#F5F9F6')
+  return next
+}
+
+export function getSavedTheme() {
+  return storedTheme()
+}
+
+export function getInitialTheme() {
+  return resolvedTheme({
+    override: getSavedTheme(),
+    matchesDark: typeof window !== 'undefined'
+      ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
+      : true,
+  })
+}
+
+export function saveTheme(theme) {
+  const next = applyTheme(theme)
+  localStorage.setItem(THEME_STORAGE_KEY, next)
+  return next
+}
+
+export function hasChosenTheme() {
+  return Boolean(getSavedTheme())
 }

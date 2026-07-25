@@ -2,7 +2,7 @@ import { useApi } from '../lib/api.js'
 import { A, Async, Section, Empty, PageHeader } from '../components/ui.jsx'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Radio, CalendarOff, Megaphone, Users } from 'lucide-react'
+import { Radio, CalendarOff, Megaphone, Users, Trophy } from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
@@ -46,31 +46,41 @@ export function Home() {
               </Section>
             )}
 
-            <Section label="This week" action={<A href="/calendar" className="metaMuted">Full calendar →</A>}>
+            <Section label="This week" action={<A href="/calendar" className="metaMuted">Calendar →</A>}>
               {data.week.length
-                ? <div className="stackSm">{data.week.map((e) => <EventCard key={e.slug} event={e} />)}</div>
-                : <Empty icon={CalendarOff} title="Nothing scheduled this week" body="Subscribe to the calendar and you’ll never miss a call." />}
+                ? <div className="stackSm">{data.week.slice(0, 4).map((e) => <EventCard key={e.slug} event={e} />)}</div>
+                : <Empty icon={CalendarOff} title="Nothing scheduled this week" body="Subscribe from Calendar so new calls show up automatically." />}
             </Section>
 
             {data.closing.length > 0 && (
-              <Section label="Closing soon" action={<A href="/submissions" className="metaMuted">All submissions →</A>}>
-                <div className="stackSm">{data.closing.map((x) => <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />)}</div>
+              <Section label="Closing soon" action={<A href="/submissions" className="metaMuted">All →</A>}>
+                <div className="stackSm">{data.closing.slice(0, 3).map((x) => <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />)}</div>
               </Section>
             )}
 
             {data.coys.length > 0 && (
-              <Section label="COYs" action={<A href="/coys" className="metaMuted">All COYs →</A>}>
-                <div className="hscroll">{data.coys.map((c) => <CoyCard key={c.slug} coy={c} />)}</div>
+              <Section label="COYs" action={<A href="/coys" className="metaMuted">All →</A>}>
+                <div className="hscroll">{data.coys.slice(0, 4).map((c) => <CoyCard key={c.slug} coy={c} />)}</div>
               </Section>
             )}
           </>
         )}
       </Async>
 
-      <Section label="Find your working group" action={<A href="/groups" className="metaMuted">Browse all →</A>}>
+      <Section label="Working groups" action={<A href="/groups" className="metaMuted">Browse →</A>}>
         <Async query={groups} skeletons={2} empty={(d) => d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" body="Groups will appear here once they’re set up." /> : null}>
-          {(data) => <div className="grid2">{data.items.slice(0, 4).map((g) => <GroupCard key={g.slug} group={g} />)}</div>}
+          {(data) => <div className="grid2">{data.items.slice(0, 2).map((g) => <GroupCard key={g.slug} group={g} />)}</div>}
         </Async>
+      </Section>
+
+      <Section label="NGO recognition" action={<A href="/recognition" className="metaMuted">Board →</A>}>
+        <A href="/recognition" className="card cardTight rowGap">
+          <Trophy size={18} strokeWidth={1.75} aria-hidden color="var(--accent)" />
+          <div>
+            <h3>See which organisations are supporting badges &amp; submissions</h3>
+            <p className="meta" style={{ marginTop: 4 }}>Staff-verified contribution points for UNFCCC-facing work.</p>
+          </div>
+        </A>
       </Section>
     </div>
   )

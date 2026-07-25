@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
-import { publicAccount, findAccountByEmail } from './accounts.js'
+import { publicAccount, findAccountByEmail, findAccountById } from './accounts.js'
 import {
   newInviteSecret,
   inviteDigest,
@@ -29,6 +29,12 @@ function readJson(file, fallback) {
 function writeJson(file, data) {
   mkdirSync(path.dirname(file), { recursive: true })
   writeFileSync(file, JSON.stringify(data, null, 2))
+}
+
+// Kept for newer route modules. Administrator status is changed only by the
+// explicit bootstrap/admin workflow, never implicitly from environment email.
+export async function ensureAdminRole(account) {
+  return account
 }
 
 export async function setAccountFields(id, fields) {
@@ -58,8 +64,12 @@ export async function setAccountFields(id, fields) {
 
 export async function completeCourse(accountId, { score }) {
   const now = new Date().toISOString()
+  const account = await findAccountById(accountId)
+  const membershipStatus = account?.membershipTrack === 'constituency_work' ? 'awaiting_onboarding' : 'course_passed'
   return setAccountFields(accountId, {
     member_status: 'verified',
+    hub_access_status: 'active',
+    membership_status: membershipStatus,
     course_passed_at: now,
     course_score: score,
     verified_at: now,
@@ -72,8 +82,10 @@ export async function listAccountsForAdmin() {
   if (pool) {
     const { rows } = await pool.query(
       `SELECT id, email, name, first_name, last_name, entity_type, organization_name,
-              organization_type, is_unfccc_admitted, member_status, role, region, country,
+              organization_type, is_unfccc_admitted, member_status, role, team_roles, region, country,
               nationality, wg_interests, course_passed_at, course_score, verified_at,
+              membership_track, constituency_work_status, hub_access_status, membership_status,
+              onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
               created_at, last_login_at, phone
        FROM hub_accounts
        ORDER BY created_at DESC
@@ -298,11 +310,18 @@ export function publicSeat(row) {
   }
 }
 
-/** Resolve the caller's active organisation and scoped seat role. */
-export async function resolveOrgContext(account) {
+/** Resolve organization scope and seat-level permissions. */
+export async function resolveOrgContext(account, requestedOrgId = null) {
   if (!account) return null
   if (account.role === 'admin') {
-    return { orgAccountId: null, seatRole: 'owner', isAdmin: true }
+    if (!requestedOrgId) return null
+    return {
+      orgAccountId: String(requestedOrgId),
+      seatRole: 'owner',
+      isAdmin: true,
+      canManageRequests: true,
+      canManageSeats: true,
+    }
   }
   const pool = getPool()
   if (pool) {
@@ -318,6 +337,8 @@ export async function resolveOrgContext(account) {
       orgAccountId: rows[0].org_account_id,
       seatRole: rows[0].seat_role,
       isAdmin: false,
+      canManageRequests: ['owner', 'representative'].includes(rows[0].seat_role),
+      canManageSeats: rows[0].seat_role === 'owner',
     }
   }
   const seats = readJson(seatsPath, [])
@@ -327,7 +348,13 @@ export async function resolveOrgContext(account) {
     orgAccountId: seat.org_account_id,
     seatRole: seat.seat_role,
     isAdmin: false,
+    canManageRequests: ['owner', 'representative'].includes(seat.seat_role),
+    canManageSeats: seat.seat_role === 'owner',
   }
+}
+
+export async function resolveOrgAccountId(account) {
+  return (await resolveOrgContext(account))?.orgAccountId || null
 }
 
 export async function listNgoSeats(orgAccountId) {
@@ -352,14 +379,14 @@ export async function listNgoSeats(orgAccountId) {
     .map(publicSeat)
 }
 
-export async function ensureOwnerSeat(orgAccount) {
+export async function ensureOwnerSeat(orgAccount, client = null) {
   if (
     !orgAccount ||
     orgAccount.entityType !== 'organization' ||
     !orgAccount.isVerified ||
     !['ngo_admin', 'admin'].includes(orgAccount.role)
   ) return null
-  const pool = getPool()
+  const pool = client || getPool()
   if (pool) {
     const existing = await pool.query(
       `SELECT * FROM ngo_seats
@@ -525,6 +552,8 @@ export async function acceptNgoInvite(token, account) {
   const list = readJson(seatsPath, [])
   const row = list.find((seat) => inviteMatches(seat, token, normalizedEmail))
   if (!row) return null
+  if (row.invite_expires_at && new Date(row.invite_expires_at) <= new Date()) return null
+  if (String(row.email).toLowerCase() !== String(account.email).toLowerCase()) return null
   row.status = 'active'
   row.member_account_id = account.id
   row.name = row.name || account.name

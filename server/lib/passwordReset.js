@@ -6,12 +6,12 @@ import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
 import { findAccountByEmail } from './accounts.js'
 import { hashPassword } from './password.js'
+import { destroyAllSessions } from './accounts.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
 const tokensPath = path.join(dataDir, 'password-reset-tokens.json')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
-const sessionsPath = path.join(dataDir, 'hub-sessions.json')
 
 const TTL_MS = 60 * 60 * 1000 // 1 hour
 
@@ -165,8 +165,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
   accounts[idx].password_hash = hash
   accounts[idx].password_salt = salt
   writeJson(accountsPath, accounts)
-  const sessions = readJson(sessionsPath, []).filter((session) => session.account_id !== row.account_id)
-  writeJson(sessionsPath, sessions)
+  await destroyAllSessions(row.account_id)
   return { accountId: row.account_id }
 }
 

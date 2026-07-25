@@ -6,31 +6,13 @@ import { publicRouter } from './routes/public.js'
 import { icsRouter } from './routes/ics.js'
 import { authRouter } from './routes/auth.js'
 import { memberRouter } from './routes/member.js'
+import { intelligenceRouter } from './routes/intelligence.js'
+import { pushRouter } from './routes/push.js'
 import { appOrigin } from './lib/config.js'
+import { requestSecurity } from './lib/security.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const defaultDist = path.join(here, '../dist')
-
-function securityHeaders(req, res, next) {
-  res.set({
-    'Content-Security-Policy': [
-      "default-src 'self'",
-      "script-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
-      "font-src 'self' data:",
-      "img-src 'self' data: https:",
-      "connect-src 'self'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-    ].join('; '),
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  })
-  next()
-}
 
 function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
   if (err?.type === 'entity.parse.failed') {
@@ -55,8 +37,11 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
 
   app.disable('x-powered-by')
   if (env.NODE_ENV === 'production') app.set('trust proxy', 1)
-  app.use(cors({ origin: env.APP_ORIGIN ? appOrigin(env) : true }))
-  app.use(securityHeaders)
+  app.use(requestSecurity)
+  app.use(cors({
+    origin: env.APP_ORIGIN ? appOrigin(env) : true,
+    credentials: true,
+  }))
   app.use(express.json({ limit: '256kb' }))
 
   app.get('/healthz', (req, res) => {
@@ -71,6 +56,8 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   })
   app.use('/api/auth', authRouter)
   app.use('/api/member', memberRouter)
+  app.use('/api/intelligence', intelligenceRouter)
+  app.use('/api/push', pushRouter)
   app.use('/api', publicRouter)
   app.use('/ics', icsRouter)
 
