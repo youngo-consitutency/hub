@@ -1,9 +1,39 @@
 import { Router } from 'express'
 import * as store from '../lib/store.js'
-import { rateLimit } from '../lib/security.js'
+import { getSessionAccount } from '../lib/accounts.js'
+import {
+  eventView,
+  groupView,
+  feedView,
+  searchView,
+  directoryView,
+} from '../lib/publicViews.js'
+import { createRateLimiter } from '../lib/rateLimit.js'
 import { listPublicRecognitionBoard, RECOGNITION_TIERS } from '../lib/points.js'
 
 export const publicRouter = Router()
+const gysSignupLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 6 })
+
+function bearerToken(req) {
+  const header = req.headers.authorization || ''
+  if (header.startsWith('Bearer ')) return header.slice(7).trim()
+  return String(req.headers['x-session-token'] || '').trim() || null
+}
+
+publicRouter.use(async (req, res, next) => {
+  try {
+    const account = await getSessionAccount(bearerToken(req))
+    if (account?.isVerified) {
+      req.publicAccount = account
+      res.set('Cache-Control', 'no-store')
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
+
+const viewOptions = (req) => ({ includePrivate: Boolean(req.publicAccount) })
 
 /** Public NGO contribution recognition board (names + points only). */
 publicRouter.get('/recognition', async (req, res) => {
@@ -21,17 +51,20 @@ publicRouter.get('/recognition', async (req, res) => {
 })
 
 publicRouter.get('/feed', (req, res) => {
-  res.json(store.getFeed())
+  res.json(feedView(store.getFeed(), viewOptions(req)))
 })
 
 publicRouter.get('/events', (req, res) => {
-  res.json({ items: store.listEvents({ type: req.query.type }) })
+  res.json({
+    items: store.listEvents({ type: req.query.type })
+      .map((event) => eventView(event, viewOptions(req))),
+  })
 })
 
 publicRouter.get('/events/:slug', (req, res) => {
   const event = store.getEvent(req.params.slug)
   if (!event) return res.status(404).json({ error: { code: 'not_found', message: 'Unknown event' } })
-  res.json(event)
+  res.json(eventView(event, viewOptions(req)))
 })
 
 publicRouter.get('/submissions', (req, res) => {
@@ -65,17 +98,23 @@ publicRouter.get('/coys/:slug', (req, res) => {
 })
 
 publicRouter.get('/groups', (req, res) => {
-  res.json({ items: store.listGroups() })
+  res.json({ items: store.listGroups().map((group) => groupView(group, viewOptions(req))) })
 })
 
 publicRouter.get('/groups/:slug', (req, res) => {
   const group = store.getGroup(req.params.slug)
   if (!group) return res.status(404).json({ error: { code: 'not_found', message: 'Unknown working group' } })
-  res.json(group)
+  res.json(groupView(group, viewOptions(req)))
 })
 
 publicRouter.get('/directory', (req, res) => {
-  res.json({ items: store.listDirectory({ member: false }) })
+  const includePrivate = Boolean(req.publicAccount)
+  res.json({
+    items: directoryView(
+      store.listDirectory({ member: includePrivate }),
+      { includePrivate },
+    ),
+  })
 })
 
 publicRouter.get('/gys', (req, res) => {
@@ -88,7 +127,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 // Public GYS 2026 participation signup. Honeypot + length caps in lieu of a captcha
 // (05 §4.7). Logs non-PII only (country/org) per 05 §7 — never names/emails.
-publicRouter.post('/gys/signup', rateLimit({ name: 'gys-signup', max: 8, windowMs: 60 * 60_000 }), async (req, res) => {
+publicRouter.post('/gys/signup', gysSignupLimit, async (req, res) => {
   const b = req.body || {}
   if (b.website) return res.status(201).json({ ok: true }) // honeypot: bots fill this; feign success
 
@@ -119,5 +158,5 @@ publicRouter.post('/gys/signup', rateLimit({ name: 'gys-signup', max: 8, windowM
 })
 
 publicRouter.get('/search', (req, res) => {
-  res.json(store.search(String(req.query.q || '')))
+  res.json(searchView(store.search(String(req.query.q || '')), viewOptions(req)))
 })

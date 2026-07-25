@@ -60,6 +60,17 @@ describe('push subscription store', () => {
     assert.ok(!a.some((r) => r.endpoint === 'https://push.example/b1'))
   })
 
+  it('moves a shared device endpoint to the account currently using it', async () => {
+    const endpoint = 'https://push.example/shared-device'
+    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub(endpoint) })
+    await saveSubscription({ accountId: ACCOUNT_B, subscription: sub(endpoint) })
+    const a = await listSubscriptionsForAccounts([ACCOUNT_A])
+    const b = await listSubscriptionsForAccounts([ACCOUNT_B])
+    assert.ok(!a.some((row) => row.endpoint === endpoint))
+    assert.equal(b.filter((row) => row.endpoint === endpoint).length, 1)
+    await deleteSubscription({ accountId: ACCOUNT_B, endpoint })
+  })
+
   it('rejects a subscription with no endpoint', async () => {
     await assert.rejects(() => saveSubscription({ accountId: ACCOUNT_A, subscription: {} }))
   })

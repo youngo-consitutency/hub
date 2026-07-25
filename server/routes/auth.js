@@ -6,28 +6,22 @@ import {
   createSession,
   getSessionAccount,
   destroySession,
-  publicAccount,
 } from '../lib/accounts.js'
-import { ensureAdminRole, ensureOwnerSeat } from '../lib/lifecycle.js'
 import { getPool } from '../lib/db.js'
 import {
   createPasswordResetToken,
   consumePasswordResetToken,
   resetLink,
 } from '../lib/passwordReset.js'
-import { cookieValue, SESSION_COOKIE, setSessionCookie, clearSessionCookie, rateLimit } from '../lib/security.js'
+import { appOrigin } from '../lib/config.js'
+import { createRateLimiter } from '../lib/rateLimit.js'
+import { bearerToken, setSessionCookie, clearSessionCookie } from '../lib/security.js'
 
 export const authRouter = Router()
-
-function bearerToken(req) {
-  const h = req.headers.authorization || ''
-  if (h.startsWith('Bearer ')) return h.slice(7).trim()
-  return String(req.headers['x-session-token'] || '').trim() || cookieValue(req, SESSION_COOKIE) || null
-}
-
-const loginLimit = rateLimit({ name: 'login', max: 10, windowMs: 15 * 60_000 })
-const registerLimit = rateLimit({ name: 'register', max: 8, windowMs: 60 * 60_000 })
-const resetLimit = rateLimit({ name: 'password-reset', max: 6, windowMs: 15 * 60_000 })
+const registerLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
+const loginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 })
+const resetRequestLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
+const resetConsumeLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 })
 
 // No caching for auth endpoints
 authRouter.use((req, res, next) => {
@@ -37,11 +31,10 @@ authRouter.use((req, res, next) => {
 
 authRouter.get('/me', async (req, res) => {
   try {
-    let account = await getSessionAccount(bearerToken(req))
+    const account = await getSessionAccount(bearerToken(req))
     if (!account) {
       return res.status(401).json({ error: { code: 'unauthorized', message: 'Sign in to continue.' } })
     }
-    account = await ensureAdminRole(account)
     res.json({ account })
   } catch (err) {
     console.error('auth/me failed:', err.message)
@@ -60,15 +53,13 @@ authRouter.post('/register', registerLimit, async (req, res) => {
     }
 
     const pool = getPool()
-    let account
     let session
     if (pool) {
       const client = await pool.connect()
       try {
         await client.query('BEGIN')
-        account = await createAccount(result.data, client)
-        if (account.entityType === 'organization') await ensureOwnerSeat(account, client)
-        session = await createSession(account.id, client)
+        const createdAccount = await createAccount(result.data, client)
+        session = await createSession(createdAccount.id, client)
         await client.query('COMMIT')
       } catch (error) {
         await client.query('ROLLBACK')
@@ -77,11 +68,10 @@ authRouter.post('/register', registerLimit, async (req, res) => {
         client.release()
       }
     } else {
-      account = await createAccount(result.data)
-      if (account.entityType === 'organization') await ensureOwnerSeat(account)
-      session = await createSession(account.id)
+      const createdAccount = await createAccount(result.data)
+      session = await createSession(createdAccount.id)
     }
-    account = await ensureAdminRole(account)
+    const account = await getSessionAccount(session.token)
     console.log(JSON.stringify({
       event: 'hub_register',
       track: account.membershipTrack,
@@ -127,9 +117,8 @@ authRouter.post('/login', loginLimit, async (req, res) => {
       })
     }
 
-    let account = publicAccount(row)
-    const session = await createSession(account.id)
-    account = await ensureAdminRole(account)
+    const session = await createSession(row.id)
+    const account = await getSessionAccount(session.token)
     console.log(JSON.stringify({
       event: 'hub_login',
       track: account.membershipTrack,
@@ -157,7 +146,7 @@ authRouter.post('/logout', async (req, res) => {
 const GENERIC_FORGOT =
   'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
 
-authRouter.post('/forgot-password', resetLimit, async (req, res) => {
+authRouter.post('/forgot-password', resetRequestLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true, message: GENERIC_FORGOT })
@@ -170,15 +159,20 @@ authRouter.post('/forgot-password', resetLimit, async (req, res) => {
 
     const created = await createPasswordResetToken(email)
     if (created) {
-      const origin = process.env.APP_ORIGIN || `${req.protocol}://${req.get('host')}`
-      const url = resetLink(origin, created.rawToken)
-      // No SMTP wired yet: log for operators / Railway logs. Never put the token in the API response.
-      console.log(JSON.stringify({
-        event: 'password_reset_issued',
-        email: created.email,
-        expiresAt: created.expiresAt,
-        resetUrl: url,
-      }))
+      if (process.env.NODE_ENV !== 'production' && process.env.LOG_PASSWORD_RESET_LINKS === 'true') {
+        console.log(JSON.stringify({
+          event: 'password_reset_development_link',
+          resetUrl: resetLink(appOrigin(), created.rawToken),
+          expiresAt: created.expiresAt,
+        }))
+      } else {
+        console.log(JSON.stringify({
+          event: 'password_reset_requested',
+          accountId: created.accountId,
+          expiresAt: created.expiresAt,
+          deliveryConfigured: false,
+        }))
+      }
     }
 
     res.json({ ok: true, message: GENERIC_FORGOT })
@@ -188,7 +182,7 @@ authRouter.post('/forgot-password', resetLimit, async (req, res) => {
   }
 })
 
-authRouter.post('/reset-password', resetLimit, async (req, res) => {
+authRouter.post('/reset-password', resetConsumeLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true })

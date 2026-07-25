@@ -1,7 +1,22 @@
-/**
- * Service Worker Registration and Push Notification Management
- * Import this in main.jsx or App.jsx to enable PWA features
- */
+let deferredInstallPrompt = null
+const HUB_CACHE_PREFIX = 'youngo-hub-'
+
+export async function disablePWAInDevelopment() {
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map((registration) => registration.unregister()))
+    }
+    if ('caches' in window) {
+      const names = await window.caches.keys()
+      await Promise.all(
+        names.filter((name) => name.startsWith(HUB_CACHE_PREFIX)).map((name) => window.caches.delete(name)),
+      )
+    }
+  } catch (error) {
+    console.warn('[PWA] Could not clear the development service worker:', error)
+  }
+}
 
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
@@ -14,15 +29,11 @@ export async function registerServiceWorker() {
       scope: '/'
     });
 
-    console.log('[PWA] Service Worker registered:', registration.scope);
-
-    // Handle updates
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available
             if (confirm('A new version of YOUNGO Hub is available. Reload to update?')) {
               window.location.reload();
             }
@@ -31,12 +42,11 @@ export async function registerServiceWorker() {
       }
     });
 
-    // Check for updates periodically
-    setInterval(() => registration.update(), 1000 * 60 * 60); // Every hour
+    setInterval(() => registration.update(), 1000 * 60 * 60)
 
     return registration;
   } catch (error) {
-    console.error('[PWA] Service Worker registration failed:', error);
+    console.error('[PWA] Service Worker registration failed:', error)
     return null;
   }
 }
@@ -67,24 +77,19 @@ export async function subscribeToPush(vapidPublicKey) {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    
-    // Check existing subscription
+
     let subscription = await registration.pushManager.getSubscription();
-    
-    if (subscription) {
-      console.log('[Push] Existing subscription found');
-      return { success: true, subscription, isNew: false };
+    const isNew = !subscription
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      })
     }
 
-    // Create new subscription
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-    });
-
-    console.log('[Push] New subscription created:', subscription);
-
-    // Send subscription to backend
+    // Always register an existing browser subscription again. On a shared
+    // device this safely moves the endpoint to the currently signed-in account.
     const response = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,7 +101,7 @@ export async function subscribeToPush(vapidPublicKey) {
       throw new Error('Failed to save subscription on server');
     }
 
-    return { success: true, subscription, isNew: true };
+    return { success: true, subscription, isNew };
   } catch (error) {
     console.error('[Push] Subscription failed:', error);
     return { success: false, error: error.message };
@@ -114,7 +119,7 @@ export async function unsubscribeFromPush() {
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       // Notify backend
       await fetch('/api/push/unsubscribe', {
@@ -147,7 +152,7 @@ export async function getPushSubscriptionStatus() {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     const permission = Notification.permission;
-    
+
     return {
       supported: true,
       subscribed: !!subscription,
@@ -195,67 +200,36 @@ export function isPWA() {
  * Check if app can be installed (beforeinstallprompt event)
  */
 export function setupInstallPrompt(onPrompt) {
-  let deferredPrompt = null;
-
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    deferredPrompt = e;
+    deferredInstallPrompt = e;
     onPrompt?.(true);
   });
 
   window.addEventListener('appinstalled', () => {
-    deferredPrompt = null;
+    deferredInstallPrompt = null;
     onPrompt?.(false);
   });
-
-  return {
-    prompt: async () => {
-      if (!deferredPrompt) return { success: false, error: 'No install prompt available' };
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      return { success: outcome === 'accepted' };
-    },
-    isAvailable: () => !!deferredPrompt
-  };
 }
 
-/**
- * Initialize PWA features
- * Call this once in your app entry point
- */
-export async function initPWA(vapidPublicKey) {
-  console.log('[PWA] Initializing...');
+export async function promptInstall() {
+  if (!deferredInstallPrompt) return { success: false, error: 'No install prompt available' }
+  deferredInstallPrompt.prompt()
+  const { outcome } = await deferredInstallPrompt.userChoice
+  deferredInstallPrompt = null
+  return { success: outcome === 'accepted' }
+}
 
-  // Register service worker
-  const registration = await registerServiceWorker();
-  
-  if (!registration) {
-    console.log('[PWA] Service Worker registration skipped');
-    return;
-  }
+export function isInstallPromptAvailable() {
+  return Boolean(deferredInstallPrompt)
+}
 
-  // Check notification permission
-  const permStatus = await requestNotificationPermission();
-  console.log('[PWA] Notification permission:', permStatus);
-
-  // If permission granted and we have VAPID key, subscribe to push
-  if (permStatus.granted && vapidPublicKey) {
-    const subResult = await subscribeToPush(vapidPublicKey);
-    console.log('[PWA] Push subscription:', subResult);
-  }
-
-  // Setup install prompt
-  const installPrompt = setupInstallPrompt((available) => {
-    // Emit custom event for UI to listen to
+export async function initPWA() {
+  setupInstallPrompt((available) => {
     window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }));
   });
-
-  return {
-    registration,
-    installPrompt,
-    isStandalone: isPWA()
-  };
+  const registration = await registerServiceWorker();
+  return { registration, isStandalone: isPWA() };
 }
 
 export default {
@@ -266,5 +240,7 @@ export default {
   requestNotificationPermission,
   isPWA,
   setupInstallPrompt,
+  promptInstall,
+  isInstallPromptAvailable,
   initPWA
 };

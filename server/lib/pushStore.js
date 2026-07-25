@@ -52,8 +52,9 @@ export async function saveSubscription({ accountId, subscription, userAgent = nu
     const { rows } = await pool.query(
       `INSERT INTO push_subscriptions (account_id, endpoint, keys, user_agent)
        VALUES ($1,$2,$3,$4)
-       ON CONFLICT (account_id, endpoint)
-       DO UPDATE SET keys = EXCLUDED.keys, user_agent = EXCLUDED.user_agent, last_used_at = now()
+       ON CONFLICT (endpoint)
+       DO UPDATE SET account_id = EXCLUDED.account_id, keys = EXCLUDED.keys,
+                     user_agent = EXCLUDED.user_agent, last_used_at = now()
        RETURNING *`,
       [accountId, endpoint, keys, userAgent]
     )
@@ -61,10 +62,12 @@ export async function saveSubscription({ accountId, subscription, userAgent = nu
   }
 
   const list = readJson(subscriptionsPath, [])
-  const existing = list.find((s) => s.accountId === accountId && s.endpoint === endpoint)
+  const existing = list.find((s) => s.endpoint === endpoint)
   if (existing) {
+    existing.accountId = accountId
     existing.keys = keys
     existing.userAgent = userAgent
+    existing.lastUsedAt = new Date().toISOString()
     writeJson(subscriptionsPath, list)
     return publicRow(existing)
   }

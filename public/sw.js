@@ -1,10 +1,6 @@
-// YOUNGO Hub Service Worker
-// Handles caching, offline support, and push notifications
-
-const CACHE_NAME = 'youngo-hub-v1';
-const STATIC_CACHE = 'youngo-hub-static-v1';
-const DYNAMIC_CACHE = 'youngo-hub-dynamic-v1';
-const API_CACHE = 'youngo-hub-api-v1';
+const STATIC_CACHE = 'youngo-hub-static-v3';
+const DYNAMIC_CACHE = 'youngo-hub-dynamic-v3';
+const CACHE_VERSION = 'v3';
 
 // Assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -33,7 +29,7 @@ const CACHE_STRATEGIES = {
     }
   },
 
-  // Network first, fallback to cache
+  // Network first, fallback to cache. Only use this for public app files.
   networkFirst: async (request, cacheName) => {
     const cache = await caches.open(cacheName);
     try {
@@ -46,29 +42,13 @@ const CACHE_STRATEGIES = {
     }
   },
 
-  // Stale while revalidate
-  staleWhileRevalidate: async (request, cacheName) => {
-    const cache = await caches.open(cacheName);
-    const cached = await cache.match(request);
-
-    const fetchPromise = fetch(request).then((response) => {
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    }).catch(() => cached);
-
-    return cached || fetchPromise;
-  }
 };
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
+      .then((cache) => cache.addAll(STATIC_ASSETS))
       .then(() => self.skipWaiting())
   );
 });
@@ -81,7 +61,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames
-            .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE)
+            .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
             .map((name) => caches.delete(name))
         );
       })
@@ -97,15 +77,26 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
+  // Never intercept Vite development modules. Their URLs can be reused with
+  // different dependency graphs, which makes a cache-first service worker load
+  // multiple React copies and break hooks after a dev-server restart.
+  if (['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) && url.port === '5173') {
+    return;
+  }
+
   // Skip cross-origin requests (except for fonts)
   if (url.origin !== location.origin && !url.pathname.match(/\.(woff2?|ttf|eot)$/)) {
     return;
   }
 
-  // API requests - network first with cache fallback
+  // API responses can contain account, message, and staff data. Never persist
+  // or replay them from a browser-wide cache, especially on shared devices.
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      CACHE_STRATEGIES.networkFirst(request, API_CACHE)
+      fetch(request).catch(() => new Response(
+        JSON.stringify({ error: { code: 'offline', message: 'Connect to the internet and try again.' } }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      ))
     );
     return;
   }
@@ -118,10 +109,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML pages - stale while revalidate
+  // Prefer fresh HTML, but keep the installed app shell available offline.
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      CACHE_STRATEGIES.staleWhileRevalidate(request, DYNAMIC_CACHE)
+      fetch(request)
+        .then(async (response) => {
+          if (response.ok) {
+            const cache = await caches.open(DYNAMIC_CACHE);
+            cache.put(request, response.clone());
+          }
+          return response;
+        })
+        .catch(async () => (
+          await caches.match(request)
+          || await caches.match('/')
+          || new Response('Offline', { status: 503 })
+        ))
     );
     return;
   }
@@ -215,7 +218,7 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data?.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_NAME });
+    event.ports[0].postMessage({ version: CACHE_VERSION });
   }
 
   if (event.data?.type === 'CLEAR_CACHE') {
@@ -262,5 +265,3 @@ async function syncContent() {
   // Sync content when on WiFi
   console.log('[SW] Periodic content sync');
 }
-
-console.log('[SW] Service Worker loaded:', CACHE_NAME);

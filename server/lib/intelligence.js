@@ -149,7 +149,7 @@ export async function recordIntelligenceQuery({ actorId = null, audience, query,
     await pool.query('INSERT INTO intelligence_queries(actor_id,audience,query_text,result_count,request_id) VALUES($1,$2,$3,$4,$5)', [actorId, audience, entry.query, entry.resultCount, entry.requestId])
     return entry
   }
-  let items = []; try { items = existsSync(queriesPath) ? JSON.parse(readFileSync(queriesPath, 'utf8')) : [] } catch { items = [] }
+  const items = readJsonArray(queriesPath)
   items.unshift(entry); writeFileSync(queriesPath, JSON.stringify(items.slice(0, 2000), null, 2)); return entry
 }
 
@@ -162,14 +162,20 @@ export async function getIntelligenceMetrics() {
     ])
     return { queries: queries.rows[0], writebacks: writebacks.rows, generatedAt: new Date().toISOString() }
   }
-  let queries = []; try { queries = existsSync(queriesPath) ? JSON.parse(readFileSync(queriesPath, 'utf8')) : [] } catch { queries = [] }
+  const queries = readJsonArray(queriesPath)
   const writebacks = readWritebacks(); const counts = new Map(); for (const item of writebacks) counts.set(item.status, (counts.get(item.status) || 0) + 1)
   return { queries: { total: queries.length, last_24h: queries.filter((x) => Date.now() - new Date(x.createdAt) < 86_400_000).length, average_results: queries.length ? Number((queries.reduce((sum, x) => sum + x.resultCount, 0) / queries.length).toFixed(2)) : 0 }, writebacks: [...counts].map(([status, count]) => ({ status, count })), generatedAt: new Date().toISOString() }
 }
 
-function readWritebacks() {
-  try { return existsSync(writebacksPath) ? JSON.parse(readFileSync(writebacksPath, 'utf8')) : [] } catch { return [] }
+function readJsonArray(filePath) {
+  try {
+    const value = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : []
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
 }
+function readWritebacks() { return readJsonArray(writebacksPath) }
 function saveWritebacks(items) { writeFileSync(writebacksPath, JSON.stringify(items, null, 2)) }
 
 export function validateWritebackPayload(payload) {

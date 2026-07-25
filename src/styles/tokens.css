@@ -3,6 +3,7 @@
 :root {
   --bg-page: #F5F9F6;      --bg-card: #FFFFFF;
   --bg-raised: #EEF4F0;    --bg-popover: #FFFFFF;
+  --brand-surface: #FFFFFF;
   --text-1: #122019;       --text-2: #45584C;      --text-3: #5E7064;
   --border: rgba(18,32,25,.10);  --border-strong: rgba(18,32,25,.18);
   --accent: #059669;       --accent-hover: #047857; --on-accent: #FFFFFF;
@@ -16,9 +17,11 @@
   --shadow-popover: 0 4px 24px rgba(18,32,25,.14);
   --glow-accent: none;
   --radius-chip: 6px; --radius-control: 8px; --radius-card: 12px; --radius-modal: 16px;
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-ui: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --wg-accent: #0F766E;          --wg-accent-hover: #115E59;
   --wg-accent-tint: #CCFBF1;     --wg-on-tint: #134E4A;
   --membership-accent: #4338CA;  --membership-accent-hover: #3730A3;
@@ -29,6 +32,7 @@
 [data-theme="dark"] {
   --bg-page: #0A0F0C;      --bg-card: #111A14;
   --bg-raised: #16221B;    --bg-popover: #1C2B22;
+  --brand-surface: #FFFFFF;
   --text-1: #E8F2EC;       --text-2: #9DB4A6;      --text-3: #6B8073;
   --border: rgba(167,243,208,.08); --border-strong: rgba(167,243,208,.16);
   --accent: #34D399;       --accent-hover: #6EE7B7; --on-accent: #062B1F;
@@ -63,6 +67,8 @@
 /* Base */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+html { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 body {
   background: var(--bg-page); color: var(--text-1);
   font-family: var(--font-ui); font-size: 15px; line-height: 1.47;
@@ -74,6 +80,7 @@ h3 { font-family: var(--font-ui); font-weight: 600; font-size: 16px; line-height
 p { margin: 0; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; }
+::selection { background: var(--accent-tint); color: var(--text-1); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mono { font-family: var(--font-mono); font-weight: 500; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {

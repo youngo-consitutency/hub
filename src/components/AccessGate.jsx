@@ -42,7 +42,7 @@ export function AccessGate({ children }) {
       const policy = hasAcknowledgedMembershipPolicy()
       if (!alive) return
       setPolicyOk(policy)
-      if (policy) {
+      if (policy && getSessionToken()) {
         setAccount(getCachedAccount())
         await refreshSession()
       }

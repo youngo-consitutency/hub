@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
-import { Button, Section, ErrorCard, Skeletons } from '../components/ui.jsx'
+import { Button, Section, ErrorCard, Skeletons, PageHeader } from '../components/ui.jsx'
 import { Shield } from 'lucide-react'
 
 export function Admin() {
@@ -51,11 +51,12 @@ export function Admin() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Staff</p>
-      <h1 className="rowGap"><Shield size={24} strokeWidth={1.75} aria-hidden /> Admin</h1>
-      <p className="meta" style={{ marginTop: 6 }}>
-        All members and NGOs (no passwords). Set <code className="mono">ADMIN_EMAILS</code> on Railway to grant admin.
-      </p>
+      <PageHeader
+        eyebrow="Staff"
+        icon={Shield}
+        title="Admin"
+        description="Review members and organisations, verify accounts, and issue one-time password reset links."
+      />
 
       {resetInfo && (
         <div className="card cardTight" style={{ marginBottom: 16 }}>

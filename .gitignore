@@ -12,3 +12,5 @@ data/wg-progress.json
 data/wg-activities.json
 data/ngo-requests.json
 *.local
+.claude/
+.codex-vault/

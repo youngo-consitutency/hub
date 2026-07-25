@@ -1,17 +1,20 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
+import { promisify } from 'node:util'
 
 const KEYLEN = 64
+const scryptAsync = promisify(scrypt)
 
-export function hashPassword(password) {
+export async function hashPassword(password) {
   const salt = randomBytes(16).toString('hex')
-  const hash = scryptSync(password, salt, KEYLEN).toString('hex')
+  const derived = await scryptAsync(password, salt, KEYLEN)
+  const hash = derived.toString('hex')
   return { salt, hash }
 }
 
-export function verifyPassword(password, salt, hash) {
+export async function verifyPassword(password, salt, hash) {
   if (!password || !salt || !hash) return false
   try {
-    const next = scryptSync(password, salt, KEYLEN)
+    const next = await scryptAsync(password, salt, KEYLEN)
     const prev = Buffer.from(hash, 'hex')
     if (next.length !== prev.length) return false
     return timingSafeEqual(next, prev)

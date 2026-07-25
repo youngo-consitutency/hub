@@ -4,12 +4,14 @@ import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
 import { hashPassword, verifyPassword, newSessionToken, sessionExpiry } from './password.js'
+import { getAccessProfile } from './access.js'
 import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../../shared/privacyNotice.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
 const sessionsPath = path.join(dataDir, 'hub-sessions.json')
+const seatsPath = path.join(dataDir, 'ngo-seats.json')
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
@@ -63,6 +65,8 @@ function publicAccount(row) {
   const name = row.name || [first, last].filter(Boolean).join(' ')
   const memberStatus = row.member_status ?? row.memberStatus ?? 'pending_course'
   const role = row.role || 'member'
+  const hubAccessStatus = row.hub_access_status ?? row.hubAccessStatus
+    ?? (memberStatus === 'verified' ? 'active' : 'pending_course')
   return {
     id: row.id,
     email: row.email,
@@ -88,7 +92,7 @@ function publicAccount(row) {
     privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
     privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     memberStatus,
-    hubAccessStatus: row.hub_access_status ?? row.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course'),
+    hubAccessStatus,
     membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
     onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
     renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
@@ -100,17 +104,49 @@ function publicAccount(row) {
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified: memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role),
+    isVerified: hubAccessStatus === 'active'
+      && (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
     isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: (row.entity_type ?? row.entityType) === 'organization',
-    isNgoAdmin: role === 'ngo_admin' || (role === 'admin') || (
-      (row.entity_type ?? row.entityType) === 'organization' && Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted)
-    ),
+    isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: row.created_at ?? row.createdAt,
     lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
+  }
+}
+
+async function enrichAccountAccess(account) {
+  if (!account) return null
+  const accessProfile = await getAccessProfile(account)
+  const pool = getPool()
+  let ngoSeat
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT org_account_id, seat_role FROM ngo_seats
+       WHERE member_account_id = $1 AND status = 'active'
+       ORDER BY accepted_at DESC NULLS LAST
+       LIMIT 1`,
+      [account.id],
+    )
+    ngoSeat = rows[0]
+  } else {
+    ngoSeat = readJson(seatsPath, [])
+      .filter((row) => row.member_account_id === account.id && row.status === 'active')
+      .sort((a, b) => String(b.accepted_at || '').localeCompare(String(a.accepted_at || '')))[0]
+  }
+
+  return {
+    ...account,
+    access: {
+      ...accessProfile,
+      isAdmin: account.role === 'admin',
+      managedWgs: accessProfile.wgAssignments.map((item) => item.wgSlug).sort(),
+      ngo: ngoSeat
+        ? { orgAccountId: ngoSeat.org_account_id, seatRole: ngoSeat.seat_role }
+        : null,
+    },
   }
 }
 
@@ -334,7 +370,7 @@ export function validateRegistration(body) {
         membershipPolicyVersion,
         constituencyWorkStatus: 'pending_onboarding',
         memberStatus: 'pending_course',
-        role: isUnfcccAdmitted ? 'ngo_admin' : 'member',
+        role: 'member',
         wgInterests: [],
       },
     }
@@ -502,7 +538,7 @@ export async function createAccount(data, client = null) {
     throw err
   }
 
-  const { salt, hash } = hashPassword(data.password)
+  const { salt, hash } = await hashPassword(data.password)
   const pool = client || getPool()
 
   const memberStatus = data.memberStatus || 'pending_course'
@@ -640,7 +676,7 @@ export async function createAccount(data, client = null) {
 export async function authenticate(email, password) {
   const row = await findAccountByEmail(email)
   if (!row) return null
-  const ok = verifyPassword(password, row.password_salt, row.password_hash)
+  const ok = await verifyPassword(password, row.password_salt, row.password_hash)
   if (!ok) return null
   return row
 }
@@ -690,12 +726,12 @@ export async function getSessionAccount(token) {
        LIMIT 1`,
       [storedToken]
     )
-    if (rows[0]) return publicAccount(rows[0])
+    if (rows[0]) return enrichAccountAccess(publicAccount(rows[0]))
     const legacy = await pool.query(
       `SELECT a.* FROM hub_sessions s JOIN hub_accounts a ON a.id=s.account_id
        WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`, [token]
     )
-    return publicAccount(legacy.rows[0] || null)
+    return enrichAccountAccess(publicAccount(legacy.rows[0] || null))
   }
   const sessions = readJson(sessionsPath, [])
   const session = sessions.find((s) => s.token === storedToken || s.token === token)
@@ -703,7 +739,7 @@ export async function getSessionAccount(token) {
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
   const row = accounts.find((a) => a.id === session.account_id)
-  return publicAccount(row || null)
+  return enrichAccountAccess(publicAccount(row || null))
 }
 
 export async function destroySession(token) {

@@ -70,7 +70,13 @@ export async function syncWgAssignment({ accountId, wgSlug, role, status, assign
   if (!pool) return
   if (status === 'active' && ['contact','lead'].includes(role)) {
     await pool.query(
-      `INSERT INTO account_assignments(account_id,scope_type,scope_id,role,status,assigned_by)
+      `WITH deactivated AS (
+         UPDATE account_assignments
+         SET status='inactive', ends_at=now(), updated_at=now()
+         WHERE account_id=$1 AND scope_type='working_group' AND scope_id=$2
+           AND role <> $3 AND status='active'
+       )
+       INSERT INTO account_assignments(account_id,scope_type,scope_id,role,status,assigned_by)
        VALUES($1,'working_group',$2,$3,'active',$4)
        ON CONFLICT(account_id,scope_type,scope_id,role)
        DO UPDATE SET status='active', ends_at=NULL, assigned_by=EXCLUDED.assigned_by, updated_at=now()`,

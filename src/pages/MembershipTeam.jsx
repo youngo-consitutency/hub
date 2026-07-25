@@ -16,8 +16,13 @@ export function MembershipTeam() {
   const [actionError, setActionError] = useState(null)
 
   const setStatus = async (id, status) => {
+    let reason
+    if (status === 'terminated') {
+      reason = window.prompt('Why is this membership being terminated?')?.trim()
+      if (!reason) return
+    }
     setBusy(id)
-    try { setActionError(null); await apiPatch(`/member/team/membership/accounts/${id}/status`, { status }); query.retry() }
+    try { setActionError(null); await apiPatch(`/member/team/membership/accounts/${id}/status`, { status, reason }); query.retry() }
     catch (error) { setActionError(error.message) }
     finally { setBusy(null) }
   }
@@ -45,7 +50,7 @@ export function MembershipTeam() {
             <Section label="Application queue">
               {actionError && <ErrorCard message={actionError} />}
               <div className="queueToolbar">
-                <div className="pillRow" aria-label="Filter applications">{['pending', 'verified', 'all'].map((item) => <button key={item} className={`pill ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item === 'verified' ? 'Active' : item[0].toUpperCase() + item.slice(1)}</button>)}</div>
+                <div className="pillRow" aria-label="Filter applications">{['pending', 'verified', 'all'].map((item) => <button type="button" aria-pressed={filter === item} key={item} className={`pill ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item === 'verified' ? 'Active' : item[0].toUpperCase() + item.slice(1)}</button>)}</div>
                 <label className="queueSearch"><Search size={16} aria-hidden /><span className="srOnly">Search members</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search members" /></label>
               </div>
               {!shown.length ? <Empty icon={ClipboardCheck} title="No applications in this view" /> : <div className="stackSm">{shown.map((item) => (

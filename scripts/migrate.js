@@ -12,8 +12,9 @@ const migrationsDir = path.join(here, '../migrations')
 async function main() {
   const pool = getPool()
   if (!pool) {
-    // No DB configured (fixture mode) — nothing to migrate. Skip cleanly so a
-    // pre-deploy hook doesn't fail fixture-only environments.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('DATABASE_URL is required for production migrations.')
+    }
     console.log('migrate: DATABASE_URL not set — skipping (fixture mode)')
     return
   }
@@ -44,20 +45,6 @@ async function main() {
     }
   }
   console.log('migrate: done')
-
-  // Bootstrap admin account + one-time reset link (logged for operator).
-  try {
-    const { spawnSync } = await import('node:child_process')
-    const r = spawnSync(process.execPath, [path.join(here, 'bootstrap-admin.js')], {
-      env: process.env,
-      encoding: 'utf8',
-    })
-    if (r.stdout) process.stdout.write(r.stdout)
-    if (r.stderr) process.stderr.write(r.stderr)
-    if (r.status !== 0) console.error('bootstrap-admin: exited', r.status)
-  } catch (e) {
-    console.error('bootstrap-admin: skipped', e.message)
-  }
 
   await pool.end()
 }

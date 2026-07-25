@@ -34,7 +34,7 @@ async function requireAccount(req, res) {
 }
 
 function requireVerified(account, res) {
-  if (!account?.isVerified && !['admin', 'focal_point'].includes(account?.role)) { res.status(403).json({ error: { code: 'not_verified', message: 'Complete the membership course to unlock Hub Intelligence.' } }); return false }
+  if (!account?.isVerified) { res.status(403).json({ error: { code: 'not_verified', message: 'Complete the membership course to unlock Hub Intelligence.' } }); return false }
   return true
 }
 
