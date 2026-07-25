@@ -89,7 +89,8 @@ YOUNGO is a **platform and network**, not a single NGO. Work happens across Work
 4. **Join WG workspaces** — presentation + rules, then channels & contacts.
 5. **Come back to Onboarding anytime** — course review, library, FAQ.
 
-Password reset is built in (forgot-password + one-time links; admin can mint links).
+Password reset is built in with one-time, expiring links. Development can print
+links explicitly; production must deliver them through a private channel.
 
 ---
 
@@ -98,11 +99,12 @@ Password reset is built in (forgot-password + one-time links; admin can mint lin
 | Role | Unlocks |
 | --- | --- |
 | **Member** (verified) | Full hub: feed, calendar, groups, directory… |
-| **WG Contact Point** | `/cp/:wg` — joiners, approve roles, log activities |
-| **NGO admin / seat** | `/ngo` — requests, deadlines, invite representatives |
+| **WG Contact Point** | `/cp/:wg` — scoped to WGs where the member is an active contact or lead |
+| **NGO owner / representative / viewer** | `/ngo` — organisation-scoped permissions for requests and seats |
 | **Admin** | `/admin` — directory, verify, roles, password reset links |
 
-Admins are promoted from `ADMIN_EMAILS` (comma-separated) on login / bootstrap.
+`ADMIN_EMAILS` is only consumed by the explicit bootstrap command. It promotes
+matching existing, verified accounts; registration and login never auto-promote.
 
 ---
 
@@ -120,7 +122,7 @@ Admins are promoted from `ADMIN_EMAILS` (comma-separated) on login / bootstrap.
 youngo-hub/
 ├── src/                 React client (pages, gates, Verdant CSS)
 ├── server/              Express API (auth, member, public, ICS)
-├── migrations/          Postgres schema (001…008+)
+├── migrations/          Postgres schema (001…009+)
 ├── data/fixtures.json   Demo calendar / WGs / feed content
 ├── src/content/         Policy, course, WG onboarding copy
 ├── scripts/             migrate · bootstrap-admin
@@ -150,8 +152,9 @@ npm run build && npm start   # production-style single process
 
 ```bash
 export DATABASE_URL=postgres://…
+export ADMIN_EMAILS=admin@example.org
 npm run migrate              # applies migrations/*.sql
-npm run bootstrap-admin      # optional: seed ADMIN_EMAILS + print reset URLs
+npm run bootstrap-admin      # optional: promote matching existing verified accounts
 ```
 
 Without `DATABASE_URL`, accounts fall back to local JSON under `data/` (dev only). Feed content still comes from `fixtures.json` until migrated to Postgres/Calendar API.
@@ -160,9 +163,10 @@ Without `DATABASE_URL`, accounts fall back to local JSON under `data/` (dev only
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Postgres connection (Railway injects this) |
-| `APP_ORIGIN` | Public origin for reset / invite links |
-| `ADMIN_EMAILS` | Comma-separated admins (auto-promote + bootstrap) |
+| `DATABASE_URL` | Postgres connection; required in production |
+| `APP_ORIGIN` | Trusted HTTPS public origin; required in production |
+| `ADMIN_EMAILS` | Comma-separated existing verified accounts for the explicit bootstrap command |
+| `LOG_PASSWORD_RESET_LINKS` | Development-only opt-in for printing reset links (`true`) |
 | `PORT` | HTTP port (Railway injects) |
 
 ---

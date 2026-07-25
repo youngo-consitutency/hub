@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { getSessionAccount } from '../lib/accounts.js'
 import {
   completeCourse,
-  ensureAdminRole,
   upsertWgProgress,
   getWgProgress,
   listMyWgProgress,
@@ -14,7 +13,7 @@ import {
   updateNgoRequestStatus,
   listAccountsForAdmin,
   setAccountFields,
-  resolveOrgAccountId,
+  resolveOrgContext,
   listNgoSeats,
   ensureOwnerSeat,
   inviteNgoSeat,
@@ -23,6 +22,13 @@ import {
   getSeatByToken,
 } from '../lib/lifecycle.js'
 import { createPasswordResetToken, resetLink } from '../lib/passwordReset.js'
+import {
+  canManageWg,
+  canReadNgo,
+  canWriteNgoRequests,
+  canManageNgoSeats,
+} from '../lib/authorization.js'
+import { appOrigin } from '../lib/config.js'
 import { scoreQuiz, QUIZ, COURSE_MODULES, COURSE_VERSION, PASS_SCORE } from '../../src/content/membershipCourse.js'
 
 export const memberRouter = Router()
@@ -39,12 +45,11 @@ memberRouter.use((req, res, next) => {
 })
 
 async function requireAccount(req, res) {
-  let account = await getSessionAccount(bearerToken(req))
+  const account = await getSessionAccount(bearerToken(req))
   if (!account) {
     res.status(401).json({ error: { code: 'unauthorized', message: 'Sign in to continue.' } })
     return null
   }
-  account = await ensureAdminRole(account)
   req.account = account
   return account
 }
@@ -111,7 +116,8 @@ memberRouter.get('/workspace/:wg', async (req, res) => {
   if (!account) return
   if (!requireVerified(req, res)) return
   const progress = await getWgProgress(account.id, req.params.wg)
-  const activities = await listWgActivities(req.params.wg)
+  const unlocked = Boolean(progress?.presentation_ok && progress?.rules_ok)
+  const activities = unlocked ? await listWgActivities(req.params.wg) : []
   res.json({ progress, activities })
 })
 
@@ -138,28 +144,38 @@ memberRouter.post('/workspace/:wg/join', async (req, res) => {
   res.json({ progress })
 })
 
+async function requireWgManager(req, res) {
+  const account = await requireAccount(req, res)
+  if (!account) return null
+  if (!requireVerified(req, res)) return null
+  const progress = account.role === 'admin'
+    ? null
+    : await getWgProgress(account.id, req.params.wg)
+  if (!canManageWg(account, progress, req.params.wg)) {
+    res.status(403).json({
+      error: { code: 'forbidden', message: 'Contact or lead access for this working group is required.' },
+    })
+    return null
+  }
+  return account
+}
+
 // CP management
 memberRouter.get('/cp/:wg/members', async (req, res) => {
-  const account = await requireAccount(req, res)
+  const account = await requireWgManager(req, res)
   if (!account) return
-  if (!requireVerified(req, res)) return
-  if (!account.isWgContact && account.role !== 'admin') {
-    // Allow any verified user to see joiners for demo if they unlocked as contact later
-    // Strict: only wg_contact or admin
-    return res.status(403).json({ error: { code: 'forbidden', message: 'WG Contact Point access required.' } })
-  }
   const items = await listWgJoiners(req.params.wg)
   res.json({ items })
 })
 
 memberRouter.post('/cp/:wg/members/:accountId/role', async (req, res) => {
-  const account = await requireAccount(req, res)
+  const account = await requireWgManager(req, res)
   if (!account) return
-  if (!account.isWgContact && account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'WG Contact Point access required.' } })
-  }
   const role = String(req.body?.role || 'member')
   const status = String(req.body?.status || 'active')
+  if (!['member', 'contact', 'lead'].includes(role) || !['interested', 'pending_approval', 'active', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: { code: 'validation', message: 'Invalid WG role or status.' } })
+  }
   const progress = await upsertWgProgress(req.params.accountId, req.params.wg, {
     role_in_wg: role,
     status,
@@ -168,11 +184,8 @@ memberRouter.post('/cp/:wg/members/:accountId/role', async (req, res) => {
 })
 
 memberRouter.post('/cp/:wg/activities', async (req, res) => {
-  const account = await requireAccount(req, res)
+  const account = await requireWgManager(req, res)
   if (!account) return
-  if (!account.isWgContact && account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'WG Contact Point access required.' } })
-  }
   const b = req.body || {}
   if (!b.title || !b.kind) {
     return res.status(400).json({ error: { code: 'validation', message: 'title and kind are required.' } })
@@ -190,19 +203,30 @@ memberRouter.post('/cp/:wg/activities', async (req, res) => {
   res.status(201).json({ activity })
 })
 
-async function requireOrgContext(req, res) {
+async function requireOrgContext(req, res, capability = 'read') {
   const account = await requireAccount(req, res)
   if (!account) return null
   if (!requireVerified(req, res)) return null
-  let orgId = await resolveOrgAccountId(account)
-  if (!orgId && account.role === 'admin' && req.query.orgId) orgId = String(req.query.orgId)
-  if (!orgId && account.isNgo) orgId = account.id
-  if (!orgId) {
+  const context = account.role === 'admin'
+    ? {
+      orgAccountId: String(req.query.orgId || '').trim() || null,
+      seatRole: 'owner',
+      isAdmin: true,
+    }
+    : await resolveOrgContext(account)
+
+  const allowed = capability === 'manage_seats'
+    ? canManageNgoSeats(context)
+    : capability === 'write_requests'
+      ? canWriteNgoRequests(context)
+      : canReadNgo(context)
+
+  if (!context?.orgAccountId || !allowed) {
     res.status(403).json({ error: { code: 'forbidden', message: 'Accredited NGO access required.' } })
     return null
   }
-  if (account.isNgo) await ensureOwnerSeat(account)
-  req.orgAccountId = orgId
+  req.orgAccountId = context.orgAccountId
+  req.orgContext = context
   return account
 }
 
@@ -216,6 +240,11 @@ memberRouter.get('/ngo/requests', async (req, res) => {
     items,
     seats,
     orgAccountId: req.orgAccountId,
+    permissions: {
+      seatRole: req.orgContext.seatRole,
+      canWriteRequests: canWriteNgoRequests(req.orgContext),
+      canManageSeats: canManageNgoSeats(req.orgContext),
+    },
     deadlines: [
       { title: 'Side event applications (placeholder)', kind: 'deadline', note: 'Connect live UNFCCC calendars later.' },
       { title: 'COP/SB nomination windows (placeholder)', kind: 'deadline', note: 'Membership Team will publish real dates.' },
@@ -225,7 +254,7 @@ memberRouter.get('/ngo/requests', async (req, res) => {
 })
 
 memberRouter.post('/ngo/requests', async (req, res) => {
-  const account = await requireOrgContext(req, res)
+  const account = await requireOrgContext(req, res, 'write_requests')
   if (!account) return
   const b = req.body || {}
   if (!b.title || !b.kind) {
@@ -243,9 +272,13 @@ memberRouter.post('/ngo/requests', async (req, res) => {
 })
 
 memberRouter.patch('/ngo/requests/:id', async (req, res) => {
-  const account = await requireOrgContext(req, res)
+  const account = await requireOrgContext(req, res, 'write_requests')
   if (!account) return
-  const item = await updateNgoRequestStatus(req.params.id, String(req.body?.status || 'done'), req.orgAccountId)
+  const status = String(req.body?.status || 'done')
+  if (!['open', 'in_progress', 'done', 'declined'].includes(status)) {
+    return res.status(400).json({ error: { code: 'validation', message: 'Invalid request status.' } })
+  }
+  const item = await updateNgoRequestStatus(req.params.id, status, req.orgAccountId)
   if (!item) return res.status(404).json({ error: { code: 'not_found', message: 'Request not found.' } })
   res.json({ item })
 })
@@ -258,7 +291,7 @@ memberRouter.get('/ngo/seats', async (req, res) => {
 })
 
 memberRouter.post('/ngo/seats/invite', async (req, res) => {
-  const account = await requireOrgContext(req, res)
+  const account = await requireOrgContext(req, res, 'manage_seats')
   if (!account) return
   try {
     const result = await inviteNgoSeat({
@@ -268,16 +301,13 @@ memberRouter.post('/ngo/seats/invite', async (req, res) => {
       seatRole: req.body?.seatRole || 'representative',
       invitedBy: account.id,
     })
-    const origin = process.env.APP_ORIGIN || `${req.protocol}://${req.get('host')}`
-    const inviteUrl = result.seat.inviteToken
-      ? `${origin}/ngo/accept?token=${result.seat.inviteToken}`
+    const inviteUrl = result.inviteToken
+      ? `${appOrigin()}/ngo/accept?token=${result.inviteToken}`
       : null
     res.status(201).json({
       seat: result.seat,
       inviteUrl,
-      note: inviteUrl
-        ? 'Share this link with the representative. If they already have a hub account matching this email, the seat is already active.'
-        : 'User already had a hub account — seat activated immediately.',
+      note: 'Share this one-time link with the invited representative. It expires in 7 days.',
     })
   } catch (err) {
     const status = err.code === 'duplicate' ? 409 : 400
@@ -286,7 +316,7 @@ memberRouter.post('/ngo/seats/invite', async (req, res) => {
 })
 
 memberRouter.post('/ngo/seats/:id/revoke', async (req, res) => {
-  const account = await requireOrgContext(req, res)
+  const account = await requireOrgContext(req, res, 'manage_seats')
   if (!account) return
   const seat = await revokeNgoSeat(req.params.id, req.orgAccountId)
   if (!seat) {
@@ -299,7 +329,7 @@ memberRouter.post('/ngo/seats/:id/revoke', async (req, res) => {
 memberRouter.get('/ngo/invite/:token', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  const seat = await getSeatByToken(req.params.token)
+  const seat = await getSeatByToken(req.params.token, account.email)
   if (!seat) {
     return res.status(404).json({ error: { code: 'not_found', message: 'Invite not found or already used.' } })
   }
@@ -314,7 +344,8 @@ memberRouter.post('/ngo/invite/:token/accept', async (req, res) => {
     if (!seat) {
       return res.status(404).json({ error: { code: 'not_found', message: 'Invite not found or already used.' } })
     }
-    res.json({ ok: true, seat, account })
+    const refreshedAccount = await getSessionAccount(bearerToken(req))
+    res.json({ ok: true, seat, account: refreshedAccount })
   } catch (err) {
     console.error('accept invite failed:', err.message)
     res.status(500).json({ error: { code: 'server_error', message: 'Could not accept invite.' } })
@@ -353,10 +384,23 @@ memberRouter.post('/admin/accounts/:id/role', async (req, res) => {
     return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   const role = String(req.body?.role || 'member')
-  if (!['member', 'wg_contact', 'ngo_admin', 'admin'].includes(role)) {
+  if (!['member', 'ngo_admin', 'admin'].includes(role)) {
     return res.status(400).json({ error: { code: 'validation', message: 'Invalid role.' } })
   }
+  if (role === 'ngo_admin') {
+    const items = await listAccountsForAdmin()
+    const target = items.find((item) => item.id === req.params.id)
+    if (!target || target.entityType !== 'organization' || !target.isVerified) {
+      return res.status(400).json({
+        error: {
+          code: 'validation',
+          message: 'Only a verified organisation account can become an NGO administrator.',
+        },
+      })
+    }
+  }
   const updated = await setAccountFields(req.params.id, { role })
+  if (role === 'ngo_admin') await ensureOwnerSeat(updated)
   res.json({ account: updated })
 })
 
@@ -377,8 +421,7 @@ memberRouter.post('/admin/accounts/:id/reset-link', async (req, res) => {
     if (!created) {
       return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
     }
-    const origin = process.env.APP_ORIGIN || `${req.protocol}://${req.get('host')}`
-    const url = resetLink(origin, created.rawToken)
+    const url = resetLink(appOrigin(), created.rawToken)
     console.log(JSON.stringify({
       event: 'admin_password_reset_issued',
       by: account.email,

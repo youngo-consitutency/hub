@@ -76,9 +76,9 @@ function nonAdmittedOrg(overrides = {}) {
 }
 
 describe('password hashing', () => {
-  it('verifies a matching password', () => {
-    const { salt, hash } = hashPassword('hello-world-99')
-    assert.equal(verifyPassword('hello-world-99', salt, hash), true)
+  it('verifies a matching password', async () => {
+    const { salt, hash } = await hashPassword('hello-world-99')
+    assert.equal(await verifyPassword('hello-world-99', salt, hash), true)
   })
 })
 
@@ -103,6 +103,7 @@ describe('admitted organisation registration', () => {
     assert.equal(result.data.organizationType, 'unfccc_admitted')
     assert.equal(result.data.dcpEmail, 'dcp@example.org')
     assert.equal(result.data.youthAffiliation, 'primary')
+    assert.equal(result.data.role, 'member', 'self-attestation must not grant NGO authority')
   })
 
   it('requires youth affiliation and DCP fields', () => {

@@ -48,7 +48,7 @@ export function Admin() {
       <p className="metaMuted" style={{ marginBottom: 6 }}>Staff</p>
       <h1 className="rowGap"><Shield size={24} strokeWidth={1.75} aria-hidden /> Admin</h1>
       <p className="meta" style={{ marginTop: 6 }}>
-        All members and NGOs (no passwords). Set <code className="mono">ADMIN_EMAILS</code> on Railway to grant admin.
+        All members and NGOs (no passwords). Administrator promotion is an explicit operator command; WG roles are scoped inside each WG console.
       </p>
 
       {resetInfo && (
@@ -80,7 +80,6 @@ export function Admin() {
                     <Button sm variant="secondary" onClick={() => verify(a.id)}>Verify</Button>
                   )}
                   <Button sm variant="ghost" onClick={() => issueReset(a.id)}>Reset password</Button>
-                  <Button sm variant="ghost" onClick={() => setRole(a.id, 'wg_contact')}>WG CP</Button>
                   <Button sm variant="ghost" onClick={() => setRole(a.id, 'member')}>Member</Button>
                 </div>
               </div>

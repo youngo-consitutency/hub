@@ -9,6 +9,8 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
 const sessionsPath = path.join(dataDir, 'hub-sessions.json')
+const progressPath = path.join(dataDir, 'wg-progress.json')
+const seatsPath = path.join(dataDir, 'ngo-seats.json')
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
@@ -90,13 +92,65 @@ function publicAccount(row) {
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
     isVerified: memberStatus === 'verified',
     isAdmin: role === 'admin',
-    isWgContact: role === 'wg_contact' || role === 'admin',
-    isNgo: (row.entity_type ?? row.entityType) === 'organization',
-    isNgoAdmin: role === 'ngo_admin' || (role === 'admin') || (
-      (row.entity_type ?? row.entityType) === 'organization' && Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted)
-    ),
     createdAt: row.created_at ?? row.createdAt,
     lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
+  }
+}
+
+async function enrichAccountAccess(account) {
+  if (!account) return null
+  const pool = getPool()
+  if (pool) {
+    const [wgResult, ngoResult] = await Promise.all([
+      pool.query(
+        `SELECT wg_slug FROM wg_workspace_progress
+         WHERE account_id = $1
+           AND status = 'active'
+           AND role_in_wg IN ('contact', 'lead')
+         ORDER BY wg_slug`,
+        [account.id],
+      ),
+      pool.query(
+        `SELECT org_account_id, seat_role FROM ngo_seats
+         WHERE member_account_id = $1 AND status = 'active'
+         ORDER BY accepted_at DESC NULLS LAST
+         LIMIT 1`,
+        [account.id],
+      ),
+    ])
+    const ngoSeat = ngoResult.rows[0]
+    return {
+      ...account,
+      access: {
+        isAdmin: account.role === 'admin',
+        managedWgs: wgResult.rows.map((row) => row.wg_slug),
+        ngo: ngoSeat
+          ? { orgAccountId: ngoSeat.org_account_id, seatRole: ngoSeat.seat_role }
+          : null,
+      },
+    }
+  }
+
+  const managedWgs = readJson(progressPath, [])
+    .filter((row) => (
+      row.account_id === account.id &&
+      row.status === 'active' &&
+      ['contact', 'lead'].includes(row.role_in_wg)
+    ))
+    .map((row) => row.wg_slug)
+    .sort()
+  const ngoSeat = readJson(seatsPath, [])
+    .filter((row) => row.member_account_id === account.id && row.status === 'active')
+    .sort((a, b) => String(b.accepted_at || '').localeCompare(String(a.accepted_at || '')))[0]
+  return {
+    ...account,
+    access: {
+      isAdmin: account.role === 'admin',
+      managedWgs,
+      ngo: ngoSeat
+        ? { orgAccountId: ngoSeat.org_account_id, seatRole: ngoSeat.seat_role }
+        : null,
+    },
   }
 }
 
@@ -288,7 +342,7 @@ export function validateRegistration(body) {
         membershipPolicyVersion,
         constituencyWorkStatus: 'pending_onboarding',
         memberStatus: 'pending_course',
-        role: isUnfcccAdmitted ? 'ngo_admin' : 'member',
+        role: 'member',
         wgInterests: [],
       },
     }
@@ -437,7 +491,7 @@ export async function createAccount(data) {
     throw err
   }
 
-  const { salt, hash } = hashPassword(data.password)
+  const { salt, hash } = await hashPassword(data.password)
   const pool = getPool()
 
   const memberStatus = data.memberStatus || 'pending_course'
@@ -561,7 +615,7 @@ export async function createAccount(data) {
 export async function authenticate(email, password) {
   const row = await findAccountByEmail(email)
   if (!row) return null
-  const ok = verifyPassword(password, row.password_salt, row.password_hash)
+  const ok = await verifyPassword(password, row.password_salt, row.password_hash)
   if (!ok) return null
   return row
 }
@@ -609,7 +663,7 @@ export async function getSessionAccount(token) {
        LIMIT 1`,
       [token]
     )
-    return publicAccount(rows[0] || null)
+    return enrichAccountAccess(publicAccount(rows[0] || null))
   }
   const sessions = readJson(sessionsPath, [])
   const session = sessions.find((s) => s.token === token)
@@ -617,7 +671,7 @@ export async function getSessionAccount(token) {
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
   const row = accounts.find((a) => a.id === session.account_id)
-  return publicAccount(row || null)
+  return enrichAccountAccess(publicAccount(row || null))
 }
 
 export async function destroySession(token) {

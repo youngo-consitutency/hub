@@ -12,7 +12,6 @@ import { Groups } from './pages/Groups.jsx'
 import { Directory } from './pages/Directory.jsx'
 import { Search } from './pages/Search.jsx'
 import { Statement } from './pages/Statement.jsx'
-import { Gallery } from './pages/Gallery.jsx'
 import { EventDetail } from './pages/EventDetail.jsx'
 import { SubmissionDetail } from './pages/SubmissionDetail.jsx'
 import { DecisionDetail } from './pages/DecisionDetail.jsx'
@@ -32,7 +31,6 @@ import { Compass, Lock } from 'lucide-react'
 const PRE_VERIFY = [
   /^\/onboarding/,
   /^\/library/,
-  /^\/gallery/,
 ]
 
 const ROUTES = [
@@ -58,7 +56,6 @@ const ROUTES = [
   [/^\/directory/, Directory],
   [/^\/gys/, Statement],
   [/^\/search/, Search],
-  [/^\/gallery/, Gallery],
 ]
 
 function NotFound() {
@@ -102,17 +99,20 @@ function AppRoutes() {
 
   // Role gates (soft): show empty-ish message for wrong role
   if (path.startsWith('/admin') && account && account.role !== 'admin') {
-    return <Shell><Empty icon={Lock} title="Admin only" body="Set ADMIN_EMAILS to your email on Railway." /></Shell>
+    return <Shell><Empty icon={Lock} title="Admin only" body="An existing verified account must be promoted with the explicit bootstrap command." /></Shell>
   }
-  // NGO portal: org accounts, ngo_admin role (seat holders), or admin
-  if (path.startsWith('/ngo') && account && !account.isNgo && account.role !== 'admin' && account.role !== 'ngo_admin') {
+  // NGO portal: approved organisation owners, invited seat holders, or admin
+  if (path.startsWith('/ngo') && account && account.role !== 'admin' && !account.access?.ngo) {
     // Allow accept route for any signed-in user
     if (!path.startsWith('/ngo/accept')) {
       return <Shell><Empty icon={Lock} title="NGO accounts only" body="Register as an organisation or accept a seat invite." /></Shell>
     }
   }
-  if (path.startsWith('/cp/') && account && !account.isWgContact && account.role !== 'admin') {
-    return <Shell><Empty icon={Lock} title="WG Contact Points only" body="Ask an admin to grant the WG CP role." /></Shell>
+  if (path.startsWith('/cp/') && account && account.role !== 'admin') {
+    const requestedWg = path.split('/')[2]
+    if (!account.access?.managedWgs?.includes(requestedWg)) {
+      return <Shell><Empty icon={Lock} title="WG Contact Points only" body="A contact or lead assignment for this working group is required." /></Shell>
+    }
   }
 
   return (

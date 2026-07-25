@@ -11,6 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
 const tokensPath = path.join(dataDir, 'password-reset-tokens.json')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
+const sessionsPath = path.join(dataDir, 'hub-sessions.json')
 
 const TTL_MS = 60 * 60 * 1000 // 1 hour
 
@@ -97,7 +98,6 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
 
   const tokenHash = hashToken(rawToken)
   const pool = getPool()
-  const { salt, hash } = hashPassword(newPassword)
 
   if (pool) {
     const client = await pool.connect()
@@ -115,6 +115,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
         err.code = 'invalid_token'
         throw err
       }
+      const { salt, hash } = await hashPassword(newPassword)
       await client.query(
         `UPDATE hub_accounts SET password_hash = $1, password_salt = $2 WHERE id = $3`,
         [hash, salt, rows[0].account_id]
@@ -127,6 +128,10 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
       await client.query(
         `UPDATE password_reset_tokens SET used_at = now()
          WHERE account_id = $1 AND used_at IS NULL`,
+        [rows[0].account_id]
+      )
+      await client.query(
+        'DELETE FROM hub_sessions WHERE account_id = $1',
         [rows[0].account_id]
       )
       await client.query('COMMIT')
@@ -146,6 +151,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
     err.code = 'invalid_token'
     throw err
   }
+  const { salt, hash } = await hashPassword(newPassword)
   row.used_at = new Date().toISOString()
   writeJson(tokensPath, list)
 
@@ -159,6 +165,8 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
   accounts[idx].password_hash = hash
   accounts[idx].password_salt = salt
   writeJson(accountsPath, accounts)
+  const sessions = readJson(sessionsPath, []).filter((session) => session.account_id !== row.account_id)
+  writeJson(sessionsPath, sessions)
   return { accountId: row.account_id }
 }
 

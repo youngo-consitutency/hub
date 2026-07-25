@@ -6,7 +6,9 @@ import { publicRouter } from './routes/public.js'
 import { icsRouter } from './routes/ics.js'
 import { authRouter } from './routes/auth.js'
 import { memberRouter } from './routes/member.js'
+import { appOrigin, validateRuntimeConfig } from './lib/config.js'
 
+validateRuntimeConfig()
 const here = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 // argv port wins (dev-all pins 8787 so an injected PORT can't steal it from Vite);
@@ -14,8 +16,29 @@ const app = express()
 const PORT = process.argv[2] || process.env.PORT || 8787
 
 app.disable('x-powered-by')
-app.use(cors({ origin: process.env.APP_ORIGIN || true }))
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1)
+app.use(cors({ origin: process.env.APP_ORIGIN ? appOrigin() : true }))
 app.use(express.json({ limit: '256kb' }))
+app.use((req, res, next) => {
+  res.set({
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "img-src 'self' data: https:",
+      "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+    ].join('; '),
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  })
+  next()
+})
 
 app.get('/healthz', (req, res) => {
   res.json({ ok: true, db: process.env.DATABASE_URL ? 'postgres' : 'fixtures', version: '0.1.0' })

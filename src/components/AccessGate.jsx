@@ -38,16 +38,16 @@ export function AccessGate({ children }) {
 
   useEffect(() => {
     let alive = true
-    ;(async () => {
-      const policy = hasAcknowledgedMembershipPolicy()
-      if (!alive) return
-      setPolicyOk(policy)
-      if (policy && getSessionToken()) {
-        setAccount(getCachedAccount())
-        await refreshSession()
-      }
-      if (alive) setReady(true)
-    })()
+      ; (async () => {
+        const policy = hasAcknowledgedMembershipPolicy()
+        if (!alive) return
+        setPolicyOk(policy)
+        if (policy && getSessionToken()) {
+          setAccount(getCachedAccount())
+          await refreshSession()
+        }
+        if (alive) setReady(true)
+      })()
     return () => { alive = false }
   }, [refreshSession])
 

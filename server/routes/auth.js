@@ -6,16 +6,20 @@ import {
   createSession,
   getSessionAccount,
   destroySession,
-  publicAccount,
 } from '../lib/accounts.js'
-import { ensureAdminRole, ensureOwnerSeat } from '../lib/lifecycle.js'
 import {
   createPasswordResetToken,
   consumePasswordResetToken,
   resetLink,
 } from '../lib/passwordReset.js'
+import { appOrigin } from '../lib/config.js'
+import { createRateLimiter } from '../lib/rateLimit.js'
 
 export const authRouter = Router()
+const registerLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
+const loginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 })
+const resetRequestLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
+const resetConsumeLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 })
 
 function bearerToken(req) {
   const h = req.headers.authorization || ''
@@ -31,11 +35,10 @@ authRouter.use((req, res, next) => {
 
 authRouter.get('/me', async (req, res) => {
   try {
-    let account = await getSessionAccount(bearerToken(req))
+    const account = await getSessionAccount(bearerToken(req))
     if (!account) {
       return res.status(401).json({ error: { code: 'unauthorized', message: 'Sign in to continue.' } })
     }
-    account = await ensureAdminRole(account)
     res.json({ account })
   } catch (err) {
     console.error('auth/me failed:', err.message)
@@ -43,7 +46,7 @@ authRouter.get('/me', async (req, res) => {
   }
 })
 
-authRouter.post('/register', async (req, res) => {
+authRouter.post('/register', registerLimit, async (req, res) => {
   try {
     const result = validateRegistration(req.body)
     if (result.honeypot) return res.status(201).json({ ok: true }) // feign success for bots
@@ -53,12 +56,9 @@ authRouter.post('/register', async (req, res) => {
       })
     }
 
-    let account = await createAccount(result.data)
-    const session = await createSession(account.id)
-    if (account.entityType === 'organization') {
-      await ensureOwnerSeat(account)
-    }
-    account = await ensureAdminRole(account)
+    const createdAccount = await createAccount(result.data)
+    const session = await createSession(createdAccount.id)
+    const account = await getSessionAccount(session.token)
     console.log(JSON.stringify({
       event: 'hub_register',
       track: account.membershipTrack,
@@ -82,7 +82,7 @@ authRouter.post('/register', async (req, res) => {
   }
 })
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', loginLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.status(200).json({ ok: true }) // honeypot
@@ -103,9 +103,8 @@ authRouter.post('/login', async (req, res) => {
       })
     }
 
-    let account = publicAccount(row)
-    const session = await createSession(account.id)
-    account = await ensureAdminRole(account)
+    const session = await createSession(row.id)
+    const account = await getSessionAccount(session.token)
     console.log(JSON.stringify({
       event: 'hub_login',
       track: account.membershipTrack,
@@ -131,7 +130,7 @@ authRouter.post('/logout', async (req, res) => {
 const GENERIC_FORGOT =
   'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
 
-authRouter.post('/forgot-password', async (req, res) => {
+authRouter.post('/forgot-password', resetRequestLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true, message: GENERIC_FORGOT })
@@ -144,15 +143,20 @@ authRouter.post('/forgot-password', async (req, res) => {
 
     const created = await createPasswordResetToken(email)
     if (created) {
-      const origin = process.env.APP_ORIGIN || `${req.protocol}://${req.get('host')}`
-      const url = resetLink(origin, created.rawToken)
-      // No SMTP wired yet: log for operators / Railway logs. Never put the token in the API response.
-      console.log(JSON.stringify({
-        event: 'password_reset_issued',
-        email: created.email,
-        expiresAt: created.expiresAt,
-        resetUrl: url,
-      }))
+      if (process.env.NODE_ENV !== 'production' && process.env.LOG_PASSWORD_RESET_LINKS === 'true') {
+        console.log(JSON.stringify({
+          event: 'password_reset_development_link',
+          resetUrl: resetLink(appOrigin(), created.rawToken),
+          expiresAt: created.expiresAt,
+        }))
+      } else {
+        console.log(JSON.stringify({
+          event: 'password_reset_requested',
+          accountId: created.accountId,
+          expiresAt: created.expiresAt,
+          deliveryConfigured: false,
+        }))
+      }
     }
 
     res.json({ ok: true, message: GENERIC_FORGOT })
@@ -162,7 +166,7 @@ authRouter.post('/forgot-password', async (req, res) => {
   }
 })
 
-authRouter.post('/reset-password', async (req, res) => {
+authRouter.post('/reset-password', resetConsumeLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.json({ ok: true })

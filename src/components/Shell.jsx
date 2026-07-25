@@ -7,7 +7,7 @@ import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
   Home, CalendarDays, FileText, Gavel, MapPin, Users, AtSign,
-  Search, Moon, Sun, MoreHorizontal, Settings2, ScrollText, LogOut,
+  Search, Moon, Sun, MoreHorizontal, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
 } from 'lucide-react'
 
@@ -38,44 +38,61 @@ export function Shell({ children }) {
 
   const nav = useMemo(() => {
     const sections = [
-      { section: 'Start', items: [
-        { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
-        { href: '/library', label: 'Library', icon: Library },
-      ]},
+      {
+        section: 'Start', items: [
+          { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
+          { href: '/library', label: 'Library', icon: Library },
+        ]
+      },
     ]
     if (verified) {
       sections.push(
-        { section: 'For you', items: [
-          { href: '/', label: 'Home', icon: Home },
-          { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-        ]},
-        { section: 'Participate', items: [
-          { href: '/submissions', label: 'Submissions', icon: FileText },
-          { href: '/coys', label: 'COY tracker', icon: MapPin },
-          { href: '/council', label: 'Council', icon: Gavel },
-          { href: '/gys', label: 'Youth Statement', icon: ScrollText },
-        ]},
-        { section: 'Community', items: [
-          { href: '/groups', label: 'Working groups', icon: Users },
-          { href: '/directory', label: 'Directory', icon: AtSign },
-        ]},
+        {
+          section: 'For you', items: [
+            { href: '/', label: 'Home', icon: Home },
+            { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+          ]
+        },
+        {
+          section: 'Participate', items: [
+            { href: '/submissions', label: 'Submissions', icon: FileText },
+            { href: '/coys', label: 'COY tracker', icon: MapPin },
+            { href: '/council', label: 'Council', icon: Gavel },
+            { href: '/gys', label: 'Youth Statement', icon: ScrollText },
+          ]
+        },
+        {
+          section: 'Community', items: [
+            { href: '/groups', label: 'Working groups', icon: Users },
+            { href: '/directory', label: 'Directory', icon: AtSign },
+          ]
+        },
       )
     }
-    if (account?.isNgo || account?.role === 'admin' || account?.role === 'ngo_admin') {
-      sections.push({ section: 'Organisation', items: [
-        { href: '/ngo', label: 'NGO platform', icon: Building2 },
-      ]})
+    if (account?.role === 'admin' || account?.access?.ngo) {
+      sections.push({
+        section: 'Organisation', items: [
+          { href: '/ngo', label: 'NGO platform', icon: Building2 },
+        ]
+      })
     }
-    if (account?.isWgContact || account?.role === 'admin') {
-      sections.push({ section: 'WG CP', items: [
-        { href: '/cp/finance', label: 'Manage Finance WG', icon: Briefcase },
-        { href: '/cp/ace', label: 'Manage ACE WG', icon: Briefcase },
-      ]})
+    if (account?.access?.managedWgs?.length) {
+      sections.push({
+        section: 'WG CP', items: [
+          ...account.access.managedWgs.map((slug) => ({
+            href: `/cp/${slug}`,
+            label: `Manage ${slug.toUpperCase()} WG`,
+            icon: Briefcase,
+          })),
+        ]
+      })
     }
     if (account?.role === 'admin') {
-      sections.push({ section: 'Staff', items: [
-        { href: '/admin', label: 'Admin', icon: Shield },
-      ]})
+      sections.push({
+        section: 'Staff', items: [
+          { href: '/admin', label: 'Admin', icon: Shield },
+        ]
+      })
     }
     return sections
   }, [account, verified])
@@ -138,7 +155,6 @@ export function Shell({ children }) {
           <button className="navItem" onClick={toggleTheme}>
             <ThemeIcon size={18} strokeWidth={1.75} aria-hidden />{theme === 'dark' ? 'Light mode' : 'Dark mode'}
           </button>
-          <A href="/gallery" className="navItem"><Settings2 size={18} strokeWidth={1.75} aria-hidden />Gallery</A>
           <button className="navItem" onClick={signOut}>
             <LogOut size={18} strokeWidth={1.75} aria-hidden />Sign out
           </button>
