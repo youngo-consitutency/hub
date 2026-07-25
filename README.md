@@ -37,8 +37,15 @@ complete the membership course to unlock member pages.
 npm test
 npm run lint
 npm run build
+npm run check
 npm run screenshots
 ```
+
+`npm run check` is the local merge gate. GitHub Actions runs the same lint,
+test, and production-build checks on Node 20 and Node 22 for every pull request
+and every push to `main`. CI also applies every migration to a clean PostgreSQL
+16 database, checks the security-critical schema, and rejects high-severity
+production dependency advisories.
 
 To serve a completed build from Express:
 
@@ -155,7 +162,9 @@ npm audit --omit=dev
 - Local JSON persistence is duplicated across several server modules.
 - Reset and invitation links need an owned email-delivery path.
 - Registration collects too much information before members reach the hub.
-- PostgreSQL migration and authorization paths need live integration tests.
+- PostgreSQL authorization and concurrent invite acceptance still need deeper
+  transactional integration tests; CI currently covers clean migration and the
+  security-critical schema.
 - One account currently uses its most recently accepted active organisation
   seat when several exist.
 
@@ -164,7 +173,7 @@ system.
 
 ## Deployment
 
-Railway configuration lives in `railway.toml`. Migrations must run before the
+Railway configuration lives in `railway.json`. Migrations must run before the
 new server process starts.
 
 ```bash
@@ -182,7 +191,7 @@ before adding page-specific wrappers.
 Before opening a pull request:
 
 ```bash
-npm test
-npm run lint
-npm run build
+npm ci
+npm run check
+npm audit --omit=dev --audit-level=high
 ```
