@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -123,7 +129,11 @@ describe('member messaging permissions', () => {
 
   it('lets participants reply inside an allowed conversation', async () => {
     const started = await findOrCreateConversation('regular-a', 'wg-contact')
-    const message = await addMessage(started.conversation.id, 'wg-contact', 'Thanks, I can help.')
+    const message = await addMessage(
+      started.conversation.id,
+      'wg-contact',
+      'Thanks, I can help.',
+    )
     assert.equal(message.body, 'Thanks, I can help.')
     assert.equal(message.senderAccountId, 'wg-contact')
   })
@@ -147,7 +157,12 @@ describe('member messaging permissions', () => {
 
   it('lists only contact points and mandate holders as member contacts', async () => {
     const contacts = await listMessageContacts('regular-a')
-    assert.deepEqual(contacts.map((c) => c.id).sort(), ['focal-point', 'team-member', 'wg-contact', 'wg-lead'])
+    assert.deepEqual(contacts.map((c) => c.id).sort(), [
+      'focal-point',
+      'team-member',
+      'wg-contact',
+      'wg-lead',
+    ])
     assert.deepEqual(
       contacts.find((contact) => contact.id === 'team-member').mandates,
       [{ type: 'team', role: 'membership_team' }],

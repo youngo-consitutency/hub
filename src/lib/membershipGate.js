@@ -4,7 +4,7 @@ const STORAGE_KEY = 'youngo-hub:membership-policy-ack'
 
 /**
  * Returns true if the visitor has acknowledged the current policy version.
- * Older versions do not count — policy updates re-open the gate.
+ * A new policy version requires another acknowledgement.
  */
 export function hasAcknowledgedMembershipPolicy() {
   try {

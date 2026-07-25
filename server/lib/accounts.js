@@ -3,9 +3,17 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
-import { hashPassword, verifyPassword, newSessionToken, sessionExpiry } from './password.js'
+import {
+  hashPassword,
+  verifyPassword,
+  newSessionToken,
+  sessionExpiry,
+} from './password.js'
 import { getAccessProfile } from './access.js'
-import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../../shared/privacyNotice.js'
+import {
+  PRIVACY_VERSION,
+  CONSENT_STATEMENT,
+} from '../../shared/privacyNotice.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -26,7 +34,13 @@ export const REGIONS = [
   'Western Europe and Others',
 ]
 
-export const GENDERS = ['Female', 'Male', 'Non-binary', 'Prefer not to say', 'Other']
+export const GENDERS = [
+  'Female',
+  'Male',
+  'Non-binary',
+  'Prefer not to say',
+  'Other',
+]
 
 export const MINORITY_OPTIONS = [
   'Indigenous peoples',
@@ -45,7 +59,9 @@ export const YOUTH_AFFILIATIONS = ['primary', 'secondary', 'no']
 function readJson(file, fallback) {
   try {
     if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return fallback
 }
 
@@ -55,7 +71,10 @@ function writeJson(file, data) {
 }
 
 function wordCount(text) {
-  return String(text || '').trim().split(/\s+/).filter(Boolean).length
+  return String(text || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
 }
 
 function publicAccount(row) {
@@ -65,8 +84,10 @@ function publicAccount(row) {
   const name = row.name || [first, last].filter(Boolean).join(' ')
   const memberStatus = row.member_status ?? row.memberStatus ?? 'pending_course'
   const role = row.role || 'member'
-  const hubAccessStatus = row.hub_access_status ?? row.hubAccessStatus
-    ?? (memberStatus === 'verified' ? 'active' : 'pending_course')
+  const hubAccessStatus =
+    row.hub_access_status ??
+    row.hubAccessStatus ??
+    (memberStatus === 'verified' ? 'active' : 'pending_course')
   return {
     id: row.id,
     email: row.email,
@@ -86,29 +107,42 @@ function publicAccount(row) {
     isUnfcccAdmitted: Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted),
     youthAffiliation: row.youth_affiliation ?? row.youthAffiliation ?? null,
     under18: Boolean(row.under_18 ?? row.under18),
-    constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
-    membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
+    constituencyWorkStatus:
+      row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
+    membershipPolicyVersion:
+      row.membership_policy_version ?? row.membershipPolicyVersion,
     privacyConsent: Boolean(row.privacy_consent ?? row.privacyConsent),
-    privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
+    privacyNoticeVersion:
+      row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
     privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     memberStatus,
     hubAccessStatus,
-    membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
+    membershipStatus:
+      row.membership_status ??
+      row.membershipStatus ??
+      (row.course_passed_at ? 'course_passed' : 'registered'),
     onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
     renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
     membershipEndedAt: row.membership_ended_at ?? row.membershipEndedAt ?? null,
-    membershipEndReason: row.membership_end_reason ?? row.membershipEndReason ?? null,
+    membershipEndReason:
+      row.membership_end_reason ?? row.membershipEndReason ?? null,
     role,
     teamRoles: row.team_roles ?? row.teamRoles ?? [],
     wgInterests: row.wg_interests ?? row.wgInterests ?? [],
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified: hubAccessStatus === 'active'
-      && (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
+    isVerified:
+      hubAccessStatus === 'active' &&
+      (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
-    isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
+    isMandateHolder: [
+      'admin',
+      'focal_point',
+      'wg_contact',
+      'ngo_admin',
+    ].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: (row.entity_type ?? row.entityType) === 'organization',
     isNgoAdmin: role === 'ngo_admin' || role === 'admin',
@@ -133,8 +167,13 @@ async function enrichAccountAccess(account) {
     ngoSeat = rows[0]
   } else {
     ngoSeat = readJson(seatsPath, [])
-      .filter((row) => row.member_account_id === account.id && row.status === 'active')
-      .sort((a, b) => String(b.accepted_at || '').localeCompare(String(a.accepted_at || '')))[0]
+      .filter(
+        (row) =>
+          row.member_account_id === account.id && row.status === 'active',
+      )
+      .sort((a, b) =>
+        String(b.accepted_at || '').localeCompare(String(a.accepted_at || '')),
+      )[0]
   }
 
   return {
@@ -162,7 +201,8 @@ function ageFromDob(dob) {
 }
 
 function asStringArray(value) {
-  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean)
+  if (Array.isArray(value))
+    return value.map((v) => String(v).trim()).filter(Boolean)
   if (typeof value === 'string' && value.trim()) return [value.trim()]
   return []
 }
@@ -174,9 +214,12 @@ function parseYesNo(value) {
 }
 
 function requirePassword(password, passwordConfirm, fields) {
-  if (password.length < 10) fields.password = 'Password must be at least 10 characters (for YOUNGO Hub access).'
+  if (password.length < 10)
+    fields.password =
+      'Password must be at least 10 characters (for YOUNGO Hub access).'
   if (password.length > 200) fields.password = 'Password is too long.'
-  if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
+  if (password !== passwordConfirm)
+    fields.passwordConfirm = 'Passwords do not match.'
 }
 
 function requireAgreements(b, fields) {
@@ -186,24 +229,34 @@ function requireAgreements(b, fields) {
   const acceptDataProtection = Boolean(b.acceptDataProtection) || combined
   const acceptPrinciples = Boolean(b.acceptPrinciples) || combined
   const acceptCoiPolicy = Boolean(b.acceptCoiPolicy) || combined
-  if (!acceptCodeOfConduct) fields.acceptCodeOfConduct = 'You must agree to the YOUNGO Code of Conduct.'
-  if (!acceptDataProtection) fields.acceptDataProtection = 'You must agree to the YOUNGO Data Protection Policy.'
-  if (!acceptPrinciples) fields.acceptPrinciples = 'You must agree to the YOUNGO Principles.'
-  if (!acceptCoiPolicy) fields.acceptCoiPolicy = 'You must agree to the YOUNGO Conflict of Interest Policy.'
+  if (!acceptCodeOfConduct)
+    fields.acceptCodeOfConduct = 'You must agree to the YOUNGO Code of Conduct.'
+  if (!acceptDataProtection)
+    fields.acceptDataProtection =
+      'You must agree to the YOUNGO Data Protection Policy.'
+  if (!acceptPrinciples)
+    fields.acceptPrinciples = 'You must agree to the YOUNGO Principles.'
+  if (!acceptCoiPolicy)
+    fields.acceptCoiPolicy =
+      'You must agree to the YOUNGO Conflict of Interest Policy.'
   if (combined && !acceptCodeOfConduct) {
-    fields.acceptAllOrgPolicies = 'The organisation must agree to YOUNGO’s policies and principles.'
+    fields.acceptAllOrgPolicies =
+      'The organisation must agree to YOUNGO’s policies and principles.'
   }
-  return { acceptCodeOfConduct, acceptDataProtection, acceptPrinciples, acceptCoiPolicy }
+  return {
+    acceptCodeOfConduct,
+    acceptDataProtection,
+    acceptPrinciples,
+    acceptCoiPolicy,
+  }
 }
 
 /**
  * Explicit consent to the YOUNGO Hub Privacy Notice.
  *
- * Deliberately separate from requireAgreements: those are promises to *respect*
- * YOUNGO policies, which is a different act from agreeing that this platform may
- * hold your personal data. Consent is only valid against a notice version, so the
- * version is recorded server-side rather than trusted from the client — a client
- * claiming an older version must not be able to consent on its behalf.
+ * Policy agreements and consent to process personal data are separate choices.
+ * The server records the current notice version instead of trusting a version
+ * supplied by the client.
  */
 function requirePrivacyConsent(b, fields) {
   const consented = Boolean(b.privacyConsent)
@@ -227,22 +280,28 @@ function requirePrivacyConsent(b, fields) {
 }
 
 /**
- * Validate Join YOUNGO registration — individual or organisational (admitted / non-admitted).
+ * Validate individual and organisation registration.
  */
 export function validateRegistration(body) {
   const b = body || {}
   const fields = {}
 
-  // Honeypot (must not collide with orgWebsite)
+  // The honeypot field must remain separate from the organisation website.
   if (b.hpWebsite || b.website === 'http://bot') return { honeypot: true }
-  // Legacy honeypot name still treated as bot if filled with obvious spam while orgWebsite is separate
-  if (b.website && !b.orgWebsite && String(b.website).includes('http') && b.entityType !== 'organization') {
-    // individual forms used website as honeypot
+  // Continue to reject obvious spam sent through the old honeypot field.
+  if (
+    b.website &&
+    !b.orgWebsite &&
+    String(b.website).includes('http') &&
+    b.entityType !== 'organization'
+  ) {
+    // Older individual forms used `website` as their honeypot.
     if (!b.firstName && !b.phone) return { honeypot: true }
   }
 
   const entityType = String(b.entityType || '').trim()
-  const membershipTrack = String(b.membershipTrack || 'network').trim() || 'network'
+  const membershipTrack =
+    String(b.membershipTrack || 'network').trim() || 'network'
   const membershipPolicyVersion = String(b.membershipPolicyVersion || '').trim()
   const password = String(b.password || '')
   const passwordConfirm = String(b.passwordConfirm || '')
@@ -254,13 +313,16 @@ export function validateRegistration(body) {
     fields.membershipTrack = 'Choose a membership track.'
   }
   if (!membershipPolicyVersion) {
-    fields.membershipPolicyVersion = 'You must read the Membership Policy first.'
+    fields.membershipPolicyVersion =
+      'You must read the Membership Policy first.'
   }
   requirePassword(password, passwordConfirm, fields)
 
-  // ─── ORGANISATION PATH ───────────────────────────────────────────
+  // Organisation registration
   if (entityType === 'organization') {
-    const email = String(b.email || '').trim().toLowerCase()
+    const email = String(b.email || '')
+      .trim()
+      .toLowerCase()
     const organizationName = String(b.organizationName || '').trim()
     const isUnfcccAdmitted = parseYesNo(b.isUnfcccAdmitted)
     const orgOperateIn = String(b.orgOperateIn || '').trim()
@@ -268,20 +330,30 @@ export function validateRegistration(body) {
     const orgSocial = String(b.orgSocial || '').trim() || null
     const orgMission = String(b.orgMission || '').trim() || null
     const dcpName = String(b.dcpName || '').trim() || null
-    const dcpEmail = String(b.dcpEmail || '').trim().toLowerCase() || null
+    const dcpEmail =
+      String(b.dcpEmail || '')
+        .trim()
+        .toLowerCase() || null
     const dcpPhone = String(b.dcpPhone || '').trim() || null
     const ycpName = String(b.ycpName || '').trim() || null
-    const ycpEmail = String(b.ycpEmail || '').trim().toLowerCase() || null
+    const ycpEmail =
+      String(b.ycpEmail || '')
+        .trim()
+        .toLowerCase() || null
     const ycpPhone = String(b.ycpPhone || '').trim() || null
     const youthAffiliation = String(b.youthAffiliation || '').trim() || null
     const region = String(b.region || b.orgRegion || '').trim()
     const country = String(b.orgCountry || b.country || '').trim()
 
     if (!EMAIL_RE.test(email)) fields.email = 'Please enter a valid email.'
-    if (!organizationName) fields.organizationName = 'Full legal name of the organisation is required.'
-    if (organizationName.length > 200) fields.organizationName = 'Organisation name is too long.'
+    if (!organizationName)
+      fields.organizationName =
+        'Full legal name of the organisation is required.'
+    if (organizationName.length > 200)
+      fields.organizationName = 'Organisation name is too long.'
     if (isUnfcccAdmitted === null) {
-      fields.isUnfcccAdmitted = 'Indicate whether this organisation is an admitted UNFCCC observer NGO.'
+      fields.isUnfcccAdmitted =
+        'Indicate whether this organisation is an admitted UNFCCC observer NGO.'
     }
     if (orgMission && wordCount(orgMission) > WORD_LIMIT) {
       fields.orgMission = `Please keep the summary to ${WORD_LIMIT} words or fewer.`
@@ -291,37 +363,55 @@ export function validateRegistration(body) {
     const privacy = requirePrivacyConsent(b, fields)
 
     if (isUnfcccAdmitted === true) {
-      // Admitted observer NGO path
+      // UNFCCC-admitted organisation
       if (!YOUTH_AFFILIATIONS.includes(youthAffiliation)) {
-        fields.youthAffiliation = 'Indicate affiliation with “youth” within the UNFCCC.'
+        fields.youthAffiliation =
+          'Indicate affiliation with “youth” within the UNFCCC.'
       }
-      if (!REGIONS.includes(region)) fields.region = 'Select the UN region where the organisation is legally established.'
-      if (!country) fields.country = 'Country of legal establishment is required.'
+      if (!REGIONS.includes(region))
+        fields.region =
+          'Select the UN region where the organisation is legally established.'
+      if (!country)
+        fields.country = 'Country of legal establishment is required.'
       if (!dcpName) fields.dcpName = "UNFCCC DCP's full name is required."
-      if (!EMAIL_RE.test(dcpEmail || '')) fields.dcpEmail = "UNFCCC DCP's official email is required."
-      if (!dcpPhone || !PHONE_RE.test(dcpPhone)) fields.dcpPhone = "UNFCCC DCP's phone (with country code) is required."
-      // YOUNGO CP optional but if any field filled, require all
+      if (!EMAIL_RE.test(dcpEmail || ''))
+        fields.dcpEmail = "UNFCCC DCP's official email is required."
+      if (!dcpPhone || !PHONE_RE.test(dcpPhone))
+        fields.dcpPhone = "UNFCCC DCP's phone (with country code) is required."
+      // Contact Point details are optional, but partial entries are invalid.
       const ycpPartial = ycpName || ycpEmail || ycpPhone
       if (ycpPartial) {
-        if (!ycpName) fields.ycpName = 'YOUNGO Contact Point name is required if providing a contact point.'
-        if (!EMAIL_RE.test(ycpEmail || '')) fields.ycpEmail = 'YOUNGO Contact Point email is required if providing a contact point.'
-        if (!ycpPhone || !PHONE_RE.test(ycpPhone)) fields.ycpPhone = 'YOUNGO Contact Point phone is required if providing a contact point.'
+        if (!ycpName)
+          fields.ycpName =
+            'YOUNGO Contact Point name is required if providing a contact point.'
+        if (!EMAIL_RE.test(ycpEmail || ''))
+          fields.ycpEmail =
+            'YOUNGO Contact Point email is required if providing a contact point.'
+        if (!ycpPhone || !PHONE_RE.test(ycpPhone))
+          fields.ycpPhone =
+            'YOUNGO Contact Point phone is required if providing a contact point.'
       }
     } else if (isUnfcccAdmitted === false) {
-      // Non-admitted path
-      if (!orgOperateIn) fields.orgOperateIn = 'Please describe regions/countries of operation.'
-      if (!ycpName) fields.ycpName = "YOUNGO Contact Point's full name is required."
-      if (!EMAIL_RE.test(ycpEmail || '')) fields.ycpEmail = "YOUNGO Contact Point's email is required."
-      if (!ycpPhone || !PHONE_RE.test(ycpPhone)) fields.ycpPhone = "YOUNGO Contact Point's phone (with country code) is required."
+      // Organisation without UNFCCC admission
+      if (!orgOperateIn)
+        fields.orgOperateIn = 'Please describe regions/countries of operation.'
+      if (!ycpName)
+        fields.ycpName = "YOUNGO Contact Point's full name is required."
+      if (!EMAIL_RE.test(ycpEmail || ''))
+        fields.ycpEmail = "YOUNGO Contact Point's email is required."
+      if (!ycpPhone || !PHONE_RE.test(ycpPhone))
+        fields.ycpPhone =
+          "YOUNGO Contact Point's phone (with country code) is required."
     }
 
     if (Object.keys(fields).length) return { fields }
 
-    // Hub account identity: prefer YOUNGO CP, else DCP, else email local-part
+    // Prefer the YOUNGO Contact Point, then the designated contact, as the account name.
     const accountName = ycpName || dcpName || organizationName
     const nameParts = accountName.split(/\s+/)
     const firstName = nameParts[0] || organizationName
-    const lastName = nameParts.slice(1).join(' ') || (isUnfcccAdmitted ? 'DCP' : 'Contact')
+    const lastName =
+      nameParts.slice(1).join(' ') || (isUnfcccAdmitted ? 'DCP' : 'Contact')
 
     return {
       data: {
@@ -376,8 +466,10 @@ export function validateRegistration(body) {
     }
   }
 
-  // ─── INDIVIDUAL PATH ─────────────────────────────────────────────
-  const email = String(b.email || '').trim().toLowerCase()
+  // Individual registration
+  const email = String(b.email || '')
+    .trim()
+    .toLowerCase()
   const firstName = String(b.firstName || '').trim()
   const lastName = String(b.lastName || '').trim()
   const name = `${firstName} ${lastName}`.trim() || String(b.name || '').trim()
@@ -386,14 +478,18 @@ export function validateRegistration(body) {
   const genderOther = String(b.genderOther || '').trim() || null
   const ageBand = String(b.ageBand || '').trim()
   const dateOfBirth = String(b.dateOfBirth || '').trim() || null
-  const minorityGroups = asStringArray(b.minorityGroups)
+  const minorityIdentity = parseYesNo(b.minorityIdentity)
+  let minorityGroups = asStringArray(b.minorityGroups)
   const minorityOther = String(b.minorityOther || '').trim() || null
   const region = String(b.region || '').trim()
   const nationality = String(b.nationality || '').trim()
   const country = String(b.countryOfResidence || b.country || '').trim()
   const motivation = String(b.motivation || '').trim() || null
   const guardianName = String(b.guardianName || '').trim() || null
-  const guardianEmail = String(b.guardianEmail || '').trim().toLowerCase() || null
+  const guardianEmail =
+    String(b.guardianEmail || '')
+      .trim()
+      .toLowerCase() || null
   const guardianConsent = Boolean(b.guardianConsent)
   const memberOfAccreditedNgo = parseYesNo(b.memberOfAccreditedNgo)
   const wgInterests = asStringArray(b.wgInterests)
@@ -405,19 +501,23 @@ export function validateRegistration(body) {
   if (!EMAIL_RE.test(email)) fields.email = 'Please enter a valid email.'
   if (email.length > 160) fields.email = 'Email is too long.'
   if (!phone || !PHONE_RE.test(phone)) {
-    fields.phone = 'Enter a phone number with country code (e.g. +123 456 7890).'
+    fields.phone =
+      'Enter a phone number with country code (e.g. +123 456 7890).'
   }
   if (!GENDERS.includes(gender)) fields.gender = 'Please select your gender.'
   if (gender === 'Other' && !genderOther) fields.genderOther = 'Please specify.'
-  if (!AGE_BANDS.includes(ageBand)) fields.ageBand = 'Please select your age group.'
+  if (!AGE_BANDS.includes(ageBand))
+    fields.ageBand = 'Please select your age group.'
   if (ageBand === '35_plus') {
-    fields.ageBand = 'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.'
+    fields.ageBand =
+      'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.'
   }
   if (!dateOfBirth) fields.dateOfBirth = 'Date of birth is required.'
   if (!REGIONS.includes(region)) fields.region = 'Please select your UN region.'
   if (!nationality) fields.nationality = 'Nationality is required.'
   if (!country) fields.country = 'Country of residence is required.'
-  if (motivation && motivation.length > 2000) fields.motivation = 'Please keep this under 2000 characters.'
+  if (motivation && motivation.length > 2000)
+    fields.motivation = 'Please keep this under 2000 characters.'
 
   const agreements = requireAgreements(b, fields)
   const privacy = requirePrivacyConsent(b, fields)
@@ -425,8 +525,17 @@ export function validateRegistration(body) {
     fields.memberOfAccreditedNgo = 'Please answer for statistics.'
   }
 
-  const invalidMinority = minorityGroups.filter((g) => !MINORITY_OPTIONS.includes(g))
-  if (invalidMinority.length) fields.minorityGroups = 'Invalid minority group selection.'
+  const invalidMinority = minorityGroups.filter(
+    (g) => !MINORITY_OPTIONS.includes(g),
+  )
+  if (minorityIdentity === null)
+    fields.minorityIdentity = 'Please answer yes or no.'
+  if (minorityIdentity === true && minorityGroups.length === 0) {
+    fields.minorityGroups = 'Select at least one option.'
+  }
+  if (minorityIdentity === false) minorityGroups = []
+  if (invalidMinority.length)
+    fields.minorityGroups = 'Invalid minority group selection.'
   if (minorityGroups.includes('Other') && !minorityOther) {
     fields.minorityOther = 'Please specify.'
   }
@@ -435,13 +544,18 @@ export function validateRegistration(body) {
   if (dateOfBirth) {
     const age = ageFromDob(dateOfBirth)
     if (age === null) fields.dateOfBirth = 'Enter a valid date of birth.'
-    else if (age >= 35) fields.dateOfBirth = 'Individual membership expires at age 35.'
+    else if (age >= 35)
+      fields.dateOfBirth = 'Individual membership expires at age 35.'
     else if (age < 18) under18 = true
   }
   if (under18) {
-    if (!guardianName) fields.guardianName = 'Guardian name is required for members under 18.'
-    if (!EMAIL_RE.test(guardianEmail || '')) fields.guardianEmail = 'Guardian email is required for members under 18.'
-    if (!guardianConsent) fields.guardianConsent = 'Guardian permission is required for members under 18.'
+    if (!guardianName)
+      fields.guardianName = 'Guardian name is required for members under 18.'
+    if (!EMAIL_RE.test(guardianEmail || ''))
+      fields.guardianEmail = 'Guardian email is required for members under 18.'
+    if (!guardianConsent)
+      fields.guardianConsent =
+        'Guardian permission is required for members under 18.'
   }
 
   if (Object.keys(fields).length) return { fields }
@@ -500,12 +614,14 @@ export function validateRegistration(body) {
 }
 
 export async function findAccountByEmail(email) {
-  const normalized = String(email || '').trim().toLowerCase()
+  const normalized = String(email || '')
+    .trim()
+    .toLowerCase()
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM hub_accounts WHERE lower(email) = lower($1) LIMIT 1',
-      [normalized]
+      [normalized],
     )
     return rows[0] || null
   }
@@ -520,7 +636,7 @@ export async function findAccountById(id) {
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM hub_accounts WHERE id = $1 LIMIT 1',
-      [accountId]
+      [accountId],
     )
     return rows[0] || null
   }
@@ -530,10 +646,17 @@ export async function findAccountById(id) {
 
 export async function createAccount(data, client = null) {
   const existing = client
-    ? (await client.query('SELECT * FROM hub_accounts WHERE lower(email) = lower($1) LIMIT 1', [data.email])).rows[0]
+    ? (
+        await client.query(
+          'SELECT * FROM hub_accounts WHERE lower(email) = lower($1) LIMIT 1',
+          [data.email],
+        )
+      ).rows[0]
     : await findAccountByEmail(data.email)
   if (existing) {
-    const err = new Error('An account with this email already exists. Sign in instead.')
+    const err = new Error(
+      'An account with this email already exists. Sign in instead.',
+    )
     err.code = 'email_taken'
     throw err
   }
@@ -548,8 +671,8 @@ export async function createAccount(data, client = null) {
   if (pool) {
     let rows
     try {
-      ({ rows } = await pool.query(
-      `INSERT INTO hub_accounts (
+      ;({ rows } = await pool.query(
+        `INSERT INTO hub_accounts (
         email, password_hash, password_salt, name, first_name, last_name,
         entity_type, membership_track, country, date_of_birth,
         organization_name, organization_type, is_unfccc_admitted, dcp_name,
@@ -580,26 +703,71 @@ export async function createAccount(data, client = null) {
         $48,$49,$50,
         $51,$52,$53,$54
       ) RETURNING *`,
-      [
-        data.email, hash, salt, data.name, data.firstName, data.lastName,
-        data.entityType, data.membershipTrack, data.country, data.dateOfBirth,
-        data.organizationName, data.organizationType, data.isUnfcccAdmitted, data.dcpName,
-        data.under18, data.guardianName, data.guardianEmail, data.guardianConsent,
-        data.coiDeclared, data.coiDetails, data.policiesAccepted, data.membershipPolicyVersion,
-        data.constituencyWorkStatus,
-        data.phone, data.gender, data.genderOther, data.ageBand, data.minorityGroups || [], data.minorityOther,
-        data.region, data.nationality, data.motivation,
-        data.acceptCodeOfConduct, data.acceptDataProtection, data.acceptPrinciples, data.acceptCoiPolicy,
-        data.memberOfAccreditedNgo,
-        data.youthAffiliation, data.orgOperateIn, data.orgWebsite, data.orgSocial, data.orgMission,
-        data.dcpEmail, data.dcpPhone, data.ycpName, data.ycpEmail, data.ycpPhone,
-        memberStatus, role, wgInterests,
-        Boolean(data.privacyConsent), data.privacyNoticeVersion || null,
-        data.privacyConsentAt || null, data.privacyConsentStatement || null,
-      ]
+        [
+          data.email,
+          hash,
+          salt,
+          data.name,
+          data.firstName,
+          data.lastName,
+          data.entityType,
+          data.membershipTrack,
+          data.country,
+          data.dateOfBirth,
+          data.organizationName,
+          data.organizationType,
+          data.isUnfcccAdmitted,
+          data.dcpName,
+          data.under18,
+          data.guardianName,
+          data.guardianEmail,
+          data.guardianConsent,
+          data.coiDeclared,
+          data.coiDetails,
+          data.policiesAccepted,
+          data.membershipPolicyVersion,
+          data.constituencyWorkStatus,
+          data.phone,
+          data.gender,
+          data.genderOther,
+          data.ageBand,
+          data.minorityGroups || [],
+          data.minorityOther,
+          data.region,
+          data.nationality,
+          data.motivation,
+          data.acceptCodeOfConduct,
+          data.acceptDataProtection,
+          data.acceptPrinciples,
+          data.acceptCoiPolicy,
+          data.memberOfAccreditedNgo,
+          data.youthAffiliation,
+          data.orgOperateIn,
+          data.orgWebsite,
+          data.orgSocial,
+          data.orgMission,
+          data.dcpEmail,
+          data.dcpPhone,
+          data.ycpName,
+          data.ycpEmail,
+          data.ycpPhone,
+          memberStatus,
+          role,
+          wgInterests,
+          Boolean(data.privacyConsent),
+          data.privacyNoticeVersion || null,
+          data.privacyConsentAt || null,
+          data.privacyConsentStatement || null,
+        ],
       ))
     } catch (error) {
-      if (error.code === '23505') { const duplicate = new Error('An account with this email already exists. Sign in instead.'); duplicate.code = 'email_taken'; throw duplicate }
+      if (error.code === '23505') {
+        const duplicate = new Error(
+          'An account with this email already exists. Sign in instead.',
+        )
+        duplicate.code = 'email_taken'
+        throw duplicate
+      }
       throw error
     }
     return publicAccount(rows[0])
@@ -676,7 +844,11 @@ export async function createAccount(data, client = null) {
 export async function authenticate(email, password) {
   const row = await findAccountByEmail(email)
   if (!row) return null
-  const ok = await verifyPassword(password, row.password_salt, row.password_hash)
+  const ok = await verifyPassword(
+    password,
+    row.password_salt,
+    row.password_hash,
+  )
   if (!ok) return null
   return row
 }
@@ -689,11 +861,11 @@ export async function createSession(accountId, client = null) {
   if (pool) {
     await pool.query(
       'INSERT INTO hub_sessions(token, account_id, expires_at) VALUES ($1, $2, $3)',
-      [storedToken, accountId, expiresAt.toISOString()]
+      [storedToken, accountId, expiresAt.toISOString()],
     )
     await pool.query(
       'UPDATE hub_accounts SET last_login_at = now() WHERE id = $1',
-      [accountId]
+      [accountId],
     )
     return { token, expiresAt: expiresAt.toISOString() }
   }
@@ -724,17 +896,20 @@ export async function getSessionAccount(token) {
        JOIN hub_accounts a ON a.id = s.account_id
        WHERE s.token = $1 AND s.expires_at > now()
        LIMIT 1`,
-      [storedToken]
+      [storedToken],
     )
     if (rows[0]) return enrichAccountAccess(publicAccount(rows[0]))
     const legacy = await pool.query(
       `SELECT a.* FROM hub_sessions s JOIN hub_accounts a ON a.id=s.account_id
-       WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`, [token]
+       WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`,
+      [token],
     )
     return enrichAccountAccess(publicAccount(legacy.rows[0] || null))
   }
   const sessions = readJson(sessionsPath, [])
-  const session = sessions.find((s) => s.token === storedToken || s.token === token)
+  const session = sessions.find(
+    (s) => s.token === storedToken || s.token === token,
+  )
   if (!session) return null
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
@@ -747,17 +922,30 @@ export async function destroySession(token) {
   const storedToken = createHash('sha256').update(token).digest('hex')
   const pool = getPool()
   if (pool) {
-    await pool.query('DELETE FROM hub_sessions WHERE token = $1 OR token = $2', [storedToken, token])
+    await pool.query(
+      'DELETE FROM hub_sessions WHERE token = $1 OR token = $2',
+      [storedToken, token],
+    )
     return
   }
-  const sessions = readJson(sessionsPath, []).filter((s) => s.token !== token && s.token !== storedToken)
+  const sessions = readJson(sessionsPath, []).filter(
+    (s) => s.token !== token && s.token !== storedToken,
+  )
   writeJson(sessionsPath, sessions)
 }
 
 export async function destroyAllSessions(accountId) {
   const pool = getPool()
-  if (pool) { await pool.query('DELETE FROM hub_sessions WHERE account_id=$1', [accountId]); return }
-  writeJson(sessionsPath, readJson(sessionsPath, []).filter((s) => s.account_id !== accountId))
+  if (pool) {
+    await pool.query('DELETE FROM hub_sessions WHERE account_id=$1', [
+      accountId,
+    ])
+    return
+  }
+  writeJson(
+    sessionsPath,
+    readJson(sessionsPath, []).filter((s) => s.account_id !== accountId),
+  )
 }
 
 export { publicAccount }

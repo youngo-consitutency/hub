@@ -1,25 +1,17 @@
 /**
- * YOUNGO Hub Privacy Notice — the platform-specific notice shown at registration.
+ * Privacy notice shown during YOUNGO Hub registration.
  *
- * This is NOT a replacement for the YOUNGO Data Protection Policy (adopted by the
- * constituency, held on the official policies Drive). This notice explains what
- * *this platform* does with the data it collects, as required before asking a
- * person to consent to that processing.
+ * It explains how this application handles data. It does not replace the
+ * constituency's Data Protection Policy in the official policy folder.
  *
- * Shared by the client (/privacy page, registration consent step) and the server
- * (consent validation and recording), so the version a member consented to is the
- * version the server stores.
+ * The client renders this file and the server records its version at consent.
  *
- * PRIVACY_VERSION must bump whenever the substance changes — what is collected,
- * why, who can see it, how long it is kept, or who processes it. Bumping it means
- * existing members are asked to review and re-consent.
+ * Increase PRIVACY_VERSION when collection, purpose, access, retention, or
+ * processors change. Existing members will then be asked to consent again.
  *
- * ── Council-confirmable facts ───────────────────────────────────────────────
- * The values in PRIVACY_META are the operational commitments this notice makes.
- * They are drawn from the adopted YOUNGO Membership Policy (Issue 2) where it
- * already speaks — §1.3 changes, §2.1 resignation, §2.2 expiration, §2.3
- * termination — and are otherwise the YOUNGO Hub Team's proposed defaults,
- * pending Council confirmation via the establishment DMP.
+ * PRIVACY_META contains the operational commitments made by this notice. Values
+ * covered by the Membership Policy follow Issue 2; the remaining defaults await
+ * Council confirmation through the Hub establishment DMP.
  */
 
 export const PRIVACY_VERSION = 'v1-2026-07-24'
@@ -28,7 +20,8 @@ export const PRIVACY_META = {
   name: 'YOUNGO Hub Privacy Notice',
   version: PRIVACY_VERSION,
   effectiveFrom: '24 July 2026',
-  status: 'Proposed — pending Council approval via the YOUNGO Hub establishment DMP',
+  status:
+    'Proposed — pending Council approval via the YOUNGO Hub establishment DMP',
   controller: 'YOUNGO — the Children and Youth Constituency of the UNFCCC',
   operatedBy: 'YOUNGO Hub Team, accountable to YOUNGO Council',
   contactEmail: 'membership@youngoclimate.org',
@@ -59,16 +52,17 @@ export const PRIVACY_META = {
 
 /**
  * What the platform collects, why, and who can see it.
- * Rendered as the core table of the notice — keep it exhaustive and truthful.
- * If a registration field is added, it must be added here in the same change.
+ * Add any new registration field here in the same change.
  */
 export const DATA_CATEGORIES = [
   {
     id: 'identity',
     label: 'Who you are',
     fields: ['First and last name', 'Email address', 'Phone number'],
-    purpose: 'To create your account, sign you in, and let contact points reach you about the work you join.',
-    whoSees: 'You, YOUNGO Hub admins, and the Membership Team. Contact points see the name and email of members who join their working group.',
+    purpose:
+      'To create your account, sign you in, and let contact points reach you about the work you join.',
+    whoSees:
+      'You, YOUNGO Hub admins, and the Membership Team. Contact points see the name and email of members who join their working group.',
   },
   {
     id: 'eligibility',
@@ -76,12 +70,17 @@ export const DATA_CATEGORIES = [
     fields: ['Date of birth', 'Age band'],
     purpose:
       'YOUNGO membership is for children and youth up to 35. Your date of birth is used to check eligibility, to determine whether guardian permission is required, and to apply the membership expiry in the Membership Policy §2.2.',
-    whoSees: 'YOUNGO Hub admins and the Membership Team. Never shown to other members and never returned by Hub search.',
+    whoSees:
+      'YOUNGO Hub admins and the Membership Team. Never shown to other members and never returned by Hub search.',
   },
   {
     id: 'guardian',
     label: 'Guardian permission (only if you are under 18)',
-    fields: ['Guardian name', 'Guardian email', 'Confirmation that permission was given'],
+    fields: [
+      'Guardian name',
+      'Guardian email',
+      'Confirmation that permission was given',
+    ],
     purpose:
       'Required by the Membership Policy §1 for members under 18, and by the Child Safeguarding Policy. Collected only when your date of birth indicates you are under 18.',
     whoSees:
@@ -93,12 +92,17 @@ export const DATA_CATEGORIES = [
     fields: ['UN region', 'Nationality', 'Country of residence'],
     purpose:
       'To report regional balance across the constituency, to run regionally fair selection processes, and to plan calls across time zones.',
-    whoSees: 'YOUNGO Hub admins and the Membership Team. Reported to the constituency only as aggregate counts, never as a list of individuals.',
+    whoSees:
+      'YOUNGO Hub admins and the Membership Team. Reported to the constituency only as aggregate counts, never as a list of individuals.',
   },
   {
     id: 'background',
     label: 'Background information you choose to give',
-    fields: ['Gender', 'Minority groups you identify with', 'Why you want to join'],
+    fields: [
+      'Gender',
+      'Minority groups you identify with',
+      'Why you want to join',
+    ],
     purpose:
       'To understand who the constituency is reaching and who it is not, so inclusion work is based on evidence. These fields are optional except where the form marks them required.',
     whoSees:
@@ -114,7 +118,8 @@ export const DATA_CATEGORIES = [
     ],
     purpose:
       'To register the organisation as a YOUNGO member and to route UNFCCC-facing requests such as badge and submission support to the right contact.',
-    whoSees: 'YOUNGO Hub admins, the Membership Team, and the organisation’s own seat holders.',
+    whoSees:
+      'YOUNGO Hub admins, the Membership Team, and the organisation’s own seat holders.',
   },
   {
     id: 'account',
@@ -186,7 +191,9 @@ export const PRIVACY_SECTIONS = [
       },
       {
         label: 'Working group contact points',
-        items: ['The name and email of members who join their own working group, so they can coordinate the work'],
+        items: [
+          'The name and email of members who join their own working group, so they can coordinate the work',
+        ],
       },
       {
         label: 'YOUNGO Hub admins and the Membership Team',
@@ -302,15 +309,15 @@ export const PRIVACY_SECTIONS = [
   },
 ]
 
-/** The exact sentence a person consents to at registration. Recorded verbatim alongside the version. */
+/** Consent text stored with the notice version. */
 export const CONSENT_STATEMENT =
   'I have read the YOUNGO Hub Privacy Notice and I consent to YOUNGO collecting and using my personal data as it describes.'
 
-/** Short plain-language points shown next to the consent checkbox, so consent is informed even without opening the full notice. */
+/** Summary shown beside the registration consent checkbox. */
 export const CONSENT_SUMMARY = [
-  'What is collected: your name, contact details, date of birth, location, and the background information you choose to give.',
-  'Why: to run your membership, check eligibility, and connect you to the right working groups.',
-  'Who sees it: other members see only your name and working groups. Admins and the Membership Team see your full record. Nobody outside YOUNGO.',
-  'How long: for as long as your membership is active, then deleted on the timelines in the Membership Policy.',
-  'You can ask to see, correct, or delete your data at any time by emailing membership@youngoclimate.org.',
+  'We collect your name, contact details, date of birth, location, and any optional background details you provide.',
+  'We use this information to manage your membership, confirm eligibility, and connect you with working groups.',
+  'Other members can see your name and working groups. Hub admins and the Membership Team can see your full membership record. Hosting providers process data only for YOUNGO.',
+  'We keep your record while your membership is active, then follow the deletion periods in the Membership Policy.',
+  'Email membership@youngoclimate.org to ask for a copy, correction, or deletion of your data.',
 ]

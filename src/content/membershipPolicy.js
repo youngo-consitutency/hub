@@ -17,16 +17,40 @@ export const POLICY_META = {
   adoptedBy: 'YOUNGO Constituency',
   contactEmail: 'membership@youngoclimate.org',
   translations: [
-    { lang: 'French', href: 'https://docs.google.com/document/d/1IxOzXjgDdzrfGMTfjvreg8xAXY0yYCnhHvnhm4an3iI/edit?tab=t.0' },
-    { lang: 'Spanish', href: 'https://docs.google.com/document/d/18kpOzCLwjAPmo4oy_mV5ivw-wFg2M-ZADGmOZWnZiZE/edit?usp=sharing' },
-    { lang: 'Portuguese', href: 'https://docs.google.com/document/d/1WWOcbku3p1F6yY_-Ow-KkmxZ3ktBLLfq9YwM1_ZrOgk/edit?usp=sharing' },
-    { lang: 'Chinese (simplified)', href: 'https://docs.google.com/document/d/1QmyQ6HM-RIKATkLQRRuT0McbytCdxViQI15i3zjgda0/edit?usp=sharing' },
-    { lang: 'Russian', href: 'https://docs.google.com/document/d/1bDZE-J8FhQsGiQGr9RklnljuWkmIP2CCRYv74bYSUAY/edit?usp=sharing' },
-    { lang: 'Arabic', href: 'https://docs.google.com/document/d/1Exxxopnb2F7et-P00J4i8PUzW0wJoqfaxnMv5uwRgME/edit?usp=sharing' },
+    {
+      lang: 'French',
+      href: 'https://docs.google.com/document/d/1IxOzXjgDdzrfGMTfjvreg8xAXY0yYCnhHvnhm4an3iI/edit?tab=t.0',
+    },
+    {
+      lang: 'Spanish',
+      href: 'https://docs.google.com/document/d/18kpOzCLwjAPmo4oy_mV5ivw-wFg2M-ZADGmOZWnZiZE/edit?usp=sharing',
+    },
+    {
+      lang: 'Portuguese',
+      href: 'https://docs.google.com/document/d/1WWOcbku3p1F6yY_-Ow-KkmxZ3ktBLLfq9YwM1_ZrOgk/edit?usp=sharing',
+    },
+    {
+      lang: 'Chinese (simplified)',
+      href: 'https://docs.google.com/document/d/1QmyQ6HM-RIKATkLQRRuT0McbytCdxViQI15i3zjgda0/edit?usp=sharing',
+    },
+    {
+      lang: 'Russian',
+      href: 'https://docs.google.com/document/d/1bDZE-J8FhQsGiQGr9RklnljuWkmIP2CCRYv74bYSUAY/edit?usp=sharing',
+    },
+    {
+      lang: 'Arabic',
+      href: 'https://docs.google.com/document/d/1Exxxopnb2F7et-P00J4i8PUzW0wJoqfaxnMv5uwRgME/edit?usp=sharing',
+    },
   ],
   related: [
-    { label: 'YOUNGO Governance Policy', href: 'https://docs.google.com/document/d/14O2gGBauihIEzIAR5iENUurJ9nkBZcO5xJTPGjpbeHQ/view' },
-    { label: 'All policies (Drive folder)', href: 'https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA' },
+    {
+      label: 'YOUNGO Governance Policy',
+      href: 'https://docs.google.com/document/d/14O2gGBauihIEzIAR5iENUurJ9nkBZcO5xJTPGjpbeHQ/view',
+    },
+    {
+      label: 'All policies (Drive folder)',
+      href: 'https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA',
+    },
     { label: 'Library catalog', href: '/library' },
   ],
   officialSource: {
@@ -38,33 +62,27 @@ export const POLICY_META = {
 /** Plain-language analysis of the membership mandate for first-time visitors. */
 export const MANDATE_ANALYSIS = {
   title: 'What membership means in YOUNGO',
-  lede:
-    'YOUNGO is the Children and Youth Constituency of the UNFCCC. It groups youth NGOs admitted to the UNFCCC and engaged in international climate negotiations — and also welcomes non-NGO youth groupings and individual youth who face barriers to the formal observer system.',
+  lede: 'YOUNGO is the Children and Youth Constituency of the UNFCCC. It groups youth NGOs admitted to the UNFCCC and engaged in international climate negotiations — and also welcomes non-NGO youth groupings and individual youth who face barriers to the formal observer system.',
   points: [
     {
       title: 'Who can join',
-      body:
-        'Children and youth-led organisations, collectives, associations, movements, UNFCCC-admitted NGOs affiliated with the Youth Constituency that advance climate action and future generations’ rights — or any young person aged 34 and under.',
+      body: 'Children and youth-led organisations, collectives, associations, movements, UNFCCC-admitted NGOs affiliated with the Youth Constituency that advance climate action and future generations’ rights — or any young person aged 34 and under.',
     },
     {
       title: 'Two membership tracks',
-      body:
-        'YOUNGO Network is the open engagement layer (updates, actions, sharing, light support). Constituency Work is the deeper layer: internal coordination, WGs/OTs/task forces, policy and advocacy, Workspace access, decision-making, and eligibility for mandated roles — after formal onboarding.',
+      body: 'YOUNGO Network is the open engagement layer (updates, actions, sharing, light support). Constituency Work is the deeper layer: internal coordination, WGs/OTs/task forces, policy and advocacy, Workspace access, decision-making, and eligibility for mandated roles — after formal onboarding.',
     },
     {
       title: 'Duties that come with membership',
-      body:
-        'All engagement must follow YOUNGO Principles, Code of Conduct, Safeguarding, Child Safeguarding, and Conflict of Interest policies. You may only speak or act for YOUNGO if selected through a formal process. Conflicts of interest must be declared at registration.',
+      body: 'All engagement must follow YOUNGO Principles, Code of Conduct, Safeguarding, Child Safeguarding, and Conflict of Interest policies. You may only speak or act for YOUNGO if selected through a formal process. Conflicts of interest must be declared at registration.',
     },
     {
       title: 'How Constituency Work stays current',
-      body:
-        'Onboarding runs every July and December. Constituency Work membership must be renewed every February (one-month window). Miss it and you drop back to the Network; you can rejoin via the normal process.',
+      body: 'Onboarding runs every July and December. Constituency Work membership must be renewed every February (one-month window). Miss it and you drop back to the Network; you can rejoin via the normal process.',
     },
     {
       title: 'How membership ends',
-      body:
-        'Resignation (email the Membership Team), expiration (individual membership ends at age 35; Constituency Work expires if not renewed), or termination for policy violations. On exit, YOUNGO data must be handed over within two weeks.',
+      body: 'Resignation (email the Membership Team), expiration (individual membership ends at age 35; Constituency Work expires if not renewed), or termination for policy violations. On exit, YOUNGO data must be handed over within two weeks.',
     },
   ],
 }

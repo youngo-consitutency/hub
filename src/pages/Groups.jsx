@@ -12,8 +12,21 @@ export function Groups() {
         title="Working groups"
         description="Browse the groups, understand their focus, and open a workspace to join."
       />
-      <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null}>
-        {(data) => <div className="grid2">{data.items.map((g) => <GroupCard key={g.slug} group={g} />)}</div>}
+      <Async
+        query={query}
+        empty={(d) =>
+          d.items.length === 0 ? (
+            <Empty icon={Users} title="No working groups yet" />
+          ) : null
+        }
+      >
+        {(data) => (
+          <div className="grid2">
+            {data.items.map((g) => (
+              <GroupCard key={g.slug} group={g} />
+            ))}
+          </div>
+        )}
       </Async>
     </div>
   )

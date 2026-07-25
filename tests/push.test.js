@@ -4,7 +4,10 @@ import { existsSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data')
+const dataDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../data',
+)
 const storePath = path.join(dataDir, 'push-subscriptions.json')
 
 const {
@@ -24,7 +27,10 @@ const ACCOUNT_A = 'aaaaaaaa-0000-4000-8000-000000000001'
 const ACCOUNT_B = 'bbbbbbbb-0000-4000-8000-000000000002'
 
 function sub(endpoint) {
-  return { endpoint, keys: { p256dh: 'key-' + endpoint, auth: 'auth-' + endpoint } }
+  return {
+    endpoint,
+    keys: { p256dh: 'key-' + endpoint, auth: 'auth-' + endpoint },
+  }
 }
 
 describe('push subscription store', () => {
@@ -32,7 +38,10 @@ describe('push subscription store', () => {
   after(clean)
 
   it('saves a subscription and finds it by account', async () => {
-    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub('https://push.example/a1') })
+    await saveSubscription({
+      accountId: ACCOUNT_A,
+      subscription: sub('https://push.example/a1'),
+    })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 1)
     assert.equal(rows[0].endpoint, 'https://push.example/a1')
@@ -40,19 +49,32 @@ describe('push subscription store', () => {
   })
 
   it('is idempotent for the same account and endpoint', async () => {
-    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub('https://push.example/a1') })
+    await saveSubscription({
+      accountId: ACCOUNT_A,
+      subscription: sub('https://push.example/a1'),
+    })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
-    assert.equal(rows.length, 1, 'resubscribing must not duplicate the endpoint')
+    assert.equal(
+      rows.length,
+      1,
+      'resubscribing must not duplicate the endpoint',
+    )
   })
 
   it('keeps one row per device', async () => {
-    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub('https://push.example/a2') })
+    await saveSubscription({
+      accountId: ACCOUNT_A,
+      subscription: sub('https://push.example/a2'),
+    })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 2)
   })
 
   it('does not leak subscriptions between accounts', async () => {
-    await saveSubscription({ accountId: ACCOUNT_B, subscription: sub('https://push.example/b1') })
+    await saveSubscription({
+      accountId: ACCOUNT_B,
+      subscription: sub('https://push.example/b1'),
+    })
     const a = await listSubscriptionsForAccounts([ACCOUNT_A])
     const b = await listSubscriptionsForAccounts([ACCOUNT_B])
     assert.equal(a.length, 2)
@@ -62,8 +84,14 @@ describe('push subscription store', () => {
 
   it('moves a shared device endpoint to the account currently using it', async () => {
     const endpoint = 'https://push.example/shared-device'
-    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub(endpoint) })
-    await saveSubscription({ accountId: ACCOUNT_B, subscription: sub(endpoint) })
+    await saveSubscription({
+      accountId: ACCOUNT_A,
+      subscription: sub(endpoint),
+    })
+    await saveSubscription({
+      accountId: ACCOUNT_B,
+      subscription: sub(endpoint),
+    })
     const a = await listSubscriptionsForAccounts([ACCOUNT_A])
     const b = await listSubscriptionsForAccounts([ACCOUNT_B])
     assert.ok(!a.some((row) => row.endpoint === endpoint))
@@ -72,11 +100,16 @@ describe('push subscription store', () => {
   })
 
   it('rejects a subscription with no endpoint', async () => {
-    await assert.rejects(() => saveSubscription({ accountId: ACCOUNT_A, subscription: {} }))
+    await assert.rejects(() =>
+      saveSubscription({ accountId: ACCOUNT_A, subscription: {} }),
+    )
   })
 
   it('deletes a single endpoint without touching the others', async () => {
-    const removed = await deleteSubscription({ accountId: ACCOUNT_A, endpoint: 'https://push.example/a1' })
+    const removed = await deleteSubscription({
+      accountId: ACCOUNT_A,
+      endpoint: 'https://push.example/a1',
+    })
     assert.equal(removed, 1)
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 1)
@@ -86,21 +119,37 @@ describe('push subscription store', () => {
   it('deletes every endpoint for an account when none is named', async () => {
     await deleteSubscription({ accountId: ACCOUNT_A })
     assert.equal((await listSubscriptionsForAccounts([ACCOUNT_A])).length, 0)
-    assert.equal((await listSubscriptionsForAccounts([ACCOUNT_B])).length, 1, 'other accounts must be untouched')
+    assert.equal(
+      (await listSubscriptionsForAccounts([ACCOUNT_B])).length,
+      1,
+      'other accounts must be untouched',
+    )
   })
 
   it('prunes endpoints the push service reports as gone', async () => {
-    await saveSubscription({ accountId: ACCOUNT_A, subscription: sub('https://push.example/dead') })
+    await saveSubscription({
+      accountId: ACCOUNT_A,
+      subscription: sub('https://push.example/dead'),
+    })
     const pruned = await pruneEndpoints(['https://push.example/dead'])
     assert.equal(pruned, 1)
     assert.equal((await listSubscriptionsForAccounts([ACCOUNT_A])).length, 0)
   })
 
   it('survives a restart — the store is on disk, not in memory', async () => {
-    await saveSubscription({ accountId: ACCOUNT_B, subscription: sub('https://push.example/b2') })
-    const fresh = await import('../server/lib/pushStore.js?reload=' + Date.now())
+    await saveSubscription({
+      accountId: ACCOUNT_B,
+      subscription: sub('https://push.example/b2'),
+    })
+    const fresh = await import(
+      '../server/lib/pushStore.js?reload=' + Date.now()
+    )
     const rows = await fresh.listSubscriptionsForAccounts([ACCOUNT_B])
-    assert.equal(rows.length, 2, 'a freshly loaded module must still see stored subscriptions')
+    assert.equal(
+      rows.length,
+      2,
+      'a freshly loaded module must still see stored subscriptions',
+    )
   })
 
   it('returns every subscription for a broadcast', async () => {
@@ -113,6 +162,10 @@ describe('push subscription store', () => {
     const shaped = toWebPushSubscription(row)
     assert.ok(shaped.endpoint)
     assert.ok(shaped.keys)
-    assert.equal(Object.keys(shaped).length, 2, 'web-push takes endpoint and keys only')
+    assert.equal(
+      Object.keys(shaped).length,
+      2,
+      'web-push takes endpoint and keys only',
+    )
   })
 })

@@ -10,7 +10,8 @@ export const DIRECTORY_LAYERS = [
     level: 'top',
     eyebrow: 'Constituency-wide',
     title: 'Global focal points',
-    description: 'The first contact for matters that concern YOUNGO as a whole.',
+    description:
+      'The first contact for matters that concern YOUNGO as a whole.',
     groups: ['focal_points'],
   },
   {
@@ -18,7 +19,8 @@ export const DIRECTORY_LAYERS = [
     level: 'middle',
     eyebrow: 'Cross-team coordination',
     title: 'Liaisons and operations',
-    description: 'Contacts who connect YOUNGO processes, institutions, and day-to-day support.',
+    description:
+      'Contacts who connect YOUNGO processes, institutions, and day-to-day support.',
     groups: ['liaisons', 'operations'],
   },
   {
@@ -26,7 +28,8 @@ export const DIRECTORY_LAYERS = [
     level: 'base',
     eyebrow: 'Thematic participation',
     title: 'Working-group contacts',
-    description: 'The people to contact about a specific policy area or working group.',
+    description:
+      'The people to contact about a specific policy area or working group.',
     groups: ['wg_contacts'],
   },
 ]

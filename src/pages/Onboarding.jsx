@@ -1,44 +1,52 @@
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, Section } from '../components/ui.jsx'
-import { BookOpen, CheckCircle2, GraduationCap, HelpCircle, Library, ShieldCheck, Users } from 'lucide-react'
+import {
+  BookOpen,
+  CheckCircle2,
+  GraduationCap,
+  HelpCircle,
+  Library,
+  ShieldCheck,
+  Users,
+} from 'lucide-react'
 import { PRIVACY_META } from '../../shared/privacyNotice.js'
 
 const FAQ_VERIFIED = [
   {
     q: 'Am I fully verified now?',
-    a: 'Yes. You finished account verification on YOUNGO Hub — your membership course is complete and you can use the full platform. Keep this Onboarding page bookmarked; you can return anytime to revisit the course or library.',
+    a: 'Yes. You passed the membership course and your Hub account is verified. You can return here at any time to review the course or open the library.',
   },
   {
     q: 'What should I do first as a verified member?',
-    a: 'Start with Home (live meetings and deadlines), open Calendar so you do not miss calls, then browse Working groups. Pick a WG you care about and complete its short workspace onboarding to unlock WhatsApp and contact-point details.',
+    a: 'Check Home for current meetings and deadlines, then open Calendar and Working groups. Each group has a short introduction and its own participation rules.',
   },
   {
     q: 'Do I still need the Membership Team onboarding call?',
-    a: 'The hub course unlocks this platform. Official YOUNGO membership processes (including Membership Team onboarding cycles in July and December for Constituency Work) still run with the Membership Team. Watch your email and Membership Team communications for those steps.',
+    a: 'Yes, if the Membership Team asks you to attend. The Hub course verifies your account, but it does not replace YOUNGO membership processes or the July and December Constituency Work onboarding cycles.',
   },
   {
     q: 'How do Working Groups work from here?',
-    a: 'Interests you selected at signup are only preferences. To join a WG space here: Groups → open a WG → WG workspace → read the presentation and accept the rules. After that you get the channel links and CP contacts for that group.',
+    a: 'The interests selected during registration are preferences, not memberships. Open a group, enter its workspace, read the introduction, and accept the rules. The Hub will then show that group’s channel links and Contact Point details.',
   },
   {
     q: 'Where do I find submissions, Council decisions, and COYs?',
-    a: 'They are in the main navigation once you are verified: Submissions, Council, and COY tracker. Closing deadlines also appear on Home so you can act quickly.',
+    a: 'Use Submissions, Council, and COY tracker in the main navigation. Home also shows approaching deadlines.',
   },
   {
-    q: 'I am with an accredited NGO — where is that?',
-    a: 'If you registered as an organisation (or accepted an NGO seat invite), open NGO platform in the sidebar for deadlines, endorsement/submission requests, and team seats. Individual members without an NGO seat will not see that section.',
+    q: 'Where is my accredited NGO workspace?',
+    a: 'If you registered an organisation or accepted a seat invitation, open NGO platform in the sidebar. It contains deadlines, endorsement and submission requests, and team seats. Members without an organisation seat do not see it.',
   },
   {
     q: 'Can I speak on behalf of YOUNGO?',
-    a: 'No — not automatically. Passing hub verification does not make you a spokesperson. You may only speak or act for YOUNGO (or a WG) if selected through a formal process under YOUNGO guidelines.',
+    a: 'Not unless you have been selected through the relevant YOUNGO process. A verified Hub account does not make someone a spokesperson for YOUNGO or a working group.',
   },
   {
-    q: 'What does the hub do with my personal data?',
-    a: 'The YOUNGO Hub Privacy Notice lists every field the registration form collects, what each is used for, who can see it, how long it is kept, and how to have it deleted. You consented to a specific version of that notice when you joined, and that version is recorded against your account. Open it from the card above, or email membership@youngoclimate.org to see, correct, or delete your data.',
+    q: 'How does the Hub use my personal data?',
+    a: 'The Privacy Notice explains what the registration form collects, why it is needed, who can see it, and how long it is kept. Your account records the notice version you accepted. Email membership@youngoclimate.org to request a copy, correction, or deletion.',
   },
   {
     q: 'How do I reset my password or get help?',
-    a: 'Use Sign in → Forgot password, or ask an admin for a reset link. For membership policy questions, contact membership@youngoclimate.org or youngomembership@gmail.com. For hub bugs, reach your platform admin.',
+    a: 'Use Forgot password from the sign-in form, or ask an admin for a reset link. Send membership questions to membership@youngoclimate.org or youngomembership@gmail.com. Report Hub problems to your platform admin.',
   },
 ]
 
@@ -48,86 +56,142 @@ export function Onboarding() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Membership journey</p>
+      <p className="metaMuted" style={{ marginBottom: 6 }}>
+        Membership journey
+      </p>
       <h1>Onboarding</h1>
       <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
         {verified
-          ? 'You are verified — welcome in. Use this space anytime for the course, library, and answers about life after verification.'
-          : 'Your hub account is created. Complete the membership course and test to unlock the full platform.'}
+          ? 'Your account is verified. Return here to review the membership course, read the library, or check what to do next.'
+          : 'Your account is ready. Complete the membership course and test to use the rest of the Hub.'}
       </p>
 
       <div className="stack" style={{ marginTop: 16 }}>
         <div className="card rowBetween">
           <div className="rowGap">
-            {verified
-              ? <CheckCircle2 size={22} strokeWidth={1.75} color="var(--accent)" aria-hidden />
-              : <GraduationCap size={22} strokeWidth={1.75} color="var(--warn)" aria-hidden />}
+            {verified ? (
+              <CheckCircle2
+                size={22}
+                strokeWidth={1.75}
+                color="var(--accent)"
+                aria-hidden
+              />
+            ) : (
+              <GraduationCap
+                size={22}
+                strokeWidth={1.75}
+                color="var(--warn)"
+                aria-hidden
+              />
+            )}
             <div>
               <h3>Status: {verified ? 'Verified member' : 'Pending course'}</h3>
               <p className="meta" style={{ marginTop: 4 }}>
                 {account?.name} · {account?.email}
-                {account?.courseScore != null && ` · Course score ${account.courseScore}`}
+                {account?.courseScore != null &&
+                  ` · Course score ${account.courseScore}`}
               </p>
             </div>
           </div>
           {!verified && (
-            <A href="/onboarding/course" className="btn btn-primary btn-glow">Start membership course</A>
+            <A href="/onboarding/course" className="btn btn-primary btn-glow">
+              Start membership course
+            </A>
           )}
           {verified && (
-            <A href="/onboarding/course" className="btn btn-secondary">Review course</A>
+            <A href="/onboarding/course" className="btn btn-secondary">
+              Review course
+            </A>
           )}
         </div>
 
         <div className="card rowBetween">
           <div className="rowGap">
-            <ShieldCheck size={22} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+            <ShieldCheck
+              size={22}
+              strokeWidth={1.75}
+              color="var(--accent)"
+              aria-hidden
+            />
             <div>
               <h3>Your data</h3>
               <p className="meta" style={{ marginTop: 4 }}>
-                What the hub collects, who can see it, and how to have it deleted.
+                What the hub collects, who can see it, and how to have it
+                deleted.
                 {account?.privacyNoticeVersion
                   ? ` You consented to version ${account.privacyNoticeVersion}.`
                   : ` Notice version ${PRIVACY_META.version}.`}
               </p>
             </div>
           </div>
-          <A href="/privacy" className="btn btn-secondary">Privacy notice</A>
+          <A href="/privacy" className="btn btn-secondary">
+            Privacy notice
+          </A>
         </div>
 
         <Section label="Path">
           <div className="grid2">
             <div className="card cardTight">
               <div className="rowGap" style={{ marginBottom: 8 }}>
-                <BookOpen size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+                <BookOpen
+                  size={18}
+                  strokeWidth={1.75}
+                  color="var(--accent)"
+                  aria-hidden
+                />
                 <h3>1. Membership course</h3>
               </div>
-              <p className="meta">History, structure, engagement mechanisms, then a short test.</p>
+              <p className="meta">
+                History, structure, engagement mechanisms, then a short test.
+              </p>
               <div style={{ marginTop: 10 }}>
-                <A href="/onboarding/course" className="btn btn-secondary btn-sm">Open course</A>
+                <A
+                  href="/onboarding/course"
+                  className="btn btn-secondary btn-sm"
+                >
+                  Open course
+                </A>
               </div>
             </div>
             <div className="card cardTight">
               <div className="rowGap" style={{ marginBottom: 8 }}>
-                <Library size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+                <Library
+                  size={18}
+                  strokeWidth={1.75}
+                  color="var(--accent)"
+                  aria-hidden
+                />
                 <h3>2. Capacity Building library</h3>
               </div>
-              <p className="meta">Open-access guides and workflows. Expand over time.</p>
+              <p className="meta">
+                Practical guides, policies, and course material.
+              </p>
               <div style={{ marginTop: 10 }}>
-                <A href="/library" className="btn btn-secondary btn-sm">Open library</A>
+                <A href="/library" className="btn btn-secondary btn-sm">
+                  Open library
+                </A>
               </div>
             </div>
             <div className="card cardTight">
               <div className="rowGap" style={{ marginBottom: 8 }}>
-                <Users size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+                <Users
+                  size={18}
+                  strokeWidth={1.75}
+                  color="var(--accent)"
+                  aria-hidden
+                />
                 <h3>3. Working Group workspaces</h3>
               </div>
               <p className="meta">
                 {verified
-                  ? 'Complete each WG’s presentation + rules to unlock WhatsApp and CP contacts.'
-                  : 'Unlocks after you pass the membership course.'}
+                  ? 'Read each group’s introduction and accept its rules to view channel links and Contact Point details.'
+                  : 'Available after you pass the membership course.'}
               </p>
               <div style={{ marginTop: 10 }}>
-                <A href={verified ? '/groups' : '/onboarding/course'} className="btn btn-secondary btn-sm">
+                <A
+                  href={verified ? '/groups' : '/onboarding/course'}
+                  className="btn btn-secondary btn-sm"
+                >
                   {verified ? 'Browse groups' : 'Finish course first'}
                 </A>
               </div>
@@ -138,27 +202,40 @@ export function Onboarding() {
         {verified && (
           <div className="card cardTight">
             <p className="meta">
-              You finished verification — the hub is open. Explore Home, Calendar, Submissions, and Working groups.
-              Contact Points and Accredited NGOs see extra sections in the sidebar.
+              Your account is verified. Use Home, Calendar, Submissions, and
+              Working groups to get started. Role-specific workspaces appear in
+              the sidebar when they are assigned to you.
             </p>
             <div className="detailActions" style={{ marginTop: 10 }}>
-              <A href="/" className="btn btn-primary">Enter home feed</A>
+              <A href="/" className="btn btn-primary">
+                Enter home feed
+              </A>
             </div>
           </div>
         )}
 
         <Section label="FAQ">
           <div className="card faqCard">
-            <div className="rowGap" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
-              <HelpCircle size={20} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+            <div
+              className="rowGap"
+              style={{ marginBottom: 12, alignItems: 'flex-start' }}
+            >
+              <HelpCircle
+                size={20}
+                strokeWidth={1.75}
+                color="var(--accent)"
+                aria-hidden
+              />
               <div>
                 <h2 style={{ fontSize: 17 }}>
-                  {verified ? 'You’re in — common questions' : 'After you verify — common questions'}
+                  {verified
+                    ? 'Common questions'
+                    : 'What happens after verification'}
                 </h2>
                 <p className="meta" style={{ marginTop: 4 }}>
                   {verified
-                    ? 'Straight answers for members who have completed account verification on the hub.'
-                    : 'Written for life after verification. Finish the course above, then these steps apply in full.'}
+                    ? 'Short answers about using the Hub and taking part in YOUNGO.'
+                    : 'Finish the course first. These answers apply once your account is verified.'}
                 </p>
               </div>
             </div>

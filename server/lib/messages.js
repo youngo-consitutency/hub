@@ -13,14 +13,21 @@ const progressPath = path.join(dataDir, 'wg-progress.json')
 const conversationsPath = path.join(dataDir, 'message-conversations.json')
 const messagesPath = path.join(dataDir, 'messages.json')
 
-const MANDATE_ROLES = new Set(['focal_point', 'wg_contact', 'ngo_admin', 'admin'])
+const MANDATE_ROLES = new Set([
+  'focal_point',
+  'wg_contact',
+  'ngo_admin',
+  'admin',
+])
 const WG_MANDATE_ROLES = new Set(['contact', 'lead'])
 const MAX_BODY = 4000
 
 function readJson(file, fallback) {
   try {
     if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return fallback
 }
 
@@ -42,9 +49,16 @@ function normalizeConversation(row) {
     createdBy: row.created_by ?? row.createdBy,
     createdAt: row.created_at ?? row.createdAt,
     updatedAt: row.updated_at ?? row.updatedAt,
-    lastMessageAt: row.last_message_at ?? row.lastMessageAt ?? row.updated_at ?? row.updatedAt,
-    lastMessagePreview: row.last_message_preview ?? row.lastMessagePreview ?? null,
-    otherParticipant: row.otherParticipant || participantSummary(row.other_participant || row.otherParticipantRow),
+    lastMessageAt:
+      row.last_message_at ??
+      row.lastMessageAt ??
+      row.updated_at ??
+      row.updatedAt,
+    lastMessagePreview:
+      row.last_message_preview ?? row.lastMessagePreview ?? null,
+    otherParticipant:
+      row.otherParticipant ||
+      participantSummary(row.other_participant || row.otherParticipantRow),
   }
 }
 
@@ -94,7 +108,8 @@ export async function getMandateProfile(accountId) {
   const account = publicAccount(row)
   const access = await getAccessProfile(account)
   const mandates = []
-  if (MANDATE_ROLES.has(account.role)) mandates.push({ type: 'platform', role: account.role })
+  if (MANDATE_ROLES.has(account.role))
+    mandates.push({ type: 'platform', role: account.role })
   mandates.push(...access.teamRoles.map((role) => ({ type: 'team', role })))
 
   const pool = getPool()
@@ -104,14 +119,27 @@ export async function getMandateProfile(accountId) {
        FROM wg_workspace_progress
        WHERE account_id = $1 AND status = 'active' AND role_in_wg IN ('contact', 'lead')
        ORDER BY wg_slug`,
-      [account.id]
+      [account.id],
     )
-    mandates.push(...rows.map((r) => ({ type: 'wg', wgSlug: r.wg_slug, role: r.role_in_wg })))
+    mandates.push(
+      ...rows.map((r) => ({
+        type: 'wg',
+        wgSlug: r.wg_slug,
+        role: r.role_in_wg,
+      })),
+    )
   } else {
     const progress = readJson(progressPath, [])
-    mandates.push(...progress
-      .filter((p) => p.account_id === account.id && p.status === 'active' && WG_MANDATE_ROLES.has(p.role_in_wg))
-      .map((p) => ({ type: 'wg', wgSlug: p.wg_slug, role: p.role_in_wg })))
+    mandates.push(
+      ...progress
+        .filter(
+          (p) =>
+            p.account_id === account.id &&
+            p.status === 'active' &&
+            WG_MANDATE_ROLES.has(p.role_in_wg),
+        )
+        .map((p) => ({ type: 'wg', wgSlug: p.wg_slug, role: p.role_in_wg })),
+    )
   }
 
   return {
@@ -122,14 +150,18 @@ export async function getMandateProfile(accountId) {
 }
 
 export async function canStartConversation(senderId, recipientId) {
-  if (String(senderId) === String(recipientId)) return { ok: false, code: 'self_message' }
+  if (String(senderId) === String(recipientId))
+    return { ok: false, code: 'self_message' }
   const [sender, recipient] = await Promise.all([
     getMandateProfile(senderId),
     getMandateProfile(recipientId),
   ])
-  if (!sender?.account || !recipient?.account) return { ok: false, code: 'not_found' }
-  if (!sender.account.isVerified) return { ok: false, code: 'sender_unverified' }
-  if (!recipient.account.isVerified) return { ok: false, code: 'recipient_unverified' }
+  if (!sender?.account || !recipient?.account)
+    return { ok: false, code: 'not_found' }
+  if (!sender.account.isVerified)
+    return { ok: false, code: 'sender_unverified' }
+  if (!recipient.account.isVerified)
+    return { ok: false, code: 'recipient_unverified' }
   if (recipient.isMandateHolder) {
     return { ok: true, sender, recipient }
   }
@@ -139,7 +171,9 @@ export async function canStartConversation(senderId, recipientId) {
 export async function listMessageContacts(accountId, { q = '' } = {}) {
   const requester = await getMandateProfile(accountId)
   if (!requester?.account) return []
-  const needle = String(q || '').trim().toLowerCase()
+  const needle = String(q || '')
+    .trim()
+    .toLowerCase()
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
@@ -161,13 +195,15 @@ export async function listMessageContacts(accountId, { q = '' } = {}) {
               OR lower(COALESCE(a.organization_name, '')) LIKE '%' || $2 || '%')
        ORDER BY a.name ASC
        LIMIT 100`,
-      [accountId, needle]
+      [accountId, needle],
     )
     return rows.map((r) => ({
       ...participantSummary(r, true),
       email: r.email,
       mandates: [
-        ...(MANDATE_ROLES.has(r.role) ? [{ type: 'platform', role: r.role }] : []),
+        ...(MANDATE_ROLES.has(r.role)
+          ? [{ type: 'platform', role: r.role }]
+          : []),
         ...(r.team_roles || []).map((role) => ({ type: 'team', role })),
         ...(Array.isArray(r.wg_mandates) ? r.wg_mandates : []),
       ],
@@ -180,25 +216,37 @@ export async function listMessageContacts(accountId, { q = '' } = {}) {
     .map((row) => {
       const account = publicAccount(row)
       const wgMandates = progress
-        .filter((p) => p.account_id === account.id && p.status === 'active' && WG_MANDATE_ROLES.has(p.role_in_wg))
+        .filter(
+          (p) =>
+            p.account_id === account.id &&
+            p.status === 'active' &&
+            WG_MANDATE_ROLES.has(p.role_in_wg),
+        )
         .map((p) => ({ type: 'wg', wgSlug: p.wg_slug, role: p.role_in_wg }))
       const mandates = [
-        ...(MANDATE_ROLES.has(account.role) ? [{ type: 'platform', role: account.role }] : []),
+        ...(MANDATE_ROLES.has(account.role)
+          ? [{ type: 'platform', role: account.role }]
+          : []),
         ...(account.teamRoles || []).map((role) => ({ type: 'team', role })),
         ...wgMandates,
       ]
       return { row, account, mandates }
     })
-    .filter(({ account, mandates }) => (
-      account.id !== accountId &&
-      account.isVerified &&
-      mandates.length > 0
-    ))
+    .filter(
+      ({ account, mandates }) =>
+        account.id !== accountId && account.isVerified && mandates.length > 0,
+    )
     .filter(({ account }) => {
       if (!needle) return true
-      return [account.name, account.email, account.organizationName].some((v) => String(v || '').toLowerCase().includes(needle))
+      return [account.name, account.email, account.organizationName].some((v) =>
+        String(v || '')
+          .toLowerCase()
+          .includes(needle),
+      )
     })
-    .sort((a, b) => String(a.account.name).localeCompare(String(b.account.name)))
+    .sort((a, b) =>
+      String(a.account.name).localeCompare(String(b.account.name)),
+    )
     .slice(0, 100)
     .map(({ row, mandates }) => ({
       ...participantSummary(row, true),
@@ -219,12 +267,19 @@ export async function findOrCreateConversation(senderId, recipientId) {
        ON CONFLICT (participant_a, participant_b)
        DO UPDATE SET updated_at = message_conversations.updated_at
        RETURNING *`,
-      [participantA, participantB, senderId]
+      [participantA, participantB, senderId],
     )
-    return { ok: true, conversation: normalizeConversation(rows[0]), sender: allowed.sender, recipient: allowed.recipient }
+    return {
+      ok: true,
+      conversation: normalizeConversation(rows[0]),
+      sender: allowed.sender,
+      recipient: allowed.recipient,
+    }
   }
   const list = readJson(conversationsPath, [])
-  let row = list.find((c) => c.participant_a === participantA && c.participant_b === participantB)
+  let row = list.find(
+    (c) => c.participant_a === participantA && c.participant_b === participantB,
+  )
   if (!row) {
     row = {
       id: randomUUID(),
@@ -239,7 +294,12 @@ export async function findOrCreateConversation(senderId, recipientId) {
     list.push(row)
     writeJson(conversationsPath, list)
   }
-  return { ok: true, conversation: normalizeConversation(row), sender: allowed.sender, recipient: allowed.recipient }
+  return {
+    ok: true,
+    conversation: normalizeConversation(row),
+    sender: allowed.sender,
+    recipient: allowed.recipient,
+  }
 }
 
 export async function listConversations(accountId) {
@@ -258,35 +318,44 @@ export async function listConversations(accountId) {
        WHERE c.participant_a = $1 OR c.participant_b = $1
        ORDER BY COALESCE(c.last_message_at, c.updated_at, c.created_at) DESC
        LIMIT 100`,
-      [accountId]
+      [accountId],
     )
-    return rows.map((r) => normalizeConversation({
-      ...r,
-      other_participant: {
-        id: r.other_id,
-        email: r.other_email,
-        name: r.other_name,
-        first_name: r.other_first_name,
-        last_name: r.other_last_name,
-        entity_type: r.other_entity_type,
-        organization_name: r.other_organization_name,
-        organization_type: r.other_organization_type,
-        is_unfccc_admitted: r.other_is_unfccc_admitted,
-        member_status: r.other_member_status,
-        role: r.other_role,
-        country: r.other_country,
-        created_at: r.other_created_at,
-      },
-    }))
+    return rows.map((r) =>
+      normalizeConversation({
+        ...r,
+        other_participant: {
+          id: r.other_id,
+          email: r.other_email,
+          name: r.other_name,
+          first_name: r.other_first_name,
+          last_name: r.other_last_name,
+          entity_type: r.other_entity_type,
+          organization_name: r.other_organization_name,
+          organization_type: r.other_organization_type,
+          is_unfccc_admitted: r.other_is_unfccc_admitted,
+          member_status: r.other_member_status,
+          role: r.other_role,
+          country: r.other_country,
+          created_at: r.other_created_at,
+        },
+      }),
+    )
   }
   const conversations = readJson(conversationsPath, [])
   const accounts = readJson(accountsPath, [])
   return conversations
-    .filter((c) => c.participant_a === accountId || c.participant_b === accountId)
-    .sort((a, b) => String(b.last_message_at || b.updated_at).localeCompare(String(a.last_message_at || a.updated_at)))
+    .filter(
+      (c) => c.participant_a === accountId || c.participant_b === accountId,
+    )
+    .sort((a, b) =>
+      String(b.last_message_at || b.updated_at).localeCompare(
+        String(a.last_message_at || a.updated_at),
+      ),
+    )
     .slice(0, 100)
     .map((c) => {
-      const otherId = c.participant_a === accountId ? c.participant_b : c.participant_a
+      const otherId =
+        c.participant_a === accountId ? c.participant_b : c.participant_a
       const otherParticipantRow = accounts.find((a) => a.id === otherId)
       return normalizeConversation({ ...c, otherParticipantRow })
     })
@@ -299,17 +368,23 @@ export async function getConversationForParticipant(conversationId, accountId) {
       `SELECT * FROM message_conversations
        WHERE id = $1 AND (participant_a = $2 OR participant_b = $2)
        LIMIT 1`,
-      [conversationId, accountId]
+      [conversationId, accountId],
     )
     return normalizeConversation(rows[0] || null)
   }
-  const row = readJson(conversationsPath, [])
-    .find((c) => c.id === conversationId && (c.participant_a === accountId || c.participant_b === accountId))
+  const row = readJson(conversationsPath, []).find(
+    (c) =>
+      c.id === conversationId &&
+      (c.participant_a === accountId || c.participant_b === accountId),
+  )
   return normalizeConversation(row || null)
 }
 
 export async function listMessages(conversationId, accountId) {
-  const conversation = await getConversationForParticipant(conversationId, accountId)
+  const conversation = await getConversationForParticipant(
+    conversationId,
+    accountId,
+  )
   if (!conversation) return null
   const pool = getPool()
   if (pool) {
@@ -330,28 +405,30 @@ export async function listMessages(conversationId, accountId) {
        FROM recent m
        JOIN hub_accounts a ON a.id = m.sender_account_id
        ORDER BY m.created_at ASC`,
-      [conversationId]
+      [conversationId],
     )
     return {
       conversation,
-      items: rows.map((r) => normalizeMessage({
-        ...r,
-        sender_row: {
-          id: r.sender_id,
-          email: r.sender_email,
-          name: r.sender_name,
-          first_name: r.sender_first_name,
-          last_name: r.sender_last_name,
-          entity_type: r.sender_entity_type,
-          organization_name: r.sender_organization_name,
-          organization_type: r.sender_organization_type,
-          is_unfccc_admitted: r.sender_is_unfccc_admitted,
-          member_status: r.sender_member_status,
-          role: r.sender_role,
-          country: r.sender_country,
-          created_at: r.sender_created_at,
-        },
-      })),
+      items: rows.map((r) =>
+        normalizeMessage({
+          ...r,
+          sender_row: {
+            id: r.sender_id,
+            email: r.sender_email,
+            name: r.sender_name,
+            first_name: r.sender_first_name,
+            last_name: r.sender_last_name,
+            entity_type: r.sender_entity_type,
+            organization_name: r.sender_organization_name,
+            organization_type: r.sender_organization_type,
+            is_unfccc_admitted: r.sender_is_unfccc_admitted,
+            member_status: r.sender_member_status,
+            role: r.sender_role,
+            country: r.sender_country,
+            created_at: r.sender_created_at,
+          },
+        }),
+      ),
     }
   }
   const messages = readJson(messagesPath, [])
@@ -362,15 +439,20 @@ export async function listMessages(conversationId, accountId) {
       .filter((m) => m.conversation_id === conversationId)
       .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
       .slice(-200)
-      .map((m) => normalizeMessage({
-        ...m,
-        senderRow: accounts.find((a) => a.id === m.sender_account_id),
-      })),
+      .map((m) =>
+        normalizeMessage({
+          ...m,
+          senderRow: accounts.find((a) => a.id === m.sender_account_id),
+        }),
+      ),
   }
 }
 
 export async function addMessage(conversationId, senderId, body) {
-  const conversation = await getConversationForParticipant(conversationId, senderId)
+  const conversation = await getConversationForParticipant(
+    conversationId,
+    senderId,
+  )
   if (!conversation) return null
   const text = cleanBody(body)
   const pool = getPool()
@@ -382,13 +464,13 @@ export async function addMessage(conversationId, senderId, body) {
         `INSERT INTO messages (conversation_id, sender_account_id, body)
          VALUES ($1, $2, $3)
          RETURNING *`,
-        [conversationId, senderId, text]
+        [conversationId, senderId, text],
       )
       await client.query(
         `UPDATE message_conversations
          SET last_message_at = $2, last_message_preview = $3, updated_at = $2
          WHERE id = $1`,
-        [conversationId, rows[0].created_at, text.slice(0, 180)]
+        [conversationId, rows[0].created_at, text.slice(0, 180)],
       )
       await client.query('COMMIT')
       return normalizeMessage(rows[0])

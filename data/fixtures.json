@@ -33,8 +33,8 @@
     { "slug": "lcoy-pending-example", "type": "lcoy", "title": "LCOY Pending (should never render)", "country": "Nowhere", "region": "eca", "status": "announced", "reviewStatus": "pending" }
   ],
   "announcements": [
-    { "title": "COP31 badge nominations open Monday", "body": "Focal points will circulate the nomination form on the mailing list — one badge pool per region.", "pinned": true, "daysAgo": 1 },
-    { "title": "New here? Start with a working group", "body": "Browse the groups page and join one WhatsApp channel — that is where the work happens.", "pinned": false, "daysAgo": 3 }
+    { "slug": "cop31-badge-nominations", "title": "COP31 badge nominations open Monday", "body": "Focal points will circulate the nomination form on the mailing list — one badge pool per region.", "pinned": true, "daysAgo": 1 },
+    { "slug": "start-with-a-working-group", "title": "New here? Start with a working group", "body": "Browse the groups page and join one WhatsApp channel — that is where the work happens.", "pinned": false, "daysAgo": 3 }
   ],
   "directory": [
     { "group": "focal_points", "roleTitle": "Global focal points", "description": "Constituency coordination, UNFCCC liaison, DMP facilitation.", "publicEmail": "focalpoints@youngoclimate.org" },

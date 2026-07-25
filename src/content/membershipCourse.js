@@ -63,17 +63,24 @@ export const QUIZ = [
     prompt: 'YOUNGO is best described as:',
     choices: [
       { id: 'a', text: 'A single international NGO with membership fees' },
-      { id: 'b', text: 'The official children & youth constituency of the UNFCCC (a platform/network)' },
+      {
+        id: 'b',
+        text: 'The official children & youth constituency of the UNFCCC (a platform/network)',
+      },
       { id: 'c', text: 'A UN agency that hires climate staff' },
     ],
     correct: 'b',
   },
   {
     id: 'q2',
-    prompt: 'Constituency Work differs from the YOUNGO Network mainly because members can:',
+    prompt:
+      'Constituency Work differs from the YOUNGO Network mainly because members can:',
     choices: [
       { id: 'a', text: 'Only receive newsletters' },
-      { id: 'b', text: 'Join internal coordination, WGs, policy work, and decision-making (after onboarding)' },
+      {
+        id: 'b',
+        text: 'Join internal coordination, WGs, policy work, and decision-making (after onboarding)',
+      },
       { id: 'c', text: 'Skip all codes of conduct' },
     ],
     correct: 'b',
@@ -100,9 +107,13 @@ export const QUIZ = [
   },
   {
     id: 'q5',
-    prompt: 'To unlock a Working Group’s WhatsApp and contact details in the hub you should:',
+    prompt:
+      'To unlock a Working Group’s WhatsApp and contact details in the hub you should:',
     choices: [
-      { id: 'a', text: 'Complete that WG’s workspace onboarding (presentation + rules)' },
+      {
+        id: 'a',
+        text: 'Complete that WG’s workspace onboarding (presentation + rules)',
+      },
       { id: 'b', text: 'Email every Party delegate' },
       { id: 'c', text: 'Pay a WG fee' },
     ],

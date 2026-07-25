@@ -1,11 +1,11 @@
 export const THEME_STORAGE_KEY = 'youngo-hub:theme-override'
 const THEMES = new Set(['light', 'dark'])
 
-export function systemTheme(matchesDark = (
-  typeof window !== 'undefined'
+export function systemTheme(
+  matchesDark = typeof window !== 'undefined'
     ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
-    : true
-)) {
+    : true,
+) {
   return matchesDark ? 'dark' : 'light'
 }
 
@@ -25,7 +25,8 @@ export function resolvedTheme({ override, matchesDark }) {
 export function applyTheme(theme, root = document.documentElement) {
   const next = THEMES.has(theme) ? theme : systemTheme()
   root.dataset.theme = next
-  root.ownerDocument?.querySelector('meta[name="theme-color"]')
+  root.ownerDocument
+    ?.querySelector('meta[name="theme-color"]')
     ?.setAttribute('content', next === 'dark' ? '#0A0F0C' : '#F5F9F6')
   return next
 }
@@ -37,9 +38,10 @@ export function getSavedTheme() {
 export function getInitialTheme() {
   return resolvedTheme({
     override: getSavedTheme(),
-    matchesDark: typeof window !== 'undefined'
-      ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
-      : true,
+    matchesDark:
+      typeof window !== 'undefined'
+        ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        : true,
   })
 }
 

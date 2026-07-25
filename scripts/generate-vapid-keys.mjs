@@ -3,20 +3,20 @@
  * Run with: node scripts/generate-vapid-keys.mjs
  */
 // web-push is CommonJS — it has no named ESM exports, so take the default.
-import webPush from 'web-push';
+import webPush from 'web-push'
 
-const keys = webPush.generateVAPIDKeys();
+const keys = webPush.generateVAPIDKeys()
 
-console.log('VAPID Keys Generated:');
-console.log('=====================');
-console.log('');
-console.log('Public Key (add to .env as VAPID_PUBLIC_KEY):');
-console.log(keys.publicKey);
-console.log('');
-console.log('Private Key (add to .env as VAPID_PRIVATE_KEY):');
-console.log(keys.privateKey);
-console.log('');
-console.log('Subject (add to .env as VAPID_SUBJECT):');
-console.log('mailto:admin@youngo-hub.org');
-console.log('');
-console.log('Add these to your Railway environment variables!');
+console.log('VAPID Keys Generated:')
+console.log('=====================')
+console.log('')
+console.log('Public Key (add to .env as VAPID_PUBLIC_KEY):')
+console.log(keys.publicKey)
+console.log('')
+console.log('Private Key (add to .env as VAPID_PRIVATE_KEY):')
+console.log(keys.privateKey)
+console.log('')
+console.log('Subject (add to .env as VAPID_SUBJECT):')
+console.log('mailto:admin@youngo-hub.org')
+console.log('')
+console.log('Add these to your Railway environment variables!')

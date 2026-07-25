@@ -10,19 +10,33 @@ import {
 const member = { id: 'member-1', role: 'member', isVerified: true }
 
 test('WG management is bound to the requested WG progress row', () => {
-  assert.equal(canManageWg(member, {
-    account_id: member.id,
-    wg_slug: 'finance',
-    role_in_wg: 'contact',
-    status: 'active',
-  }, 'finance'), true)
+  assert.equal(
+    canManageWg(
+      member,
+      {
+        account_id: member.id,
+        wg_slug: 'finance',
+        role_in_wg: 'contact',
+        status: 'active',
+      },
+      'finance',
+    ),
+    true,
+  )
 
-  assert.equal(canManageWg(member, {
-    account_id: member.id,
-    wg_slug: 'finance',
-    role_in_wg: 'contact',
-    status: 'active',
-  }, 'ace'), false)
+  assert.equal(
+    canManageWg(
+      member,
+      {
+        account_id: member.id,
+        wg_slug: 'finance',
+        role_in_wg: 'contact',
+        status: 'active',
+      },
+      'ace',
+    ),
+    false,
+  )
 })
 
 test('platform administrators retain WG override access', () => {
@@ -44,4 +58,3 @@ test('NGO capabilities distinguish viewer, representative, and owner', () => {
   assert.equal(canWriteNgoRequests(owner), true)
   assert.equal(canManageNgoSeats(owner), true)
 })
-

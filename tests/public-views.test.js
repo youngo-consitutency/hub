@@ -40,15 +40,27 @@ test('anonymous event and group views omit member-private links', () => {
 })
 
 test('verified member views retain private event and group fields', () => {
-  assert.equal(eventView(event, { includePrivate: true }).meetingUrl, event.meetingUrl)
-  assert.equal(groupView(group, { includePrivate: true }).whatsappUrl, group.whatsappUrl)
+  assert.equal(
+    eventView(event, { includePrivate: true }).meetingUrl,
+    event.meetingUrl,
+  )
+  assert.equal(
+    groupView(group, { includePrivate: true }).whatsappUrl,
+    group.whatsappUrl,
+  )
 })
 
 test('feed and search sanitization covers nested event and group objects', () => {
-  assert.equal(feedView({ live: event, week: [event] }).live.meetingUrl, undefined)
-  const result = searchView({ events: [event], groups: [group], contacts: [group.contact] })
+  assert.equal(
+    feedView({ live: event, week: [event] }).live.meetingUrl,
+    undefined,
+  )
+  const result = searchView({
+    events: [event],
+    groups: [group],
+    contacts: [group.contact],
+  })
   assert.equal(result.events[0].meetingUrl, undefined)
   assert.equal(result.groups[0].whatsappUrl, undefined)
   assert.equal(result.contacts[0].personName, undefined)
 })
-

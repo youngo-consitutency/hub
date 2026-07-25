@@ -15,7 +15,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ORG = 'org-points-test-1'
-const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data')
+const dataDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../data',
+)
 const ledgerFile = path.join(dataDir, 'ngo-point-ledger.json')
 const requestsFile = path.join(dataDir, 'ngo-requests.json')
 let originalLedger = null
@@ -23,8 +26,12 @@ let originalRequests = null
 
 describe('NGO contribution points', () => {
   before(() => {
-    originalLedger = existsSync(ledgerFile) ? readFileSync(ledgerFile, 'utf8') : null
-    originalRequests = existsSync(requestsFile) ? readFileSync(requestsFile, 'utf8') : null
+    originalLedger = existsSync(ledgerFile)
+      ? readFileSync(ledgerFile, 'utf8')
+      : null
+    originalRequests = existsSync(requestsFile)
+      ? readFileSync(requestsFile, 'utf8')
+      : null
   })
 
   after(() => {
@@ -82,11 +89,22 @@ describe('NGO contribution points', () => {
 
   it('rejects invalid reason codes and zero points without defaults', async () => {
     await assert.rejects(
-      () => awardOrgPoints({ orgAccountId: ORG, reasonCode: 'not_real', title: 'x' }),
+      () =>
+        awardOrgPoints({
+          orgAccountId: ORG,
+          reasonCode: 'not_real',
+          title: 'x',
+        }),
       /Unknown contribution/,
     )
     await assert.rejects(
-      () => awardOrgPoints({ orgAccountId: ORG, reasonCode: 'adjustment', title: 'noop', points: 0 }),
+      () =>
+        awardOrgPoints({
+          orgAccountId: ORG,
+          reasonCode: 'adjustment',
+          title: 'noop',
+          points: 0,
+        }),
       /non-zero/,
     )
   })
@@ -94,14 +112,23 @@ describe('NGO contribution points', () => {
   it('suggests awards for done requests and drops them after linked award', async () => {
     mkdirSync(dataDir, { recursive: true })
     const requestId = `req-suggest-${Date.now()}`
-    writeFileSync(path.join(dataDir, 'ngo-requests.json'), JSON.stringify([{
-      id: requestId,
-      org_account_id: ORG,
-      kind: 'badge_support',
-      title: 'Helped with pool badge allocation',
-      status: 'done',
-      created_at: new Date().toISOString(),
-    }], null, 2))
+    writeFileSync(
+      path.join(dataDir, 'ngo-requests.json'),
+      JSON.stringify(
+        [
+          {
+            id: requestId,
+            org_account_id: ORG,
+            kind: 'badge_support',
+            title: 'Helped with pool badge allocation',
+            status: 'done',
+            created_at: new Date().toISOString(),
+          },
+        ],
+        null,
+        2,
+      ),
+    )
 
     const before = await listAwardSuggestions({ limit: 50 })
     assert.ok(before.some((s) => s.requestId === requestId))

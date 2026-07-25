@@ -8,15 +8,25 @@ test('development cleanup unregisters workers and removes only Hub caches', asyn
   const originalNavigator = globalThis.navigator
   const originalWindow = globalThis.window
   t.after(() => {
-    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: originalNavigator })
-    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow })
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: originalNavigator,
+    })
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: originalWindow,
+    })
   })
   Object.defineProperty(globalThis, 'navigator', {
     configurable: true,
     value: {
       serviceWorker: {
         getRegistrations: async () => [
-          { unregister: async () => { unregistered += 1 } },
+          {
+            unregister: async () => {
+              unregistered += 1
+            },
+          },
         ],
       },
     },
@@ -26,7 +36,9 @@ test('development cleanup unregisters workers and removes only Hub caches', asyn
     value: {
       caches: {
         keys: async () => ['youngo-hub-static-v2', 'another-app-cache'],
-        delete: async (name) => { deleted.push(name) },
+        delete: async (name) => {
+          deleted.push(name)
+        },
       },
     },
   })
@@ -49,8 +61,14 @@ test('an existing push subscription is registered for the current account again'
   const originalWindow = globalThis.window
   const originalFetch = globalThis.fetch
   t.after(() => {
-    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: originalNavigator })
-    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow })
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: originalNavigator,
+    })
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: originalWindow,
+    })
     globalThis.fetch = originalFetch
   })
   Object.defineProperty(globalThis, 'navigator', {
@@ -60,7 +78,9 @@ test('an existing push subscription is registered for the current account again'
         ready: Promise.resolve({
           pushManager: {
             getSubscription: async () => existing,
-            subscribe: async () => { throw new Error('must reuse existing subscription') },
+            subscribe: async () => {
+              throw new Error('must reuse existing subscription')
+            },
           },
         }),
       },
@@ -80,5 +100,8 @@ test('an existing push subscription is registered for the current account again'
   assert.equal(result.isNew, false)
   assert.equal(requests.length, 1)
   assert.equal(requests[0].url, '/api/push/subscribe')
-  assert.equal(JSON.parse(requests[0].options.body).subscription.endpoint, existing.endpoint)
+  assert.equal(
+    JSON.parse(requests[0].options.body).subscription.endpoint,
+    existing.endpoint,
+  )
 })

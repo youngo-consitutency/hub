@@ -1,28 +1,55 @@
 # Editing Hub content
 
-Most calendar entries, working groups, submissions, Council items, COYs, announcements, and directory contacts live in one file:
+Events and announcements are edited in the Hub. Other public content still
+lives in `data/fixtures.json`.
 
-`data/fixtures.json`
+## Events and announcements
 
-You do not need to understand React or the server to update that content.
+Open **Content Studio** from the Hub sidebar.
 
-## Before you edit
+- A content editor creates a draft and submits it for review.
+- A content publisher reviews the draft.
+- The original editor cannot review or publish their own work.
+- Approved content must still be published as a separate action.
+- Every change of status is recorded in the audit log.
 
-1. Make a new Git branch.
-2. Open `data/fixtures.json` in GitHub or a code editor.
-3. Find the section you need, such as `"events"` or `"directory"`.
-4. Copy a similar item and change its values.
+An admin can assign the `content_editor` and `content_publisher`
+responsibilities from the account administration page.
 
-JSON is strict:
+Use the form validation messages to correct missing or invalid fields. Published
+events replace fixture events with the same slug; published announcements work
+the same way.
 
-- Keep the double quotes around words.
-- Put a comma between items, but not after the last item in a list.
-- Do not reuse a `slug`. It is the item’s permanent ID and appears in links.
-- Use full links beginning with `https://`.
+## Fixture-backed content
 
-## Events
+These sections still come from `data/fixtures.json`:
 
-Events can use a fixed time:
+- working groups
+- submissions
+- Council items
+- COYs
+- directory contacts
+
+You do not need to change React or server code to update them.
+
+1. Create a Git branch.
+2. Open `data/fixtures.json`.
+3. Find the relevant list, such as `"groups"` or `"directory"`.
+4. Copy an item with the same shape and replace its values.
+5. Run `npm run content:check`.
+
+JSON has a few strict rules:
+
+- Keep double quotes around text.
+- Separate items with commas.
+- Do not put a comma after the final item in a list.
+- Do not reuse a `slug`; it is the permanent identifier used in links.
+- Use complete URLs beginning with `https://`.
+
+## Event fixture example
+
+Use Content Studio for normal event updates. Fixture events remain useful for
+seed data and local demos:
 
 ```json
 {
@@ -36,7 +63,7 @@ Events can use a fixed time:
 }
 ```
 
-Times ending in `Z` are UTC. Event types currently supported are:
+A timestamp ending in `Z` is in UTC. Supported event types are:
 
 - `constituency_call`
 - `wg_call`
@@ -45,9 +72,10 @@ Times ending in `Z` are UTC. Event types currently supported are:
 - `webinar`
 - `coordination`
 
-The demo entries also support `dayOffset` and `hourUtc`, which keep dates moving relative to today. Use `startsAt` for real published events.
+Demo events may use `dayOffset` and `hourUtc` to stay relative to the current
+date. Use `startsAt` for a fixed date.
 
-The `wg` value must match a working-group `slug` in the `"groups"` section.
+The `wg` value must match a working-group slug in the `"groups"` list.
 
 ## Directory
 
@@ -58,20 +86,23 @@ Directory entries use one of these groups:
 - `operations`
 - `wg_contacts`
 
-The order and headings of the directory structure live in `src/content/directory.js`. Email addresses and role descriptions stay in `data/fixtures.json`.
+Headings and display order live in `src/content/directory.js`. Email addresses
+and role descriptions live in `data/fixtures.json`.
 
-## Check your change
+## Validate a change
 
-From the project folder, run:
+Run:
 
 ```bash
 npm run content:check
 ```
 
-The command explains the exact item that needs fixing. Before opening a pull request, run the full check:
+The command reports the item and field that need attention. Before opening a
+pull request, run:
 
 ```bash
 npm run check
 ```
 
-GitHub runs the same checks on every pull request, so broken content cannot be merged unnoticed.
+GitHub Actions formats pushed code and runs the full check on Node 20 and
+Node 22.

@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outDir = path.join(__dirname, '../docs/screenshots')
-const origin = process.env.APP_ORIGIN || 'https://web-staging-31ab.up.railway.app'
+const origin =
+  process.env.APP_ORIGIN || 'https://web-staging-31ab.up.railway.app'
 const n = Date.now()
 const email = `readme-shot-${n}@youngo-hub.test`
 const password = 'readme-shot-pass-99'
@@ -25,7 +26,10 @@ async function api(pathname, opts = {}) {
     },
   })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(`${pathname} ${res.status}: ${data?.error?.message || res.statusText}`)
+  if (!res.ok)
+    throw new Error(
+      `${pathname} ${res.status}: ${data?.error?.message || res.statusText}`,
+    )
   return data
 }
 
@@ -63,7 +67,9 @@ async function main() {
   await api('/api/member/course/submit', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ answers: { q1: 'b', q2: 'b', q3: 'b', q4: 'a', q5: 'a' } }),
+    body: JSON.stringify({
+      answers: { q1: 'b', q2: 'b', q3: 'b', q4: 'a', q5: 'a' },
+    }),
   })
   console.log('verified member ready', email)
 
@@ -76,7 +82,10 @@ async function main() {
   const page = await context.newPage()
 
   async function shot(name, urlPath, setup) {
-    await page.goto(`${origin}${urlPath}`, { waitUntil: 'networkidle', timeout: 60000 })
+    await page.goto(`${origin}${urlPath}`, {
+      waitUntil: 'networkidle',
+      timeout: 60000,
+    })
     if (setup) await setup(page)
     await page.waitForTimeout(800)
     const file = path.join(outDir, `${name}.png`)
@@ -91,26 +100,43 @@ async function main() {
     colorScheme: 'dark',
   })
   const policyPage = await policyCtx.newPage()
-  await policyPage.goto(origin + '/', { waitUntil: 'networkidle', timeout: 60000 })
+  await policyPage.goto(origin + '/', {
+    waitUntil: 'networkidle',
+    timeout: 60000,
+  })
   await policyPage.waitForTimeout(1000)
-  await policyPage.screenshot({ path: path.join(outDir, '01-membership-policy.png'), fullPage: false })
+  await policyPage.screenshot({
+    path: path.join(outDir, '01-membership-policy.png'),
+    fullPage: false,
+  })
   console.log('wrote policy')
   await policyCtx.close()
 
   // Authenticated shots
   await page.goto(origin + '/', { waitUntil: 'domcontentloaded' })
-  await page.evaluate(({ token, account }) => {
-    localStorage.setItem('youngo-hub:membership-policy-ack', JSON.stringify({
-      version: 'issue-2-2025-05-04',
-      acknowledgedAt: new Date().toISOString(),
-    }))
-    localStorage.setItem('youngo-hub:session-token', token)
-    localStorage.setItem('youngo-hub:session-account', JSON.stringify(account))
-    localStorage.setItem('theme', 'dark')
-  }, { token, account: reg.account })
+  await page.evaluate(
+    ({ token, account }) => {
+      localStorage.setItem(
+        'youngo-hub:membership-policy-ack',
+        JSON.stringify({
+          version: 'issue-2-2025-05-04',
+          acknowledgedAt: new Date().toISOString(),
+        }),
+      )
+      localStorage.setItem('youngo-hub:session-token', token)
+      localStorage.setItem(
+        'youngo-hub:session-account',
+        JSON.stringify(account),
+      )
+      localStorage.setItem('theme', 'dark')
+    },
+    { token, account: reg.account },
+  )
 
   // Re-fetch me to get verified account
-  const me = await api('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+  const me = await api('/api/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
   await page.evaluate((account) => {
     localStorage.setItem('youngo-hub:session-account', JSON.stringify(account))
   }, me.account)
@@ -184,7 +210,10 @@ async function main() {
       '08-join-signin.png',
     ],
   }
-  writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(index, null, 2))
+  writeFileSync(
+    path.join(outDir, 'manifest.json'),
+    JSON.stringify(index, null, 2),
+  )
   console.log('done')
 }
 

@@ -25,9 +25,10 @@ export function createRateLimiter({
     }
 
     const current = buckets.get(id)
-    const bucket = !current || current.resetAt <= timestamp
-      ? { count: 0, resetAt: timestamp + windowMs }
-      : current
+    const bucket =
+      !current || current.resetAt <= timestamp
+        ? { count: 0, resetAt: timestamp + windowMs }
+        : current
 
     bucket.count += 1
     buckets.set(id, bucket)
@@ -37,7 +38,10 @@ export function createRateLimiter({
       return
     }
 
-    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - timestamp) / 1000))
+    const retryAfter = Math.max(
+      1,
+      Math.ceil((bucket.resetAt - timestamp) / 1000),
+    )
     res.set('Retry-After', String(retryAfter))
     res.status(429).json({
       error: {

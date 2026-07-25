@@ -20,7 +20,10 @@ describe('calendar deep links', () => {
     const url = googleCalendarUrl(sample)
     assert.match(url, /^https:\/\/calendar\.google\.com\/calendar\/render\?/)
     assert.match(url, /action=TEMPLATE/)
-    assert.match(url, /dates=20260720T150000Z%2F20260720T160000Z|dates=20260720T150000Z\/20260720T160000Z/)
+    assert.match(
+      url,
+      /dates=20260720T150000Z%2F20260720T160000Z|dates=20260720T150000Z\/20260720T160000Z/,
+    )
     assert.match(url, /text=ACE/)
   })
 
@@ -32,6 +35,9 @@ describe('calendar deep links', () => {
   })
 
   it('returns a relative ICS path for the event slug', () => {
-    assert.equal(icsDownloadPath(sample.slug), '/ics/event/ace-drafting-session.ics')
+    assert.equal(
+      icsDownloadPath(sample.slug),
+      '/ics/event/ace-drafting-session.ics',
+    )
   })
 })

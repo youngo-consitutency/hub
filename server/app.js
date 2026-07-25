@@ -14,21 +14,32 @@ import { requestSecurity } from './lib/security.js'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const defaultDist = path.join(here, '../dist')
 
-function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
+// Express recognises an error handler by its four-argument signature.
+// eslint-disable-next-line no-unused-vars
+function errorHandler(err, req, res, next) {
   if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({
-      error: { code: 'invalid_json', message: 'Request body must contain valid JSON.' },
+      error: {
+        code: 'invalid_json',
+        message: 'Request body must contain valid JSON.',
+      },
     })
   }
   if (err?.type === 'entity.too.large') {
     return res.status(413).json({
-      error: { code: 'payload_too_large', message: 'Request body is too large.' },
+      error: {
+        code: 'payload_too_large',
+        message: 'Request body is too large.',
+      },
     })
   }
 
   console.error(err)
   return res.status(500).json({
-    error: { code: 'server_error', message: 'Something broke — try again.' },
+    error: {
+      code: 'server_error',
+      message: 'Something went wrong. Please try again.',
+    },
   })
 }
 
@@ -38,14 +49,20 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.disable('x-powered-by')
   if (env.NODE_ENV === 'production') app.set('trust proxy', 1)
   app.use(requestSecurity)
-  app.use(cors({
-    origin: env.APP_ORIGIN ? appOrigin(env) : true,
-    credentials: true,
-  }))
+  app.use(
+    cors({
+      origin: env.APP_ORIGIN ? appOrigin(env) : true,
+      credentials: true,
+    }),
+  )
   app.use(express.json({ limit: '256kb' }))
 
   app.get('/healthz', (req, res) => {
-    res.json({ ok: true, db: env.DATABASE_URL ? 'postgres' : 'fixtures', version: '0.1.0' })
+    res.json({
+      ok: true,
+      db: env.DATABASE_URL ? 'postgres' : 'fixtures',
+      version: '0.1.0',
+    })
   })
 
   app.use('/api', (req, res, next) => {
@@ -63,7 +80,9 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
 
   app.use(express.static(dist))
   app.get(/^\/(?!api|ics|og|healthz).*/, (req, res, next) => {
-    res.sendFile(path.join(dist, 'index.html'), (err) => (err ? next() : undefined))
+    res.sendFile(path.join(dist, 'index.html'), (err) =>
+      err ? next() : undefined,
+    )
   })
 
   app.use(errorHandler)

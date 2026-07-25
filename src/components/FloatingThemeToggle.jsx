@@ -14,9 +14,12 @@ export function FloatingThemeToggle() {
   const [mode, setMode] = useState(() => getSavedTheme() || 'system')
   const isDark = theme === 'dark'
   const Icon = isDark ? Sun : Moon
-  const label = mode === 'light'
-    ? 'Use system theme'
-    : (isDark ? 'Switch to light theme' : 'Switch to dark theme')
+  const label =
+    mode === 'light'
+      ? 'Use system theme'
+      : isDark
+        ? 'Switch to light theme'
+        : 'Switch to dark theme'
 
   useEffect(() => {
     applyTheme(theme)
@@ -42,7 +45,13 @@ export function FloatingThemeToggle() {
   }
 
   return (
-    <button type="button" className="floatingThemeToggle" onClick={toggle} aria-label={label} title={label}>
+    <button
+      type="button"
+      className="floatingThemeToggle"
+      onClick={toggle}
+      aria-label={label}
+      title={label}
+    >
       <Icon size={19} strokeWidth={1.75} aria-hidden />
     </button>
   )

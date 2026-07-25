@@ -11,6 +11,8 @@ data/ngo-seats.json
 data/wg-progress.json
 data/wg-activities.json
 data/ngo-requests.json
+data/content-revisions.json
+data/content-publications.json
 *.local
 .claude/
 .codex-vault/

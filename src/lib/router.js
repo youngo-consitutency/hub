@@ -2,7 +2,9 @@
 import { useSyncExternalStore, useCallback } from 'react'
 
 const listeners = new Set()
-function emit() { listeners.forEach((l) => l()) }
+function emit() {
+  listeners.forEach((l) => l())
+}
 
 export function navigate(to) {
   if (to === window.location.pathname + window.location.search) return
@@ -17,9 +19,12 @@ if (typeof window !== 'undefined') {
 
 export function usePath() {
   return useSyncExternalStore(
-    (cb) => { listeners.add(cb); return () => listeners.delete(cb) },
+    (cb) => {
+      listeners.add(cb)
+      return () => listeners.delete(cb)
+    },
     () => window.location.pathname,
-    () => '/'
+    () => '/',
   )
 }
 

@@ -21,8 +21,14 @@ test('event dates use UTC rather than the sender offset', () => {
 })
 
 test('calendar months shift across year boundaries', () => {
-  assert.deepEqual(shiftCalendarMonth({ year: 2026, month: 11 }, 1), { year: 2027, month: 0 })
-  assert.deepEqual(shiftCalendarMonth({ year: 2026, month: 0 }, -1), { year: 2025, month: 11 })
+  assert.deepEqual(shiftCalendarMonth({ year: 2026, month: 11 }, 1), {
+    year: 2027,
+    month: 0,
+  })
+  assert.deepEqual(shiftCalendarMonth({ year: 2026, month: 0 }, -1), {
+    year: 2025,
+    month: 11,
+  })
 })
 
 test('month grid starts on Monday and only event days are interactive', () => {
@@ -34,12 +40,18 @@ test('month grid starts on Monday and only event days are interactive', () => {
   assert.equal(days.at(-1).key, '2026-08-09')
   assert.equal(days.find((day) => day.key === '2026-07-15').interactive, true)
   assert.equal(days.find((day) => day.key === '2026-07-14').interactive, false)
-  assert.equal(days.find((day) => day.key === '2026-06-30').interactive, false, 'outside-month dates stay inert')
+  assert.equal(
+    days.find((day) => day.key === '2026-06-30').interactive,
+    false,
+    'outside-month dates stay inert',
+  )
 })
 
 test('the month agenda contains only events in the visible UTC month', () => {
   assert.deepEqual(
-    eventsInCalendarMonth(events, { year: 2026, month: 6 }).map((event) => event.slug),
+    eventsInCalendarMonth(events, { year: 2026, month: 6 }).map(
+      (event) => event.slug,
+    ),
     ['july-call', 'july-forum'],
   )
 })

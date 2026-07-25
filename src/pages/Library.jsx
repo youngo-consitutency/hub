@@ -16,35 +16,43 @@ const OPEN_GUIDES = [
   },
   {
     title: 'Working Group engagement',
-    body: 'Join a WG, complete workspace onboarding, then use WhatsApp and CP contacts responsibly.',
+    body: 'Join a working group, read its introduction, and use its channels and Contact Point details responsibly.',
     href: '/groups',
   },
   {
-    title: 'Membership Policy (mandate)',
-    body: 'Who can join, rights, renewal, and end of membership — required first-visit read.',
+    title: 'Membership Policy',
+    body: 'Who can join, member rights, renewal, and how membership ends.',
     href: '/onboarding',
   },
   {
-    title: 'Workflows (draft)',
-    body: 'What is done by whom after registration, course pass, WG join, and CP approvals — expand with RACI.',
+    title: 'Member workflows',
+    body: 'What happens after registration, course completion, working-group onboarding, and Contact Point approval.',
     href: '/onboarding',
   },
 ]
 
 function ExternalCard({ title, body, href, meta }) {
   return (
-    <a
-      href={href}
-      className="card"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a href={href} className="card" target="_blank" rel="noopener noreferrer">
       <h3 className="rowGap" style={{ alignItems: 'flex-start' }}>
         <span style={{ flex: 1 }}>{title}</span>
-        <ExternalLink size={14} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0, marginTop: 3, opacity: 0.7 }} />
+        <ExternalLink
+          size={14}
+          strokeWidth={1.75}
+          aria-hidden
+          style={{ flexShrink: 0, marginTop: 3, opacity: 0.7 }}
+        />
       </h3>
-      {body ? <p className="meta" style={{ marginTop: 4 }}>{body}</p> : null}
-      {meta ? <p className="metaMuted" style={{ marginTop: 6 }}>{meta}</p> : null}
+      {body ? (
+        <p className="meta" style={{ marginTop: 4 }}>
+          {body}
+        </p>
+      ) : null}
+      {meta ? (
+        <p className="metaMuted" style={{ marginTop: 6 }}>
+          {meta}
+        </p>
+      ) : null}
     </a>
   )
 }
@@ -56,7 +64,7 @@ export function Library() {
         eyebrow="Capacity building"
         icon={LibIcon}
         title="Library"
-        description="Open guides, the official policies folder, and course previews. Canonical legal text stays in Drive."
+        description="Guides, course material, and links to the official policy files in Google Drive."
       />
 
       <Section
@@ -76,7 +84,11 @@ export function Library() {
         <div className="card cardTight" style={{ marginBottom: 12 }}>
           <p className="meta" style={{ margin: 0 }}>
             Source:{' '}
-            <a href={POLICIES_FOLDER.href} target="_blank" rel="noopener noreferrer">
+            <a
+              href={POLICIES_FOLDER.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {POLICIES_FOLDER.title}
             </a>
             {' · '}
@@ -97,7 +109,9 @@ export function Library() {
           if (!docs.length) return null
           return (
             <div key={cat.id} style={{ marginBottom: 16 }}>
-              <p className="metaMuted" style={{ marginBottom: 8 }}>{cat.label}</p>
+              <p className="metaMuted" style={{ marginBottom: 8 }}>
+                {cat.label}
+              </p>
               <div className="stack">
                 {docs.map((doc) => (
                   <ExternalCard
@@ -105,7 +119,14 @@ export function Library() {
                     title={doc.title}
                     body={doc.note}
                     href={doc.href}
-                    meta={[doc.year ? String(doc.year) : null, doc.kind === 'pdf' ? 'PDF' : doc.kind === 'image' ? 'Image' : 'Google Doc']
+                    meta={[
+                      doc.year ? String(doc.year) : null,
+                      doc.kind === 'pdf'
+                        ? 'PDF'
+                        : doc.kind === 'image'
+                          ? 'Image'
+                          : 'Google Doc',
+                    ]
                       .filter(Boolean)
                       .join(' · ')}
                   />
@@ -121,7 +142,9 @@ export function Library() {
           {OPEN_GUIDES.map((g) => (
             <A key={g.title} href={g.href} className="card">
               <h3>{g.title}</h3>
-              <p className="meta" style={{ marginTop: 4 }}>{g.body}</p>
+              <p className="meta" style={{ marginTop: 4 }}>
+                {g.body}
+              </p>
             </A>
           ))}
         </div>
@@ -132,8 +155,12 @@ export function Library() {
           {COURSE_MODULES.map((m) => (
             <div key={m.id} className="card cardTight">
               <h3>{m.title}</h3>
-              <p className="metaMuted" style={{ marginTop: 4 }}>~{m.minutes} min</p>
-              <p className="meta" style={{ marginTop: 6 }}>{m.body[0]}</p>
+              <p className="metaMuted" style={{ marginTop: 4 }}>
+                ~{m.minutes} min
+              </p>
+              <p className="meta" style={{ marginTop: 6 }}>
+                {m.body[0]}
+              </p>
             </div>
           ))}
         </div>

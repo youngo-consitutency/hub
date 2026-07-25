@@ -7,20 +7,27 @@ export function localTz() {
 
 export function fmtDay(iso, tz) {
   return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'short', day: 'numeric', month: 'short',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
     ...(tz ? { timeZone: tz } : {}),
   }).format(new Date(iso))
 }
 
 function hm(iso, tz) {
   return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: tz,
   }).format(new Date(iso))
 }
 
 function zoneAbbr(iso, tz) {
   const parts = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit', timeZone: tz, timeZoneName: 'short',
+    hour: '2-digit',
+    timeZone: tz,
+    timeZoneName: 'short',
   }).formatToParts(new Date(iso))
   return parts.find((p) => p.type === 'timeZoneName')?.value || tz
 }
@@ -36,9 +43,17 @@ export function fmtDual(iso, tz = localTz()) {
 
 export function fmtDateRange(startsOn, endsOn, datesTbc) {
   if (!startsOn) return 'Dates TBC'
-  const fmt = (d) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(d + 'T00:00:00Z'))
+  const fmt = (d) =>
+    new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    }).format(new Date(d + 'T00:00:00Z'))
   const year = startsOn.slice(0, 4)
-  const range = endsOn && endsOn !== startsOn ? `${fmt(startsOn)}–${fmt(endsOn)}` : fmt(startsOn)
+  const range =
+    endsOn && endsOn !== startsOn
+      ? `${fmt(startsOn)}–${fmt(endsOn)}`
+      : fmt(startsOn)
   return `${range} ${year}${datesTbc ? ' · TBC' : ''}`
 }
 
@@ -49,9 +64,11 @@ export function countdown(iso, now = new Date()) {
   const totalH = Math.floor(ms / 3600000)
   const d = Math.floor(totalH / 24)
   const label =
-    totalH >= 48 ? `${d}d ${String(totalH % 24).padStart(2, '0')}h`
-    : totalH >= 2 ? `${totalH}h`
-    : `${Math.max(1, Math.floor(ms / 60000))}m`
+    totalH >= 48
+      ? `${d}d ${String(totalH % 24).padStart(2, '0')}h`
+      : totalH >= 2
+        ? `${totalH}h`
+        : `${Math.max(1, Math.floor(ms / 60000))}m`
   const tone = totalH < 48 ? 'danger' : d <= 7 ? 'warn' : 'neutral'
   return { label, tone }
 }

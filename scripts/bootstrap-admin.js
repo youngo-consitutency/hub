@@ -12,12 +12,16 @@ const emails = String(process.env.ADMIN_EMAILS || '')
 async function promoteExistingAccount(email) {
   const row = await findAccountByEmail(email)
   if (!row) {
-    throw new Error(`No account exists for ${email}. Register and verify it before promotion.`)
+    throw new Error(
+      `No account exists for ${email}. Register and verify it before promotion.`,
+    )
   }
 
   const account = publicAccount(row)
   if (!account.isVerified) {
-    throw new Error(`Account ${email} is not verified. Verify it before promotion.`)
+    throw new Error(
+      `Account ${email} is not verified. Verify it before promotion.`,
+    )
   }
 
   return setAccountFields(account.id, {
@@ -31,18 +35,22 @@ async function main() {
     throw new Error('DATABASE_URL is required for administrator bootstrap.')
   }
   if (!emails.length) {
-    throw new Error('ADMIN_EMAILS is required; there is no default administrator.')
+    throw new Error(
+      'ADMIN_EMAILS is required; there is no default administrator.',
+    )
   }
 
   const pool = getPool()
   try {
     for (const email of emails) {
       const account = await promoteExistingAccount(email)
-      console.log(JSON.stringify({
-        event: 'admin_promoted',
-        accountId: account.id,
-        email: account.email,
-      }))
+      console.log(
+        JSON.stringify({
+          event: 'admin_promoted',
+          accountId: account.id,
+          email: account.email,
+        }),
+      )
     }
   } finally {
     if (pool) await pool.end()

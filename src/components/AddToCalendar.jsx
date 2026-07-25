@@ -8,8 +8,7 @@ import {
 } from '../lib/calendarLinks.js'
 
 /**
- * Add-to-calendar menu: Google / Outlook one-click + .ics download.
- * Fixes "only downloads a file" feedback for event detail.
+ * Calendar actions for Google, Outlook, Microsoft 365, and ICS downloads.
  */
 export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
   const [open, setOpen] = useState(false)
@@ -20,7 +19,9 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
     const onDoc = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
     }
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
     return () => {
@@ -42,7 +43,12 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
       >
         <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
         Add to calendar
-        <ChevronDown size={14} strokeWidth={1.75} aria-hidden style={{ opacity: 0.7 }} />
+        <ChevronDown
+          size={14}
+          strokeWidth={1.75}
+          aria-hidden
+          style={{ opacity: 0.7 }}
+        />
       </button>
       {open && (
         <div className="addCalPanel card" role="menu">

@@ -20,6 +20,8 @@ const ROLE_LABELS = {
 const TEAM_LABELS = {
   membership_team: 'Membership Team',
   gys_policy_team: 'Global Youth Statement Policy Team',
+  content_editor: 'Content editor',
+  content_publisher: 'Content publisher',
 }
 
 function Detail({ term, children }) {
@@ -49,17 +51,30 @@ export function Profile() {
       />
 
       <div className="profileGrid">
-        <section className="card profileSummary" aria-labelledby="profile-account-title">
+        <section
+          className="card profileSummary"
+          aria-labelledby="profile-account-title"
+        >
           <div className="profileAvatar" aria-hidden>
-            {(account?.name || account?.email || '?').trim().slice(0, 1).toUpperCase()}
+            {(account?.name || account?.email || '?')
+              .trim()
+              .slice(0, 1)
+              .toUpperCase()}
           </div>
           <div>
-            <h2 id="profile-account-title">{account?.name || 'YOUNGO member'}</h2>
+            <h2 id="profile-account-title">
+              {account?.name || 'YOUNGO member'}
+            </h2>
             <a className="profileEmail" href={`mailto:${account?.email}`}>
-              <Mail size={15} aria-hidden />{account?.email}
+              <Mail size={15} aria-hidden />
+              {account?.email}
             </a>
-            <span className={`chip ${account?.isVerified ? 'chip-accent' : 'chip-warn'} profileStatus`}>
-              {account?.isVerified ? 'Verified member' : 'Onboarding in progress'}
+            <span
+              className={`chip ${account?.isVerified ? 'chip-accent' : 'chip-warn'} profileStatus`}
+            >
+              {account?.isVerified
+                ? 'Verified member'
+                : 'Onboarding in progress'}
             </span>
           </div>
         </section>
@@ -67,31 +82,43 @@ export function Profile() {
         <section className="card" aria-labelledby="profile-details-title">
           <h2 id="profile-details-title">Membership details</h2>
           <dl className="profileDetails">
-            <Detail term="Role">{ROLE_LABELS[account?.role] || account?.role}</Detail>
+            <Detail term="Role">
+              {ROLE_LABELS[account?.role] || account?.role}
+            </Detail>
             <Detail term="Country">{account?.country}</Detail>
             <Detail term="Region">{account?.region}</Detail>
             <Detail term="Organisation">{account?.organizationName}</Detail>
             <Detail term="Course score">
-              {account?.courseScore == null ? null : `${account.courseScore} correct answers`}
+              {account?.courseScore == null
+                ? null
+                : `${account.courseScore} correct answers`}
             </Detail>
           </dl>
           <p className="metaMuted profileHelp">
             To correct membership details, contact{' '}
-            <a className="inlineLink" href="mailto:membership@youngoclimate.org">
+            <a
+              className="inlineLink"
+              href="mailto:membership@youngoclimate.org"
+            >
               membership@youngoclimate.org
-            </a>.
+            </a>
+            .
           </p>
         </section>
       </div>
 
-      {(teamRoles.length > 0 || wgAssignments.length > 0 || interests.length > 0) && (
+      {(teamRoles.length > 0 ||
+        wgAssignments.length > 0 ||
+        interests.length > 0) && (
         <Section label="Your participation">
           <div className="grid2">
             {teamRoles.length > 0 && (
               <div className="card cardTight">
                 <h3>Teams</h3>
                 <ul className="profileList">
-                  {teamRoles.map((role) => <li key={role}>{TEAM_LABELS[role] || role}</li>)}
+                  {teamRoles.map((role) => (
+                    <li key={role}>{TEAM_LABELS[role] || role}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -100,8 +127,11 @@ export function Profile() {
                 <h3>Working-group roles</h3>
                 <ul className="profileList">
                   {wgAssignments.map((assignment) => (
-                    <li key={`${assignment.wgSlug}-${assignment.role || 'member'}`}>
-                      {assignment.wgName || assignment.wgSlug} · {assignment.role || 'member'}
+                    <li
+                      key={`${assignment.wgSlug}-${assignment.role || 'member'}`}
+                    >
+                      {assignment.wgName || assignment.wgSlug} ·{' '}
+                      {assignment.role || 'member'}
                     </li>
                   ))}
                 </ul>
@@ -121,23 +151,38 @@ export function Profile() {
         <div className="profileLinks">
           <A href="/onboarding" className="card profileLink">
             <BookOpenCheck size={21} aria-hidden />
-            <span><strong>Onboarding guide</strong><small>How the Hub and YOUNGO membership work</small></span>
+            <span>
+              <strong>Onboarding guide</strong>
+              <small>How the Hub and YOUNGO membership work</small>
+            </span>
           </A>
           <A href="/onboarding/course" className="card profileLink">
             <GraduationCap size={21} aria-hidden />
-            <span><strong>Membership course</strong><small>Review the course whenever you need it</small></span>
+            <span>
+              <strong>Membership course</strong>
+              <small>Review the course whenever you need it</small>
+            </span>
           </A>
           <A href="/library" className="card profileLink">
             <Library size={21} aria-hidden />
-            <span><strong>Resource library</strong><small>Guides, policies, and practical materials</small></span>
+            <span>
+              <strong>Resource library</strong>
+              <small>Guides, policies, and practical materials</small>
+            </span>
           </A>
           <A href="/groups" className="card profileLink">
             <Users size={21} aria-hidden />
-            <span><strong>Working groups</strong><small>Find a group and complete its onboarding</small></span>
+            <span>
+              <strong>Working groups</strong>
+              <small>Find a group and complete its onboarding</small>
+            </span>
           </A>
           <A href="/privacy" className="card profileLink">
             <LockKeyhole size={21} aria-hidden />
-            <span><strong>Privacy notice</strong><small>What the Hub stores and who can see it</small></span>
+            <span>
+              <strong>Privacy notice</strong>
+              <small>What the Hub stores and who can see it</small>
+            </span>
           </A>
         </div>
       </Section>

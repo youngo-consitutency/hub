@@ -20,13 +20,26 @@ export function Directory() {
         <div className="liveBanner" style={{ marginTop: 12 }}>
           <span className="liveDot" />
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 500, fontSize: 14 }}>Need to coordinate directly?</p>
-            <p className="meta">Use Messages for contact points and mandate holders.</p>
+            <p style={{ fontWeight: 500, fontSize: 14 }}>
+              Need to coordinate directly?
+            </p>
+            <p className="meta">
+              Use Messages for contact points and mandate holders.
+            </p>
           </div>
-          <A href="/messages" className="btn btn-primary btn-sm">Open messages</A>
+          <A href="/messages" className="btn btn-primary btn-sm">
+            Open messages
+          </A>
         </div>
       )}
-      <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null}>
+      <Async
+        query={query}
+        empty={(d) =>
+          d.items.length === 0 ? (
+            <Empty icon={AtSign} title="Directory is empty" />
+          ) : null
+        }
+      >
         {(data) => {
           const groups = new Map()
           for (const contact of data.items) {
@@ -41,15 +54,24 @@ export function Directory() {
           return (
             <>
               <p className="meta directoryNote">
-                This shape shows how broad each contact’s scope is. It is not a ranking of people or importance.
+                This shape shows how broad each contact’s scope is. It is not a
+                ranking of people or importance.
               </p>
-              <ol className="directoryPyramid" aria-label="YOUNGO contact structure">
+              <ol
+                className="directoryPyramid"
+                aria-label="YOUNGO contact structure"
+              >
                 {layers.map((layer) => (
-                  <li key={layer.id} className={`directoryLayer directoryLayer-${layer.level}`}>
+                  <li
+                    key={layer.id}
+                    className={`directoryLayer directoryLayer-${layer.level}`}
+                  >
                     <section aria-labelledby={`directory-${layer.id}`}>
                       <p className="pageEyebrow">{layer.eyebrow}</p>
                       <h2 id={`directory-${layer.id}`}>{layer.title}</h2>
-                      <p className="meta directoryLayerDescription">{layer.description}</p>
+                      <p className="meta directoryLayerDescription">
+                        {layer.description}
+                      </p>
                       <div className="directoryContacts">
                         {layer.contacts.map((contact) => (
                           <ContactCard
@@ -60,7 +82,7 @@ export function Directory() {
                       </div>
                     </section>
                   </li>
-              ))}
+                ))}
               </ol>
             </>
           )

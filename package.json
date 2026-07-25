@@ -15,10 +15,12 @@
     "migrate": "node scripts/migrate.js",
     "bootstrap-admin": "node scripts/bootstrap-admin.js",
     "content:check": "node scripts/check-content.js",
+    "format": "prettier --write \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
+    "format:check": "prettier --check \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
     "screenshots": "node scripts/capture-readme-screenshots.mjs",
-    "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
     "lint": "eslint .",
-    "check": "npm run content:check && npm run lint && npm test && npm run build"
+    "check": "npm run content:check && npm run format:check && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -39,6 +41,7 @@
     "eslint": "^10.8.0",
     "globals": "^17.7.0",
     "playwright": "^1.62.0",
+    "prettier": "3.9.6",
     "vite": "^8.0.0"
   }
 }

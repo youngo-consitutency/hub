@@ -34,14 +34,51 @@ export function Coys() {
         description="LCOYs, RCOYs, and the global Conference of Youth."
       >
         <div className="pillRow" aria-label="Filter by conference type">
-          {TYPES.map((t) => <button type="button" aria-pressed={type === t.key} key={t.key} className={`pill ${type === t.key ? 'active' : ''}`} onClick={() => setType(t.key)}>{t.label}</button>)}
+          {TYPES.map((t) => (
+            <button
+              type="button"
+              aria-pressed={type === t.key}
+              key={t.key}
+              className={`pill ${type === t.key ? 'active' : ''}`}
+              onClick={() => setType(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
         <div className="pillRow" aria-label="Filter by region">
-          {REGIONS.map((r) => <button type="button" aria-pressed={region === r.key} key={r.key} className={`pill ${region === r.key ? 'active' : ''}`} onClick={() => setRegion(r.key)}>{r.label}</button>)}
+          {REGIONS.map((r) => (
+            <button
+              type="button"
+              aria-pressed={region === r.key}
+              key={r.key}
+              className={`pill ${region === r.key ? 'active' : ''}`}
+              onClick={() => setRegion(r.key)}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       </PageHeader>
-      <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={MapPin} title="No COYs for this filter" body="Try another region or type." /> : null}>
-        {(data) => <div className="grid2">{data.items.map((c) => <CoyCard key={c.slug} coy={c} />)}</div>}
+      <Async
+        query={query}
+        empty={(d) =>
+          d.items.length === 0 ? (
+            <Empty
+              icon={MapPin}
+              title="No COYs for this filter"
+              body="Try another region or type."
+            />
+          ) : null
+        }
+      >
+        {(data) => (
+          <div className="grid2">
+            {data.items.map((c) => (
+              <CoyCard key={c.slug} coy={c} />
+            ))}
+          </div>
+        )}
       </Async>
     </div>
   )

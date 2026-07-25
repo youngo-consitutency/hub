@@ -17,17 +17,26 @@ async function withApp(run, options) {
 }
 
 test('complete app exposes health and security headers without framework leakage', async () => {
-  await withApp(async (origin) => {
-    const response = await fetch(`${origin}/healthz`)
-    const body = await response.json()
+  await withApp(
+    async (origin) => {
+      const response = await fetch(`${origin}/healthz`)
+      const body = await response.json()
 
-    assert.equal(response.status, 200)
-    assert.deepEqual(body, { ok: true, db: 'fixtures', version: '0.1.0' })
-    assert.equal(response.headers.get('x-powered-by'), null)
-    assert.equal(response.headers.get('x-content-type-options'), 'nosniff')
-    assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin')
-    assert.match(response.headers.get('content-security-policy'), /frame-ancestors 'none'/)
-  }, { env: {} })
+      assert.equal(response.status, 200)
+      assert.deepEqual(body, { ok: true, db: 'fixtures', version: '0.1.0' })
+      assert.equal(response.headers.get('x-powered-by'), null)
+      assert.equal(response.headers.get('x-content-type-options'), 'nosniff')
+      assert.equal(
+        response.headers.get('referrer-policy'),
+        'strict-origin-when-cross-origin',
+      )
+      assert.match(
+        response.headers.get('content-security-policy'),
+        /frame-ancestors 'none'/,
+      )
+    },
+    { env: {} },
+  )
 })
 
 test('private routes override public caching and enforce authentication', async () => {

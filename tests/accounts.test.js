@@ -18,6 +18,7 @@ function individual(overrides = {}) {
     phone: '+254 700 000 000',
     gender: 'Female',
     dateOfBirth: '2000-06-15',
+    minorityIdentity: 'no',
     minorityGroups: [],
     region: 'Africa',
     nationality: 'Kenyan',
@@ -127,10 +128,12 @@ describe('privacy consent', () => {
   })
 
   it('is not satisfied by the separate data protection policy agreement', () => {
-    const result = validateRegistration(individual({
-      privacyConsent: false,
-      acceptDataProtection: true,
-    }))
+    const result = validateRegistration(
+      individual({
+        privacyConsent: false,
+        acceptDataProtection: true,
+      }),
+    )
     assert.equal(result.data, undefined)
     assert.ok(result.fields.privacyConsent)
   })
@@ -145,13 +148,17 @@ describe('privacy consent', () => {
   })
 
   it('rejects consent claimed against a stale notice version', () => {
-    const result = validateRegistration(individual({ privacyNoticeVersion: 'v0-2020-01-01' }))
+    const result = validateRegistration(
+      individual({ privacyNoticeVersion: 'v0-2020-01-01' }),
+    )
     assert.equal(result.data, undefined)
     assert.ok(result.fields.privacyConsent)
   })
 
   it('records the server version when the client sends none', () => {
-    const result = validateRegistration(individual({ privacyNoticeVersion: undefined }))
+    const result = validateRegistration(
+      individual({ privacyNoticeVersion: undefined }),
+    )
     assert.ok(result.data, JSON.stringify(result.fields))
     assert.equal(result.data.privacyNoticeVersion, PRIVACY_VERSION)
   })
@@ -168,6 +175,36 @@ describe('individual registration', () => {
     const result = validateRegistration(individual({ ageBand: '35_plus' }))
     assert.ok(result.fields.ageBand)
   })
+
+  it('requires the minority yes-or-no answer', () => {
+    const result = validateRegistration(individual({ minorityIdentity: '' }))
+    assert.ok(result.fields.minorityIdentity)
+  })
+
+  it('requires a selection after a minority yes answer', () => {
+    const result = validateRegistration(
+      individual({ minorityIdentity: 'yes', minorityGroups: [] }),
+    )
+    assert.ok(result.fields.minorityGroups)
+  })
+
+  it('stores selected minority groups only after a yes answer', () => {
+    const yes = validateRegistration(
+      individual({
+        minorityIdentity: 'yes',
+        minorityGroups: ['Indigenous peoples', 'Women'],
+      }),
+    )
+    assert.deepEqual(yes.data.minorityGroups, ['Indigenous peoples', 'Women'])
+
+    const no = validateRegistration(
+      individual({
+        minorityIdentity: 'no',
+        minorityGroups: ['Women'],
+      }),
+    )
+    assert.deepEqual(no.data.minorityGroups, [])
+  })
 })
 
 describe('admitted organisation registration', () => {
@@ -178,16 +215,22 @@ describe('admitted organisation registration', () => {
     assert.equal(result.data.organizationType, 'unfccc_admitted')
     assert.equal(result.data.dcpEmail, 'dcp@example.org')
     assert.equal(result.data.youthAffiliation, 'primary')
-    assert.equal(result.data.role, 'member', 'self-attestation must not grant NGO authority')
+    assert.equal(
+      result.data.role,
+      'member',
+      'self-attestation must not grant NGO authority',
+    )
   })
 
   it('requires youth affiliation and DCP fields', () => {
-    const result = validateRegistration(admittedOrg({
-      youthAffiliation: '',
-      dcpName: '',
-      dcpEmail: '',
-      dcpPhone: '',
-    }))
+    const result = validateRegistration(
+      admittedOrg({
+        youthAffiliation: '',
+        dcpName: '',
+        dcpEmail: '',
+        dcpPhone: '',
+      }),
+    )
     assert.ok(result.fields.youthAffiliation)
     assert.ok(result.fields.dcpName)
     assert.ok(result.fields.dcpEmail)
@@ -211,12 +254,14 @@ describe('non-admitted organisation registration', () => {
   })
 
   it('requires operation regions and YOUNGO CP', () => {
-    const result = validateRegistration(nonAdmittedOrg({
-      orgOperateIn: '',
-      ycpName: '',
-      ycpEmail: '',
-      ycpPhone: '',
-    }))
+    const result = validateRegistration(
+      nonAdmittedOrg({
+        orgOperateIn: '',
+        ycpName: '',
+        ycpEmail: '',
+        ycpPhone: '',
+      }),
+    )
     assert.ok(result.fields.orgOperateIn)
     assert.ok(result.fields.ycpName)
     assert.ok(result.fields.ycpEmail)
@@ -224,7 +269,9 @@ describe('non-admitted organisation registration', () => {
   })
 
   it('requires admitted yes/no', () => {
-    const result = validateRegistration(nonAdmittedOrg({ isUnfcccAdmitted: null }))
+    const result = validateRegistration(
+      nonAdmittedOrg({ isUnfcccAdmitted: null }),
+    )
     assert.ok(result.fields.isUnfcccAdmitted)
   })
 })

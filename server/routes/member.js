@@ -21,15 +21,30 @@ import {
   revokeNgoSeat,
   getSeatByToken,
 } from '../lib/lifecycle.js'
-import { getAccessProfile, canManageWg, setTeamAssignment, syncWgAssignment } from '../lib/access.js'
-import { recordAudit, listAudit } from '../lib/audit.js'
-import { createGysContribution, getGysWorkflow, updateGysContribution } from '../lib/gysWorkflow.js'
-import { getFeed, getGys, listEvents, listGroups, listSubmissions, listCouncil } from '../lib/store.js'
-import { createPasswordResetToken, resetLink } from '../lib/passwordReset.js'
 import {
-  canWriteNgoRequests,
-  canManageNgoSeats,
-} from '../lib/authorization.js'
+  getAccessProfile,
+  hasCapability,
+  canManageWg,
+  setTeamAssignment,
+  syncWgAssignment,
+} from '../lib/access.js'
+import { recordAudit, listAudit } from '../lib/audit.js'
+import {
+  createGysContribution,
+  getGysWorkflow,
+  updateGysContribution,
+} from '../lib/gysWorkflow.js'
+import {
+  getFeed,
+  getGys,
+  listEvents,
+  listAnnouncements,
+  listGroups,
+  listSubmissions,
+  listCouncil,
+} from '../lib/store.js'
+import { createPasswordResetToken, resetLink } from '../lib/passwordReset.js'
+import { canWriteNgoRequests, canManageNgoSeats } from '../lib/authorization.js'
 import { appOrigin } from '../lib/config.js'
 import {
   addMessage,
@@ -38,7 +53,13 @@ import {
   listMessageContacts,
   listMessages,
 } from '../lib/messages.js'
-import { scoreQuiz, QUIZ, COURSE_MODULES, COURSE_VERSION, PASS_SCORE } from '../../src/content/membershipCourse.js'
+import {
+  scoreQuiz,
+  QUIZ,
+  COURSE_MODULES,
+  COURSE_VERSION,
+  PASS_SCORE,
+} from '../../src/content/membershipCourse.js'
 import { cookieValue, SESSION_COOKIE, rateLimit } from '../lib/security.js'
 import {
   POINT_REASONS,
@@ -54,13 +75,26 @@ import {
   tiersForBalance,
 } from '../lib/points.js'
 import { WG_ACTIVITY_KIND_VALUES } from '../../shared/workflows.js'
+import {
+  createContentRevision,
+  updateContentRevision,
+  submitContentRevision,
+  reviewContentRevision,
+  publishContentRevision,
+  listContentRevisions,
+  listContentPublications,
+} from '../lib/contentWorkflow.js'
 
 export const memberRouter = Router()
 
 function bearerToken(req) {
   const h = req.headers.authorization || ''
   if (h.startsWith('Bearer ')) return h.slice(7).trim()
-  return String(req.headers['x-session-token'] || '').trim() || cookieValue(req, SESSION_COOKIE) || null
+  return (
+    String(req.headers['x-session-token'] || '').trim() ||
+    cookieValue(req, SESSION_COOKIE) ||
+    null
+  )
 }
 
 const messageLimit = rateLimit({ name: 'messages', max: 60, windowMs: 60_000 })
@@ -73,7 +107,9 @@ memberRouter.use((req, res, next) => {
 async function requireAccount(req, res) {
   const account = await getSessionAccount(bearerToken(req))
   if (!account) {
-    res.status(401).json({ error: { code: 'unauthorized', message: 'Sign in to continue.' } })
+    res.status(401).json({
+      error: { code: 'unauthorized', message: 'Sign in to continue.' },
+    })
     return null
   }
   req.account = account
@@ -83,7 +119,10 @@ async function requireAccount(req, res) {
 function requireVerified(req, res) {
   if (!req.account?.isVerified) {
     res.status(403).json({
-      error: { code: 'not_verified', message: 'Complete the membership course to unlock this feature.' },
+      error: {
+        code: 'not_verified',
+        message: 'Complete the membership course to use this feature.',
+      },
     })
     return false
   }
@@ -93,7 +132,26 @@ function requireVerified(req, res) {
 async function requireTeam(req, res, teamRole) {
   const access = await getAccessProfile(req.account)
   if (!access.teamRoles.includes(teamRole)) {
-    res.status(403).json({ error: { code: 'forbidden', message: 'This team workspace is not assigned to your account.' } })
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'This team workspace is not assigned to your account.',
+      },
+    })
+    return null
+  }
+  return access
+}
+
+async function requireCapability(req, res, capability) {
+  const access = await getAccessProfile(req.account)
+  if (!hasCapability(access, capability)) {
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'This content responsibility is not assigned to your account.',
+      },
+    })
     return null
   }
   return access
@@ -101,9 +159,31 @@ async function requireTeam(req, res, teamRole) {
 
 function requireFocalPoint(req, res) {
   if (!['admin', 'focal_point'].includes(req.account?.role)) {
-    res.status(403).json({ error: { code: 'forbidden', message: 'Focal Point access required.' } })
+    res.status(403).json({
+      error: { code: 'forbidden', message: 'Focal Point access required.' },
+    })
     return false
   }
+  return true
+}
+
+function sendContentWorkflowError(res, error) {
+  const status = {
+    validation: 400,
+    not_found: 404,
+    forbidden: 403,
+    invalid_status: 409,
+    separation_of_duties: 409,
+    conflict: 409,
+  }[error.code]
+  if (!status) return false
+  res.status(status).json({
+    error: {
+      code: error.code,
+      message: error.message,
+      ...(error.fields ? { fields: error.fields } : {}),
+    },
+  })
   return true
 }
 
@@ -162,7 +242,12 @@ memberRouter.post('/course/submit', async (req, res) => {
     res.json({ ok: true, score, total, passed: true, account: updated })
   } catch (err) {
     console.error('course submit failed:', err.message)
-    res.status(500).json({ error: { code: 'server_error', message: 'Could not record course result.' } })
+    res.status(500).json({
+      error: {
+        code: 'server_error',
+        message: 'Could not record course result.',
+      },
+    })
   }
 })
 
@@ -231,7 +316,9 @@ memberRouter.post('/messages/conversations', messageLimit, async (req, res) => {
   if (!requireVerified(req, res)) return
   const recipientId = String(req.body?.recipientId || '').trim()
   if (!recipientId) {
-    return res.status(400).json({ error: { code: 'validation', message: 'recipientId is required.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'recipientId is required.' },
+    })
   }
   const result = await findOrCreateConversation(account.id, recipientId)
   if (!result.ok) {
@@ -239,20 +326,27 @@ memberRouter.post('/messages/conversations', messageLimit, async (req, res) => {
     return res.status(status).json({
       error: {
         code: result.code || 'forbidden',
-        message: result.code === 'recipient_not_mandate_holder'
-          ? 'Members can only start chats with contact points or mandate holders.'
-          : 'You cannot start that conversation.',
+        message:
+          result.code === 'recipient_not_mandate_holder'
+            ? 'Members can only start chats with contact points or mandate holders.'
+            : 'You cannot start that conversation.',
       },
     })
   }
   let message = null
   try {
     if (req.body?.body != null && String(req.body.body).trim()) {
-      message = await addMessage(result.conversation.id, account.id, req.body.body)
+      message = await addMessage(
+        result.conversation.id,
+        account.id,
+        req.body.body,
+      )
     }
   } catch (err) {
     if (err.code === 'validation') {
-      return res.status(400).json({ error: { code: 'validation', message: err.message } })
+      return res
+        .status(400)
+        .json({ error: { code: 'validation', message: err.message } })
     }
     throw err
   }
@@ -264,33 +358,52 @@ memberRouter.get('/messages/conversations/:id/messages', async (req, res) => {
   if (!account) return
   if (!requireVerified(req, res)) return
   const result = await listMessages(req.params.id, account.id)
-  if (!result) return res.status(404).json({ error: { code: 'not_found', message: 'Conversation not found.' } })
+  if (!result)
+    return res.status(404).json({
+      error: { code: 'not_found', message: 'Conversation not found.' },
+    })
   res.json(result)
 })
 
-memberRouter.post('/messages/conversations/:id/messages', messageLimit, async (req, res) => {
-  const account = await requireAccount(req, res)
-  if (!account) return
-  if (!requireVerified(req, res)) return
-  try {
-    const message = await addMessage(req.params.id, account.id, req.body?.body)
-    if (!message) return res.status(404).json({ error: { code: 'not_found', message: 'Conversation not found.' } })
-    res.status(201).json({ message })
-  } catch (err) {
-    if (err.code === 'validation') {
-      return res.status(400).json({ error: { code: 'validation', message: err.message } })
+memberRouter.post(
+  '/messages/conversations/:id/messages',
+  messageLimit,
+  async (req, res) => {
+    const account = await requireAccount(req, res)
+    if (!account) return
+    if (!requireVerified(req, res)) return
+    try {
+      const message = await addMessage(
+        req.params.id,
+        account.id,
+        req.body?.body,
+      )
+      if (!message)
+        return res.status(404).json({
+          error: { code: 'not_found', message: 'Conversation not found.' },
+        })
+      res.status(201).json({ message })
+    } catch (err) {
+      if (err.code === 'validation') {
+        return res
+          .status(400)
+          .json({ error: { code: 'validation', message: err.message } })
+      }
+      throw err
     }
-    throw err
-  }
-})
+  },
+)
 
 async function requireWgManager(req, res) {
   const account = await requireAccount(req, res)
   if (!account) return null
   if (!requireVerified(req, res)) return null
-  if (!await canManageWg(account, req.params.wg)) {
+  if (!(await canManageWg(account, req.params.wg))) {
     res.status(403).json({
-      error: { code: 'forbidden', message: 'Contact or lead access for this working group is required.' },
+      error: {
+        code: 'forbidden',
+        message: 'Contact or lead access for this working group is required.',
+      },
     })
     return null
   }
@@ -311,21 +424,43 @@ memberRouter.post('/cp/:wg/members/:accountId/role', async (req, res) => {
   const role = String(req.body?.role || 'member')
   const status = String(req.body?.status || 'active')
   if (
-    !['member', 'contact', 'lead'].includes(role)
-    || !['interested', 'pending_approval', 'active', 'rejected'].includes(status)
+    !['member', 'contact', 'lead'].includes(role) ||
+    !['interested', 'pending_approval', 'active', 'rejected'].includes(status)
   ) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid WG role or status.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Invalid WG role or status.' },
+    })
   }
   const before = await getWgProgress(req.params.accountId, req.params.wg)
   if (!before && account.role !== 'admin') {
-    return res.status(404).json({ error: { code: 'not_found', message: 'This person has not joined the working group.' } })
+    return res.status(404).json({
+      error: {
+        code: 'not_found',
+        message: 'This person has not joined the working group.',
+      },
+    })
   }
   const progress = await upsertWgProgress(req.params.accountId, req.params.wg, {
     role_in_wg: role,
     status,
   })
-  await syncWgAssignment({ accountId: req.params.accountId, wgSlug: req.params.wg, role, status, assignedBy: account.id })
-  await recordAudit({ actorId: account.id, action: 'wg.member_role_changed', targetType: 'wg_membership', targetId: `${req.params.wg}:${req.params.accountId}`, before, after: { role, status }, reason: req.body?.reason, requestId: req.requestId })
+  await syncWgAssignment({
+    accountId: req.params.accountId,
+    wgSlug: req.params.wg,
+    role,
+    status,
+    assignedBy: account.id,
+  })
+  await recordAudit({
+    actorId: account.id,
+    action: 'wg.member_role_changed',
+    targetType: 'wg_membership',
+    targetId: `${req.params.wg}:${req.params.accountId}`,
+    before,
+    after: { role, status },
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ progress })
 })
 
@@ -334,13 +469,19 @@ memberRouter.post('/cp/:wg/activities', async (req, res) => {
   if (!account) return
   const b = req.body || {}
   if (!b.title || !b.kind) {
-    return res.status(400).json({ error: { code: 'validation', message: 'title and kind are required.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'title and kind are required.' },
+    })
   }
   if (!WG_ACTIVITY_KIND_VALUES.includes(String(b.kind))) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid activity kind.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Invalid activity kind.' },
+    })
   }
   if (b.startsAt && Number.isNaN(Date.parse(b.startsAt))) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid start date.' } })
+    return res
+      .status(400)
+      .json({ error: { code: 'validation', message: 'Invalid start date.' } })
   }
   const activity = await addWgActivity({
     wgSlug: req.params.wg,
@@ -352,7 +493,14 @@ memberRouter.post('/cp/:wg/activities', async (req, res) => {
     url: b.url || null,
     createdBy: account.id,
   })
-  await recordAudit({ actorId: account.id, action: 'wg.activity_created', targetType: 'wg_activity', targetId: activity.id, after: activity, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'wg.activity_created',
+    targetType: 'wg_activity',
+    targetId: activity.id,
+    after: activity,
+    requestId: req.requestId,
+  })
   res.status(201).json({ activity })
 })
 
@@ -363,15 +511,30 @@ async function requireOrgScope(req, res, permission = 'read') {
   const requestedOrgId = req.query.orgId || req.body?.orgId || null
   const context = await resolveOrgContext(account, requestedOrgId)
   if (!context) {
-    res.status(403).json({ error: { code: 'forbidden', message: 'Accredited NGO access required.' } })
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Accredited NGO access required.',
+      },
+    })
     return null
   }
   if (permission === 'requests' && !context.canManageRequests) {
-    res.status(403).json({ error: { code: 'forbidden', message: 'Viewer seats have read-only access.' } })
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Viewer seats have read-only access.',
+      },
+    })
     return null
   }
   if (permission === 'seats' && !context.canManageSeats) {
-    res.status(403).json({ error: { code: 'forbidden', message: 'Only the organization owner may manage seats.' } })
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Only the organization owner may manage seats.',
+      },
+    })
     return null
   }
   req.orgAccountId = context.orgAccountId
@@ -386,7 +549,9 @@ memberRouter.get('/ngo/requests', async (req, res) => {
   const items = await listNgoRequests(req.orgAccountId)
   const seats = await listNgoSeats(req.orgAccountId)
   const balance = await getOrgPointsBalance(req.orgAccountId)
-  const pointsLedger = await listOrgPointsLedger(req.orgAccountId, { limit: 25 })
+  const pointsLedger = await listOrgPointsLedger(req.orgAccountId, {
+    limit: 25,
+  })
   res.json({
     items,
     seats,
@@ -401,12 +566,26 @@ memberRouter.get('/ngo/requests', async (req, res) => {
       recognition: tiersForBalance(balance),
       ledger: pointsLedger,
       tiers: RECOGNITION_TIERS,
-      reasons: Object.values(POINT_REASONS).filter((r) => r.code !== 'adjustment'),
+      reasons: Object.values(POINT_REASONS).filter(
+        (r) => r.code !== 'adjustment',
+      ),
     },
     deadlines: [
-      { title: 'Side event applications (placeholder)', kind: 'deadline', note: 'Connect live UNFCCC calendars later.' },
-      { title: 'COP/SB nomination windows (placeholder)', kind: 'deadline', note: 'Membership Team will publish real dates.' },
-      { title: 'Submission deadlines tracked in hub Submissions', kind: 'deadline', href: '/submissions' },
+      {
+        title: 'Side event applications (placeholder)',
+        kind: 'deadline',
+        note: 'Connect live UNFCCC calendars later.',
+      },
+      {
+        title: 'COP/SB nomination windows (placeholder)',
+        kind: 'deadline',
+        note: 'Membership Team will publish real dates.',
+      },
+      {
+        title: 'Submission deadlines tracked in hub Submissions',
+        kind: 'deadline',
+        href: '/submissions',
+      },
     ],
   })
 })
@@ -415,7 +594,9 @@ memberRouter.get('/ngo/points', async (req, res) => {
   const account = await requireOrgScope(req, res)
   if (!account) return
   const balance = await getOrgPointsBalance(req.orgAccountId)
-  const ledger = await listOrgPointsLedger(req.orgAccountId, { limit: Number(req.query.limit) || 50 })
+  const ledger = await listOrgPointsLedger(req.orgAccountId, {
+    limit: Number(req.query.limit) || 50,
+  })
   res.json({
     orgAccountId: req.orgAccountId,
     balance,
@@ -434,7 +615,8 @@ async function requirePointsAwarder(req, res) {
     res.status(403).json({
       error: {
         code: 'forbidden',
-        message: 'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
+        message:
+          'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
       },
     })
     return null
@@ -489,7 +671,9 @@ memberRouter.post('/staff/points/award', async (req, res) => {
     res.status(201).json(result)
   } catch (err) {
     const status = err.code === 'not_found' ? 404 : 400
-    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+    res
+      .status(status)
+      .json({ error: { code: err.code || 'validation', message: err.message } })
   }
 })
 
@@ -499,10 +683,16 @@ memberRouter.post('/staff/points/award-suggestion', async (req, res) => {
   if (!account) return
   const b = req.body || {}
   if (!b.requestId || !b.orgAccountId) {
-    return res.status(400).json({ error: { code: 'validation', message: 'requestId and orgAccountId required.' } })
+    return res.status(400).json({
+      error: {
+        code: 'validation',
+        message: 'requestId and orgAccountId required.',
+      },
+    })
   }
   try {
-    const reasonCode = b.reasonCode || reasonFromNgoRequestKind(b.kind || 'other')
+    const reasonCode =
+      b.reasonCode || reasonFromNgoRequestKind(b.kind || 'other')
     const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
     const result = await awardOrgPoints({
       orgAccountId: b.orgAccountId,
@@ -525,7 +715,9 @@ memberRouter.post('/staff/points/award-suggestion', async (req, res) => {
     res.status(201).json(result)
   } catch (err) {
     const status = err.code === 'not_found' ? 404 : 400
-    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+    res
+      .status(status)
+      .json({ error: { code: err.code || 'validation', message: err.message } })
   }
 })
 
@@ -547,7 +739,9 @@ memberRouter.post('/ngo/requests', async (req, res) => {
   if (!account) return
   const b = req.body || {}
   if (!b.title || !b.kind) {
-    return res.status(400).json({ error: { code: 'validation', message: 'title and kind required.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'title and kind required.' },
+    })
   }
   const item = await addNgoRequest({
     orgAccountId: req.orgAccountId,
@@ -557,7 +751,14 @@ memberRouter.post('/ngo/requests', async (req, res) => {
     deadlineAt: b.deadlineAt || null,
     createdBy: account.id,
   })
-  await recordAudit({ actorId: account.id, action: 'ngo.request_created', targetType: 'ngo_request', targetId: item.id, after: item, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'ngo.request_created',
+    targetType: 'ngo_request',
+    targetId: item.id,
+    after: item,
+    requestId: req.requestId,
+  })
   res.status(201).json({ item })
 })
 
@@ -566,11 +767,28 @@ memberRouter.patch('/ngo/requests/:id', async (req, res) => {
   if (!account) return
   const nextStatus = String(req.body?.status || 'done')
   if (!['open', 'in_progress', 'done', 'declined'].includes(nextStatus)) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid request status.' } })
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Invalid request status.' },
+    })
   }
-  const item = await updateNgoRequestStatus(req.params.id, nextStatus, req.orgAccountId)
-  if (!item) return res.status(404).json({ error: { code: 'not_found', message: 'Request not found.' } })
-  await recordAudit({ actorId: account.id, action: 'ngo.request_status_changed', targetType: 'ngo_request', targetId: item.id, after: item, reason: req.body?.reason, requestId: req.requestId })
+  const item = await updateNgoRequestStatus(
+    req.params.id,
+    nextStatus,
+    req.orgAccountId,
+  )
+  if (!item)
+    return res
+      .status(404)
+      .json({ error: { code: 'not_found', message: 'Request not found.' } })
+  await recordAudit({
+    actorId: account.id,
+    action: 'ngo.request_status_changed',
+    targetType: 'ngo_request',
+    targetId: item.id,
+    after: item,
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   // When marked done, surface a staff award suggestion (points stay human-verified).
   let awardSuggestion = null
   if (nextStatus === 'done') {
@@ -584,7 +802,8 @@ memberRouter.patch('/ngo/requests/:id', async (req, res) => {
       suggestedReasonCode: reasonCode,
       suggestedReasonLabel: reason.label,
       suggestedPoints: reason.defaultPoints,
-      message: 'Request marked done. Staff can award contribution points from /staff/points.',
+      message:
+        'Request marked done. Staff can award contribution points from /staff/points.',
     }
   }
   res.json({ item, awardSuggestion })
@@ -611,7 +830,14 @@ memberRouter.post('/ngo/seats/invite', async (req, res) => {
     const inviteUrl = result.inviteToken
       ? `${appOrigin()}/ngo/accept?token=${result.inviteToken}`
       : null
-    await recordAudit({ actorId: account.id, action: 'ngo.seat_invited', targetType: 'ngo_seat', targetId: result.seat.id, after: result.seat, requestId: req.requestId })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.seat_invited',
+      targetType: 'ngo_seat',
+      targetId: result.seat.id,
+      after: result.seat,
+      requestId: req.requestId,
+    })
     res.status(201).json({
       seat: result.seat,
       inviteUrl,
@@ -619,7 +845,9 @@ memberRouter.post('/ngo/seats/invite', async (req, res) => {
     })
   } catch (err) {
     const status = err.code === 'duplicate' ? 409 : 400
-    res.status(status).json({ error: { code: err.code || 'validation', message: err.message } })
+    res
+      .status(status)
+      .json({ error: { code: err.code || 'validation', message: err.message } })
   }
 })
 
@@ -628,9 +856,22 @@ memberRouter.post('/ngo/seats/:id/revoke', async (req, res) => {
   if (!account) return
   const seat = await revokeNgoSeat(req.params.id, req.orgAccountId)
   if (!seat) {
-    return res.status(400).json({ error: { code: 'cannot_revoke', message: 'Cannot revoke owner or missing seat.' } })
+    return res.status(400).json({
+      error: {
+        code: 'cannot_revoke',
+        message: 'Cannot revoke owner or missing seat.',
+      },
+    })
   }
-  await recordAudit({ actorId: account.id, action: 'ngo.seat_revoked', targetType: 'ngo_seat', targetId: seat.id, after: seat, reason: req.body?.reason, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'ngo.seat_revoked',
+    targetType: 'ngo_seat',
+    targetId: seat.id,
+    after: seat,
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ seat })
 })
 
@@ -640,7 +881,12 @@ memberRouter.get('/ngo/invite/:token', async (req, res) => {
   if (!account) return
   const seat = await getSeatByToken(req.params.token, account.email)
   if (!seat) {
-    return res.status(404).json({ error: { code: 'not_found', message: 'Invite not found or already used.' } })
+    return res.status(404).json({
+      error: {
+        code: 'not_found',
+        message: 'Invite not found or already used.',
+      },
+    })
   }
   res.json({ seat })
 })
@@ -651,14 +897,28 @@ memberRouter.post('/ngo/invite/:token/accept', async (req, res) => {
   try {
     const seat = await acceptNgoInvite(req.params.token, account)
     if (!seat) {
-      return res.status(404).json({ error: { code: 'not_found', message: 'Invite not found or already used.' } })
+      return res.status(404).json({
+        error: {
+          code: 'not_found',
+          message: 'Invite not found or already used.',
+        },
+      })
     }
-    await recordAudit({ actorId: account.id, action: 'ngo.seat_accepted', targetType: 'ngo_seat', targetId: seat.id, after: seat, requestId: req.requestId })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.seat_accepted',
+      targetType: 'ngo_seat',
+      targetId: seat.id,
+      after: seat,
+      requestId: req.requestId,
+    })
     const refreshedAccount = await getSessionAccount(bearerToken(req))
     res.json({ ok: true, seat, account: refreshedAccount })
   } catch (err) {
     console.error('accept invite failed:', err.message)
-    res.status(500).json({ error: { code: 'server_error', message: 'Could not accept invite.' } })
+    res.status(500).json({
+      error: { code: 'server_error', message: 'Could not accept invite.' },
+    })
   }
 })
 
@@ -666,7 +926,7 @@ memberRouter.post('/ngo/invite/:token/accept', async (req, res) => {
 memberRouter.get('/team/membership/overview', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'membership_team')) return
+  if (!(await requireTeam(req, res, 'membership_team'))) return
   const items = await listAccountsForAdmin()
   res.json({ items })
 })
@@ -674,7 +934,7 @@ memberRouter.get('/team/membership/overview', async (req, res) => {
 memberRouter.post('/team/membership/accounts/:id/verify', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'membership_team')) return
+  if (!(await requireTeam(req, res, 'membership_team'))) return
   const updated = await setAccountFields(req.params.id, {
     member_status: 'verified',
     hub_access_status: 'active',
@@ -683,56 +943,134 @@ memberRouter.post('/team/membership/accounts/:id/verify', async (req, res) => {
     verified_at: new Date().toISOString(),
     verified_by: account.email,
   })
-  await recordAudit({ actorId: account.id, action: 'membership.status_changed', targetType: 'account', targetId: req.params.id, after: updated, reason: req.body?.reason, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'membership.status_changed',
+    targetType: 'account',
+    targetId: req.params.id,
+    after: updated,
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ account: updated })
 })
 
 memberRouter.patch('/team/membership/accounts/:id/status', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'membership_team')) return
+  if (!(await requireTeam(req, res, 'membership_team'))) return
   const status = String(req.body?.status || '')
-  const allowed = ['registered', 'course_passed', 'awaiting_onboarding', 'active', 'renewal_due', 'expired', 'terminated']
-  if (!allowed.includes(status)) return res.status(400).json({ error: { code: 'validation', message: 'Invalid membership status.' } })
+  const allowed = [
+    'registered',
+    'course_passed',
+    'awaiting_onboarding',
+    'active',
+    'renewal_due',
+    'expired',
+    'terminated',
+  ]
+  if (!allowed.includes(status))
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Invalid membership status.' },
+    })
   const items = await listAccountsForAdmin()
   const before = items.find((item) => item.id === req.params.id)
-  if (!before) return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
-  if (account.role !== 'admin' && ['admin', 'focal_point'].includes(before.role)) {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Only an admin can change platform staff membership.' } })
+  if (!before)
+    return res
+      .status(404)
+      .json({ error: { code: 'not_found', message: 'Account not found.' } })
+  if (
+    account.role !== 'admin' &&
+    ['admin', 'focal_point'].includes(before.role)
+  ) {
+    return res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Only an admin can change platform staff membership.',
+      },
+    })
   }
-  if (status === 'active' && !before.coursePassedAt && !['admin', 'focal_point'].includes(before.role)) {
-    return res.status(409).json({ error: { code: 'course_required', message: 'The member must pass the membership course before activation.' } })
+  if (
+    status === 'active' &&
+    !before.coursePassedAt &&
+    !['admin', 'focal_point'].includes(before.role)
+  ) {
+    return res.status(409).json({
+      error: {
+        code: 'course_required',
+        message:
+          'The member must pass the membership course before activation.',
+      },
+    })
   }
   if (status === 'terminated' && !String(req.body?.reason || '').trim()) {
-    return res.status(400).json({ error: { code: 'validation', message: 'A reason is required when terminating membership.' } })
+    return res.status(400).json({
+      error: {
+        code: 'validation',
+        message: 'A reason is required when terminating membership.',
+      },
+    })
   }
-  if (req.body?.renewalDueAt && Number.isNaN(Date.parse(req.body.renewalDueAt))) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid renewal date.' } })
+  if (
+    req.body?.renewalDueAt &&
+    Number.isNaN(Date.parse(req.body.renewalDueAt))
+  ) {
+    return res
+      .status(400)
+      .json({ error: { code: 'validation', message: 'Invalid renewal date.' } })
   }
   const now = new Date().toISOString()
   const accessStatus = ['expired', 'terminated'].includes(status)
     ? 'suspended'
-    : (['course_passed', 'awaiting_onboarding', 'active', 'renewal_due'].includes(status) ? 'active' : 'pending_course')
+    : [
+          'course_passed',
+          'awaiting_onboarding',
+          'active',
+          'renewal_due',
+        ].includes(status)
+      ? 'active'
+      : 'pending_course'
   const fields = {
     membership_status: status,
     hub_access_status: accessStatus,
-    ...(status === 'active' ? { member_status: 'verified', verified_at: before.verifiedAt || now } : {}),
-    onboarding_cohort: req.body?.onboardingCohort || before.onboardingCohort || null,
+    ...(status === 'active'
+      ? { member_status: 'verified', verified_at: before.verifiedAt || now }
+      : {}),
+    onboarding_cohort:
+      req.body?.onboardingCohort || before.onboardingCohort || null,
     renewal_due_at: req.body?.renewalDueAt || before.renewalDueAt || null,
-    membership_ended_at: ['expired', 'terminated'].includes(status) ? now : null,
-    membership_end_reason: ['expired', 'terminated'].includes(status) ? String(req.body?.reason || '').slice(0, 500) || null : null,
-    constituency_work_status: status === 'active' ? 'active' : (status === 'awaiting_onboarding' ? 'pending_onboarding' : before.constituencyWorkStatus),
+    membership_ended_at: ['expired', 'terminated'].includes(status)
+      ? now
+      : null,
+    membership_end_reason: ['expired', 'terminated'].includes(status)
+      ? String(req.body?.reason || '').slice(0, 500) || null
+      : null,
+    constituency_work_status:
+      status === 'active'
+        ? 'active'
+        : status === 'awaiting_onboarding'
+          ? 'pending_onboarding'
+          : before.constituencyWorkStatus,
   }
   const updated = await setAccountFields(req.params.id, fields)
   if (accessStatus === 'suspended') await destroyAllSessions(req.params.id)
-  await recordAudit({ actorId: account.id, action: 'membership.status_changed', targetType: 'account', targetId: req.params.id, before, after: updated, reason: req.body?.reason, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'membership.status_changed',
+    targetType: 'account',
+    targetId: req.params.id,
+    before,
+    after: updated,
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ account: updated })
 })
 
 memberRouter.get('/team/gys/overview', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'gys_policy_team')) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
   const gys = getGys()
   const workflow = await getGysWorkflow()
   res.json({
@@ -748,13 +1086,26 @@ memberRouter.get('/team/gys/overview', async (req, res) => {
 memberRouter.post('/team/gys/contributions', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'gys_policy_team')) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
   try {
-    const contribution = await createGysContribution({ ...req.body, authorId: account.id })
-    await recordAudit({ actorId: account.id, action: 'gys.contribution_created', targetType: 'gys_contribution', targetId: contribution.id, after: contribution, requestId: req.requestId })
+    const contribution = await createGysContribution({
+      ...req.body,
+      authorId: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'gys.contribution_created',
+      targetType: 'gys_contribution',
+      targetId: contribution.id,
+      after: contribution,
+      requestId: req.requestId,
+    })
     res.status(201).json({ contribution })
   } catch (error) {
-    if (error.code === 'validation') return res.status(400).json({ error: { code: error.code, message: error.message } })
+    if (error.code === 'validation')
+      return res
+        .status(400)
+        .json({ error: { code: error.code, message: error.message } })
     throw error
   }
 })
@@ -762,15 +1113,201 @@ memberRouter.post('/team/gys/contributions', async (req, res) => {
 memberRouter.patch('/team/gys/contributions/:id', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (!await requireTeam(req, res, 'gys_policy_team')) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
   try {
-    const result = await updateGysContribution({ id: req.params.id, status: String(req.body?.status || ''), reviewerId: req.body?.reviewerId, actorId: account.id, note: req.body?.note, decision: req.body?.decision })
-    if (!result) return res.status(404).json({ error: { code: 'not_found', message: 'Contribution not found.' } })
-    await recordAudit({ actorId: account.id, action: 'gys.contribution_status_changed', targetType: 'gys_contribution', targetId: req.params.id, before: result.before, after: result.contribution, reason: req.body?.note, requestId: req.requestId })
+    const result = await updateGysContribution({
+      id: req.params.id,
+      status: String(req.body?.status || ''),
+      reviewerId: req.body?.reviewerId,
+      actorId: account.id,
+      note: req.body?.note,
+      decision: req.body?.decision,
+    })
+    if (!result)
+      return res.status(404).json({
+        error: { code: 'not_found', message: 'Contribution not found.' },
+      })
+    await recordAudit({
+      actorId: account.id,
+      action: 'gys.contribution_status_changed',
+      targetType: 'gys_contribution',
+      targetId: req.params.id,
+      before: result.before,
+      after: result.contribution,
+      reason: req.body?.note,
+      requestId: req.requestId,
+    })
     res.json(result)
   } catch (error) {
-    if (error.code === 'validation') return res.status(400).json({ error: { code: error.code, message: error.message } })
+    if (error.code === 'validation')
+      return res
+        .status(400)
+        .json({ error: { code: error.code, message: error.message } })
     throw error
+  }
+})
+
+memberRouter.get('/content', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    const access = await getAccessProfile(account)
+    const canDraft = hasCapability(access, 'content.draft')
+    const canReview = hasCapability(access, 'content.review')
+    const canPublish = hasCapability(access, 'content.publish')
+    if (!canDraft && !canReview) {
+      return res.status(403).json({
+        error: {
+          code: 'forbidden',
+          message: 'Content workspace access is not assigned.',
+        },
+      })
+    }
+    res.json({
+      permissions: { canDraft, canReview, canPublish },
+      items: await listContentRevisions({ actorId: account.id, canReview }),
+      publications: await listContentPublications(),
+      groups: listGroups().map(({ slug, name }) => ({ slug, name })),
+      live: {
+        events: listEvents(),
+        announcements: listAnnouncements(),
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+memberRouter.post('/content/drafts', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    if (!(await requireCapability(req, res, 'content.draft'))) return
+    const item = await createContentRevision({
+      actorId: account.id,
+      contentType: String(req.body?.contentType || ''),
+      payload: req.body?.payload,
+      groupSlugs: listGroups().map((group) => group.slug),
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'content.draft_created',
+      targetType: 'content_revision',
+      targetId: item.id,
+      after: {
+        contentType: item.contentType,
+        contentKey: item.contentKey,
+        status: item.status,
+      },
+      requestId: req.requestId,
+    })
+    res.status(201).json({ item })
+  } catch (error) {
+    if (!sendContentWorkflowError(res, error)) next(error)
+  }
+})
+
+memberRouter.patch('/content/drafts/:id', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    if (!(await requireCapability(req, res, 'content.draft'))) return
+    const item = await updateContentRevision({
+      id: req.params.id,
+      actorId: account.id,
+      payload: req.body?.payload,
+      groupSlugs: listGroups().map((group) => group.slug),
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'content.draft_updated',
+      targetType: 'content_revision',
+      targetId: item.id,
+      after: {
+        contentType: item.contentType,
+        contentKey: item.contentKey,
+        status: item.status,
+      },
+      requestId: req.requestId,
+    })
+    res.json({ item })
+  } catch (error) {
+    if (!sendContentWorkflowError(res, error)) next(error)
+  }
+})
+
+memberRouter.post('/content/drafts/:id/submit', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    if (!(await requireCapability(req, res, 'content.draft'))) return
+    const item = await submitContentRevision({
+      id: req.params.id,
+      actorId: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'content.review_requested',
+      targetType: 'content_revision',
+      targetId: item.id,
+      after: { status: item.status },
+      requestId: req.requestId,
+    })
+    res.json({ item })
+  } catch (error) {
+    if (!sendContentWorkflowError(res, error)) next(error)
+  }
+})
+
+memberRouter.post('/content/drafts/:id/review', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    if (!(await requireCapability(req, res, 'content.review'))) return
+    const item = await reviewContentRevision({
+      id: req.params.id,
+      actorId: account.id,
+      decision: String(req.body?.decision || ''),
+      note: req.body?.note,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: `content.review_${String(req.body?.decision || '')}`,
+      targetType: 'content_revision',
+      targetId: item.id,
+      after: { status: item.status },
+      reason: item.reviewNote,
+      requestId: req.requestId,
+    })
+    res.json({ item })
+  } catch (error) {
+    if (!sendContentWorkflowError(res, error)) next(error)
+  }
+})
+
+memberRouter.post('/content/drafts/:id/publish', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account || !requireVerified(req, res)) return
+    if (!(await requireCapability(req, res, 'content.publish'))) return
+    const publication = await publishContentRevision({
+      id: req.params.id,
+      actorId: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'content.published',
+      targetType: publication.contentType,
+      targetId: publication.contentKey,
+      after: {
+        revisionId: publication.revisionId,
+        publishedAt: publication.publishedAt,
+      },
+      requestId: req.requestId,
+    })
+    res.json({ publication })
+  } catch (error) {
+    if (!sendContentWorkflowError(res, error)) next(error)
   }
 })
 
@@ -778,7 +1315,9 @@ memberRouter.get('/admin/accounts', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   const items = await listAccountsForAdmin()
   res.json({ items })
@@ -787,15 +1326,25 @@ memberRouter.get('/admin/accounts', async (req, res) => {
 memberRouter.get('/admin/audit', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  if (account.role !== 'admin') return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
-  res.json({ items: await listAudit({ limit: req.query.limit, targetType: req.query.targetType || null }) })
+  if (account.role !== 'admin')
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+  res.json({
+    items: await listAudit({
+      limit: req.query.limit,
+      targetType: req.query.targetType || null,
+    }),
+  })
 })
 
 memberRouter.post('/admin/accounts/:id/verify', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   const updated = await setAccountFields(req.params.id, {
     member_status: 'verified',
@@ -804,7 +1353,14 @@ memberRouter.post('/admin/accounts/:id/verify', async (req, res) => {
     verified_at: new Date().toISOString(),
     verified_by: 'staff',
   })
-  await recordAudit({ actorId: account.id, action: 'membership.status_changed', targetType: 'account', targetId: req.params.id, after: updated, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'membership.status_changed',
+    targetType: 'account',
+    targetId: req.params.id,
+    after: updated,
+    requestId: req.requestId,
+  })
   res.json({ account: updated })
 })
 
@@ -812,29 +1368,58 @@ memberRouter.post('/admin/accounts/:id/role', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   const role = String(req.body?.role || 'member')
-  if (!['member', 'focal_point', 'wg_contact', 'ngo_admin', 'admin'].includes(role)) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid role.' } })
+  if (
+    !['member', 'focal_point', 'wg_contact', 'ngo_admin', 'admin'].includes(
+      role,
+    )
+  ) {
+    return res
+      .status(400)
+      .json({ error: { code: 'validation', message: 'Invalid role.' } })
   }
   const items = await listAccountsForAdmin()
   const target = items.find((item) => item.id === req.params.id)
-  if (!target) return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
+  if (!target)
+    return res
+      .status(404)
+      .json({ error: { code: 'not_found', message: 'Account not found.' } })
   if (target.id === account.id && role !== 'admin') {
-    return res.status(400).json({ error: { code: 'self_demote', message: 'You cannot remove your own admin access.' } })
+    return res.status(400).json({
+      error: {
+        code: 'self_demote',
+        message: 'You cannot remove your own admin access.',
+      },
+    })
   }
-  if (role === 'ngo_admin' && (target.entityType !== 'organization' || !target.isVerified)) {
+  if (
+    role === 'ngo_admin' &&
+    (target.entityType !== 'organization' || !target.isVerified)
+  ) {
     return res.status(400).json({
       error: {
         code: 'validation',
-        message: 'Only a verified organisation account can become an NGO administrator.',
+        message:
+          'Only a verified organisation account can become an NGO administrator.',
       },
     })
   }
   const updated = await setAccountFields(req.params.id, { role })
   if (role === 'ngo_admin') await ensureOwnerSeat(updated)
-  await recordAudit({ actorId: account.id, action: 'account.platform_role_changed', targetType: 'account', targetId: req.params.id, before: { role: target?.role }, after: { role }, reason: req.body?.reason, requestId: req.requestId })
+  await recordAudit({
+    actorId: account.id,
+    action: 'account.platform_role_changed',
+    targetType: 'account',
+    targetId: req.params.id,
+    before: { role: target?.role },
+    after: { role },
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ account: updated })
 })
 
@@ -842,21 +1427,51 @@ memberRouter.post('/admin/accounts/:id/team-role', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   const teamRole = String(req.body?.teamRole || '')
-  if (!['membership_team', 'gys_policy_team'].includes(teamRole)) {
-    return res.status(400).json({ error: { code: 'validation', message: 'Invalid team role.' } })
+  if (
+    ![
+      'membership_team',
+      'gys_policy_team',
+      'content_editor',
+      'content_publisher',
+    ].includes(teamRole)
+  ) {
+    return res
+      .status(400)
+      .json({ error: { code: 'validation', message: 'Invalid team role.' } })
   }
   const items = await listAccountsForAdmin()
   const target = items.find((item) => item.id === req.params.id)
-  if (!target) return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
+  if (!target)
+    return res
+      .status(404)
+      .json({ error: { code: 'not_found', message: 'Account not found.' } })
   const roles = new Set(target.teamRoles || [])
   if (req.body?.enabled === false) roles.delete(teamRole)
   else roles.add(teamRole)
-  const updated = await setAccountFields(req.params.id, { team_roles: [...roles] })
-  await setTeamAssignment({ accountId: req.params.id, teamRole, enabled: req.body?.enabled !== false, assignedBy: account.id })
-  await recordAudit({ actorId: account.id, action: 'account.team_assignment_changed', targetType: 'account', targetId: req.params.id, before: { teamRoles: target.teamRoles }, after: { teamRoles: [...roles] }, reason: req.body?.reason, requestId: req.requestId })
+  const updated = await setAccountFields(req.params.id, {
+    team_roles: [...roles],
+  })
+  await setTeamAssignment({
+    accountId: req.params.id,
+    teamRole,
+    enabled: req.body?.enabled !== false,
+    assignedBy: account.id,
+  })
+  await recordAudit({
+    actorId: account.id,
+    action: 'account.team_assignment_changed',
+    targetType: 'account',
+    targetId: req.params.id,
+    before: { teamRoles: target.teamRoles },
+    after: { teamRoles: [...roles] },
+    reason: req.body?.reason,
+    requestId: req.requestId,
+  })
   res.json({ account: updated })
 })
 
@@ -865,34 +1480,48 @@ memberRouter.post('/admin/accounts/:id/reset-link', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (account.role !== 'admin') {
-    return res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
   try {
     const list = await listAccountsForAdmin()
     const target = list.find((a) => a.id === req.params.id)
     if (!target) {
-      return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
+      return res
+        .status(404)
+        .json({ error: { code: 'not_found', message: 'Account not found.' } })
     }
     const created = await createPasswordResetToken(target.email)
     if (!created) {
-      return res.status(404).json({ error: { code: 'not_found', message: 'Account not found.' } })
+      return res
+        .status(404)
+        .json({ error: { code: 'not_found', message: 'Account not found.' } })
     }
     const url = resetLink(appOrigin(), created.rawToken)
-    console.log(JSON.stringify({
-      event: 'admin_password_reset_issued',
-      by: account.email,
-      for: target.email,
-      expiresAt: created.expiresAt,
-    }))
+    console.log(
+      JSON.stringify({
+        event: 'admin_password_reset_issued',
+        by: account.email,
+        for: target.email,
+        expiresAt: created.expiresAt,
+      }),
+    )
     res.json({
       ok: true,
       email: target.email,
       resetUrl: url,
       expiresAt: created.expiresAt,
-      message: 'Share this link with the user. It expires in 1 hour and can be used once.',
+      message:
+        'Share this link with the user. It expires in 1 hour and can be used once.',
     })
   } catch (err) {
     console.error('admin reset-link failed:', err.message)
-    res.status(500).json({ error: { code: 'server_error', message: 'Could not create reset link.' } })
+    res.status(500).json({
+      error: {
+        code: 'server_error',
+        message: 'Could not create reset link.',
+      },
+    })
   }
 })

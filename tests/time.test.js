@@ -28,6 +28,9 @@ test('countdown labels use largest units', () => {
 })
 
 test('fmtDateRange handles ranges and TBC', () => {
-  assert.equal(fmtDateRange('2026-09-12', '2026-09-14', false), '12 Sept–14 Sept 2026')
+  assert.equal(
+    fmtDateRange('2026-09-12', '2026-09-14', false),
+    '12 Sept–14 Sept 2026',
+  )
   assert.equal(fmtDateRange(null, null, false), 'Dates TBC')
 })

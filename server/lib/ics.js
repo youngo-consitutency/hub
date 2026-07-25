@@ -5,7 +5,10 @@ const PRODID = '-//YOUNGO Hub//EN'
 
 // 2026-07-08T13:00:00.000Z → 20260708T130000Z
 export function icsDate(iso) {
-  return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  return new Date(iso)
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '')
 }
 
 // Escape per RFC 5545 §3.3.11: backslash, semicolon, comma, and newlines.
@@ -41,7 +44,8 @@ function vevent(event, stamp) {
     `DTEND:${icsDate(event.endsAt)}`,
     `SUMMARY:${escapeText(event.title)}`,
   ]
-  if (event.description) lines.push(`DESCRIPTION:${escapeText(event.description)}`)
+  if (event.description)
+    lines.push(`DESCRIPTION:${escapeText(event.description)}`)
   if (event.meetingUrl) {
     lines.push(`URL:${escapeText(event.meetingUrl)}`)
     lines.push(`LOCATION:${escapeText(event.meetingUrl)}`)
