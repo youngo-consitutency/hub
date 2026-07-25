@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { usePath } from '../lib/router.js'
-import { A, Button, Section, Empty, ErrorCard } from '../components/ui.jsx'
+import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
 import { Building2, UserPlus, Copy, Check } from 'lucide-react'
 
 export function NgoPortal() {
@@ -110,11 +110,12 @@ export function NgoPortal() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Accredited NGO</p>
-      <h1 className="rowGap"><Building2 size={24} strokeWidth={1.75} aria-hidden /> NGO platform</h1>
-      <p className="meta" style={{ marginTop: 6 }}>
-        {account?.organizationName || 'Your organisation'} — deadlines, requests, and team seats.
-      </p>
+      <PageHeader
+        eyebrow="Organisation"
+        icon={Building2}
+        title="NGO platform"
+        description={`${account?.organizationName || 'Your organisation'} — deadlines, requests, and team seats.`}
+      />
       {acceptMsg && <p className="meta" style={{ color: 'var(--accent)' }}>{acceptMsg}</p>}
       {error && <ErrorCard message={error} onRetry={load} />}
       {invitePreview && (

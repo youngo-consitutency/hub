@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useApi } from '../lib/api.js'
-import { A, Button, Async, Section, Empty, ErrorCard, Skeletons } from '../components/ui.jsx'
+import { A, Button, Async, Section, Empty, ErrorCard, Skeletons, PageHeader } from '../components/ui.jsx'
 import { getWgOnboarding } from '../content/wgOnboarding.js'
 import { Lock, Unlock, MessageCircle, AtSign } from 'lucide-react'
 
@@ -52,8 +52,11 @@ export function Workspace({ slug }) {
           if (!group) return <Empty title="Unknown group" body="That working group isn’t in the directory." />
           return (
             <>
-              <h1>{group.name} workspace</h1>
-              <p className="meta" style={{ marginTop: 4 }}>{group.focusLine}</p>
+              <PageHeader
+                eyebrow="Working group workspace"
+                title={group.name}
+                description={group.focusLine}
+              />
 
               {state.loading && <Skeletons n={3} />}
               {state.error && <ErrorCard message={state.error} onRetry={load} />}

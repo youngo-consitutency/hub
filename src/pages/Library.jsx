@@ -1,4 +1,4 @@
-import { A, Section } from '../components/ui.jsx'
+import { A, Section, PageHeader } from '../components/ui.jsx'
 import { Library as LibIcon } from 'lucide-react'
 import { COURSE_MODULES } from '../content/membershipCourse.js'
 
@@ -28,11 +28,12 @@ const OPEN_GUIDES = [
 export function Library() {
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Capacity Building</p>
-      <h1 className="rowGap"><LibIcon size={24} strokeWidth={1.75} aria-hidden /> Library</h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Open-access guides for coordination and learning. The graded membership course remains under Onboarding.
-      </p>
+      <PageHeader
+        eyebrow="Capacity building"
+        icon={LibIcon}
+        title="Library"
+        description="Open guides for coordination and learning. The graded membership course stays under Onboarding."
+      />
 
       <Section label="Open guides">
         <div className="stack">

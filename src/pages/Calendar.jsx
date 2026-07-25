@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty } from '../components/ui.jsx'
+import { Async, Empty, PageHeader } from '../components/ui.jsx'
 import { EventCard } from '../components/cards.jsx'
 import { CalendarSubscribe } from '../components/Subscribe.jsx'
 import { fmtDay } from '../lib/time.js'
@@ -32,15 +32,18 @@ export function Calendar() {
 
   return (
     <div>
-      <div className="rowBetween">
-        <h1>Calendar</h1>
-        <CalendarSubscribe type={type} />
-      </div>
-      <div className="pillRow" style={{ marginTop: 12 }}>
-        {FILTERS.map((f) => (
-          <button key={f.key} className={`pill ${type === f.key ? 'active' : ''}`} onClick={() => setType(f.key)}>{f.label}</button>
-        ))}
-      </div>
+      <PageHeader
+        eyebrow="Schedule"
+        title="Calendar"
+        description="Calls, forums, sessions, and webinars in one UTC-first agenda."
+        action={<CalendarSubscribe type={type} />}
+      >
+        <div className="pillRow">
+          {FILTERS.map((f) => (
+            <button key={f.key} className={`pill ${type === f.key ? 'active' : ''}`} onClick={() => setType(f.key)}>{f.label}</button>
+          ))}
+        </div>
+      </PageHeader>
       <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={CalendarOff} title="Nothing scheduled for this filter" body="Try another type or check back soon." /> : null}>
         {(data) => (
           <div className="stack">

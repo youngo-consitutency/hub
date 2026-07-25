@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useApi } from '../lib/api.js'
-import { A, Button, Async, Section, Empty, ErrorCard } from '../components/ui.jsx'
+import { A, Button, Async, Section, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
 
 export function CpManage({ slug }) {
   const groups = useApi('/groups')
@@ -51,8 +51,11 @@ export function CpManage({ slug }) {
           const group = (g.items || []).find((x) => x.slug === slug)
           return (
             <>
-              <h1>WG management · {group?.name || slug}</h1>
-              <p className="meta" style={{ marginTop: 4 }}>Contact Point console — joiners, roles, activities.</p>
+              <PageHeader
+                eyebrow="Contact Point console"
+                title={group?.name || slug}
+                description="Review joiners, assign WG roles, and register activities."
+              />
               {error && <ErrorCard message={error} onRetry={load} />}
               {msg && <p className="meta" style={{ color: 'var(--accent)' }}>{msg}</p>}
 

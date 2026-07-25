@@ -98,33 +98,28 @@ export function CoyCard({ coy }) {
 
 export function GroupCard({ group }) {
   return (
-    <div className="card">
-      <div className="rowGap" style={{ alignItems: 'flex-start' }}>
+    <div className="card groupCard">
+      <div className="groupCardBody">
         <A href={`/groups/${group.slug}`} className="monogram">{group.monogram || group.name.slice(0, 2)}</A>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="groupCardCopy">
           <h3><A href={`/groups/${group.slug}`} className="inlineLink">{group.name}</A></h3>
           <p className="meta" style={{ marginTop: 2 }}>{group.focusLine}</p>
         </div>
       </div>
-      {group.cadenceNote && <p className="metaMuted mono" style={{ marginTop: 10 }}>{group.cadenceNote}</p>}
-      <div className="rowGap" style={{ marginTop: 10 }}>
+      {group.cadenceNote && <p className="metaMuted mono">{group.cadenceNote}</p>}
+      <div className="groupCardActions">
         {group.whatsappUrl && <a className="btn btn-secondary btn-sm" href={group.whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle size={16} strokeWidth={1.75} aria-hidden />WhatsApp</a>}
         {group.groupUrl && <a className="btn btn-secondary btn-sm" href={group.groupUrl} target="_blank" rel="noreferrer"><Users size={16} strokeWidth={1.75} aria-hidden />Group</a>}
         {group.driveUrl && <a className="btn btn-ghost btn-sm" href={group.driveUrl} target="_blank" rel="noreferrer">Drive<ArrowUpRight size={16} strokeWidth={1.75} aria-hidden /></a>}
+        <A href={`/groups/${group.slug}`} className="btn btn-ghost btn-sm">Open workspace<ArrowUpRight size={16} strokeWidth={1.75} aria-hidden /></A>
       </div>
     </div>
   )
 }
 
-const CONTACT_GROUP = {
-  focal_points: 'Global focal points', wg_contacts: 'Working group contacts',
-  liaisons: 'Thematic liaisons', operations: 'Operations',
-}
-export { CONTACT_GROUP }
-
 export function ContactCard({ contact }) {
   return (
-    <div className="card cardTight">
+    <div className="card cardTight contactCard">
       <h3 style={{ fontSize: 14 }}>{contact.roleTitle}</h3>
       {contact.description && <p className="meta" style={{ marginTop: 4 }}>{contact.description}</p>}
       {contact.publicEmail

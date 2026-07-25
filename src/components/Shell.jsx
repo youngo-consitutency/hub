@@ -6,6 +6,12 @@ import { apiPost } from '../lib/api.js'
 import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
+  THEME_STORAGE_KEY,
+  applyTheme,
+  resolvedTheme,
+  storedTheme,
+} from '../lib/theme.js'
+import {
   Home, CalendarDays, FileText, Gavel, MapPin, Users, AtSign,
   Search, Moon, Sun, MoreHorizontal, ScrollText, LogOut,
   GraduationCap, Library, Building2, Shield, Briefcase,
@@ -16,14 +22,31 @@ function isActive(path, href) {
 }
 
 function useTheme() {
-  const [theme, setTheme] = useState(() =>
-    localStorage.getItem('theme') ||
-    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'))
+  const media = useMemo(
+    () => window.matchMedia('(prefers-color-scheme: dark)'),
+    [],
+  )
+  const [override, setOverride] = useState(() => storedTheme(localStorage))
+  const [matchesDark, setMatchesDark] = useState(media.matches)
+  const theme = resolvedTheme({ override, matchesDark })
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
+    applyTheme(theme)
   }, [theme])
-  return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))]
+
+  useEffect(() => {
+    const onChange = (event) => setMatchesDark(event.matches)
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
+  }, [media])
+
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    localStorage.setItem(THEME_STORAGE_KEY, next)
+    setOverride(next)
+  }
+
+  return [theme, toggle]
 }
 
 export function Shell({ children }) {
@@ -163,17 +186,17 @@ export function Shell({ children }) {
 
       <div className="content">
         <header className="topbar">
-          <A href={verified ? '/' : '/onboarding'} className="wordmark" style={{ padding: 0 }}><span className="branddot" />YOUNGO Hub</A>
+          <A href={verified ? '/' : '/onboarding'} className="wordmark"><span className="branddot" />YOUNGO Hub</A>
           <div className="rowGap">
             {verified && <A href="/search" className="btn btn-ghost btn-sm" aria-label="Search"><Search size={20} strokeWidth={1.75} aria-hidden /></A>}
             <Button sm variant="ghost" onClick={toggleTheme} aria-label="Toggle theme"><ThemeIcon size={20} strokeWidth={1.75} aria-hidden /></Button>
           </div>
         </header>
         {!verified && (
-          <div className="liveBanner" style={{ background: 'var(--warn-tint)', borderColor: 'color-mix(in srgb, var(--warn) 35%, transparent)' }}>
-            <span className="liveDot" style={{ background: 'var(--warn)' }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 500, fontSize: 14 }}>Complete the membership course to unlock the platform</p>
+          <div className="noticeBanner noticeBannerWarn">
+            <span className="noticeDot" />
+            <div className="noticeCopy">
+              <p>Complete the membership course to unlock the platform</p>
             </div>
             <A href="/onboarding/course" className="btn btn-primary btn-sm">Course</A>
           </div>

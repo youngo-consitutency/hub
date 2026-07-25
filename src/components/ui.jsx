@@ -26,6 +26,25 @@ export function Button({ variant = 'secondary', sm, glow, className = '', ...res
   return <button className={cls} {...rest} />
 }
 
+export function PageHeader({ eyebrow, icon: Icon, title, description, action, children }) {
+  return (
+    <header className="pageHeader">
+      {eyebrow && <p className="pageEyebrow">{eyebrow}</p>}
+      <div className="pageHeaderRow">
+        <div className="pageHeaderCopy">
+          <h1 className="pageTitle">
+            {Icon && <Icon size={24} strokeWidth={1.75} aria-hidden />}
+            {title}
+          </h1>
+          {description && <p className="pageLead">{description}</p>}
+        </div>
+        {action && <div className="pageHeaderAction">{action}</div>}
+      </div>
+      {children && <div className="pageHeaderControls">{children}</div>}
+    </header>
+  )
+}
+
 // Status → chip class + label, per design system §6.2.
 const CHIP = {
   live_now: ['chip-live', 'Live now', true],
@@ -70,11 +89,11 @@ export function CountdownChip({ iso }) {
 
 export function Section({ label, action, children }) {
   return (
-    <section>
+    <section className="section">
       {label && (
         <div className="sectionLabel">
           <span>{label}</span>
-          {action}
+          {action && <div className="sectionAction">{action}</div>}
         </div>
       )}
       {children}

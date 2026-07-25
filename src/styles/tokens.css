@@ -15,6 +15,8 @@
   --shadow-popover: 0 4px 24px rgba(18,32,25,.14);
   --glow-accent: none;
   --radius-chip: 6px; --radius-control: 8px; --radius-card: 12px; --radius-modal: 16px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-ui: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -37,6 +39,8 @@
 /* Base */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+html { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 body {
   background: var(--bg-page); color: var(--text-1);
   font-family: var(--font-ui); font-size: 15px; line-height: 1.47;
@@ -48,6 +52,7 @@ h3 { font-family: var(--font-ui); font-weight: 600; font-size: 16px; line-height
 p { margin: 0; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; }
+::selection { background: var(--accent-tint); color: var(--text-1); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mono { font-family: var(--font-mono); font-weight: 500; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {

@@ -1,240 +1,188 @@
 # YOUNGO Hub
 
-**The member OS for the Children & Youth Constituency of the UNFCCC.**
+YOUNGO Hub is a member portal for the Children and Youth Constituency of the
+UNFCCC. It puts the calendar, working groups, submissions, Council decisions,
+COYs, contacts, onboarding, and organisation tools behind one account.
 
-What’s happening · what can I contribute to · where can I go · who do I contact · what is my WG doing · what is being decided — in under 30 seconds.
+This repository is an active prototype. Authentication and member workflows are
+implemented, while most calendar and public-content records still come from
+`data/fixtures.json`.
 
-<p align="center">
-  <a href="https://web-staging-31ab.up.railway.app"><strong>Open staging →</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://youngoclimate.org/">youngoclimate.org</a>
-</p>
+## Run it locally
 
-<p align="center">
-  <img src="docs/screenshots/02-home.png" alt="YOUNGO Hub home feed (dark)" width="900" />
-</p>
-<p align="center"><sub>Home — live constituency call, this week, and closing deadlines</sub></p>
+Requirements:
 
----
+- Node.js `^20.19` or `>=22.12`
+- npm
 
-## Screenshots
-
-Captured from [staging](https://web-staging-31ab.up.railway.app). Refresh anytime with:
-
-```bash
-npm run screenshots   # optional: APP_ORIGIN=https://…
-```
-
-| Membership policy gate | Sign in |
-| :---: | :---: |
-| <img src="docs/screenshots/01-membership-policy.png" alt="Membership policy gate" width="420" /> | <img src="docs/screenshots/08-join-signin.png" alt="Sign in" width="420" /> |
-
-| Onboarding + FAQ (verified) | Working groups |
-| :---: | :---: |
-| <img src="docs/screenshots/03-onboarding-faq.png" alt="Onboarding and FAQ" width="420" /> | <img src="docs/screenshots/04-groups.png" alt="Working groups" width="420" /> |
-
-| Calendar | Capacity Building library |
-| :---: | :---: |
-| <img src="docs/screenshots/05-calendar.png" alt="Calendar" width="420" /> | <img src="docs/screenshots/06-library.png" alt="Library" width="420" /> |
-
-<p align="center">
-  <img src="docs/screenshots/07-home-light.png" alt="Home feed light theme" width="900" />
-</p>
-<p align="center"><sub>Same home feed in light mode</sub></p>
-
----
-
-## Why this exists
-
-YOUNGO is a **platform and network**, not a single NGO. Work happens across Working Groups, Council processes, COYs, and accredited organisations — usually scattered across WhatsApp, docs, and memory.
-
-**YOUNGO Hub** brings that into one place:
-
-| Surface | Purpose |
-| --- | --- |
-| **Home feed** | Live meetings, this week, closing deadlines, pinned notes |
-| **Calendar** | Constituency + WG calls (ICS subscribe) |
-| **Submissions / Council / COYs** | Track opens, decisions, and conferences of youth |
-| **Working groups** | Catalog → workspace onboarding → WhatsApp & CPs |
-| **Onboarding** | Membership policy → account → course → verified member |
-| **Library** | Capacity Building guides (open access) |
-| **NGO platform** | Deadlines, endorse/submit requests, multi-user seats |
-| **Admin** | Members & orgs (never passwords), roles, reset links |
-
----
-
-## Member journey
-
-```text
-  Policy (first browser visit)
-            │
-            ▼
-  Create account  or  Sign in
-            │
-            ▼
-  Membership course + test
-            │
-            ▼
-     ✓ Verified member
-            │
-     ┌──────┼──────┬────────────┐
-     ▼      ▼      ▼            ▼
-   Home   WGs   NGO seats    Admin / CP
-          workspaces
-```
-
-1. **Read the Membership Policy** (mandatory, once per policy version).
-2. **Join YOUNGO** — individual or organisation (UNFCCC admitted / non-admitted).
-3. **Pass the membership course** — hub unlocks.
-4. **Join WG workspaces** — presentation + rules, then channels & contacts.
-5. **Come back to Onboarding anytime** — course review, library, FAQ.
-
-Password reset is built in with one-time, expiring links. Development can print
-links explicitly; production must deliver them through a private channel.
-
----
-
-## Roles
-
-| Role | Unlocks |
-| --- | --- |
-| **Member** (verified) | Full hub: feed, calendar, groups, directory… |
-| **WG Contact Point** | `/cp/:wg` — scoped to WGs where the member is an active contact or lead |
-| **NGO owner / representative / viewer** | `/ngo` — organisation-scoped permissions for requests and seats |
-| **Admin** | `/admin` — directory, verify, roles, password reset links |
-
-`ADMIN_EMAILS` is only consumed by the explicit bootstrap command. It promotes
-matching existing, verified accounts; registration and login never auto-promote.
-
----
-
-## Stack
-
-| Layer | Choice |
-| --- | --- |
-| UI | React 19 + Vite 8 · **Verdant** design tokens |
-| API | Express · same origin as static build on Railway |
-| Auth | Email + password (scrypt) · bearer sessions |
-| Data | **Postgres** when `DATABASE_URL` is set · fixtures for local demo content |
-| Deploy | Railway (Nixpacks) · `preDeployCommand: npm run migrate` |
-
-```
-youngo-hub/
-├── src/                 React client (pages, gates, Verdant CSS)
-├── server/              Express API (auth, member, public, ICS)
-├── migrations/          Postgres schema (001…009+)
-├── data/fixtures.json   Demo calendar / WGs / feed content
-├── src/content/         Policy, course, WG onboarding copy
-├── scripts/             migrate · bootstrap-admin
-└── openspec/            Product change queue
-```
-
----
-
-## Quick start
-
-**Requirements:** Node `^20.19 || >=22.12`
+Install dependencies and start the API and Vite together:
 
 ```bash
 npm install
-npm run dev-all     # API :8787 + Vite :5173 (proxied)
+npm run dev-all
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open <http://localhost:5173>.
+
+The local API runs on port `8787` and Vite proxies `/api` and `/ics` requests to
+it. PostgreSQL is optional for local development. Without `DATABASE_URL`,
+accounts and sessions are written to ignored JSON files under `data/`.
+
+On the first visit, acknowledge the Membership Policy, create an account, and
+complete the membership course to unlock member pages.
+
+### Useful commands
 
 ```bash
-npm test            # node:test
+npm test
 npm run lint
-npm run build && npm start   # production-style single process
+npm run build
+npm run screenshots
 ```
 
-### With Postgres
+To serve a completed build from Express:
 
 ```bash
-export DATABASE_URL=postgres://…
+npm run build
+npm start
+```
+
+Then open <http://localhost:8787>.
+
+Do not set `NODE_ENV=production` for the fixture-backed local setup. Production
+mode requires both `DATABASE_URL` and `APP_ORIGIN`.
+
+## Implemented
+
+- Membership Policy acknowledgement
+- Individual and organisation registration
+- Email/password sessions and password reset
+- Membership course and account verification
+- Member feed, calendar, search, submissions, Council, COYs, and directory
+- Working-group onboarding and scoped Contact Point management
+- Organisation requests and viewer/representative/owner seats
+- Administrator account review and reset-link generation
+- Anonymous/member response filtering for private meeting and channel links
+- System-aware light and dark themes with a saved manual override
+- Desktop and mobile navigation
+
+## Access model
+
+| Access | Scope |
+| --- | --- |
+| Verified member | General member pages and private member fields |
+| WG contact or lead | Only the working groups assigned to that account |
+| NGO viewer | Read organisation requests and seats |
+| NGO representative | Read and update organisation requests |
+| NGO owner | Manage requests and organisation seats |
+| Platform administrator | Account administration and explicit scope override |
+
+Registration does not grant administrator or NGO-owner access. Platform
+administrators are promoted with an explicit operator command, and organisation
+owner access requires administrator approval.
+
+## Project structure
+
+```text
+src/
+  components/       shared React components and account gates
+  content/          Membership Policy, course, and WG onboarding copy
+  lib/              API, session, routing, and time helpers
+  pages/            member and administration pages
+  styles/           shared tokens and component styles
+server/
+  lib/              persistence, authorization, tokens, and response views
+  routes/           public, auth, member, and ICS endpoints
+migrations/         forward-only PostgreSQL migrations
+data/fixtures.json  current demo content
+scripts/            migration, admin bootstrap, and screenshot commands
+tests/              Node test suite
+```
+
+The client is React 19 with Vite. The server is Express. The production store is
+PostgreSQL; local development currently has JSON fallbacks for accounts,
+sessions, WG state, NGO state, and reset tokens.
+
+## PostgreSQL setup
+
+Set the connection string and apply migrations:
+
+```bash
+export DATABASE_URL=postgres://user:password@localhost:5432/youngo
+npm run migrate
+```
+
+To promote an existing verified account:
+
+```bash
 export ADMIN_EMAILS=admin@example.org
-npm run migrate              # applies migrations/*.sql
-npm run bootstrap-admin      # optional: promote matching existing verified accounts
+npm run bootstrap-admin
 ```
 
-Without `DATABASE_URL`, accounts fall back to local JSON under `data/` (dev only). Feed content still comes from `fixtures.json` until migrated to Postgres/Calendar API.
+The bootstrap command never creates an account and has no default email.
 
-### Environment
+## Environment variables
 
-| Variable | Purpose |
+| Variable | Use |
 | --- | --- |
-| `DATABASE_URL` | Postgres connection; required in production |
-| `APP_ORIGIN` | Trusted HTTPS public origin; required in production |
-| `ADMIN_EMAILS` | Comma-separated existing verified accounts for the explicit bootstrap command |
-| `LOG_PASSWORD_RESET_LINKS` | Development-only opt-in for printing reset links (`true`) |
-| `PORT` | HTTP port (Railway injects) |
+| `DATABASE_URL` | PostgreSQL connection; required in production |
+| `APP_ORIGIN` | Public HTTPS origin; required in production |
+| `ADMIN_EMAILS` | Existing verified accounts accepted by `bootstrap-admin` |
+| `LOG_PASSWORD_RESET_LINKS` | Print reset links only during explicit local development |
+| `PORT` | Express port; defaults to `8787` |
 
----
+## Security notes
 
-## Staging
+- Passwords use asynchronous scrypt with per-account salts.
+- Sessions and invitation/reset tokens use random bearer secrets.
+- Reset and invitation secrets are hashed at rest and expire.
+- Password reset invalidates all sessions for the account.
+- WG and organisation permissions are enforced by the server, not the UI.
+- Anonymous responses omit private meeting, channel, Drive, and contact fields.
+- Public write and authentication routes have bounded per-IP rate limits.
 
-| | |
-| --- | --- |
-| **URL** | https://web-staging-31ab.up.railway.app |
-| **Health** | `GET /healthz` → `{ ok, db: "postgres" \| "fixtures" }` |
-
-Deploy (from this package root):
+Run both dependency checks before deployment:
 
 ```bash
-railway up --environment staging --service web -m "your message"
+npm audit
+npm audit --omit=dev
 ```
 
----
+## Known gaps
 
-## Design system
+- Public content is still fixture-backed; the PostgreSQL content tables are not
+  connected to an editor or publishing workflow.
+- Local JSON persistence is duplicated across several server modules.
+- Reset and invitation links need an owned email-delivery path.
+- Registration collects too much information before members reach the hub.
+- PostgreSQL migration and authorization paths need live integration tests.
+- One account currently uses its most recently accepted active organisation
+  seat when several exist.
 
-**Verdant** — colors only live in `src/styles/tokens.css` (light + dark).  
-Display: Space Grotesk · UI: Inter · Mono: JetBrains Mono.
+These should be addressed before treating the project as a production member
+system.
 
-Component gallery (dev): `/gallery`.
+## Deployment
 
----
+Railway configuration lives in `railway.toml`. Migrations must run before the
+new server process starts.
 
-## Product principles
+```bash
+railway up --environment staging --service web
+```
 
-- **Fast orientation** — status, deadlines, and next actions above the fold.
-- **Policy-aligned membership** — Network / Constituency Work, age rules, org paths.
-- **Gates with purpose** — policy → account → course → WG workspace, not friction for its own sake.
-- **Role-aware surfaces** — members, CPs, NGOs, and staff each see the tools they need.
-- **No password leakage** — hashes only; reset tokens are single-use and hashed at rest.
-
----
-
-## Roadmap (high level)
-
-- [x] Membership policy gate & registration (individual + org)
-- [x] Course verification & feature lock
-- [x] WG workspace onboarding
-- [x] NGO seats (invite / accept / revoke)
-- [x] Admin directory & password reset
-- [ ] Live Google Calendar API (owner console access)
-- [ ] Full feed content in Postgres (not only fixtures)
-- [ ] SMTP for reset / invite emails
-- [ ] Richer Capacity Building library & RACI workflows
-
----
+Staging: <https://web-staging-31ab.up.railway.app>
 
 ## Contributing
 
-1. Read product context in `openspec/project.md` (and parent `docs/specs/youngo/` when available).
-2. Prefer small, shippable slices; keep design tokens centralized.
-3. Run `npm test` and `npm run lint` before opening a PR.
+Keep shared colors and spacing in `src/styles/tokens.css`, and reusable UI rules
+in `src/styles/app.css`. Prefer existing components in `src/components/ui.jsx`
+before adding page-specific wrappers.
 
----
+Before opening a pull request:
 
-## Links
-
-- **YOUNGO** — [youngoclimate.org](https://youngoclimate.org/)
-- **Membership contact** — membership@youngoclimate.org · youngomembership@gmail.com
-- **Staging hub** — [web-staging-31ab.up.railway.app](https://web-staging-31ab.up.railway.app)
-
----
-
-<p align="center">
-  <sub>Built for the constituency · by people who need the calendar to stop living in twelve chats.</sub>
-</p>
+```bash
+npm test
+npm run lint
+npm run build
+```

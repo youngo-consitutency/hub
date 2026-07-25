@@ -1,5 +1,5 @@
 import { useApi } from '../lib/api.js'
-import { A, Button, Async, Section, Empty } from '../components/ui.jsx'
+import { A, Async, Section, Empty, PageHeader } from '../components/ui.jsx'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards.jsx'
 import { fmtDual } from '../lib/time.js'
 import { Radio, CalendarOff, Megaphone, Users } from 'lucide-react'
@@ -27,16 +27,17 @@ export function Home() {
         {(data) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <h1>YOUNGO, in one place</h1>
-            <p className="meta" style={{ marginTop: 4 }}>
-              {data.closing.length} closing soon · {data.week.length} meetings this week
-            </p>
+            <PageHeader
+              eyebrow="Member overview"
+              title="YOUNGO, in one place"
+              description={`${data.closing.length} closing soon · ${data.week.length} meetings this week`}
+            />
 
             {data.pinned.length > 0 && (
               <Section label="Pinned">
                 <div className="stackSm">
                   {data.pinned.map((a, i) => (
-                    <div key={i} className="card cardTight">
+                    <div key={i} className="card cardTight announcementCard">
                       <p style={{ fontWeight: 500, fontSize: 14 }}><Megaphone size={16} strokeWidth={1.75} aria-hidden style={{ verticalAlign: -3, marginRight: 6, color: 'var(--accent)' }} />{a.title}</p>
                       <p className="meta" style={{ marginTop: 4 }}>{a.body}</p>
                     </div>
