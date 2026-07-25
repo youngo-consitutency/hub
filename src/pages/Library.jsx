@@ -1,4 +1,4 @@
-import { A, Section } from '../components/ui.jsx'
+import { A, Section, PageHeader } from '../components/ui.jsx'
 import { ExternalLink, FolderOpen, Library as LibIcon } from 'lucide-react'
 import { COURSE_MODULES } from '../content/membershipCourse.js'
 import {
@@ -52,12 +52,12 @@ function ExternalCard({ title, body, href, meta }) {
 export function Library() {
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Capacity Building</p>
-      <h1 className="rowGap"><LibIcon size={24} strokeWidth={1.75} aria-hidden /> Library</h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Open-access guides plus the official YOUNGO Policies & Guidelines folder on Drive.
-        Canonical legal text stays in Drive — the hub points you there.
-      </p>
+      <PageHeader
+        eyebrow="Capacity building"
+        icon={LibIcon}
+        title="Library"
+        description="Open guides, the official policies folder, and course previews. Canonical legal text stays in Drive."
+      />
 
       <Section
         label="Official policies"

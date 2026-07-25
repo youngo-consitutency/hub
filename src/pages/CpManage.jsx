@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useApi } from '../lib/api.js'
-import { A, Button, Async, Section, Empty, ErrorCard } from '../components/ui.jsx'
+import { A, Button, Async, Section, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
+import { WG_ACTIVITY_KINDS } from '../../shared/workflows.js'
 
 export function CpManage({ slug }) {
   const groups = useApi('/groups')
@@ -51,8 +52,11 @@ export function CpManage({ slug }) {
           const group = (g.items || []).find((x) => x.slug === slug)
           return (
             <>
-              <h1>WG management · {group?.name || slug}</h1>
-              <p className="meta" style={{ marginTop: 4 }}>Contact Point console — joiners, roles, activities.</p>
+              <PageHeader
+                eyebrow="Contact Point console"
+                title={group?.name || slug}
+                description="Review joiners, assign WG roles, and register activities."
+              />
               {error && <ErrorCard message={error} onRetry={load} />}
               {msg && <p className="meta" style={{ color: 'var(--accent)' }}>{msg}</p>}
 
@@ -79,10 +83,9 @@ export function CpManage({ slug }) {
                   <label className="field">
                     <span>Kind</span>
                     <select className="input" value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}>
-                      <option value="call">WG call</option>
-                      <option value="submission">Submission</option>
-                      <option value="campaign">Campaign</option>
-                      <option value="action_point">Action point</option>
+                      {WG_ACTIVITY_KINDS.map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
                     </select>
                   </label>
                   <label className="field">

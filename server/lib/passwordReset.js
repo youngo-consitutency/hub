@@ -98,7 +98,6 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
 
   const tokenHash = hashToken(rawToken)
   const pool = getPool()
-  const { salt, hash } = hashPassword(newPassword)
 
   if (pool) {
     const client = await pool.connect()
@@ -116,6 +115,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
         err.code = 'invalid_token'
         throw err
       }
+      const { salt, hash } = await hashPassword(newPassword)
       await client.query(
         `UPDATE hub_accounts SET password_hash = $1, password_salt = $2 WHERE id = $3`,
         [hash, salt, rows[0].account_id]
@@ -130,8 +130,11 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
          WHERE account_id = $1 AND used_at IS NULL`,
         [rows[0].account_id]
       )
+      await client.query(
+        'DELETE FROM hub_sessions WHERE account_id = $1',
+        [rows[0].account_id]
+      )
       await client.query('COMMIT')
-      await destroyAllSessions(rows[0].account_id)
       return { accountId: rows[0].account_id }
     } catch (e) {
       await client.query('ROLLBACK')
@@ -148,6 +151,7 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
     err.code = 'invalid_token'
     throw err
   }
+  const { salt, hash } = await hashPassword(newPassword)
   row.used_at = new Date().toISOString()
   writeJson(tokensPath, list)
 

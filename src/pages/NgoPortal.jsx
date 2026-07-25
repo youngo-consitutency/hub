@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { usePath } from '../lib/router.js'
-import { A, Button, Section, Empty, ErrorCard } from '../components/ui.jsx'
+import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
 import { Award, BadgeCheck, Building2, UserPlus, Copy, Check } from 'lucide-react'
 
 export function NgoPortal() {
@@ -15,6 +15,8 @@ export function NgoPortal() {
   const [inviteResult, setInviteResult] = useState(null)
   const [copied, setCopied] = useState(false)
   const [acceptMsg, setAcceptMsg] = useState(null)
+  const [inviteToken, setInviteToken] = useState(null)
+  const [invitePreview, setInvitePreview] = useState(null)
 
   const load = () => {
     setError(null)
@@ -23,23 +25,36 @@ export function NgoPortal() {
       .catch((e) => setError(e.message))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    if (!path.includes('accept')) load()
+  }, [path])
 
-  // Accept invite via /ngo/accept?token=...
+  // Preview first; accepting requires an explicit user action.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
     if (!path.includes('accept') && !token) return
     if (!token) return
-    apiPost(`/member/ngo/invite/${encodeURIComponent(token)}/accept`, {})
+    setInviteToken(token)
+    apiGet(`/member/ngo/invite/${encodeURIComponent(token)}`)
+      .then(({ seat }) => setInvitePreview(seat))
+      .catch((e) => setError(e.message))
+  }, [path])
+
+  const acceptInvite = () => {
+    if (!inviteToken) return
+    setError(null)
+    apiPost(`/member/ngo/invite/${encodeURIComponent(inviteToken)}/accept`, {})
       .then((res) => {
         setAcceptMsg('You joined the organisation team.')
         if (res.account) setAccount(res.account)
+        setInvitePreview(null)
+        setInviteToken(null)
         load()
         window.history.replaceState({}, '', '/ngo')
       })
       .catch((e) => setError(e.message))
-  }, [path])
+  }
 
   const create = async (e) => {
     e.preventDefault()
@@ -100,13 +115,23 @@ export function NgoPortal() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Accredited NGO</p>
-      <h1 className="rowGap"><Building2 size={24} strokeWidth={1.75} aria-hidden /> NGO platform</h1>
-      <p className="meta" style={{ marginTop: 6 }}>
-        {account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.
-      </p>
+      <PageHeader
+        eyebrow="Organisation"
+        icon={Building2}
+        title="NGO platform"
+        description={`${account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.`}
+      />
       {acceptMsg && <p className="meta" style={{ color: 'var(--accent)' }}>{acceptMsg}</p>}
       {error && <ErrorCard message={error} onRetry={load} />}
+      {invitePreview && (
+        <div className="card stack" style={{ marginTop: 16 }}>
+          <h2>Join {invitePreview.organizationName || 'organisation team'}?</h2>
+          <p className="meta">
+            This invitation is for {invitePreview.email} with the {invitePreview.seatRole} role.
+          </p>
+          <Button variant="primary" onClick={acceptInvite}>Accept invitation</Button>
+        </div>
+      )}
 
       {data?.points && (
         <Section label="Contribution points">
@@ -164,7 +189,7 @@ export function NgoPortal() {
         </Section>
       )}
 
-      <Section label="Deadlines for NGOs">
+      {data && <Section label="Deadlines for NGOs">
         <div className="stackSm">
           {(data?.deadlines || []).map((d, i) => (
             <div key={i} className="card cardTight">
@@ -174,9 +199,9 @@ export function NgoPortal() {
             </div>
           ))}
         </div>
-      </Section>
+      </Section>}
 
-      <Section label="Requests inbox">
+      {data && <Section label="Requests inbox">
         {!data?.items?.length
           ? <Empty title="No requests yet" body="Log endorsement or submission requests below." />
           : data.items.map((r) => (
@@ -186,14 +211,14 @@ export function NgoPortal() {
                 <h3 style={{ marginTop: 6 }}>{r.title}</h3>
                 <p className="meta">{r.status}{r.deadline_at ? ` · due ${new Date(r.deadline_at).toLocaleDateString()}` : ''}</p>
               </div>
-              {r.status === 'open' && (
+              {data.permissions?.canWriteRequests && r.status === 'open' && (
                 <Button sm variant="secondary" onClick={() => markDone(r.id)}>Mark done</Button>
               )}
             </div>
           ))}
-      </Section>
+      </Section>}
 
-      <Section label="Log a request">
+      {data?.permissions?.canWriteRequests && <Section label="Log a request">
         <form className="card stack" onSubmit={create}>
           <label className="field">
             <span>Type</span>
@@ -223,9 +248,9 @@ export function NgoPortal() {
           </label>
           <Button type="submit" variant="primary">Save request</Button>
         </form>
-      </Section>
+      </Section>}
 
-      <Section label="Manage team (seats)">
+      {data && <Section label="Team seats">
         <div className="stack">
           {(data?.seats || []).map((s) => (
             <div key={s.id} className="card cardTight rowBetween">
@@ -233,7 +258,7 @@ export function NgoPortal() {
                 <strong>{s.memberName || s.name || s.email}</strong>
                 <p className="meta">{s.email} · {s.seatRole} · {s.status}</p>
               </div>
-              {s.seatRole !== 'owner' && s.status !== 'revoked' && (
+              {data.permissions?.canManageSeats && s.seatRole !== 'owner' && s.status !== 'revoked' && (
                 <Button sm variant="ghost" onClick={() => revoke(s.id)}>Revoke</Button>
               )}
             </div>
@@ -243,7 +268,7 @@ export function NgoPortal() {
           )}
         </div>
 
-        <form className="card stack" style={{ marginTop: 12 }} onSubmit={sendInvite}>
+        {data.permissions?.canManageSeats && <form className="card stack" style={{ marginTop: 12 }} onSubmit={sendInvite}>
           <h3 className="rowGap"><UserPlus size={18} strokeWidth={1.75} aria-hidden /> Invite representative</h3>
           <div className="formRow">
             <label className="field">
@@ -263,9 +288,9 @@ export function NgoPortal() {
             </select>
           </label>
           <Button type="submit" variant="primary">Send invite</Button>
-        </form>
+        </form>}
 
-        {inviteResult && (
+        {data.permissions?.canManageSeats && inviteResult && (
           <div className="card cardTight" style={{ marginTop: 12 }}>
             <p className="meta">{inviteResult.note}</p>
             {inviteResult.inviteUrl && (
@@ -279,7 +304,7 @@ export function NgoPortal() {
             )}
           </div>
         )}
-      </Section>
+      </Section>}
     </div>
   )
 }

@@ -41,6 +41,18 @@ export function cookieValue(req, name) {
 }
 
 export const SESSION_COOKIE = 'youngo_session'
+
+/**
+ * Session token from Authorization, x-session-token, or the session cookie.
+ * Shared home for the lookup that member and intelligence routes each define
+ * locally; new routes should import this rather than add a fourth copy.
+ */
+export function bearerToken(req) {
+  const header = req.headers.authorization || ''
+  if (header.startsWith('Bearer ')) return header.slice(7).trim()
+  return String(req.headers['x-session-token'] || '').trim() || cookieValue(req, SESSION_COOKIE) || null
+}
+
 export function setSessionCookie(res, token, expiresAt) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
   res.append('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Expires=${new Date(expiresAt).toUTCString()}${secure}`)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { A, Async, Empty } from '../components/ui.jsx'
+import { A, Async, Empty, PageHeader } from '../components/ui.jsx'
 import { fmtDual, fmtDateRange } from '../lib/time.js'
 import { Search as SearchIcon, CalendarDays, FileText, Gavel, MapPin, Users } from 'lucide-react'
 
@@ -20,14 +20,21 @@ export function Search() {
 
   return (
     <div>
-      <h1>Search</h1>
-      <input className="input" style={{ marginTop: 12 }} autoFocus placeholder="Search events, submissions, decisions, COYs, groups" value={q} onChange={(e) => setQ(e.target.value)} />
+      <PageHeader
+        eyebrow="Across the hub"
+        title="Search"
+        description="Find meetings, submissions, decisions, COYs, groups, and contacts."
+      />
+      <div className="searchInputWrap">
+        <SearchIcon size={18} strokeWidth={1.75} aria-hidden />
+        <input className="input" autoFocus placeholder="Search the hub" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
       {q.trim() === ''
-        ? <Empty icon={SearchIcon} title="Search the Hub" body="Find anything across meetings, submissions, decisions, COYs, and groups." />
+        ? <div className="searchEmpty"><Empty icon={SearchIcon} title="Search the Hub" body="Start typing to search all member resources." /></div>
         : (
           <Async query={query} empty={() => total === 0 ? <Empty icon={SearchIcon} title="No matches" body={`Nothing found for “${q}”.`} /> : null}>
             {(data) => (
-              <div className="stack" style={{ marginTop: 16 }}>
+              <div className="stack searchResults">
                 {GROUPS.filter((g) => data[g.key]?.length).map((g) => (
                   <section key={g.key}>
                     <div className="sectionLabel"><span>{g.label}</span></div>

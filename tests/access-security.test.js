@@ -17,9 +17,23 @@ test('team assignment produces its workflow capability', async () => {
   assert.equal(hasCapability(access, 'membership.review'), false)
 })
 
-test('organization account receives owner permissions', async () => {
+test('organization registration alone does not grant owner permissions', async () => {
   const context = await resolveOrgContext({ id: 'org-1', role: 'member', entityType: 'organization' })
-  assert.deepEqual(context, { orgAccountId: 'org-1', seatRole: 'owner', canManageRequests: true, canManageSeats: true })
+  assert.equal(context, null)
+})
+
+test('admin organization access requires an explicit scope', async () => {
+  assert.equal(await resolveOrgContext({ id: 'admin-1', role: 'admin' }), null)
+  assert.deepEqual(
+    await resolveOrgContext({ id: 'admin-1', role: 'admin' }, 'org-1'),
+    {
+      orgAccountId: 'org-1',
+      seatRole: 'owner',
+      isAdmin: true,
+      canManageRequests: true,
+      canManageSeats: true,
+    },
+  )
 })
 
 test('security middleware adds request and browser hardening headers', () => {

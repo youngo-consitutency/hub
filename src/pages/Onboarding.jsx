@@ -1,6 +1,7 @@
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, Section } from '../components/ui.jsx'
-import { BookOpen, CheckCircle2, GraduationCap, HelpCircle, Library, Users } from 'lucide-react'
+import { BookOpen, CheckCircle2, GraduationCap, HelpCircle, Library, ShieldCheck, Users } from 'lucide-react'
+import { PRIVACY_META } from '../../shared/privacyNotice.js'
 
 const FAQ_VERIFIED = [
   {
@@ -30,6 +31,10 @@ const FAQ_VERIFIED = [
   {
     q: 'Can I speak on behalf of YOUNGO?',
     a: 'No — not automatically. Passing hub verification does not make you a spokesperson. You may only speak or act for YOUNGO (or a WG) if selected through a formal process under YOUNGO guidelines.',
+  },
+  {
+    q: 'What does the hub do with my personal data?',
+    a: 'The YOUNGO Hub Privacy Notice lists every field the registration form collects, what each is used for, who can see it, how long it is kept, and how to have it deleted. You consented to a specific version of that notice when you joined, and that version is recorded against your account. Open it from the card above, or email membership@youngoclimate.org to see, correct, or delete your data.',
   },
   {
     q: 'How do I reset my password or get help?',
@@ -71,6 +76,22 @@ export function Onboarding() {
           {verified && (
             <A href="/onboarding/course" className="btn btn-secondary">Review course</A>
           )}
+        </div>
+
+        <div className="card rowBetween">
+          <div className="rowGap">
+            <ShieldCheck size={22} strokeWidth={1.75} color="var(--accent)" aria-hidden />
+            <div>
+              <h3>Your data</h3>
+              <p className="meta" style={{ marginTop: 4 }}>
+                What the hub collects, who can see it, and how to have it deleted.
+                {account?.privacyNoticeVersion
+                  ? ` You consented to version ${account.privacyNoticeVersion}.`
+                  : ` Notice version ${PRIVACY_META.version}.`}
+              </p>
+            </div>
+          </div>
+          <A href="/privacy" className="btn btn-secondary">Privacy notice</A>
         </div>
 
         <Section label="Path">

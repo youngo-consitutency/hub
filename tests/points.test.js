@@ -1,4 +1,4 @@
-import { describe, it, before } from 'node:test'
+import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   POINT_REASONS,
@@ -10,13 +10,28 @@ import {
   reasonFromNgoRequestKind,
   tiersForBalance,
 } from '../server/lib/points.js'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ORG = 'org-points-test-1'
+const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data')
+const ledgerFile = path.join(dataDir, 'ngo-point-ledger.json')
+const requestsFile = path.join(dataDir, 'ngo-requests.json')
+let originalLedger = null
+let originalRequests = null
 
 describe('NGO contribution points', () => {
+  before(() => {
+    originalLedger = existsSync(ledgerFile) ? readFileSync(ledgerFile, 'utf8') : null
+    originalRequests = existsSync(requestsFile) ? readFileSync(requestsFile, 'utf8') : null
+  })
+
+  after(() => {
+    if (originalLedger != null) writeFileSync(ledgerFile, originalLedger)
+    if (originalRequests != null) writeFileSync(requestsFile, originalRequests)
+  })
+
   before(async () => {
     // Clear fixture ledger for this org by awarding net-zero via void isn't available —
     // tests use unique titles and assert balance deltas where possible.
@@ -77,9 +92,8 @@ describe('NGO contribution points', () => {
   })
 
   it('suggests awards for done requests and drops them after linked award', async () => {
-    const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data')
     mkdirSync(dataDir, { recursive: true })
-    const requestId = 'req-suggest-1'
+    const requestId = `req-suggest-${Date.now()}`
     writeFileSync(path.join(dataDir, 'ngo-requests.json'), JSON.stringify([{
       id: requestId,
       org_account_id: ORG,

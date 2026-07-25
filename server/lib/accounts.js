@@ -4,11 +4,14 @@ import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
 import { hashPassword, verifyPassword, newSessionToken, sessionExpiry } from './password.js'
+import { getAccessProfile } from './access.js'
+import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../../shared/privacyNotice.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
 const sessionsPath = path.join(dataDir, 'hub-sessions.json')
+const seatsPath = path.join(dataDir, 'ngo-seats.json')
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
@@ -62,6 +65,8 @@ function publicAccount(row) {
   const name = row.name || [first, last].filter(Boolean).join(' ')
   const memberStatus = row.member_status ?? row.memberStatus ?? 'pending_course'
   const role = row.role || 'member'
+  const hubAccessStatus = row.hub_access_status ?? row.hubAccessStatus
+    ?? (memberStatus === 'verified' ? 'active' : 'pending_course')
   return {
     id: row.id,
     email: row.email,
@@ -83,8 +88,11 @@ function publicAccount(row) {
     under18: Boolean(row.under_18 ?? row.under18),
     constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
     membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
+    privacyConsent: Boolean(row.privacy_consent ?? row.privacyConsent),
+    privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
+    privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     memberStatus,
-    hubAccessStatus: row.hub_access_status ?? row.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course'),
+    hubAccessStatus,
     membershipStatus: row.membership_status ?? row.membershipStatus ?? (row.course_passed_at ? 'course_passed' : 'registered'),
     onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
     renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
@@ -96,17 +104,49 @@ function publicAccount(row) {
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified: memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role),
+    isVerified: hubAccessStatus === 'active'
+      && (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
     isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: (row.entity_type ?? row.entityType) === 'organization',
-    isNgoAdmin: role === 'ngo_admin' || (role === 'admin') || (
-      (row.entity_type ?? row.entityType) === 'organization' && Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted)
-    ),
+    isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: row.created_at ?? row.createdAt,
     lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
+  }
+}
+
+async function enrichAccountAccess(account) {
+  if (!account) return null
+  const accessProfile = await getAccessProfile(account)
+  const pool = getPool()
+  let ngoSeat
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT org_account_id, seat_role FROM ngo_seats
+       WHERE member_account_id = $1 AND status = 'active'
+       ORDER BY accepted_at DESC NULLS LAST
+       LIMIT 1`,
+      [account.id],
+    )
+    ngoSeat = rows[0]
+  } else {
+    ngoSeat = readJson(seatsPath, [])
+      .filter((row) => row.member_account_id === account.id && row.status === 'active')
+      .sort((a, b) => String(b.accepted_at || '').localeCompare(String(a.accepted_at || '')))[0]
+  }
+
+  return {
+    ...account,
+    access: {
+      ...accessProfile,
+      isAdmin: account.role === 'admin',
+      managedWgs: accessProfile.wgAssignments.map((item) => item.wgSlug).sort(),
+      ngo: ngoSeat
+        ? { orgAccountId: ngoSeat.org_account_id, seatRole: ngoSeat.seat_role }
+        : null,
+    },
   }
 }
 
@@ -154,6 +194,36 @@ function requireAgreements(b, fields) {
     fields.acceptAllOrgPolicies = 'The organisation must agree to YOUNGO’s policies and principles.'
   }
   return { acceptCodeOfConduct, acceptDataProtection, acceptPrinciples, acceptCoiPolicy }
+}
+
+/**
+ * Explicit consent to the YOUNGO Hub Privacy Notice.
+ *
+ * Deliberately separate from requireAgreements: those are promises to *respect*
+ * YOUNGO policies, which is a different act from agreeing that this platform may
+ * hold your personal data. Consent is only valid against a notice version, so the
+ * version is recorded server-side rather than trusted from the client — a client
+ * claiming an older version must not be able to consent on its behalf.
+ */
+function requirePrivacyConsent(b, fields) {
+  const consented = Boolean(b.privacyConsent)
+  if (!consented) {
+    fields.privacyConsent =
+      'Please read the YOUNGO Hub Privacy Notice and confirm you consent to your data being used as it describes.'
+    return null
+  }
+  const claimed = String(b.privacyNoticeVersion || '').trim()
+  if (claimed && claimed !== PRIVACY_VERSION) {
+    fields.privacyConsent =
+      'The Privacy Notice has been updated since this page was opened. Please reload, read the current notice, and consent again.'
+    return null
+  }
+  return {
+    privacyConsent: true,
+    privacyNoticeVersion: PRIVACY_VERSION,
+    privacyConsentAt: new Date().toISOString(),
+    privacyConsentStatement: CONSENT_STATEMENT,
+  }
 }
 
 /**
@@ -218,6 +288,7 @@ export function validateRegistration(body) {
     }
 
     const agreements = requireAgreements(b, fields)
+    const privacy = requirePrivacyConsent(b, fields)
 
     if (isUnfcccAdmitted === true) {
       // Admitted observer NGO path
@@ -291,6 +362,7 @@ export function validateRegistration(body) {
         guardianEmail: null,
         guardianConsent: false,
         ...agreements,
+        ...privacy,
         coiDeclared: agreements.acceptCoiPolicy,
         coiDetails: null,
         policiesAccepted: true,
@@ -298,7 +370,7 @@ export function validateRegistration(body) {
         membershipPolicyVersion,
         constituencyWorkStatus: 'pending_onboarding',
         memberStatus: 'pending_course',
-        role: isUnfcccAdmitted ? 'ngo_admin' : 'member',
+        role: 'member',
         wgInterests: [],
       },
     }
@@ -348,6 +420,7 @@ export function validateRegistration(body) {
   if (motivation && motivation.length > 2000) fields.motivation = 'Please keep this under 2000 characters.'
 
   const agreements = requireAgreements(b, fields)
+  const privacy = requirePrivacyConsent(b, fields)
   if (memberOfAccreditedNgo === null) {
     fields.memberOfAccreditedNgo = 'Please answer for statistics.'
   }
@@ -412,6 +485,7 @@ export function validateRegistration(body) {
       guardianEmail: under18 ? guardianEmail : null,
       guardianConsent: under18 ? guardianConsent : false,
       ...agreements,
+      ...privacy,
       coiDeclared: agreements.acceptCoiPolicy,
       coiDetails: null,
       policiesAccepted: true,
@@ -464,7 +538,7 @@ export async function createAccount(data, client = null) {
     throw err
   }
 
-  const { salt, hash } = hashPassword(data.password)
+  const { salt, hash } = await hashPassword(data.password)
   const pool = client || getPool()
 
   const memberStatus = data.memberStatus || 'pending_course'
@@ -488,7 +562,8 @@ export async function createAccount(data, client = null) {
         member_of_accredited_ngo,
         youth_affiliation, org_operate_in, org_website, org_social, org_mission,
         dcp_email, dcp_phone, ycp_name, ycp_email, ycp_phone,
-        member_status, role, wg_interests
+        member_status, role, wg_interests,
+        privacy_consent, privacy_notice_version, privacy_consent_at, privacy_consent_statement
       ) VALUES (
         $1,$2,$3,$4,$5,$6,
         $7,$8,$9,$10,
@@ -502,7 +577,8 @@ export async function createAccount(data, client = null) {
         $37,
         $38,$39,$40,$41,$42,
         $43,$44,$45,$46,$47,
-        $48,$49,$50
+        $48,$49,$50,
+        $51,$52,$53,$54
       ) RETURNING *`,
       [
         data.email, hash, salt, data.name, data.firstName, data.lastName,
@@ -518,6 +594,8 @@ export async function createAccount(data, client = null) {
         data.youthAffiliation, data.orgOperateIn, data.orgWebsite, data.orgSocial, data.orgMission,
         data.dcpEmail, data.dcpPhone, data.ycpName, data.ycpEmail, data.ycpPhone,
         memberStatus, role, wgInterests,
+        Boolean(data.privacyConsent), data.privacyNoticeVersion || null,
+        data.privacyConsentAt || null, data.privacyConsentStatement || null,
       ]
       ))
     } catch (error) {
@@ -565,6 +643,10 @@ export async function createAccount(data, client = null) {
     accept_data_protection: data.acceptDataProtection,
     accept_principles: data.acceptPrinciples,
     accept_coi_policy: data.acceptCoiPolicy,
+    privacy_consent: Boolean(data.privacyConsent),
+    privacy_notice_version: data.privacyNoticeVersion || null,
+    privacy_consent_at: data.privacyConsentAt || null,
+    privacy_consent_statement: data.privacyConsentStatement || null,
     member_of_accredited_ngo: data.memberOfAccreditedNgo,
     youth_affiliation: data.youthAffiliation,
     org_operate_in: data.orgOperateIn,
@@ -594,7 +676,7 @@ export async function createAccount(data, client = null) {
 export async function authenticate(email, password) {
   const row = await findAccountByEmail(email)
   if (!row) return null
-  const ok = verifyPassword(password, row.password_salt, row.password_hash)
+  const ok = await verifyPassword(password, row.password_salt, row.password_hash)
   if (!ok) return null
   return row
 }
@@ -644,12 +726,12 @@ export async function getSessionAccount(token) {
        LIMIT 1`,
       [storedToken]
     )
-    if (rows[0]) return publicAccount(rows[0])
+    if (rows[0]) return enrichAccountAccess(publicAccount(rows[0]))
     const legacy = await pool.query(
       `SELECT a.* FROM hub_sessions s JOIN hub_accounts a ON a.id=s.account_id
        WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`, [token]
     )
-    return publicAccount(legacy.rows[0] || null)
+    return enrichAccountAccess(publicAccount(legacy.rows[0] || null))
   }
   const sessions = readJson(sessionsPath, [])
   const session = sessions.find((s) => s.token === storedToken || s.token === token)
@@ -657,7 +739,7 @@ export async function getSessionAccount(token) {
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
   const row = accounts.find((a) => a.id === session.account_id)
-  return publicAccount(row || null)
+  return enrichAccountAccess(publicAccount(row || null))
 }
 
 export async function destroySession(token) {

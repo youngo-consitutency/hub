@@ -8,6 +8,7 @@ import {
 } from '../content/membershipPolicy.js'
 import { acknowledgeMembershipPolicy } from '../lib/membershipGate.js'
 import { Button } from './ui.jsx'
+import { Brand } from './Brand.jsx'
 
 /**
  * Full-screen mandatory Membership Policy read (step 1 of access).
@@ -81,6 +82,7 @@ export function MembershipMandateGate({ onComplete }) {
     >
       <div className="mandateShell">
         <header className="mandateHeader">
+          <div className="gateBrand"><Brand /></div>
           <div className="rowGap" style={{ alignItems: 'flex-start' }}>
             <span className="iconTile" aria-hidden>
               <ScrollText size={22} strokeWidth={1.75} />

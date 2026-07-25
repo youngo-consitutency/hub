@@ -1,19 +1,44 @@
 import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
-import { applyTheme, getInitialTheme, saveTheme } from '../lib/theme.js'
+import {
+  applyTheme,
+  clearThemeOverride,
+  getInitialTheme,
+  getSavedTheme,
+  saveTheme,
+  systemTheme,
+} from '../lib/theme.js'
 
 export function FloatingThemeToggle() {
   const [theme, setTheme] = useState(getInitialTheme)
+  const [mode, setMode] = useState(() => getSavedTheme() || 'system')
   const isDark = theme === 'dark'
   const Icon = isDark ? Sun : Moon
-  const label = isDark ? 'Switch to light theme' : 'Switch to dark theme'
+  const label = mode === 'light'
+    ? 'Use system theme'
+    : (isDark ? 'Switch to light theme' : 'Switch to dark theme')
 
   useEffect(() => {
     applyTheme(theme)
   }, [theme])
 
+  useEffect(() => {
+    if (mode !== 'system') return undefined
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+    const update = () => setTheme(systemTheme(Boolean(media?.matches)))
+    media?.addEventListener?.('change', update)
+    return () => media?.removeEventListener?.('change', update)
+  }, [mode])
+
   const toggle = () => {
-    setTheme((current) => saveTheme(current === 'dark' ? 'light' : 'dark'))
+    if (mode === 'light') {
+      setMode('system')
+      setTheme(clearThemeOverride())
+      return
+    }
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setMode(next)
+    setTheme(saveTheme(next))
   }
 
   return (
