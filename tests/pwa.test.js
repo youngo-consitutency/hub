@@ -1,6 +1,40 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { subscribeToPush } from '../src/lib/pwa.js'
+import { disablePWAInDevelopment, subscribeToPush } from '../src/lib/pwa.js'
+
+test('development cleanup unregisters workers and removes only Hub caches', async (t) => {
+  const deleted = []
+  let unregistered = 0
+  const originalNavigator = globalThis.navigator
+  const originalWindow = globalThis.window
+  t.after(() => {
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: originalNavigator })
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow })
+  })
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: {
+      serviceWorker: {
+        getRegistrations: async () => [
+          { unregister: async () => { unregistered += 1 } },
+        ],
+      },
+    },
+  })
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      caches: {
+        keys: async () => ['youngo-hub-static-v2', 'another-app-cache'],
+        delete: async (name) => { deleted.push(name) },
+      },
+    },
+  })
+
+  await disablePWAInDevelopment()
+  assert.equal(unregistered, 1)
+  assert.deepEqual(deleted, ['youngo-hub-static-v2'])
+})
 
 test('an existing push subscription is registered for the current account again', async (t) => {
   const existing = {

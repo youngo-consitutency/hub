@@ -1,4 +1,22 @@
 let deferredInstallPrompt = null
+const HUB_CACHE_PREFIX = 'youngo-hub-'
+
+export async function disablePWAInDevelopment() {
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map((registration) => registration.unregister()))
+    }
+    if ('caches' in window) {
+      const names = await window.caches.keys()
+      await Promise.all(
+        names.filter((name) => name.startsWith(HUB_CACHE_PREFIX)).map((name) => window.caches.delete(name)),
+      )
+    }
+  } catch (error) {
+    console.warn('[PWA] Could not clear the development service worker:', error)
+  }
+}
 
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {

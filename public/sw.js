@@ -1,6 +1,6 @@
-const STATIC_CACHE = 'youngo-hub-static-v2';
-const DYNAMIC_CACHE = 'youngo-hub-dynamic-v2';
-const CACHE_VERSION = 'v2';
+const STATIC_CACHE = 'youngo-hub-static-v3';
+const DYNAMIC_CACHE = 'youngo-hub-dynamic-v3';
+const CACHE_VERSION = 'v3';
 
 // Assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -76,6 +76,13 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') return;
+
+  // Never intercept Vite development modules. Their URLs can be reused with
+  // different dependency graphs, which makes a cache-first service worker load
+  // multiple React copies and break hooks after a dev-server restart.
+  if (['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) && url.port === '5173') {
+    return;
+  }
 
   // Skip cross-origin requests (except for fonts)
   if (url.origin !== location.origin && !url.pathname.match(/\.(woff2?|ttf|eot)$/)) {
