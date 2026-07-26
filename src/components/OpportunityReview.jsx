@@ -20,7 +20,9 @@ function PostingMeta({ item }) {
           {KIND_LABEL[item.kind] || item.kind}
         </span>
         <span className="chip chip-neutral">{item.format}</span>
-        {item.region && <span className="chip chip-neutral">{item.region}</span>}
+        {item.region && (
+          <span className="chip chip-neutral">{item.region}</span>
+        )}
       </div>
       <h3>{item.title}</h3>
       <p className="meta">
@@ -212,7 +214,10 @@ export function OpportunityReview() {
           <div className="stackSm">
             {state.organisations.map((org) => (
               <div key={org.orgAccountId} className="card cardTight stackSm">
-                <div className="rowBetween" style={{ flexWrap: 'wrap', gap: 8 }}>
+                <div
+                  className="rowBetween"
+                  style={{ flexWrap: 'wrap', gap: 8 }}
+                >
                   <div>
                     <h3>{org.organizationName || 'Organisation'}</h3>
                     <p className="metaMuted">

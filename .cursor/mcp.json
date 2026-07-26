@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "youngo-hub-tickets": {
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/agent/hub-tickets-mcp.mjs"],
+      "env": {
+        "HUB_AGENT_RO_URL": "${env:HUB_AGENT_RO_URL}"
+      }
+    }
+  }
+}

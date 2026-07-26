@@ -441,8 +441,7 @@ export async function listPostingOrganisations() {
         row.org_account_id === orgAccountId && row.status === 'published',
     )
     const trusted =
-      override === 'trusted' ||
-      (override !== 'review_required' && hasPublished)
+      override === 'trusted' || (override !== 'review_required' && hasPublished)
     return {
       orgAccountId,
       organizationName: orgNameFor(accounts, orgAccountId),

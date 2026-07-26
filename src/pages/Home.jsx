@@ -1,5 +1,12 @@
 import { useApi } from '../lib/api.js'
-import { A, Async, Section, Empty, PageHeader } from '../components/ui.jsx'
+import {
+  A,
+  Async,
+  CountdownChip,
+  Section,
+  Empty,
+  PageHeader,
+} from '../components/ui.jsx'
 import {
   EventCard,
   ClosingCard,
@@ -12,7 +19,7 @@ import {
 } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
 import { BETA_CONTRIBUTORS, publishedLinks } from '../content/connect.js'
-import { Radio, CalendarOff, Users, ArrowUpRight } from 'lucide-react'
+import { Radio, CalendarOff, Users, ArrowUpRight, ExternalLink } from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
@@ -76,10 +83,38 @@ export function Home() {
             {data.pinned.length > 0 && (
               <Section label="Pinned">
                 <div className="cardGrid">
-                  {data.pinned.map((a, i) => (
-                    <div key={i} className="card cardTight announcementCard">
+                  {data.pinned.map((a) => (
+                    <div
+                      key={a.slug || a.title}
+                      className="card cardTight announcementCard"
+                    >
                       <h3>{a.title}</h3>
                       <p className="meta">{a.body}</p>
+                      {(a.ctaUrl || a.ctaDeadlineAt) && (
+                        <div className="announcementActions">
+                          {a.ctaDeadlineAt && (
+                            <CountdownChip
+                              iso={a.ctaDeadlineAt}
+                              label="Closes in"
+                            />
+                          )}
+                          {a.ctaUrl && (
+                            <a
+                              className="btn btn-primary btn-sm"
+                              href={a.ctaUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {a.ctaLabel || 'Open'}
+                              <ExternalLink
+                                size={14}
+                                strokeWidth={1.75}
+                                aria-hidden
+                              />
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

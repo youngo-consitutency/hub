@@ -193,11 +193,7 @@ export function FeedbackQueue() {
       )}
       <div className="stackSm">
         {(state.items || []).map((ticket) => (
-          <TicketCard
-            key={ticket.id}
-            ticket={ticket}
-            onUpdate={updateTicket}
-          />
+          <TicketCard key={ticket.id} ticket={ticket} onUpdate={updateTicket} />
         ))}
       </div>
     </Section>

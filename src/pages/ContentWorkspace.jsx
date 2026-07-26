@@ -33,7 +33,15 @@ const EMPTY_EVENT = {
   meetingUrl: '',
   recordingUrl: '',
 }
-const EMPTY_ANNOUNCEMENT = { slug: '', title: '', body: '', pinned: false }
+const EMPTY_ANNOUNCEMENT = {
+  slug: '',
+  title: '',
+  body: '',
+  pinned: false,
+  ctaUrl: '',
+  ctaLabel: '',
+  ctaDeadlineAt: '',
+}
 
 const TYPE_LABELS = {
   constituency_call: 'Constituency call',
@@ -62,7 +70,13 @@ function eventForm(payload = {}) {
 }
 
 function announcementForm(payload = {}) {
-  return { ...EMPTY_ANNOUNCEMENT, ...payload }
+  return {
+    ...EMPTY_ANNOUNCEMENT,
+    ...payload,
+    ctaUrl: payload.ctaUrl || '',
+    ctaLabel: payload.ctaLabel || '',
+    ctaDeadlineAt: localDateTime(payload.ctaDeadlineAt),
+  }
 }
 
 export function ContentWorkspace() {
@@ -117,7 +131,12 @@ export function ContentWorkspace() {
                 ? new Date(payload.endsAt).toISOString()
                 : '',
             }
-          : payload,
+          : {
+              ...payload,
+              ctaDeadlineAt: payload.ctaDeadlineAt
+                ? new Date(payload.ctaDeadlineAt).toISOString()
+                : '',
+            },
     }
     try {
       if (editingId)
@@ -351,6 +370,42 @@ export function ContentWorkspace() {
                           }
                         />
                         Pin this announcement on the home feed
+                      </label>
+                      <div className="formGrid">
+                        <label>
+                          CTA link
+                          <input
+                            type="url"
+                            value={payload.ctaUrl}
+                            onChange={(event) =>
+                              set('ctaUrl', event.target.value)
+                            }
+                            placeholder="https://forms.gle/…"
+                          />
+                          <FieldError msg={fields.ctaUrl} />
+                        </label>
+                        <label>
+                          CTA label
+                          <input
+                            value={payload.ctaLabel}
+                            onChange={(event) =>
+                              set('ctaLabel', event.target.value)
+                            }
+                            placeholder="Submit inputs"
+                          />
+                          <FieldError msg={fields.ctaLabel} />
+                        </label>
+                      </div>
+                      <label>
+                        CTA deadline
+                        <input
+                          type="datetime-local"
+                          value={payload.ctaDeadlineAt}
+                          onChange={(event) =>
+                            set('ctaDeadlineAt', event.target.value)
+                          }
+                        />
+                        <FieldError msg={fields.ctaDeadlineAt} />
                       </label>
                     </>
                   )}

@@ -18,6 +18,9 @@ import {
   MessagesSquare,
   CheckCircle2,
   ArrowRight,
+  Upload,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react'
 
 const NEXT = {
@@ -30,11 +33,32 @@ const NEXT = {
   published: [],
 }
 
+function CountList({ title, items }) {
+  if (!items?.length) return null
+  return (
+    <div className="gysCountBlock">
+      <strong>{title}</strong>
+      <ul>
+        {items.slice(0, 8).map((item) => (
+          <li key={item.label}>
+            <span>{item.label}</span>
+            <span className="mono">{item.count}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function GysPolicyTeam() {
   const query = useApi('/member/team/gys/overview')
   const [draft, setDraft] = useState({ title: '', body: '', theme: '' })
+  const [csvText, setCsvText] = useState('')
+  const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
+  const [importMessage, setImportMessage] = useState(null)
+
   const create = async (event) => {
     event.preventDefault()
     setBusy(true)
@@ -49,6 +73,7 @@ export function GysPolicyTeam() {
       setBusy(false)
     }
   }
+
   const move = async (id, status) => {
     setBusy(true)
     try {
@@ -61,6 +86,69 @@ export function GysPolicyTeam() {
       setBusy(false)
     }
   }
+
+  const promoteBullet = async (bullet) => {
+    setBusy(true)
+    try {
+      setActionError(null)
+      await apiPost('/member/team/gys/contributions', {
+        title: bullet.theme
+          ? `${bullet.theme} — synthesis demand`
+          : 'Synthesis demand',
+        theme: bullet.theme || '',
+        body: `${bullet.text}\n\nCited inputs: ${bullet.citations
+          .map((c) => c.title)
+          .join('; ')}`,
+      })
+      query.retry()
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const runPreview = async () => {
+    setBusy(true)
+    setImportMessage(null)
+    try {
+      setActionError(null)
+      const result = await apiPost('/member/team/gys/inputs/preview', {
+        csvText,
+      })
+      setPreview(result)
+    } catch (error) {
+      setPreview(null)
+      setActionError(error.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const runImport = async () => {
+    setBusy(true)
+    setImportMessage(null)
+    try {
+      setActionError(null)
+      const result = await apiPost('/member/team/gys/inputs/import', {
+        csvText,
+        columnMap: preview?.columnMap,
+      })
+      setImportMessage(
+        `Imported ${result.imported}, skipped ${result.skipped}${
+          result.errors?.length ? `, ${result.errors.length} row errors` : ''
+        }.`,
+      )
+      setCsvText('')
+      setPreview(null)
+      query.retry()
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -81,9 +169,22 @@ export function GysPolicyTeam() {
                   {data.current?.tagline || data.current?.status}
                 </p>
               </div>
-              <A href="/gys" className="btn btn-secondary">
-                View public statement <ArrowRight size={16} aria-hidden />
-              </A>
+              <div className="rowGap">
+                {data.formUrl && (
+                  <a
+                    href={data.formUrl}
+                    className="btn btn-secondary"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Official inputs form
+                    <ExternalLink size={16} aria-hidden />
+                  </a>
+                )}
+                <A href="/gys" className="btn btn-secondary">
+                  View public statement <ArrowRight size={16} aria-hidden />
+                </A>
+              </div>
             </div>
             <div className="metricGrid">
               <div className="metricCard">
@@ -102,6 +203,130 @@ export function GysPolicyTeam() {
                 <span>production stages</span>
               </div>
             </div>
+
+            <Section label="Import Google Form responses">
+              {actionError && <ErrorCard message={actionError} />}
+              {importMessage && <p className="meta">{importMessage}</p>}
+              <div className="card cardTight stackSm">
+                <p className="meta">
+                  Export responses from the official GYS 2026 form as CSV, paste
+                  them below, preview the column mapping, then import into the
+                  contribution queue.
+                </p>
+                <label>
+                  CSV export
+                  <textarea
+                    rows="6"
+                    value={csvText}
+                    onChange={(event) => {
+                      setCsvText(event.target.value)
+                      setPreview(null)
+                    }}
+                    placeholder="Timestamp,Email Address,Country,Theme,Policy recommendation…"
+                  />
+                </label>
+                <div className="rowGap">
+                  <Button
+                    sm
+                    variant="secondary"
+                    disabled={busy || !csvText.trim()}
+                    onClick={runPreview}
+                  >
+                    <Upload size={16} aria-hidden />
+                    Preview mapping
+                  </Button>
+                  <Button
+                    sm
+                    variant="primary"
+                    disabled={busy || !preview?.rowCount}
+                    onClick={runImport}
+                  >
+                    Import {preview?.rowCount || 0} rows
+                  </Button>
+                </div>
+                {preview && (
+                  <div className="gysImportPreview">
+                    <p className="meta">
+                      Detected {preview.rowCount} rows. Body column:{' '}
+                      <strong>{preview.columnMap?.body || '—'}</strong>
+                    </p>
+                    <div className="stackSm">
+                      {preview.preview.map((row) => (
+                        <div key={row.externalId} className="card cardTight">
+                          <strong>{row.title}</strong>
+                          <p className="meta">
+                            {[row.theme, row.country, row.submitterType]
+                              .filter(Boolean)
+                              .join(' · ') || 'No metadata'}
+                          </p>
+                          <p className="meta">{row.bodyPreview}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            <Section label="Intelligent synthesis">
+              {!data.synthesis ? (
+                <Empty icon={Sparkles} title="No synthesis yet" />
+              ) : (
+                <div className="card cardTight stackSm gysSynthesisPanel">
+                  <div className="rowGap">
+                    <Sparkles size={18} color="var(--accent)" aria-hidden />
+                    <strong>{data.synthesis.answer}</strong>
+                  </div>
+                  <div className="gysCountGrid">
+                    <CountList
+                      title="By theme"
+                      items={data.synthesis.counts?.byTheme}
+                    />
+                    <CountList
+                      title="By region"
+                      items={data.synthesis.counts?.byRegion}
+                    />
+                    <CountList
+                      title="By country"
+                      items={data.synthesis.counts?.byCountry}
+                    />
+                    <CountList
+                      title="By submitter type"
+                      items={data.synthesis.counts?.bySubmitterType}
+                    />
+                  </div>
+                  {data.synthesis.bullets?.length > 0 && (
+                    <ul className="gysSynthesisBullets">
+                      {data.synthesis.bullets.map((bullet, index) => (
+                        <li key={`${bullet.citations[0]?.contributionId}-${index}`}>
+                          <div>
+                            <p>{bullet.text}</p>
+                            <p className="meta">
+                              Cited:{' '}
+                              {bullet.citations
+                                .map((c) => c.title)
+                                .join(', ')}
+                            </p>
+                          </div>
+                          <Button
+                            sm
+                            variant="secondary"
+                            disabled={busy}
+                            onClick={() => promoteBullet(bullet)}
+                          >
+                            Track demand
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="meta intelligenceCaveat">
+                    {data.synthesis.caveat}
+                  </p>
+                </div>
+              )}
+            </Section>
+
             <Section label="Production cycle">
               <ol className="workflowSteps">
                 {data.process.map((step, index) => (
@@ -165,7 +390,10 @@ export function GysPolicyTeam() {
                       <div>
                         <strong>{item.title}</strong>
                         <p className="meta">
-                          {item.theme || 'No theme'} · version {item.version}
+                          {[item.theme || 'No theme', item.source, item.country]
+                            .filter(Boolean)
+                            .join(' · ')}{' '}
+                          · version {item.version}
                         </p>
                       </div>
                       <div className="rowGap">
@@ -225,7 +453,8 @@ export function GysPolicyTeam() {
                   <strong>Authorship and review are traceable</strong>
                   <p className="meta">
                     Each contribution records author, reviewer, version, status
-                    changes, and approval decisions.
+                    changes, and approval decisions. Imported form rows keep
+                    source metadata for the policy team only.
                   </p>
                 </div>
               </div>

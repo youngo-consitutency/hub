@@ -239,6 +239,16 @@ describe('admitted organisation registration', () => {
     )
   })
 
+  it('stores working group interests and drops unknown slugs', () => {
+    const result = validateRegistration(
+      admittedOrg({
+        wgInterests: ['ace', 'loss-and-damage', 'not-a-real-wg', 'ace'],
+      }),
+    )
+    assert.ok(result.data, JSON.stringify(result.fields))
+    assert.deepEqual(result.data.wgInterests, ['ace', 'loss-and-damage'])
+  })
+
   it('requires youth affiliation and DCP fields', () => {
     const result = validateRegistration(
       admittedOrg({
@@ -268,6 +278,14 @@ describe('non-admitted organisation registration', () => {
     assert.equal(result.data.isUnfcccAdmitted, false)
     assert.equal(result.data.organizationType, 'non_admitted')
     assert.equal(result.data.ycpName, 'Sam Facilitator')
+  })
+
+  it('stores working group interests', () => {
+    const result = validateRegistration(
+      nonAdmittedOrg({ wgInterests: ['oceans', 'coy'] }),
+    )
+    assert.ok(result.data, JSON.stringify(result.fields))
+    assert.deepEqual(result.data.wgInterests, ['oceans', 'coy'])
   })
 
   it('requires operation regions and YOUNGO CP', () => {

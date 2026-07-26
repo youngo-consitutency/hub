@@ -1,7 +1,7 @@
 import { useApi } from '../lib/api.js'
-import { Async, PageHeader, Section } from '../components/ui.jsx'
+import { Async, CountdownChip, PageHeader, Section } from '../components/ui.jsx'
 import { GysSignup } from '../components/GysSignup.jsx'
-import { ArrowUpRight, ScrollText } from 'lucide-react'
+import { ArrowUpRight, ExternalLink, ScrollText } from 'lucide-react'
 
 export function Statement() {
   const query = useApi('/gys')
@@ -55,6 +55,27 @@ export function Statement() {
                       {edition}
                     </span>
                   ))}
+                  {current.inputsDeadlineAt && (
+                    <CountdownChip
+                      iso={current.inputsDeadlineAt}
+                      label="Inputs close"
+                    />
+                  )}
+                  {current.inputsUrl && (
+                    <a
+                      className="btn btn-primary btn-sm"
+                      href={current.inputsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Submit inputs
+                      <ExternalLink
+                        size={14}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                    </a>
+                  )}
                   {current.releaseUrl && (
                     <a
                       className="btn btn-ghost btn-sm"

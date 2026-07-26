@@ -2,6 +2,7 @@ import { useAccount } from '../lib/accountContext.jsx'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
 import { MyFeedback } from '../components/MyFeedback.jsx'
+import { workingGroupLabel } from '../../shared/workingGroups.js'
 import {
   BookOpenCheck,
   GraduationCap,
@@ -144,7 +145,9 @@ export function Profile() {
             {interests.length > 0 && (
               <div className="card cardTight">
                 <h3>Working-group interests</h3>
-                <p className="meta">{interests.join(', ')}</p>
+                <p className="meta">
+                  {interests.map(workingGroupLabel).join(', ')}
+                </p>
               </div>
             )}
           </div>

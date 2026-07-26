@@ -5,6 +5,7 @@ dist/
 .env.*
 data/og/
 data/gys-signups.json
+data/gys-workflow.json
 data/hub-accounts.json
 data/hub-sessions.json
 data/password-reset-tokens.json
