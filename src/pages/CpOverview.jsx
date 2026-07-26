@@ -1,55 +1,96 @@
-import { useApi } from '../lib/api.js'
+import { useEffect, useMemo, useState } from 'react'
+import { apiGet, useApi } from '../lib/api.js'
+import { A, Async, Empty, StatusChip } from '../components/ui.jsx'
 import {
-  A,
-  Async,
-  Empty,
-  PageHeader,
-  Section,
-  StatusChip,
-} from '../components/ui.jsx'
+  MissionCountdown,
+  MissionMetric,
+  MissionMonogram,
+} from '../components/MissionConsole.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
-import {
-  Briefcase,
-  Users,
-  CalendarDays,
-  ListChecks,
-  ArrowRight,
-} from 'lucide-react'
+import { ArrowRight, Briefcase, ListChecks, Radio, Users } from 'lucide-react'
+
+function roleForGroup(access, slug) {
+  return (
+    access.wgAssignments?.find((item) => item.wgSlug === slug)?.role ||
+    (access.manageAllWgs ? 'admin' : 'contact')
+  )
+}
 
 export function CpOverview() {
   const groups = useApi('/groups')
   const { account } = useAccount()
   const access = account?.access || { wgAssignments: [], manageAllWgs: false }
+  const [pendingByWg, setPendingByWg] = useState({})
+
+  const assignedSlugs = useMemo(() => {
+    if (access.manageAllWgs) return null
+    return new Set(
+      (access.wgAssignments || []).map((item) => item.wgSlug).filter(Boolean),
+    )
+  }, [access.manageAllWgs, access.wgAssignments])
+
+  useEffect(() => {
+    const items = groups.data?.items
+    if (!items?.length) return
+    const assigned = access.manageAllWgs
+      ? items
+      : items.filter((group) => assignedSlugs?.has(group.slug))
+    let cancelled = false
+    Promise.all(
+      assigned.map(async (group) => {
+        try {
+          const data = await apiGet(
+            `/member/cp/${encodeURIComponent(group.slug)}/members`,
+          )
+          const pending = (data.items || []).filter(
+            (m) => m.status === 'pending_approval' || m.status === 'interested',
+          ).length
+          return [group.slug, pending]
+        } catch {
+          return [group.slug, 0]
+        }
+      }),
+    ).then((pairs) => {
+      if (cancelled) return
+      setPendingByWg(Object.fromEntries(pairs))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [groups.data, access.manageAllWgs, assignedSlugs])
+
+  const pendingTotal = Object.values(pendingByWg).reduce((sum, n) => sum + n, 0)
 
   return (
-    <div>
-      <PageHeader
-        eyebrow="Coordination workspace"
-        title="Working Group Contact Points"
-        description="Review joiners, keep activities visible, and move working-group action points forward."
-      />
-
-      <div className="metricGrid">
-        <div className="metricCard">
-          <Users size={18} aria-hidden />
-          <strong>
-            {access.manageAllWgs ? 'All' : access.wgAssignments.length}
-          </strong>
-          <span>assigned groups</span>
-        </div>
-        <div className="metricCard">
-          <ListChecks size={18} aria-hidden />
-          <strong>Review</strong>
-          <span>new joiners first</span>
-        </div>
-        <div className="metricCard">
-          <CalendarDays size={18} aria-hidden />
-          <strong>Update</strong>
-          <span>calls and actions</span>
+    <div className="mcConsole">
+      <div className="mcHero">
+        <MissionCountdown />
+        <div className="mcHeroMetrics">
+          <MissionMetric
+            value={
+              access.manageAllWgs
+                ? 'ALL'
+                : String(access.wgAssignments?.length || 0)
+            }
+            label="Assigned groups"
+          />
+          <MissionMetric
+            value={String(pendingTotal)}
+            label="Awaiting review"
+            tone={pendingTotal > 0 ? 'warn' : undefined}
+          />
+          <MissionMetric value="CP" label="Your mandate" />
         </div>
       </div>
 
-      <Section label="Your WG workspaces">
+      <section className="mcSection">
+        <div className="mcSectionHead">
+          <h2>Your WG workspaces</h2>
+          <span className="mcSectionHint">
+            <Radio size={14} aria-hidden /> Open a group to review joiners
+          </span>
+        </div>
+
         <Async
           query={groups}
           empty={(data) =>
@@ -61,12 +102,8 @@ export function CpOverview() {
           {(data) => {
             const assigned = access.manageAllWgs
               ? data.items
-              : data.items.filter((group) =>
-                  access.wgAssignments.some(
-                    (item) => item.wgSlug === group.slug,
-                  ),
-                )
-            if (!assigned.length)
+              : data.items.filter((group) => assignedSlugs?.has(group.slug))
+            if (!assigned.length) {
               return (
                 <Empty
                   icon={Briefcase}
@@ -74,32 +111,51 @@ export function CpOverview() {
                   body="An admin or existing Contact Point must assign you to a specific working group."
                 />
               )
+            }
             return (
-              <div className="grid2">
-                {assigned.map((group) => (
-                  <A
-                    key={group.slug}
-                    href={`/cp/${group.slug}`}
-                    className="card roleCard"
-                  >
-                    <div className="rowBetween">
-                      <span className="monogram">{group.monogram}</span>
-                      <StatusChip status="active" />
-                    </div>
-                    <h3 style={{ marginTop: 12 }}>{group.name}</h3>
-                    <p className="meta" style={{ marginTop: 4 }}>
-                      {group.focusLine}
-                    </p>
-                    <span className="roleCardAction">
-                      Open management <ArrowRight size={15} aria-hidden />
-                    </span>
-                  </A>
-                ))}
+              <div className="mcBento">
+                {assigned.map((group) => {
+                  const pending = pendingByWg[group.slug] || 0
+                  const role = roleForGroup(access, group.slug)
+                  return (
+                    <A
+                      key={group.slug}
+                      href={`/cp/${group.slug}`}
+                      className="mcWgTile"
+                    >
+                      <div className="mcWgTileTop">
+                        <MissionMonogram>
+                          {group.monogram || group.name.slice(0, 2)}
+                        </MissionMonogram>
+                        <StatusChip status="active" />
+                      </div>
+                      <h3>{group.name}</h3>
+                      <p className="mcWgFocus">{group.focusLine}</p>
+                      <div className="mcWgMeta">
+                        <span className="mcPill mono">{role}</span>
+                        {pending > 0 ? (
+                          <span className="mcPill mcPillWarn mono">
+                            <ListChecks size={12} aria-hidden />
+                            {pending} pending
+                          </span>
+                        ) : (
+                          <span className="mcPill mono">
+                            <Users size={12} aria-hidden />
+                            clear
+                          </span>
+                        )}
+                      </div>
+                      <span className="mcWgCta">
+                        Open console <ArrowRight size={15} aria-hidden />
+                      </span>
+                    </A>
+                  )
+                })}
               </div>
             )
           }}
         </Async>
-      </Section>
+      </section>
     </div>
   )
 }

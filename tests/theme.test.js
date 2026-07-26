@@ -1,23 +1,23 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  DEFAULT_THEME,
   THEME_STORAGE_KEY,
   clearThemeOverride,
   resolvedTheme,
   storedTheme,
-  systemTheme,
 } from '../src/lib/theme.js'
 
-test('system colour scheme is the default', () => {
-  assert.equal(systemTheme(true), 'dark')
-  assert.equal(systemTheme(false), 'light')
-  assert.equal(resolvedTheme({ override: null, matchesDark: true }), 'dark')
-  assert.equal(resolvedTheme({ override: null, matchesDark: false }), 'light')
+test('light is the default colour scheme', () => {
+  assert.equal(DEFAULT_THEME, 'light')
+  assert.equal(resolvedTheme({ override: null }), 'light')
+  assert.equal(resolvedTheme({ override: undefined }), 'light')
+  assert.equal(resolvedTheme({ override: 'system' }), 'light')
 })
 
-test('an explicit user override wins over the system scheme', () => {
-  assert.equal(resolvedTheme({ override: 'light', matchesDark: true }), 'light')
-  assert.equal(resolvedTheme({ override: 'dark', matchesDark: false }), 'dark')
+test('an explicit user override wins over the default', () => {
+  assert.equal(resolvedTheme({ override: 'dark' }), 'dark')
+  assert.equal(resolvedTheme({ override: 'light' }), 'light')
 })
 
 test('stored theme accepts only supported overrides', () => {
@@ -34,13 +34,13 @@ test('stored theme accepts only supported overrides', () => {
   assert.equal(storedTheme(storage(null)), null)
 })
 
-test('theme override can return to the system setting', () => {
+test('clearing the override returns to the light default', () => {
   let removedKey
   const storage = {
     removeItem: (key) => {
       removedKey = key
     },
   }
-  assert.equal(clearThemeOverride(storage), systemTheme())
+  assert.equal(clearThemeOverride(storage), DEFAULT_THEME)
   assert.equal(removedKey, THEME_STORAGE_KEY)
 })

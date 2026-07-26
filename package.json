@@ -14,6 +14,7 @@
     "start": "node server/index.js",
     "migrate": "node scripts/database/migrate.js",
     "bootstrap-admin": "node scripts/admin/bootstrap-admin.js",
+    "seed-demo-accounts": "node scripts/admin/seed-demo-accounts.js",
     "content:check": "node scripts/content/check-content.js",
     "format": "prettier --write \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
     "format:check": "prettier --check \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
@@ -26,7 +27,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "libphonenumber-js": "1.13.9",
+    "libphonenumber-js": "^1.13.9",
     "lucide-react": "^1.8.0",
     "pg": "^8.22.0",
     "react": "^19.2.4",

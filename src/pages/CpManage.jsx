@@ -1,17 +1,14 @@
-import { useEffect, useState } from 'react'
-import { apiGet, apiPost } from '../lib/api.js'
-import { useApi } from '../lib/api.js'
-import {
-  A,
-  Button,
-  Async,
-  Section,
-  Empty,
-  ErrorCard,
-  PageHeader,
-} from '../components/ui.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import { apiGet, apiPost, useApi } from '../lib/api.js'
+import { A, Button, Async, Empty, ErrorCard } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
+import {
+  MissionCountdown,
+  MissionMetric,
+  MissionMonogram,
+} from '../components/MissionConsole.jsx'
 import { WG_ACTIVITY_KINDS } from '../../shared/workflows.js'
+import { ArrowLeft } from 'lucide-react'
 
 export function CpManage({ slug }) {
   const groups = useApi('/groups')
@@ -63,132 +60,190 @@ export function CpManage({ slug }) {
     }
   }
 
+  const pending = useMemo(
+    () =>
+      members.filter(
+        (m) => m.status === 'pending_approval' || m.status === 'interested',
+      ),
+    [members],
+  )
+  const active = useMemo(
+    () => members.filter((m) => m.status === 'active'),
+    [members],
+  )
+
   return (
-    <div>
-      <A href="/groups" className="backLink">
-        ← Groups
+    <div className="mcConsole">
+      <A href="/cp" className="mcBack">
+        <ArrowLeft size={16} strokeWidth={1.75} aria-hidden />
+        All WG consoles
       </A>
+
       <Async query={groups} skeletons={2}>
         {(g) => {
           const group = (g.items || []).find((x) => x.slug === slug)
+          const monogram =
+            group?.monogram || String(slug).slice(0, 2).toUpperCase()
           return (
             <>
-              <PageHeader
-                eyebrow="Contact Point console"
-                title={group?.name || slug}
-                description="Review joiners, assign WG roles, and register activities."
-              />
+              <div className="mcHero">
+                <div className="mcHeroIdentity">
+                  <MissionMonogram>{monogram}</MissionMonogram>
+                  <div>
+                    <p className="mcEyebrow">Contact Point console</p>
+                    <h1 className="mcTitle">{group?.name || slug}</h1>
+                    {group?.focusLine && (
+                      <p className="mcLead">{group.focusLine}</p>
+                    )}
+                  </div>
+                </div>
+                <MissionCountdown />
+                <div className="mcHeroMetrics">
+                  <MissionMetric
+                    value={String(pending.length)}
+                    label="Awaiting review"
+                    tone={pending.length ? 'warn' : undefined}
+                  />
+                  <MissionMetric
+                    value={String(active.length)}
+                    label="Active members"
+                  />
+                  <MissionMetric
+                    value={String(members.length)}
+                    label="In queue total"
+                  />
+                </div>
+              </div>
+
               {error && <ErrorCard message={error} onRetry={load} />}
-              {msg && (
-                <p className="meta" style={{ color: 'var(--accent)' }}>
-                  {msg}
-                </p>
-              )}
+              {msg && <p className="mcFlash">{msg}</p>}
 
-              <Section label="Recent members">
-                {members.length === 0 ? (
-                  <Empty
-                    title="No joiners yet"
-                    body="When members unlock this workspace they appear here."
-                  />
-                ) : (
-                  members.map((m) => (
-                    <div
-                      key={`${m.account_id}-${m.wg_slug}`}
-                      className="card cardTight rowBetween"
-                    >
-                      <div>
-                        <strong>{m.name || m.email}</strong>
-                        <p className="meta">
-                          {m.email} · {m.status} · {m.role_in_wg}
-                        </p>
-                      </div>
-                      <div className="rowGap">
-                        <Button
-                          sm
-                          variant="secondary"
-                          onClick={() =>
-                            setRole(m.account_id, 'member', 'active')
-                          }
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          sm
-                          variant="ghost"
-                          onClick={() =>
-                            setRole(m.account_id, 'contact', 'active')
-                          }
-                        >
-                          Make CP
-                        </Button>
-                        <Button
-                          sm
-                          variant="ghost"
-                          onClick={() =>
-                            setRole(m.account_id, 'member', 'rejected')
-                          }
-                        >
-                          Reject
-                        </Button>
-                      </div>
+              <div className="mcSplit">
+                <section className="mcPanel">
+                  <div className="mcSectionHead">
+                    <h2>Joiner queue</h2>
+                    <span className="mcSectionHint mono">
+                      {members.length} records
+                    </span>
+                  </div>
+                  {members.length === 0 ? (
+                    <Empty
+                      title="No joiners yet"
+                      body="When members unlock this workspace they appear here."
+                    />
+                  ) : (
+                    <div className="mcQueue">
+                      {members.map((m) => {
+                        const needsReview =
+                          m.status === 'pending_approval' ||
+                          m.status === 'interested'
+                        return (
+                          <div
+                            key={`${m.account_id}-${m.wg_slug}`}
+                            className={`mcQueueRow${needsReview ? ' mcQueueRowWarn' : ''}`}
+                          >
+                            <div className="mcQueueCopy">
+                              <strong>{m.name || m.email}</strong>
+                              <p className="mcQueueMeta mono">
+                                {m.email}
+                                <span aria-hidden> · </span>
+                                {m.status}
+                                <span aria-hidden> · </span>
+                                {m.role_in_wg}
+                              </p>
+                            </div>
+                            <div className="mcQueueActions">
+                              <Button
+                                sm
+                                variant="secondary"
+                                onClick={() =>
+                                  setRole(m.account_id, 'member', 'active')
+                                }
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                sm
+                                variant="ghost"
+                                onClick={() =>
+                                  setRole(m.account_id, 'contact', 'active')
+                                }
+                              >
+                                Make CP
+                              </Button>
+                              <Button
+                                sm
+                                variant="ghost"
+                                onClick={() =>
+                                  setRole(m.account_id, 'member', 'rejected')
+                                }
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))
-                )}
-              </Section>
+                  )}
+                </section>
 
-              <Section label="Register activity">
-                <form className="card stack" onSubmit={addActivity}>
-                  <SearchableSelect
-                    label="Kind"
-                    options={WG_ACTIVITY_KINDS.map(([value, label]) => ({
-                      value,
-                      label,
-                    }))}
-                    value={form.kind}
-                    onChange={(kind) =>
-                      setForm((current) => ({ ...current, kind }))
-                    }
-                    searchPlaceholder="Search activity types…"
-                  />
-                  <label className="field">
-                    <span>Title</span>
-                    <input
-                      className="input"
-                      value={form.title}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, title: e.target.value }))
+                <section className="mcPanel">
+                  <div className="mcSectionHead">
+                    <h2>Register activity</h2>
+                  </div>
+                  <form className="mcForm" onSubmit={addActivity}>
+                    <SearchableSelect
+                      label="Kind"
+                      options={WG_ACTIVITY_KINDS.map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
+                      value={form.kind}
+                      onChange={(kind) =>
+                        setForm((current) => ({ ...current, kind }))
                       }
-                      required
+                      searchPlaceholder="Search activity types…"
                     />
-                  </label>
-                  <label className="field">
-                    <span>Details</span>
-                    <textarea
-                      className="input textarea"
-                      rows={3}
-                      value={form.body}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, body: e.target.value }))
-                      }
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Starts (optional)</span>
-                    <input
-                      className="input"
-                      type="datetime-local"
-                      value={form.startsAt}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, startsAt: e.target.value }))
-                      }
-                    />
-                  </label>
-                  <Button type="submit" variant="primary">
-                    Add activity
-                  </Button>
-                </form>
-              </Section>
+                    <label className="field">
+                      <span>Title</span>
+                      <input
+                        className="input"
+                        value={form.title}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, title: e.target.value }))
+                        }
+                        required
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Details</span>
+                      <textarea
+                        className="input textarea"
+                        rows={3}
+                        value={form.body}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, body: e.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Starts (optional)</span>
+                      <input
+                        className="input"
+                        type="datetime-local"
+                        value={form.startsAt}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, startsAt: e.target.value }))
+                        }
+                      />
+                    </label>
+                    <Button type="submit" variant="primary" glow>
+                      Add activity
+                    </Button>
+                  </form>
+                </section>
+              </div>
             </>
           )
         }}

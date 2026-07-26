@@ -1,13 +1,9 @@
 export const THEME_STORAGE_KEY = 'youngo-hub:theme-override'
 const THEMES = new Set(['light', 'dark'])
 
-export function systemTheme(
-  matchesDark = typeof window !== 'undefined'
-    ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
-    : true,
-) {
-  return matchesDark ? 'dark' : 'light'
-}
+// Light is the product default. Dark renders only for members who opt in, so
+// the operating-system colour scheme never decides the first paint.
+export const DEFAULT_THEME = 'light'
 
 export function storedTheme(storage = globalThis.localStorage) {
   try {
@@ -18,12 +14,12 @@ export function storedTheme(storage = globalThis.localStorage) {
   }
 }
 
-export function resolvedTheme({ override, matchesDark }) {
-  return override || systemTheme(matchesDark)
+export function resolvedTheme({ override }) {
+  return THEMES.has(override) ? override : DEFAULT_THEME
 }
 
 export function applyTheme(theme, root = document.documentElement) {
-  const next = THEMES.has(theme) ? theme : systemTheme()
+  const next = THEMES.has(theme) ? theme : DEFAULT_THEME
   root.dataset.theme = next
   root.ownerDocument
     ?.querySelector('meta[name="theme-color"]')
@@ -36,18 +32,16 @@ export function getSavedTheme() {
 }
 
 export function getInitialTheme() {
-  return resolvedTheme({
-    override: getSavedTheme(),
-    matchesDark:
-      typeof window !== 'undefined'
-        ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
-        : true,
-  })
+  return resolvedTheme({ override: getSavedTheme() })
 }
 
 export function saveTheme(theme) {
   const next = applyTheme(theme)
-  localStorage.setItem(THEME_STORAGE_KEY, next)
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next)
+  } catch {
+    // Storage may be unavailable in privacy-restricted contexts.
+  }
   return next
 }
 
@@ -57,7 +51,7 @@ export function clearThemeOverride(storage = globalThis.localStorage) {
   } catch {
     // Storage may be unavailable in privacy-restricted contexts.
   }
-  return systemTheme()
+  return DEFAULT_THEME
 }
 
 export function hasChosenTheme() {

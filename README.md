@@ -287,7 +287,7 @@ Railway reads `railway.json` and performs these steps:
 3. start the server with `npm start`
 4. check `/healthz`
 
-### Publish a local change
+### Publish a change
 
 Railway cannot deploy uncommitted files. First turn the verified worktree into
 a Git commit and push it:
@@ -302,41 +302,38 @@ git push origin main
 ```
 
 Check the `git status` output before committing. It is the final list of files
-that will be published. After pushing, open the GitHub **Verify** workflow and
-confirm both Node versions pass for the new commit.
+that will be published.
 
-If Railway is connected to GitHub, its service source must point to this
-repository and the `main` branch. Confirm that the deployment shows the same
-commit SHA returned by:
+The independently controlled Railway project watches `Genn25369/YOUNGO-HUB`
+on `main`. A push starts GitHub **Verify**; Railway waits for those checks and
+then deploys the commit automatically. Confirm both Node versions pass and the
+Railway deployment shows the same commit SHA returned by:
 
 ```bash
 git rev-parse HEAD
 git ls-remote origin refs/heads/main
 ```
 
-Those two hashes must match. If GitHub has the commit but Railway does not
-deploy it, repair the Railway service's repository/branch connection or deploy
-the verified worktree explicitly to staging:
+Those two hashes must match.
 
-```bash
-railway up --environment staging --service youngo-hub
-```
+Current independent deployment:
+<https://youngo-hub-production-c0a0.up.railway.app>
 
-Staging: <https://web-staging-31ab.up.railway.app>
+Health check:
+<https://youngo-hub-production-c0a0.up.railway.app/healthz>
 
-Check `/healthz` and the changed user journeys on staging before promoting the
-same build to production. Do not use a production deployment to find out
-whether migrations or authentication changes work.
+The Railway service uses its attached PostgreSQL database and runs migrations
+before each start. The generated public domain targets Railway's injected
+application port (`8080`).
 
-This repository does not contain a GitHub Actions deployment job. Automatic
-deployment after a push depends on the Railway service's GitHub connection and
-branch settings.
+This is a new database. Accounts and other database-only state from the older
+Railway project were not copied. Fixture-backed public content ships with the
+repository, but existing members must be migrated before this URL replaces an
+established member service.
 
-The current hosting stack is not replaced by Vercel or Supabase. Before any
-migration, first confirm that the intended commit exists on GitHub `main` and
-that Railway is watching that branch. A future database move can point the
-existing server at Supabase Postgres through `DATABASE_URL`; moving the Express
-runtime to Vercel would be a separate serverless deployment change.
+If a push does not deploy, first confirm GitHub **Verify** completed, then check
+Railway's service source is still `Genn25369/YOUNGO-HUB`, branch `main`, with
+automatic deployment and **Wait for CI** enabled.
 
 ## Known gaps
 
