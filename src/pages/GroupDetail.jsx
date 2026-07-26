@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   CalendarOff,
   Unlock,
+  BookOpen,
 } from 'lucide-react'
 
 export function GroupDetail({ slug }) {
@@ -126,6 +127,38 @@ export function GroupDetail({ slug }) {
                 <div className="cardGrid">
                   {g.submissions.map((s) => (
                     <SubmissionCard key={s.slug} sub={s} />
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {g.resources?.length > 0 && (
+              <Section label="Learning & resources">
+                <div className="grid2">
+                  {g.resources.map((r) => (
+                    <a
+                      key={r.url}
+                      className="card cardTight"
+                      href={r.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <div className="rowGap">
+                        <BookOpen size={18} strokeWidth={1.75} aria-hidden />
+                        <strong>{r.label}</strong>
+                        <ArrowUpRight
+                          size={16}
+                          strokeWidth={1.75}
+                          aria-hidden
+                          style={{ marginLeft: 'auto' }}
+                        />
+                      </div>
+                      {r.description && (
+                        <p className="meta" style={{ marginTop: 6 }}>
+                          {r.description}
+                        </p>
+                      )}
+                    </a>
                   ))}
                 </div>
               </Section>

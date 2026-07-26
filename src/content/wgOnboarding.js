@@ -35,6 +35,18 @@ export const WG_ONBOARDING = {
       'Coordinate ACE Dialogue and education-related inputs with the group.',
     ],
   },
+  energy: {
+    presentation: [
+      'Energy WG works on a just energy transition — scaling renewables, phasing out fossil fuels, and energy access for young people and frontline communities.',
+      'We track mitigation and energy agenda items, prepare submissions, and use open data like Climate Watch and the Climate Action Tracker to keep inputs evidence-based.',
+      'CPs maintain the WhatsApp space and the biweekly call cadence.',
+    ],
+    rules: [
+      'Ground claims in cited, verifiable sources when drafting submissions.',
+      'Centre a just transition and the needs of fossil-fuel-dependent and energy-poor communities.',
+      'Coordinate public statements with CPs before using the YOUNGO name.',
+    ],
+  },
 }
 
 export function getWgOnboarding(slug) {
