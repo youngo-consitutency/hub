@@ -1,39 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
-const buckets = new Map()
-
-export function rateLimit({
-  windowMs = 60_000,
-  max = 30,
-  name = 'default',
-} = {}) {
-  return (req, res, next) => {
-    const key = `${name}:${req.ip || req.socket?.remoteAddress || 'unknown'}`
-    const now = Date.now()
-    if (buckets.size > 10_000)
-      for (const [bucketKey, value] of buckets)
-        if (value.resetAt <= now) buckets.delete(bucketKey)
-    const current = buckets.get(key)
-    if (!current || current.resetAt <= now)
-      buckets.set(key, { count: 1, resetAt: now + windowMs })
-    else {
-      current.count += 1
-      if (current.count > max) {
-        res.set(
-          'Retry-After',
-          String(Math.ceil((current.resetAt - now) / 1000)),
-        )
-        return res.status(429).json({
-          error: {
-            code: 'rate_limited',
-            message: 'Too many requests. Please try again shortly.',
-          },
-        })
-      }
-    }
-    next()
-  }
-}
+// Rate limiting lives in ./rateLimit.js — it enforces a hard bucket cap, so it
+// cannot grow without bound when a caller rotates source addresses.
 
 export function requestSecurity(req, res, next) {
   req.requestId = req.get('x-request-id') || randomUUID()

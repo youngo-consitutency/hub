@@ -6,7 +6,7 @@ import {
   useCallback,
   useEffect,
 } from 'react'
-import { setSession, getCachedAccount, getSessionToken } from './session.js'
+import { setSession, getCachedAccount } from './session.js'
 import { apiGet } from './api.js'
 
 const AccountContext = createContext(null)
@@ -36,8 +36,7 @@ export function AccountProvider({ initialAccount, children }) {
 
   const setAccount = useCallback((acc) => {
     setAccountState(acc)
-    const token = getSessionToken()
-    if (acc) setSession({ token, account: acc })
+    if (acc) setSession({ account: acc })
   }, [])
 
   const value = useMemo(() => ({ account, setAccount }), [account, setAccount])

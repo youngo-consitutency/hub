@@ -24,6 +24,18 @@ import {
 export const authRouter = Router()
 const registerLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 8 })
 const loginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 })
+// Per-IP limiting alone does not slow a credential-stuffing run spread across
+// many addresses, so one account may also be targeted only so often. The
+// threshold stays well above human retry rates: this throttles guessing, it is
+// not a lockout, and it clears on its own.
+const loginAccountLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: (req) =>
+    `email:${String(req.body?.email || '')
+      .trim()
+      .toLowerCase()}`,
+})
 const resetRequestLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 8,
@@ -62,7 +74,19 @@ authRouter.get('/me', async (req, res) => {
 authRouter.post('/register', registerLimit, async (req, res) => {
   try {
     const result = validateRegistration(req.body)
-    if (result.honeypot) return res.status(201).json({ ok: true }) // feign success for bots
+    if (result.honeypot) {
+      // Feign success so bots do not learn they were caught. Log it, though:
+      // a false positive here silently costs a real member their account, and
+      // without this line there is no way to tell that it happened.
+      console.log(
+        JSON.stringify({
+          event: 'hub_register_rejected_as_automated',
+          requestId: req.requestId,
+          at: new Date().toISOString(),
+        }),
+      )
+      return res.status(201).json({ ok: true })
+    }
     if (result.fields) {
       return res.status(400).json({
         error: {
@@ -132,7 +156,7 @@ authRouter.post('/register', registerLimit, async (req, res) => {
   }
 })
 
-authRouter.post('/login', loginLimit, async (req, res) => {
+authRouter.post('/login', loginLimit, loginAccountLimit, async (req, res) => {
   try {
     const b = req.body || {}
     if (b.website) return res.status(200).json({ ok: true }) // honeypot

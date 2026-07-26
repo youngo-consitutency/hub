@@ -43,8 +43,36 @@ export async function ensureAdminRole(account) {
   return account
 }
 
+// Column names cannot be parameterised, so they are interpolated into the SQL.
+// Every writable column is listed here: an unknown key is rejected rather than
+// concatenated, so a caller that ever forwards request data cannot inject SQL.
+const WRITABLE_ACCOUNT_COLUMNS = new Set([
+  'member_status',
+  'hub_access_status',
+  'membership_status',
+  'membership_track',
+  'constituency_work_status',
+  'course_passed_at',
+  'course_score',
+  'verified_at',
+  'verified_by',
+  'role',
+  'team_roles',
+  'onboarding_cohort',
+  'renewal_due_at',
+  'membership_ended_at',
+  'membership_end_reason',
+  'last_login_at',
+])
+
 export async function setAccountFields(id, fields) {
   const pool = getPool()
+  const unknown = Object.keys(fields).filter(
+    (key) => !WRITABLE_ACCOUNT_COLUMNS.has(key),
+  )
+  if (unknown.length) {
+    throw new Error(`Refusing to update unknown account column(s): ${unknown}`)
+  }
   if (pool) {
     const sets = []
     const vals = []

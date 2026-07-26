@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { getSessionToken, clearSession } from './session.js'
+import { clearSession } from './session.js'
 
+// Requests carry no Authorization header: the session travels in the HttpOnly
+// `youngo_session` cookie, which `credentials: 'same-origin'` attaches. Keeping
+// the credential out of JavaScript is what makes an XSS bug non-fatal.
 function authHeaders(extra = {}) {
-  const headers = { ...extra }
-  const token = getSessionToken()
-  if (token) headers.Authorization = `Bearer ${token}`
-  return headers
+  return { ...extra }
 }
 
 export async function apiGet(path) {

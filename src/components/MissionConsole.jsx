@@ -21,12 +21,14 @@ export function formatUtcClock(date) {
   return `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())} UTC`
 }
 
-export function MissionStatusBar({ liveLabel, right }) {
+export function MissionStatusBar({ station, liveLabel, right }) {
   const now = useUtcClock()
   return (
     <div className="mcStatusBar" role="status">
       <div className="mcStatusLeft">
         <span className="mcStatusTag">COP31 · ANTALYA</span>
+        {station && <span className="mcStatusStation">{station}</span>}
+        {/* The pulsing pill means something is genuinely live — never a page name. */}
         {liveLabel && (
           <span className="mcLivePill">
             <span className="mcLiveDot" aria-hidden />

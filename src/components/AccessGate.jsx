@@ -10,7 +10,7 @@ import { apiGet } from '../lib/api.js'
 import {
   clearSession,
   getCachedAccount,
-  getSessionToken,
+  hasCachedSession,
   setSession,
 } from '../lib/session.js'
 import { usePath } from '../lib/router.js'
@@ -27,11 +27,10 @@ export function AccessGate({ children }) {
   const [account, setAccount] = useState(null)
 
   const refreshSession = useCallback(async () => {
-    const token = getSessionToken()
     try {
       const data = await apiGet('/auth/me')
       setAccount(data.account)
-      setSession({ token, account: data.account })
+      setSession({ account: data.account })
     } catch {
       clearSession()
       setAccount(null)
@@ -45,8 +44,11 @@ export function AccessGate({ children }) {
       const policy = hasAcknowledgedMembershipPolicy()
       if (!alive) return
       setPolicyOk(policy)
-      if (policy && getSessionToken()) {
-        setAccount(getCachedAccount())
+      // The session cookie is HttpOnly, so the client cannot inspect it — the
+      // server is asked on every load. Cached profile data only pre-fills the
+      // first paint; `/auth/me` confirms or clears it.
+      if (policy) {
+        if (hasCachedSession()) setAccount(getCachedAccount())
         await refreshSession()
       }
       if (alive) setReady(true)

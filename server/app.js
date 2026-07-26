@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { publicRouter } from './routes/public.js'
 import { icsRouter } from './routes/ics.js'
 import { authRouter } from './routes/auth.js'
-import { memberRouter } from './routes/member.js'
+import { memberRouter } from './routes/member/index.js'
 import { intelligenceRouter } from './routes/intelligence.js'
 import { pushRouter } from './routes/push.js'
 import { appOrigin } from './lib/config.js'
@@ -49,9 +49,13 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.disable('x-powered-by')
   if (env.NODE_ENV === 'production') app.set('trust proxy', 1)
   app.use(requestSecurity)
+  // Credentialed CORS is granted to named origins only. Reflecting whatever
+  // Origin arrives would let any site call this API with the caller's cookie.
   app.use(
     cors({
-      origin: env.APP_ORIGIN ? appOrigin(env) : true,
+      origin: env.APP_ORIGIN
+        ? [appOrigin(env)]
+        : ['http://localhost:5173', 'http://127.0.0.1:5173'],
       credentials: true,
     }),
   )
