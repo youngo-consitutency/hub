@@ -6,6 +6,10 @@ import {
   CoyCard,
   GroupCard,
 } from '../components/cards.jsx'
+import {
+  MissionCountdown,
+  MissionMetric,
+} from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
 import { Radio, CalendarOff, Users } from 'lucide-react'
 
@@ -47,8 +51,26 @@ export function Home() {
             <PageHeader
               eyebrow="Member overview"
               title="YOUNGO, in one place"
-              description={`${data.closing.length} closing soon · ${data.week.length} meetings this week`}
             />
+
+            <div className="mcHero homeHero">
+              <MissionCountdown label="Days to COP31 · Antalya, Türkiye" />
+              <div className="mcHeroMetrics">
+                <MissionMetric
+                  value={String(data.closing.length)}
+                  label="Closing soon"
+                  tone={data.closing.length > 0 ? 'warn' : undefined}
+                />
+                <MissionMetric
+                  value={String(data.week.length)}
+                  label="Meetings this week"
+                />
+                <MissionMetric
+                  value={String(data.coys.length)}
+                  label="COYs listed"
+                />
+              </div>
+            </div>
 
             {data.pinned.length > 0 && (
               <Section label="Pinned">

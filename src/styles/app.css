@@ -40,6 +40,8 @@
   padding: 4px 6px;
   border-radius: 5px;
   background: var(--brand-surface);
+  /* Define the plate edge so it doesn't vanish white-on-near-white in light. */
+  border: 1px solid var(--border);
 }
 
 .brandLogoPlate img {
@@ -51,7 +53,7 @@
 
 .brandHub {
   font-family: var(--font-display);
-  font-weight: 650;
+  font-weight: 600;
   font-size: 16px;
   color: var(--text-1);
 }
@@ -4177,6 +4179,25 @@ main > .mcStatusBar {
   color: var(--text-2);
 }
 
+/* Neutral "where you are" indicator — no pulse, distinct from a live pill. */
+.mcStatusStation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+
+.mcStatusStation::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
 .mcLivePill {
   display: inline-flex;
   align-items: center;
@@ -4229,6 +4250,11 @@ main > .mcStatusBar {
   box-shadow: var(--mc-ring);
 }
 
+/* Outside .mcConsole the hero has no flex gap to lean on. */
+.homeHero {
+  margin-bottom: var(--section-gap);
+}
+
 .mcHeroIdentity {
   grid-column: 1 / -1;
   display: flex;
@@ -4237,10 +4263,11 @@ main > .mcStatusBar {
 }
 
 .mcTitle {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: 28px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   margin: 2px 0 0;
 }
 
@@ -4276,6 +4303,10 @@ main > .mcStatusBar {
   line-height: 0.92;
   letter-spacing: -0.05em;
   color: var(--text-1);
+}
+
+/* The accent glow reads as a muddy halo on light — reserve it for dark. */
+[data-theme='dark'] .mcCountdownDays {
   text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
@@ -4650,4 +4681,50 @@ main > .mcStatusBar {
   .mcLiveDot {
     animation: none;
   }
+}
+
+/* ── Member surface: the warmer, movement-forward register ─────────────
+   Operational routes keep data-surface='mission'. Member-facing pages get a
+   soft emerald ambient plus a woven texture reserved for empty states —
+   echoing the COY21 call's green world without the console density. */
+[data-surface='member'] .content {
+  background-image: radial-gradient(
+    130% 60% at 50% -12%,
+    color-mix(in srgb, var(--accent) 7%, transparent),
+    transparent 58%
+  );
+  background-repeat: no-repeat;
+}
+
+[data-surface='member'] .empty {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: none;
+}
+
+[data-surface='member'] .empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.7;
+  background-image:
+    repeating-linear-gradient(
+      60deg,
+      transparent 0 20px,
+      color-mix(in srgb, var(--accent) 9%, transparent) 20px 21px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      transparent 0 20px,
+      color-mix(in srgb, var(--accent) 9%, transparent) 20px 21px
+    );
+  -webkit-mask-image: radial-gradient(
+    85% 85% at 50% 42%,
+    #000 26%,
+    transparent 76%
+  );
+  mask-image: radial-gradient(85% 85% at 50% 42%, #000 26%, transparent 76%);
 }
