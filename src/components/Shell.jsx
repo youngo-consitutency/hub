@@ -6,6 +6,7 @@ import { usePath } from '../lib/router.js'
 import { apiPost } from '../lib/api.js'
 import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
+import { MissionStatusBar } from './MissionConsole.jsx'
 import {
   Home,
   CalendarDays,
@@ -36,6 +37,34 @@ function isActive(path, href) {
   return href === '/' ? path === '/' : path.startsWith(href)
 }
 
+const STATIONS = [
+  ['/cp', 'WG contact point'],
+  ['/team/membership', 'Membership team'],
+  ['/team/gys', 'GYS policy'],
+  ['/staff/content', 'Content ops'],
+  ['/staff/points', 'NGO points'],
+  ['/admin', 'Admin'],
+  ['/focal', 'Focal point'],
+  ['/ngo', 'NGO platform'],
+  ['/onboarding', 'Onboarding'],
+  ['/library', 'Library'],
+  ['/calendar', 'Calendar'],
+  ['/submissions', 'Submissions'],
+  ['/council', 'Council'],
+  ['/coys', 'COY tracker'],
+  ['/gys', 'Youth statement'],
+  ['/groups', 'Working groups'],
+  ['/directory', 'Directory'],
+  ['/recognition', 'NGO recognition'],
+  ['/profile', 'Profile'],
+  ['/search', 'Search'],
+]
+
+function stationFor(path) {
+  const match = STATIONS.find(([prefix]) => path.startsWith(prefix))
+  return match ? match[1] : 'Member hub'
+}
+
 export function Shell({ children }) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
@@ -49,16 +78,19 @@ export function Shell({ children }) {
     setSheet(false)
   }, [path])
 
+  const workspace = path.startsWith('/cp')
+    ? 'wg'
+    : path.startsWith('/team/membership')
+      ? 'membership'
+      : path.startsWith('/team/gys')
+        ? 'gys'
+        : 'member'
+
   useEffect(() => {
-    const workspace = path.startsWith('/cp')
-      ? 'wg'
-      : path.startsWith('/team/membership')
-        ? 'membership'
-        : path.startsWith('/team/gys')
-          ? 'gys'
-          : 'member'
-    document.documentElement.dataset.workspace = workspace
-  }, [path])
+    const root = document.documentElement
+    root.dataset.workspace = workspace
+    root.dataset.surface = 'mission'
+  }, [workspace])
 
   const verified = Boolean(account?.isVerified)
 
@@ -308,6 +340,7 @@ export function Shell({ children }) {
           </div>
         </header>
         <main id="main-content" tabIndex="-1">
+          <MissionStatusBar liveLabel={stationFor(path)} />
           {!verified && (
             <div className="noticeBanner noticeBannerWarn">
               <span className="noticeDot" />
@@ -317,30 +350,6 @@ export function Shell({ children }) {
               <A href="/onboarding/course" className="btn btn-primary btn-sm">
                 Course
               </A>
-            </div>
-          )}
-          {path.startsWith('/cp') && (
-            <div className="workspaceContext workspaceContext-wg">
-              <Briefcase size={16} aria-hidden />
-              WG Contact Point workspace
-            </div>
-          )}
-          {path.startsWith('/team/membership') && (
-            <div className="workspaceContext workspaceContext-membership">
-              <ClipboardCheck size={16} aria-hidden />
-              Membership Team workspace
-            </div>
-          )}
-          {path.startsWith('/team/gys') && (
-            <div className="workspaceContext workspaceContext-gys">
-              <PenTool size={16} aria-hidden />
-              Global Youth Statement Policy workspace
-            </div>
-          )}
-          {path.startsWith('/staff/content') && (
-            <div className="workspaceContext">
-              <FilePenLine size={16} aria-hidden />
-              Content operations workspace
             </div>
           )}
           {children}
