@@ -11,7 +11,8 @@ import {
   MissionMetric,
 } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Radio, CalendarOff, Users } from 'lucide-react'
+import { BETA_CONTRIBUTORS, publishedLinks } from '../content/connect.js'
+import { Radio, CalendarOff, Users, ArrowUpRight } from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
@@ -193,6 +194,58 @@ export function Home() {
           </p>
         </A>
       </Section>
+
+      <ConnectAndCredits />
     </div>
+  )
+}
+
+/**
+ * Where to find YOUNGO outside the Hub, and who is building the beta. Links
+ * appear only once a real address is set in content/connect.js.
+ */
+function ConnectAndCredits() {
+  const links = publishedLinks()
+
+  return (
+    <Section label="Connect">
+      <div className="grid2">
+        {links.length > 0 && (
+          <div className="card cardTight connectCard">
+            <h3>YOUNGO elsewhere</h3>
+            <p className="meta">
+              Follow the constituency's public channels for announcements beyond
+              the Hub.
+            </p>
+            <ul className="connectLinks">
+              {links.map((link) => (
+                <li key={link.key}>
+                  <a href={link.url} target="_blank" rel="noreferrer">
+                    {link.label}
+                    <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="card cardTight connectCard">
+          <h3>
+            <span className="mono betaCount">{BETA_CONTRIBUTORS.length}</span>{' '}
+            people are shaping this beta
+          </h3>
+          <p className="meta">
+            The Hub is built in the open with the constituency. Thank you to
+            everyone testing it and sending feedback.
+          </p>
+          <ul className="contributorList">
+            {BETA_CONTRIBUTORS.map((person) => (
+              <li key={person}>{person}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </Section>
   )
 }

@@ -8,6 +8,8 @@ import { router as ngo } from './ngo.js'
 import { router as points } from './points.js'
 import { router as teams } from './teams.js'
 import { router as content } from './content.js'
+import { router as feedback } from './feedback.js'
+import { router as opportunities } from './opportunities.js'
 import { router as admin } from './admin.js'
 
 export const memberRouter = Router()
@@ -25,4 +27,6 @@ memberRouter.use(ngo)
 memberRouter.use(points)
 memberRouter.use(teams)
 memberRouter.use(content)
+memberRouter.use(feedback)
+memberRouter.use(opportunities)
 memberRouter.use(admin)

@@ -10,7 +10,33 @@ import {
   MapPin,
   Users,
   CornerDownLeft,
+  Megaphone,
 } from 'lucide-react'
+
+// Hub pages that are useful as palette shortcuts even when search returns nothing.
+const PAGE_SHORTCUTS = [
+  {
+    to: '/opportunities',
+    title: 'NGO opportunities',
+    line: 'Events, workshops and open calls from organisations',
+    keywords: 'ngo opportunity workshop hackathon open call training',
+    Icon: Megaphone,
+  },
+  {
+    to: '/calendar',
+    title: 'Calendar',
+    line: 'Meetings and constituency events',
+    keywords: 'calendar meetings events schedule',
+    Icon: CalendarDays,
+  },
+  {
+    to: '/groups',
+    title: 'Working groups',
+    line: 'Find a group and its onboarding',
+    keywords: 'working groups wg',
+    Icon: Users,
+  },
+]
 
 // Same content groups as the /search page, in palette result order.
 const GROUPS = [
@@ -70,11 +96,25 @@ function PaletteBody({ onClose }) {
   const query = useApi(`/search?q=${encodeURIComponent(q)}`, [q])
   const listRef = useRef(null)
 
-  // Flatten grouped results into a single navigable list.
+  // Flatten grouped results into a single navigable list, plus page shortcuts.
   const flat = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    if (!needle) return []
+    const pages = PAGE_SHORTCUTS.filter(
+      (page) =>
+        page.title.toLowerCase().includes(needle) ||
+        page.keywords.includes(needle) ||
+        page.keywords.split(' ').some((word) => word.startsWith(needle)),
+    ).map((page) => ({
+      to: page.to,
+      title: page.title,
+      line: page.line,
+      Icon: page.Icon,
+      group: 'Pages',
+    }))
     const data = query.data
-    if (!data || q.trim() === '') return []
-    return GROUPS.flatMap((g) =>
+    if (!data) return pages
+    const content = GROUPS.flatMap((g) =>
       (data[g.key] || []).map((item) => ({
         to: g.to(item),
         title: g.title(item),
@@ -83,6 +123,7 @@ function PaletteBody({ onClose }) {
         group: g.label,
       })),
     )
+    return [...pages, ...content]
   }, [query.data, q])
 
   useEffect(() => {
@@ -133,7 +174,7 @@ function PaletteBody({ onClose }) {
           aria-activedescendant={
             flat[active] ? `command-palette-result-${active}` : undefined
           }
-          placeholder="Search meetings, submissions, decisions, COYs, groups…"
+          placeholder="Search meetings, NGO opportunities, decisions, groups…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}

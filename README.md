@@ -101,6 +101,35 @@ still maintained in `data/fixtures.json`. See
 [`docs/EDITING_CONTENT.md`](docs/EDITING_CONTENT.md) for the supported fields
 and validation command.
 
+## Member feedback
+
+Every signed-in account gets a **Feedback** button on every page, including
+before the membership course is passed — a member who is blocked is exactly the
+one who needs to reach the team. The dialog captures the page path, viewport and
+user agent alongside the report so the team can reproduce it without a
+follow-up.
+
+Admins and the Membership Team triage the queue on `/admin` and
+`/team/membership`, including status changes and internal triage notes. Setting
+`GITHUB_ISSUE_TOKEN` and `GITHUB_ISSUE_REPO` also opens a GitHub issue per
+ticket; mirroring is best-effort and a GitHub outage never loses a report.
+Agents can process the queue over a read-only Postgres MCP role — see
+[`docs/AGENT_TICKET_ACCESS.md`](docs/AGENT_TICKET_ACCESS.md). Members can see
+their own reports on Profile.
+
+## NGO postings
+
+Accredited organisations post events, online workshops, hackathons, open calls
+and other opportunities from the NGO platform (`/ngo`); members browse them
+under Participate → **NGO opportunities**. Owners and representatives may post,
+matching who may write service requests; viewer seats stay read-only.
+
+An organisation's **first posting is held for review**. Once it is approved the
+organisation is trusted and later postings publish immediately. Staff approve,
+unpublish, and override trust on `/admin` and `/team/membership` (APIs:
+`POST /api/member/opportunities/:id/review`, `…/unpublish`, and
+`…/trust/:orgAccountId`).
+
 ## Commands
 
 | Command | Purpose |
@@ -228,6 +257,8 @@ formal membership or governance records owned by the responsible team.
 | `VAPID_PRIVATE_KEY` | Push only | Web Push private key |
 | `VAPID_SUBJECT` | Push only | Web Push contact URI, such as `mailto:ops@example.org` |
 | `VITE_VAPID_PUBLIC_KEY` | Push only | Public key included in the frontend build |
+| `GITHUB_ISSUE_TOKEN` | Optional | Mirrors feedback tickets into GitHub issues |
+| `GITHUB_ISSUE_REPO` | Optional | Target `owner/repo` for mirrored tickets |
 
 Push notifications are optional. Generate a VAPID key pair with:
 

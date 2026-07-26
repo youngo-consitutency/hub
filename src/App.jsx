@@ -21,6 +21,10 @@ const Groups = lazyPage(() => import('./pages/Groups.jsx'), 'Groups')
 const Directory = lazyPage(() => import('./pages/Directory.jsx'), 'Directory')
 const Search = lazyPage(() => import('./pages/Search.jsx'), 'Search')
 const Statement = lazyPage(() => import('./pages/Statement.jsx'), 'Statement')
+const Opportunities = lazyPage(
+  () => import('./pages/Opportunities.jsx'),
+  'Opportunities',
+)
 const EventDetail = lazyPage(
   () => import('./pages/EventDetail.jsx'),
   'EventDetail',
@@ -116,6 +120,7 @@ const ROUTES = [
   [/^\/coys/, Coys],
   [/^\/groups\/(.+)$/, GroupDetail],
   [/^\/groups/, Groups],
+  [/^\/opportunities/, Opportunities],
   [/^\/directory/, Directory],
   [/^\/gys/, Statement],
   [/^\/search/, Search],
