@@ -20,7 +20,11 @@ export function groupView(group, { includePrivate = false } = {}) {
   const result = {
     ...group,
     ...(Array.isArray(group.events)
-      ? { events: group.events.map((event) => eventView(event, { includePrivate })) }
+      ? {
+          events: group.events.map((event) =>
+            eventView(event, { includePrivate }),
+          ),
+        }
       : {}),
     ...(group.contact
       ? { contact: contactView(group.contact, { includePrivate }) }
@@ -39,7 +43,9 @@ export function feedView(feed, { includePrivate = false } = {}) {
   return {
     ...feed,
     live: eventView(feed.live, { includePrivate }),
-    week: (feed.week || []).map((event) => eventView(event, { includePrivate })),
+    week: (feed.week || []).map((event) =>
+      eventView(event, { includePrivate }),
+    ),
   }
 }
 
@@ -47,12 +53,20 @@ export function searchView(results, { includePrivate = false } = {}) {
   if (!results) return results
   return {
     ...results,
-    events: (results.events || []).map((event) => eventView(event, { includePrivate })),
-    groups: (results.groups || []).map((group) => groupView(group, { includePrivate })),
-    contacts: (results.contacts || []).map((contact) => contactView(contact, { includePrivate })),
+    events: (results.events || []).map((event) =>
+      eventView(event, { includePrivate }),
+    ),
+    groups: (results.groups || []).map((group) =>
+      groupView(group, { includePrivate }),
+    ),
+    contacts: (results.contacts || []).map((contact) =>
+      contactView(contact, { includePrivate }),
+    ),
   }
 }
 
 export function directoryView(items, { includePrivate = false } = {}) {
-  return (items || []).map((contact) => contactView(contact, { includePrivate }))
+  return (items || []).map((contact) =>
+    contactView(contact, { includePrivate }),
+  )
 }

@@ -7,9 +7,13 @@ export function appOrigin(env = process.env) {
 export function validateRuntimeConfig(env = process.env) {
   if (env.NODE_ENV !== 'production') return
 
-  const missing = ['DATABASE_URL', 'APP_ORIGIN'].filter((name) => !String(env[name] || '').trim())
+  const missing = ['DATABASE_URL', 'APP_ORIGIN'].filter(
+    (name) => !String(env[name] || '').trim(),
+  )
   if (missing.length) {
-    throw new Error(`Missing required production environment variables: ${missing.join(', ')}`)
+    throw new Error(
+      `Missing required production environment variables: ${missing.join(', ')}`,
+    )
   }
 
   const origin = new URL(env.APP_ORIGIN)
@@ -17,4 +21,3 @@ export function validateRuntimeConfig(env = process.env) {
     throw new Error('APP_ORIGIN must use HTTPS in production.')
   }
 }
-

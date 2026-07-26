@@ -3,14 +3,21 @@ const HUB_CACHE_PREFIX = 'youngo-hub-'
 
 export async function disablePWAInDevelopment() {
   try {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+    if (
+      'serviceWorker' in navigator &&
+      navigator.serviceWorker.getRegistrations
+    ) {
       const registrations = await navigator.serviceWorker.getRegistrations()
-      await Promise.all(registrations.map((registration) => registration.unregister()))
+      await Promise.all(
+        registrations.map((registration) => registration.unregister()),
+      )
     }
     if ('caches' in window) {
       const names = await window.caches.keys()
       await Promise.all(
-        names.filter((name) => name.startsWith(HUB_CACHE_PREFIX)).map((name) => window.caches.delete(name)),
+        names
+          .filter((name) => name.startsWith(HUB_CACHE_PREFIX))
+          .map((name) => window.caches.delete(name)),
       )
     }
   } catch (error) {
@@ -20,34 +27,41 @@ export async function disablePWAInDevelopment() {
 
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
-    console.log('[PWA] Service Worker not supported');
-    return null;
+    console.log('[PWA] Service Worker not supported')
+    return null
   }
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/'
-    });
+      scope: '/',
+    })
 
     registration.addEventListener('updatefound', () => {
-      const newWorker = registration.installing;
+      const newWorker = registration.installing
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            if (confirm('A new version of YOUNGO Hub is available. Reload to update?')) {
-              window.location.reload();
+          if (
+            newWorker.state === 'installed' &&
+            navigator.serviceWorker.controller
+          ) {
+            if (
+              confirm(
+                'A new version of YOUNGO Hub is available. Reload to update?',
+              )
+            ) {
+              window.location.reload()
             }
           }
-        });
+        })
       }
-    });
+    })
 
     setInterval(() => registration.update(), 1000 * 60 * 60)
 
-    return registration;
+    return registration
   } catch (error) {
     console.error('[PWA] Service Worker registration failed:', error)
-    return null;
+    return null
   }
 }
 
@@ -55,14 +69,14 @@ export async function registerServiceWorker() {
  * Convert base64 string to Uint8Array for VAPID key
  */
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
   for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    outputArray[i] = rawData.charCodeAt(i)
   }
-  return outputArray;
+  return outputArray
 }
 
 /**
@@ -71,20 +85,20 @@ function urlBase64ToUint8Array(base64String) {
  */
 export async function subscribeToPush(vapidPublicKey) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('[Push] Push not supported');
-    return { success: false, error: 'Push not supported' };
+    console.log('[Push] Push not supported')
+    return { success: false, error: 'Push not supported' }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.ready
 
-    let subscription = await registration.pushManager.getSubscription();
+    let subscription = await registration.pushManager.getSubscription()
     const isNew = !subscription
 
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       })
     }
 
@@ -94,17 +108,17 @@ export async function subscribeToPush(vapidPublicKey) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ subscription: subscription.toJSON() })
-    });
+      body: JSON.stringify({ subscription: subscription.toJSON() }),
+    })
 
     if (!response.ok) {
-      throw new Error('Failed to save subscription on server');
+      throw new Error('Failed to save subscription on server')
     }
 
-    return { success: true, subscription, isNew };
+    return { success: true, subscription, isNew }
   } catch (error) {
-    console.error('[Push] Subscription failed:', error);
-    return { success: false, error: error.message };
+    console.error('[Push] Subscription failed:', error)
+    return { success: false, error: error.message }
   }
 }
 
@@ -113,12 +127,12 @@ export async function subscribeToPush(vapidPublicKey) {
  */
 export async function unsubscribeFromPush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    return { success: false, error: 'Push not supported' };
+    return { success: false, error: 'Push not supported' }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
 
     if (subscription) {
       // Notify backend
@@ -126,17 +140,17 @@ export async function unsubscribeFromPush() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ endpoint: subscription.endpoint })
-      });
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      })
 
-      await subscription.unsubscribe();
-      console.log('[Push] Unsubscribed successfully');
+      await subscription.unsubscribe()
+      console.log('[Push] Unsubscribed successfully')
     }
 
-    return { success: true };
+    return { success: true }
   } catch (error) {
-    console.error('[Push] Unsubscribe failed:', error);
-    return { success: false, error: error.message };
+    console.error('[Push] Unsubscribe failed:', error)
+    return { success: false, error: error.message }
   }
 }
 
@@ -145,26 +159,28 @@ export async function unsubscribeFromPush() {
  */
 export async function getPushSubscriptionStatus() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    return { supported: false, subscribed: false };
+    return { supported: false, subscribed: false }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    const permission = Notification.permission;
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    const permission = Notification.permission
 
     return {
       supported: true,
       subscribed: !!subscription,
       permission,
-      subscription: subscription ? {
-        endpoint: subscription.endpoint,
-        expirationTime: subscription.expirationTime
-      } : null
-    };
+      subscription: subscription
+        ? {
+            endpoint: subscription.endpoint,
+            expirationTime: subscription.expirationTime,
+          }
+        : null,
+    }
   } catch (error) {
-    console.error('[Push] Status check failed:', error);
-    return { supported: true, subscribed: false, error: error.message };
+    console.error('[Push] Status check failed:', error)
+    return { supported: true, subscribed: false, error: error.message }
   }
 }
 
@@ -173,27 +189,29 @@ export async function getPushSubscriptionStatus() {
  */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) {
-    return { granted: false, error: 'Notifications not supported' };
+    return { granted: false, error: 'Notifications not supported' }
   }
 
   if (Notification.permission === 'granted') {
-    return { granted: true };
+    return { granted: true }
   }
 
   if (Notification.permission === 'denied') {
-    return { granted: false, error: 'Permission denied' };
+    return { granted: false, error: 'Permission denied' }
   }
 
-  const permission = await Notification.requestPermission();
-  return { granted: permission === 'granted', permission };
+  const permission = await Notification.requestPermission()
+  return { granted: permission === 'granted', permission }
 }
 
 /**
  * Check if app is running in standalone mode (PWA)
  */
 export function isPWA() {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true
+  )
 }
 
 /**
@@ -201,19 +219,20 @@ export function isPWA() {
  */
 export function setupInstallPrompt(onPrompt) {
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    onPrompt?.(true);
-  });
+    e.preventDefault()
+    deferredInstallPrompt = e
+    onPrompt?.(true)
+  })
 
   window.addEventListener('appinstalled', () => {
-    deferredInstallPrompt = null;
-    onPrompt?.(false);
-  });
+    deferredInstallPrompt = null
+    onPrompt?.(false)
+  })
 }
 
 export async function promptInstall() {
-  if (!deferredInstallPrompt) return { success: false, error: 'No install prompt available' }
+  if (!deferredInstallPrompt)
+    return { success: false, error: 'No install prompt available' }
   deferredInstallPrompt.prompt()
   const { outcome } = await deferredInstallPrompt.userChoice
   deferredInstallPrompt = null
@@ -226,10 +245,12 @@ export function isInstallPromptAvailable() {
 
 export async function initPWA() {
   setupInstallPrompt((available) => {
-    window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }));
-  });
-  const registration = await registerServiceWorker();
-  return { registration, isStandalone: isPWA() };
+    window.dispatchEvent(
+      new CustomEvent('pwa-install-available', { detail: { available } }),
+    )
+  })
+  const registration = await registerServiceWorker()
+  return { registration, isStandalone: isPWA() }
 }
 
 export default {
@@ -242,5 +263,5 @@ export default {
   setupInstallPrompt,
   promptInstall,
   isInstallPromptAvailable,
-  initPWA
-};
+  initPWA,
+}

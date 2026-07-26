@@ -18,7 +18,9 @@ const TTL_MS = 60 * 60 * 1000 // 1 hour
 function readJson(file, fallback) {
   try {
     if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return fallback
 }
 
@@ -54,17 +56,19 @@ export async function createPasswordResetToken(email) {
     await pool.query(
       `UPDATE password_reset_tokens SET used_at = now()
        WHERE account_id = $1 AND used_at IS NULL`,
-      [account.id]
+      [account.id],
     )
     await pool.query(
       `INSERT INTO password_reset_tokens (account_id, token_hash, expires_at)
        VALUES ($1, $2, $3)`,
-      [account.id, tokenHash, expiresAt.toISOString()]
+      [account.id, tokenHash, expiresAt.toISOString()],
     )
   } else {
-    const list = readJson(tokensPath, []).map((t) => (
-      t.account_id === account.id && !t.used_at ? { ...t, used_at: new Date().toISOString() } : t
-    ))
+    const list = readJson(tokensPath, []).map((t) =>
+      t.account_id === account.id && !t.used_at
+        ? { ...t, used_at: new Date().toISOString() }
+        : t,
+    )
     list.push({
       id: randomUUID(),
       account_id: account.id,
@@ -108,32 +112,33 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
          WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()
          LIMIT 1
          FOR UPDATE`,
-        [tokenHash]
+        [tokenHash],
       )
       if (!rows[0]) {
-        const err = new Error('This reset link is invalid or has expired. Request a new one.')
+        const err = new Error(
+          'This reset link is invalid or has expired. Request a new one.',
+        )
         err.code = 'invalid_token'
         throw err
       }
       const { salt, hash } = await hashPassword(newPassword)
       await client.query(
         `UPDATE hub_accounts SET password_hash = $1, password_salt = $2 WHERE id = $3`,
-        [hash, salt, rows[0].account_id]
+        [hash, salt, rows[0].account_id],
       )
       await client.query(
         `UPDATE password_reset_tokens SET used_at = now() WHERE id = $1`,
-        [rows[0].id]
+        [rows[0].id],
       )
       // Invalidate other open tokens
       await client.query(
         `UPDATE password_reset_tokens SET used_at = now()
          WHERE account_id = $1 AND used_at IS NULL`,
-        [rows[0].account_id]
+        [rows[0].account_id],
       )
-      await client.query(
-        'DELETE FROM hub_sessions WHERE account_id = $1',
-        [rows[0].account_id]
-      )
+      await client.query('DELETE FROM hub_sessions WHERE account_id = $1', [
+        rows[0].account_id,
+      ])
       await client.query('COMMIT')
       return { accountId: rows[0].account_id }
     } catch (e) {
@@ -145,9 +150,16 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
   }
 
   const list = readJson(tokensPath, [])
-  const row = list.find((t) => t.token_hash === tokenHash && !t.used_at && new Date(t.expires_at) > new Date())
+  const row = list.find(
+    (t) =>
+      t.token_hash === tokenHash &&
+      !t.used_at &&
+      new Date(t.expires_at) > new Date(),
+  )
   if (!row) {
-    const err = new Error('This reset link is invalid or has expired. Request a new one.')
+    const err = new Error(
+      'This reset link is invalid or has expired. Request a new one.',
+    )
     err.code = 'invalid_token'
     throw err
   }

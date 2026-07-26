@@ -7,7 +7,9 @@ export function newInviteSecret() {
 }
 
 export function inviteDigest(token) {
-  return createHash('sha256').update(String(token || '')).digest('hex')
+  return createHash('sha256')
+    .update(String(token || ''))
+    .digest('hex')
 }
 
 export function inviteExpiry(now = Date.now()) {
@@ -20,7 +22,19 @@ export function inviteSeatRole(value) {
 
 export function inviteMatches(row, token, accountEmail, now = Date.now()) {
   if (!row || row.status !== 'invited') return false
-  if (!row.invite_token_hash || row.invite_token_hash !== inviteDigest(token)) return false
-  if (!row.invite_expires_at || new Date(row.invite_expires_at).getTime() <= now) return false
-  return String(row.email || '').trim().toLowerCase() === String(accountEmail || '').trim().toLowerCase()
+  if (!row.invite_token_hash || row.invite_token_hash !== inviteDigest(token))
+    return false
+  if (
+    !row.invite_expires_at ||
+    new Date(row.invite_expires_at).getTime() <= now
+  )
+    return false
+  return (
+    String(row.email || '')
+      .trim()
+      .toLowerCase() ===
+    String(accountEmail || '')
+      .trim()
+      .toLowerCase()
+  )
 }

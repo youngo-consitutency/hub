@@ -14,7 +14,13 @@ test('content validation reports common editing mistakes', () => {
   const content = {
     groups: [{ slug: 'finance' }],
     events: [
-      { slug: 'call', title: '', type: 'meeting', wg: 'missing', meetingUrl: 'zoom dot us' },
+      {
+        slug: 'call',
+        title: '',
+        type: 'meeting',
+        wg: 'missing',
+        meetingUrl: 'zoom dot us',
+      },
       { slug: 'call', title: 'Second call', type: 'wg_call' },
     ],
     submissions: [],
@@ -27,7 +33,11 @@ test('content validation reports common editing mistakes', () => {
   const errors = validateContent(content)
   assert.ok(errors.some((error) => error.includes('duplicate slug')))
   assert.ok(errors.some((error) => error.includes('type "meeting"')))
-  assert.ok(errors.some((error) => error.includes('does not match a group slug')))
-  assert.ok(errors.some((error) => error.includes('full http:// or https:// URL')))
+  assert.ok(
+    errors.some((error) => error.includes('does not match a group slug')),
+  )
+  assert.ok(
+    errors.some((error) => error.includes('full http:// or https:// URL')),
+  )
   assert.ok(errors.some((error) => error.includes('group "leaders"')))
 })

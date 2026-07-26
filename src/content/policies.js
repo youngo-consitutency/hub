@@ -272,16 +272,36 @@ export const POLICY_CATEGORIES = [
 
 /** Quick lookups used by gates / course copy. */
 export const POLICY_BY_SLUG = {
-  principles: OFFICIAL_POLICIES.find((p) => p.id === '1PRk4PYmcVoE37ZTKoW-0HAPTMTRIahLy3qTTeSqRI9o'),
-  codeOfConduct: OFFICIAL_POLICIES.find((p) => p.id === '1RRM-kLzxZHhy2J4hwkjkZDuH19YPwJTriFq7lbDnopI'),
-  safeguarding: OFFICIAL_POLICIES.find((p) => p.id === '1w3JRz2thInmgtCAYKKsyX2Hz2hwCd1qycgaPglkpL1s'),
-  childSafeguarding: OFFICIAL_POLICIES.find((p) => p.id === '1lGxfcMKQlXuINDYzVga38DibnLwMTfkSyNXaNbTf_w4'),
-  conflictOfInterest: OFFICIAL_POLICIES.find((p) => p.id === '1LfvWGPF0nvGe54h_A8iFMxq_wn3IlVjiQEpdW0c5Gg0'),
-  dataProtection: OFFICIAL_POLICIES.find((p) => p.id === '1AagyoPzGAbG4c_7DnanjlE8rp1jzreQrYG4H74bDiZI'),
-  membership: OFFICIAL_POLICIES.find((p) => p.id === '19Up9-sErBOLHvFwu1kD_SH-T6N96cLj_9SaE4hb52lc'),
-  governance: OFFICIAL_POLICIES.find((p) => p.id === '14O2gGBauihIEzIAR5iENUurJ9nkBZcO5xJTPGjpbeHQ'),
-  decisionMaking: OFFICIAL_POLICIES.find((p) => p.id === '10iD0yQ57jMMKm-E2WQ2Amjk8_COvFi3PLjuW2QrxzfE'),
-  focalPointMandate: OFFICIAL_POLICIES.find((p) => p.id === '1t0di28Ov2LjhuXOPO2SVWAGnTTrmhINDizQ9F-vXS90'),
+  principles: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1PRk4PYmcVoE37ZTKoW-0HAPTMTRIahLy3qTTeSqRI9o',
+  ),
+  codeOfConduct: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1RRM-kLzxZHhy2J4hwkjkZDuH19YPwJTriFq7lbDnopI',
+  ),
+  safeguarding: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1w3JRz2thInmgtCAYKKsyX2Hz2hwCd1qycgaPglkpL1s',
+  ),
+  childSafeguarding: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1lGxfcMKQlXuINDYzVga38DibnLwMTfkSyNXaNbTf_w4',
+  ),
+  conflictOfInterest: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1LfvWGPF0nvGe54h_A8iFMxq_wn3IlVjiQEpdW0c5Gg0',
+  ),
+  dataProtection: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1AagyoPzGAbG4c_7DnanjlE8rp1jzreQrYG4H74bDiZI',
+  ),
+  membership: OFFICIAL_POLICIES.find(
+    (p) => p.id === '19Up9-sErBOLHvFwu1kD_SH-T6N96cLj_9SaE4hb52lc',
+  ),
+  governance: OFFICIAL_POLICIES.find(
+    (p) => p.id === '14O2gGBauihIEzIAR5iENUurJ9nkBZcO5xJTPGjpbeHQ',
+  ),
+  decisionMaking: OFFICIAL_POLICIES.find(
+    (p) => p.id === '10iD0yQ57jMMKm-E2WQ2Amjk8_COvFi3PLjuW2QrxzfE',
+  ),
+  focalPointMandate: OFFICIAL_POLICIES.find(
+    (p) => p.id === '1t0di28Ov2LjhuXOPO2SVWAGnTTrmhINDizQ9F-vXS90',
+  ),
 }
 
 export function policiesInCategory(categoryId) {

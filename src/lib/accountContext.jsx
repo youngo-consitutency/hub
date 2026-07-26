@@ -1,11 +1,20 @@
-import { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react'
 import { setSession, getCachedAccount, getSessionToken } from './session.js'
 import { apiGet } from './api.js'
 
 const AccountContext = createContext(null)
 
 export function AccountProvider({ initialAccount, children }) {
-  const [account, setAccountState] = useState(initialAccount || getCachedAccount())
+  const [account, setAccountState] = useState(
+    initialAccount || getCachedAccount(),
+  )
 
   useEffect(() => {
     if (!account) return
@@ -13,10 +22,16 @@ export function AccountProvider({ initialAccount, children }) {
     apiGet('/member/access')
       .then((access) => {
         if (!alive) return
-        setAccountState((current) => current ? { ...current, access } : current)
+        setAccountState((current) =>
+          current ? { ...current, access } : current,
+        )
       })
-      .catch(() => { /* role workspaces remain hidden if access cannot load */ })
-    return () => { alive = false }
+      .catch(() => {
+        /* role workspaces remain hidden if access cannot load */
+      })
+    return () => {
+      alive = false
+    }
   }, [account?.id])
 
   const setAccount = useCallback((acc) => {
@@ -26,7 +41,9 @@ export function AccountProvider({ initialAccount, children }) {
   }, [])
 
   const value = useMemo(() => ({ account, setAccount }), [account, setAccount])
-  return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
+  return (
+    <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
+  )
 }
 
 export function useAccount() {

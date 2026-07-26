@@ -29,8 +29,19 @@ test('invitation validation binds token, invited email, status, and expiry', () 
 
   assert.equal(inviteMatches(row, token, 'MEMBER@example.org', now), true)
   assert.equal(inviteMatches(row, token, 'attacker@example.org', now), false)
-  assert.equal(inviteMatches(row, 'wrong-token', 'member@example.org', now), false)
-  assert.equal(inviteMatches(row, token, 'member@example.org', Date.parse(row.invite_expires_at)), false)
+  assert.equal(
+    inviteMatches(row, 'wrong-token', 'member@example.org', now),
+    false,
+  )
+  assert.equal(
+    inviteMatches(
+      row,
+      token,
+      'member@example.org',
+      Date.parse(row.invite_expires_at),
+    ),
+    false,
+  )
 })
 
 test('seat responses never expose stored invitation credentials', () => {

@@ -29,17 +29,18 @@ if (vapidPublicKey && vapidPrivateKey) {
 const sendLimit = rateLimit({ name: 'push-send', max: 10, windowMs: 60_000 })
 
 /**
- * Resolve the signed-in account, or answer 401.
- *
- * This route file previously passed `authenticate` — which is
- * `authenticate(email, password)`, not middleware — straight to Express. It
- * never called next(), so every authenticated push request hung until the
- * platform reaped the socket.
+ * Resolve the current account or return 401. Do not use `authenticate` here;
+ * that function checks an email and password and is not Express middleware.
  */
 async function requireAccount(req, res) {
   const account = await getSessionAccount(bearerToken(req))
   if (!account) {
-    res.status(401).json({ error: { code: 'unauthorized', message: 'Sign in to manage notifications.' } })
+    res.status(401).json({
+      error: {
+        code: 'unauthorized',
+        message: 'Sign in to manage notifications.',
+      },
+    })
     return null
   }
   req.account = await ensureAdminRole(account)
@@ -48,7 +49,9 @@ async function requireAccount(req, res) {
 
 function requireAdmin(account, res) {
   if (account.role !== 'admin') {
-    res.status(403).json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+    res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
     return false
   }
   return true
@@ -56,23 +59,31 @@ function requireAdmin(account, res) {
 
 function requireConfigured(res) {
   if (!vapidPublicKey || !vapidPrivateKey) {
-    res.status(503).json({ error: { code: 'push_not_configured', message: 'Push notifications are not configured.' } })
+    res.status(503).json({
+      error: {
+        code: 'push_not_configured',
+        message: 'Push notifications are not configured.',
+      },
+    })
     return false
   }
   return true
 }
 
 /**
- * Deliver to every stored endpoint, dropping the ones the push service reports
- * as gone so dead rows do not accumulate and fail on every later send.
+ * Send a notification and remove endpoints that the push service reports as
+ * expired.
  */
 async function deliver(rows, payload) {
   const results = await Promise.allSettled(
-    rows.map((row) => webPush.sendNotification(toWebPushSubscription(row), payload))
+    rows.map((row) =>
+      webPush.sendNotification(toWebPushSubscription(row), payload),
+    ),
   )
   const expired = []
   results.forEach((result, index) => {
-    const status = result.status === 'rejected' ? result.reason?.statusCode : null
+    const status =
+      result.status === 'rejected' ? result.reason?.statusCode : null
     if (status === 404 || status === 410) expired.push(rows[index].endpoint)
   })
   if (expired.length) await pruneEndpoints(expired)
@@ -91,52 +102,81 @@ pushRouter.get('/vapid-key', (req, res) => {
 
 pushRouter.post('/subscribe', async (req, res, next) => {
   try {
-    const account = await requireAccount(req, res); if (!account) return
+    const account = await requireAccount(req, res)
+    if (!account) return
     if (!requireConfigured(res)) return
-    // Accept both the nested { subscription } envelope and a bare
-    // PushSubscription.toJSON() body — clients in the wild send both.
+    // Accept the current { subscription } body and the older bare subscription.
     const body = req.body || {}
     const subscription = body.subscription?.endpoint ? body.subscription : body
     if (!subscription?.endpoint) {
-      return res.status(400).json({ error: { code: 'validation', message: 'A subscription endpoint is required.' } })
+      return res.status(400).json({
+        error: {
+          code: 'validation',
+          message: 'A subscription endpoint is required.',
+        },
+      })
     }
     const saved = await saveSubscription({
       accountId: account.id,
       subscription,
       userAgent: req.get('user-agent') || null,
     })
-    res.json({ ok: true, subscription: { id: saved.id, endpoint: saved.endpoint } })
-  } catch (error) { next(error) }
+    res.json({
+      ok: true,
+      subscription: { id: saved.id, endpoint: saved.endpoint },
+    })
+  } catch (error) {
+    next(error)
+  }
 })
 
 pushRouter.post('/unsubscribe', async (req, res, next) => {
   try {
-    const account = await requireAccount(req, res); if (!account) return
-    const removed = await deleteSubscription({ accountId: account.id, endpoint: req.body?.endpoint || null })
+    const account = await requireAccount(req, res)
+    if (!account) return
+    const removed = await deleteSubscription({
+      accountId: account.id,
+      endpoint: req.body?.endpoint || null,
+    })
     res.json({ ok: true, removed })
-  } catch (error) { next(error) }
+  } catch (error) {
+    next(error)
+  }
 })
 
 pushRouter.get('/status', async (req, res, next) => {
   try {
-    const account = await requireAccount(req, res); if (!account) return
+    const account = await requireAccount(req, res)
+    if (!account) return
     const rows = await listSubscriptionsForAccounts([account.id])
     res.json({
       configured: Boolean(vapidPublicKey && vapidPrivateKey),
       subscribed: rows.length > 0,
-      subscriptions: rows.map((row) => ({ id: row.id, endpoint: row.endpoint, createdAt: row.createdAt })),
+      subscriptions: rows.map((row) => ({
+        id: row.id,
+        endpoint: row.endpoint,
+        createdAt: row.createdAt,
+      })),
     })
-  } catch (error) { next(error) }
+  } catch (error) {
+    next(error)
+  }
 })
 
 pushRouter.post('/test', sendLimit, async (req, res, next) => {
   try {
-    const account = await requireAccount(req, res); if (!account) return
+    const account = await requireAccount(req, res)
+    if (!account) return
     if (!requireAdmin(account, res)) return
     if (!requireConfigured(res)) return
     const rows = await listSubscriptionsForAccounts([account.id])
     if (!rows.length) {
-      return res.status(404).json({ error: { code: 'no_subscriptions', message: 'Subscribe on this device first.' } })
+      return res.status(404).json({
+        error: {
+          code: 'no_subscriptions',
+          message: 'Subscribe on this device first.',
+        },
+      })
     }
     const payload = JSON.stringify({
       title: req.body?.title || 'YOUNGO Hub',
@@ -147,32 +187,51 @@ pushRouter.post('/test', sendLimit, async (req, res, next) => {
       data: { url: '/' },
     })
     res.json({ ok: true, ...(await deliver(rows, payload)) })
-  } catch (error) { next(error) }
+  } catch (error) {
+    next(error)
+  }
 })
 
 /**
- * Broadcast to named members. Admin-only and audited: this reaches members'
- * devices under YOUNGO's name, so it is a mandate-holder action rather than
- * something any signed-in member may do.
+ * Send an audited admin notification to selected members or all members.
  */
 pushRouter.post('/send', sendLimit, async (req, res, next) => {
   try {
-    const account = await requireAccount(req, res); if (!account) return
+    const account = await requireAccount(req, res)
+    if (!account) return
     if (!requireAdmin(account, res)) return
     if (!requireConfigured(res)) return
 
-    const { userIds, title, body, icon, badge, tag, data, requireInteraction } = req.body || {}
+    const { userIds, title, body, icon, badge, tag, data, requireInteraction } =
+      req.body || {}
     const targetAll = userIds === 'all'
     if (!targetAll && (!Array.isArray(userIds) || !userIds.length)) {
-      return res.status(400).json({ error: { code: 'validation', message: 'Provide userIds as an array, or "all".' } })
+      return res.status(400).json({
+        error: {
+          code: 'validation',
+          message: 'Provide userIds as an array, or "all".',
+        },
+      })
     }
     if (!title || !body) {
-      return res.status(400).json({ error: { code: 'validation', message: 'A title and body are required.' } })
+      return res.status(400).json({
+        error: {
+          code: 'validation',
+          message: 'A title and body are required.',
+        },
+      })
     }
 
-    const rows = targetAll ? await listAllSubscriptions() : await listSubscriptionsForAccounts(userIds)
+    const rows = targetAll
+      ? await listAllSubscriptions()
+      : await listSubscriptionsForAccounts(userIds)
     if (!rows.length) {
-      return res.status(404).json({ error: { code: 'no_subscriptions', message: 'No active subscriptions for those members.' } })
+      return res.status(404).json({
+        error: {
+          code: 'no_subscriptions',
+          message: 'No active subscriptions for those members.',
+        },
+      })
     }
 
     const payload = JSON.stringify({
@@ -196,5 +255,7 @@ pushRouter.post('/send', sendLimit, async (req, res, next) => {
     })
 
     res.json({ ok: true, ...result })
-  } catch (error) { next(error) }
+  } catch (error) {
+    next(error)
+  }
 })

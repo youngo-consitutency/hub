@@ -4,7 +4,10 @@
  */
 
 function compactUtc(iso) {
-  return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  return new Date(iso)
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '')
 }
 
 function encode(value) {
@@ -15,7 +18,9 @@ function encode(value) {
 export function googleCalendarUrl(event) {
   const text = event.title || 'YOUNGO event'
   const dates = `${compactUtc(event.startsAt)}/${compactUtc(event.endsAt)}`
-  const details = [event.description, event.meetingUrl].filter(Boolean).join('\n\n')
+  const details = [event.description, event.meetingUrl]
+    .filter(Boolean)
+    .join('\n\n')
   const location = event.meetingUrl || ''
   const params = new URLSearchParams({
     action: 'TEMPLATE',

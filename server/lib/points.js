@@ -9,7 +9,10 @@ import { fileURLToPath } from 'node:url'
 import { getPool } from './db.js'
 import { getAccessProfile } from './access.js'
 
-const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../data')
+const dataDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../data',
+)
 const ledgerPath = path.join(dataDir, 'ngo-point-ledger.json')
 
 export const POINT_REASONS = {
@@ -22,7 +25,8 @@ export const POINT_REASONS = {
   unfccc_submission: {
     code: 'unfccc_submission',
     label: 'UNFCCC submission support',
-    description: 'Supported, co-authored, or endorsed a UNFCCC-facing submission.',
+    description:
+      'Supported, co-authored, or endorsed a UNFCCC-facing submission.',
     defaultPoints: 15,
   },
   endorse_document: {
@@ -59,10 +63,30 @@ export const POINT_REASONS = {
 
 /** Soft recognition tiers — not UNFCCC credentials; hub recognition only. */
 export const RECOGNITION_TIERS = [
-  { id: 'contributor', label: 'Contributor', minPoints: 25, blurb: 'First verified contributions logged.' },
-  { id: 'active_partner', label: 'Active partner', minPoints: 50, blurb: 'Regular support for submissions or badges.' },
-  { id: 'core_partner', label: 'Core partner', minPoints: 100, blurb: 'Sustained contribution to constituency work.' },
-  { id: 'steward', label: 'Steward', minPoints: 200, blurb: 'Deep, ongoing support for YOUNGO processes.' },
+  {
+    id: 'contributor',
+    label: 'Contributor',
+    minPoints: 25,
+    blurb: 'First verified contributions logged.',
+  },
+  {
+    id: 'active_partner',
+    label: 'Active partner',
+    minPoints: 50,
+    blurb: 'Regular support for submissions or badges.',
+  },
+  {
+    id: 'core_partner',
+    label: 'Core partner',
+    minPoints: 100,
+    blurb: 'Sustained contribution to constituency work.',
+  },
+  {
+    id: 'steward',
+    label: 'Steward',
+    minPoints: 200,
+    blurb: 'Deep, ongoing support for YOUNGO processes.',
+  },
 ]
 
 function readJson(file, fallback = []) {
@@ -81,7 +105,8 @@ function writeJson(file, data) {
 
 export function publicLedgerEntry(row) {
   if (!row) return null
-  const reason = POINT_REASONS[row.reason_code ?? row.reasonCode] || POINT_REASONS.other
+  const reason =
+    POINT_REASONS[row.reason_code ?? row.reasonCode] || POINT_REASONS.other
   return {
     id: row.id,
     orgAccountId: row.org_account_id ?? row.orgAccountId,
@@ -135,7 +160,11 @@ export async function getOrgPointsBalance(orgAccountId) {
   }
   const list = readJson(ledgerPath, [])
   return list
-    .filter((r) => (r.org_account_id || r.orgAccountId) === orgAccountId && (r.status || 'posted') === 'posted')
+    .filter(
+      (r) =>
+        (r.org_account_id || r.orgAccountId) === orgAccountId &&
+        (r.status || 'posted') === 'posted',
+    )
     .reduce((sum, r) => sum + Number(r.points || 0), 0)
 }
 
@@ -156,7 +185,11 @@ export async function listOrgPointsLedger(orgAccountId, { limit = 50 } = {}) {
   }
   return readJson(ledgerPath, [])
     .filter((r) => (r.org_account_id || r.orgAccountId) === orgAccountId)
-    .sort((a, b) => String(b.created_at || b.createdAt).localeCompare(String(a.created_at || a.createdAt)))
+    .sort((a, b) =>
+      String(b.created_at || b.createdAt).localeCompare(
+        String(a.created_at || a.createdAt),
+      ),
+    )
     .slice(0, safeLimit)
     .map(publicLedgerEntry)
 }
@@ -181,7 +214,11 @@ export async function listRecentPointAwards({ limit = 40 } = {}) {
   }
   return readJson(ledgerPath, [])
     .filter((r) => (r.status || 'posted') === 'posted')
-    .sort((a, b) => String(b.created_at || b.createdAt).localeCompare(String(a.created_at || a.createdAt)))
+    .sort((a, b) =>
+      String(b.created_at || b.createdAt).localeCompare(
+        String(a.created_at || a.createdAt),
+      ),
+    )
     .slice(0, safeLimit)
     .map(publicLedgerEntry)
 }
@@ -244,23 +281,36 @@ export async function awardOrgPoints({
   relatedId = null,
   awardedBy = null,
 }) {
-  if (!orgAccountId) throw Object.assign(new Error('Organisation is required.'), { code: 'validation' })
+  if (!orgAccountId)
+    throw Object.assign(new Error('Organisation is required.'), {
+      code: 'validation',
+    })
   const reason = POINT_REASONS[reasonCode]
-  if (!reason) throw Object.assign(new Error('Unknown contribution type.'), { code: 'validation' })
+  if (!reason)
+    throw Object.assign(new Error('Unknown contribution type.'), {
+      code: 'validation',
+    })
 
   let pts = Number(points)
   if (!Number.isFinite(pts) || pts === 0) {
     pts = reason.defaultPoints
   }
   if (!Number.isFinite(pts) || pts === 0) {
-    throw Object.assign(new Error('Points must be a non-zero number.'), { code: 'validation' })
+    throw Object.assign(new Error('Points must be a non-zero number.'), {
+      code: 'validation',
+    })
   }
   if (Math.abs(pts) > 500) {
-    throw Object.assign(new Error('Single award cannot exceed ±500 points.'), { code: 'validation' })
+    throw Object.assign(new Error('Single award cannot exceed ±500 points.'), {
+      code: 'validation',
+    })
   }
 
-  const cleanTitle = String(title || reason.label).trim().slice(0, 200)
-  if (!cleanTitle) throw Object.assign(new Error('Title is required.'), { code: 'validation' })
+  const cleanTitle = String(title || reason.label)
+    .trim()
+    .slice(0, 200)
+  if (!cleanTitle)
+    throw Object.assign(new Error('Title is required.'), { code: 'validation' })
 
   const pool = getPool()
   if (pool) {
@@ -269,7 +319,9 @@ export async function awardOrgPoints({
       [orgAccountId],
     )
     if (!org.rows[0]) {
-      throw Object.assign(new Error('Organisation account not found.'), { code: 'not_found' })
+      throw Object.assign(new Error('Organisation account not found.'), {
+        code: 'not_found',
+      })
     }
 
     const { rows } = await pool.query(
@@ -323,12 +375,18 @@ export async function awardOrgPoints({
 /** Map NGO request kinds → default reason codes for staff convenience. */
 export function reasonFromNgoRequestKind(kind) {
   switch (kind) {
-    case 'endorse': return 'endorse_document'
-    case 'submit': return 'unfccc_submission'
-    case 'badge_support': return 'badge_support'
-    case 'represent': return 'represent'
-    case 'deadline': return 'other'
-    default: return 'other'
+    case 'endorse':
+      return 'endorse_document'
+    case 'submit':
+      return 'unfccc_submission'
+    case 'badge_support':
+      return 'badge_support'
+    case 'represent':
+      return 'represent'
+    case 'deadline':
+      return 'other'
+    default:
+      return 'other'
   }
 }
 
@@ -391,7 +449,11 @@ export async function listAwardSuggestions({ limit = 40 } = {}) {
   const ledger = readJson(ledgerPath, [])
   const awardedIds = new Set(
     ledger
-      .filter((e) => (e.related_type || e.relatedType) === 'ngo_request' && (e.status || 'posted') === 'posted')
+      .filter(
+        (e) =>
+          (e.related_type || e.relatedType) === 'ngo_request' &&
+          (e.status || 'posted') === 'posted',
+      )
       .map((e) => String(e.related_id || e.relatedId)),
   )
   return requests

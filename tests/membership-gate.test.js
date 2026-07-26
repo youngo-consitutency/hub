@@ -6,9 +6,15 @@ import { POLICY_VERSION } from '../src/content/membershipPolicy.js'
 const store = new Map()
 globalThis.localStorage = {
   getItem: (k) => (store.has(k) ? store.get(k) : null),
-  setItem: (k, v) => { store.set(k, String(v)) },
-  removeItem: (k) => { store.delete(k) },
-  clear: () => { store.clear() },
+  setItem: (k, v) => {
+    store.set(k, String(v))
+  },
+  removeItem: (k) => {
+    store.delete(k)
+  },
+  clear: () => {
+    store.clear()
+  },
 }
 
 const {
@@ -19,7 +25,9 @@ const {
 } = await import('../src/lib/membershipGate.js')
 
 describe('membershipGate', () => {
-  beforeEach(() => { store.clear() })
+  beforeEach(() => {
+    store.clear()
+  })
 
   it('starts unacknowledged', () => {
     assert.equal(hasAcknowledgedMembershipPolicy(), false)
@@ -35,10 +43,13 @@ describe('membershipGate', () => {
   })
 
   it('rejects stale version', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      version: 'issue-1-old',
-      acknowledgedAt: new Date().toISOString(),
-    }))
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 'issue-1-old',
+        acknowledgedAt: new Date().toISOString(),
+      }),
+    )
     assert.equal(hasAcknowledgedMembershipPolicy(), false)
   })
 

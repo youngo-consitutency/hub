@@ -4,7 +4,11 @@ import { googleAddByUrlPage, webcalFeedUrl } from '../lib/calendarLinks.js'
 
 // Copies the absolute ICS feed URL so a calendar app can subscribe (live feed),
 // rather than downloading a one-time snapshot.
-export function CopyFeedButton({ path, label = 'Copy feed URL', className = 'btn btn-secondary btn-sm' }) {
+export function CopyFeedButton({
+  path,
+  label = 'Copy feed URL',
+  className = 'btn btn-secondary btn-sm',
+}) {
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -18,7 +22,11 @@ export function CopyFeedButton({ path, label = 'Copy feed URL', className = 'btn
         })
       }}
     >
-      {copied ? <Check size={16} strokeWidth={1.75} aria-hidden /> : <Copy size={16} strokeWidth={1.75} aria-hidden />}
+      {copied ? (
+        <Check size={16} strokeWidth={1.75} aria-hidden />
+      ) : (
+        <Copy size={16} strokeWidth={1.75} aria-hidden />
+      )}
       {copied ? 'Copied' : label}
     </button>
   )
@@ -27,7 +35,9 @@ export function CopyFeedButton({ path, label = 'Copy feed URL', className = 'btn
 function FeedRow({ label, path }) {
   return (
     <div className="subscribeFeedRow">
-      <span className="meta" style={{ minWidth: 0, flex: 1 }}>{label}</span>
+      <span className="meta" style={{ minWidth: 0, flex: 1 }}>
+        {label}
+      </span>
       <div className="subscribeFeedActions">
         <CopyFeedButton path={path} className="btn btn-ghost btn-sm" />
         <a
@@ -35,7 +45,7 @@ function FeedRow({ label, path }) {
           href={webcalFeedUrl(path)}
           title="Open in Apple Calendar / apps that support webcal"
         >
-          Apple
+          Open in Apple
         </a>
       </div>
     </div>
@@ -53,34 +63,56 @@ export function CalendarSubscribe({ type }) {
         className={`btn btn-secondary btn-sm ${open ? 'active' : ''}`}
         onClick={() => setOpen((o) => !o)}
       >
-        <CalendarPlus size={16} strokeWidth={1.75} aria-hidden />Subscribe
+        <CalendarPlus size={16} strokeWidth={1.75} aria-hidden />
+        Subscribe
       </button>
       {open && (
         <div className="subscribePanel card">
-          <p className="meta" style={{ fontWeight: 500 }}>Live calendar feed</p>
-          <p className="metaMuted">
-            Subscribe once — new meetings appear automatically. This is not a one-off .ics download.
-          </p>
+          <div className="subscribeHeader">
+            <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
+            <div>
+              <h3>Live calendar feed</h3>
+              <p className="meta">
+                Subscribe once. New Hub events update automatically.
+              </p>
+            </div>
+          </div>
           <FeedRow label="All events" path="/ics/all.ics" />
           {filtered && (
             <FeedRow label="This filter only" path={`/ics/type/${type}.ics`} />
           )}
-          <ol className="subscribeSteps meta">
+          <ol className="subscribeSteps">
             <li>
-              <strong>Google Calendar:</strong> copy the feed URL →{' '}
-              <a href={googleAddByUrlPage()} target="_blank" rel="noopener noreferrer" className="inlineLink">
-                Add by URL <ExternalLink size={12} strokeWidth={1.75} aria-hidden style={{ verticalAlign: -1 }} />
-              </a>
-              {' '}→ paste → Add calendar.
+              <strong>Google</strong>
+              <span>
+                Copy the URL, open{' '}
+                <a
+                  href={googleAddByUrlPage()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inlineLink"
+                >
+                  Add by URL{' '}
+                  <ExternalLink
+                    size={12}
+                    strokeWidth={1.75}
+                    aria-hidden
+                    style={{ verticalAlign: -1 }}
+                  />
+                </a>
+                , then paste.
+              </span>
             </li>
             <li>
-              <strong>Apple Calendar:</strong> tap <em>Apple</em> above (webcal) or File → New Calendar Subscription.
+              <strong>Apple</strong>
+              <span>Choose “Open in Apple” above.</span>
             </li>
             <li>
-              <strong>Outlook:</strong> Add calendar → Subscribe from web → paste the HTTPS feed URL.
+              <strong>Outlook</strong>
+              <span>Copy the URL, then choose “Subscribe from web”.</span>
             </li>
           </ol>
-          <p className="metaMuted">Per-working-group feeds live on each group’s page.</p>
+          <p className="metaMuted">Group-specific feeds are on group pages.</p>
         </div>
       )}
     </div>

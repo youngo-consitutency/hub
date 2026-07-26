@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
-import { A, Button, Empty, ErrorCard, Section, Skeletons } from '../components/ui.jsx'
-import { Award, BadgeCheck, Plus, Sparkles } from 'lucide-react'
+import {
+  A,
+  Button,
+  Empty,
+  ErrorCard,
+  PageHeader,
+  Section,
+  Skeletons,
+} from '../components/ui.jsx'
+import { SearchableSelect } from '../components/FormControls.jsx'
+import { BadgeCheck, Plus, Sparkles } from 'lucide-react'
 
 const EMPTY_FORM = {
   orgAccountId: '',
@@ -27,7 +36,9 @@ export function StaffPoints() {
       .catch((e) => setError(e.message))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   const reasonMeta = useMemo(() => {
     if (!data?.reasons) return null
@@ -58,10 +69,16 @@ export function StaffPoints() {
         relatedId: form.requestId || undefined,
       })
       setFlash(
-        `Awarded ${result.entry.points} pts · new balance ${result.balance}`
-        + (result.recognition.current ? ` · ${result.recognition.current.label}` : ''),
+        `Awarded ${result.entry.points} pts · new balance ${result.balance}` +
+          (result.recognition.current
+            ? ` · ${result.recognition.current.label}`
+            : ''),
       )
-      setForm((f) => ({ ...EMPTY_FORM, orgAccountId: f.orgAccountId, reasonCode: f.reasonCode }))
+      setForm((f) => ({
+        ...EMPTY_FORM,
+        orgAccountId: f.orgAccountId,
+        reasonCode: f.reasonCode,
+      }))
       load()
       setStatus('idle')
     } catch (err) {
@@ -111,105 +128,141 @@ export function StaffPoints() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Staff · recognition</p>
-      <h1 className="rowGap"><Award size={24} strokeWidth={1.75} aria-hidden /> NGO contribution points</h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Award points when an NGO supports pool badges, endorses or contributes to UNFCCC submissions,
-        or otherwise helps constituency work. Points are staff-verified — not self-claimed.
-      </p>
+      <PageHeader
+        eyebrow="Staff · recognition"
+        title="NGO contribution points"
+        description="Award points when an NGO supports pool badges, contributes to UNFCCC submissions, or helps other constituency work. Staff verify every award."
+      />
 
       {flash && (
-        <div className="card cardTight" style={{ marginTop: 12, borderColor: 'var(--accent)' }}>
-          <p className="meta" style={{ color: 'var(--accent)', fontWeight: 500 }}>{flash}</p>
+        <div
+          className="card cardTight"
+          style={{ marginTop: 12, borderColor: 'var(--accent)' }}
+        >
+          <p
+            className="meta"
+            style={{ color: 'var(--accent)', fontWeight: 500 }}
+          >
+            {flash}
+          </p>
         </div>
       )}
       {error && <ErrorCard message={error} onRetry={load} />}
 
       <p className="metaMuted" style={{ marginBottom: 12 }}>
-        Public board: <A href="/recognition" className="inlineLink">/recognition</A>
+        Public board:{' '}
+        <A href="/recognition" className="inlineLink">
+          /recognition
+        </A>
       </p>
 
       <Section
         label={`Suggested awards (${data.suggestions?.length || 0})`}
-        action={data.suggestions?.length ? <span className="metaMuted">From completed NGO requests</span> : null}
+        action={
+          data.suggestions?.length ? (
+            <span className="metaMuted">From completed NGO requests</span>
+          ) : null
+        }
       >
-        {!data.suggestions?.length
-          ? (
-            <Empty
-              icon={Sparkles}
-              title="No pending suggestions"
-              body="When an NGO marks a badge or UNFCCC request as done, it appears here for one-click award."
-            />
-          )
-          : (
-            <div className="stackSm">
-              {data.suggestions.map((s) => (
-                <div key={s.requestId} className="card cardTight">
-                  <div className="rowBetween" style={{ gap: 12, flexWrap: 'wrap' }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <strong>{s.orgName || 'Organisation'}</strong>
-                      <p className="meta" style={{ marginTop: 4 }}>{s.title}</p>
-                      <p className="metaMuted">
-                        {s.suggestedReasonLabel} · default {s.suggestedPoints} pts
-                        {s.createdAt ? ` · done ${new Date(s.createdAt).toLocaleDateString()}` : ''}
-                      </p>
-                    </div>
-                    <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-                      <Button sm variant="ghost" onClick={() => prefillFromSuggestion(s)}>Edit</Button>
-                      <Button
-                        sm
-                        variant="primary"
-                        disabled={busyId === s.requestId}
-                        onClick={() => awardSuggestion(s)}
-                      >
-                        {busyId === s.requestId ? 'Awarding…' : `Award +${s.suggestedPoints}`}
-                      </Button>
-                    </div>
+        {!data.suggestions?.length ? (
+          <Empty
+            icon={Sparkles}
+            title="No pending suggestions"
+            body="When an NGO marks a badge or UNFCCC request as done, it appears here for one-click award."
+          />
+        ) : (
+          <div className="stackSm">
+            {data.suggestions.map((s) => (
+              <div key={s.requestId} className="card cardTight">
+                <div
+                  className="rowBetween"
+                  style={{ gap: 12, flexWrap: 'wrap' }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <strong>{s.orgName || 'Organisation'}</strong>
+                    <p className="meta" style={{ marginTop: 4 }}>
+                      {s.title}
+                    </p>
+                    <p className="metaMuted">
+                      {s.suggestedReasonLabel} · default {s.suggestedPoints} pts
+                      {s.createdAt
+                        ? ` · done ${new Date(s.createdAt).toLocaleDateString()}`
+                        : ''}
+                    </p>
+                  </div>
+                  <div className="rowGap" style={{ flexWrap: 'wrap' }}>
+                    <Button
+                      sm
+                      variant="ghost"
+                      onClick={() => prefillFromSuggestion(s)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      sm
+                      variant="primary"
+                      disabled={busyId === s.requestId}
+                      onClick={() => awardSuggestion(s)}
+                    >
+                      {busyId === s.requestId
+                        ? 'Awarding…'
+                        : `Award +${s.suggestedPoints}`}
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section label="Award points">
         <form className="card stack" onSubmit={award}>
           {form.requestId && (
             <p className="meta" style={{ color: 'var(--accent)' }}>
-              Linked to request <code className="mono">{form.requestId.slice(0, 8)}…</code>
+              Linked to request{' '}
+              <code className="mono">{form.requestId.slice(0, 8)}…</code>
             </p>
           )}
-          <label className="field">
-            <span>Organisation *</span>
-            <select
-              className="input"
-              required
-              value={form.orgAccountId}
-              onChange={(e) => setForm((f) => ({ ...f, orgAccountId: e.target.value }))}
-            >
-              <option value="">Select NGO…</option>
-              {(data.orgs || []).map((o) => (
-                <option key={o.orgAccountId} value={o.orgAccountId}>
-                  {(o.name || 'Organisation')} · {o.balance} pts
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Contribution type *</span>
-            <select
-              className="input"
-              value={form.reasonCode}
-              onChange={(e) => setForm((f) => ({ ...f, reasonCode: e.target.value, points: '' }))}
-            >
-              {(data.reasons || []).map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.label}{r.defaultPoints ? ` (default ${r.defaultPoints})` : ''}
-                </option>
-              ))}
-            </select>
-            {reasonMeta && <p className="metaMuted" style={{ marginTop: 4 }}>{reasonMeta.description}</p>}
-          </label>
+          <SearchableSelect
+            label="Organisation *"
+            options={(data.orgs || []).map((org) => ({
+              value: org.orgAccountId,
+              label: `${org.name || 'Organisation'} · ${org.balance} pts`,
+            }))}
+            value={form.orgAccountId}
+            onChange={(orgAccountId) =>
+              setForm((current) => ({ ...current, orgAccountId }))
+            }
+            placeholder="Select NGO…"
+            searchPlaceholder="Search organisations…"
+          />
+          <SearchableSelect
+            label="Contribution type *"
+            options={(data.reasons || []).map((reason) => ({
+              value: reason.code,
+              label:
+                reason.label +
+                (reason.defaultPoints
+                  ? ` (default ${reason.defaultPoints})`
+                  : ''),
+            }))}
+            value={form.reasonCode}
+            onChange={(reasonCode) =>
+              setForm((current) => ({
+                ...current,
+                reasonCode,
+                points: '',
+              }))
+            }
+            searchPlaceholder="Search contribution types…"
+          >
+            {reasonMeta && (
+              <p className="metaMuted" style={{ marginTop: 4 }}>
+                {reasonMeta.description}
+              </p>
+            )}
+          </SearchableSelect>
           <div className="formRow">
             <label className="field">
               <span>Points *</span>
@@ -218,8 +271,14 @@ export function StaffPoints() {
                 type="number"
                 required
                 value={form.points}
-                onChange={(e) => setForm((f) => ({ ...f, points: e.target.value }))}
-                placeholder={reasonMeta?.defaultPoints ? String(reasonMeta.defaultPoints) : '10'}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, points: e.target.value }))
+                }
+                placeholder={
+                  reasonMeta?.defaultPoints
+                    ? String(reasonMeta.defaultPoints)
+                    : '10'
+                }
               />
             </label>
             <label className="field">
@@ -228,7 +287,9 @@ export function StaffPoints() {
                 className="input"
                 required
                 value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, title: e.target.value }))
+                }
                 placeholder="e.g. Supported GGA indicators youth submission"
               />
             </label>
@@ -243,7 +304,11 @@ export function StaffPoints() {
               placeholder="Optional context for audit trail"
             />
           </label>
-          <Button type="submit" variant="primary" disabled={status === 'submitting'}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={status === 'submitting'}
+          >
             <Plus size={16} strokeWidth={1.75} aria-hidden />
             {status === 'submitting' ? 'Saving…' : 'Award points'}
           </Button>
@@ -251,68 +316,95 @@ export function StaffPoints() {
       </Section>
 
       <Section label="Organisation balances">
-        {!data.orgs?.length
-          ? <Empty title="No organisations yet" body="Register an NGO account first." />
-          : (
-            <div className="stackSm">
-              {data.orgs.map((o) => (
-                <div key={o.orgAccountId} className="card cardTight rowBetween">
-                  <div>
-                    <strong>{o.name || 'Organisation'}</strong>
-                    <p className="meta">{o.email} · {o.memberStatus || '—'}</p>
-                    {o.recognition?.current && (
-                      <p className="metaMuted" style={{ marginTop: 4 }}>
-                        <BadgeCheck size={14} strokeWidth={1.75} aria-hidden style={{ verticalAlign: -2 }} />
-                        {' '}{o.recognition.current.label}
-                        {o.recognition.next
-                          ? ` · ${o.recognition.pointsToNext} pts to ${o.recognition.next.label}`
-                          : ''}
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p className="mono" style={{ fontSize: 18, fontWeight: 600 }}>{o.balance}</p>
-                    <p className="metaMuted">points</p>
-                    <Button
-                      sm
-                      variant="ghost"
-                      onClick={() => setForm((f) => ({
+        {!data.orgs?.length ? (
+          <Empty
+            title="No organisations yet"
+            body="Register an NGO account first."
+          />
+        ) : (
+          <div className="stackSm">
+            {data.orgs.map((o) => (
+              <div key={o.orgAccountId} className="card cardTight rowBetween">
+                <div>
+                  <strong>{o.name || 'Organisation'}</strong>
+                  <p className="meta">
+                    {o.email} · {o.memberStatus || '—'}
+                  </p>
+                  {o.recognition?.current && (
+                    <p className="metaMuted" style={{ marginTop: 4 }}>
+                      <BadgeCheck
+                        size={14}
+                        strokeWidth={1.75}
+                        aria-hidden
+                        style={{ verticalAlign: -2 }}
+                      />{' '}
+                      {o.recognition.current.label}
+                      {o.recognition.next
+                        ? ` · ${o.recognition.pointsToNext} pts to ${o.recognition.next.label}`
+                        : ''}
+                    </p>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p className="mono" style={{ fontSize: 18, fontWeight: 600 }}>
+                    {o.balance}
+                  </p>
+                  <p className="metaMuted">points</p>
+                  <Button
+                    sm
+                    variant="ghost"
+                    onClick={() =>
+                      setForm((f) => ({
                         ...f,
                         orgAccountId: o.orgAccountId,
                         title: f.title || '',
-                      }))}
-                    >
-                      Award
-                    </Button>
-                  </div>
+                      }))
+                    }
+                  >
+                    Award
+                  </Button>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section label="Recent awards">
-        {!data.recent?.length
-          ? <Empty title="No awards yet" body="Award points for the first verified contribution." />
-          : (
-            <div className="stackSm">
-              {data.recent.map((e) => (
-                <div key={e.id} className="card cardTight">
-                  <div className="rowBetween">
-                    <strong>{e.organizationName || e.orgName || e.orgAccountId}</strong>
-                    <span className="mono" style={{ color: e.points > 0 ? 'var(--accent)' : 'var(--danger)' }}>
-                      {e.points > 0 ? `+${e.points}` : e.points}
-                    </span>
-                  </div>
-                  <p className="meta" style={{ marginTop: 4 }}>{e.title}</p>
-                  <p className="metaMuted">
-                    {e.reasonLabel} · {e.createdAt ? new Date(e.createdAt).toLocaleString() : ''}
-                    {e.awardedByName ? ` · by ${e.awardedByName}` : ''}
-                  </p>
+        {!data.recent?.length ? (
+          <Empty
+            title="No awards yet"
+            body="Award points for the first verified contribution."
+          />
+        ) : (
+          <div className="stackSm">
+            {data.recent.map((e) => (
+              <div key={e.id} className="card cardTight">
+                <div className="rowBetween">
+                  <strong>
+                    {e.organizationName || e.orgName || e.orgAccountId}
+                  </strong>
+                  <span
+                    className="mono"
+                    style={{
+                      color: e.points > 0 ? 'var(--accent)' : 'var(--danger)',
+                    }}
+                  >
+                    {e.points > 0 ? `+${e.points}` : e.points}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+                <p className="meta" style={{ marginTop: 4 }}>
+                  {e.title}
+                </p>
+                <p className="metaMuted">
+                  {e.reasonLabel} ·{' '}
+                  {e.createdAt ? new Date(e.createdAt).toLocaleString() : ''}
+                  {e.awardedByName ? ` · by ${e.awardedByName}` : ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
     </div>
   )

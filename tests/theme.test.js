@@ -21,10 +21,12 @@ test('an explicit user override wins over the system scheme', () => {
 })
 
 test('stored theme accepts only supported overrides', () => {
-  const storage = (value) => ({ getItem: (key) => {
-    assert.equal(key, THEME_STORAGE_KEY)
-    return value
-  } })
+  const storage = (value) => ({
+    getItem: (key) => {
+      assert.equal(key, THEME_STORAGE_KEY)
+      return value
+    },
+  })
 
   assert.equal(storedTheme(storage('dark')), 'dark')
   assert.equal(storedTheme(storage('light')), 'light')
@@ -34,7 +36,11 @@ test('stored theme accepts only supported overrides', () => {
 
 test('theme override can return to the system setting', () => {
   let removedKey
-  const storage = { removeItem: (key) => { removedKey = key } }
+  const storage = {
+    removeItem: (key) => {
+      removedKey = key
+    },
+  }
   assert.equal(clearThemeOverride(storage), systemTheme())
   assert.equal(removedKey, THEME_STORAGE_KEY)
 })

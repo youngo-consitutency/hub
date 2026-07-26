@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
-import { A, Button, Skeletons, ErrorCard } from '../components/ui.jsx'
+import {
+  A,
+  Button,
+  Skeletons,
+  ErrorCard,
+  PageHeader,
+} from '../components/ui.jsx'
 import { navigate } from '../lib/router.js'
-import { Check, GraduationCap } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function Course() {
   const { account, setAccount } = useAccount()
@@ -22,7 +28,9 @@ export function Course() {
       .catch((e) => setError(e.message))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   if (error) return <ErrorCard message={error} onRetry={load} />
   if (!data) return <Skeletons n={4} />
@@ -51,22 +59,32 @@ export function Course() {
     return (
       <div className="card" style={{ maxWidth: 520, margin: '24px auto' }}>
         <div className="rowGap" style={{ marginBottom: 12 }}>
-          <span className="iconTile"><Check size={22} strokeWidth={1.75} aria-hidden /></span>
+          <span className="iconTile">
+            <Check size={22} strokeWidth={1.75} aria-hidden />
+          </span>
           <div>
             <h1>You’re verified</h1>
             <p className="meta" style={{ marginTop: 4 }}>
-              Score {result.score}/{result.total}. Your account can use the full hub.
+              Score {result.score}/{result.total}. Your account can use the full
+              hub.
             </p>
           </div>
         </div>
         <p className="meta mandatePara">
-          Next: explore Working groups, complete a WG workspace onboarding to unlock WhatsApp and CP contacts,
-          and use Calendar / Submissions for live coordination.
+          Next, browse Working groups and complete the introduction for any
+          group you want to join. Use Calendar for meetings and Submissions for
+          current drafting processes.
         </p>
         <div className="detailActions">
-          <Button variant="primary" glow onClick={() => navigate('/')}>Enter platform</Button>
-          <A href="/groups" className="btn btn-secondary">Working groups</A>
-          <A href="/onboarding" className="btn btn-ghost">Onboarding home</A>
+          <Button variant="primary" glow onClick={() => navigate('/')}>
+            Enter platform
+          </Button>
+          <A href="/groups" className="btn btn-secondary">
+            Working groups
+          </A>
+          <A href="/onboarding" className="btn btn-ghost">
+            Onboarding home
+          </A>
         </div>
       </div>
     )
@@ -74,48 +92,86 @@ export function Course() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>Membership course · {data.version}</p>
-      <h1 className="rowGap"><GraduationCap size={26} strokeWidth={1.75} aria-hidden /> Membership course</h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Pass score: {data.passScore}/{data.quiz.length}.
-        {account?.isVerified && ' You already passed — review anytime.'}
-      </p>
+      <PageHeader
+        eyebrow={`Membership course · ${data.version}`}
+        title="Membership course"
+        description={`Pass score: ${data.passScore}/${data.quiz.length}.${account?.isVerified ? ' You already passed — review anytime.' : ''}`}
+      />
 
       {step === 'modules' && mod && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <p className="metaMuted">Module {moduleIdx + 1} of {data.modules.length} · ~{mod.minutes} min</p>
-          <h2 style={{ marginTop: 6 }}>{mod.title}</h2>
-          <div className="stackSm" style={{ marginTop: 12 }}>
-            {mod.body.map((p, i) => (
-              <p key={i} className="meta mandatePara">{p}</p>
-            ))}
+        <>
+          <div className="card courseModuleCard">
+            <div className="courseModuleHeader">
+              <div>
+                <p className="metaMuted">
+                  Module {moduleIdx + 1} of {data.modules.length} · ~
+                  {mod.minutes} min
+                </p>
+                <h2>{mod.title}</h2>
+              </div>
+              <div
+                className="courseModuleNavigation"
+                aria-label="Course modules"
+              >
+                <button
+                  type="button"
+                  className="iconButton"
+                  aria-label="Previous module"
+                  disabled={moduleIdx === 0}
+                  onClick={() => setModuleIdx((i) => i - 1)}
+                >
+                  <ChevronLeft size={20} strokeWidth={1.75} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="iconButton"
+                  aria-label="Next module"
+                  disabled={lastModule}
+                  onClick={() => setModuleIdx((i) => i + 1)}
+                >
+                  <ChevronRight size={20} strokeWidth={1.75} aria-hidden />
+                </button>
+              </div>
+            </div>
+            <div className="stackSm courseModuleBody">
+              {mod.body.map((p, i) => (
+                <p key={i} className="meta mandatePara">
+                  {p}
+                </p>
+              ))}
+            </div>
           </div>
-          <div className="detailActions">
-            {moduleIdx > 0 && (
-              <Button variant="ghost" onClick={() => setModuleIdx((i) => i - 1)}>Back</Button>
-            )}
-            {!lastModule ? (
-              <Button variant="primary" onClick={() => setModuleIdx((i) => i + 1)}>Next module</Button>
-            ) : (
-              <Button variant="primary" glow onClick={() => setStep('quiz')}>Take the test</Button>
-            )}
-          </div>
-        </div>
+          {lastModule && (
+            <div className="courseModuleAction">
+              <Button variant="primary" glow onClick={() => setStep('quiz')}>
+                Start the membership test
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {step === 'quiz' && (
         <form className="stack" style={{ marginTop: 16 }} onSubmit={submitQuiz}>
           {data.quiz.map((q, qi) => (
             <div key={q.id} className="card">
-              <h3>{qi + 1}. {q.prompt}</h3>
+              <h3>
+                {qi + 1}. {q.prompt}
+              </h3>
               <div className="stackSm" style={{ marginTop: 10 }}>
                 {q.choices.map((c) => (
-                  <label key={c.id} className={`authChoice ${answers[q.id] === c.id ? 'active' : ''}`} style={{ display: 'block' }}>
+                  <label
+                    key={c.id}
+                    className={`authChoice ${answers[q.id] === c.id ? 'active' : ''}`}
+                    style={{ display: 'block' }}
+                  >
                     <input
                       type="radio"
                       name={q.id}
                       checked={answers[q.id] === c.id}
-                      onChange={() => setAnswers((a) => ({ ...a, [q.id]: c.id }))}
+                      onChange={() =>
+                        setAnswers((a) => ({ ...a, [q.id]: c.id }))
+                      }
                     />
                     <span className="meta">{c.text}</span>
                   </label>
@@ -123,11 +179,21 @@ export function Course() {
               </div>
             </div>
           ))}
-          {error && <p className="meta" style={{ color: 'var(--danger)' }} role="alert">{error}</p>}
-          <div className="detailActions">
-            <Button type="button" variant="ghost" onClick={() => setStep('modules')}>Back to modules</Button>
+          {error && (
+            <p className="meta" style={{ color: 'var(--danger)' }} role="alert">
+              {error}
+            </p>
+          )}
+          <div className="courseQuizActions">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setStep('modules')}
+            >
+              Back to modules
+            </Button>
             <Button type="submit" variant="primary" glow disabled={submitting}>
-              {submitting ? 'Checking…' : 'Submit test'}
+              {submitting ? 'Checking…' : 'Submit and continue'}
             </Button>
           </div>
         </form>

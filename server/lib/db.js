@@ -1,6 +1,6 @@
-// Postgres pool, lazily created from DATABASE_URL. Returns null in fixture mode so
-// the store can branch (tasks.md 2.5). Railway's internal host needs no SSL; the
-// public proxy host does.
+// Lazily create the PostgreSQL pool from DATABASE_URL. Returning null keeps
+// fixture mode available. Railway's internal hostname does not require SSL;
+// external database proxy connections do.
 import pg from 'pg'
 
 let pool = null

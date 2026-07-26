@@ -3,7 +3,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
-import { publicAccount, findAccountByEmail, findAccountById } from './accounts.js'
+import {
+  publicAccount,
+  findAccountByEmail,
+  findAccountById,
+} from './accounts.js'
 import {
   newInviteSecret,
   inviteDigest,
@@ -22,7 +26,9 @@ const requestsPath = path.join(dataDir, 'ngo-requests.json')
 function readJson(file, fallback) {
   try {
     if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return fallback
 }
 
@@ -50,7 +56,7 @@ export async function setAccountFields(id, fields) {
     vals.push(id)
     const { rows } = await pool.query(
       `UPDATE hub_accounts SET ${sets.join(', ')} WHERE id = $${i} RETURNING *`,
-      vals
+      vals,
     )
     return publicAccount(rows[0])
   }
@@ -65,7 +71,10 @@ export async function setAccountFields(id, fields) {
 export async function completeCourse(accountId, { score }) {
   const now = new Date().toISOString()
   const account = await findAccountById(accountId)
-  const membershipStatus = account?.membershipTrack === 'constituency_work' ? 'awaiting_onboarding' : 'course_passed'
+  const membershipStatus =
+    account?.membershipTrack === 'constituency_work'
+      ? 'awaiting_onboarding'
+      : 'course_passed'
   return setAccountFields(accountId, {
     member_status: 'verified',
     hub_access_status: 'active',
@@ -89,11 +98,149 @@ export async function listAccountsForAdmin() {
               created_at, last_login_at, phone
        FROM hub_accounts
        ORDER BY created_at DESC
-       LIMIT 500`
+       LIMIT 500`,
     )
     return rows.map((r) => publicAccount(r))
   }
   return readJson(accountsPath, []).map(publicAccount)
+}
+
+const ACCOUNT_SORTS = {
+  newest: 'created_at DESC',
+  oldest: 'created_at ASC',
+  name: 'name ASC, email ASC',
+  recent_login: 'last_login_at DESC NULLS LAST, created_at DESC',
+}
+
+function pageNumber(value, fallback, max) {
+  const number = Number.parseInt(value, 10)
+  return Number.isFinite(number) ? Math.min(max, Math.max(1, number)) : fallback
+}
+
+export async function queryAccountsForAdmin({
+  search = '',
+  entityType = '',
+  status = '',
+  role = '',
+  sort = 'newest',
+  page = 1,
+  pageSize = 12,
+} = {}) {
+  const cleanSearch = String(search).trim().slice(0, 120)
+  const cleanEntityType = ['individual', 'organization'].includes(entityType)
+    ? entityType
+    : ''
+  const cleanStatus = [
+    'registered',
+    'course_passed',
+    'awaiting_onboarding',
+    'active',
+    'renewal_due',
+    'expired',
+    'terminated',
+  ].includes(status)
+    ? status
+    : ''
+  const cleanRole = [
+    'member',
+    'focal_point',
+    'wg_contact',
+    'ngo_admin',
+    'admin',
+  ].includes(role)
+    ? role
+    : ''
+  const cleanSort = ACCOUNT_SORTS[sort] ? sort : 'newest'
+  const cleanPage = pageNumber(page, 1, 100_000)
+  const cleanPageSize = pageNumber(pageSize, 12, 50)
+  const pool = getPool()
+
+  if (pool) {
+    const values = []
+    const where = []
+    const add = (clause, value) => {
+      values.push(value)
+      where.push(clause.replace('?', `$${values.length}`))
+    }
+    if (cleanSearch)
+      add(
+        `concat_ws(' ', name, email, organization_name, country) ILIKE ?`,
+        `%${cleanSearch}%`,
+      )
+    if (cleanEntityType) add('entity_type = ?', cleanEntityType)
+    if (cleanStatus) add('membership_status = ?', cleanStatus)
+    if (cleanRole) add('role = ?', cleanRole)
+    const filter = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    const count = await pool.query(
+      `SELECT count(*)::int AS total FROM hub_accounts ${filter}`,
+      values,
+    )
+    const total = count.rows[0]?.total || 0
+    const pages = Math.max(1, Math.ceil(total / cleanPageSize))
+    const currentPage = Math.min(cleanPage, pages)
+    const limitIndex = values.length + 1
+    const offsetIndex = values.length + 2
+    const { rows } = await pool.query(
+      `SELECT id, email, name, first_name, last_name, entity_type, organization_name,
+              organization_type, is_unfccc_admitted, member_status, role, team_roles, region, country,
+              nationality, wg_interests, course_passed_at, course_score, verified_at,
+              membership_track, constituency_work_status, hub_access_status, membership_status,
+              onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
+              created_at, last_login_at, phone
+       FROM hub_accounts
+       ${filter}
+       ORDER BY ${ACCOUNT_SORTS[cleanSort]}
+       LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+      [...values, cleanPageSize, (currentPage - 1) * cleanPageSize],
+    )
+    return {
+      items: rows.map(publicAccount),
+      total,
+      page: currentPage,
+      pageSize: cleanPageSize,
+      pages,
+    }
+  }
+
+  const needle = cleanSearch.toLowerCase()
+  const items = readJson(accountsPath, [])
+    .map(publicAccount)
+    .filter((account) => {
+      const text =
+        `${account.name} ${account.email} ${account.organizationName || ''} ${account.country || ''}`.toLowerCase()
+      return (
+        (!needle || text.includes(needle)) &&
+        (!cleanEntityType || account.entityType === cleanEntityType) &&
+        (!cleanStatus || account.membershipStatus === cleanStatus) &&
+        (!cleanRole || account.role === cleanRole)
+      )
+    })
+    .sort((a, b) => {
+      if (cleanSort === 'oldest')
+        return String(a.createdAt || '').localeCompare(
+          String(b.createdAt || ''),
+        )
+      if (cleanSort === 'name')
+        return String(a.name || a.email).localeCompare(
+          String(b.name || b.email),
+        )
+      if (cleanSort === 'recent_login')
+        return String(b.lastLoginAt || '').localeCompare(
+          String(a.lastLoginAt || ''),
+        )
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
+    })
+  const total = items.length
+  const pages = Math.max(1, Math.ceil(total / cleanPageSize))
+  const currentPage = Math.min(cleanPage, pages)
+  const start = (currentPage - 1) * cleanPageSize
+  return {
+    items: items.slice(start, start + cleanPageSize),
+    total,
+    page: currentPage,
+    pageSize: cleanPageSize,
+    pages,
+  }
 }
 
 export async function getWgProgress(accountId, wgSlug) {
@@ -101,11 +248,15 @@ export async function getWgProgress(accountId, wgSlug) {
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM wg_workspace_progress WHERE account_id = $1 AND wg_slug = $2',
-      [accountId, wgSlug]
+      [accountId, wgSlug],
     )
     return rows[0] || null
   }
-  return readJson(progressPath, []).find((p) => p.account_id === accountId && p.wg_slug === wgSlug) || null
+  return (
+    readJson(progressPath, []).find(
+      (p) => p.account_id === accountId && p.wg_slug === wgSlug,
+    ) || null
+  )
 }
 
 export async function listMyWgProgress(accountId) {
@@ -113,7 +264,7 @@ export async function listMyWgProgress(accountId) {
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM wg_workspace_progress WHERE account_id = $1 ORDER BY joined_at DESC',
-      [accountId]
+      [accountId],
     )
     return rows
   }
@@ -128,27 +279,49 @@ export async function upsertWgProgress(accountId, wgSlug, patch) {
       const presentation = Boolean(patch.presentation_ok)
       const rules = Boolean(patch.rules_ok)
       const unlocked = presentation && rules ? new Date().toISOString() : null
-      const status = presentation && rules ? (patch.status || 'active') : (patch.status || 'interested')
+      const status =
+        presentation && rules
+          ? patch.status || 'active'
+          : patch.status || 'interested'
       const { rows } = await pool.query(
         `INSERT INTO wg_workspace_progress (account_id, wg_slug, presentation_ok, rules_ok, unlocked_at, status, role_in_wg)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
         [
-          accountId, wgSlug,
-          presentation, rules, unlocked, status, patch.role_in_wg || 'member',
-        ]
+          accountId,
+          wgSlug,
+          presentation,
+          rules,
+          unlocked,
+          status,
+          patch.role_in_wg || 'member',
+        ],
       )
       return rows[0]
     }
     const presentation = patch.presentation_ok ?? existing.presentation_ok
     const rules = patch.rules_ok ?? existing.rules_ok
-    const unlocked = presentation && rules ? (existing.unlocked_at || new Date().toISOString()) : existing.unlocked_at
-    const status = presentation && rules ? (patch.status || 'active') : (patch.status || existing.status)
+    const unlocked =
+      presentation && rules
+        ? existing.unlocked_at || new Date().toISOString()
+        : existing.unlocked_at
+    const status =
+      presentation && rules
+        ? patch.status || 'active'
+        : patch.status || existing.status
     const { rows } = await pool.query(
       `UPDATE wg_workspace_progress SET
         presentation_ok = $3, rules_ok = $4, unlocked_at = $5, status = $6,
         role_in_wg = COALESCE($7, role_in_wg)
        WHERE account_id = $1 AND wg_slug = $2 RETURNING *`,
-      [accountId, wgSlug, presentation, rules, unlocked, status, patch.role_in_wg || null]
+      [
+        accountId,
+        wgSlug,
+        presentation,
+        rules,
+        unlocked,
+        status,
+        patch.role_in_wg || null,
+      ],
     )
     return rows[0]
   }
@@ -156,9 +329,14 @@ export async function upsertWgProgress(accountId, wgSlug, patch) {
   let row = list.find((p) => p.account_id === accountId && p.wg_slug === wgSlug)
   if (!row) {
     row = {
-      account_id: accountId, wg_slug: wgSlug,
-      presentation_ok: false, rules_ok: false, unlocked_at: null,
-      joined_at: new Date().toISOString(), role_in_wg: 'member', status: 'interested',
+      account_id: accountId,
+      wg_slug: wgSlug,
+      presentation_ok: false,
+      rules_ok: false,
+      unlocked_at: null,
+      joined_at: new Date().toISOString(),
+      role_in_wg: 'member',
+      status: 'interested',
     }
     list.push(row)
   }
@@ -181,15 +359,22 @@ export async function listWgJoiners(wgSlug) {
        WHERE p.wg_slug = $1
        ORDER BY p.joined_at DESC
        LIMIT 100`,
-      [wgSlug]
+      [wgSlug],
     )
     return rows
   }
-  const progress = readJson(progressPath, []).filter((p) => p.wg_slug === wgSlug)
+  const progress = readJson(progressPath, []).filter(
+    (p) => p.wg_slug === wgSlug,
+  )
   const accounts = readJson(accountsPath, [])
   return progress.map((p) => {
     const a = accounts.find((x) => x.id === p.account_id) || {}
-    return { ...p, name: a.name, email: a.email, member_status: a.member_status }
+    return {
+      ...p,
+      name: a.name,
+      email: a.email,
+      member_status: a.member_status,
+    }
   })
 }
 
@@ -200,9 +385,15 @@ export async function addWgActivity(activity) {
       `INSERT INTO wg_activities (wg_slug, kind, title, body, starts_at, ends_at, url, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
       [
-        activity.wgSlug, activity.kind, activity.title, activity.body || null,
-        activity.startsAt || null, activity.endsAt || null, activity.url || null, activity.createdBy,
-      ]
+        activity.wgSlug,
+        activity.kind,
+        activity.title,
+        activity.body || null,
+        activity.startsAt || null,
+        activity.endsAt || null,
+        activity.url || null,
+        activity.createdBy,
+      ],
     )
     return rows[0]
   }
@@ -229,11 +420,13 @@ export async function listWgActivities(wgSlug) {
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM wg_activities WHERE wg_slug = $1 ORDER BY created_at DESC LIMIT 50',
-      [wgSlug]
+      [wgSlug],
     )
     return rows
   }
-  return readJson(activitiesPath, []).filter((a) => a.wg_slug === wgSlug).slice(0, 50)
+  return readJson(activitiesPath, [])
+    .filter((a) => a.wg_slug === wgSlug)
+    .slice(0, 50)
 }
 
 export async function listNgoRequests(orgAccountId) {
@@ -241,11 +434,13 @@ export async function listNgoRequests(orgAccountId) {
   if (pool) {
     const { rows } = await pool.query(
       'SELECT * FROM ngo_requests WHERE org_account_id = $1 ORDER BY created_at DESC LIMIT 100',
-      [orgAccountId]
+      [orgAccountId],
     )
     return rows
   }
-  return readJson(requestsPath, []).filter((r) => r.org_account_id === orgAccountId)
+  return readJson(requestsPath, []).filter(
+    (r) => r.org_account_id === orgAccountId,
+  )
 }
 
 export async function addNgoRequest(req) {
@@ -254,7 +449,14 @@ export async function addNgoRequest(req) {
     const { rows } = await pool.query(
       `INSERT INTO ngo_requests (org_account_id, kind, title, body, deadline_at, created_by)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [req.orgAccountId, req.kind, req.title, req.body || null, req.deadlineAt || null, req.createdBy]
+      [
+        req.orgAccountId,
+        req.kind,
+        req.title,
+        req.body || null,
+        req.deadlineAt || null,
+        req.createdBy,
+      ],
     )
     return rows[0]
   }
@@ -280,7 +482,7 @@ export async function updateNgoRequestStatus(id, status, orgAccountId) {
   if (pool) {
     const { rows } = await pool.query(
       'UPDATE ngo_requests SET status = $1 WHERE id = $2 AND org_account_id = $3 RETURNING *',
-      [status, id, orgAccountId]
+      [status, id, orgAccountId],
     )
     return rows[0] || null
   }
@@ -330,19 +532,23 @@ export async function resolveOrgContext(account, requestedOrgId = null) {
        WHERE member_account_id = $1 AND status = 'active'
        ORDER BY accepted_at DESC NULLS LAST
        LIMIT 1`,
-      [account.id]
+      [account.id],
     )
     if (!rows[0]) return null
     return {
       orgAccountId: rows[0].org_account_id,
       seatRole: rows[0].seat_role,
       isAdmin: false,
-      canManageRequests: ['owner', 'representative'].includes(rows[0].seat_role),
+      canManageRequests: ['owner', 'representative'].includes(
+        rows[0].seat_role,
+      ),
       canManageSeats: rows[0].seat_role === 'owner',
     }
   }
   const seats = readJson(seatsPath, [])
-  const seat = seats.find((s) => s.member_account_id === account.id && s.status === 'active')
+  const seat = seats.find(
+    (s) => s.member_account_id === account.id && s.status === 'active',
+  )
   if (!seat) return null
   return {
     orgAccountId: seat.org_account_id,
@@ -366,7 +572,7 @@ export async function listNgoSeats(orgAccountId) {
        LEFT JOIN hub_accounts a ON a.id = s.member_account_id
        WHERE s.org_account_id = $1 AND s.status != 'revoked'
        ORDER BY s.created_at ASC`,
-      [orgAccountId]
+      [orgAccountId],
     )
     return rows.map((r) => ({
       ...publicSeat(r),
@@ -385,14 +591,15 @@ export async function ensureOwnerSeat(orgAccount, client = null) {
     orgAccount.entityType !== 'organization' ||
     !orgAccount.isVerified ||
     !['ngo_admin', 'admin'].includes(orgAccount.role)
-  ) return null
+  )
+    return null
   const pool = client || getPool()
   if (pool) {
     const existing = await pool.query(
       `SELECT * FROM ngo_seats
        WHERE org_account_id = $1 AND seat_role = 'owner' AND status = 'active'
        LIMIT 1`,
-      [orgAccount.id]
+      [orgAccount.id],
     )
     if (existing.rowCount) return publicSeat(existing.rows[0])
     const { rows } = await pool.query(
@@ -408,12 +615,14 @@ export async function ensureOwnerSeat(orgAccount, client = null) {
          invite_token_hash = NULL,
          invite_expires_at = NULL
        RETURNING *`,
-      [orgAccount.id, orgAccount.id, orgAccount.email, orgAccount.name]
+      [orgAccount.id, orgAccount.id, orgAccount.email, orgAccount.name],
     )
     return publicSeat(rows[0])
   }
   const list = readJson(seatsPath, [])
-  let row = list.find((s) => s.org_account_id === orgAccount.id && s.seat_role === 'owner')
+  let row = list.find(
+    (s) => s.org_account_id === orgAccount.id && s.seat_role === 'owner',
+  )
   if (row) {
     Object.assign(row, {
       member_account_id: orgAccount.id,
@@ -445,8 +654,16 @@ export async function ensureOwnerSeat(orgAccount, client = null) {
   return publicSeat(row)
 }
 
-export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invitedBy }) {
-  const normalized = String(email || '').trim().toLowerCase()
+export async function inviteNgoSeat({
+  orgAccountId,
+  email,
+  name,
+  seatRole,
+  invitedBy,
+}) {
+  const normalized = String(email || '')
+    .trim()
+    .toLowerCase()
   if (!normalized) {
     const err = new Error('Email is required.')
     err.code = 'validation'
@@ -476,10 +693,12 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
            accepted_at = NULL
          WHERE ngo_seats.status = 'revoked'
          RETURNING *`,
-        [orgAccountId, normalized, name || null, role, tokenHash, expiresAt]
+        [orgAccountId, normalized, name || null, role, tokenHash, expiresAt],
       )
       if (!rows[0]) {
-        const err = new Error('That email already has an active or pending seat.')
+        const err = new Error(
+          'That email already has an active or pending seat.',
+        )
         err.code = 'duplicate'
         throw err
       }
@@ -495,7 +714,9 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
     }
   }
   const list = readJson(seatsPath, [])
-  let row = list.find((s) => s.org_account_id === orgAccountId && s.email === normalized)
+  let row = list.find(
+    (s) => s.org_account_id === orgAccountId && s.email === normalized,
+  )
   if (row && row.status !== 'revoked') {
     const err = new Error('That email already has an active or pending seat.')
     err.code = 'duplicate'
@@ -526,7 +747,9 @@ export async function inviteNgoSeat({ orgAccountId, email, name, seatRole, invit
 
 export async function acceptNgoInvite(token, account) {
   const tokenHash = inviteDigest(token)
-  const normalizedEmail = String(account?.email || '').trim().toLowerCase()
+  const normalizedEmail = String(account?.email || '')
+    .trim()
+    .toLowerCase()
   if (!normalizedEmail) return null
   const pool = getPool()
   if (pool) {
@@ -544,7 +767,7 @@ export async function acceptNgoInvite(token, account) {
          AND invite_expires_at > now()
          AND lower(email) = lower($4)
        RETURNING *`,
-      [tokenHash, account.id, account.name, normalizedEmail]
+      [tokenHash, account.id, account.name, normalizedEmail],
     )
     if (!rows[0]) return null
     return publicSeat(rows[0])
@@ -552,8 +775,10 @@ export async function acceptNgoInvite(token, account) {
   const list = readJson(seatsPath, [])
   const row = list.find((seat) => inviteMatches(seat, token, normalizedEmail))
   if (!row) return null
-  if (row.invite_expires_at && new Date(row.invite_expires_at) <= new Date()) return null
-  if (String(row.email).toLowerCase() !== String(account.email).toLowerCase()) return null
+  if (row.invite_expires_at && new Date(row.invite_expires_at) <= new Date())
+    return null
+  if (String(row.email).toLowerCase() !== String(account.email).toLowerCase())
+    return null
   row.status = 'active'
   row.member_account_id = account.id
   row.name = row.name || account.name
@@ -576,12 +801,14 @@ export async function revokeNgoSeat(seatId, orgAccountId) {
          invite_expires_at = NULL
        WHERE id = $1 AND org_account_id = $2 AND seat_role != 'owner'
        RETURNING *`,
-      [seatId, orgAccountId]
+      [seatId, orgAccountId],
     )
     return publicSeat(rows[0] || null)
   }
   const list = readJson(seatsPath, [])
-  const row = list.find((s) => s.id === seatId && s.org_account_id === orgAccountId)
+  const row = list.find(
+    (s) => s.id === seatId && s.org_account_id === orgAccountId,
+  )
   if (!row || row.seat_role === 'owner') return null
   row.status = 'revoked'
   row.invite_token = null
@@ -593,7 +820,9 @@ export async function revokeNgoSeat(seatId, orgAccountId) {
 
 export async function getSeatByToken(token, accountEmail) {
   const tokenHash = inviteDigest(token)
-  const normalizedEmail = String(accountEmail || '').trim().toLowerCase()
+  const normalizedEmail = String(accountEmail || '')
+    .trim()
+    .toLowerCase()
   if (!normalizedEmail) return null
   const pool = getPool()
   if (pool) {
@@ -606,7 +835,7 @@ export async function getSeatByToken(token, accountEmail) {
          AND s.invite_expires_at > now()
          AND lower(s.email) = lower($2)
        LIMIT 1`,
-      [tokenHash, normalizedEmail]
+      [tokenHash, normalizedEmail],
     )
     if (!rows[0]) return null
     return {

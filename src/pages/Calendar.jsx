@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, PageHeader } from '../components/ui.jsx'
+import { Async, Empty, FilterPill, PageHeader } from '../components/ui.jsx'
 import { EventCard } from '../components/cards.jsx'
 import { CalendarSubscribe } from '../components/Subscribe.jsx'
 import {
@@ -12,15 +12,25 @@ import {
   groupEventsByDate,
   shiftCalendarMonth,
 } from '../lib/monthCalendar.js'
-import { CalendarOff, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  CalendarOff,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Users,
+  Network,
+  Landmark,
+  MessageSquareText,
+  Presentation,
+} from 'lucide-react'
 
 const FILTERS = [
-  { key: 'all', label: 'All' },
-  { key: 'constituency_call', label: 'Constituency' },
-  { key: 'wg_call', label: 'Working groups' },
-  { key: 'wgf', label: 'Forums' },
-  { key: 'unfccc_session', label: 'UNFCCC' },
-  { key: 'webinar', label: 'Webinars' },
+  { key: 'all', label: 'All', icon: ListFilter },
+  { key: 'constituency_call', label: 'Constituency', icon: Users },
+  { key: 'wg_call', label: 'Working groups', icon: Network },
+  { key: 'wgf', label: 'Forums', icon: MessageSquareText },
+  { key: 'unfccc_session', label: 'UNFCCC', icon: Landmark },
+  { key: 'webinar', label: 'Webinars', icon: Presentation },
 ]
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -66,48 +76,84 @@ export function Calendar() {
       >
         <div className="pillRow" aria-label="Filter events by type">
           {FILTERS.map((f) => (
-            <button
-              type="button"
+            <FilterPill
               key={f.key}
-              className={`pill ${type === f.key ? 'active' : ''}`}
+              active={type === f.key}
+              icon={f.icon}
               onClick={() => changeType(f.key)}
-              aria-pressed={type === f.key}
             >
               {f.label}
-            </button>
+            </FilterPill>
           ))}
         </div>
       </PageHeader>
-      <Async query={query} empty={(d) => d.items.length === 0 ? <Empty icon={CalendarOff} title="Nothing scheduled for this filter" body="Try another type or check back soon." /> : null}>
+      <Async
+        query={query}
+        empty={(d) =>
+          d.items.length === 0 ? (
+            <Empty
+              icon={CalendarOff}
+              title="Nothing scheduled for this filter"
+              body="Try another type or check back soon."
+            />
+          ) : null
+        }
+      >
         {(data) => {
           const grouped = groupEventsByDate(data.items)
           const days = buildCalendarDays(month, grouped)
           const monthEvents = eventsInCalendarMonth(data.items, month)
-          const activeDay = selectedDay && grouped.has(selectedDay) ? selectedDay : null
+          const activeDay =
+            selectedDay && grouped.has(selectedDay) ? selectedDay : null
           const agendaEvents = activeDay ? grouped.get(activeDay) : monthEvents
-          const visibleTypes = [...new Set(monthEvents.map((event) => event.type))]
+          const visibleTypes = [
+            ...new Set(monthEvents.map((event) => event.type)),
+          ]
 
           return (
             <div className="calendarLayout">
-              <section className="calendarPanel" aria-label={`${formatCalendarMonth(month)} calendar`}>
+              <section
+                className="calendarPanel"
+                aria-label={`${formatCalendarMonth(month)} calendar`}
+              >
                 <div className="calendarToolbar">
                   <div>
                     <p className="eyebrow">Month</p>
                     <h2>{formatCalendarMonth(month)}</h2>
                   </div>
                   <div className="calendarControls">
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={returnToThisMonth}>Today</button>
-                    <button type="button" className="iconButton" onClick={() => changeMonth(-1)} aria-label="Previous month">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={returnToThisMonth}
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      className="iconButton"
+                      onClick={() => changeMonth(-1)}
+                      aria-label="Previous month"
+                    >
                       <ChevronLeft size={18} aria-hidden />
                     </button>
-                    <button type="button" className="iconButton" onClick={() => changeMonth(1)} aria-label="Next month">
+                    <button
+                      type="button"
+                      className="iconButton"
+                      onClick={() => changeMonth(1)}
+                      aria-label="Next month"
+                    >
                       <ChevronRight size={18} aria-hidden />
                     </button>
                   </div>
                 </div>
 
                 <div className="calendarWeekdays" aria-hidden>
-                  {WEEKDAYS.map((day) => <span key={day}>{day}</span>)}
+                  {WEEKDAYS.map((day, index) => (
+                    <span key={day} data-weekend={index >= 5 || undefined}>
+                      {day}
+                    </span>
+                  ))}
                 </div>
                 <div className="calendarMonthGrid">
                   {days.map((date) => {
@@ -115,11 +161,25 @@ export function Calendar() {
                     const label = `${formatCalendarDay(date.key)}: ${date.events.map((event) => event.title).join(', ')}`
                     const content = (
                       <>
-                        <span className={`calendarDayNumber ${date.key === today ? 'today' : ''}`}>{date.day}</span>
+                        <span
+                          className={`calendarDayNumber ${date.key === today ? 'today' : ''}`}
+                        >
+                          {date.day}
+                        </span>
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
-                            {dots.map((event) => <span key={event.slug} className="calendarDot" data-event-type={event.type} />)}
-                            {date.events.length > dots.length && <span className="calendarMore">+{date.events.length - dots.length}</span>}
+                            {dots.map((event) => (
+                              <span
+                                key={event.slug}
+                                className="calendarDot"
+                                data-event-type={event.type}
+                              />
+                            ))}
+                            {date.events.length > dots.length && (
+                              <span className="calendarMore">
+                                +{date.events.length - dots.length}
+                              </span>
+                            )}
                           </span>
                         )}
                       </>
@@ -130,6 +190,7 @@ export function Calendar() {
                         type="button"
                         key={date.key}
                         className={`calendarDay calendarDayButton ${selectedDay === date.key ? 'selected' : ''}`}
+                        data-weekend={date.isWeekend || undefined}
                         onClick={() => setSelectedDay(date.key)}
                         aria-label={label}
                         aria-pressed={selectedDay === date.key}
@@ -137,7 +198,12 @@ export function Calendar() {
                         {content}
                       </button>
                     ) : (
-                      <div key={date.key} className={`calendarDay calendarDayEmpty ${date.inMonth ? '' : 'outside'}`} aria-hidden={!date.inMonth}>
+                      <div
+                        key={date.key}
+                        className={`calendarDay calendarDayEmpty ${date.inMonth ? '' : 'outside'}`}
+                        data-weekend={date.isWeekend || undefined}
+                        aria-hidden={!date.inMonth}
+                      >
                         {content}
                       </div>
                     )
@@ -148,7 +214,11 @@ export function Calendar() {
                   <div className="calendarLegend" aria-label="Event colours">
                     {visibleTypes.map((eventType) => (
                       <span key={eventType}>
-                        <span className="calendarDot" data-event-type={eventType} aria-hidden />
+                        <span
+                          className="calendarDot"
+                          data-event-type={eventType}
+                          aria-hidden
+                        />
                         {EVENT_TYPES[eventType] || eventType}
                       </span>
                     ))}
@@ -156,25 +226,42 @@ export function Calendar() {
                 )}
               </section>
 
-              <aside className="calendarAgenda" aria-labelledby="calendar-agenda-title">
+              <aside
+                className="calendarAgenda"
+                aria-labelledby="calendar-agenda-title"
+              >
                 <div className="calendarAgendaHeader">
-                  <p className="eyebrow">{activeDay ? 'Selected day' : 'This month'}</p>
-                  <h2 id="calendar-agenda-title">{activeDay ? formatCalendarDay(activeDay) : formatCalendarMonth(month)}</h2>
+                  <p className="eyebrow">
+                    {activeDay ? 'Selected day' : 'This month'}
+                  </p>
+                  <h2 id="calendar-agenda-title">
+                    {activeDay
+                      ? formatCalendarDay(activeDay)
+                      : formatCalendarMonth(month)}
+                  </h2>
                   <p className="meta">
                     {agendaEvents.length
                       ? `${agendaEvents.length} ${agendaEvents.length === 1 ? 'event' : 'events'}`
                       : 'No events scheduled'}
                   </p>
                   <span className="srOnly" role="status">
-                    {activeDay ? `Showing events for ${formatCalendarDay(activeDay)}` : `Showing ${formatCalendarMonth(month)}`}
+                    {activeDay
+                      ? `Showing events for ${formatCalendarDay(activeDay)}`
+                      : `Showing ${formatCalendarMonth(month)}`}
                   </span>
                 </div>
                 {agendaEvents.length ? (
                   <div className="calendarAgendaList">
-                    {agendaEvents.map((event) => <EventCard key={event.slug} event={event} />)}
+                    {agendaEvents.map((event) => (
+                      <EventCard key={event.slug} event={event} />
+                    ))}
                   </div>
                 ) : (
-                  <Empty icon={CalendarOff} title="No events this month" body="Use the arrows to check another month." />
+                  <Empty
+                    icon={CalendarOff}
+                    title="No events this month"
+                    body="Use the arrows to check another month."
+                  />
                 )}
               </aside>
             </div>

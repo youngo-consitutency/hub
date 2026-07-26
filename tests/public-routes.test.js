@@ -15,7 +15,9 @@ async function withServer(run) {
   try {
     await run(`http://127.0.0.1:${port}`)
   } finally {
-    await new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())))
+    await new Promise((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve())),
+    )
   }
 }
 
@@ -23,23 +25,29 @@ test('anonymous JSON routes omit private meeting and WG channel links', async ()
   await withServer(async (origin) => {
     const events = await fetch(`${origin}/api/events`).then((res) => res.json())
     assert.ok(events.items.length > 0)
-    assert.ok(events.items.every((event) => !Object.hasOwn(event, 'meetingUrl')))
+    assert.ok(
+      events.items.every((event) => !Object.hasOwn(event, 'meetingUrl')),
+    )
 
     const groups = await fetch(`${origin}/api/groups`).then((res) => res.json())
     assert.ok(groups.items.length > 0)
-    assert.ok(groups.items.every((group) => (
-      !Object.hasOwn(group, 'whatsappUrl') &&
-      !Object.hasOwn(group, 'groupUrl') &&
-      !Object.hasOwn(group, 'driveUrl')
-    )))
+    assert.ok(
+      groups.items.every(
+        (group) =>
+          !Object.hasOwn(group, 'whatsappUrl') &&
+          !Object.hasOwn(group, 'groupUrl') &&
+          !Object.hasOwn(group, 'driveUrl'),
+      ),
+    )
   })
 })
 
 test('anonymous ICS routes omit private meeting URLs', async () => {
   await withServer(async (origin) => {
-    const calendar = await fetch(`${origin}/ics/all.ics`).then((res) => res.text())
+    const calendar = await fetch(`${origin}/ics/all.ics`).then((res) =>
+      res.text(),
+    )
     assert.doesNotMatch(calendar, /https?:\/\/(?:meet|zoom|teams)\./i)
     assert.doesNotMatch(calendar, /^URL:/m)
   })
 })
-

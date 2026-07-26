@@ -7,15 +7,18 @@ import { Privacy } from '../pages/Privacy.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { applyTheme, getInitialTheme } from '../lib/theme.js'
 import { apiGet } from '../lib/api.js'
-import { clearSession, getCachedAccount, getSessionToken, setSession } from '../lib/session.js'
+import {
+  clearSession,
+  getCachedAccount,
+  getSessionToken,
+  setSession,
+} from '../lib/session.js'
 import { usePath } from '../lib/router.js'
 
 /**
- * Two-step unlock for YOUNGO Hub:
- * 1) Mandatory Membership Policy read
- * 2) Create account or sign in
- * Feature gating by verification is handled in App routes.
- * Password reset is available without a session.
+ * Controls access before the main application loads. Visitors first read the
+ * Membership Policy, then create an account or sign in. App.jsx handles
+ * course-verification and role-specific routes.
  */
 export function AccessGate({ children }) {
   const path = usePath()
@@ -48,7 +51,9 @@ export function AccessGate({ children }) {
       }
       if (alive) setReady(true)
     })()
-    return () => { alive = false }
+    return () => {
+      alive = false
+    }
   }, [refreshSession])
 
   if (path.startsWith('/reset-password')) {
@@ -60,8 +65,7 @@ export function AccessGate({ children }) {
     )
   }
 
-  // Readable without an account: consent is not informed if you must first hand
-  // over data to find out what happens to it.
+  // The privacy notice must be readable before someone is asked for personal data.
   if (path.startsWith('/privacy')) {
     return (
       <>
@@ -76,7 +80,14 @@ export function AccessGate({ children }) {
       <>
         <FloatingThemeToggle />
         <div className="mandateGate" aria-busy="true">
-          <div className="mandateShell" style={{ justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <div
+            className="mandateShell"
+            style={{
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 24,
+            }}
+          >
             <p className="meta">Loading YOUNGO Hub...</p>
           </div>
         </div>
@@ -97,9 +108,7 @@ export function AccessGate({ children }) {
     return (
       <>
         <FloatingThemeToggle />
-        <AuthGate
-          onAuthenticated={(acc) => setAccount(acc)}
-        />
+        <AuthGate onAuthenticated={(acc) => setAccount(acc)} />
       </>
     )
   }

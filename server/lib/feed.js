@@ -3,11 +3,15 @@ const DAY = 86400000
 
 export function assembleFeed(data, now = new Date()) {
   const t = now.getTime()
-  const events = [...data.events].sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))
+  const events = [...data.events].sort(
+    (a, b) => new Date(a.startsAt) - new Date(b.startsAt),
+  )
 
-  const live = events.find(
-    (e) => new Date(e.startsAt) <= now && e.endsAt && now < new Date(e.endsAt)
-  ) || null
+  const live =
+    events.find(
+      (e) =>
+        new Date(e.startsAt) <= now && e.endsAt && now < new Date(e.endsAt),
+    ) || null
 
   const week = events
     .filter((e) => {
@@ -20,15 +24,23 @@ export function assembleFeed(data, now = new Date()) {
     .filter((s) => ['open', 'drafting', 'internal_review'].includes(s.status))
     .filter((s) => s.deadlineAt && new Date(s.deadlineAt) > now)
     .map((s) => ({
-      kind: 'submission', slug: s.slug, title: s.title,
-      status: s.status, deadlineAt: s.deadlineAt, wg: s.wg || null,
+      kind: 'submission',
+      slug: s.slug,
+      title: s.title,
+      status: s.status,
+      deadlineAt: s.deadlineAt,
+      wg: s.wg || null,
     }))
 
   const openDecisions = data.council
     .filter((d) => ['open_for_input', 'objection_window'].includes(d.status))
     .map((d) => ({
-      kind: 'decision', slug: d.slug, title: d.title, status: d.status,
-      deadlineAt: d.status === 'objection_window' ? d.objectionDeadline : d.inputDeadline,
+      kind: 'decision',
+      slug: d.slug,
+      title: d.title,
+      status: d.status,
+      deadlineAt:
+        d.status === 'objection_window' ? d.objectionDeadline : d.inputDeadline,
     }))
     .filter((d) => d.deadlineAt && new Date(d.deadlineAt) > now)
 
@@ -40,8 +52,14 @@ export function assembleFeed(data, now = new Date()) {
   const pinned = data.announcements.filter((a) => a.pinned).slice(0, 2)
 
   const coys = data.coys
-    .filter((c) => c.reviewStatus === 'approved' && !['concluded', 'cancelled'].includes(c.status))
-    .sort((a, b) => String(a.startsOn || '9999').localeCompare(String(b.startsOn || '9999')))
+    .filter(
+      (c) =>
+        c.reviewStatus === 'approved' &&
+        !['concluded', 'cancelled'].includes(c.status),
+    )
+    .sort((a, b) =>
+      String(a.startsOn || '9999').localeCompare(String(b.startsOn || '9999')),
+    )
     .slice(0, 4)
 
   return { live, pinned, week, closing, coys }

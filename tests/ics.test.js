@@ -1,14 +1,22 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildCalendar, icsDate, escapeText, foldLine } from '../server/lib/ics.js'
+import {
+  buildCalendar,
+  icsDate,
+  escapeText,
+  foldLine,
+} from '../server/lib/ics.js'
 
 const now = new Date('2026-07-06T09:00:00Z')
 
 const events = [
   {
-    slug: 'constituency-call', title: 'Constituency call',
-    startsAt: '2026-07-08T13:00:00.000Z', endsAt: '2026-07-08T14:30:00.000Z',
-    description: 'Agenda: logistics, AOB', meetingUrl: 'https://zoom.us/j/example',
+    slug: 'constituency-call',
+    title: 'Constituency call',
+    startsAt: '2026-07-08T13:00:00.000Z',
+    endsAt: '2026-07-08T14:30:00.000Z',
+    description: 'Agenda: logistics, AOB',
+    meetingUrl: 'https://zoom.us/j/example',
   },
 ]
 
@@ -48,7 +56,10 @@ test('buildCalendar uses CRLF line endings throughout', () => {
 })
 
 test('an event without a meeting URL omits URL/LOCATION lines', () => {
-  const ics = buildCalendar({ name: 'Cal', events: [{ ...events[0], meetingUrl: null }] }, now)
+  const ics = buildCalendar(
+    { name: 'Cal', events: [{ ...events[0], meetingUrl: null }] },
+    now,
+  )
   assert.ok(!ics.includes('URL:'))
   assert.ok(!ics.includes('LOCATION:'))
 })
