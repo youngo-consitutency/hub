@@ -16,6 +16,7 @@ import {
   REGIONS,
   wordCount,
 } from '../../shared/registration.js'
+import { WORKING_GROUPS } from '../../shared/workingGroups.js'
 import { Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
 import {
@@ -30,18 +31,40 @@ const asOptions = (values) => values.map((value) => ({ value, label: value }))
 const REGION_OPTIONS = asOptions(REGIONS)
 const GENDER_OPTIONS = asOptions(GENDERS)
 const MINORITY_SELECT_OPTIONS = asOptions(MINORITY_OPTIONS)
-const WG_SELECT_OPTIONS = [
-  { value: 'ace', label: 'ACE' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'adaptation', label: 'Adaptation' },
-  { value: 'health', label: 'Health' },
-]
+const WG_SELECT_OPTIONS = WORKING_GROUPS.map((g) => ({
+  value: g.slug,
+  label: g.name,
+}))
+
+function WgInterestsSection({ selected, onToggle }) {
+  return (
+    <section className="card authSection">
+      <h2 className="authSectionTitle">Working groups you’re interested in</h2>
+      <p className="meta">
+        Optional. You’ll complete each group’s onboarding before its member
+        channels open.
+      </p>
+      <MultiSelectDropdown
+        label="Working groups"
+        hideLabel
+        options={WG_SELECT_OPTIONS}
+        selected={selected}
+        onToggle={onToggle}
+      />
+    </section>
+  )
+}
 
 let phoneSupportPromise
 let nationalityOptionsPromise
 
 function loadPhoneSupport() {
-  phoneSupportPromise ||= import('../lib/phone.js')
+  // Retry if a prior dynamic import failed (e.g. broken Vite HMR), otherwise
+  // submit stays on "Submitting…" forever waiting on a rejected/stale promise.
+  phoneSupportPromise ||= import('../lib/phone.js').catch((error) => {
+    phoneSupportPromise = null
+    throw error
+  })
   return phoneSupportPromise
 }
 
@@ -453,11 +476,15 @@ export function AuthGate({ onAuthenticated }) {
     setStatus('submitting')
     setError(null)
     setFields({})
+    let signedIn = false
     try {
       const data = await apiPost('/auth/login', login)
       finishAuth(data)
+      signedIn = Boolean(data?.account)
     } catch (err) {
       applyErrors(err)
+    } finally {
+      if (!signedIn) setStatus('idle')
     }
   }
 
@@ -507,6 +534,7 @@ export function AuthGate({ onAuthenticated }) {
       return
     }
 
+    let signedIn = false
     try {
       const { normalizePhone } = await loadPhoneSupport()
       const payload = {
@@ -531,8 +559,12 @@ export function AuthGate({ onAuthenticated }) {
       }
       const data = await apiPost('/auth/register', payload)
       finishAuth(data)
+      signedIn = Boolean(data?.account)
     } catch (err) {
       applyErrors(err)
+    } finally {
+      // AuthGate unmounts on success; only clear the stuck button on failure.
+      if (!signedIn) setStatus('idle')
     }
   }
 
@@ -1181,6 +1213,13 @@ export function AuthGate({ onAuthenticated }) {
                   )}
 
                   {(admitted || nonAdmitted) && (
+                    <WgInterestsSection
+                      selected={form.wgInterests}
+                      onToggle={toggleWg}
+                    />
+                  )}
+
+                  {(admitted || nonAdmitted) && (
                     <section className="card authSection">
                       <h2 className="authSectionTitle">Policies *</h2>
                       <p className="meta">
@@ -1574,22 +1613,10 @@ export function AuthGate({ onAuthenticated }) {
                     </section>
                   )}
 
-                  <section className="card authSection">
-                    <h2 className="authSectionTitle">
-                      Working groups you’re interested in
-                    </h2>
-                    <p className="meta">
-                      Optional. You’ll complete each group’s onboarding before
-                      its member channels open.
-                    </p>
-                    <MultiSelectDropdown
-                      label="Working groups"
-                      hideLabel
-                      options={WG_SELECT_OPTIONS}
-                      selected={form.wgInterests}
-                      onToggle={toggleWg}
-                    />
-                  </section>
+                  <WgInterestsSection
+                    selected={form.wgInterests}
+                    onToggle={toggleWg}
+                  />
 
                   <section className="card authSection">
                     <h2 className="authSectionTitle">

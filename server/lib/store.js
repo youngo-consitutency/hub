@@ -92,6 +92,9 @@ function materialize(raw, now = new Date()) {
     title: a.title,
     body: a.body,
     pinned: !!a.pinned,
+    ctaUrl: a.ctaUrl || null,
+    ctaLabel: a.ctaLabel || null,
+    ctaDeadlineAt: a.ctaDeadlineAt || null,
     publishedAt: iso(now.getTime() - (a.daysAgo || 0) * DAY),
   }))
 
@@ -162,6 +165,9 @@ export function setPublishedContent(items = []) {
         title: payload.title,
         body: payload.body,
         pinned: Boolean(payload.pinned),
+        ctaUrl: payload.ctaUrl || null,
+        ctaLabel: payload.ctaLabel || null,
+        ctaDeadlineAt: payload.ctaDeadlineAt || null,
         publishedAt: item.publishedAt,
       })
     }

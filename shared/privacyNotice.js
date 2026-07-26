@@ -114,6 +114,7 @@ export const DATA_CATEGORIES = [
     fields: [
       'Organisation name, country, website and social links',
       'Mission and activities',
+      'Working groups the organisation is interested in',
       'UNFCCC Designated Contact Point and YOUNGO Contact Point details',
     ],
     purpose:

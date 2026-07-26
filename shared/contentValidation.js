@@ -215,12 +215,37 @@ export function validateEditableContent(
   }
 
   const body = cleanText(payload.body)
+  const ctaUrl = cleanText(payload.ctaUrl)
+  const ctaLabel = cleanText(payload.ctaLabel)
+  const ctaDeadlineAt = cleanText(payload.ctaDeadlineAt)
   if (body.length < 10 || body.length > 4000) {
     errors.body = 'Enter announcement text between 10 and 4,000 characters.'
+  }
+  if (ctaUrl && !isWebUrl(ctaUrl)) {
+    errors.ctaUrl = 'Enter a full http:// or https:// URL.'
+  }
+  if (ctaLabel.length > 80) {
+    errors.ctaLabel = 'CTA label must be 80 characters or fewer.'
+  }
+  if (ctaUrl && !ctaLabel) {
+    errors.ctaLabel = 'Add a label for the call-to-action button.'
+  }
+  if (ctaDeadlineAt && !validDate(ctaDeadlineAt)) {
+    errors.ctaDeadlineAt = 'Enter a valid deadline date and time.'
   }
   return {
     ok: Object.keys(errors).length === 0,
     errors,
-    value: { slug, title, body, pinned: Boolean(payload.pinned) },
+    value: {
+      slug,
+      title,
+      body,
+      pinned: Boolean(payload.pinned),
+      ctaUrl: ctaUrl || null,
+      ctaLabel: ctaLabel || null,
+      ctaDeadlineAt: validDate(ctaDeadlineAt)
+        ? new Date(ctaDeadlineAt).toISOString()
+        : null,
+    },
   }
 }

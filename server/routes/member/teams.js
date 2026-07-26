@@ -10,8 +10,11 @@ import { recordAudit } from '../../lib/audit.js'
 import {
   createGysContribution,
   getGysWorkflow,
+  importGysContributionsFromCsv,
+  setGysCycleStatus,
   updateGysContribution,
 } from '../../lib/gysWorkflow.js'
+import { previewCsvImport } from '../../lib/gysImport.js'
 import { listAccountsForAdmin, setAccountFields } from '../../lib/lifecycle.js'
 import { getGys, listCouncil, listSubmissions } from '../../lib/store.js'
 
@@ -86,9 +89,85 @@ router.get('/team/gys/overview', async (req, res) => {
     process: gys?.process || [],
     contributions: workflow.contributions,
     statuses: workflow.statuses,
+    synthesis: workflow.synthesis,
+    formUrl: gys?.current?.inputsUrl || 'https://forms.gle/7Hw2ZQoxPvWzaotL9',
     submissions: listSubmissions('open'),
     decisions: listCouncil('active'),
   })
+})
+
+router.post('/team/gys/inputs/preview', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
+  const preview = previewCsvImport(req.body?.csvText, req.body?.columnMap)
+  if (!preview.ok) {
+    return res.status(400).json({
+      error: { code: 'validation', message: preview.error },
+    })
+  }
+  res.json(preview)
+})
+
+router.post('/team/gys/inputs/import', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
+  try {
+    const workflow = await getGysWorkflow()
+    const result = await importGysContributionsFromCsv({
+      csvText: req.body?.csvText,
+      columnMap: req.body?.columnMap,
+      authorId: account.id,
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'gys.inputs_imported',
+      targetType: 'gys_cycle',
+      targetId: workflow.cycle?.id,
+      after: {
+        imported: result.imported,
+        skipped: result.skipped,
+        errors: result.errors.length,
+      },
+      requestId: req.requestId,
+    })
+    res.status(201).json(result)
+  } catch (error) {
+    if (error.code === 'validation')
+      return res
+        .status(400)
+        .json({ error: { code: error.code, message: error.message } })
+    throw error
+  }
+})
+
+router.patch('/team/gys/cycle', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!(await requireTeam(req, res, 'gys_policy_team'))) return
+  try {
+    const cycle = await setGysCycleStatus(String(req.body?.status || ''))
+    if (!cycle)
+      return res.status(404).json({
+        error: { code: 'not_found', message: 'No active GYS cycle.' },
+      })
+    await recordAudit({
+      actorId: account.id,
+      action: 'gys.cycle_status_changed',
+      targetType: 'gys_cycle',
+      targetId: cycle.id,
+      after: cycle,
+      requestId: req.requestId,
+    })
+    res.json({ cycle })
+  } catch (error) {
+    if (error.code === 'validation')
+      return res
+        .status(400)
+        .json({ error: { code: error.code, message: error.message } })
+    throw error
+  }
 })
 
 router.post('/team/gys/contributions', async (req, res) => {

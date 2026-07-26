@@ -23,6 +23,7 @@ import {
   wordCount,
   YOUTH_AFFILIATIONS,
 } from '../../shared/registration.js'
+import { sanitizeWgInterests } from '../../shared/workingGroups.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -436,7 +437,7 @@ export function validateRegistration(body) {
         constituencyWorkStatus: 'pending_onboarding',
         memberStatus: 'pending_course',
         role: 'member',
-        wgInterests: [],
+        wgInterests: sanitizeWgInterests(b.wgInterests),
       },
     }
   }
@@ -467,7 +468,7 @@ export function validateRegistration(body) {
       .toLowerCase() || null
   const guardianConsent = Boolean(b.guardianConsent)
   const memberOfAccreditedNgo = parseYesNo(b.memberOfAccreditedNgo)
-  const wgInterests = asStringArray(b.wgInterests)
+  const wgInterests = sanitizeWgInterests(b.wgInterests)
 
   if (!firstName) fields.firstName = 'First name is required.'
   if (firstName.length > 80) fields.firstName = 'First name is too long.'

@@ -91,7 +91,11 @@ export function SubmissionDetail({ slug }) {
                           rel="noreferrer"
                         >
                           <FileText size={18} strokeWidth={1.75} aria-hidden />
-                          Open draft
+                          {/forms\.gle|docs\.google\.com\/forms/i.test(
+                            sub.draftUrl,
+                          )
+                            ? 'Submit inputs'
+                            : 'Open draft'}
                         </a>
                       )}
                       {sub.unfcccUrl && (

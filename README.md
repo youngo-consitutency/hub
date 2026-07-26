@@ -113,7 +113,8 @@ Admins and the Membership Team triage the queue on `/admin` and
 `/team/membership`, including status changes and internal triage notes. Setting
 `GITHUB_ISSUE_TOKEN` and `GITHUB_ISSUE_REPO` also opens a GitHub issue per
 ticket; mirroring is best-effort and a GitHub outage never loses a report.
-Agents can process the queue over a read-only Postgres MCP role — see
+Agents can triage the queue over a scoped Postgres role and the
+`youngo-hub-tickets` MCP — see
 [`docs/AGENT_TICKET_ACCESS.md`](docs/AGENT_TICKET_ACCESS.md). Members can see
 their own reports on Profile.
 
