@@ -292,3 +292,41 @@ describe('non-admitted organisation registration', () => {
     assert.ok(result.fields.isUnfcccAdmitted)
   })
 })
+
+// A hidden honeypot input in the registration form was being completed by
+// browser autofill and password managers. The server then treated real people
+// as bots: it answered 201 and created nothing, so they could neither continue
+// nor sign in afterwards. These pin both halves of the fix in place.
+describe('registration is not mistaken for automation', () => {
+  it('accepts a complete individual submission', () => {
+    const result = validateRegistration(individual())
+    assert.equal(
+      result.honeypot,
+      undefined,
+      'a real submission must never be classified as automated',
+    )
+    assert.equal(result.fields, undefined)
+    assert.ok(result.data, 'expected account data to be returned')
+  })
+
+  it('still rejects a scripted post that fills the honeypot field', () => {
+    const result = validateRegistration(
+      individual({ hpWebsite: 'https://spam.example' }),
+    )
+    assert.equal(result.honeypot, true)
+  })
+
+  it('does not render a honeypot input the browser could autofill', async () => {
+    const { readFileSync } = await import('node:fs')
+    const form = readFileSync(
+      new URL('../src/components/AuthGate.jsx', import.meta.url),
+      'utf8',
+    )
+    // Reintroducing an input bound to the trap field would resurrect the bug.
+    assert.equal(
+      /<input[^>]*hpWebsite/s.test(form),
+      false,
+      'the registration form must not bind an input to the honeypot field',
+    )
+  })
+})

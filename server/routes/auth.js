@@ -74,7 +74,19 @@ authRouter.get('/me', async (req, res) => {
 authRouter.post('/register', registerLimit, async (req, res) => {
   try {
     const result = validateRegistration(req.body)
-    if (result.honeypot) return res.status(201).json({ ok: true }) // feign success for bots
+    if (result.honeypot) {
+      // Feign success so bots do not learn they were caught. Log it, though:
+      // a false positive here silently costs a real member their account, and
+      // without this line there is no way to tell that it happened.
+      console.log(
+        JSON.stringify({
+          event: 'hub_register_rejected_as_automated',
+          requestId: req.requestId,
+          at: new Date().toISOString(),
+        }),
+      )
+      return res.status(201).json({ ok: true })
+    }
     if (result.fields) {
       return res.status(400).json({
         error: {

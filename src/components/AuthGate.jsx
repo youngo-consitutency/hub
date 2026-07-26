@@ -116,7 +116,6 @@ const EMPTY_REGISTER = {
   acceptAllOrgPolicies: false,
   membershipTrack: 'network',
   wgInterests: [],
-  hpWebsite: '',
 }
 
 function initialRegistrationForm() {
@@ -434,7 +433,17 @@ export function AuthGate({ onAuthenticated }) {
     })
   }
 
+  // A 2xx without an account means the request was classified as automated and
+  // nothing was created. Surfacing it beats pretending to sign the person in
+  // and dropping them back at the start with no idea what went wrong.
   const finishAuth = (data) => {
+    if (!data?.account) {
+      setStatus('idle')
+      setError(
+        'We could not complete that submission. Please reload the page and try again, or contact support if it keeps happening.',
+      )
+      return
+    }
     setSession({ account: data.account })
     onAuthenticated(data.account)
   }
@@ -1675,14 +1684,12 @@ export function AuthGate({ onAuthenticated }) {
                 isOrg={isOrg}
               />
 
-              <input
-                className="hp"
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden="true"
-                value={form.hpWebsite}
-                onChange={setReg('hpWebsite')}
-              />
+              {/* The hidden honeypot input that used to sit here was filled by
+                  browser autofill and password managers, which silently voided
+                  real registrations. Browsers cannot fill a field that is not
+                  in the document, so the trap now lives only on the server —
+                  scripted posts that blindly include `hpWebsite` are still
+                  rejected there. */}
 
               {error && <FormAlert>{error}</FormAlert>}
 
