@@ -13,7 +13,13 @@ export default [
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Capitalised bindings are JSX components. Without the React plugin
+      // ESLint cannot see them being rendered, so exempt them as bindings and
+      // as destructured parameters (`{ icon: Icon }`).
+      'no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^[A-Z_]' },
+      ],
     },
   },
   {
