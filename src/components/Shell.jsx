@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
+import { FeedbackButton } from './FeedbackButton.jsx'
 import { Brand } from './Brand.jsx'
 import { usePath } from '../lib/router.js'
 import { apiPost } from '../lib/api.js'
@@ -31,6 +32,7 @@ import {
   Trophy,
   UserCircle,
   FilePenLine,
+  Megaphone,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -54,6 +56,7 @@ const STATIONS = [
   ['/coys', 'COY tracker'],
   ['/gys', 'Youth statement'],
   ['/groups', 'Working groups'],
+  ['/opportunities', 'NGO opportunities'],
   ['/directory', 'Directory'],
   ['/recognition', 'NGO recognition'],
   ['/profile', 'Profile'],
@@ -132,6 +135,11 @@ export function Shell({ children }) {
             { href: '/coys', label: 'COY tracker', icon: MapPin },
             { href: '/council', label: 'Council', icon: Gavel },
             { href: '/gys', label: 'Youth Statement', icon: ScrollText },
+            {
+              href: '/opportunities',
+              label: 'NGO opportunities',
+              icon: Megaphone,
+            },
           ],
         },
         {
@@ -387,6 +395,10 @@ export function Shell({ children }) {
       )}
 
       <CommandPalette />
+
+      {/* Available on every page, including before the course is passed — a
+          blocked member is exactly who needs to reach the team. */}
+      {account && <FeedbackButton />}
 
       <nav className="tabbar" aria-label="Primary mobile">
         {tabs.map(({ href, label, icon: Icon }) => (

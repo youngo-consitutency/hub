@@ -11,6 +11,7 @@ import {
   PageHeader,
 } from '../components/ui.jsx'
 import { DatePicker, SearchableSelect } from '../components/FormControls.jsx'
+import { NgoOpportunities } from '../components/NgoOpportunities.jsx'
 import { Award, BadgeCheck, UserPlus, Copy, Check } from 'lucide-react'
 
 export function NgoPortal() {
@@ -29,6 +30,8 @@ export function NgoPortal() {
     name: '',
     seatRole: 'representative',
   })
+  // Seat role the organisation intends to grant, per pending request.
+  const [decisionRole, setDecisionRole] = useState({})
   const [inviteResult, setInviteResult] = useState(null)
   const [copied, setCopied] = useState(false)
   const [acceptMsg, setAcceptMsg] = useState(null)
@@ -105,6 +108,18 @@ export function NgoPortal() {
   const revoke = async (id) => {
     try {
       await apiPost(`/member/ngo/seats/${id}/revoke`, {})
+      load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const decideAffiliation = async (id, decision) => {
+    try {
+      await apiPost(`/member/ngo/affiliations/${id}/decide`, {
+        decision,
+        seatRole: decisionRole[id] || 'affiliate',
+      })
       load()
     } catch (err) {
       setError(err.message)
@@ -255,6 +270,8 @@ export function NgoPortal() {
         </Section>
       )}
 
+      {data && <NgoOpportunities />}
+
       {data && (
         <Section label="Deadlines for NGOs">
           <div className="stackSm">
@@ -371,110 +388,181 @@ export function NgoPortal() {
       )}
 
       {data && (
-        <Section label="Team seats">
-          <div className="stack">
-            {(data?.seats || []).map((s) => (
-              <div key={s.id} className="card cardTight rowBetween">
-                <div>
-                  <strong>{s.memberName || s.name || s.email}</strong>
-                  <p className="meta">
-                    {s.email} · {s.seatRole} · {s.status}
-                  </p>
-                </div>
-                {data.permissions?.canManageSeats &&
-                  s.seatRole !== 'owner' &&
-                  s.status !== 'revoked' && (
-                    <Button sm variant="ghost" onClick={() => revoke(s.id)}>
-                      Revoke
-                    </Button>
-                  )}
+        <>
+          {/* People who asked to be linked to this organisation. The org
+              decides whether that is a label only, or also opens the portal. */}
+          {(data?.seats || []).some((s) => s.status === 'requested') && (
+            <Section label="Affiliation requests">
+              <div className="stack">
+                {(data?.seats || [])
+                  .filter((s) => s.status === 'requested')
+                  .map((s) => (
+                    <div key={s.id} className="card affiliationRequest">
+                      <div>
+                        <strong>{s.memberName || s.name || s.email}</strong>
+                        <p className="meta">
+                          {s.email} — asked to be listed as part of this
+                          organisation.
+                        </p>
+                      </div>
+                      {data.permissions?.canManageSeats ? (
+                        <div className="affiliationDecide">
+                          <SearchableSelect
+                            label="Approve as"
+                            options={[
+                              {
+                                value: 'affiliate',
+                                label: 'Affiliation only (no portal access)',
+                              },
+                              { value: 'viewer', label: 'Viewer (read-only)' },
+                              {
+                                value: 'representative',
+                                label: 'Representative (can act)',
+                              },
+                            ]}
+                            value={decisionRole[s.id] || 'affiliate'}
+                            onChange={(seatRole) =>
+                              setDecisionRole((current) => ({
+                                ...current,
+                                [s.id]: seatRole,
+                              }))
+                            }
+                          />
+                          <div className="affiliationActions">
+                            <Button
+                              sm
+                              variant="primary"
+                              onClick={() => decideAffiliation(s.id, 'approve')}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              sm
+                              variant="ghost"
+                              onClick={() => decideAffiliation(s.id, 'decline')}
+                            >
+                              Decline
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="metaMuted">
+                          An owner of this organisation can decide.
+                        </p>
+                      )}
+                    </div>
+                  ))}
               </div>
-            ))}
-            {!data?.seats?.length && (
-              <Empty
-                title="No seats yet"
-                body="Invite representatives who can act for this NGO."
-              />
-            )}
-          </div>
-
-          {data.permissions?.canManageSeats && (
-            <form
-              className="card stack"
-              style={{ marginTop: 12 }}
-              onSubmit={sendInvite}
-            >
-              <h3>Invite representative</h3>
-              <div className="formRow">
-                <label className="field">
-                  <span>Email *</span>
-                  <input
-                    className="input"
-                    type="email"
-                    required
-                    value={invite.email}
-                    onChange={(e) =>
-                      setInvite((f) => ({ ...f, email: e.target.value }))
-                    }
-                  />
-                </label>
-                <label className="field">
-                  <span>Name</span>
-                  <input
-                    className="input"
-                    value={invite.name}
-                    onChange={(e) =>
-                      setInvite((f) => ({ ...f, name: e.target.value }))
-                    }
-                  />
-                </label>
-              </div>
-              <SearchableSelect
-                label="Seat role"
-                options={[
-                  { value: 'representative', label: 'Representative' },
-                  { value: 'viewer', label: 'Viewer' },
-                ]}
-                value={invite.seatRole}
-                onChange={(seatRole) =>
-                  setInvite((current) => ({ ...current, seatRole }))
-                }
-                searchPlaceholder="Search seat roles…"
-              />
-              <Button type="submit" variant="primary">
-                <UserPlus size={18} strokeWidth={1.75} aria-hidden />
-                Send invite
-              </Button>
-            </form>
+            </Section>
           )}
 
-          {data.permissions?.canManageSeats && inviteResult && (
-            <div className="card cardTight" style={{ marginTop: 12 }}>
-              <p className="meta">{inviteResult.note}</p>
-              {inviteResult.inviteUrl && (
-                <div
-                  className="rowBetween"
-                  style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}
-                >
-                  <code
-                    className="mono"
-                    style={{ fontSize: 12, wordBreak: 'break-all' }}
-                  >
-                    {inviteResult.inviteUrl}
-                  </code>
-                  <Button sm variant="secondary" onClick={copyLink}>
-                    {copied ? (
-                      <Check size={16} strokeWidth={1.75} aria-hidden />
-                    ) : (
-                      <Copy size={16} strokeWidth={1.75} aria-hidden />
-                    )}
-                    {copied ? 'Copied' : 'Copy link'}
-                  </Button>
-                </div>
+          <Section label="Team seats">
+            <div className="stack">
+              {(data?.seats || [])
+                .filter((s) => s.status !== 'requested')
+                .map((s) => (
+                  <div key={s.id} className="card cardTight rowBetween">
+                    <div>
+                      <strong>{s.memberName || s.name || s.email}</strong>
+                      <p className="meta">
+                        {s.email} · {s.seatRole} · {s.status}
+                      </p>
+                    </div>
+                    {data.permissions?.canManageSeats &&
+                      s.seatRole !== 'owner' &&
+                      s.status !== 'revoked' && (
+                        <Button sm variant="ghost" onClick={() => revoke(s.id)}>
+                          Revoke
+                        </Button>
+                      )}
+                  </div>
+                ))}
+              {!data?.seats?.length && (
+                <Empty
+                  title="No seats yet"
+                  body="Invite representatives who can act for this NGO."
+                />
               )}
             </div>
-          )}
-        </Section>
+
+            {data.permissions?.canManageSeats && (
+              <form
+                className="card stack"
+                style={{ marginTop: 12 }}
+                onSubmit={sendInvite}
+              >
+                <h3>Invite representative</h3>
+                <div className="formRow">
+                  <label className="field">
+                    <span>Email *</span>
+                    <input
+                      className="input"
+                      type="email"
+                      required
+                      value={invite.email}
+                      onChange={(e) =>
+                        setInvite((f) => ({ ...f, email: e.target.value }))
+                      }
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Name</span>
+                    <input
+                      className="input"
+                      value={invite.name}
+                      onChange={(e) =>
+                        setInvite((f) => ({ ...f, name: e.target.value }))
+                      }
+                    />
+                  </label>
+                </div>
+                <SearchableSelect
+                  label="Seat role"
+                  options={[
+                    { value: 'representative', label: 'Representative' },
+                    { value: 'viewer', label: 'Viewer' },
+                  ]}
+                  value={invite.seatRole}
+                  onChange={(seatRole) =>
+                    setInvite((current) => ({ ...current, seatRole }))
+                  }
+                  searchPlaceholder="Search seat roles…"
+                />
+                <Button type="submit" variant="primary">
+                  <UserPlus size={18} strokeWidth={1.75} aria-hidden />
+                  Send invite
+                </Button>
+              </form>
+            )}
+
+            {data.permissions?.canManageSeats && inviteResult && (
+              <div className="card cardTight" style={{ marginTop: 12 }}>
+                <p className="meta">{inviteResult.note}</p>
+                {inviteResult.inviteUrl && (
+                  <div
+                    className="rowBetween"
+                    style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}
+                  >
+                    <code
+                      className="mono"
+                      style={{ fontSize: 12, wordBreak: 'break-all' }}
+                    >
+                      {inviteResult.inviteUrl}
+                    </code>
+                    <Button sm variant="secondary" onClick={copyLink}>
+                      {copied ? (
+                        <Check size={16} strokeWidth={1.75} aria-hidden />
+                      ) : (
+                        <Copy size={16} strokeWidth={1.75} aria-hidden />
+                      )}
+                      {copied ? 'Copied' : 'Copy link'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </Section>
+        </>
       )}
     </div>
   )

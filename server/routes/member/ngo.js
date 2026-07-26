@@ -1,6 +1,6 @@
 // NGO organisation portal: service requests, points, seats and invitations.
 import { Router } from 'express'
-import { requireAccount, requireVerified } from './guards.js'
+import { requireAccount, requireOrgScope, requireVerified } from './guards.js'
 import { getSessionAccount } from '../../lib/accounts.js'
 import { recordAudit } from '../../lib/audit.js'
 import {
@@ -9,13 +9,17 @@ import {
 } from '../../lib/authorization.js'
 import { appOrigin } from '../../lib/config.js'
 import {
+  AFFILIATION_ROLES,
   acceptNgoInvite,
   addNgoRequest,
+  decideNgoAffiliation,
   getSeatByToken,
   inviteNgoSeat,
+  listMyAffiliations,
   listNgoRequests,
   listNgoSeats,
-  resolveOrgContext,
+  listOrganisationsForAffiliation,
+  requestNgoAffiliation,
   revokeNgoSeat,
   updateNgoRequestStatus,
 } from '../../lib/lifecycle.js'
@@ -30,44 +34,6 @@ import {
 import { bearerToken } from '../../lib/security.js'
 
 export const router = Router()
-
-async function requireOrgScope(req, res, permission = 'read') {
-  const account = await requireAccount(req, res)
-  if (!account) return null
-  if (!requireVerified(req, res)) return null
-  const requestedOrgId = req.query.orgId || req.body?.orgId || null
-  const context = await resolveOrgContext(account, requestedOrgId)
-  if (!context) {
-    res.status(403).json({
-      error: {
-        code: 'forbidden',
-        message: 'Accredited NGO access required.',
-      },
-    })
-    return null
-  }
-  if (permission === 'requests' && !context.canManageRequests) {
-    res.status(403).json({
-      error: {
-        code: 'forbidden',
-        message: 'Viewer seats have read-only access.',
-      },
-    })
-    return null
-  }
-  if (permission === 'seats' && !context.canManageSeats) {
-    res.status(403).json({
-      error: {
-        code: 'forbidden',
-        message: 'Only the organization owner may manage seats.',
-      },
-    })
-    return null
-  }
-  req.orgAccountId = context.orgAccountId
-  req.orgContext = context
-  return account
-}
 
 router.get('/ngo/requests', async (req, res) => {
   const account = await requireOrgScope(req, res)
@@ -318,4 +284,98 @@ router.post('/ngo/invite/:token/accept', async (req, res) => {
       error: { code: 'server_error', message: 'Could not accept invite.' },
     })
   }
+})
+
+/* ── Affiliation: a member asks, the organisation decides ───────────── */
+
+/** Organisations a member can pick from. Any verified member may browse. */
+router.get('/organisations', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!requireVerified(req, res)) return
+  const items = await listOrganisationsForAffiliation(req.query.search || '')
+  res.json({ items })
+})
+
+/** The member's own affiliations, including requests awaiting a decision. */
+router.get('/affiliations', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!requireVerified(req, res)) return
+  const items = await listMyAffiliations(account.id)
+  res.json({ items })
+})
+
+router.post('/affiliations', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (!requireVerified(req, res)) return
+  const orgAccountId = String(req.body?.orgAccountId || '').trim()
+  if (!orgAccountId) {
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Choose an organisation.' },
+    })
+  }
+  try {
+    const seat = await requestNgoAffiliation({ account, orgAccountId })
+    await recordAudit({
+      actorId: account.id,
+      action: 'ngo.affiliation_requested',
+      targetType: 'ngo_seat',
+      targetId: seat.id,
+      after: { orgAccountId, status: seat.status },
+      requestId: req.requestId,
+    })
+    res.status(201).json({ seat })
+  } catch (error) {
+    if (error.code === 'unknown_organisation') {
+      return res
+        .status(404)
+        .json({ error: { code: error.code, message: error.message } })
+    }
+    throw error
+  }
+})
+
+/**
+ * Approve or decline a request. The organisation chooses what the link grants:
+ * 'affiliate' records the association only, while viewer and representative
+ * also open the organisation's portal.
+ */
+router.post('/affiliations/:id/decide', async (req, res) => {
+  const account = await requireOrgScope(req, res, 'seats')
+  if (!account) return
+  const approve = req.body?.decision === 'approve'
+  const seatRole = String(req.body?.seatRole || 'affiliate')
+  if (approve && !AFFILIATION_ROLES.includes(seatRole)) {
+    return res.status(400).json({
+      error: {
+        code: 'validation',
+        message: `Seat role must be one of: ${AFFILIATION_ROLES.join(', ')}.`,
+      },
+    })
+  }
+  const seat = await decideNgoAffiliation({
+    seatId: req.params.id,
+    orgAccountId: req.orgAccountId,
+    approve,
+    seatRole,
+  })
+  if (!seat) {
+    return res.status(404).json({
+      error: {
+        code: 'not_found',
+        message: 'That request is no longer awaiting a decision.',
+      },
+    })
+  }
+  await recordAudit({
+    actorId: account.id,
+    action: approve ? 'ngo.affiliation_approved' : 'ngo.affiliation_declined',
+    targetType: 'ngo_seat',
+    targetId: seat.id,
+    after: { status: seat.status, seatRole: approve ? seatRole : null },
+    requestId: req.requestId,
+  })
+  res.json({ seat })
 })

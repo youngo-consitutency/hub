@@ -10,6 +10,8 @@ import {
   Section,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
+import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
+import { OpportunityReview } from '../components/OpportunityReview.jsx'
 import {
   ClipboardCheck,
   Clock3,
@@ -199,6 +201,10 @@ export function MembershipTeam() {
           )
         }}
       </Async>
+
+      <FeedbackQueue />
+
+      <OpportunityReview />
     </div>
   )
 }

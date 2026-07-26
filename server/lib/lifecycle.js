@@ -877,3 +877,186 @@ export async function getSeatByToken(token, accountEmail) {
 }
 
 export { findAccountByEmail }
+
+/* ── Individual ↔ organisation affiliation ─────────────────────────────
+   Seats normally start with the organisation inviting someone. These let a
+   person ask to be linked to the organisation they already work with, and the
+   organisation decides what that link grants. */
+
+/** Organisations a member can ask to be affiliated with. */
+export async function listOrganisationsForAffiliation(search = '') {
+  const term = String(search).trim().slice(0, 120)
+  const pool = getPool()
+  if (pool) {
+    const values = []
+    let filter = ''
+    if (term) {
+      values.push(`%${term}%`)
+      filter = `AND concat_ws(' ', organization_name, name, country) ILIKE $1`
+    }
+    const { rows } = await pool.query(
+      `SELECT id, organization_name, name, country, is_unfccc_admitted
+       FROM hub_accounts
+       WHERE entity_type = 'organization' ${filter}
+       ORDER BY organization_name ASC NULLS LAST
+       LIMIT 50`,
+      values,
+    )
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.organization_name || row.name,
+      country: row.country || null,
+      isUnfcccAdmitted: Boolean(row.is_unfccc_admitted),
+    }))
+  }
+  const lowered = term.toLowerCase()
+  return readJson(accountsPath, [])
+    .filter((a) => (a.entity_type ?? a.entityType) === 'organization')
+    .filter((a) =>
+      lowered
+        ? `${a.organization_name || ''} ${a.name || ''} ${a.country || ''}`
+            .toLowerCase()
+            .includes(lowered)
+        : true,
+    )
+    .slice(0, 50)
+    .map((a) => ({
+      id: a.id,
+      name: a.organization_name || a.organizationName || a.name,
+      country: a.country || null,
+      isUnfcccAdmitted: Boolean(a.is_unfccc_admitted ?? a.isUnfcccAdmitted),
+    }))
+}
+
+/** Affiliations belonging to one person, including undecided requests. */
+export async function listMyAffiliations(accountId) {
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT s.*, o.organization_name, o.name AS org_display
+       FROM ngo_seats s
+       JOIN hub_accounts o ON o.id = s.org_account_id
+       WHERE s.member_account_id = $1 AND s.status <> 'revoked'
+       ORDER BY s.created_at DESC`,
+      [accountId],
+    )
+    return rows.map((row) => ({
+      ...publicSeat(row),
+      organizationName: row.organization_name || row.org_display,
+    }))
+  }
+  return readJson(seatsPath, [])
+    .filter(
+      (s) =>
+        (s.member_account_id ?? s.memberAccountId) === accountId &&
+        s.status !== 'revoked',
+    )
+    .map(publicSeat)
+}
+
+/**
+ * Ask an organisation to confirm an affiliation. The seat is created unapproved
+ * and with no role, so nothing is granted until the organisation decides.
+ */
+export async function requestNgoAffiliation({ account, orgAccountId }) {
+  const org = await findAccountById(orgAccountId)
+  if (!org || (org.entity_type ?? org.entityType) !== 'organization') {
+    const err = new Error('That organisation is not on the Hub.')
+    err.code = 'unknown_organisation'
+    throw err
+  }
+  const email = String(account.email || '')
+    .trim()
+    .toLowerCase()
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      `INSERT INTO ngo_seats
+         (org_account_id, member_account_id, email, name, seat_role, status)
+       VALUES ($1, $2, $3, $4, 'affiliate', 'requested')
+       ON CONFLICT (org_account_id, email) DO UPDATE
+         SET status = CASE
+               WHEN ngo_seats.status IN ('revoked', 'declined') THEN 'requested'
+               ELSE ngo_seats.status
+             END,
+             member_account_id = COALESCE(ngo_seats.member_account_id, $2)
+       RETURNING *`,
+      [orgAccountId, account.id, email, account.name || null],
+    )
+    return publicSeat(rows[0])
+  }
+  const list = readJson(seatsPath, [])
+  const existing = list.find(
+    (s) => s.org_account_id === orgAccountId && s.email === email,
+  )
+  if (existing) {
+    if (['revoked', 'declined'].includes(existing.status)) {
+      existing.status = 'requested'
+      existing.member_account_id ??= account.id
+      writeJson(seatsPath, list)
+    }
+    return publicSeat(existing)
+  }
+  const row = {
+    id: randomUUID(),
+    org_account_id: orgAccountId,
+    member_account_id: account.id,
+    email,
+    name: account.name || null,
+    seat_role: 'affiliate',
+    status: 'requested',
+    created_at: new Date().toISOString(),
+    accepted_at: null,
+  }
+  list.push(row)
+  writeJson(seatsPath, list)
+  return publicSeat(row)
+}
+
+/** Seat roles an organisation may grant when approving a request. */
+export const AFFILIATION_ROLES = ['affiliate', 'viewer', 'representative']
+
+/**
+ * Approve or decline a pending request. Scoped to the organisation making the
+ * decision so one organisation can never act on another's queue.
+ */
+export async function decideNgoAffiliation({
+  seatId,
+  orgAccountId,
+  approve,
+  seatRole = 'affiliate',
+}) {
+  const role = AFFILIATION_ROLES.includes(seatRole) ? seatRole : 'affiliate'
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      approve
+        ? `UPDATE ngo_seats
+             SET status = 'active', seat_role = $3, accepted_at = now()
+           WHERE id = $1 AND org_account_id = $2 AND status = 'requested'
+           RETURNING *`
+        : `UPDATE ngo_seats SET status = 'declined'
+           WHERE id = $1 AND org_account_id = $2 AND status = 'requested'
+           RETURNING *`,
+      approve ? [seatId, orgAccountId, role] : [seatId, orgAccountId],
+    )
+    return publicSeat(rows[0] || null)
+  }
+  const list = readJson(seatsPath, [])
+  const row = list.find(
+    (s) =>
+      s.id === seatId &&
+      s.org_account_id === orgAccountId &&
+      s.status === 'requested',
+  )
+  if (!row) return null
+  if (approve) {
+    row.status = 'active'
+    row.seat_role = role
+    row.accepted_at = new Date().toISOString()
+  } else {
+    row.status = 'declined'
+  }
+  writeJson(seatsPath, list)
+  return publicSeat(row)
+}

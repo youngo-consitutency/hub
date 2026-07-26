@@ -914,3 +914,40 @@ ul.mandateBulletGroup {
   max-width: 62ch;
   line-height: 1.55;
 }
+
+/* Ineligibility notice shown the moment "35+" is chosen. Warning rather than
+   danger: the person has done nothing wrong, and there is a route forward. */
+.ageIneligible {
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-control);
+  background: var(--warn-tint);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ageIneligible h3 {
+  font-size: 15px;
+  color: var(--text-1);
+}
+
+.ageIneligible p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+  max-width: var(--text-measure);
+}
+
+.ageIneligible strong {
+  color: var(--text-1);
+}
+
+.ageIneligibleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}

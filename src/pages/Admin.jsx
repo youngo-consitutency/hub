@@ -21,6 +21,8 @@ import {
   Skeletons,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
+import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
+import { OpportunityReview } from '../components/OpportunityReview.jsx'
 
 const ENTITY_OPTIONS = [
   { value: '', label: 'All account types' },
@@ -494,6 +496,10 @@ export function Admin() {
           </Button>
         </nav>
       </Section>
+
+      <FeedbackQueue />
+
+      <OpportunityReview />
 
       <Section label="Governance audit" action={<span>Latest 30</span>}>
         <div className="stackSm">

@@ -2,7 +2,11 @@
 // member route modules. Guards live here so no route file redefines them.
 import { getAccessProfile, hasCapability } from '../../lib/access.js'
 import { destroyAllSessions, getSessionAccount } from '../../lib/accounts.js'
-import { listAccountsForAdmin, setAccountFields } from '../../lib/lifecycle.js'
+import {
+  listAccountsForAdmin,
+  resolveOrgContext,
+  setAccountFields,
+} from '../../lib/lifecycle.js'
 import { bearerToken } from '../../lib/security.js'
 
 export async function requireAccount(req, res) {
@@ -56,6 +60,46 @@ export async function requireCapability(req, res, capability) {
     return null
   }
   return access
+}
+
+/**
+ * Resolve the organisation the caller is acting for and check the seat role.
+ * Sets req.orgAccountId / req.orgContext and returns the account, or null when
+ * a response has already been sent.
+ */
+export async function requireOrgScope(req, res, permission = 'read') {
+  const account = await requireAccount(req, res)
+  if (!account) return null
+  if (!requireVerified(req, res)) return null
+  const requestedOrgId = req.query.orgId || req.body?.orgId || null
+  const context = await resolveOrgContext(account, requestedOrgId)
+  if (!context) {
+    res.status(403).json({
+      error: { code: 'forbidden', message: 'Accredited NGO access required.' },
+    })
+    return null
+  }
+  if (permission === 'requests' && !context.canManageRequests) {
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Viewer seats have read-only access.',
+      },
+    })
+    return null
+  }
+  if (permission === 'seats' && !context.canManageSeats) {
+    res.status(403).json({
+      error: {
+        code: 'forbidden',
+        message: 'Only the organization owner may manage seats.',
+      },
+    })
+    return null
+  }
+  req.orgAccountId = context.orgAccountId
+  req.orgContext = context
+  return account
 }
 
 export function requireFocalPoint(req, res) {

@@ -1286,6 +1286,48 @@ export function AuthGate({ onAuthenticated }) {
                         </label>
                       ))}
                     </div>
+                    {/* Answered before the rest of the form is filled in, so
+                        nobody completes a long registration only to find out
+                        at submit time that they are not eligible. */}
+                    {form.ageBand === '35_plus' && (
+                      <div className="ageIneligible" role="alert">
+                        <h3>YOUNGO individual membership is for under-35s</h3>
+                        <p>
+                          YOUNGO is the children and youth constituency of the
+                          UNFCCC, so individual membership ends at 35. You
+                          cannot create an individual account with this age
+                          group selected.
+                        </p>
+                        <p>
+                          <strong>You can still take part.</strong> If you work
+                          with a youth organisation, register it here as an
+                          organisation — organisations have no age limit and can
+                          nominate youth representatives. For anything else, the
+                          membership team is happy to talk it through.
+                        </p>
+                        <div className="ageIneligibleActions">
+                          <Button
+                            variant="secondary"
+                            sm
+                            onClick={() => {
+                              setForm((f) => ({
+                                ...f,
+                                entityType: 'organization',
+                              }))
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                          >
+                            Register an organisation instead
+                          </Button>
+                          <a
+                            className="btn btn-ghost btn-sm"
+                            href="mailto:youngomembership@gmail.com?subject=Membership%20question"
+                          >
+                            Email the membership team
+                          </a>
+                        </div>
+                      </div>
+                    )}
                     <FieldError msg={fields.ageBand} />
                   </section>
 

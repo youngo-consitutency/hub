@@ -754,3 +754,34 @@ a.monogram:hover {
   clip: rect(0 0 0 0);
   border: 0;
 }
+
+/* Affiliation requests awaiting an organisation's decision. */
+.affiliationRequest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.affiliationDecide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 260px;
+}
+
+.affiliationActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .affiliationDecide {
+    min-width: 100%;
+  }
+
+  .affiliationActions .btn {
+    flex: 1;
+  }
+}

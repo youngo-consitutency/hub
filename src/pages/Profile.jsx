@@ -1,5 +1,7 @@
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, PageHeader, Section } from '../components/ui.jsx'
+import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
+import { MyFeedback } from '../components/MyFeedback.jsx'
 import {
   BookOpenCheck,
   GraduationCap,
@@ -104,6 +106,10 @@ export function Profile() {
           </p>
         </section>
       </div>
+
+      <OrgAffiliation />
+
+      <MyFeedback />
 
       {(teamRoles.length > 0 ||
         wgAssignments.length > 0 ||
