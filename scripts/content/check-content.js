@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
-import { validateContent } from '../shared/contentValidation.js'
+import { validateContent } from '../../shared/contentValidation.js'
 
-const file = new URL('../data/fixtures.json', import.meta.url)
+const file = new URL('../../data/fixtures.json', import.meta.url)
 
 try {
   const content = JSON.parse(await readFile(file, 'utf8'))

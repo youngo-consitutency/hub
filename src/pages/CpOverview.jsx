@@ -1,5 +1,12 @@
 import { useApi } from '../lib/api.js'
-import { A, Async, Empty, Section, StatusChip } from '../components/ui.jsx'
+import {
+  A,
+  Async,
+  Empty,
+  PageHeader,
+  Section,
+  StatusChip,
+} from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
   Briefcase,
@@ -16,12 +23,11 @@ export function CpOverview() {
 
   return (
     <div>
-      <p className="eyebrow">Coordination workspace</p>
-      <h1>Working Group Contact Points</h1>
-      <p className="meta pageIntro">
-        Review joiners, keep activities visible, and move WG action points
-        forward.
-      </p>
+      <PageHeader
+        eyebrow="Coordination workspace"
+        title="Working Group Contact Points"
+        description="Review joiners, keep activities visible, and move working-group action points forward."
+      />
 
       <div className="metricGrid">
         <div className="metricCard">

@@ -12,7 +12,7 @@ fixture data, tests, and Railway deployment configuration.
 
 The Hub is a working pre-production application. Registration, sign-in,
 membership verification, role-based access, working-group tools, organisation
-seats, messaging, administration, and the first governed content workflow are
+seats, administration, cited search, and the first governed content workflow are
 implemented.
 
 Events and announcements can be drafted, reviewed, and published in the Hub.
@@ -160,6 +160,61 @@ npm run bootstrap-admin
 The command only promotes existing verified accounts. It does not create an
 account, change a password, or fall back to a default email address.
 
+### Work as an admin
+
+Sign in with a promoted account and open **Admin** in the **Staff** section, or
+go directly to `/admin`.
+
+The account list can be searched by name, email address, organisation, or
+country. Use the filters to narrow it by account type, membership lifecycle, or
+platform role. Results are sorted and paginated by the server, so the page does
+not need to load every account at once.
+
+Select **Manage** on an account before making a change. Every admin action
+requires a clear reason of at least eight characters. The reason, acting
+administrator, target account, previous value, new value, and request metadata
+are written to the governance audit where applicable.
+
+An administrator can:
+
+- change the membership lifecycle;
+- assign a platform role;
+- assign or remove Membership Team, GYS Policy Team, content editor, and
+  content publisher responsibilities;
+- issue a one-time password-reset link;
+- open the organisation points workspace for organisation accounts; and
+- review the latest governance audit entries.
+
+Membership lifecycle and access are connected:
+
+- `registered` keeps the account at the course stage;
+- `course_passed`, `awaiting_onboarding`, `active`, and `renewal_due` allow Hub
+  access;
+- ordinary members cannot be moved to `active` until they pass the membership
+  course; and
+- `expired` and `terminated` suspend Hub access and end every active session.
+
+Platform roles and team responsibilities are different. Platform roles control
+broad authority such as administrator, Focal Point, or organisation
+administrator. Team responsibilities open a specific staff workspace. Give a
+content contributor `content_editor` or `content_publisher`; do not give them
+general administrator access. Working Group Contact Points are assigned from
+the relevant working-group workspace, not from Admin.
+
+An administrator cannot remove their own admin role or expire or terminate
+their own account. Use a second administrator for those changes. A verified
+organisation account is required before assigning the organisation
+administrator role.
+
+Password-reset links expire after one hour and work once. The Hub currently
+shows the link once and can open a pre-addressed email draft, but it does not
+send the message automatically. Deliver the link only to the account owner
+through a trusted channel. The raw link is not stored in the audit record.
+
+The **Governance audit** section shows the latest 30 entries. Use it to confirm
+who made a sensitive change and when; do not treat it as a replacement for the
+formal membership or governance records owned by the responsible team.
+
 ## Environment variables
 
 | Variable | Required | Purpose |
@@ -177,7 +232,7 @@ account, change a password, or fall back to a default email address.
 Push notifications are optional. Generate a VAPID key pair with:
 
 ```bash
-node scripts/generate-vapid-keys.mjs
+npm run setup:push
 ```
 
 ## Repository map
@@ -189,7 +244,7 @@ docs/                    Maintainer and content-editing guides
 migrations/              Ordered PostgreSQL migrations
 openspec/                Proposals, designs, and acceptance scenarios
 public/                  PWA manifest, icons, and service worker
-scripts/                 Maintenance and setup commands
+scripts/                 Commands grouped by admin, assets, content, database, docs, and setup
 server/                  Express API, access rules, stores, and workflows
 shared/                  Validation and policy data used by both sides
 src/                     React application and styles
@@ -215,9 +270,13 @@ random and stored as hashes. Resetting a password ends every active session for
 that account.
 
 Anonymous responses exclude private meeting links, channels, Drive links, and
-contact details. Hub Intelligence has stricter source-side exclusions for
-account records, credentials, private messages, guardian data, minority data,
+contact details. Cited Hub search has stricter source-side exclusions for
+account records, credentials, guardian data, minority data,
 and personal contact fields.
+
+The Search page combines ordinary page matching with the governed, cited
+cross-record answer flow. The old `/intelligence` URL redirects to `/search`;
+the authorization and audit boundaries remain server-side.
 
 ## Deployment
 
@@ -228,17 +287,56 @@ Railway reads `railway.json` and performs these steps:
 3. start the server with `npm start`
 4. check `/healthz`
 
-To deploy explicitly with the Railway CLI:
+### Publish a local change
+
+Railway cannot deploy uncommitted files. First turn the verified worktree into
+a Git commit and push it:
 
 ```bash
-railway up --environment staging --service web
+npm run check
+git diff --check
+git add --all
+git status --short
+git commit -m "Describe the Hub change"
+git push origin main
+```
+
+Check the `git status` output before committing. It is the final list of files
+that will be published. After pushing, open the GitHub **Verify** workflow and
+confirm both Node versions pass for the new commit.
+
+If Railway is connected to GitHub, its service source must point to this
+repository and the `main` branch. Confirm that the deployment shows the same
+commit SHA returned by:
+
+```bash
+git rev-parse HEAD
+git ls-remote origin refs/heads/main
+```
+
+Those two hashes must match. If GitHub has the commit but Railway does not
+deploy it, repair the Railway service's repository/branch connection or deploy
+the verified worktree explicitly to staging:
+
+```bash
+railway up --environment staging --service youngo-hub
 ```
 
 Staging: <https://web-staging-31ab.up.railway.app>
 
+Check `/healthz` and the changed user journeys on staging before promoting the
+same build to production. Do not use a production deployment to find out
+whether migrations or authentication changes work.
+
 This repository does not contain a GitHub Actions deployment job. Automatic
 deployment after a push depends on the Railway service's GitHub connection and
 branch settings.
+
+The current hosting stack is not replaced by Vercel or Supabase. Before any
+migration, first confirm that the intended commit exists on GitHub `main` and
+that Railway is watching that branch. A future database move can point the
+existing server at Supabase Postgres through `DATABASE_URL`; moving the Express
+runtime to Vercel would be a separate serverless deployment change.
 
 ## Known gaps
 

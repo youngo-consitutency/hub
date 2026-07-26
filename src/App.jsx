@@ -56,7 +56,6 @@ const FocalPoint = lazyPage(
   () => import('./pages/FocalPoint.jsx'),
   'FocalPoint',
 )
-const Messages = lazyPage(() => import('./pages/Messages.jsx'), 'Messages')
 const MembershipTeam = lazyPage(
   () => import('./pages/MembershipTeam.jsx'),
   'MembershipTeam',
@@ -77,10 +76,6 @@ const Recognition = lazyPage(
   () => import('./pages/Recognition.jsx'),
   'Recognition',
 )
-const Intelligence = lazyPage(
-  () => import('./pages/Intelligence.jsx'),
-  'Intelligence',
-)
 const Profile = lazyPage(() => import('./pages/Profile.jsx'), 'Profile')
 
 // These pages remain available while the membership course is incomplete.
@@ -97,7 +92,6 @@ const ROUTES = [
   [/^\/library$/, Library],
   [/^\/privacy$/, Privacy],
   [/^\/workspace\/(.+)$/, Workspace],
-  [/^\/messages$/, Messages],
   [/^\/focal$/, FocalPoint],
   [/^\/cp$/, CpOverview],
   [/^\/cp\/(.+)$/, CpManage],
@@ -106,7 +100,7 @@ const ROUTES = [
   [/^\/staff\/points$/, StaffPoints],
   [/^\/staff\/content$/, ContentWorkspace],
   [/^\/recognition$/, Recognition],
-  [/^\/intelligence$/, Intelligence],
+  [/^\/intelligence$/, SearchRedirect],
   [/^\/profile$/, Profile],
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
@@ -135,6 +129,13 @@ function NotFound() {
       body="That link doesn’t lead anywhere yet."
     />
   )
+}
+
+function SearchRedirect() {
+  useEffect(() => {
+    navigate('/search')
+  }, [])
+  return <Skeletons n={2} />
 }
 
 function Locked() {

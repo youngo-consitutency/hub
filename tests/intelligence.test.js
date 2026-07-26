@@ -33,7 +33,6 @@ test('public adapter emits stable, source-attributed envelopes without prohibite
     'session_token',
     'guardian_email',
     'minority_groups',
-    'private_messages',
   ])
     assert.equal(serialized.includes(field), false)
 })
@@ -98,7 +97,7 @@ test('retrieval and synthesis retain inspectable citation IDs', () => {
   assert.match(result.synthesis.caveat, /verify/i)
 })
 
-test('field policy explicitly excludes sensitive account and message material', () => {
+test('field policy explicitly excludes sensitive account material', () => {
   const excluded = new Set(INTELLIGENCE_FIELD_POLICY.alwaysExcluded)
   for (const field of [
     'password_hash',
@@ -106,7 +105,6 @@ test('field policy explicitly excludes sensitive account and message material', 
     'date_of_birth',
     'guardian_email',
     'minority_groups',
-    'private_messages',
     'raw_account_record',
   ])
     assert.equal(excluded.has(field), true)

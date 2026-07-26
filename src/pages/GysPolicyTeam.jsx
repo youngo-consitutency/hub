@@ -6,9 +6,11 @@ import {
   Button,
   Empty,
   ErrorCard,
+  PageHeader,
   Section,
   StatusChip,
 } from '../components/ui.jsx'
+import { SearchableSelect } from '../components/FormControls.jsx'
 import {
   PenTool,
   Inbox,
@@ -61,12 +63,11 @@ export function GysPolicyTeam() {
   }
   return (
     <div>
-      <p className="eyebrow">Policy production</p>
-      <h1>Global Youth Statement</h1>
-      <p className="meta pageIntro">
-        Turn youth inputs into a reviewed, negotiation-ready statement with a
-        visible handover.
-      </p>
+      <PageHeader
+        eyebrow="Policy production"
+        title="Global Youth Statement"
+        description="Turn youth inputs into a reviewed statement with a visible handover."
+      />
       <Async query={query} skeletons={5}>
         {(data) => (
           <>
@@ -169,23 +170,25 @@ export function GysPolicyTeam() {
                       </div>
                       <div className="rowGap">
                         <StatusChip status={item.status} />
-                        <select
+                        <SearchableSelect
+                          label={`Change status for ${item.title}`}
+                          hideLabel
+                          className="queueSelect"
                           disabled={busy || !NEXT[item.status]?.length}
                           value={item.status}
-                          onChange={(event) =>
-                            move(item.id, event.target.value)
-                          }
-                          aria-label={`Change status for ${item.title}`}
-                        >
-                          <option value={item.status}>
-                            {item.status.replaceAll('_', ' ')}
-                          </option>
-                          {NEXT[item.status]?.map((status) => (
-                            <option key={status} value={status}>
-                              {status.replaceAll('_', ' ')}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(status) => move(item.id, status)}
+                          options={[
+                            {
+                              value: item.status,
+                              label: item.status.replaceAll('_', ' '),
+                            },
+                            ...(NEXT[item.status] || []).map((status) => ({
+                              value: status,
+                              label: status.replaceAll('_', ' '),
+                            })),
+                          ]}
+                          searchPlaceholder="Search statuses…"
+                        />
                       </div>
                     </div>
                   ))}

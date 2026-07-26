@@ -1,8 +1,8 @@
 // Explicitly promote existing, verified accounts to platform administrators.
 // Usage: ADMIN_EMAILS=admin@example.org DATABASE_URL=... npm run bootstrap-admin
-import { findAccountByEmail, publicAccount } from '../server/lib/accounts.js'
-import { setAccountFields } from '../server/lib/lifecycle.js'
-import { getPool } from '../server/lib/db.js'
+import { findAccountByEmail, publicAccount } from '../../server/lib/accounts.js'
+import { setAccountFields } from '../../server/lib/lifecycle.js'
+import { getPool } from '../../server/lib/db.js'
 
 const emails = String(process.env.ADMIN_EMAILS || '')
   .split(',')

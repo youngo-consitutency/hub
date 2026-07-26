@@ -164,6 +164,23 @@ describe('privacy consent', () => {
   })
 })
 
+describe('individual nationality', () => {
+  it('accepts a nationality from the published list', () => {
+    const result = validateRegistration(individual({ nationality: 'Kenyan' }))
+    assert.ok(result.data, JSON.stringify(result.fields))
+  })
+
+  it('rejects free text outside the published list', () => {
+    const result = validateRegistration(
+      individual({ nationality: 'Somewhere-ish' }),
+    )
+    assert.equal(
+      result.fields.nationality,
+      'Please select a nationality from the list.',
+    )
+  })
+})
+
 describe('individual registration', () => {
   it('accepts a valid individual', () => {
     const result = validateRegistration(individual())

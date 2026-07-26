@@ -1,160 +1,140 @@
 import { useApi } from '../lib/api.js'
-import { Async } from '../components/ui.jsx'
+import { Async, PageHeader, Section } from '../components/ui.jsx'
 import { GysSignup } from '../components/GysSignup.jsx'
-import { fmtDay } from '../lib/time.js'
-import {
-  ScrollText,
-  ArrowUpRight,
-  Flame,
-  Users,
-  Swords,
-  Coins,
-  Sprout,
-} from 'lucide-react'
-
-// One icon per 2025 priority, in statement order.
-const PRIORITY_ICON = [Flame, Users, Swords, Coins, Sprout]
+import { ArrowUpRight, ScrollText } from 'lucide-react'
 
 export function Statement() {
   const query = useApi('/gys')
+
   return (
     <div>
       <Async query={query} skeletons={4}>
         {(gys) => {
-          const c = gys.current
+          const current = gys.current
           return (
             <>
-              <p className="eyebrow">
-                YOUNGO · Children and Youth Constituency
-              </p>
-              <h1>{c.title}</h1>
-              <p className="gysTagline">{c.tagline}</p>
-
-              <div className="gysHero card">
-                <blockquote className="gysQuote">“{c.quote}”</blockquote>
-                <p className="metaMuted mono">
-                  {c.edition} · {c.location} · aimed at {c.targetSession} ·
-                  published {fmtDay(`${c.publishedOn}T00:00:00Z`, 'UTC')}
-                </p>
-                <div className="gysStats">
-                  {c.stats.map((s) => (
-                    <div key={s.label} className="statBlock">
-                      <span className="statValue">{s.value}</span>
-                      <span className="metaMuted">{s.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="detailActions" style={{ marginTop: 4 }}>
+              <PageHeader
+                eyebrow="YOUNGO policy"
+                title={current.title}
+                description={current.intro}
+                action={
                   <a
                     className="btn btn-primary"
-                    href={c.fullUrl}
+                    href={current.fullUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
                     <ScrollText size={18} strokeWidth={1.75} aria-hidden />
-                    Read the full statement
+                    Read the statement
                   </a>
-                  <a
-                    className="btn btn-secondary"
-                    href={c.releaseUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Read the release
-                    <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
-                  </a>
-                </div>
-              </div>
+                }
+              />
 
-              <p className="meta gysIntro">{c.intro}</p>
-              <p className="meta gysIntro">{c.note}</p>
-              <div className="rowGap" style={{ marginTop: 12 }}>
-                {c.editions.map((e) => (
-                  <span key={e} className="chip chip-neutral">
-                    {e}
-                  </span>
-                ))}
-              </div>
-
-              <div style={{ marginTop: 20 }}>
-                <GysSignup />
-              </div>
-
-              <div className="sectionLabel">
-                <span>{c.year} priorities</span>
-              </div>
-              <div className="grid2">
-                {gys.priorities.map((p, i) => {
-                  const Icon = PRIORITY_ICON[i] || ScrollText
-                  return (
-                    <div key={p.title} className="card">
-                      <div className="rowGap">
-                        <span className="eventIcon">
-                          <Icon size={18} strokeWidth={1.75} aria-hidden />
-                        </span>
-                        <h3 style={{ fontSize: 15 }}>{p.title}</h3>
-                      </div>
-                      <p className="meta" style={{ marginTop: 8 }}>
-                        {p.body}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className="sectionLabel">
-                <span>How it’s built</span>
-              </div>
-              <ol className="gysSteps">
-                {gys.process.map((s, i) => (
-                  <li key={s.step} className="gysStep">
-                    <span className="stepNum">{i + 1}</span>
-                    <div>
-                      <p className="stepHead">{s.step}</p>
-                      <p className="meta" style={{ marginTop: 2 }}>
-                        {s.body}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              <div className="sectionLabel">
-                <span>Past statements</span>
-              </div>
-              <div className="stackSm">
-                {gys.archive.map((a) => (
-                  <div key={a.edition} className="card cardTight rowBetween">
-                    <span>
-                      <span className="mono" style={{ color: 'var(--text-2)' }}>
-                        {a.year}
-                      </span>{' '}
-                      · {a.edition}
-                      <span className="metaMuted" style={{ marginLeft: 8 }}>
-                        {a.host}
-                      </span>
-                    </span>
-                    <span className="rowGap">
-                      {a.links.map((l) => (
-                        <a
-                          key={l.url}
-                          className="btn btn-ghost btn-sm"
-                          href={l.url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {l.label}
-                          <ArrowUpRight
-                            size={16}
-                            strokeWidth={1.75}
-                            aria-hidden
-                          />
-                        </a>
-                      ))}
-                    </span>
+              <section
+                className="card gysOverview"
+                aria-label="Current edition"
+              >
+                <div className="gysFacts">
+                  <div>
+                    <p className="metaMuted">Edition</p>
+                    <strong>{current.edition}</strong>
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <p className="metaMuted">Prepared in</p>
+                    <strong>{current.location}</strong>
+                  </div>
+                  <div>
+                    <p className="metaMuted">Climate conference</p>
+                    <strong>{current.targetSession}</strong>
+                  </div>
+                </div>
+                <p className="meta">{current.note}</p>
+                <div className="gysResources" aria-label="Available resources">
+                  {current.editions.map((edition) => (
+                    <span key={edition} className="chip chip-neutral">
+                      {edition}
+                    </span>
+                  ))}
+                  {current.releaseUrl && (
+                    <a
+                      className="btn btn-ghost btn-sm"
+                      href={current.releaseUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      UNFCCC background
+                      <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
+                    </a>
+                  )}
+                </div>
+              </section>
+
+              <Section label="Take part">
+                <GysSignup />
+              </Section>
+
+              <Section label={`${current.year} policy priorities`}>
+                <div className="cardGrid">
+                  {gys.priorities.map((priority) => (
+                    <article key={priority.title} className="card gysPriority">
+                      <h3>{priority.title}</h3>
+                      <p className="meta">{priority.body}</p>
+                    </article>
+                  ))}
+                </div>
+              </Section>
+
+              <Section label="How the statement is developed">
+                <ol className="gysSteps">
+                  {gys.process.map((item, index) => (
+                    <li key={item.step} className="card gysStep">
+                      <span className="stepNum" aria-hidden>
+                        {index + 1}
+                      </span>
+                      <div>
+                        <h3>{item.step}</h3>
+                        <p className="meta">{item.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </Section>
+
+              <Section label="Previous statements">
+                <div className="stackSm">
+                  {gys.archive.map((archive) => (
+                    <article
+                      key={archive.edition}
+                      className="card cardTight gysArchiveItem"
+                    >
+                      <div>
+                        <h3>{archive.edition}</h3>
+                        <p className="metaMuted">
+                          {archive.year} · {archive.host}
+                        </p>
+                      </div>
+                      <div className="gysArchiveLinks">
+                        {archive.links.map((link) => (
+                          <a
+                            key={link.url}
+                            className="btn btn-ghost btn-sm"
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {link.label}
+                            <ArrowUpRight
+                              size={16}
+                              strokeWidth={1.75}
+                              aria-hidden
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </Section>
             </>
           )
         }}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { apiPost } from '../lib/api.js'
-import { UserPlus, Check } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
 
 const EMPTY = {
   name: '',
@@ -37,28 +37,21 @@ export function GysSignup() {
   if (status === 'done') {
     return (
       <div className="card gysSignupCard">
-        <div className="rowGap" style={{ alignItems: 'flex-start' }}>
-          <span className="iconTile" style={{ width: 36, height: 36 }}>
-            <Check size={18} strokeWidth={1.75} aria-hidden />
-          </span>
-          <div>
-            <h3>You’re on the list</h3>
-            <p className="meta" style={{ marginTop: 4 }}>
-              We’ll contact you about GYS 2026 consultations, hackathons, and
-              drafting sessions.
-            </p>
-          </div>
-        </div>
+        <h3>You’re on the participation list</h3>
+        <p className="meta gysSignupLead">
+          The GYS team will contact you when consultations or drafting sessions
+          open.
+        </p>
       </div>
     )
   }
 
   return (
     <div className="card gysSignupCard">
-      <h3>Help shape GYS 2026</h3>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Add your name to take part in regional consultations, thematic
-        hackathons, and drafting for the next Global Youth Statement.
+      <h3>Join the next consultation cycle</h3>
+      <p className="meta gysSignupLead">
+        Leave your details to hear about regional consultations and drafting
+        sessions for the next Global Youth Statement.
       </p>
 
       {!open ? (
@@ -131,11 +124,7 @@ export function GysSignup() {
             onChange={set('website')}
           />
 
-          {error && (
-            <p className="meta" style={{ color: 'var(--danger)' }}>
-              {error}
-            </p>
-          )}
+          {error && <p className="meta formError">{error}</p>}
 
           <div className="detailActions">
             <button

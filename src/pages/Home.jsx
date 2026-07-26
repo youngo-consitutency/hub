@@ -7,25 +7,18 @@ import {
   GroupCard,
 } from '../components/cards.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Radio, CalendarOff, Megaphone, Users, Trophy } from 'lucide-react'
+import { Radio, CalendarOff, Users } from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
     <div className="liveBanner">
       <span className="liveDot pulse" />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 500, fontSize: 14 }}>
-          <Radio
-            size={14}
-            strokeWidth={1.75}
-            aria-hidden
-            style={{ verticalAlign: -2, marginRight: 6, color: 'var(--live)' }}
-          />
+      <div className="liveBannerCopy">
+        <p className="liveBannerTitle">
+          <Radio size={14} strokeWidth={1.75} aria-hidden />
           {event.title} — live now
         </p>
-        <p className="mono" style={{ color: 'var(--live)', marginTop: 2 }}>
-          {fmtDual(event.startsAt)}
-        </p>
+        <p className="mono liveBannerTime">{fmtDual(event.startsAt)}</p>
       </div>
       {event.meetingUrl && (
         <a
@@ -59,25 +52,11 @@ export function Home() {
 
             {data.pinned.length > 0 && (
               <Section label="Pinned">
-                <div className="stackSm">
+                <div className="cardGrid">
                   {data.pinned.map((a, i) => (
                     <div key={i} className="card cardTight announcementCard">
-                      <p style={{ fontWeight: 500, fontSize: 14 }}>
-                        <Megaphone
-                          size={16}
-                          strokeWidth={1.75}
-                          aria-hidden
-                          style={{
-                            verticalAlign: -3,
-                            marginRight: 6,
-                            color: 'var(--accent)',
-                          }}
-                        />
-                        {a.title}
-                      </p>
-                      <p className="meta" style={{ marginTop: 4 }}>
-                        {a.body}
-                      </p>
+                      <h3>{a.title}</h3>
+                      <p className="meta">{a.body}</p>
                     </div>
                   ))}
                 </div>
@@ -93,8 +72,8 @@ export function Home() {
               }
             >
               {data.week.length ? (
-                <div className="stackSm">
-                  {data.week.slice(0, 4).map((e) => (
+                <div className="cardGrid">
+                  {data.week.slice(0, 6).map((e) => (
                     <EventCard key={e.slug} event={e} />
                   ))}
                 </div>
@@ -116,7 +95,7 @@ export function Home() {
                   </A>
                 }
               >
-                <div className="stackSm">
+                <div className="cardGrid">
                   {data.closing.slice(0, 3).map((x) => (
                     <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
                   ))}
@@ -133,8 +112,8 @@ export function Home() {
                   </A>
                 }
               >
-                <div className="hscroll">
-                  {data.coys.slice(0, 4).map((c) => (
+                <div className="cardGrid">
+                  {data.coys.slice(0, 6).map((c) => (
                     <CoyCard key={c.slug} coy={c} />
                   ))}
                 </div>
@@ -166,8 +145,8 @@ export function Home() {
           }
         >
           {(data) => (
-            <div className="grid2">
-              {data.items.slice(0, 2).map((g) => (
+            <div className="cardGrid">
+              {data.items.slice(0, 3).map((g) => (
                 <GroupCard key={g.slug} group={g} />
               ))}
             </div>
@@ -183,21 +162,13 @@ export function Home() {
           </A>
         }
       >
-        <A href="/recognition" className="card cardTight rowGap">
-          <Trophy
-            size={18}
-            strokeWidth={1.75}
-            aria-hidden
-            color="var(--accent)"
-          />
-          <div>
-            <h3>
-              See which organisations are supporting badges &amp; submissions
-            </h3>
-            <p className="meta" style={{ marginTop: 4 }}>
-              Staff-verified contribution points for UNFCCC-facing work.
-            </p>
-          </div>
+        <A href="/recognition" className="card cardTight recognitionPromo">
+          <h3>
+            See which organisations are supporting badges &amp; submissions
+          </h3>
+          <p className="meta">
+            Staff-verified contribution points for UNFCCC-facing work.
+          </p>
         </A>
       </Section>
     </div>

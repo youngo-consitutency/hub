@@ -105,6 +105,144 @@ export async function listAccountsForAdmin() {
   return readJson(accountsPath, []).map(publicAccount)
 }
 
+const ACCOUNT_SORTS = {
+  newest: 'created_at DESC',
+  oldest: 'created_at ASC',
+  name: 'name ASC, email ASC',
+  recent_login: 'last_login_at DESC NULLS LAST, created_at DESC',
+}
+
+function pageNumber(value, fallback, max) {
+  const number = Number.parseInt(value, 10)
+  return Number.isFinite(number) ? Math.min(max, Math.max(1, number)) : fallback
+}
+
+export async function queryAccountsForAdmin({
+  search = '',
+  entityType = '',
+  status = '',
+  role = '',
+  sort = 'newest',
+  page = 1,
+  pageSize = 12,
+} = {}) {
+  const cleanSearch = String(search).trim().slice(0, 120)
+  const cleanEntityType = ['individual', 'organization'].includes(entityType)
+    ? entityType
+    : ''
+  const cleanStatus = [
+    'registered',
+    'course_passed',
+    'awaiting_onboarding',
+    'active',
+    'renewal_due',
+    'expired',
+    'terminated',
+  ].includes(status)
+    ? status
+    : ''
+  const cleanRole = [
+    'member',
+    'focal_point',
+    'wg_contact',
+    'ngo_admin',
+    'admin',
+  ].includes(role)
+    ? role
+    : ''
+  const cleanSort = ACCOUNT_SORTS[sort] ? sort : 'newest'
+  const cleanPage = pageNumber(page, 1, 100_000)
+  const cleanPageSize = pageNumber(pageSize, 12, 50)
+  const pool = getPool()
+
+  if (pool) {
+    const values = []
+    const where = []
+    const add = (clause, value) => {
+      values.push(value)
+      where.push(clause.replace('?', `$${values.length}`))
+    }
+    if (cleanSearch)
+      add(
+        `concat_ws(' ', name, email, organization_name, country) ILIKE ?`,
+        `%${cleanSearch}%`,
+      )
+    if (cleanEntityType) add('entity_type = ?', cleanEntityType)
+    if (cleanStatus) add('membership_status = ?', cleanStatus)
+    if (cleanRole) add('role = ?', cleanRole)
+    const filter = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    const count = await pool.query(
+      `SELECT count(*)::int AS total FROM hub_accounts ${filter}`,
+      values,
+    )
+    const total = count.rows[0]?.total || 0
+    const pages = Math.max(1, Math.ceil(total / cleanPageSize))
+    const currentPage = Math.min(cleanPage, pages)
+    const limitIndex = values.length + 1
+    const offsetIndex = values.length + 2
+    const { rows } = await pool.query(
+      `SELECT id, email, name, first_name, last_name, entity_type, organization_name,
+              organization_type, is_unfccc_admitted, member_status, role, team_roles, region, country,
+              nationality, wg_interests, course_passed_at, course_score, verified_at,
+              membership_track, constituency_work_status, hub_access_status, membership_status,
+              onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
+              created_at, last_login_at, phone
+       FROM hub_accounts
+       ${filter}
+       ORDER BY ${ACCOUNT_SORTS[cleanSort]}
+       LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+      [...values, cleanPageSize, (currentPage - 1) * cleanPageSize],
+    )
+    return {
+      items: rows.map(publicAccount),
+      total,
+      page: currentPage,
+      pageSize: cleanPageSize,
+      pages,
+    }
+  }
+
+  const needle = cleanSearch.toLowerCase()
+  const items = readJson(accountsPath, [])
+    .map(publicAccount)
+    .filter((account) => {
+      const text =
+        `${account.name} ${account.email} ${account.organizationName || ''} ${account.country || ''}`.toLowerCase()
+      return (
+        (!needle || text.includes(needle)) &&
+        (!cleanEntityType || account.entityType === cleanEntityType) &&
+        (!cleanStatus || account.membershipStatus === cleanStatus) &&
+        (!cleanRole || account.role === cleanRole)
+      )
+    })
+    .sort((a, b) => {
+      if (cleanSort === 'oldest')
+        return String(a.createdAt || '').localeCompare(
+          String(b.createdAt || ''),
+        )
+      if (cleanSort === 'name')
+        return String(a.name || a.email).localeCompare(
+          String(b.name || b.email),
+        )
+      if (cleanSort === 'recent_login')
+        return String(b.lastLoginAt || '').localeCompare(
+          String(a.lastLoginAt || ''),
+        )
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
+    })
+  const total = items.length
+  const pages = Math.max(1, Math.ceil(total / cleanPageSize))
+  const currentPage = Math.min(cleanPage, pages)
+  const start = (currentPage - 1) * cleanPageSize
+  return {
+    items: items.slice(start, start + cleanPageSize),
+    total,
+    page: currentPage,
+    pageSize: cleanPageSize,
+    pages,
+  }
+}
+
 export async function getWgProgress(accountId, wgSlug) {
   const pool = getPool()
   if (pool) {

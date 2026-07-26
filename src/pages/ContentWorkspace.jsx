@@ -6,10 +6,12 @@ import {
   Button,
   Empty,
   ErrorCard,
+  FilterPill,
   PageHeader,
   Section,
   StatusChip,
 } from '../components/ui.jsx'
+import { FieldError, SearchableSelect } from '../components/FormControls.jsx'
 import { EVENT_TYPES } from '../../shared/contentValidation.js'
 import {
   CalendarDays,
@@ -61,10 +63,6 @@ function eventForm(payload = {}) {
 
 function announcementForm(payload = {}) {
   return { ...EMPTY_ANNOUNCEMENT, ...payload }
-}
-
-function FieldError({ message }) {
-  return message ? <span className="fieldError">{message}</span> : null
 }
 
 export function ContentWorkspace() {
@@ -188,7 +186,6 @@ export function ContentWorkspace() {
     <div>
       <PageHeader
         eyebrow="Content operations"
-        icon={FilePenLine}
         title="Content studio"
         description="Prepare public Hub updates, send them for independent review, and publish an approved version."
       />
@@ -201,22 +198,20 @@ export function ContentWorkspace() {
             {data.permissions.canDraft && (
               <Section label={title}>
                 <div className="pillRow" aria-label="Content type">
-                  <button
-                    type="button"
-                    className={`pill ${contentType === 'event' ? 'active' : ''}`}
-                    aria-pressed={contentType === 'event'}
+                  <FilterPill
+                    active={contentType === 'event'}
+                    icon={CalendarDays}
                     onClick={() => chooseType('event')}
                   >
                     Event
-                  </button>
-                  <button
-                    type="button"
-                    className={`pill ${contentType === 'announcement' ? 'active' : ''}`}
-                    aria-pressed={contentType === 'announcement'}
+                  </FilterPill>
+                  <FilterPill
+                    active={contentType === 'announcement'}
+                    icon={Megaphone}
                     onClick={() => chooseType('announcement')}
                   >
                     Announcement
-                  </button>
+                  </FilterPill>
                 </div>
 
                 <form className="card contentForm stackSm" onSubmit={save}>
@@ -229,7 +224,7 @@ export function ContentWorkspace() {
                         onChange={(event) => set('slug', event.target.value)}
                         placeholder="finance-call-august"
                       />
-                      <FieldError message={fields.slug} />
+                      <FieldError msg={fields.slug} />
                     </label>
                     <label>
                       Title
@@ -238,44 +233,38 @@ export function ContentWorkspace() {
                         value={payload.title}
                         onChange={(event) => set('title', event.target.value)}
                       />
-                      <FieldError message={fields.title} />
+                      <FieldError msg={fields.title} />
                     </label>
                   </div>
 
                   {contentType === 'event' ? (
                     <>
                       <div className="formGrid">
-                        <label>
-                          Event type
-                          <select
-                            value={payload.type}
-                            onChange={(event) =>
-                              set('type', event.target.value)
-                            }
-                          >
-                            {EVENT_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {TYPE_LABELS[type]}
-                              </option>
-                            ))}
-                          </select>
-                          <FieldError message={fields.type} />
-                        </label>
-                        <label>
-                          Working group
-                          <select
-                            value={payload.wg}
-                            onChange={(event) => set('wg', event.target.value)}
-                          >
-                            <option value="">Whole constituency</option>
-                            {data.groups.map((group) => (
-                              <option key={group.slug} value={group.slug}>
-                                {group.name}
-                              </option>
-                            ))}
-                          </select>
-                          <FieldError message={fields.wg} />
-                        </label>
+                        <SearchableSelect
+                          label="Event type"
+                          options={EVENT_TYPES.map((type) => ({
+                            value: type,
+                            label: TYPE_LABELS[type],
+                          }))}
+                          value={payload.type}
+                          onChange={(type) => set('type', type)}
+                          error={fields.type}
+                          searchPlaceholder="Search event types…"
+                        />
+                        <SearchableSelect
+                          label="Working group"
+                          options={[
+                            { value: '', label: 'Whole constituency' },
+                            ...data.groups.map((group) => ({
+                              value: group.slug,
+                              label: group.name,
+                            })),
+                          ]}
+                          value={payload.wg}
+                          onChange={(wg) => set('wg', wg)}
+                          error={fields.wg}
+                          searchPlaceholder="Search working groups…"
+                        />
                       </div>
                       <div className="formGrid">
                         <label>
@@ -288,7 +277,7 @@ export function ContentWorkspace() {
                               set('startsAt', event.target.value)
                             }
                           />
-                          <FieldError message={fields.startsAt} />
+                          <FieldError msg={fields.startsAt} />
                         </label>
                         <label>
                           Ends
@@ -300,7 +289,7 @@ export function ContentWorkspace() {
                               set('endsAt', event.target.value)
                             }
                           />
-                          <FieldError message={fields.endsAt} />
+                          <FieldError msg={fields.endsAt} />
                         </label>
                       </div>
                       <label>
@@ -312,7 +301,7 @@ export function ContentWorkspace() {
                             set('description', event.target.value)
                           }
                         />
-                        <FieldError message={fields.description} />
+                        <FieldError msg={fields.description} />
                       </label>
                       <div className="formGrid">
                         <label>
@@ -325,7 +314,7 @@ export function ContentWorkspace() {
                             }
                             placeholder="https://…"
                           />
-                          <FieldError message={fields.meetingUrl} />
+                          <FieldError msg={fields.meetingUrl} />
                         </label>
                         <label>
                           Recording link
@@ -337,7 +326,7 @@ export function ContentWorkspace() {
                             }
                             placeholder="https://…"
                           />
-                          <FieldError message={fields.recordingUrl} />
+                          <FieldError msg={fields.recordingUrl} />
                         </label>
                       </div>
                     </>
@@ -351,7 +340,7 @@ export function ContentWorkspace() {
                           value={payload.body}
                           onChange={(event) => set('body', event.target.value)}
                         />
-                        <FieldError message={fields.body} />
+                        <FieldError msg={fields.body} />
                       </label>
                       <label className="contentCheck">
                         <input

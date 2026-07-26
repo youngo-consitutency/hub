@@ -45,7 +45,7 @@ async function requireAccount(req, res) {
     res.status(401).json({
       error: {
         code: 'unauthorized',
-        message: 'Sign in to use Hub Intelligence.',
+        message: 'Sign in to search the Hub.',
       },
     })
     return null
@@ -60,7 +60,7 @@ function requireVerified(account, res) {
     res.status(403).json({
       error: {
         code: 'not_verified',
-        message: 'Complete the membership course to unlock Hub Intelligence.',
+        message: 'Complete the membership course to search the full Hub.',
       },
     })
     return false
@@ -125,7 +125,7 @@ intelligenceRouter.post('/query', memberLimit, async (req, res, next) => {
       return res.status(403).json({
         error: {
           code: 'forbidden',
-          message: 'Intelligence query access is not assigned.',
+          message: 'Role-scoped Hub search is not assigned.',
         },
       })
     const query = cleanQuery(req, res)

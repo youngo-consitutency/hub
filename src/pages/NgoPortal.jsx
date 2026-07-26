@@ -10,14 +10,8 @@ import {
   ErrorCard,
   PageHeader,
 } from '../components/ui.jsx'
-import {
-  Award,
-  BadgeCheck,
-  Building2,
-  UserPlus,
-  Copy,
-  Check,
-} from 'lucide-react'
+import { DatePicker, SearchableSelect } from '../components/FormControls.jsx'
+import { Award, BadgeCheck, UserPlus, Copy, Check } from 'lucide-react'
 
 export function NgoPortal() {
   const { account, setAccount } = useAccount()
@@ -144,7 +138,6 @@ export function NgoPortal() {
     <div>
       <PageHeader
         eyebrow="Organisation"
-        icon={Building2}
         title="NGO platform"
         description={`${account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.`}
       />
@@ -316,27 +309,31 @@ export function NgoPortal() {
       {data?.permissions?.canWriteRequests && (
         <Section label="Log a request">
           <form className="card stack" onSubmit={create}>
-            <label className="field">
-              <span>Type</span>
-              <select
-                className="input"
-                value={form.kind}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, kind: e.target.value }))
-                }
-              >
-                <option value="endorse">Endorse document</option>
-                <option value="submit">UNFCCC / constituency submission</option>
-                <option value="badge_support">Support badge allocation</option>
-                <option value="represent">Represent NGO</option>
-                <option value="deadline">Deadline</option>
-                <option value="other">Other</option>
-              </select>
+            <SearchableSelect
+              label="Type"
+              options={[
+                { value: 'endorse', label: 'Endorse document' },
+                {
+                  value: 'submit',
+                  label: 'UNFCCC / constituency submission',
+                },
+                {
+                  value: 'badge_support',
+                  label: 'Support badge allocation',
+                },
+                { value: 'represent', label: 'Represent NGO' },
+                { value: 'deadline', label: 'Deadline' },
+                { value: 'other', label: 'Other' },
+              ]}
+              value={form.kind}
+              onChange={(kind) => setForm((current) => ({ ...current, kind }))}
+              searchPlaceholder="Search request types…"
+            >
               <p className="metaMuted" style={{ marginTop: 4 }}>
                 Logging a request tracks work; contribution points are awarded
                 separately by staff after verification.
               </p>
-            </label>
+            </SearchableSelect>
             <label className="field">
               <span>Title</span>
               <input
@@ -359,17 +356,13 @@ export function NgoPortal() {
                 }
               />
             </label>
-            <label className="field">
-              <span>Deadline</span>
-              <input
-                className="input"
-                type="date"
-                value={form.deadlineAt}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, deadlineAt: e.target.value }))
-                }
-              />
-            </label>
+            <DatePicker
+              label="Deadline"
+              value={form.deadlineAt}
+              onChange={(deadlineAt) =>
+                setForm((current) => ({ ...current, deadlineAt }))
+              }
+            />
             <Button type="submit" variant="primary">
               Save request
             </Button>
@@ -411,10 +404,7 @@ export function NgoPortal() {
               style={{ marginTop: 12 }}
               onSubmit={sendInvite}
             >
-              <h3 className="rowGap">
-                <UserPlus size={18} strokeWidth={1.75} aria-hidden /> Invite
-                representative
-              </h3>
+              <h3>Invite representative</h3>
               <div className="formRow">
                 <label className="field">
                   <span>Email *</span>
@@ -439,20 +429,20 @@ export function NgoPortal() {
                   />
                 </label>
               </div>
-              <label className="field">
-                <span>Seat role</span>
-                <select
-                  className="input"
-                  value={invite.seatRole}
-                  onChange={(e) =>
-                    setInvite((f) => ({ ...f, seatRole: e.target.value }))
-                  }
-                >
-                  <option value="representative">Representative</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </label>
+              <SearchableSelect
+                label="Seat role"
+                options={[
+                  { value: 'representative', label: 'Representative' },
+                  { value: 'viewer', label: 'Viewer' },
+                ]}
+                value={invite.seatRole}
+                onChange={(seatRole) =>
+                  setInvite((current) => ({ ...current, seatRole }))
+                }
+                searchPlaceholder="Search seat roles…"
+              />
               <Button type="submit" variant="primary">
+                <UserPlus size={18} strokeWidth={1.75} aria-hidden />
                 Send invite
               </Button>
             </form>

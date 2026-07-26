@@ -1,9 +1,19 @@
 import { useState } from 'react'
 import { apiPatch, useApi } from '../lib/api.js'
-import { Async, Button, Empty, ErrorCard, Section } from '../components/ui.jsx'
+import {
+  Async,
+  Button,
+  Empty,
+  ErrorCard,
+  FilterPill,
+  PageHeader,
+  Section,
+} from '../components/ui.jsx'
+import { SearchableSelect } from '../components/FormControls.jsx'
 import {
   ClipboardCheck,
   Clock3,
+  Layers3,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -50,12 +60,11 @@ export function MembershipTeam() {
 
   return (
     <div>
-      <p className="eyebrow">Member lifecycle</p>
-      <h1>Membership Team</h1>
-      <p className="meta pageIntro">
-        Move applications from registration through onboarding, activation,
-        renewal, and offboarding.
-      </p>
+      <PageHeader
+        eyebrow="Member lifecycle"
+        title="Membership Team"
+        description="Move applications from registration through onboarding, activation, renewal, and offboarding."
+      />
       <Async query={query} skeletons={5}>
         {(data) => {
           const active = data.items.filter(
@@ -103,18 +112,19 @@ export function MembershipTeam() {
                 {actionError && <ErrorCard message={actionError} />}
                 <div className="queueToolbar">
                   <div className="pillRow" aria-label="Filter applications">
-                    {['pending', 'verified', 'all'].map((item) => (
-                      <button
-                        type="button"
-                        aria-pressed={filter === item}
-                        key={item}
-                        className={`pill ${filter === item ? 'active' : ''}`}
-                        onClick={() => setFilter(item)}
+                    {[
+                      { key: 'pending', label: 'Pending', icon: Clock3 },
+                      { key: 'verified', label: 'Active', icon: UserCheck },
+                      { key: 'all', label: 'All', icon: Layers3 },
+                    ].map((item) => (
+                      <FilterPill
+                        key={item.key}
+                        active={filter === item.key}
+                        icon={item.icon}
+                        onClick={() => setFilter(item.key)}
                       >
-                        {item === 'verified'
-                          ? 'Active'
-                          : item[0].toUpperCase() + item.slice(1)}
-                      </button>
+                        {item.label}
+                      </FilterPill>
                     ))}
                   </div>
                   <label className="queueSearch">
@@ -158,25 +168,17 @@ export function MembershipTeam() {
                             ))}
                           </div>
                         </div>
-                        <label className="meta">
-                          Membership status
-                          <select
-                            disabled={busy === item.id}
-                            value={item.membershipStatus}
-                            onChange={(event) =>
-                              setStatus(item.id, event.target.value)
-                            }
-                            style={{ display: 'block', marginTop: 4 }}
-                          >
-                            {Object.entries(STATUS_LABELS).map(
-                              ([value, label]) => (
-                                <option key={value} value={value}>
-                                  {label}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        </label>
+                        <SearchableSelect
+                          label="Membership status"
+                          options={Object.entries(STATUS_LABELS).map(
+                            ([value, label]) => ({ value, label }),
+                          )}
+                          value={item.membershipStatus}
+                          onChange={(status) => setStatus(item.id, status)}
+                          disabled={busy === item.id}
+                          className="queueSelect"
+                          searchPlaceholder="Search statuses…"
+                        />
                         {item.membershipStatus !== 'active' && (
                           <Button
                             sm

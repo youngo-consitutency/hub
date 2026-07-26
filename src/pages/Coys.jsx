@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, PageHeader } from '../components/ui.jsx'
+import { Async, Empty, FilterPill, PageHeader } from '../components/ui.jsx'
 import { CoyCard } from '../components/cards.jsx'
-import { MapPin } from 'lucide-react'
+import { Globe2, Layers3, Map, MapPin } from 'lucide-react'
 
 const TYPES = [
-  { key: 'all', label: 'All' },
-  { key: 'lcoy', label: 'LCOY' },
-  { key: 'rcoy', label: 'RCOY' },
-  { key: 'coy', label: 'COY' },
+  { key: 'all', label: 'All', icon: Layers3 },
+  { key: 'lcoy', label: 'LCOY', icon: MapPin },
+  { key: 'rcoy', label: 'RCOY', icon: Map },
+  { key: 'coy', label: 'COY', icon: Globe2 },
 ]
 const REGIONS = [
   { key: 'all', label: 'All regions' },
@@ -31,33 +31,39 @@ export function Coys() {
       <PageHeader
         eyebrow="Conferences of Youth"
         title="COY tracker"
-        description="LCOYs, RCOYs, and the global Conference of Youth."
+        description="Find local, regional, and global Conferences of Youth, with dates and participation status."
       >
-        <div className="pillRow" aria-label="Filter by conference type">
-          {TYPES.map((t) => (
-            <button
-              type="button"
-              aria-pressed={type === t.key}
-              key={t.key}
-              className={`pill ${type === t.key ? 'active' : ''}`}
-              onClick={() => setType(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <div className="pillRow" aria-label="Filter by region">
-          {REGIONS.map((r) => (
-            <button
-              type="button"
-              aria-pressed={region === r.key}
-              key={r.key}
-              className={`pill ${region === r.key ? 'active' : ''}`}
-              onClick={() => setRegion(r.key)}
-            >
-              {r.label}
-            </button>
-          ))}
+        <div className="filterHierarchy" aria-label="COY filters">
+          <fieldset className="filterLevel">
+            <legend>Conference type</legend>
+            <div className="pillRow">
+              {TYPES.map((t) => (
+                <FilterPill
+                  key={t.key}
+                  active={type === t.key}
+                  icon={t.icon}
+                  onClick={() => setType(t.key)}
+                >
+                  {t.label}
+                </FilterPill>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="filterLevel">
+            <legend>Region</legend>
+            <div className="pillRow">
+              {REGIONS.map((r) => (
+                <FilterPill
+                  key={r.key}
+                  active={region === r.key}
+                  icon={r.key === 'all' ? Map : undefined}
+                  onClick={() => setRegion(r.key)}
+                >
+                  {r.label}
+                </FilterPill>
+              ))}
+            </div>
+          </fieldset>
         </div>
       </PageHeader>
       <Async
@@ -73,11 +79,17 @@ export function Coys() {
         }
       >
         {(data) => (
-          <div className="grid2">
-            {data.items.map((c) => (
-              <CoyCard key={c.slug} coy={c} />
-            ))}
-          </div>
+          <>
+            <p className="resultsSummary" role="status">
+              {data.items.length} conference
+              {data.items.length === 1 ? '' : 's'}
+            </p>
+            <div className="cardGrid">
+              {data.items.map((c) => (
+                <CoyCard key={c.slug} coy={c} />
+              ))}
+            </div>
+          </>
         )}
       </Async>
     </div>

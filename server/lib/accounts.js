@@ -14,6 +14,15 @@ import {
   PRIVACY_VERSION,
   CONSENT_STATEMENT,
 } from '../../shared/privacyNotice.js'
+import { NATIONALITIES } from '../../shared/nationalities.js'
+import {
+  AGE_BANDS,
+  GENDERS,
+  MINORITY_OPTIONS,
+  REGIONS,
+  wordCount,
+  YOUTH_AFFILIATIONS,
+} from '../../shared/registration.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -25,36 +34,9 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
 const WORD_LIMIT = 250
 const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
+const NATIONALITY_SET = new Set(NATIONALITIES)
 
-export const REGIONS = [
-  'Africa',
-  'Asia-Pacific',
-  'Eastern Europe',
-  'Latin America and the Caribbean',
-  'Western Europe and Others',
-]
-
-export const GENDERS = [
-  'Female',
-  'Male',
-  'Non-binary',
-  'Prefer not to say',
-  'Other',
-]
-
-export const MINORITY_OPTIONS = [
-  'Indigenous peoples',
-  'Persons with disabilities',
-  'LGBTQIA+ community',
-  'Refugees',
-  'Women',
-  'Children',
-  'Other',
-]
-
-export const AGE_BANDS = ['under_18', '18_35', '35_plus']
-
-export const YOUTH_AFFILIATIONS = ['primary', 'secondary', 'no']
+export { AGE_BANDS, GENDERS, MINORITY_OPTIONS, REGIONS, YOUTH_AFFILIATIONS }
 
 function readJson(file, fallback) {
   try {
@@ -68,13 +50,6 @@ function readJson(file, fallback) {
 function writeJson(file, data) {
   mkdirSync(path.dirname(file), { recursive: true })
   writeFileSync(file, JSON.stringify(data, null, 2))
-}
-
-function wordCount(text) {
-  return String(text || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length
 }
 
 function publicAccount(row) {
@@ -514,7 +489,8 @@ export function validateRegistration(body) {
   }
   if (!dateOfBirth) fields.dateOfBirth = 'Date of birth is required.'
   if (!REGIONS.includes(region)) fields.region = 'Please select your UN region.'
-  if (!nationality) fields.nationality = 'Nationality is required.'
+  if (!NATIONALITY_SET.has(nationality))
+    fields.nationality = 'Please select a nationality from the list.'
   if (!country) fields.country = 'Country of residence is required.'
   if (motivation && motivation.length > 2000)
     fields.motivation = 'Please keep this under 2000 characters.'

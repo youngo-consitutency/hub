@@ -5,10 +5,12 @@ import {
   Button,
   Empty,
   ErrorCard,
+  PageHeader,
   Section,
   Skeletons,
 } from '../components/ui.jsx'
-import { Award, BadgeCheck, Plus, Sparkles } from 'lucide-react'
+import { SearchableSelect } from '../components/FormControls.jsx'
+import { BadgeCheck, Plus, Sparkles } from 'lucide-react'
 
 const EMPTY_FORM = {
   orgAccountId: '',
@@ -126,18 +128,11 @@ export function StaffPoints() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>
-        Staff · recognition
-      </p>
-      <h1 className="rowGap">
-        <Award size={24} strokeWidth={1.75} aria-hidden /> NGO contribution
-        points
-      </h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        Award points when an NGO supports pool badges, endorses or contributes
-        to UNFCCC submissions, or otherwise helps constituency work. Points are
-        staff-verified — not self-claimed.
-      </p>
+      <PageHeader
+        eyebrow="Staff · recognition"
+        title="NGO contribution points"
+        description="Award points when an NGO supports pool badges, contributes to UNFCCC submissions, or helps other constituency work. Staff verify every award."
+      />
 
       {flash && (
         <div
@@ -229,50 +224,45 @@ export function StaffPoints() {
               <code className="mono">{form.requestId.slice(0, 8)}…</code>
             </p>
           )}
-          <label className="field">
-            <span>Organisation *</span>
-            <select
-              className="input"
-              required
-              value={form.orgAccountId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, orgAccountId: e.target.value }))
-              }
-            >
-              <option value="">Select NGO…</option>
-              {(data.orgs || []).map((o) => (
-                <option key={o.orgAccountId} value={o.orgAccountId}>
-                  {o.name || 'Organisation'} · {o.balance} pts
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Contribution type *</span>
-            <select
-              className="input"
-              value={form.reasonCode}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  reasonCode: e.target.value,
-                  points: '',
-                }))
-              }
-            >
-              {(data.reasons || []).map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.label}
-                  {r.defaultPoints ? ` (default ${r.defaultPoints})` : ''}
-                </option>
-              ))}
-            </select>
+          <SearchableSelect
+            label="Organisation *"
+            options={(data.orgs || []).map((org) => ({
+              value: org.orgAccountId,
+              label: `${org.name || 'Organisation'} · ${org.balance} pts`,
+            }))}
+            value={form.orgAccountId}
+            onChange={(orgAccountId) =>
+              setForm((current) => ({ ...current, orgAccountId }))
+            }
+            placeholder="Select NGO…"
+            searchPlaceholder="Search organisations…"
+          />
+          <SearchableSelect
+            label="Contribution type *"
+            options={(data.reasons || []).map((reason) => ({
+              value: reason.code,
+              label:
+                reason.label +
+                (reason.defaultPoints
+                  ? ` (default ${reason.defaultPoints})`
+                  : ''),
+            }))}
+            value={form.reasonCode}
+            onChange={(reasonCode) =>
+              setForm((current) => ({
+                ...current,
+                reasonCode,
+                points: '',
+              }))
+            }
+            searchPlaceholder="Search contribution types…"
+          >
             {reasonMeta && (
               <p className="metaMuted" style={{ marginTop: 4 }}>
                 {reasonMeta.description}
               </p>
             )}
-          </label>
+          </SearchableSelect>
           <div className="formRow">
             <label className="field">
               <span>Points *</span>

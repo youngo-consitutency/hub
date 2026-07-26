@@ -89,12 +89,10 @@ export async function getAccessProfile(account) {
   }
   if (teamRoles.has('membership_team')) {
     capabilities.add('membership.review')
-    capabilities.add('messages.receive')
     capabilities.add('points.award')
   }
   if (teamRoles.has('gys_policy_team')) {
     capabilities.add('gys.manage')
-    capabilities.add('messages.receive')
   }
   if (teamRoles.has('content_editor')) capabilities.add('content.draft')
   if (teamRoles.has('content_publisher')) {
@@ -105,10 +103,10 @@ export async function getAccessProfile(account) {
     ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(
       account.role,
     ) ||
-    wgAssignments.length
+    wgAssignments.length ||
+    teamRoles.has('membership_team') ||
+    teamRoles.has('gys_policy_team')
   )
-    capabilities.add('messages.receive')
-  if (capabilities.has('messages.receive'))
     capabilities.add('intelligence.contacts.read')
   for (const item of wgAssignments) capabilities.add(`wg.manage:${item.wgSlug}`)
   return {
@@ -117,7 +115,7 @@ export async function getAccessProfile(account) {
     capabilities: [...capabilities],
     manageAllWgs: account.role === 'admin',
     isFocalPoint: account.role === 'focal_point',
-    isMandateHolder: capabilities.has('messages.receive'),
+    isMandateHolder: capabilities.has('intelligence.contacts.read'),
   }
 }
 

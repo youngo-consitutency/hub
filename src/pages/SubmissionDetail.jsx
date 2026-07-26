@@ -6,8 +6,10 @@ import {
   CountdownChip,
   Timeline,
   A,
+  PageHeader,
+  Section,
 } from '../components/ui.jsx'
-import { fmtDual } from '../lib/time.js'
+import { fmtMoment } from '../lib/time.js'
 import { FileText, ArrowUpRight, ExternalLink } from 'lucide-react'
 
 const STEPS = ['Open', 'Drafting', 'Internal review', 'Submitted']
@@ -22,66 +24,108 @@ const STEP_INDEX = {
 export function SubmissionDetail({ slug }) {
   const query = useApi(`/submissions/${slug}`)
   return (
-    <div>
+    <div className="detailPage">
       <BackLink href="/submissions">Submissions</BackLink>
       <Async query={query}>
         {(sub) => {
           const archived = !['open', 'drafting', 'internal_review'].includes(
             sub.status,
           )
+          const deadline = fmtMoment(sub.deadlineAt)
           return (
             <>
-              <div className="rowGap" style={{ marginTop: 8 }}>
-                <FileText
-                  size={20}
-                  strokeWidth={1.75}
-                  aria-hidden
-                  style={{ color: 'var(--text-2)' }}
-                />
-                <StatusChip status={sub.status} />
-                {sub.wg && (
-                  <A
-                    href={`/groups/${sub.wg.slug}`}
-                    className="chip chip-neutral"
-                  >
-                    {sub.wg.name} WG
-                  </A>
-                )}
-              </div>
-              <h1 style={{ marginTop: 10 }}>{sub.title}</h1>
+              <PageHeader eyebrow="Submission" title={sub.title}>
+                <div className="detailHeaderMeta">
+                  <StatusChip status={sub.status} />
+                  {sub.wg && (
+                    <A
+                      href={`/groups/${sub.wg.slug}`}
+                      className="chip chip-neutral"
+                    >
+                      {sub.wg.name} WG
+                    </A>
+                  )}
+                </div>
+              </PageHeader>
 
-              <div className="detailHeroRow">
-                <span className="mono detailHero">
-                  {archived ? 'Submitted' : 'Due'} {fmtDual(sub.deadlineAt)}
-                </span>
-                {!archived && <CountdownChip iso={sub.deadlineAt} />}
-              </div>
-
-              <Timeline
-                steps={STEPS}
-                currentIndex={STEP_INDEX[sub.status] ?? 0}
-              />
+              <Section label="Submission process">
+                <div className="card detailProcess">
+                  <div className="detailDeadline">
+                    <div>
+                      <p className="metaMuted detailMetaLabel">
+                        {archived ? 'Submitted' : 'Deadline'}
+                      </p>
+                      <p className="mono">
+                        {deadline.day} · {deadline.localTime}{' '}
+                        {deadline.localZone}
+                      </p>
+                      {!deadline.isUtc && (
+                        <p className="metaMuted mono">
+                          UTC: {deadline.utcTime}
+                        </p>
+                      )}
+                    </div>
+                    {!archived && (
+                      <CountdownChip iso={sub.deadlineAt} label="Closes in" />
+                    )}
+                  </div>
+                  <Timeline
+                    steps={STEPS}
+                    currentIndex={STEP_INDEX[sub.status] ?? 0}
+                  />
+                </div>
+              </Section>
 
               {!archived && (
-                <div className="card" style={{ marginTop: 16 }}>
-                  <h3>How to contribute</h3>
-                  {sub.contributeNote && (
-                    <p className="meta" style={{ marginTop: 6 }}>
-                      {sub.contributeNote}
-                    </p>
-                  )}
-                  <div className="detailActions">
-                    {sub.draftUrl && (
-                      <a
-                        className="btn btn-primary"
-                        href={sub.draftUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FileText size={18} strokeWidth={1.75} aria-hidden />
-                        Open draft
-                      </a>
+                <Section label="How to contribute">
+                  <div className="card detailPanel">
+                    {sub.contributeNote && (
+                      <p className="meta">{sub.contributeNote}</p>
                     )}
+                    <div className="detailActions">
+                      {sub.draftUrl && (
+                        <a
+                          className="btn btn-primary"
+                          href={sub.draftUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <FileText size={18} strokeWidth={1.75} aria-hidden />
+                          Open draft
+                        </a>
+                      )}
+                      {sub.unfcccUrl && (
+                        <a
+                          className="btn btn-secondary"
+                          href={sub.unfcccUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          UNFCCC reference
+                          <ArrowUpRight
+                            size={16}
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </Section>
+              )}
+
+              {archived && sub.finalUrl && (
+                <Section label="Published submission">
+                  <div className="detailActions detailStandaloneActions">
+                    <a
+                      className="btn btn-primary"
+                      href={sub.finalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink size={18} strokeWidth={1.75} aria-hidden />
+                      Final submission
+                    </a>
                     {sub.unfcccUrl && (
                       <a
                         className="btn btn-secondary"
@@ -98,32 +142,7 @@ export function SubmissionDetail({ slug }) {
                       </a>
                     )}
                   </div>
-                </div>
-              )}
-
-              {archived && sub.finalUrl && (
-                <div className="detailActions">
-                  <a
-                    className="btn btn-primary"
-                    href={sub.finalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <ExternalLink size={18} strokeWidth={1.75} aria-hidden />
-                    Final submission
-                  </a>
-                  {sub.unfcccUrl && (
-                    <a
-                      className="btn btn-secondary"
-                      href={sub.unfcccUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      UNFCCC reference
-                      <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
-                    </a>
-                  )}
-                </div>
+                </Section>
               )}
             </>
           )

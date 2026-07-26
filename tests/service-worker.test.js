@@ -46,7 +46,7 @@ test('service worker never reads or writes cache for API requests', async () => 
   listeners.fetch({
     request: {
       method: 'GET',
-      url: 'https://hub.example/api/member/messages',
+      url: 'https://hub.example/api/member/workspace',
       headers: { get: () => 'application/json' },
     },
     respondWith: (promise) => {

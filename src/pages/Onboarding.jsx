@@ -1,10 +1,10 @@
 import { useAccount } from '../lib/accountContext.jsx'
-import { A, Section } from '../components/ui.jsx'
+import { A, PageHeader, Section } from '../components/ui.jsx'
 import {
+  ArrowRight,
   BookOpen,
   CheckCircle2,
   GraduationCap,
-  HelpCircle,
   Library,
   ShieldCheck,
   Users,
@@ -56,42 +56,40 @@ export function Onboarding() {
 
   return (
     <div>
-      <p className="metaMuted" style={{ marginBottom: 6 }}>
-        Membership journey
-      </p>
-      <h1>Onboarding</h1>
-      <p className="meta" style={{ marginTop: 6, maxWidth: 560 }}>
-        {verified
-          ? 'Your account is verified. Return here to review the membership course, read the library, or check what to do next.'
-          : 'Your account is ready. Complete the membership course and test to use the rest of the Hub.'}
-      </p>
+      <PageHeader
+        eyebrow="Membership journey"
+        title="Onboarding"
+        description={
+          verified
+            ? 'Your account is verified. Return here to review the membership course, read the library, or check what to do next.'
+            : 'Your account is ready. Complete the membership course and test to use the rest of the Hub.'
+        }
+      />
 
-      <div className="stack" style={{ marginTop: 16 }}>
-        <div className="card rowBetween">
-          <div className="rowGap">
-            {verified ? (
-              <CheckCircle2
-                size={22}
-                strokeWidth={1.75}
-                color="var(--accent)"
-                aria-hidden
-              />
-            ) : (
-              <GraduationCap
-                size={22}
-                strokeWidth={1.75}
-                color="var(--warn)"
-                aria-hidden
-              />
-            )}
-            <div>
-              <h3>Status: {verified ? 'Verified member' : 'Pending course'}</h3>
-              <p className="meta" style={{ marginTop: 4 }}>
-                {account?.name} · {account?.email}
-                {account?.courseScore != null &&
-                  ` · Course score ${account.courseScore}`}
-              </p>
-            </div>
+      <div className="stack">
+        <div className="card actionCard">
+          {verified ? (
+            <CheckCircle2
+              className="actionCardIcon"
+              size={22}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          ) : (
+            <GraduationCap
+              className="actionCardIcon actionCardIconWarning"
+              size={22}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          )}
+          <div className="actionCardCopy">
+            <h3>Status: {verified ? 'Verified member' : 'Pending course'}</h3>
+            <p className="meta">
+              {account?.name} · {account?.email}
+              {account?.courseScore != null &&
+                ` · Course score ${account.courseScore}`}
+            </p>
           </div>
           {!verified && (
             <A href="/onboarding/course" className="btn btn-primary btn-glow">
@@ -105,24 +103,21 @@ export function Onboarding() {
           )}
         </div>
 
-        <div className="card rowBetween">
-          <div className="rowGap">
-            <ShieldCheck
-              size={22}
-              strokeWidth={1.75}
-              color="var(--accent)"
-              aria-hidden
-            />
-            <div>
-              <h3>Your data</h3>
-              <p className="meta" style={{ marginTop: 4 }}>
-                What the hub collects, who can see it, and how to have it
-                deleted.
-                {account?.privacyNoticeVersion
-                  ? ` You consented to version ${account.privacyNoticeVersion}.`
-                  : ` Notice version ${PRIVACY_META.version}.`}
-              </p>
-            </div>
+        <div className="card actionCard">
+          <ShieldCheck
+            className="actionCardIcon"
+            size={22}
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <div className="actionCardCopy">
+            <h3>Your data</h3>
+            <p className="meta">
+              What the hub collects, who can see it, and how to have it deleted.
+              {account?.privacyNoticeVersion
+                ? ` You consented to version ${account.privacyNoticeVersion}.`
+                : ` Notice version ${PRIVACY_META.version}.`}
+            </p>
           </div>
           <A href="/privacy" className="btn btn-secondary">
             Privacy notice
@@ -130,21 +125,21 @@ export function Onboarding() {
         </div>
 
         <Section label="Path">
-          <div className="grid2">
-            <div className="card cardTight">
-              <div className="rowGap" style={{ marginBottom: 8 }}>
+          <div className="onboardingPathGrid">
+            <div className="card cardTight onboardingPathCard">
+              <div className="rowGap onboardingPathTitle">
                 <BookOpen
                   size={18}
                   strokeWidth={1.75}
                   color="var(--accent)"
                   aria-hidden
                 />
-                <h3>1. Membership course</h3>
+                <h3>Membership course</h3>
               </div>
               <p className="meta">
                 History, structure, engagement mechanisms, then a short test.
               </p>
-              <div style={{ marginTop: 10 }}>
+              <div className="onboardingPathAction">
                 <A
                   href="/onboarding/course"
                   className="btn btn-secondary btn-sm"
@@ -153,41 +148,53 @@ export function Onboarding() {
                 </A>
               </div>
             </div>
-            <div className="card cardTight">
-              <div className="rowGap" style={{ marginBottom: 8 }}>
+            <ArrowRight
+              className="onboardingPathConnector"
+              size={20}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+            <div className="card cardTight onboardingPathCard">
+              <div className="rowGap onboardingPathTitle">
                 <Library
                   size={18}
                   strokeWidth={1.75}
                   color="var(--accent)"
                   aria-hidden
                 />
-                <h3>2. Capacity Building library</h3>
+                <h3>Capacity Building library</h3>
               </div>
               <p className="meta">
                 Practical guides, policies, and course material.
               </p>
-              <div style={{ marginTop: 10 }}>
+              <div className="onboardingPathAction">
                 <A href="/library" className="btn btn-secondary btn-sm">
                   Open library
                 </A>
               </div>
             </div>
-            <div className="card cardTight">
-              <div className="rowGap" style={{ marginBottom: 8 }}>
+            <ArrowRight
+              className="onboardingPathConnector"
+              size={20}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+            <div className="card cardTight onboardingPathCard">
+              <div className="rowGap onboardingPathTitle">
                 <Users
                   size={18}
                   strokeWidth={1.75}
                   color="var(--accent)"
                   aria-hidden
                 />
-                <h3>3. Working Group workspaces</h3>
+                <h3>Working Group workspaces</h3>
               </div>
               <p className="meta">
                 {verified
                   ? 'Read each group’s introduction and accept its rules to view channel links and Contact Point details.'
                   : 'Available after you pass the membership course.'}
               </p>
-              <div style={{ marginTop: 10 }}>
+              <div className="onboardingPathAction">
                 <A
                   href={verified ? '/groups' : '/onboarding/course'}
                   className="btn btn-secondary btn-sm"
@@ -216,29 +223,11 @@ export function Onboarding() {
 
         <Section label="FAQ">
           <div className="card faqCard">
-            <div
-              className="rowGap"
-              style={{ marginBottom: 12, alignItems: 'flex-start' }}
-            >
-              <HelpCircle
-                size={20}
-                strokeWidth={1.75}
-                color="var(--accent)"
-                aria-hidden
-              />
-              <div>
-                <h2 style={{ fontSize: 17 }}>
-                  {verified
-                    ? 'Common questions'
-                    : 'What happens after verification'}
-                </h2>
-                <p className="meta" style={{ marginTop: 4 }}>
-                  {verified
-                    ? 'Short answers about using the Hub and taking part in YOUNGO.'
-                    : 'Finish the course first. These answers apply once your account is verified.'}
-                </p>
-              </div>
-            </div>
+            <p className="meta faqIntro">
+              {verified
+                ? 'Answers about using the Hub and taking part in YOUNGO.'
+                : 'These answers apply after you finish the membership course.'}
+            </p>
             <div className="faqList">
               {FAQ_VERIFIED.map((item) => (
                 <details key={item.q} className="faqItem">

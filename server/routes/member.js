@@ -12,6 +12,7 @@ import {
   addNgoRequest,
   updateNgoRequestStatus,
   listAccountsForAdmin,
+  queryAccountsForAdmin,
   setAccountFields,
   resolveOrgContext,
   listNgoSeats,
@@ -42,17 +43,11 @@ import {
   listGroups,
   listSubmissions,
   listCouncil,
+  listDirectory,
 } from '../lib/store.js'
 import { createPasswordResetToken, resetLink } from '../lib/passwordReset.js'
 import { canWriteNgoRequests, canManageNgoSeats } from '../lib/authorization.js'
 import { appOrigin } from '../lib/config.js'
-import {
-  addMessage,
-  findOrCreateConversation,
-  listConversations,
-  listMessageContacts,
-  listMessages,
-} from '../lib/messages.js'
 import {
   scoreQuiz,
   QUIZ,
@@ -60,7 +55,7 @@ import {
   COURSE_VERSION,
   PASS_SCORE,
 } from '../../src/content/membershipCourse.js'
-import { cookieValue, SESSION_COOKIE, rateLimit } from '../lib/security.js'
+import { cookieValue, SESSION_COOKIE } from '../lib/security.js'
 import {
   POINT_REASONS,
   RECOGNITION_TIERS,
@@ -96,8 +91,6 @@ function bearerToken(req) {
     null
   )
 }
-
-const messageLimit = rateLimit({ name: 'messages', max: 60, windowMs: 60_000 })
 
 memberRouter.use((req, res, next) => {
   res.set('Cache-Control', 'no-store')
@@ -187,6 +180,119 @@ function sendContentWorkflowError(res, error) {
   return true
 }
 
+const MEMBERSHIP_STATUSES = [
+  'registered',
+  'course_passed',
+  'awaiting_onboarding',
+  'active',
+  'renewal_due',
+  'expired',
+  'terminated',
+]
+
+function routeError(status, code, message) {
+  return Object.assign(new Error(message), { status, code })
+}
+
+function sendRouteError(res, error) {
+  if (!error.status) return false
+  res.status(error.status).json({
+    error: { code: error.code || 'request_failed', message: error.message },
+  })
+  return true
+}
+
+function adminReason(req, res) {
+  const reason = String(req.body?.reason || '').trim()
+  if (reason.length < 8) {
+    res.status(400).json({
+      error: {
+        code: 'validation',
+        message:
+          'Give a reason of at least 8 characters for this admin action.',
+      },
+    })
+    return null
+  }
+  return reason.slice(0, 500)
+}
+
+async function updateMembershipLifecycle({ actor, targetId, body }) {
+  const status = String(body?.status || '')
+  if (!MEMBERSHIP_STATUSES.includes(status))
+    throw routeError(400, 'validation', 'Invalid membership status.')
+  const items = await listAccountsForAdmin()
+  const before = items.find((item) => item.id === targetId)
+  if (!before) throw routeError(404, 'not_found', 'Account not found.')
+  if (actor.role !== 'admin' && ['admin', 'focal_point'].includes(before.role))
+    throw routeError(
+      403,
+      'forbidden',
+      'Only an admin can change platform staff membership.',
+    )
+  if (actor.id === before.id && ['expired', 'terminated'].includes(status))
+    throw routeError(
+      400,
+      'self_suspend',
+      'You cannot suspend your own admin account.',
+    )
+  if (
+    status === 'active' &&
+    !before.coursePassedAt &&
+    !['admin', 'focal_point'].includes(before.role)
+  )
+    throw routeError(
+      409,
+      'course_required',
+      'The member must pass the membership course before activation.',
+    )
+  const reason = String(body?.reason || '').trim()
+  if (status === 'terminated' && !reason)
+    throw routeError(
+      400,
+      'validation',
+      'A reason is required when terminating membership.',
+    )
+  if (body?.renewalDueAt && Number.isNaN(Date.parse(body.renewalDueAt)))
+    throw routeError(400, 'validation', 'Invalid renewal date.')
+
+  const now = new Date().toISOString()
+  const accessStatus = ['expired', 'terminated'].includes(status)
+    ? 'suspended'
+    : [
+          'course_passed',
+          'awaiting_onboarding',
+          'active',
+          'renewal_due',
+        ].includes(status)
+      ? 'active'
+      : 'pending_course'
+  const updated = await setAccountFields(targetId, {
+    membership_status: status,
+    hub_access_status: accessStatus,
+    ...(status === 'active'
+      ? { member_status: 'verified', verified_at: before.verifiedAt || now }
+      : {}),
+    onboarding_cohort:
+      body?.onboardingCohort || before.onboardingCohort || null,
+    renewal_due_at: body?.renewalDueAt || before.renewalDueAt || null,
+    membership_ended_at: ['expired', 'terminated'].includes(status)
+      ? now
+      : null,
+    membership_end_reason: ['expired', 'terminated'].includes(status)
+      ? reason.slice(0, 500) || null
+      : null,
+    constituency_work_status:
+      status === 'active'
+        ? 'active'
+        : status === 'awaiting_onboarding'
+          ? 'pending_onboarding'
+          : before.constituencyWorkStatus,
+  })
+  if (accessStatus === 'suspended') await destroyAllSessions(targetId)
+  return { before, updated, reason: reason || null }
+}
+
 memberRouter.get('/access', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
@@ -197,14 +303,13 @@ memberRouter.get('/focal/overview', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (!requireFocalPoint(req, res)) return
-  const contacts = await listMessageContacts(account.id)
   res.json({
     feed: getFeed(),
     events: listEvents().slice(0, 8),
     submissions: listSubmissions('open').slice(0, 8),
     decisions: listCouncil('active').slice(0, 8),
     groups: listGroups(),
-    mandateContacts: contacts.slice(0, 12),
+    mandateContacts: listDirectory({ member: true }).slice(0, 12),
   })
 })
 
@@ -292,107 +397,6 @@ memberRouter.post('/workspace/:wg/join', async (req, res) => {
   })
   res.json({ progress })
 })
-
-// Member messaging: members can message CPs / mandate holders; mandate holders can reply.
-memberRouter.get('/messages/contacts', async (req, res) => {
-  const account = await requireAccount(req, res)
-  if (!account) return
-  if (!requireVerified(req, res)) return
-  const items = await listMessageContacts(account.id, { q: req.query.q || '' })
-  res.json({ items })
-})
-
-memberRouter.get('/messages/conversations', async (req, res) => {
-  const account = await requireAccount(req, res)
-  if (!account) return
-  if (!requireVerified(req, res)) return
-  const items = await listConversations(account.id)
-  res.json({ items })
-})
-
-memberRouter.post('/messages/conversations', messageLimit, async (req, res) => {
-  const account = await requireAccount(req, res)
-  if (!account) return
-  if (!requireVerified(req, res)) return
-  const recipientId = String(req.body?.recipientId || '').trim()
-  if (!recipientId) {
-    return res.status(400).json({
-      error: { code: 'validation', message: 'recipientId is required.' },
-    })
-  }
-  const result = await findOrCreateConversation(account.id, recipientId)
-  if (!result.ok) {
-    const status = result.code === 'not_found' ? 404 : 403
-    return res.status(status).json({
-      error: {
-        code: result.code || 'forbidden',
-        message:
-          result.code === 'recipient_not_mandate_holder'
-            ? 'Members can only start chats with contact points or mandate holders.'
-            : 'You cannot start that conversation.',
-      },
-    })
-  }
-  let message = null
-  try {
-    if (req.body?.body != null && String(req.body.body).trim()) {
-      message = await addMessage(
-        result.conversation.id,
-        account.id,
-        req.body.body,
-      )
-    }
-  } catch (err) {
-    if (err.code === 'validation') {
-      return res
-        .status(400)
-        .json({ error: { code: 'validation', message: err.message } })
-    }
-    throw err
-  }
-  res.status(201).json({ conversation: result.conversation, message })
-})
-
-memberRouter.get('/messages/conversations/:id/messages', async (req, res) => {
-  const account = await requireAccount(req, res)
-  if (!account) return
-  if (!requireVerified(req, res)) return
-  const result = await listMessages(req.params.id, account.id)
-  if (!result)
-    return res.status(404).json({
-      error: { code: 'not_found', message: 'Conversation not found.' },
-    })
-  res.json(result)
-})
-
-memberRouter.post(
-  '/messages/conversations/:id/messages',
-  messageLimit,
-  async (req, res) => {
-    const account = await requireAccount(req, res)
-    if (!account) return
-    if (!requireVerified(req, res)) return
-    try {
-      const message = await addMessage(
-        req.params.id,
-        account.id,
-        req.body?.body,
-      )
-      if (!message)
-        return res.status(404).json({
-          error: { code: 'not_found', message: 'Conversation not found.' },
-        })
-      res.status(201).json({ message })
-    } catch (err) {
-      if (err.code === 'validation') {
-        return res
-          .status(400)
-          .json({ error: { code: 'validation', message: err.message } })
-      }
-      throw err
-    }
-  },
-)
 
 async function requireWgManager(req, res) {
   const account = await requireAccount(req, res)
@@ -959,112 +963,26 @@ memberRouter.patch('/team/membership/accounts/:id/status', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
   if (!(await requireTeam(req, res, 'membership_team'))) return
-  const status = String(req.body?.status || '')
-  const allowed = [
-    'registered',
-    'course_passed',
-    'awaiting_onboarding',
-    'active',
-    'renewal_due',
-    'expired',
-    'terminated',
-  ]
-  if (!allowed.includes(status))
-    return res.status(400).json({
-      error: { code: 'validation', message: 'Invalid membership status.' },
+  try {
+    const result = await updateMembershipLifecycle({
+      actor: account,
+      targetId: req.params.id,
+      body: req.body,
     })
-  const items = await listAccountsForAdmin()
-  const before = items.find((item) => item.id === req.params.id)
-  if (!before)
-    return res
-      .status(404)
-      .json({ error: { code: 'not_found', message: 'Account not found.' } })
-  if (
-    account.role !== 'admin' &&
-    ['admin', 'focal_point'].includes(before.role)
-  ) {
-    return res.status(403).json({
-      error: {
-        code: 'forbidden',
-        message: 'Only an admin can change platform staff membership.',
-      },
+    await recordAudit({
+      actorId: account.id,
+      action: 'membership.status_changed',
+      targetType: 'account',
+      targetId: req.params.id,
+      before: result.before,
+      after: result.updated,
+      reason: result.reason,
+      requestId: req.requestId,
     })
+    res.json({ account: result.updated })
+  } catch (error) {
+    if (!sendRouteError(res, error)) throw error
   }
-  if (
-    status === 'active' &&
-    !before.coursePassedAt &&
-    !['admin', 'focal_point'].includes(before.role)
-  ) {
-    return res.status(409).json({
-      error: {
-        code: 'course_required',
-        message:
-          'The member must pass the membership course before activation.',
-      },
-    })
-  }
-  if (status === 'terminated' && !String(req.body?.reason || '').trim()) {
-    return res.status(400).json({
-      error: {
-        code: 'validation',
-        message: 'A reason is required when terminating membership.',
-      },
-    })
-  }
-  if (
-    req.body?.renewalDueAt &&
-    Number.isNaN(Date.parse(req.body.renewalDueAt))
-  ) {
-    return res
-      .status(400)
-      .json({ error: { code: 'validation', message: 'Invalid renewal date.' } })
-  }
-  const now = new Date().toISOString()
-  const accessStatus = ['expired', 'terminated'].includes(status)
-    ? 'suspended'
-    : [
-          'course_passed',
-          'awaiting_onboarding',
-          'active',
-          'renewal_due',
-        ].includes(status)
-      ? 'active'
-      : 'pending_course'
-  const fields = {
-    membership_status: status,
-    hub_access_status: accessStatus,
-    ...(status === 'active'
-      ? { member_status: 'verified', verified_at: before.verifiedAt || now }
-      : {}),
-    onboarding_cohort:
-      req.body?.onboardingCohort || before.onboardingCohort || null,
-    renewal_due_at: req.body?.renewalDueAt || before.renewalDueAt || null,
-    membership_ended_at: ['expired', 'terminated'].includes(status)
-      ? now
-      : null,
-    membership_end_reason: ['expired', 'terminated'].includes(status)
-      ? String(req.body?.reason || '').slice(0, 500) || null
-      : null,
-    constituency_work_status:
-      status === 'active'
-        ? 'active'
-        : status === 'awaiting_onboarding'
-          ? 'pending_onboarding'
-          : before.constituencyWorkStatus,
-  }
-  const updated = await setAccountFields(req.params.id, fields)
-  if (accessStatus === 'suspended') await destroyAllSessions(req.params.id)
-  await recordAudit({
-    actorId: account.id,
-    action: 'membership.status_changed',
-    targetType: 'account',
-    targetId: req.params.id,
-    before,
-    after: updated,
-    reason: req.body?.reason,
-    requestId: req.requestId,
-  })
-  res.json({ account: updated })
 })
 
 memberRouter.get('/team/gys/overview', async (req, res) => {
@@ -1319,8 +1237,17 @@ memberRouter.get('/admin/accounts', async (req, res) => {
       .status(403)
       .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
-  const items = await listAccountsForAdmin()
-  res.json({ items })
+  res.json(
+    await queryAccountsForAdmin({
+      search: req.query.search,
+      entityType: req.query.entityType,
+      status: req.query.status,
+      role: req.query.role,
+      sort: req.query.sort,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+    }),
+  )
 })
 
 memberRouter.get('/admin/audit', async (req, res) => {
@@ -1346,6 +1273,14 @@ memberRouter.post('/admin/accounts/:id/verify', async (req, res) => {
       .status(403)
       .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
+  const reason = adminReason(req, res)
+  if (!reason) return
+  const items = await listAccountsForAdmin()
+  const before = items.find((item) => item.id === req.params.id)
+  if (!before)
+    return res
+      .status(404)
+      .json({ error: { code: 'not_found', message: 'Account not found.' } })
   const updated = await setAccountFields(req.params.id, {
     member_status: 'verified',
     hub_access_status: 'active',
@@ -1358,10 +1293,43 @@ memberRouter.post('/admin/accounts/:id/verify', async (req, res) => {
     action: 'membership.status_changed',
     targetType: 'account',
     targetId: req.params.id,
+    before,
     after: updated,
+    reason,
     requestId: req.requestId,
   })
   res.json({ account: updated })
+})
+
+memberRouter.patch('/admin/accounts/:id/status', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  if (account.role !== 'admin')
+    return res
+      .status(403)
+      .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
+  const reason = adminReason(req, res)
+  if (!reason) return
+  try {
+    const result = await updateMembershipLifecycle({
+      actor: account,
+      targetId: req.params.id,
+      body: { ...req.body, reason },
+    })
+    await recordAudit({
+      actorId: account.id,
+      action: 'membership.status_changed',
+      targetType: 'account',
+      targetId: req.params.id,
+      before: result.before,
+      after: result.updated,
+      reason,
+      requestId: req.requestId,
+    })
+    res.json({ account: result.updated })
+  } catch (error) {
+    if (!sendRouteError(res, error)) throw error
+  }
 })
 
 memberRouter.post('/admin/accounts/:id/role', async (req, res) => {
@@ -1372,6 +1340,8 @@ memberRouter.post('/admin/accounts/:id/role', async (req, res) => {
       .status(403)
       .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
+  const reason = adminReason(req, res)
+  if (!reason) return
   const role = String(req.body?.role || 'member')
   if (
     !['member', 'focal_point', 'wg_contact', 'ngo_admin', 'admin'].includes(
@@ -1417,7 +1387,7 @@ memberRouter.post('/admin/accounts/:id/role', async (req, res) => {
     targetId: req.params.id,
     before: { role: target?.role },
     after: { role },
-    reason: req.body?.reason,
+    reason,
     requestId: req.requestId,
   })
   res.json({ account: updated })
@@ -1431,6 +1401,8 @@ memberRouter.post('/admin/accounts/:id/team-role', async (req, res) => {
       .status(403)
       .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
+  const reason = adminReason(req, res)
+  if (!reason) return
   const teamRole = String(req.body?.teamRole || '')
   if (
     ![
@@ -1469,7 +1441,7 @@ memberRouter.post('/admin/accounts/:id/team-role', async (req, res) => {
     targetId: req.params.id,
     before: { teamRoles: target.teamRoles },
     after: { teamRoles: [...roles] },
-    reason: req.body?.reason,
+    reason,
     requestId: req.requestId,
   })
   res.json({ account: updated })
@@ -1484,6 +1456,8 @@ memberRouter.post('/admin/accounts/:id/reset-link', async (req, res) => {
       .status(403)
       .json({ error: { code: 'forbidden', message: 'Admin access required.' } })
   }
+  const reason = adminReason(req, res)
+  if (!reason) return
   try {
     const list = await listAccountsForAdmin()
     const target = list.find((a) => a.id === req.params.id)
@@ -1507,6 +1481,15 @@ memberRouter.post('/admin/accounts/:id/reset-link', async (req, res) => {
         expiresAt: created.expiresAt,
       }),
     )
+    await recordAudit({
+      actorId: account.id,
+      action: 'account.password_reset_issued',
+      targetType: 'account',
+      targetId: target.id,
+      after: { expiresAt: created.expiresAt },
+      reason,
+      requestId: req.requestId,
+    })
     res.json({
       ok: true,
       email: target.email,

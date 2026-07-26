@@ -1,5 +1,12 @@
 import { useApi } from '../lib/api.js'
-import { A, Async, BackLink, Section, Empty } from '../components/ui.jsx'
+import {
+  A,
+  Async,
+  BackLink,
+  Section,
+  Empty,
+  PageHeader,
+} from '../components/ui.jsx'
 import { EventCard, SubmissionCard } from '../components/cards.jsx'
 import { CopyFeedButton } from '../components/Subscribe.jsx'
 import {
@@ -13,30 +20,20 @@ import {
 export function GroupDetail({ slug }) {
   const query = useApi(`/groups/${slug}`)
   return (
-    <div>
+    <div className="detailPage">
       <BackLink href="/groups">Working groups</BackLink>
       <Async query={query}>
         {(g) => (
           <>
-            <div
-              className="rowGap"
-              style={{ marginTop: 8, alignItems: 'flex-start' }}
+            <PageHeader
+              eyebrow={`${g.monogram || g.name.slice(0, 2)} · Working group`}
+              title={g.name}
+              description={g.focusLine}
             >
-              <span className="monogram">
-                {g.monogram || g.name.slice(0, 2)}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h1>{g.name}</h1>
-                <p className="meta" style={{ marginTop: 4 }}>
-                  {g.focusLine}
-                </p>
-              </div>
-            </div>
-            {g.cadenceNote && (
-              <p className="metaMuted mono" style={{ marginTop: 12 }}>
-                {g.cadenceNote}
-              </p>
-            )}
+              {g.cadenceNote && (
+                <p className="metaMuted mono">{g.cadenceNote}</p>
+              )}
+            </PageHeader>
 
             <div className="detailActions">
               <A
@@ -80,13 +77,13 @@ export function GroupDetail({ slug }) {
                 </a>
               )}
             </div>
-            <p className="metaMuted" style={{ marginTop: 8 }}>
+            <p className="metaMuted detailHelp">
               Read the workspace introduction and accept the group rules to view
               its WhatsApp link and full Contact Point details.
             </p>
 
             {g.contact?.publicEmail && (
-              <p className="meta" style={{ marginTop: 12 }}>
+              <p className="meta detailContact">
                 Contact:{' '}
                 <a
                   className="inlineLink"
@@ -110,7 +107,7 @@ export function GroupDetail({ slug }) {
               }
             >
               {g.events?.length ? (
-                <div className="stackSm">
+                <div className="cardGrid">
                   {g.events.map((e) => (
                     <EventCard key={e.slug} event={e} />
                   ))}
@@ -126,7 +123,7 @@ export function GroupDetail({ slug }) {
 
             {g.submissions?.length > 0 && (
               <Section label="Open submissions">
-                <div className="stackSm">
+                <div className="cardGrid">
                   {g.submissions.map((s) => (
                     <SubmissionCard key={s.slug} sub={s} />
                   ))}

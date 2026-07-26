@@ -1,14 +1,11 @@
 import { useApi } from '../lib/api.js'
-import { A, Async, Empty, PageHeader } from '../components/ui.jsx'
+import { Async, Empty, PageHeader } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
-import { useAccount } from '../lib/accountContext.jsx'
 import { DIRECTORY_LAYERS } from '../content/directory.js'
 import { AtSign } from 'lucide-react'
 
 export function Directory() {
   const query = useApi('/directory')
-  const { account } = useAccount()
-  const verified = Boolean(account?.isVerified)
   return (
     <div>
       <PageHeader
@@ -16,22 +13,6 @@ export function Directory() {
         title="Directory"
         description="Find the right contact by starting at the top for constituency-wide questions, or lower down for a specific team."
       />
-      {verified && (
-        <div className="liveBanner" style={{ marginTop: 12 }}>
-          <span className="liveDot" />
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 500, fontSize: 14 }}>
-              Need to coordinate directly?
-            </p>
-            <p className="meta">
-              Use Messages for contact points and mandate holders.
-            </p>
-          </div>
-          <A href="/messages" className="btn btn-primary btn-sm">
-            Open messages
-          </A>
-        </div>
-      )}
       <Async
         query={query}
         empty={(d) =>

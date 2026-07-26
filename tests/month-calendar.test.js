@@ -38,6 +38,8 @@ test('month grid starts on Monday and only event days are interactive', () => {
   assert.equal(days.length, 42)
   assert.equal(days[0].key, '2026-06-29')
   assert.equal(days.at(-1).key, '2026-08-09')
+  assert.equal(days.find((day) => day.key === '2026-07-04').isWeekend, true)
+  assert.equal(days.find((day) => day.key === '2026-07-06').isWeekend, false)
   assert.equal(days.find((day) => day.key === '2026-07-15').interactive, true)
   assert.equal(days.find((day) => day.key === '2026-07-14').interactive, false)
   assert.equal(

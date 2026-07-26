@@ -38,7 +38,6 @@ export const INTELLIGENCE_FIELD_POLICY = Object.freeze({
     'guardian_email',
     'minority_groups',
     'coi_details',
-    'private_messages',
     'raw_account_record',
   ],
 })
@@ -51,7 +50,7 @@ const TYPE_PATH = {
   group: '/groups/',
   contact: '/directory',
   statement: '/gys',
-  assignment: '/intelligence',
+  assignment: '/search',
 }
 
 function stableId(type, sourceId) {

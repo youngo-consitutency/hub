@@ -1,13 +1,13 @@
 // Minimal forward-only migration runner: applies migrations/*.sql in filename order
 // inside a transaction each, recording applied files in schema_migrations so re-runs
-// are idempotent. Usage: DATABASE_URL=... node scripts/migrate.js
+// are idempotent. Usage: DATABASE_URL=... npm run migrate
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { getPool } from '../server/lib/db.js'
+import { getPool } from '../../server/lib/db.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const migrationsDir = path.join(here, '../migrations')
+const migrationsDir = path.join(here, '../../migrations')
 
 async function main() {
   const pool = getPool()

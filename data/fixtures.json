@@ -1,9 +1,9 @@
 {
   "groups": [
-    { "slug": "ace", "name": "ACE", "monogram": "AC", "focusLine": "Action for Climate Empowerment — education, training, public participation", "cadenceNote": "Biweekly Thursdays 15:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-ace", "groupUrl": "https://groups.google.com/g/youngo-ace", "driveUrl": "https://drive.google.com/drive/folders/example-ace" },
-    { "slug": "finance", "name": "Finance", "monogram": "FI", "focusLine": "Climate finance, NCQG follow-up, and youth access to funds", "cadenceNote": "Weekly Fridays 12:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW", "groupUrl": "https://groups.google.com/g/youngo-finance" },
-    { "slug": "adaptation", "name": "Adaptation", "monogram": "AD", "focusLine": "Adaptation, loss and damage, and locally led resilience", "cadenceNote": "Biweekly Mondays 14:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-adaptation" },
-    { "slug": "health", "name": "Health", "monogram": "HE", "focusLine": "Climate and health intersections, WHO-UNFCCC engagement", "cadenceNote": "Monthly first Wednesday 16:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-health", "groupUrl": "https://groups.google.com/g/youngo-health" }
+    { "slug": "ace", "name": "ACE", "monogram": "AC", "focusLine": "Action for Climate Empowerment — education, training, public participation", "tags": ["Education", "Participation"], "cadenceNote": "Biweekly Thursdays 15:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-ace", "groupUrl": "https://groups.google.com/g/youngo-ace", "driveUrl": "https://drive.google.com/drive/folders/example-ace" },
+    { "slug": "finance", "name": "Finance", "monogram": "FI", "focusLine": "Climate finance, NCQG follow-up, and youth access to funds", "tags": ["Finance", "Policy"], "cadenceNote": "Weekly Fridays 12:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW", "groupUrl": "https://groups.google.com/g/youngo-finance" },
+    { "slug": "adaptation", "name": "Adaptation", "monogram": "AD", "focusLine": "Adaptation, loss and damage, and locally led resilience", "tags": ["Adaptation", "Loss and damage", "Resilience"], "cadenceNote": "Biweekly Mondays 14:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-adaptation" },
+    { "slug": "health", "name": "Health", "monogram": "HE", "focusLine": "Climate and health intersections, WHO-UNFCCC engagement", "tags": ["Health", "Policy"], "cadenceNote": "Monthly first Wednesday 16:00 UTC", "whatsappUrl": "https://chat.whatsapp.com/example-health", "groupUrl": "https://groups.google.com/g/youngo-health" }
   ],
   "events": [
     { "slug": "constituency-call-live", "title": "Constituency call", "type": "constituency_call", "startOffsetMin": -20, "durationMin": 90, "meetingUrl": "https://zoom.us/j/example", "description": "Weekly coordination: COP31 logistics, WG round-robin, AOB." },
@@ -29,7 +29,7 @@
     { "slug": "lcoy-kenya-2026", "type": "lcoy", "title": "LCOY Kenya 2026", "country": "Kenya", "city": "Nairobi", "region": "africa", "startsOn": "2026-09-12", "endsOn": "2026-09-14", "status": "registration_open", "registerUrl": "https://example.org/lcoy-kenya", "organizerName": "LCOY Kenya team", "organizerOrg": "Kenya YOUNGO focal group", "reviewStatus": "approved" },
     { "slug": "rcoy-africa-2026", "type": "rcoy", "title": "RCOY Africa 2026", "country": "Ghana", "city": "Accra", "region": "africa", "startsOn": "2026-10-03", "endsOn": "2026-10-05", "status": "applications_open", "registerUrl": "https://example.org/rcoy-africa", "organizerName": "RCOY Africa organizing committee", "reviewStatus": "approved" },
     { "slug": "lcoy-brazil-2026", "type": "lcoy", "title": "LCOY Brazil 2026", "country": "Brazil", "city": "São Paulo", "region": "lac", "startsOn": "2026-08-21", "endsOn": "2026-08-23", "status": "registration_open", "registerUrl": "https://example.org/lcoy-brazil", "reviewStatus": "approved" },
-    { "slug": "coy20", "type": "coy", "title": "COY20", "country": "Türkiye", "city": "Antalya", "region": "weog", "startsOn": "2026-11-02", "endsOn": "2026-11-05", "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
+    { "slug": "coy21", "type": "coy", "title": "COY21", "country": "Türkiye", "city": "Antalya", "region": "weog", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
     { "slug": "lcoy-pending-example", "type": "lcoy", "title": "LCOY Pending (should never render)", "country": "Nowhere", "region": "eca", "status": "announced", "reviewStatus": "pending" }
   ],
   "announcements": [
@@ -48,22 +48,13 @@
       "year": 2025,
       "edition": "COY20",
       "title": "The Global Youth Statement 2025",
-      "tagline": "A Generation’s Blueprint for Climate Action",
-      "quote": "We are not just demanding a future, we are designing it.",
       "location": "Belém, Brazil",
       "targetSession": "COP30",
-      "publishedOn": "2025-11-06",
-      "intro": "The Global Youth Statement (GYS) is the world’s largest youth-led negotiation document — an evidence-based collection of the collective demands of children and youth worldwide, presented to the UNFCCC and Parties by YOUNGO, the official Children and Youth Constituency. Coordinated each year through LCOYs, RCOYs, and thematic working groups, it turns grassroots youth perspectives into negotiation-ready policy asks.",
-      "note": "The 2025 edition, formulated at COY20 in Belém, embodies the spirit of “Harvesting Hope” and Mutirão (collective action), with every demand mapped directly to official COP30 agenda items.",
-      "stats": [
-        { "value": "30,000+", "label": "youth voices" },
-        { "value": "150+", "label": "countries" },
-        { "value": "80,000+", "label": "hours of work" },
-        { "value": "20+", "label": "thematic areas" }
-      ],
+      "intro": "The Global Youth Statement brings together policy priorities developed by children and young people through YOUNGO consultations, working groups, and Conferences of Youth.",
+      "note": "The 2025 statement was developed around COY20 in Belém and taken into YOUNGO’s COP30 policy work.",
       "editions": ["Full Statement", "Summary for Policymakers", "Advocacy Toolkit"],
       "fullUrl": "https://bit.ly/GYS2025EDITION",
-      "releaseUrl": "https://landportal.org/news/2026/01/youngo-releases-2025-global-youth-statement-calling-urgent-and-equitable-climate"
+      "releaseUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy"
     },
     "priorities": [
       { "title": "Fossil fuel phase-out", "body": "Science-aligned NDCs and a full, fair, and fast phase-out of fossil fuels." },

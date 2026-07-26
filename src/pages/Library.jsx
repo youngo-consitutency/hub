@@ -1,8 +1,6 @@
 import { A, Section, PageHeader } from '../components/ui.jsx'
-import { ExternalLink, FolderOpen, Library as LibIcon } from 'lucide-react'
-import { COURSE_MODULES } from '../content/membershipCourse.js'
+import { ExternalLink, FolderOpen } from 'lucide-react'
 import {
-  OFFICIAL_POLICIES,
   POLICIES_FOLDER,
   POLICY_CATEGORIES,
   policiesInCategory,
@@ -31,28 +29,22 @@ const OPEN_GUIDES = [
   },
 ]
 
-function ExternalCard({ title, body, href, meta }) {
+function ExternalRow({ title, body, href, meta }) {
   return (
-    <a href={href} className="card" target="_blank" rel="noopener noreferrer">
-      <h3 className="rowGap" style={{ alignItems: 'flex-start' }}>
-        <span style={{ flex: 1 }}>{title}</span>
-        <ExternalLink
-          size={14}
-          strokeWidth={1.75}
-          aria-hidden
-          style={{ flexShrink: 0, marginTop: 3, opacity: 0.7 }}
-        />
-      </h3>
-      {body ? (
-        <p className="meta" style={{ marginTop: 4 }}>
-          {body}
-        </p>
-      ) : null}
-      {meta ? (
-        <p className="metaMuted" style={{ marginTop: 6 }}>
-          {meta}
-        </p>
-      ) : null}
+    <a
+      href={href}
+      className="resourceRow"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span className="resourceCopy">
+        <strong>{title}</strong>
+        {body && <span className="meta">{body}</span>}
+      </span>
+      <span className="resourceMeta">
+        {meta && <span className="metaMuted">{meta}</span>}
+        <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
+      </span>
     </a>
   )
 }
@@ -62,9 +54,8 @@ export function Library() {
     <div>
       <PageHeader
         eyebrow="Capacity building"
-        icon={LibIcon}
         title="Library"
-        description="Guides, course material, and links to the official policy files in Google Drive."
+        description="Official policies and practical guides for YOUNGO members."
       />
 
       <Section
@@ -81,40 +72,15 @@ export function Library() {
           </a>
         }
       >
-        <div className="card cardTight" style={{ marginBottom: 12 }}>
-          <p className="meta" style={{ margin: 0 }}>
-            Source:{' '}
-            <a
-              href={POLICIES_FOLDER.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {POLICIES_FOLDER.title}
-            </a>
-            {' · '}
-            <a
-              href={POLICIES_FOLDER.translationsFolder.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Translations
-            </a>
-            {' · '}
-            {OFFICIAL_POLICIES.length} core English documents indexed below.
-          </p>
-        </div>
-
         {POLICY_CATEGORIES.map((cat) => {
           const docs = policiesInCategory(cat.id)
           if (!docs.length) return null
           return (
-            <div key={cat.id} style={{ marginBottom: 16 }}>
-              <p className="metaMuted" style={{ marginBottom: 8 }}>
-                {cat.label}
-              </p>
-              <div className="stack">
+            <div key={cat.id} className="libraryCategory">
+              <h3 className="libraryCategoryTitle">{cat.label}</h3>
+              <div className="resourceList">
                 {docs.map((doc) => (
-                  <ExternalCard
+                  <ExternalRow
                     key={doc.id}
                     title={doc.title}
                     body={doc.note}
@@ -138,30 +104,14 @@ export function Library() {
       </Section>
 
       <Section label="Open guides">
-        <div className="stack">
+        <div className="resourceList">
           {OPEN_GUIDES.map((g) => (
-            <A key={g.title} href={g.href} className="card">
-              <h3>{g.title}</h3>
-              <p className="meta" style={{ marginTop: 4 }}>
-                {g.body}
-              </p>
+            <A key={g.title} href={g.href} className="resourceRow">
+              <span className="resourceCopy">
+                <strong>{g.title}</strong>
+                <span className="meta">{g.body}</span>
+              </span>
             </A>
-          ))}
-        </div>
-      </Section>
-
-      <Section label="Course modules (preview)">
-        <div className="grid2">
-          {COURSE_MODULES.map((m) => (
-            <div key={m.id} className="card cardTight">
-              <h3>{m.title}</h3>
-              <p className="metaMuted" style={{ marginTop: 4 }}>
-                ~{m.minutes} min
-              </p>
-              <p className="meta" style={{ marginTop: 6 }}>
-                {m.body[0]}
-              </p>
-            </div>
           ))}
         </div>
       </Section>

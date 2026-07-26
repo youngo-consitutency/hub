@@ -10,6 +10,7 @@ import {
   ErrorCard,
   PageHeader,
 } from '../components/ui.jsx'
+import { SearchableSelect } from '../components/FormControls.jsx'
 import { WG_ACTIVITY_KINDS } from '../../shared/workflows.js'
 
 export function CpManage({ slug }) {
@@ -138,22 +139,18 @@ export function CpManage({ slug }) {
 
               <Section label="Register activity">
                 <form className="card stack" onSubmit={addActivity}>
-                  <label className="field">
-                    <span>Kind</span>
-                    <select
-                      className="input"
-                      value={form.kind}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, kind: e.target.value }))
-                      }
-                    >
-                      {WG_ACTIVITY_KINDS.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <SearchableSelect
+                    label="Kind"
+                    options={WG_ACTIVITY_KINDS.map(([value, label]) => ({
+                      value,
+                      label,
+                    }))}
+                    value={form.kind}
+                    onChange={(kind) =>
+                      setForm((current) => ({ ...current, kind }))
+                    }
+                    searchPlaceholder="Search activity types…"
+                  />
                   <label className="field">
                     <span>Title</span>
                     <input

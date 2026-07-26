@@ -1,41 +1,31 @@
 import { useApi } from '../lib/api.js'
-import { A, Async, Empty, Section, StatusChip } from '../components/ui.jsx'
+import {
+  A,
+  Async,
+  Empty,
+  PageHeader,
+  Section,
+  StatusChip,
+} from '../components/ui.jsx'
+import { ContactCard } from '../components/cards.jsx'
 import {
   CalendarDays,
   FileText,
   Gavel,
-  MessageSquare,
   Network,
   Radio,
   Users,
 } from 'lucide-react'
 
-function ContactMini({ contact }) {
-  return (
-    <A href="/messages" className="card cardTight contactMini">
-      <span className="messageAvatar">{contact.name?.slice(0, 1) || '?'}</span>
-      <span>
-        <strong>{contact.name}</strong>
-        <span className="meta">
-          {contact.role === 'focal_point'
-            ? 'Focal Point'
-            : contact.role?.replaceAll('_', ' ') || 'Mandate holder'}
-        </span>
-      </span>
-    </A>
-  )
-}
-
 export function FocalPoint() {
   const query = useApi('/member/focal/overview')
   return (
     <div>
-      <p className="eyebrow">Constituency representation</p>
-      <h1>Focal Point</h1>
-      <p className="meta pageIntro">
-        Track constituency signals, coordinate with mandate holders, and keep
-        UNFCCC-facing work connected to what members are doing.
-      </p>
+      <PageHeader
+        eyebrow="Constituency representation"
+        title="Focal Point"
+        description="Track constituency signals, coordinate with mandate holders, and keep UNFCCC-facing work connected to what members are doing."
+      />
 
       <Async query={query} skeletons={5}>
         {(data) => (
@@ -60,19 +50,22 @@ export function FocalPoint() {
 
             <div className="focalGrid">
               <Section
-                label="Mandate-holder coordination"
+                label="Mandate-holder directory"
                 action={
-                  <A href="/messages" className="metaMuted">
-                    Open messages →
+                  <A href="/directory" className="metaMuted">
+                    Full directory →
                   </A>
                 }
               >
                 {!data.mandateContacts.length ? (
-                  <Empty icon={MessageSquare} title="No mandate contacts yet" />
+                  <Empty icon={Users} title="No mandate contacts yet" />
                 ) : (
                   <div className="grid2">
                     {data.mandateContacts.slice(0, 6).map((contact) => (
-                      <ContactMini key={contact.id} contact={contact} />
+                      <ContactCard
+                        key={`${contact.group}-${contact.roleTitle}`}
+                        contact={contact}
+                      />
                     ))}
                   </div>
                 )}
@@ -113,9 +106,7 @@ export function FocalPoint() {
             <Section label="Constituency progress signals">
               <div className="grid2">
                 <div>
-                  <div className="sectionLabel">
-                    <span>Open submissions</span>
-                  </div>
+                  <h3 className="subsectionHeading">Open submissions</h3>
                   <div className="stackSm">
                     {data.submissions.slice(0, 4).map((item) => (
                       <A
@@ -138,9 +129,9 @@ export function FocalPoint() {
                   </div>
                 </div>
                 <div>
-                  <div className="sectionLabel">
-                    <span>Active council decisions</span>
-                  </div>
+                  <h3 className="subsectionHeading">
+                    Active council decisions
+                  </h3>
                   <div className="stackSm">
                     {data.decisions.slice(0, 4).map((item) => (
                       <A

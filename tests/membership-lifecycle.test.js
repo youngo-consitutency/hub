@@ -71,6 +71,7 @@ test('offboarding suspends Hub access, revokes sessions, and protects platform s
 
   const reviewerSession = await createSession('membership-reviewer')
   const departingSession = await createSession('departing-member')
+  const adminSession = await createSession('platform-admin')
   const server = createApp({ env: {} }).listen(0, '127.0.0.1')
   await new Promise((resolve) => server.once('listening', resolve))
   const origin = `http://127.0.0.1:${server.address().port}`
@@ -121,4 +122,45 @@ test('offboarding suspends Hub access, revokes sessions, and protects platform s
   )
   assert.equal(protectedStaff.status, 403)
   assert.equal((await protectedStaff.json()).error.code, 'forbidden')
+
+  const filteredAccounts = await fetch(
+    `${origin}/api/member/admin/accounts?search=departing&pageSize=1`,
+    { headers: { 'x-session-token': adminSession.token } },
+  )
+  assert.equal(filteredAccounts.status, 200)
+  const filteredBody = await filteredAccounts.json()
+  assert.equal(filteredBody.total, 1)
+  assert.equal(filteredBody.pageSize, 1)
+  assert.equal(filteredBody.items[0].id, 'departing-member')
+
+  const unexplainedRoleChange = await fetch(
+    `${origin}/api/member/admin/accounts/membership-reviewer/role`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-session-token': adminSession.token,
+      },
+      body: JSON.stringify({ role: 'focal_point' }),
+    },
+  )
+  assert.equal(unexplainedRoleChange.status, 400)
+  assert.equal((await unexplainedRoleChange.json()).error.code, 'validation')
+
+  const selfSuspend = await fetch(
+    `${origin}/api/member/admin/accounts/platform-admin/status`,
+    {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+        'x-session-token': adminSession.token,
+      },
+      body: JSON.stringify({
+        status: 'terminated',
+        reason: 'Testing protected self suspension',
+      }),
+    },
+  )
+  assert.equal(selfSuspend.status, 400)
+  assert.equal((await selfSuspend.json()).error.code, 'self_suspend')
 })

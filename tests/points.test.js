@@ -10,7 +10,13 @@ import {
   reasonFromNgoRequestKind,
   tiersForBalance,
 } from '../server/lib/points.js'
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs'
+import {
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  readFileSync,
+  unlinkSync,
+} from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -36,7 +42,9 @@ describe('NGO contribution points', () => {
 
   after(() => {
     if (originalLedger != null) writeFileSync(ledgerFile, originalLedger)
+    else if (existsSync(ledgerFile)) unlinkSync(ledgerFile)
     if (originalRequests != null) writeFileSync(requestsFile, originalRequests)
+    else if (existsSync(requestsFile)) unlinkSync(requestsFile)
   })
 
   before(async () => {

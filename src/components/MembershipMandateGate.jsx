@@ -26,6 +26,7 @@ export function MembershipMandateGate({ onComplete }) {
   const [progress, setProgress] = useState(0)
   const [checked, setChecked] = useState(false)
   const [showFull, setShowFull] = useState(false)
+  const gateRef = useRef(null)
   const bodyRef = useRef(null)
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function MembershipMandateGate({ onComplete }) {
   }, [])
 
   const onScroll = useCallback(() => {
-    const el = bodyRef.current
+    const el = gateRef.current
     if (!el) return
     const max = el.scrollHeight - el.clientHeight
     if (max <= 8) {
@@ -82,7 +83,9 @@ export function MembershipMandateGate({ onComplete }) {
 
   return (
     <div
-      className="mandateGate"
+      className="mandateGate mandatePolicyGate"
+      ref={gateRef}
+      onScroll={onScroll}
       role="dialog"
       aria-modal="true"
       aria-labelledby="mandate-title"
@@ -112,20 +115,16 @@ export function MembershipMandateGate({ onComplete }) {
               </p>
             </div>
           </div>
-          <div className="mandateProgress" aria-hidden>
-            <div
-              className="mandateProgressBar"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
-          </div>
         </header>
 
-        <div
-          className="mandateBody"
-          ref={bodyRef}
-          onScroll={onScroll}
-          tabIndex={0}
-        >
+        <div className="mandateProgress" aria-hidden>
+          <div
+            className="mandateProgressBar"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+
+        <div className="mandateBody" ref={bodyRef} tabIndex={0}>
           <section className="mandateAnalysis card">
             <div className="rowGap" style={{ marginBottom: 10 }}>
               <BookOpen
@@ -136,17 +135,15 @@ export function MembershipMandateGate({ onComplete }) {
               />
               <h2>{MANDATE_ANALYSIS.title}</h2>
             </div>
-            <p className="meta" style={{ marginBottom: 14, maxWidth: 640 }}>
-              {MANDATE_ANALYSIS.lede}
-            </p>
-            <div className="mandatePoints">
+            <p className="meta mandateAnalysisLead">{MANDATE_ANALYSIS.lede}</p>
+            <ol className="mandatePoints">
               {MANDATE_ANALYSIS.points.map((p) => (
-                <div key={p.title} className="mandatePoint">
+                <li key={p.title} className="mandatePoint">
                   <h3>{p.title}</h3>
                   <p className="meta">{p.body}</p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </section>
 
           <div className="mandateDocMeta card cardTight">
@@ -285,7 +282,7 @@ export function MembershipMandateGate({ onComplete }) {
               onChange={(e) => setChecked(e.target.checked)}
             />
             <span>
-              I have read and understand the YOUNGO Membership Policy (
+              I have read and understood the YOUNGO Membership Policy (
               {POLICY_META.issue}, updated {POLICY_META.updatedOn}).
             </span>
           </label>

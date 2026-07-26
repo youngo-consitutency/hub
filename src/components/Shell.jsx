@@ -25,11 +25,9 @@ import {
   Briefcase,
   ClipboardCheck,
   PenTool,
-  MessageSquare,
   Network,
   Award,
   Trophy,
-  BrainCircuit,
   UserCircle,
   FilePenLine,
 } from 'lucide-react'
@@ -82,11 +80,6 @@ export function Shell({ children }) {
           items: [
             { href: '/', label: 'Home', icon: Home },
             { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-            {
-              href: '/intelligence',
-              label: 'Hub Intelligence',
-              icon: BrainCircuit,
-            },
           ],
         },
         {
@@ -104,7 +97,6 @@ export function Shell({ children }) {
             { href: '/groups', label: 'Working groups', icon: Users },
             { href: '/directory', label: 'Directory', icon: AtSign },
             { href: '/recognition', label: 'NGO recognition', icon: Trophy },
-            { href: '/messages', label: 'Messages', icon: MessageSquare },
           ],
         },
       )

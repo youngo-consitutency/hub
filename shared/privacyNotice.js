@@ -129,13 +129,12 @@ export const DATA_CATEGORIES = [
       'Sign-in sessions (stored hashed)',
       'Course completion and score',
       'Working groups you join',
-      'Messages you send to contact points',
       'Administrative actions, recorded in the governance audit log',
     ],
     purpose:
       'To keep your account secure, to record that you completed the membership course, and to keep an accountable record of role and permission changes.',
     whoSees:
-      'Nobody can see your password — it is not stored in a readable form, and administrators cannot recover it. Messages are visible only to you and the person you are messaging.',
+      'Nobody can see your password — it is not stored in a readable form, and administrators cannot recover it. Hub admins can review the governance audit log.',
   },
   {
     id: 'agreements',
@@ -217,7 +216,7 @@ export const PRIVACY_SECTIONS = [
     heading: 'What the Hub’s search and intelligence features can never reach',
     paragraphs: [
       'The Hub has a search feature that answers questions from YOUNGO’s documented record. It is walled off from personal data by design, not by convention.',
-      'Account records, passwords, sessions, private messages, guardian details, background and minority information, and personal email and phone fields are excluded from what it can retrieve — for every user, including administrators. Queries against it are logged so that the exclusion can be audited rather than taken on trust.',
+      'Account records, passwords, sessions, guardian details, background and minority information, and personal email and phone fields are excluded from what it can retrieve — for every user, including administrators. Queries against it are logged so that the exclusion can be audited rather than taken on trust.',
     ],
   },
   {

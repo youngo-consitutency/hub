@@ -1,6 +1,6 @@
 /**
  * Capture README screenshots from staging (or APP_ORIGIN).
- * Usage: node scripts/capture-readme-screenshots.mjs
+ * Usage: npm run screenshots
  */
 import { chromium } from 'playwright'
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -8,7 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const outDir = path.join(__dirname, '../docs/screenshots')
+const outDir = path.join(__dirname, '../../docs/screenshots')
 const origin =
   process.env.APP_ORIGIN || 'https://web-staging-31ab.up.railway.app'
 const n = Date.now()

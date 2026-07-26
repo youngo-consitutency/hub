@@ -94,16 +94,15 @@ test(
 )
 
 test(
-  'PostgreSQL message and push paths keep only current data',
+  'PostgreSQL push path keeps one owner per subscription endpoint',
   {
     skip: databaseUrl ? false : 'DATABASE_URL is not set',
   },
   async (t) => {
     const previousDatabaseUrl = process.env.DATABASE_URL
     process.env.DATABASE_URL = databaseUrl
-    const [{ getPool }, { listMessages }, pushStore] = await Promise.all([
+    const [{ getPool }, pushStore] = await Promise.all([
       import('../server/lib/db.js'),
-      import('../server/lib/messages.js'),
       import('../server/lib/pushStore.js'),
     ])
     const pool = getPool()
@@ -130,25 +129,6 @@ test(
      RETURNING id`,
     )
     const [accountA, accountB] = accounts.map((row) => row.id)
-    const { rows: conversations } = await pool.query(
-      `INSERT INTO message_conversations (participant_a, participant_b, created_by)
-     VALUES ($1, $2, $1)
-     RETURNING id`,
-      [accountA, accountB],
-    )
-    const conversationId = conversations[0].id
-    await pool.query(
-      `INSERT INTO messages (conversation_id, sender_account_id, body, created_at)
-     SELECT $1, $2, 'Message ' || number, '2026-01-01T00:00:00Z'::timestamptz + number * interval '1 second'
-     FROM generate_series(1, 205) AS number`,
-      [conversationId, accountA],
-    )
-
-    const result = await listMessages(conversationId, accountA)
-    assert.equal(result.items.length, 200)
-    assert.equal(result.items[0].body, 'Message 6')
-    assert.equal(result.items.at(-1).body, 'Message 205')
-
     const endpoint = 'https://push.example/postgres-shared-device'
     await pushStore.saveSubscription({
       accountId: accountA,

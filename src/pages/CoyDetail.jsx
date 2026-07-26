@@ -1,5 +1,11 @@
 import { useApi } from '../lib/api.js'
-import { Async, BackLink, StatusChip } from '../components/ui.jsx'
+import {
+  Async,
+  BackLink,
+  StatusChip,
+  PageHeader,
+  Section,
+} from '../components/ui.jsx'
 import { fmtDateRange } from '../lib/time.js'
 import { MapPin, ArrowUpRight } from 'lucide-react'
 
@@ -18,7 +24,7 @@ const CTA = { registration_open: 'Register', applications_open: 'Apply' }
 export function CoyDetail({ slug }) {
   const query = useApi(`/coys/${slug}`)
   return (
-    <div>
+    <div className="detailPage">
       <BackLink href="/coys">COY tracker</BackLink>
       <Async query={query}>
         {(coy) => {
@@ -27,19 +33,18 @@ export function CoyDetail({ slug }) {
           const cta = CTA[coy.status]
           return (
             <>
-              <div className="rowGap" style={{ marginTop: 8 }}>
-                <span className="chip chip-neutral">{COY_LABEL[coy.type]}</span>
-                <StatusChip status={coy.status} />
-              </div>
-              <h1 style={{ marginTop: 10 }}>{coy.title}</h1>
-              <p className="mono detailHero">
-                {fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}
-              </p>
-              <p className="meta" style={{ marginTop: 4 }}>
-                {place}
-                {place && coy.region ? ' · ' : ''}
-                {REGION_LABEL[coy.region] || coy.region}
-              </p>
+              <PageHeader
+                eyebrow={COY_LABEL[coy.type]}
+                title={coy.title}
+                description={`${place || 'Location to be announced'} · ${REGION_LABEL[coy.region] || coy.region}`}
+              >
+                <div className="detailHeaderMeta">
+                  <StatusChip status={coy.status} />
+                  <p className="mono">
+                    {fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}
+                  </p>
+                </div>
+              </PageHeader>
 
               <div className="detailActions">
                 {cta && coy.registerUrl && (
@@ -64,31 +69,33 @@ export function CoyDetail({ slug }) {
               </div>
 
               {(coy.organizerName || coy.organizerOrg) && (
-                <div className="card" style={{ marginTop: 16 }}>
-                  <h3>Organizer</h3>
-                  {coy.organizerName && (
-                    <p className="meta" style={{ marginTop: 6 }}>
-                      {coy.organizerName}
-                    </p>
-                  )}
-                  {coy.organizerOrg && (
-                    <p className="metaMuted" style={{ marginTop: 2 }}>
-                      {coy.organizerOrg}
-                    </p>
-                  )}
-                  {coy.registerUrl && (
-                    <a
-                      className="btn btn-ghost btn-sm"
-                      style={{ marginTop: 8, paddingLeft: 0 }}
-                      href={coy.registerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Website
-                      <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
-                    </a>
-                  )}
-                </div>
+                <Section label="Organiser">
+                  <div className="card detailPanel">
+                    <div>
+                      {coy.organizerName && (
+                        <p className="meta">{coy.organizerName}</p>
+                      )}
+                      {coy.organizerOrg && (
+                        <p className="metaMuted">{coy.organizerOrg}</p>
+                      )}
+                    </div>
+                    {coy.registerUrl && (
+                      <a
+                        className="btn btn-ghost btn-sm detailInlineAction"
+                        href={coy.registerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Website
+                        <ArrowUpRight
+                          size={16}
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                      </a>
+                    )}
+                  </div>
+                </Section>
               )}
             </>
           )

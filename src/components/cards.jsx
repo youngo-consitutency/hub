@@ -1,43 +1,78 @@
 import { A, StatusChip, CountdownChip } from './ui.jsx'
-import { fmtDual, fmtDateRange } from '../lib/time.js'
+import { fmtMoment, fmtDateRange } from '../lib/time.js'
 import {
-  Video,
   Users,
-  FileText,
-  Gavel,
   MapPin,
   CalendarDays,
-  Landmark,
   MessageCircle,
   ArrowUpRight,
 } from 'lucide-react'
 
-const EVENT_ICON = {
-  constituency_call: Video,
-  wg_call: Video,
-  wgf: Users,
-  unfccc_session: Landmark,
-  webinar: CalendarDays,
-  coordination: Users,
+const EVENT_LABEL = {
+  constituency_call: 'Constituency',
+  wg_call: 'Working group',
+  wgf: 'Forum',
+  unfccc_session: 'UNFCCC',
+  webinar: 'Webinar',
+  coordination: 'Coordination',
+}
+
+const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
+const REGION_LABEL = {
+  africa: 'Africa',
+  apac: 'Asia-Pacific',
+  eca: 'ECA',
+  lac: 'LAC',
+  mena: 'MENA',
+  noram: 'North America',
+  weog: 'WEOG',
+}
+
+function EntityHeader({ title, status }) {
+  return (
+    <div className="entityCardHeader">
+      <div className="entityCardHeading">
+        <h3>{title}</h3>
+        {status && (
+          <div className="entityCardStatus">
+            <StatusChip status={status} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MomentRow({ iso, label }) {
+  const moment = fmtMoment(iso)
+  return (
+    <div className="entityCardSchedule">
+      <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
+      <div>
+        <span className="entityCardMetaLabel">{label}</span>
+        <span>
+          {moment.day} · {moment.localTime} {moment.localZone}
+        </span>
+        {!moment.isUtc && (
+          <span className="entityCardSecondary">UTC: {moment.utcTime}</span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function EventCard({ event }) {
-  const Icon = EVENT_ICON[event.type] || CalendarDays
   return (
-    <A href={`/calendar/${event.slug}`} className="card cardTight">
-      <div className="eventRow">
-        <span className="eventIcon">
-          <Icon size={18} strokeWidth={1.75} aria-hidden />
+    <A href={`/calendar/${event.slug}`} className="card cardTight entityCard">
+      <EntityHeader title={event.title} />
+      <div className="entityCardBody">
+        <MomentRow iso={event.startsAt} label="Starts" />
+      </div>
+      <div className="entityCardFooter">
+        <span className="chip chip-neutral">
+          {EVENT_LABEL[event.type] || event.type}
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="rowBetween">
-            <h3 style={{ fontSize: 14 }}>{event.title}</h3>
-            {event.wg && <span className="metaMuted">{event.wg.name}</span>}
-          </div>
-          <p className="mono" style={{ color: 'var(--text-2)', marginTop: 2 }}>
-            {fmtDual(event.startsAt)}
-          </p>
-        </div>
+        {event.wg && <span className="chip chip-neutral">{event.wg.name}</span>}
       </div>
     </A>
   )
@@ -45,30 +80,15 @@ export function EventCard({ event }) {
 
 export function SubmissionCard({ sub }) {
   return (
-    <A href={`/submissions/${sub.slug}`} className="card">
-      <div className="rowBetween">
-        <h3>
-          <FileText
-            size={16}
-            strokeWidth={1.75}
-            aria-hidden
-            style={{
-              verticalAlign: -3,
-              marginRight: 6,
-              color: 'var(--text-2)',
-            }}
-          />
-          {sub.title}
-        </h3>
-        <StatusChip status={sub.status} />
+    <A href={`/submissions/${sub.slug}`} className="card entityCard">
+      <EntityHeader title={sub.title} status={sub.status} />
+      <div className="entityCardBody">
+        <MomentRow iso={sub.deadlineAt} label="Deadline" />
       </div>
-      <div className="rowGap" style={{ marginTop: 8 }}>
-        <span className="mono" style={{ color: 'var(--text-2)' }}>
-          Due {fmtDual(sub.deadlineAt)}
-        </span>
-        <CountdownChip iso={sub.deadlineAt} />
+      <div className="entityCardFooter">
+        <CountdownChip iso={sub.deadlineAt} label="Closes in" />
         {sub.wg && (
-          <span className="metaMuted" style={{ marginLeft: 'auto' }}>
+          <span className="chip chip-neutral entityCardOwner">
             {sub.wg.name}
           </span>
         )}
@@ -80,31 +100,18 @@ export function SubmissionCard({ sub }) {
 // Home closing-soon item: either a submission or a DMP decision.
 export function ClosingCard({ item }) {
   const isDecision = item.kind === 'decision'
-  const Icon = isDecision ? Gavel : FileText
   const href = `${isDecision ? '/council' : '/submissions'}/${item.slug}`
   return (
-    <A href={href} className="card">
-      <div className="rowBetween">
-        <h3>
-          <Icon
-            size={16}
-            strokeWidth={1.75}
-            aria-hidden
-            style={{
-              verticalAlign: -3,
-              marginRight: 6,
-              color: 'var(--text-2)',
-            }}
-          />
-          {item.title}
-        </h3>
-        <StatusChip status={item.status} />
+    <A href={href} className="card entityCard">
+      <EntityHeader title={item.title} status={item.status} />
+      <div className="entityCardBody">
+        <MomentRow iso={item.deadlineAt} label="Deadline" />
       </div>
-      <div className="rowGap" style={{ marginTop: 8 }}>
-        <span className="mono" style={{ color: 'var(--text-2)' }}>
-          {fmtDual(item.deadlineAt)}
+      <div className="entityCardFooter">
+        <CountdownChip iso={item.deadlineAt} label="Closes in" />
+        <span className="chip chip-neutral entityCardOwner">
+          {isDecision ? 'Council' : 'Submission'}
         </span>
-        <CountdownChip iso={item.deadlineAt} />
       </div>
     </A>
   )
@@ -116,82 +123,48 @@ export function DecisionCard({ decision }) {
       ? decision.objectionDeadline
       : decision.inputDeadline
   return (
-    <A href={`/council/${decision.slug}`} className="card">
-      <div className="rowBetween">
-        <h3>
-          <Gavel
-            size={16}
-            strokeWidth={1.75}
-            aria-hidden
-            style={{
-              verticalAlign: -3,
-              marginRight: 6,
-              color: 'var(--text-2)',
-            }}
-          />
-          {decision.title}
-        </h3>
-        <StatusChip status={decision.status} />
+    <A href={`/council/${decision.slug}`} className="card entityCard">
+      <EntityHeader title={decision.title} status={decision.status} />
+      <div className="entityCardBody">
+        {decision.summary && <p className="meta">{decision.summary}</p>}
+        {windowIso && <MomentRow iso={windowIso} label="Decision window" />}
       </div>
-      {decision.summary && (
-        <p className="meta" style={{ marginTop: 6 }}>
-          {decision.summary}
-        </p>
-      )}
-      <div className="rowGap" style={{ marginTop: 8 }}>
-        {windowIso && (
-          <>
-            <span className="mono" style={{ color: 'var(--text-2)' }}>
-              {fmtDual(windowIso)}
-            </span>
-            <CountdownChip iso={windowIso} />
-          </>
-        )}
-        <span className="metaMuted" style={{ marginLeft: 'auto' }}>
-          {decision.proposer}
-        </span>
+      <div className="entityCardFooter">
+        {windowIso && <CountdownChip iso={windowIso} label="Closes in" />}
+        <span className="metaMuted entityCardOwner">{decision.proposer}</span>
       </div>
     </A>
   )
 }
 
-const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
-
 export function CoyCard({ coy }) {
+  const place = [coy.city, coy.country].filter(Boolean).join(', ')
   return (
-    <A href={`/coys/${coy.slug}`} className="card">
-      <div className="rowBetween">
-        <h3>
-          <MapPin
-            size={16}
-            strokeWidth={1.75}
-            aria-hidden
-            style={{
-              verticalAlign: -3,
-              marginRight: 6,
-              color: 'var(--text-2)',
-            }}
-          />
-          {coy.title}
-        </h3>
-        <StatusChip status={coy.status} />
+    <A href={`/coys/${coy.slug}`} className="card entityCard coyCard">
+      <EntityHeader title={coy.title} status={coy.status} />
+      <div className="entityCardBody">
+        <p className="entityCardMetaRow">
+          <MapPin size={16} strokeWidth={1.75} aria-hidden />
+          <span>{place || 'Location to be announced'}</span>
+        </p>
+        <p className="entityCardMetaRow">
+          <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
+          <span>{fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}</span>
+        </p>
       </div>
-      <p className="meta" style={{ marginTop: 6 }}>
-        {[coy.city, coy.country].filter(Boolean).join(', ')} ·{' '}
-        <span className="mono">
-          {fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}
+      <div className="entityCardFooter">
+        <span className="chip chip-neutral">{COY_LABEL[coy.type]}</span>
+        <span className="chip chip-neutral">
+          {REGION_LABEL[coy.region] || coy.region}
         </span>
-      </p>
-      <span className="chip chip-neutral" style={{ marginTop: 8 }}>
-        {COY_LABEL[coy.type]}
-      </span>
+      </div>
     </A>
   )
 }
 
 export function GroupCard({ group }) {
   return (
-    <div className="card groupCard">
+    <div className="card groupCard entityCard">
       <div className="groupCardBody">
         <A href={`/groups/${group.slug}`} className="monogram">
           {group.monogram || group.name.slice(0, 2)}
@@ -208,7 +181,19 @@ export function GroupCard({ group }) {
         </div>
       </div>
       {group.cadenceNote && (
-        <p className="metaMuted mono">{group.cadenceNote}</p>
+        <p className="entityCardMetaRow">
+          <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
+          <span>{group.cadenceNote}</span>
+        </p>
+      )}
+      {group.tags?.length > 0 && (
+        <div className="entityCardTags">
+          {group.tags.map((tag) => (
+            <span key={tag} className="chip chip-neutral">
+              {tag}
+            </span>
+          ))}
+        </div>
       )}
       <div className="groupCardActions">
         {group.whatsappUrl && (

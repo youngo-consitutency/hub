@@ -41,6 +41,18 @@ export function fmtDual(iso, tz = localTz()) {
   return `${day} · ${utc} · ${hm(iso, tz)} ${zone}`
 }
 
+export function fmtMoment(iso, tz = localTz()) {
+  const zone = zoneAbbr(iso, tz)
+  const isUtc = zone === 'UTC' || zone === 'GMT'
+  return {
+    day: fmtDay(iso, tz),
+    localTime: hm(iso, tz),
+    localZone: isUtc ? 'UTC' : zone,
+    utcTime: hm(iso, 'UTC'),
+    isUtc,
+  }
+}
+
 export function fmtDateRange(startsOn, endsOn, datesTbc) {
   if (!startsOn) return 'Dates TBC'
   const fmt = (d) =>

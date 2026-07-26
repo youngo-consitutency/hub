@@ -1,16 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-  Building2,
-  Check,
-  ExternalLink,
-  KeyRound,
-  Shield,
-  ShieldCheck,
-  UserPlus,
-  Globe2,
-  Heart,
-  Users,
-} from 'lucide-react'
+import { Check, ExternalLink, KeyRound, UserPlus } from 'lucide-react'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { POLICY_VERSION } from '../content/membershipPolicy.js'
@@ -21,35 +10,61 @@ import {
   CONSENT_SUMMARY,
   PRIVACY_META,
 } from '../../shared/privacyNotice.js'
+import {
+  GENDERS,
+  MINORITY_OPTIONS,
+  REGIONS,
+  wordCount,
+} from '../../shared/registration.js'
 import { Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
+import {
+  DatePicker,
+  FieldError,
+  MultiSelectDropdown,
+  SearchableSelect,
+} from './FormControls.jsx'
 
-const REGIONS = [
-  'Africa',
-  'Asia-Pacific',
-  'Eastern Europe',
-  'Latin America and the Caribbean',
-  'Western Europe and Others',
+const asOptions = (values) => values.map((value) => ({ value, label: value }))
+
+const REGION_OPTIONS = asOptions(REGIONS)
+const GENDER_OPTIONS = asOptions(GENDERS)
+const MINORITY_SELECT_OPTIONS = asOptions(MINORITY_OPTIONS)
+const WG_SELECT_OPTIONS = [
+  { value: 'ace', label: 'ACE' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'adaptation', label: 'Adaptation' },
+  { value: 'health', label: 'Health' },
 ]
 
-const GENDERS = ['Female', 'Male', 'Non-binary', 'Prefer not to say', 'Other']
+let phoneSupportPromise
+let nationalityOptionsPromise
 
-const MINORITY_OPTIONS = [
-  'Indigenous peoples',
-  'Persons with disabilities',
-  'LGBTQIA+ community',
-  'Refugees',
-  'Women',
-  'Children',
-  'Other',
-]
+function loadPhoneSupport() {
+  phoneSupportPromise ||= import('../lib/phone.js')
+  return phoneSupportPromise
+}
 
-const WG_OPTIONS = [
-  { slug: 'ace', label: 'ACE' },
-  { slug: 'finance', label: 'Finance' },
-  { slug: 'adaptation', label: 'Adaptation' },
-  { slug: 'health', label: 'Health' },
-]
+function loadNationalityOptions() {
+  nationalityOptionsPromise ||= import('../../shared/nationalities.js').then(
+    ({ NATIONALITIES }) =>
+      NATIONALITIES.map((nationality) => ({
+        value: nationality,
+        label: nationality,
+      })),
+  )
+  return nationalityOptionsPromise
+}
+
+function browserPhoneCountry() {
+  if (typeof navigator === 'undefined') return ''
+  try {
+    const locale = navigator.languages?.[0] || navigator.language
+    return new Intl.Locale(locale).maximize().region || ''
+  } catch {
+    return ''
+  }
+}
 
 const EMPTY_REGISTER = {
   email: '',
@@ -60,7 +75,8 @@ const EMPTY_REGISTER = {
   ageBand: '',
   firstName: '',
   lastName: '',
-  phone: '',
+  phone: '+ ',
+  phoneCountry: '',
   gender: '',
   genderOther: '',
   dateOfBirth: '',
@@ -91,53 +107,82 @@ const EMPTY_REGISTER = {
   orgMission: '',
   dcpName: '',
   dcpEmail: '',
-  dcpPhone: '',
+  dcpPhone: '+ ',
+  dcpPhoneCountry: '',
   ycpName: '',
   ycpEmail: '',
-  ycpPhone: '',
+  ycpPhone: '+ ',
+  ycpPhoneCountry: '',
   acceptAllOrgPolicies: false,
   membershipTrack: 'network',
   wgInterests: [],
   hpWebsite: '',
 }
 
-function FieldError({ msg }) {
-  if (!msg) return null
-  return (
-    <span className="fieldError" role="alert">
-      {msg}
-    </span>
-  )
+function initialRegistrationForm() {
+  const country = browserPhoneCountry()
+  return {
+    ...EMPTY_REGISTER,
+    phoneCountry: country,
+    dcpPhoneCountry: country,
+    ycpPhoneCountry: country,
+  }
 }
 
-function MultiSelectDropdown({ label, options, selected, onToggle, error }) {
-  const selectedLabels = options
-    .filter((option) => selected.includes(option.value))
-    .map((option) => option.label)
+function phoneInputValue(value) {
+  return `+ ${String(value || '')
+    .replaceAll('+', '')
+    .trimStart()}`
+}
+
+function PhoneField({
+  label,
+  value,
+  onValueChange,
+  onLoad,
+  error,
+  required = false,
+}) {
   return (
-    <div className={fieldClass(error)}>
-      <span>{label}</span>
-      <details className="multiSelect">
-        <summary>
-          {selectedLabels.length
-            ? `${selectedLabels.length} selected: ${selectedLabels.join(', ')}`
-            : 'Select one or more…'}
-        </summary>
-        <div className="multiSelectMenu" role="group" aria-label={label}>
-          {options.map((option) => (
-            <label key={option.value} className="multiSelectOption">
-              <input
-                type="checkbox"
-                checked={selected.includes(option.value)}
-                onChange={() => onToggle(option.value)}
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-      </details>
+    <label className={fieldClass(error)}>
+      <span>
+        {label}
+        {required ? ' *' : ''}
+      </span>
+      <input
+        className="input"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="+123 456 7890"
+        value={value || '+ '}
+        onFocus={(event) => {
+          onLoad?.()
+          const input = event.currentTarget
+          if (input.selectionStart <= 1) {
+            requestAnimationFrame(() => {
+              input.setSelectionRange(2, 2)
+            })
+          }
+        }}
+        onKeyDown={(event) => {
+          const input = event.currentTarget
+          if (
+            (event.key === 'Backspace' &&
+              input.selectionStart <= 2 &&
+              input.selectionEnd <= 2) ||
+            (event.key === 'Delete' &&
+              input.selectionStart === 0 &&
+              input.selectionEnd <= 2)
+          ) {
+            event.preventDefault()
+          }
+        }}
+        onChange={onValueChange}
+        aria-invalid={!!error}
+      />
       <FieldError msg={error} />
-    </div>
+    </label>
   )
 }
 
@@ -170,21 +215,18 @@ function PolicyLink({ href, children }) {
 function PrivacyConsentSection({ checked, onChange, error, isOrg }) {
   return (
     <section className="card authSection">
-      <h2 className="authSectionTitle">
-        <ShieldCheck size={18} strokeWidth={1.75} aria-hidden /> Your data and
-        your consent *
-      </h2>
-      <p className="meta" style={{ marginBottom: 10 }}>
+      <h2 className="authSectionTitle">Your data and your consent *</h2>
+      <p className="meta">
         {isOrg
           ? 'Before the organisation registers, please read how the YOUNGO Hub handles the contact details on this form.'
           : 'We use the information on this form to create and manage your Hub account. The Membership Policy covers participation in YOUNGO; the Privacy Notice covers how this information is used and protected.'}
       </p>
-      <ul className="authBullet meta" style={{ marginBottom: 12 }}>
+      <ul className="authBullet meta">
         {CONSENT_SUMMARY.map((point) => (
           <li key={point}>{point}</li>
         ))}
       </ul>
-      <p className="metaMuted" style={{ marginBottom: 12 }}>
+      <p className="metaMuted">
         <PolicyLink href="/privacy">
           Read the full YOUNGO Hub Privacy Notice (version {PRIVACY_VERSION})
         </PolicyLink>
@@ -194,7 +236,7 @@ function PrivacyConsentSection({ checked, onChange, error, isOrg }) {
         <span>{CONSENT_STATEMENT} *</span>
       </label>
       <FieldError msg={error} />
-      <p className="metaMuted" style={{ marginTop: 10 }}>
+      <p className="metaMuted">
         You can withdraw this consent at any time by emailing{' '}
         <a
           className="mandateExtLink"
@@ -246,20 +288,15 @@ function ageFromDob(dob) {
   return age
 }
 
-function wordCount(text) {
-  return String(text || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length
-}
-
 /**
  * Sign-in and registration for individuals and organisations.
  */
 export function AuthGate({ onAuthenticated }) {
   const [mode, setMode] = useState('register')
   const [login, setLogin] = useState({ email: '', password: '', website: '' })
-  const [form, setForm] = useState(EMPTY_REGISTER)
+  const [form, setForm] = useState(initialRegistrationForm)
+  const [countryOptions, setCountryOptions] = useState([])
+  const [nationalityOptions, setNationalityOptions] = useState([])
   const [fields, setFields] = useState({})
   const [error, setError] = useState(null)
   const [status, setStatus] = useState('idle')
@@ -272,6 +309,23 @@ export function AuthGate({ onAuthenticated }) {
   const admitted = form.isUnfcccAdmitted === 'yes'
   const nonAdmitted = form.isUnfcccAdmitted === 'no'
   const missionWords = wordCount(form.orgMission)
+
+  const clearFieldError = (key) => {
+    setFields((previous) => {
+      if (!previous[key]) return previous
+      const next = { ...previous }
+      delete next[key]
+      return next
+    })
+    if (error) setError(null)
+  }
+
+  const setChoice =
+    (key, errorKey = key) =>
+    (value) => {
+      setForm((current) => ({ ...current, [key]: value }))
+      clearFieldError(errorKey)
+    }
 
   const setReg = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value
@@ -292,6 +346,35 @@ export function AuthGate({ onAuthenticated }) {
     })
     if (error) setError(null)
   }
+
+  const ensureCountryOptions = async () => {
+    const support = await loadPhoneSupport()
+    setCountryOptions((current) =>
+      current.length ? current : support.getCountryOptions(),
+    )
+  }
+
+  const ensureNationalityOptions = async () => {
+    const options = await loadNationalityOptions()
+    setNationalityOptions((current) => (current.length ? current : options))
+  }
+
+  const setPhone = (phoneKey, countryKey) => (event) => {
+    const rawValue = phoneInputValue(event.target.value)
+    setForm((current) => ({ ...current, [phoneKey]: rawValue }))
+    clearFieldError(phoneKey)
+
+    void loadPhoneSupport().then(({ formatPhoneWhileTyping }) => {
+      setForm((current) => ({
+        ...current,
+        [phoneKey]: formatPhoneWhileTyping(
+          current[phoneKey],
+          current[countryKey],
+        ),
+      }))
+    })
+  }
+
   const setLog = (k) => (e) => {
     setLogin((f) => ({ ...f, [k]: e.target.value }))
     setFields((prev) => {
@@ -416,8 +499,12 @@ export function AuthGate({ onAuthenticated }) {
     }
 
     try {
+      const { normalizePhone } = await loadPhoneSupport()
       const payload = {
         ...form,
+        phone: normalizePhone(form.phone, form.phoneCountry),
+        dcpPhone: normalizePhone(form.dcpPhone, form.dcpPhoneCountry),
+        ycpPhone: normalizePhone(form.ycpPhone, form.ycpPhoneCountry),
         membershipPolicyVersion: POLICY_VERSION,
         privacyNoticeVersion: PRIVACY_VERSION,
         memberOfAccreditedNgo:
@@ -636,10 +723,7 @@ export function AuthGate({ onAuthenticated }) {
               <FormAlert>{error}</FormAlert>
               {/* Path selector */}
               <section className="card authSection">
-                <h2 className="authSectionTitle">
-                  <Users size={18} strokeWidth={1.75} aria-hidden /> Who is
-                  registering? *
-                </h2>
+                <h2 className="authSectionTitle">Who is registering? *</h2>
                 <div className="authChoiceGrid">
                   <label
                     className={`authChoice ${form.entityType === 'individual' ? 'active' : ''}`}
@@ -682,7 +766,6 @@ export function AuthGate({ onAuthenticated }) {
                   {/* Org intro */}
                   <section className="card authSection authIntro">
                     <h2 className="authSectionTitle">
-                      <Building2 size={18} strokeWidth={1.75} aria-hidden />{' '}
                       Organisation registration
                     </h2>
                     <ul className="authBullet meta">
@@ -737,7 +820,7 @@ export function AuthGate({ onAuthenticated }) {
                       />
                       <FieldError msg={fields.organizationName} />
                     </label>
-                    <p className="meta" style={{ margin: '10px 0 8px' }}>
+                    <p className="meta authSectionPrompt">
                       Is this organisation an{' '}
                       <strong>admitted observer NGO</strong> of the UNFCCC? *
                     </p>
@@ -780,10 +863,7 @@ export function AuthGate({ onAuthenticated }) {
 
                   {/* Hub password early so it's not buried */}
                   <section className="card authSection">
-                    <h2 className="authSectionTitle">
-                      <KeyRound size={18} strokeWidth={1.75} aria-hidden />{' '}
-                      YOUNGO Hub password
-                    </h2>
+                    <h2 className="authSectionTitle">YOUNGO Hub password</h2>
                     <div className="formRow">
                       <label className={fieldClass(fields.password)}>
                         <span>
@@ -820,11 +900,11 @@ export function AuthGate({ onAuthenticated }) {
                         <h2 className="authSectionTitle">
                           UNFCCC-admitted NGO
                         </h2>
-                        <p className="meta" style={{ marginBottom: 8 }}>
+                        <p className="meta">
                           Is your organisation affiliated with “youth” within
                           the UNFCCC? *
                         </p>
-                        <div className="authChoiceGrid authChoiceGrid3">
+                        <div className="authChoiceGrid">
                           {[
                             { value: 'primary', label: 'Yes — Primary' },
                             { value: 'secondary', label: 'Yes — Secondary' },
@@ -850,33 +930,26 @@ export function AuthGate({ onAuthenticated }) {
                           ))}
                         </div>
                         <FieldError msg={fields.youthAffiliation} />
-                        <label className="field" style={{ marginTop: 12 }}>
-                          <span>
-                            Region where legally established (UN groupings) *
-                          </span>
-                          <select
-                            className="input"
-                            value={form.region}
-                            onChange={setReg('region')}
-                          >
-                            <option value="">Select…</option>
-                            {REGIONS.map((r) => (
-                              <option key={r} value={r}>
-                                {r}
-                              </option>
-                            ))}
-                          </select>
-                          <FieldError msg={fields.region} />
-                        </label>
-                        <label className="field">
-                          <span>Country where legally established *</span>
-                          <input
-                            className="input"
-                            value={form.orgCountry}
-                            onChange={setReg('orgCountry')}
-                          />
-                          <FieldError msg={fields.country} />
-                        </label>
+                        <SearchableSelect
+                          className="authSectionBreak"
+                          label="Region where legally established (UN groupings) *"
+                          options={REGION_OPTIONS}
+                          value={form.region}
+                          onChange={setChoice('region')}
+                          error={fields.region}
+                          placeholder="Select region…"
+                          searchPlaceholder="Search regions…"
+                        />
+                        <SearchableSelect
+                          label="Country where legally established *"
+                          options={countryOptions}
+                          value={form.orgCountry}
+                          onChange={setChoice('orgCountry', 'country')}
+                          onOpen={ensureCountryOptions}
+                          error={fields.country}
+                          placeholder="Select country…"
+                          searchPlaceholder="Search countries…"
+                        />
                         <label className="field">
                           <span>Regions and/or countries of operation</span>
                           <textarea
@@ -949,17 +1022,17 @@ export function AuthGate({ onAuthenticated }) {
                             />
                             <FieldError msg={fields.dcpEmail} />
                           </label>
-                          <label className="field">
-                            <span>DCP phone (+ country code) *</span>
-                            <input
-                              className="input"
-                              type="tel"
-                              placeholder="+123 456 7890"
-                              value={form.dcpPhone}
-                              onChange={setReg('dcpPhone')}
-                            />
-                            <FieldError msg={fields.dcpPhone} />
-                          </label>
+                          <PhoneField
+                            label="DCP phone"
+                            required
+                            value={form.dcpPhone}
+                            onValueChange={setPhone(
+                              'dcpPhone',
+                              'dcpPhoneCountry',
+                            )}
+                            onLoad={loadPhoneSupport}
+                            error={fields.dcpPhone}
+                          />
                         </div>
                       </section>
 
@@ -970,7 +1043,7 @@ export function AuthGate({ onAuthenticated }) {
                             (if DCP is over 35 / not eligible)
                           </span>
                         </h2>
-                        <p className="meta" style={{ marginBottom: 10 }}>
+                        <p className="meta">
                           Facilitates communication with YOUNGO when the
                           official UNFCCC DCP does not meet YOUNGO age criteria
                           (no older than 35).
@@ -995,16 +1068,16 @@ export function AuthGate({ onAuthenticated }) {
                             />
                             <FieldError msg={fields.ycpEmail} />
                           </label>
-                          <label className="field">
-                            <span>YOUNGO CP phone</span>
-                            <input
-                              className="input"
-                              type="tel"
-                              value={form.ycpPhone}
-                              onChange={setReg('ycpPhone')}
-                            />
-                            <FieldError msg={fields.ycpPhone} />
-                          </label>
+                          <PhoneField
+                            label="YOUNGO CP phone"
+                            value={form.ycpPhone}
+                            onValueChange={setPhone(
+                              'ycpPhone',
+                              'ycpPhoneCountry',
+                            )}
+                            onLoad={loadPhoneSupport}
+                            error={fields.ycpPhone}
+                          />
                         </div>
                       </section>
                     </>
@@ -1056,10 +1129,10 @@ export function AuthGate({ onAuthenticated }) {
                         />
                         <FieldError msg={fields.orgMission} />
                       </label>
-                      <h3 style={{ marginTop: 12, fontSize: 14 }}>
+                      <h3 className="authSectionSubheading">
                         YOUNGO Contact Point *
                       </h3>
-                      <p className="meta" style={{ marginBottom: 8 }}>
+                      <p className="meta">
                         Facilitates communication with YOUNGO and receives
                         update emails.
                       </p>
@@ -1083,27 +1156,25 @@ export function AuthGate({ onAuthenticated }) {
                           />
                           <FieldError msg={fields.ycpEmail} />
                         </label>
-                        <label className="field">
-                          <span>Contact Point phone (+ country code) *</span>
-                          <input
-                            className="input"
-                            type="tel"
-                            value={form.ycpPhone}
-                            onChange={setReg('ycpPhone')}
-                          />
-                          <FieldError msg={fields.ycpPhone} />
-                        </label>
+                        <PhoneField
+                          label="Contact Point phone"
+                          required
+                          value={form.ycpPhone}
+                          onValueChange={setPhone(
+                            'ycpPhone',
+                            'ycpPhoneCountry',
+                          )}
+                          onLoad={loadPhoneSupport}
+                          error={fields.ycpPhone}
+                        />
                       </div>
                     </section>
                   )}
 
                   {(admitted || nonAdmitted) && (
                     <section className="card authSection">
-                      <h2 className="authSectionTitle">
-                        <Shield size={18} strokeWidth={1.75} aria-hidden />{' '}
-                        Policies *
-                      </h2>
-                      <p className="meta" style={{ marginBottom: 10 }}>
+                      <h2 className="authSectionTitle">Policies *</h2>
+                      <p className="meta">
                         Open each policy to read it, then confirm. Official
                         texts open in a new tab.
                       </p>
@@ -1150,7 +1221,7 @@ export function AuthGate({ onAuthenticated }) {
                           fields.acceptCoiPolicy
                         }
                       />
-                      <p className="metaMuted" style={{ marginTop: 8 }}>
+                      <p className="metaMuted">
                         <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
                           All policies folder
                         </PolicyLink>
@@ -1163,7 +1234,6 @@ export function AuthGate({ onAuthenticated }) {
                   {/* Individual intro + form */}
                   <section className="card authSection authIntro">
                     <h2 className="authSectionTitle">
-                      <Globe2 size={18} strokeWidth={1.75} aria-hidden />{' '}
                       Individual registration
                     </h2>
                     <ul className="authBullet meta">
@@ -1185,7 +1255,7 @@ export function AuthGate({ onAuthenticated }) {
 
                   <section className="card authSection">
                     <h2 className="authSectionTitle">How old are you? *</h2>
-                    <div className="authChoiceGrid authChoiceGrid3">
+                    <div className="authChoiceGrid">
                       {[
                         { value: 'under_18', label: 'Under 18' },
                         { value: '18_35', label: '18–35' },
@@ -1248,47 +1318,30 @@ export function AuthGate({ onAuthenticated }) {
                       />
                       <FieldError msg={fields.email} />
                     </label>
-                    <label className={fieldClass(fields.phone)}>
-                      <span>Phone (+ country code) *</span>
-                      <input
-                        className="input"
-                        type="tel"
-                        placeholder="+123 456 7890"
-                        value={form.phone}
-                        onChange={setReg('phone')}
-                        aria-invalid={!!fields.phone}
-                      />
-                      <FieldError msg={fields.phone} />
-                    </label>
+                    <PhoneField
+                      label="Phone"
+                      required
+                      value={form.phone}
+                      onValueChange={setPhone('phone', 'phoneCountry')}
+                      onLoad={loadPhoneSupport}
+                      error={fields.phone}
+                    />
                     <div className="formRow">
-                      <label className={fieldClass(fields.gender)}>
-                        <span>Gender *</span>
-                        <select
-                          className="input"
-                          value={form.gender}
-                          onChange={setReg('gender')}
-                          aria-invalid={!!fields.gender}
-                        >
-                          <option value="">Select…</option>
-                          {GENDERS.map((g) => (
-                            <option key={g} value={g}>
-                              {g}
-                            </option>
-                          ))}
-                        </select>
-                        <FieldError msg={fields.gender} />
-                      </label>
-                      <label className={fieldClass(fields.dateOfBirth)}>
-                        <span>Date of birth *</span>
-                        <input
-                          className="input"
-                          type="date"
-                          value={form.dateOfBirth}
-                          onChange={setReg('dateOfBirth')}
-                          aria-invalid={!!fields.dateOfBirth}
-                        />
-                        <FieldError msg={fields.dateOfBirth} />
-                      </label>
+                      <SearchableSelect
+                        label="Gender *"
+                        options={GENDER_OPTIONS}
+                        value={form.gender}
+                        onChange={setChoice('gender')}
+                        error={fields.gender}
+                        placeholder="Select gender…"
+                        searchPlaceholder="Search gender options…"
+                      />
+                      <DatePicker
+                        label="Date of birth *"
+                        value={form.dateOfBirth}
+                        onChange={setChoice('dateOfBirth')}
+                        error={fields.dateOfBirth}
+                      />
                     </div>
                     {form.gender === 'Other' && (
                       <label className={fieldClass(fields.genderOther)}>
@@ -1305,10 +1358,7 @@ export function AuthGate({ onAuthenticated }) {
                   </section>
 
                   <section className="card authSection">
-                    <h2 className="authSectionTitle">
-                      <KeyRound size={18} strokeWidth={1.75} aria-hidden />{' '}
-                      YOUNGO Hub password
-                    </h2>
+                    <h2 className="authSectionTitle">YOUNGO Hub password</h2>
                     <div className="formRow">
                       <label className={fieldClass(fields.password)}>
                         <span>
@@ -1340,11 +1390,8 @@ export function AuthGate({ onAuthenticated }) {
                   </section>
 
                   <section className="card authSection">
-                    <h2 className="authSectionTitle">
-                      <Heart size={18} strokeWidth={1.75} aria-hidden />{' '}
-                      Background
-                    </h2>
-                    <p className="meta" style={{ marginBottom: 8 }}>
+                    <h2 className="authSectionTitle">Background</h2>
+                    <p className="meta">
                       Do you identify as part of a minority group? *
                     </p>
                     <div className="authChoiceGrid">
@@ -1375,10 +1422,7 @@ export function AuthGate({ onAuthenticated }) {
                     {form.minorityIdentity === 'yes' && (
                       <MultiSelectDropdown
                         label="Which groups do you identify with? *"
-                        options={MINORITY_OPTIONS.map((option) => ({
-                          value: option,
-                          label: option,
-                        }))}
+                        options={MINORITY_SELECT_OPTIONS}
                         selected={form.minorityGroups}
                         onToggle={toggleMinority}
                         error={fields.minorityGroups}
@@ -1396,47 +1440,37 @@ export function AuthGate({ onAuthenticated }) {
                           <FieldError msg={fields.minorityOther} />
                         </label>
                       )}
-                    <label
-                      className={fieldClass(fields.region)}
-                      style={{ marginTop: 12 }}
-                    >
-                      <span>Region (UN classifications) *</span>
-                      <select
-                        className="input"
-                        value={form.region}
-                        onChange={setReg('region')}
-                        aria-invalid={!!fields.region}
-                      >
-                        <option value="">Select…</option>
-                        {REGIONS.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                      <FieldError msg={fields.region} />
-                    </label>
+                    <SearchableSelect
+                      className="authSectionBreak"
+                      label="Region (UN classifications) *"
+                      options={REGION_OPTIONS}
+                      value={form.region}
+                      onChange={setChoice('region')}
+                      error={fields.region}
+                      placeholder="Select region…"
+                      searchPlaceholder="Search regions…"
+                    />
                     <div className="formRow">
-                      <label className={fieldClass(fields.nationality)}>
-                        <span>Nationality *</span>
-                        <input
-                          className="input"
-                          value={form.nationality}
-                          onChange={setReg('nationality')}
-                          aria-invalid={!!fields.nationality}
-                        />
-                        <FieldError msg={fields.nationality} />
-                      </label>
-                      <label className={fieldClass(fields.country)}>
-                        <span>Country of residence *</span>
-                        <input
-                          className="input"
-                          value={form.countryOfResidence}
-                          onChange={setReg('countryOfResidence')}
-                          aria-invalid={!!fields.country}
-                        />
-                        <FieldError msg={fields.country} />
-                      </label>
+                      <SearchableSelect
+                        label="Nationality *"
+                        options={nationalityOptions}
+                        value={form.nationality}
+                        onChange={setChoice('nationality')}
+                        error={fields.nationality}
+                        placeholder="Select nationality…"
+                        searchPlaceholder="Search nationalities…"
+                        onOpen={ensureNationalityOptions}
+                      />
+                      <SearchableSelect
+                        label="Country of residence *"
+                        value={form.countryOfResidence}
+                        options={countryOptions}
+                        onChange={setChoice('countryOfResidence', 'country')}
+                        onOpen={ensureCountryOptions}
+                        error={fields.country}
+                        placeholder="Select country…"
+                        searchPlaceholder="Search countries…"
+                      />
                     </div>
                     <label className="field">
                       <span>Why do you want to join YOUNGO?</span>
@@ -1493,16 +1527,14 @@ export function AuthGate({ onAuthenticated }) {
                     <h2 className="authSectionTitle">
                       Working groups you’re interested in
                     </h2>
-                    <p className="meta" style={{ marginBottom: 8 }}>
+                    <p className="meta">
                       Optional. You’ll complete each group’s onboarding before
                       its member channels open.
                     </p>
                     <MultiSelectDropdown
                       label="Working groups"
-                      options={WG_OPTIONS.map((group) => ({
-                        value: group.slug,
-                        label: group.label,
-                      }))}
+                      hideLabel
+                      options={WG_SELECT_OPTIONS}
                       selected={form.wgInterests}
                       onToggle={toggleWg}
                     />
@@ -1512,7 +1544,7 @@ export function AuthGate({ onAuthenticated }) {
                     <h2 className="authSectionTitle">
                       Accredited NGO membership (statistics)
                     </h2>
-                    <p className="meta" style={{ marginBottom: 8 }}>
+                    <p className="meta">
                       Are you a member of an accredited NGO (which is a member
                       of YOUNGO)? *
                     </p>
@@ -1554,77 +1586,80 @@ export function AuthGate({ onAuthenticated }) {
                   </section>
 
                   <section className="card authSection">
-                    <h2 className="authSectionTitle">
-                      <Shield size={18} strokeWidth={1.75} aria-hidden />{' '}
-                      Agreements *
-                    </h2>
-                    <p className="meta" style={{ marginBottom: 10 }}>
+                    <h2 className="authSectionTitle">Agreements *</h2>
+                    <p className="meta">
                       Open each policy link to read it, then tick the box. Links
                       open in a new tab.
                     </p>
-                    <label className={checkClass(fields.acceptCodeOfConduct)}>
-                      <input
-                        type="checkbox"
-                        checked={form.acceptCodeOfConduct}
-                        onChange={setReg('acceptCodeOfConduct')}
-                      />
-                      <span>
-                        I agree to respect the YOUNGO{' '}
-                        <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>
-                          Code of Conduct
-                        </PolicyLink>
-                        . *
-                      </span>
-                    </label>
-                    <FieldError msg={fields.acceptCodeOfConduct} />
-                    <label className={checkClass(fields.acceptDataProtection)}>
-                      <input
-                        type="checkbox"
-                        checked={form.acceptDataProtection}
-                        onChange={setReg('acceptDataProtection')}
-                      />
-                      <span>
-                        I agree to respect the YOUNGO{' '}
-                        <PolicyLink href={POLICY_BY_SLUG.dataProtection?.href}>
-                          Data Protection Policy
-                        </PolicyLink>
-                        . *
-                      </span>
-                    </label>
-                    <FieldError msg={fields.acceptDataProtection} />
-                    <label className={checkClass(fields.acceptPrinciples)}>
-                      <input
-                        type="checkbox"
-                        checked={form.acceptPrinciples}
-                        onChange={setReg('acceptPrinciples')}
-                      />
-                      <span>
-                        I agree to respect the YOUNGO{' '}
-                        <PolicyLink href={POLICY_BY_SLUG.principles?.href}>
-                          Principles
-                        </PolicyLink>
-                        . *
-                      </span>
-                    </label>
-                    <FieldError msg={fields.acceptPrinciples} />
-                    <label className={checkClass(fields.acceptCoiPolicy)}>
-                      <input
-                        type="checkbox"
-                        checked={form.acceptCoiPolicy}
-                        onChange={setReg('acceptCoiPolicy')}
-                      />
-                      <span>
-                        I agree to respect the YOUNGO{' '}
-                        <PolicyLink
-                          href={POLICY_BY_SLUG.conflictOfInterest?.href}
-                        >
-                          Conflict of Interest Policy
-                        </PolicyLink>
-                        . *
-                      </span>
-                    </label>
-                    <FieldError msg={fields.acceptCoiPolicy} />
-                    <p className="metaMuted" style={{ marginTop: 10 }}>
+                    <div className="authAgreementList">
+                      <label className={checkClass(fields.acceptCodeOfConduct)}>
+                        <input
+                          type="checkbox"
+                          checked={form.acceptCodeOfConduct}
+                          onChange={setReg('acceptCodeOfConduct')}
+                        />
+                        <span>
+                          I agree to respect the YOUNGO{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>
+                            Code of Conduct
+                          </PolicyLink>
+                          . *
+                        </span>
+                      </label>
+                      <FieldError msg={fields.acceptCodeOfConduct} />
+                      <label
+                        className={checkClass(fields.acceptDataProtection)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.acceptDataProtection}
+                          onChange={setReg('acceptDataProtection')}
+                        />
+                        <span>
+                          I agree to respect the YOUNGO{' '}
+                          <PolicyLink
+                            href={POLICY_BY_SLUG.dataProtection?.href}
+                          >
+                            Data Protection Policy
+                          </PolicyLink>
+                          . *
+                        </span>
+                      </label>
+                      <FieldError msg={fields.acceptDataProtection} />
+                      <label className={checkClass(fields.acceptPrinciples)}>
+                        <input
+                          type="checkbox"
+                          checked={form.acceptPrinciples}
+                          onChange={setReg('acceptPrinciples')}
+                        />
+                        <span>
+                          I agree to respect the YOUNGO{' '}
+                          <PolicyLink href={POLICY_BY_SLUG.principles?.href}>
+                            Principles
+                          </PolicyLink>
+                          . *
+                        </span>
+                      </label>
+                      <FieldError msg={fields.acceptPrinciples} />
+                      <label className={checkClass(fields.acceptCoiPolicy)}>
+                        <input
+                          type="checkbox"
+                          checked={form.acceptCoiPolicy}
+                          onChange={setReg('acceptCoiPolicy')}
+                        />
+                        <span>
+                          I agree to respect the YOUNGO{' '}
+                          <PolicyLink
+                            href={POLICY_BY_SLUG.conflictOfInterest?.href}
+                          >
+                            Conflict of Interest Policy
+                          </PolicyLink>
+                          . *
+                        </span>
+                      </label>
+                      <FieldError msg={fields.acceptCoiPolicy} />
+                    </div>
+                    <p className="metaMuted">
                       <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
                         Browse all YOUNGO policies
                       </PolicyLink>

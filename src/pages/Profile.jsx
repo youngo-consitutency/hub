@@ -6,7 +6,6 @@ import {
   Library,
   LockKeyhole,
   Mail,
-  UserCircle,
   Users,
 } from 'lucide-react'
 
@@ -45,7 +44,6 @@ export function Profile() {
     <div>
       <PageHeader
         eyebrow="Your account"
-        icon={UserCircle}
         title="Profile"
         description="Your membership details, roles, and useful starting points."
       />

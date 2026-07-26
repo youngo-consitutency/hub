@@ -45,6 +45,7 @@ export function buildCalendarDays({ year, month }, groupedEvents) {
       key,
       day: date.getUTCDate(),
       inMonth,
+      isWeekend: [0, 6].includes(date.getUTCDay()),
       events: inMonth ? events : [],
       interactive: inMonth && events.length > 0,
     }

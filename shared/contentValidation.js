@@ -85,6 +85,21 @@ export function validateContent(content) {
   }
 
   const groupSlugs = new Set(content.groups.map((group) => group.slug))
+  content.groups.forEach((group, index) => {
+    if (!Array.isArray(group.tags) || group.tags.length === 0) {
+      errors.push(`groups[${index}].tags must contain at least one topic`)
+      return
+    }
+    const tags = group.tags.map((tag) => String(tag || '').trim())
+    if (tags.some((tag) => !tag || tag.length > 40)) {
+      errors.push(`groups[${index}].tags must be 1–40 characters each`)
+    }
+    if (
+      new Set(tags.map((tag) => tag.toLocaleLowerCase())).size !== tags.length
+    ) {
+      errors.push(`groups[${index}].tags must not contain duplicates`)
+    }
+  })
   content.events.forEach((event, index) => {
     if (!String(event.title || '').trim())
       errors.push(`events[${index}].title is required`)

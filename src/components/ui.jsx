@@ -50,23 +50,33 @@ export function Button({
   return <button type="button" className={cls} {...rest} />
 }
 
-export function PageHeader({
-  eyebrow,
+export function FilterPill({
+  active,
   icon: Icon,
-  title,
-  description,
-  action,
   children,
+  className = '',
+  ...rest
 }) {
+  return (
+    <button
+      type="button"
+      className={`pill ${active ? 'active' : ''} ${className}`.trim()}
+      aria-pressed={active}
+      {...rest}
+    >
+      {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />}
+      {children}
+    </button>
+  )
+}
+
+export function PageHeader({ eyebrow, title, description, action, children }) {
   return (
     <header className="pageHeader">
       {eyebrow && <p className="pageEyebrow">{eyebrow}</p>}
       <div className="pageHeaderRow">
         <div className="pageHeaderCopy">
-          <h1 className="pageTitle">
-            {Icon && <Icon size={24} strokeWidth={1.75} aria-hidden />}
-            {title}
-          </h1>
+          <h1 className="pageTitle">{title}</h1>
           {description && <p className="pageLead">{description}</p>}
         </div>
         {action && <div className="pageHeaderAction">{action}</div>}
@@ -110,13 +120,14 @@ export function StatusChip({ status }) {
   )
 }
 
-export function CountdownChip({ iso }) {
+export function CountdownChip({ iso, label }) {
   if (!iso) return null
-  const { label, tone } = countdown(iso)
+  const { label: countdownLabel, tone } = countdown(iso)
   return (
     <span className={`chip chip-${tone} chipMono`}>
       <AlarmClock size={12} strokeWidth={1.75} aria-hidden />
-      {label}
+      {label && <span className="chipPrefix">{label}</span>}
+      {countdownLabel}
     </span>
   )
 }
@@ -154,12 +165,8 @@ export function Empty({ icon: Icon, title, body, cta }) {
         </div>
       )}
       <h3>{title}</h3>
-      {body && (
-        <p className="meta" style={{ maxWidth: 320 }}>
-          {body}
-        </p>
-      )}
-      {cta && <div style={{ marginTop: 12 }}>{cta}</div>}
+      {body && <p className="meta emptyBody">{body}</p>}
+      {cta && <div className="emptyCta">{cta}</div>}
     </div>
   )
 }

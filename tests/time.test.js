@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { fmtDual, countdown, fmtDateRange } from '../src/lib/time.js'
+import { fmtDual, fmtMoment, countdown, fmtDateRange } from '../src/lib/time.js'
 
 const now = new Date('2026-07-15T13:00:00Z')
 const at = (h) => new Date(now.getTime() + h * 3600000).toISOString()
@@ -12,6 +12,23 @@ test('fmtDual renders single time for UTC viewers', () => {
 test('fmtDual renders dual time for non-UTC viewers', () => {
   const s = fmtDual('2026-07-15T13:00:00Z', 'Africa/Nairobi')
   assert.ok(s.startsWith('Wed 15 Jul · 13:00 UTC · 16:00'), s)
+})
+
+test('fmtMoment labels local and UTC times without duplicating UTC', () => {
+  assert.deepEqual(fmtMoment('2026-07-15T13:00:00Z', 'UTC'), {
+    day: 'Wed 15 Jul',
+    localTime: '13:00',
+    localZone: 'UTC',
+    utcTime: '13:00',
+    isUtc: true,
+  })
+  assert.deepEqual(fmtMoment('2026-07-15T13:00:00Z', 'Africa/Nairobi'), {
+    day: 'Wed 15 Jul',
+    localTime: '16:00',
+    localZone: 'GMT+3',
+    utcTime: '13:00',
+    isUtc: false,
+  })
 })
 
 test('countdown tones follow spec thresholds', () => {

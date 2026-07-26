@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, PageHeader } from '../components/ui.jsx'
+import { Async, Empty, FilterPill, PageHeader } from '../components/ui.jsx'
 import { EventCard } from '../components/cards.jsx'
 import { CalendarSubscribe } from '../components/Subscribe.jsx'
 import {
@@ -12,15 +12,25 @@ import {
   groupEventsByDate,
   shiftCalendarMonth,
 } from '../lib/monthCalendar.js'
-import { CalendarOff, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  CalendarOff,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Users,
+  Network,
+  Landmark,
+  MessageSquareText,
+  Presentation,
+} from 'lucide-react'
 
 const FILTERS = [
-  { key: 'all', label: 'All' },
-  { key: 'constituency_call', label: 'Constituency' },
-  { key: 'wg_call', label: 'Working groups' },
-  { key: 'wgf', label: 'Forums' },
-  { key: 'unfccc_session', label: 'UNFCCC' },
-  { key: 'webinar', label: 'Webinars' },
+  { key: 'all', label: 'All', icon: ListFilter },
+  { key: 'constituency_call', label: 'Constituency', icon: Users },
+  { key: 'wg_call', label: 'Working groups', icon: Network },
+  { key: 'wgf', label: 'Forums', icon: MessageSquareText },
+  { key: 'unfccc_session', label: 'UNFCCC', icon: Landmark },
+  { key: 'webinar', label: 'Webinars', icon: Presentation },
 ]
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -66,15 +76,14 @@ export function Calendar() {
       >
         <div className="pillRow" aria-label="Filter events by type">
           {FILTERS.map((f) => (
-            <button
-              type="button"
+            <FilterPill
               key={f.key}
-              className={`pill ${type === f.key ? 'active' : ''}`}
+              active={type === f.key}
+              icon={f.icon}
               onClick={() => changeType(f.key)}
-              aria-pressed={type === f.key}
             >
               {f.label}
-            </button>
+            </FilterPill>
           ))}
         </div>
       </PageHeader>
@@ -140,8 +149,10 @@ export function Calendar() {
                 </div>
 
                 <div className="calendarWeekdays" aria-hidden>
-                  {WEEKDAYS.map((day) => (
-                    <span key={day}>{day}</span>
+                  {WEEKDAYS.map((day, index) => (
+                    <span key={day} data-weekend={index >= 5 || undefined}>
+                      {day}
+                    </span>
                   ))}
                 </div>
                 <div className="calendarMonthGrid">
@@ -179,6 +190,7 @@ export function Calendar() {
                         type="button"
                         key={date.key}
                         className={`calendarDay calendarDayButton ${selectedDay === date.key ? 'selected' : ''}`}
+                        data-weekend={date.isWeekend || undefined}
                         onClick={() => setSelectedDay(date.key)}
                         aria-label={label}
                         aria-pressed={selectedDay === date.key}
@@ -189,6 +201,7 @@ export function Calendar() {
                       <div
                         key={date.key}
                         className={`calendarDay calendarDayEmpty ${date.inMonth ? '' : 'outside'}`}
+                        data-weekend={date.isWeekend || undefined}
                         aria-hidden={!date.inMonth}
                       >
                         {content}
