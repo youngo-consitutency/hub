@@ -1,0 +1,403 @@
+/* Cards, chips, buttons and filter pills.
+   Colours come from tokens.css variables only. */
+
+/* ── Cards ─────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-card);
+}
+
+a.card {
+  display: block;
+  transition:
+    border-color 0.12s cubic-bezier(0.2, 0, 0, 1),
+    background 0.12s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+
+a.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+a.card.rowBetween,
+a.card.rowGap {
+  display: flex;
+}
+
+.cardTight {
+  padding: var(--space-3);
+}
+
+.entityCard,
+a.entityCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.entityCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.entityCardIcon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--text-2);
+}
+
+.entityCardHeading {
+  min-width: 0;
+}
+
+.entityCardHeading h3 {
+  font-size: 16px;
+}
+
+.entityCardStatus {
+  margin-top: var(--space-2);
+}
+
+.entityCardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entityCardSchedule,
+.entityCardMetaRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.entityCardSchedule > svg,
+.entityCardMetaRow > svg {
+  margin-top: 2px;
+  color: var(--text-3);
+}
+
+.entityCardSchedule span {
+  display: block;
+}
+
+.entityCardMetaLabel {
+  margin-bottom: 1px;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.entityCardSecondary {
+  margin-top: 1px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.entityCardFooter,
+.entityCardTags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.entityCardOwner {
+  margin-left: auto;
+}
+
+.chipPrefix {
+  font-family: var(--font-ui);
+}
+
+.coyCard {
+  min-height: 220px;
+}
+
+.actionCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actionCardIcon {
+  align-self: start;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.actionCardIconWarning {
+  color: var(--warn);
+}
+
+.actionCardCopy {
+  min-width: 0;
+}
+
+.actionCardCopy .meta {
+  margin-top: var(--space-1);
+}
+
+.resourceList {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+
+.resourceRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+}
+
+.resourceRow:last-child {
+  border-bottom: 0;
+}
+
+a.resourceRow:hover {
+  background: var(--bg-raised);
+}
+
+.resourceCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.resourceMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.libraryCategory + .libraryCategory {
+  margin-top: var(--space-4);
+}
+
+.libraryCategoryTitle {
+  margin-bottom: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 760px) {
+  .actionCard {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .actionCard > .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .resourceRow {
+    grid-template-columns: 1fr;
+  }
+
+  .resourceMeta {
+    justify-content: flex-start;
+  }
+}
+
+.groupCard,
+.contactCard {
+  height: 100%;
+}
+
+.groupCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.groupCardBody {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.groupCardCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupCardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.announcementCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.recognitionPromo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.archiveRow {
+  min-height: 52px;
+}
+
+/* ── Chips ─────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chip .cdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.chip-accent {
+  color: var(--on-accent-tint);
+  background: var(--accent-tint);
+}
+
+.chip-live {
+  color: var(--live);
+  background: var(--live-tint);
+}
+
+.chip-info {
+  color: var(--info);
+  background: var(--info-tint);
+}
+
+.chip-warn {
+  color: var(--warn);
+  background: var(--warn-tint);
+}
+
+.chip-danger {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.chip-neutral {
+  color: var(--text-2);
+  background: var(--bg-raised);
+}
+
+.chipMono {
+  font-family: var(--font-mono);
+}
+
+.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-1);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background 0.12s cubic-bezier(0.2, 0, 0, 1),
+    border-color 0.12s cubic-bezier(0.2, 0, 0, 1),
+    color 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-glow {
+  box-shadow: var(--glow-accent);
+}
+
+.btn-secondary {
+  border-color: var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-raised);
+}
+
+.btn-ghost {
+  color: var(--text-2);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.btn-sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: 13px;
+}

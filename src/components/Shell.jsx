@@ -86,11 +86,22 @@ export function Shell({ children }) {
         ? 'gys'
         : 'member'
 
+  // Operational consoles keep the dense mission treatment; member-facing pages
+  // get the warmer register. Staff / admin / NGO tools count as operational even
+  // though they resolve to the default member workspace.
+  const surface =
+    workspace !== 'member' ||
+    ['/staff', '/admin', '/focal', '/ngo'].some((prefix) =>
+      path.startsWith(prefix),
+    )
+      ? 'mission'
+      : 'member'
+
   useEffect(() => {
     const root = document.documentElement
     root.dataset.workspace = workspace
-    root.dataset.surface = 'mission'
-  }, [workspace])
+    root.dataset.surface = surface
+  }, [workspace, surface])
 
   const verified = Boolean(account?.isVerified)
 
@@ -340,7 +351,11 @@ export function Shell({ children }) {
           </div>
         </header>
         <main id="main-content" tabIndex="-1">
-          <MissionStatusBar liveLabel={stationFor(path)} />
+          {/* Operational consoles only — the COP31 clock is ops chrome, not
+              something a member checking a deadline needs on every page. */}
+          {surface === 'mission' && (
+            <MissionStatusBar station={stationFor(path)} />
+          )}
           {!verified && (
             <div className="noticeBanner noticeBannerWarn">
               <span className="noticeDot" />

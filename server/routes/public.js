@@ -9,16 +9,11 @@ import {
   directoryView,
 } from '../lib/publicViews.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { bearerToken } from '../lib/security.js'
 import { listPublicRecognitionBoard, RECOGNITION_TIERS } from '../lib/points.js'
 
 export const publicRouter = Router()
 const gysSignupLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 6 })
-
-function bearerToken(req) {
-  const header = req.headers.authorization || ''
-  if (header.startsWith('Bearer ')) return header.slice(7).trim()
-  return String(req.headers['x-session-token'] || '').trim() || null
-}
 
 publicRouter.use(async (req, res, next) => {
   try {

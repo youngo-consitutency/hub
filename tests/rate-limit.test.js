@@ -72,3 +72,41 @@ test('rate limiter bounds tracked client buckets', () => {
 
   assert.equal(nextCalls, 4)
 })
+
+test('a limiter can be keyed on the target account rather than the caller IP', () => {
+  const limiter = createRateLimiter({
+    max: 2,
+    windowMs: 60_000,
+    key: (req) => `email:${String(req.body?.email || '').toLowerCase()}`,
+  })
+  const res = () => {
+    const r = {
+      statusCode: null,
+      set: () => r,
+      status: (s) => {
+        r.statusCode = s
+        return r
+      },
+      json: () => r,
+    }
+    return r
+  }
+  const attempt = (email, ip) => {
+    const r = res()
+    let passed = false
+    limiter({ ip, body: { email } }, r, () => {
+      passed = true
+    })
+    return { passed, status: r.statusCode }
+  }
+
+  // The same account guessed from three different addresses is still throttled.
+  assert.equal(attempt('victim@example.org', '198.51.100.1').passed, true)
+  assert.equal(attempt('VICTIM@example.org', '198.51.100.2').passed, true)
+  const third = attempt('victim@example.org', '198.51.100.3')
+  assert.equal(third.passed, false)
+  assert.equal(third.status, 429)
+
+  // A different account is unaffected.
+  assert.equal(attempt('someone@example.org', '198.51.100.3').passed, true)
+})

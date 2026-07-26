@@ -12,7 +12,9 @@
   const theme = saved === 'dark' ? 'dark' : 'light'
 
   document.documentElement.dataset.theme = theme
-  document.documentElement.dataset.surface = 'mission'
+  // Warm member register is the safe default; the Shell promotes operational
+  // routes to the dense 'mission' surface on mount.
+  document.documentElement.dataset.surface = 'member'
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute('content', theme === 'dark' ? '#0A0F0C' : '#F5F9F6')

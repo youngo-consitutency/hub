@@ -1,7 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getAccessProfile, hasCapability } from '../server/lib/access.js'
-import { rateLimit, requestSecurity } from '../server/lib/security.js'
+import {
+  requestSecurity,
+  bearerToken,
+  setSessionCookie,
+  clearSessionCookie,
+  SESSION_COOKIE,
+} from '../server/lib/security.js'
+import { createRateLimiter } from '../server/lib/rateLimit.js'
 import { resolveOrgContext } from '../server/lib/lifecycle.js'
 
 test('admin access is derived centrally', async () => {
@@ -67,11 +74,7 @@ test('security middleware adds request and browser hardening headers', () => {
 })
 
 test('rate limiter rejects requests after the configured threshold', () => {
-  const middleware = rateLimit({
-    name: `test-${Date.now()}`,
-    max: 1,
-    windowMs: 60_000,
-  })
+  const middleware = createRateLimiter({ max: 1, windowMs: 60_000 })
   const req = { ip: '192.0.2.1' }
   let statusCode = null
   const res = {
@@ -91,4 +94,56 @@ test('rate limiter rejects requests after the configured threshold', () => {
   })
   assert.equal(passes, 1)
   assert.equal(statusCode, 429)
+})
+
+// The browser client sends no Authorization header — the session travels only in
+// the HttpOnly cookie. These guard that path, and the flags that keep the
+// credential out of reach of JavaScript.
+test('the session cookie alone authenticates a request', () => {
+  assert.equal(
+    bearerToken({ headers: { cookie: `${SESSION_COOKIE}=cookie-token` } }),
+    'cookie-token',
+  )
+  assert.equal(
+    bearerToken({
+      headers: { cookie: `other=1; ${SESSION_COOKIE}=cookie-token; last=2` },
+    }),
+    'cookie-token',
+  )
+  assert.equal(
+    bearerToken({ headers: { cookie: `${SESSION_COOKIE}=a%20b` } }),
+    'a b',
+  )
+  assert.equal(bearerToken({ headers: {} }), null)
+})
+
+test('an explicit Authorization header still wins over the cookie', () => {
+  assert.equal(
+    bearerToken({
+      headers: {
+        authorization: 'Bearer header-token',
+        cookie: `${SESSION_COOKIE}=cookie-token`,
+      },
+    }),
+    'header-token',
+  )
+})
+
+test('the session cookie is not readable from JavaScript', () => {
+  const sent = []
+  setSessionCookie(
+    { append: (_key, value) => sent.push(value) },
+    'tok',
+    Date.now() + 1000,
+  )
+  assert.match(sent[0], /HttpOnly/)
+  assert.match(sent[0], /SameSite=Lax/)
+  assert.match(sent[0], /Path=\//)
+})
+
+test('signing out expires the session cookie', () => {
+  const sent = []
+  clearSessionCookie({ append: (_key, value) => sent.push(value) })
+  assert.match(sent[0], /Max-Age=0/)
+  assert.match(sent[0], /HttpOnly/)
 })

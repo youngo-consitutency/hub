@@ -34,7 +34,32 @@ test('database TLS is disabled only for local and Railway-internal connections',
     false,
   )
   assert.deepEqual(
-    databaseSsl('postgres://postgres@public.proxy.example:5432/youngo'),
+    databaseSsl('postgres://postgres@public.proxy.example:5432/youngo', {}),
+    { rejectUnauthorized: true },
+  )
+})
+
+test('a pinned CA certificate is used to verify the database connection', () => {
+  assert.deepEqual(
+    databaseSsl('postgres://postgres@public.proxy.example:5432/youngo', {
+      DATABASE_CA_CERT: '-----BEGIN CERTIFICATE-----abc',
+    }),
+    { ca: '-----BEGIN CERTIFICATE-----abc', rejectUnauthorized: true },
+  )
+})
+
+test('certificate verification is skipped only when explicitly opted out', () => {
+  assert.deepEqual(
+    databaseSsl('postgres://postgres@public.proxy.example:5432/youngo', {
+      DATABASE_SSL_INSECURE: 'true',
+    }),
     { rejectUnauthorized: false },
+  )
+  // Anything other than the exact opt-out keeps verification on.
+  assert.deepEqual(
+    databaseSsl('postgres://postgres@public.proxy.example:5432/youngo', {
+      DATABASE_SSL_INSECURE: 'yes',
+    }),
+    { rejectUnauthorized: true },
   )
 })

@@ -4,7 +4,8 @@ import { getSessionAccount } from '../lib/accounts.js'
 import { ensureAdminRole } from '../lib/lifecycle.js'
 import { getAccessProfile, hasCapability } from '../lib/access.js'
 import { recordAudit } from '../lib/audit.js'
-import { cookieValue, SESSION_COOKIE, rateLimit } from '../lib/security.js'
+import { bearerToken } from '../lib/security.js'
+import { createRateLimiter } from '../lib/rateLimit.js'
 import {
   INTELLIGENCE_FIELD_POLICY,
   queryIntelligence,
@@ -18,26 +19,8 @@ import {
 
 export const intelligenceRouter = Router()
 
-const publicLimit = rateLimit({
-  name: 'intelligence-public',
-  max: 20,
-  windowMs: 60_000,
-})
-const memberLimit = rateLimit({
-  name: 'intelligence-member',
-  max: 40,
-  windowMs: 60_000,
-})
-
-function bearerToken(req) {
-  const header = req.headers.authorization || ''
-  if (header.startsWith('Bearer ')) return header.slice(7).trim()
-  return (
-    String(req.headers['x-session-token'] || '').trim() ||
-    cookieValue(req, SESSION_COOKIE) ||
-    null
-  )
-}
+const publicLimit = createRateLimiter({ max: 20, windowMs: 60_000 })
+const memberLimit = createRateLimiter({ max: 40, windowMs: 60_000 })
 
 async function requireAccount(req, res) {
   let account = await getSessionAccount(bearerToken(req))

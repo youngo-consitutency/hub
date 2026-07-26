@@ -2,7 +2,8 @@ import { Router } from 'express'
 import webPush from 'web-push'
 import { getSessionAccount } from '../lib/accounts.js'
 import { ensureAdminRole } from '../lib/lifecycle.js'
-import { bearerToken, rateLimit } from '../lib/security.js'
+import { bearerToken } from '../lib/security.js'
+import { createRateLimiter } from '../lib/rateLimit.js'
 import { recordAudit } from '../lib/audit.js'
 import {
   saveSubscription,
@@ -26,7 +27,7 @@ if (vapidPublicKey && vapidPrivateKey) {
   console.warn('[Push] VAPID keys not configured - push notifications disabled')
 }
 
-const sendLimit = rateLimit({ name: 'push-send', max: 10, windowMs: 60_000 })
+const sendLimit = createRateLimiter({ max: 10, windowMs: 60_000 })
 
 /**
  * Resolve the current account or return 401. Do not use `authenticate` here;

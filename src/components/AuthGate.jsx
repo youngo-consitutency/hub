@@ -435,7 +435,7 @@ export function AuthGate({ onAuthenticated }) {
   }
 
   const finishAuth = (data) => {
-    setSession({ token: data.token, account: data.account })
+    setSession({ account: data.account })
     onAuthenticated(data.account)
   }
 
