@@ -16,6 +16,9 @@
     "bootstrap-admin": "node scripts/admin/bootstrap-admin.js",
     "seed-demo-accounts": "node scripts/admin/seed-demo-accounts.js",
     "content:check": "node scripts/content/check-content.js",
+    "research:wg-meetings": "node scripts/research/extract-wg-meeting-links.mjs",
+    "research:telegram-extract": "node scripts/research/extract-telegram-export.mjs",
+    "research:telegram-feed": "node scripts/research/feed-telegram-ace-to-hub.mjs",
     "format": "prettier --write \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
     "format:check": "prettier --check \"{.github,src,server,shared,scripts,tests,public}/**/*.{js,jsx,mjs,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
     "screenshots": "node scripts/docs/capture-readme-screenshots.mjs",
@@ -42,12 +45,22 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@open-wa/wa-automate": "^4.76.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
     "concurrently": "^8.2.2",
     "eslint": "^10.8.0",
     "globals": "^17.7.0",
+    "pino": "^10.3.1",
     "playwright": "^1.62.0",
     "prettier": "3.9.6",
-    "vite": "^8.0.0"
+    "qrcode-terminal": "^0.12.0",
+    "vite": "^8.0.0",
+    "whatsapp-web.js": "^1.34.7"
+  },
+  "allowScripts": {
+    "@open-wa/wa-automate@4.76.0": true,
+    "puppeteer@23.11.1": true,
+    "cloudflared@0.5.3": true
   }
 }

@@ -19,7 +19,14 @@ import {
 } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
 import { BETA_CONTRIBUTORS, publishedLinks } from '../content/connect.js'
-import { Radio, CalendarOff, Users, ArrowUpRight, ExternalLink } from 'lucide-react'
+import {
+  Radio,
+  CalendarOff,
+  Users,
+  ArrowUpRight,
+  ExternalLink,
+  Pin,
+} from 'lucide-react'
 
 function LiveBanner({ event }) {
   return (
@@ -82,16 +89,22 @@ export function Home() {
 
             {data.pinned.length > 0 && (
               <Section label="Pinned">
-                <div className="cardGrid">
+                <div className="pinnedStack">
                   {data.pinned.map((a) => (
                     <div
                       key={a.slug || a.title}
-                      className="card cardTight announcementCard"
+                      className="pinnedBanner"
                     >
-                      <h3>{a.title}</h3>
-                      <p className="meta">{a.body}</p>
+                      <span className="pinnedBannerIcon" aria-hidden>
+                        <Pin size={16} strokeWidth={2} />
+                      </span>
+                      <div className="pinnedBannerCopy">
+                        <p className="pinnedBannerEyebrow">Pinned announcement</p>
+                        <h3 className="pinnedBannerTitle">{a.title}</h3>
+                        <p className="pinnedBannerBody">{a.body}</p>
+                      </div>
                       {(a.ctaUrl || a.ctaDeadlineAt) && (
-                        <div className="announcementActions">
+                        <div className="announcementActions pinnedBannerActions">
                           {a.ctaDeadlineAt && (
                             <CountdownChip
                               iso={a.ctaDeadlineAt}

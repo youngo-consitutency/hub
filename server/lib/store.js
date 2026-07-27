@@ -102,6 +102,45 @@ function materialize(raw, now = new Date()) {
 
   const directory = raw.directory.map((c) => ({ ...c, wg: wgRef(c.wg) }))
 
+  // Shared opportunity board items (channel digests, open calls). Relative
+  // deadlines use deadlineInDays; absolute ISO fields pass through.
+  const opportunities = (raw.opportunities || []).map((o) => {
+    const deadlineAt =
+      o.deadlineAt ||
+      (o.deadlineInDays != null
+        ? iso(now.getTime() + o.deadlineInDays * DAY)
+        : null)
+    const startsAt =
+      o.startsAt ||
+      (o.startsInDays != null
+        ? iso(now.getTime() + o.startsInDays * DAY)
+        : null)
+    const endsAt =
+      o.endsAt ||
+      (o.endsInDays != null ? iso(now.getTime() + o.endsInDays * DAY) : null)
+    return {
+      id: `fixture:${o.slug}`,
+      orgAccountId: null,
+      organizationName: o.organizationName || 'Shared opportunity',
+      kind: o.kind,
+      title: o.title,
+      summary: o.summary || null,
+      body: o.body || null,
+      format: o.format || 'online',
+      location: o.location || null,
+      region: o.region || null,
+      startsAt,
+      endsAt,
+      deadlineAt,
+      linkUrl: o.linkUrl || null,
+      status: 'published',
+      reviewNote: null,
+      reviewedAt: null,
+      createdAt: iso(now.getTime() - (o.daysAgo || 0) * DAY),
+      source: 'fixture',
+    }
+  })
+
   // GYS is static reference content (no relative dates), passed through untouched.
   const gys = raw.gys || null
 
@@ -113,6 +152,7 @@ function materialize(raw, now = new Date()) {
     announcements,
     coys,
     directory,
+    opportunities,
     gys,
   }
 }
@@ -191,6 +231,15 @@ export function listEvents({ type } = {}) {
 
 export function listGroups() {
   return data.groups.filter((g) => g.isActive)
+}
+
+/** Fixture-backed shared opportunities for the member Opportunities board. */
+export function listFixtureOpportunities({ kind, format } = {}, now = new Date()) {
+  const cutoff = new Date(now.getTime() - DAY).toISOString()
+  return (data.opportunities || [])
+    .filter((row) => !row.endsAt || row.endsAt >= cutoff)
+    .filter((row) => !kind || kind === 'all' || row.kind === kind)
+    .filter((row) => !format || format === 'all' || row.format === format)
 }
 
 // ICS feeds include ongoing and upcoming events, optionally filtered by type or

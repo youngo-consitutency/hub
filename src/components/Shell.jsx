@@ -56,7 +56,7 @@ const STATIONS = [
   ['/coys', 'COY tracker'],
   ['/gys', 'Youth statement'],
   ['/groups', 'Working groups'],
-  ['/opportunities', 'NGO opportunities'],
+  ['/opportunities', 'Opportunities'],
   ['/directory', 'Directory'],
   ['/recognition', 'NGO recognition'],
   ['/profile', 'Profile'],
@@ -137,7 +137,7 @@ export function Shell({ children }) {
             { href: '/gys', label: 'Youth Statement', icon: ScrollText },
             {
               href: '/opportunities',
-              label: 'NGO opportunities',
+              label: 'Opportunities',
               icon: Megaphone,
             },
           ],

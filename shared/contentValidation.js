@@ -30,6 +30,15 @@ const DIRECTORY_GROUPS = new Set([
   'liaisons',
   'operations',
 ])
+const OPPORTUNITY_KINDS = new Set([
+  'event',
+  'workshop',
+  'hackathon',
+  'opportunity',
+  'call',
+  'training',
+])
+const OPPORTUNITY_FORMATS = new Set(['online', 'in_person', 'hybrid'])
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function isWebUrl(value) {
@@ -128,6 +137,41 @@ export function validateContent(content) {
     if (!String(contact.description || '').trim())
       errors.push(`directory[${index}].description is required`)
   })
+
+  // Optional board feed: shared / channel opportunities (not WG-inherent work).
+  if (content.opportunities != null) {
+    if (!Array.isArray(content.opportunities)) {
+      errors.push('opportunities must be a list')
+    } else {
+      const seenOpp = new Set()
+      content.opportunities.forEach((item, index) => {
+        const slug = String(item?.slug || '').trim()
+        if (!slug) {
+          errors.push(`opportunities[${index}].slug is required`)
+        } else if (seenOpp.has(slug)) {
+          errors.push(`opportunities contains the duplicate slug "${slug}"`)
+        } else if (!SLUG_PATTERN.test(slug)) {
+          errors.push(`opportunities[${index}].slug is not a valid slug`)
+        } else {
+          seenOpp.add(slug)
+        }
+        if (!String(item?.title || '').trim()) {
+          errors.push(`opportunities[${index}].title is required`)
+        }
+        if (!OPPORTUNITY_KINDS.has(item?.kind)) {
+          errors.push(
+            `opportunities[${index}].kind "${item?.kind}" is not supported`,
+          )
+        }
+        const format = item?.format || 'online'
+        if (!OPPORTUNITY_FORMATS.has(format)) {
+          errors.push(
+            `opportunities[${index}].format "${format}" is not supported`,
+          )
+        }
+      })
+    }
+  }
 
   validateUrls(content, '', errors)
   return errors

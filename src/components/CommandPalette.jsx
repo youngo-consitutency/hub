@@ -17,7 +17,7 @@ import {
 const PAGE_SHORTCUTS = [
   {
     to: '/opportunities',
-    title: 'NGO opportunities',
+    title: 'Opportunities',
     line: 'Events, workshops and open calls from organisations',
     keywords: 'ngo opportunity workshop hackathon open call training',
     Icon: Megaphone,
@@ -174,7 +174,7 @@ function PaletteBody({ onClose }) {
           aria-activedescendant={
             flat[active] ? `command-palette-result-${active}` : undefined
           }
-          placeholder="Search meetings, NGO opportunities, decisions, groups…"
+          placeholder="Search meetings, opportunities, decisions, groups…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}

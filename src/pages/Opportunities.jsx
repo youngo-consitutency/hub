@@ -119,9 +119,9 @@ export function Opportunities() {
   return (
     <div>
       <PageHeader
-        eyebrow="From organisations"
-        title="NGO opportunities"
-        description="Events, online workshops, hackathons and open calls posted by organisations in the constituency."
+        eyebrow="Open calls & postings"
+        title="Opportunities"
+        description="Shared open calls, fellowships, speaker slots, and events from constituency channels — plus postings from organisations in the Hub."
       >
         <div className="filterHierarchy" aria-label="Opportunity filters">
           <fieldset className="filterLevel">
@@ -163,7 +163,7 @@ export function Opportunities() {
             <Empty
               icon={Megaphone}
               title="Nothing posted for this filter"
-              body="Organisations post events, workshops and open calls here. Try another type or format."
+              body="Channel digests and organisation postings appear here. Try another type or format."
             />
           ) : null
         }
