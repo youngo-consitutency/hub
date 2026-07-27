@@ -112,7 +112,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'One Seed — global choir for COP31',
     organizationName: 'One Seed',
-    summary: 'Low-friction cultural participation — join the global choir initiative toward COP31.',
+    summary:
+      'Low-friction cultural participation — join the global choir initiative toward COP31.',
     body: 'Shared via Road to COP31 Friends. Confirm details on LinkedIn.',
     format: 'online',
     linkUrl:
@@ -124,7 +125,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'Calling young Pacific climate leaders',
     organizationName: 'Pacific climate leadership call',
-    summary: 'Opportunity for young Pacific climate leaders (amplified by COP30/31 PYCC channels).',
+    summary:
+      'Opportunity for young Pacific climate leaders (amplified by COP30/31 PYCC channels).',
     body: 'Shared via Road to COP31 Friends (12–13 Jul 2026). Confirm eligibility on the LinkedIn post.',
     format: 'hybrid',
     region: 'Pacific',
@@ -182,7 +184,9 @@ if (adaptationContact) {
   summary.added['directory.adaptation'] = 'added'
 }
 
-const genderContact = dir.find((d) => d.group === 'wg_contacts' && d.wg === 'gender')
+const genderContact = dir.find(
+  (d) => d.group === 'wg_contacts' && d.wg === 'gender',
+)
 if (!genderContact) {
   dir.push({
     group: 'wg_contacts',
@@ -206,7 +210,8 @@ const nature = fixtures.groups.find((g) => g.slug === 'nature')
 if (nature) {
   upsertResource(nature, {
     label: 'Task-force interest sheet (closed 20 Jul)',
-    description: 'Four task-force structure interest sheet for the 2026/27 Nature WG term.',
+    description:
+      'Four task-force structure interest sheet for the 2026/27 Nature WG term.',
     url: 'https://docs.google.com/spreadsheets/d/1Q-G87MBnJZ7PBB3URlpxwsY1REs4kTOaGUEWP-bN4Sc/edit',
   })
   summary.updated['nature.resources'] = 'updated'
@@ -216,7 +221,8 @@ const finance = fixtures.groups.find((g) => g.slug === 'finance')
 if (finance) {
   upsertResource(finance, {
     label: 'Turquoise Nexus Initiative (SB64)',
-    description: 'IISD ENB coverage of Turquoise Nexus / youth MoI materials from SB64.',
+    description:
+      'IISD ENB coverage of Turquoise Nexus / youth MoI materials from SB64.',
     url: 'https://enb.iisd.org/turquoise-nexus-initiative',
   })
   summary.updated['finance.resources'] = 'updated'
@@ -226,7 +232,8 @@ const agriculture = fixtures.groups.find((g) => g.slug === 'agriculture')
 if (agriculture) {
   upsertResource(agriculture, {
     label: '2026 LCOY organizers sheet',
-    description: 'Approved 2026 LCOY organizers — use to embed food & agriculture agenda toward GYS.',
+    description:
+      'Approved 2026 LCOY organizers — use to embed food & agriculture agenda toward GYS.',
     url: 'https://docs.google.com/spreadsheets/d/1vwmkHG2isO5_7AwSPcml34UaZ_R3GdcowMpcw7IwG94/edit?gid=0#gid=0',
   })
   upsertResource(agriculture, {
@@ -392,7 +399,11 @@ const plan = {
         'Action-versary festival / video / toolkit → opportunities',
         'Action-versary hub → announcements',
       ],
-      skip: ['past UNGA vote blitz', 'expired trainings', 'wg_activities (not a Hub WG)'],
+      skip: [
+        'past UNGA vote blitz',
+        'expired trainings',
+        'wg_activities (not a Hub WG)',
+      ],
     },
   ],
   countsAfter: {

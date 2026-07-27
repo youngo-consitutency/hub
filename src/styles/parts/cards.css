@@ -279,13 +279,12 @@ a.resourceRow:hover {
   gap: var(--space-4);
   width: 100%;
   padding: var(--space-4) var(--space-5);
-  background:
-    linear-gradient(
-      105deg,
-      var(--accent-tint) 0%,
-      color-mix(in srgb, var(--accent-tint) 55%, var(--bg-card)) 55%,
-      var(--bg-card) 100%
-    );
+  background: linear-gradient(
+    105deg,
+    var(--accent-tint) 0%,
+    color-mix(in srgb, var(--accent-tint) 55%, var(--bg-card)) 55%,
+    var(--bg-card) 100%
+  );
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-left: 4px solid var(--accent);
   border-radius: var(--radius-card);

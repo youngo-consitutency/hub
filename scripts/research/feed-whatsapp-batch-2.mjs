@@ -118,7 +118,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'COP31 — Australian Party overflow badge applications',
     organizationName: 'Australian Government (DCCEEW)',
-    summary: 'Overflow badge pathway for COP31 accreditation via the Australian Party process.',
+    summary:
+      'Overflow badge pathway for COP31 accreditation via the Australian Party process.',
     body: 'Shared by Gender WG CP 7 Jul 2026. Confirm nationality/residency rules on the official portal.',
     format: 'in_person',
     deadlineAt: '2026-08-13T23:59:00.000Z',
@@ -131,7 +132,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'COP31 Climate Conference Travel Support (Australia-registered)',
     organizationName: 'Australian Government',
-    summary: 'AUD 15–20k travel support grants for COP31 — Australia residency required.',
+    summary:
+      'AUD 15–20k travel support grants for COP31 — Australia residency required.',
     body: 'Shared via Gender WG WhatsApp. Confirm eligibility on grants.gov.au.',
     format: 'in_person',
     region: 'Pacific',
@@ -168,7 +170,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'Glacier Nation Global Challenge 2026',
     organizationName: 'Glacier Nation',
-    summary: 'Cryosphere / high-mountain youth challenge. Registration window referenced as 27 July 2026.',
+    summary:
+      'Cryosphere / high-mountain youth challenge. Registration window referenced as 27 July 2026.',
     body: 'Broadcast via Road to COP31 Friends (21 Jul 2026). Confirm status on Mailchimp link.',
     format: 'online',
     deadlineAt: '2026-07-27T23:59:00.000Z',
@@ -180,7 +183,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'NYC Climate Week — submit events (pay-what-you-can)',
     organizationName: 'Climate Week NYC',
-    summary: 'Submit events before fees jump — $0 tier referenced before 7 August 2026.',
+    summary:
+      'Submit events before fees jump — $0 tier referenced before 7 August 2026.',
     body: 'Shared via Road to COP31 Friends (15 Jul 2026). Confirm on the Climate Week NYC portal.',
     format: 'in_person',
     location: 'New York, USA',
@@ -207,7 +211,8 @@ const opportunities = [
     kind: 'opportunity',
     title: 'Global Localization Forum — Benin (road to COP31)',
     organizationName: 'Connected Advocacy',
-    summary: 'Africa localization dialogue framed as a road-to-COP31 process (5–7 Aug 2026).',
+    summary:
+      'Africa localization dialogue framed as a road-to-COP31 process (5–7 Aug 2026).',
     body: 'Shared via Road to COP31 Friends.',
     format: 'in_person',
     location: 'Benin',
@@ -222,7 +227,8 @@ const opportunities = [
     kind: 'call',
     title: 'NATO ENSEC COE — youth video competition',
     organizationName: 'NATO ENSEC COE',
-    summary: 'Youth video competition on energy security / blackout resilience themes.',
+    summary:
+      'Youth video competition on energy security / blackout resilience themes.',
     body: 'Shared via Energy WG WhatsApp. Deadline 31 July 2026.',
     format: 'online',
     deadlineAt: '2026-07-31T23:59:00.000Z',
@@ -239,7 +245,8 @@ const opportunities = [
     format: 'online',
     startsAt: '2026-10-06T00:00:00.000Z',
     endsAt: '2026-10-07T23:59:00.000Z',
-    linkUrl: 'https://live.letsgetdigital.com/5267-energy_2026/virtualevent/registered',
+    linkUrl:
+      'https://live.letsgetdigital.com/5267-energy_2026/virtualevent/registered',
     daysAgo: 14,
   },
   {
@@ -272,7 +279,8 @@ const opportunities = [
     kind: 'call',
     title: 'Contribute to the Global ICJ AO Implementation Toolkit',
     organizationName: 'World Youth for Climate Justice (WYCJ)',
-    summary: 'Share AO-related resources for a crowdsourced implementation hub.',
+    summary:
+      'Share AO-related resources for a crowdsourced implementation hub.',
     body: 'Email resources to nicole@wy4cj.org. Campaign channel, 15 Jul 2026.',
     format: 'online',
     linkUrl: 'https://www.wy4cj.org/icj-aonniversary',
@@ -428,13 +436,19 @@ const announcements = [
   },
 ]
 
-for (const item of opportunities) summary[item.slug] = upsertBySlug(fixtures.opportunities, item)
-for (const item of events) summary[item.slug] = upsertBySlug(fixtures.events, item)
-for (const item of submissions) summary[item.slug] = upsertBySlug(fixtures.submissions, item)
-for (const item of announcements) summary[item.slug] = upsertBySlug(fixtures.announcements, item)
+for (const item of opportunities)
+  summary[item.slug] = upsertBySlug(fixtures.opportunities, item)
+for (const item of events)
+  summary[item.slug] = upsertBySlug(fixtures.events, item)
+for (const item of submissions)
+  summary[item.slug] = upsertBySlug(fixtures.submissions, item)
+for (const item of announcements)
+  summary[item.slug] = upsertBySlug(fixtures.announcements, item)
 
 // Refresh Energy GYS submission
-const energyGys = fixtures.submissions.find((s) => s.slug === 'energy-gys-input-2026')
+const energyGys = fixtures.submissions.find(
+  (s) => s.slug === 'energy-gys-input-2026',
+)
 if (energyGys) {
   energyGys.status = 'open'
   energyGys.deadlineInDays = 4.2
@@ -445,7 +459,9 @@ if (energyGys) {
 }
 
 // Enrich existing COP31 volunteer announcement if present
-const volunteerAnn = fixtures.announcements.find((a) => a.slug === 'cop31-volunteers-open')
+const volunteerAnn = fixtures.announcements.find(
+  (a) => a.slug === 'cop31-volunteers-open',
+)
 if (volunteerAnn) {
   volunteerAnn.body =
     'Applications for the COP31 volunteer programme in Antalya (9–20 November 2026) remain open through August. More than 10,000 people from 104 countries have already applied — details at cop31volunteers.com. Recent applicants report a video interview step due around 2 August.'
@@ -458,7 +474,8 @@ const agriculture = fixtures.groups.find((g) => g.slug === 'agriculture')
 if (agriculture) {
   upsertResource(agriculture, {
     label: 'GYS 2026 F&A draft inputs',
-    description: 'Shared Google Doc for Food & Agriculture GYS thematic inputs (Suggestion mode).',
+    description:
+      'Shared Google Doc for Food & Agriculture GYS thematic inputs (Suggestion mode).',
     url: 'https://docs.google.com/document/d/1hZRlinZEsJavOX7X9yFH0ZgI0JmPnCwB/edit?usp=sharing',
   })
   summary['agriculture.resources'] = 'updated'
@@ -468,7 +485,8 @@ const gender = fixtures.groups.find((g) => g.slug === 'gender')
 if (gender) {
   upsertResource(gender, {
     label: '2026 policy & submissions roadmap',
-    description: 'CP-maintained Gender WG plan for 2026 submissions and processes.',
+    description:
+      'CP-maintained Gender WG plan for 2026 submissions and processes.',
     url: 'https://docs.google.com/document/d/14x8deg6vEu1oKLfWP_EzBtMqPFVGPNNePP9T4-EzE3E/edit',
   })
   upsertResource(gender, {
@@ -488,7 +506,8 @@ const adaptation = fixtures.groups.find((g) => g.slug === 'adaptation')
 if (adaptation) {
   upsertResource(adaptation, {
     label: 'SB64 Adaptation central working document',
-    description: 'Positions, negotiation notes, resources, and role coordination hub.',
+    description:
+      'Positions, negotiation notes, resources, and role coordination hub.',
     url: 'https://docs.google.com/document/d/1-pHu4hLJV1ohRWDfkDqYPAmJYDlq3luAA-ljy20x02w/edit',
   })
   upsertResource(adaptation, {
@@ -498,7 +517,8 @@ if (adaptation) {
   })
   upsertResource(adaptation, {
     label: 'SB64 prep slides (archive)',
-    description: 'Adaptation WG SB64 preparation slides and capacity-building archive.',
+    description:
+      'Adaptation WG SB64 preparation slides and capacity-building archive.',
     url: 'https://docs.google.com/presentation/d/11DJ1ZhxH3qcDza4UhmIfTNZpbssKshWf8yeMCIruzRM/edit',
   })
   summary['adaptation.resources'] = 'updated'
@@ -649,10 +669,20 @@ const wgActs = [
 for (const item of wgActs) summary[item.id] = upsertActivity(activities, item)
 writeJson(ACTIVITIES, activities)
 
-console.log(JSON.stringify({ ok: true, counts: {
-  opportunities: opportunities.length,
-  events: events.length,
-  submissions: submissions.length,
-  announcements: announcements.length,
-  wgActivities: wgActs.length,
-}, summary }, null, 2))
+console.log(
+  JSON.stringify(
+    {
+      ok: true,
+      counts: {
+        opportunities: opportunities.length,
+        events: events.length,
+        submissions: submissions.length,
+        announcements: announcements.length,
+        wgActivities: wgActs.length,
+      },
+      summary,
+    },
+    null,
+    2,
+  ),
+)

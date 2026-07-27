@@ -91,15 +91,14 @@ export function Home() {
               <Section label="Pinned">
                 <div className="pinnedStack">
                   {data.pinned.map((a) => (
-                    <div
-                      key={a.slug || a.title}
-                      className="pinnedBanner"
-                    >
+                    <div key={a.slug || a.title} className="pinnedBanner">
                       <span className="pinnedBannerIcon" aria-hidden>
                         <Pin size={16} strokeWidth={2} />
                       </span>
                       <div className="pinnedBannerCopy">
-                        <p className="pinnedBannerEyebrow">Pinned announcement</p>
+                        <p className="pinnedBannerEyebrow">
+                          Pinned announcement
+                        </p>
                         <h3 className="pinnedBannerTitle">{a.title}</h3>
                         <p className="pinnedBannerBody">{a.body}</p>
                       </div>

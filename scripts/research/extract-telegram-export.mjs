@@ -17,7 +17,9 @@ const OUT_DIR = path.join(ROOT, 'data', 'research')
 
 const exportDir = process.argv[2]
 if (!exportDir) {
-  console.error('Usage: node scripts/research/extract-telegram-export.mjs <ChatExportDir>')
+  console.error(
+    'Usage: node scripts/research/extract-telegram-export.mjs <ChatExportDir>',
+  )
   process.exit(1)
 }
 
@@ -93,7 +95,9 @@ function deadlineGuess(text) {
 function dateGuess(text) {
   const m =
     text.match(/(?:date|when|on)[:\s]*([^\n]{3,60})/i) ||
-    text.match(/((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[^\n]{0,40})/i) ||
+    text.match(
+      /((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[^\n]{0,40})/i,
+    ) ||
     text.match(
       /(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}[^\n]{0,40})/i,
     )
@@ -103,14 +107,19 @@ function dateGuess(text) {
 function classify(m) {
   const hay = `${m.text} ${m.links.join(' ')}`
   const hasMeeting =
-    m.links.some((l) => MEETING_RE.test(l)) || /join (us|the call|zoom|meet)/i.test(m.text)
+    m.links.some((l) => MEETING_RE.test(l)) ||
+    /join (us|the call|zoom|meet)/i.test(m.text)
   const hasForm = m.links.some((l) => FORM_RE.test(l))
   const isOpp =
     OPP_KW.test(hay) &&
-    (hasForm || /deadline|apply|call for|fellowship|internship|scholarship|funding/i.test(hay))
+    (hasForm ||
+      /deadline|apply|call for|fellowship|internship|scholarship|funding/i.test(
+        hay,
+      ))
   const isWg =
     WG_ACT_KW.test(hay) ||
-    (ACE_KW.test(hay) && (hasMeeting || hasForm || /deadline|session|workshop|call/i.test(hay)))
+    (ACE_KW.test(hay) &&
+      (hasMeeting || hasForm || /deadline|session|workshop|call/i.test(hay)))
   const types = []
   if (isOpp) types.push('opportunity')
   if (hasMeeting) types.push('meeting')
@@ -132,14 +141,21 @@ function dedupe(arr, key = 'title') {
 }
 
 function parseExport(dir) {
-  const files = ['messages.html', 'messages2.html', 'messages3.html', 'messages4.html']
+  const files = [
+    'messages.html',
+    'messages2.html',
+    'messages3.html',
+    'messages4.html',
+  ]
     .map((f) => path.join(dir, f))
     .filter((f) => fs.existsSync(f))
 
   const titleHtml = fs.readFileSync(files[0], 'utf8')
   const chatTitle =
-    decode((titleHtml.match(/<div class="text bold">\s*([\s\S]*?)\s*<\/div>/) || [])[1] || '') ||
-    'Group'
+    decode(
+      (titleHtml.match(/<div class="text bold">\s*([\s\S]*?)\s*<\/div>/) ||
+        [])[1] || '',
+    ) || 'Group'
 
   const messages = []
   let currentDate = null
@@ -152,7 +168,10 @@ function parseExport(dir) {
         const d = part.match(/<div class="body details">\s*([^<]+)/)
         if (d) {
           const label = d[1].trim()
-          if (/^\d{1,2}\s+\w+\s+\d{4}/.test(label) || /^\w+\s+\d{1,2},\s+\d{4}/.test(label)) {
+          if (
+            /^\d{1,2}\s+\w+\s+\d{4}/.test(label) ||
+            /^\w+\s+\d{1,2},\s+\d{4}/.test(label)
+          ) {
             currentDate = label
           }
         }
@@ -161,11 +180,13 @@ function parseExport(dir) {
       if (!part.startsWith('default')) continue
       const id = (part.match(/id="(message\d+)"/) || [])[1] || null
       const title = (part.match(/title="([^"]+)"/) || [])[1] || ''
-      const fromBlocks = [...part.matchAll(/<div class="from_name">\s*([\s\S]*?)\s*<\/div>/g)].map(
-        (x) => decode(x[1]),
-      )
+      const fromBlocks = [
+        ...part.matchAll(/<div class="from_name">\s*([\s\S]*?)\s*<\/div>/g),
+      ].map((x) => decode(x[1]))
       const from =
-        fromBlocks.find((n) => n && n !== 'Imported Message') || fromBlocks[0] || 'Unknown'
+        fromBlocks.find((n) => n && n !== 'Imported Message') ||
+        fromBlocks[0] ||
+        'Unknown'
       const textMatch = part.match(/<div class="text">\s*([\s\S]*?)\s*<\/div>/)
       if (!textMatch) continue
       const rawText = textMatch[1]
@@ -187,7 +208,9 @@ function parseExport(dir) {
 }
 
 const { chatTitle, messages } = parseExport(exportDir)
-const classified = messages.map((m) => ({ ...m, types: classify(m) })).filter((m) => m.types.length)
+const classified = messages
+  .map((m) => ({ ...m, types: classify(m) }))
+  .filter((m) => m.types.length)
 
 const opportunities = classified.filter((m) => m.types.includes('opportunity'))
 const meetings = classified.filter((m) => m.types.includes('meeting'))
@@ -203,7 +226,14 @@ const summary = {
   scrapedAt: new Date().toISOString(),
   source: path.resolve(exportDir),
   chatTitle,
-  inferredWg: ACE_KW.test(messages.slice(0, 50).map((m) => m.text).join(' ')) ? 'ace' : null,
+  inferredWg: ACE_KW.test(
+    messages
+      .slice(0, 50)
+      .map((m) => m.text)
+      .join(' '),
+  )
+    ? 'ace'
+    : null,
   stats: {
     totalMessages: messages.length,
     classified: classified.length,
@@ -223,7 +253,9 @@ const summary = {
       title: titleGuess(m.text),
       deadlineHint: deadlineGuess(m.text),
       dateHint: dateGuess(m.text),
-      links: m.links.filter((l) => FORM_RE.test(l) || /^https?:/i.test(l)).slice(0, 8),
+      links: m.links
+        .filter((l) => FORM_RE.test(l) || /^https?:/i.test(l))
+        .slice(0, 8),
       snippet: snippet(m.text),
       hubTarget: 'ngo_opportunity | announcement | submission',
       suggestedKind: /webinar|workshop|session/i.test(m.text)
@@ -282,12 +314,19 @@ const now = new Date('2026-07-27')
 function looksCurrent(item) {
   const hay = `${item.deadlineHint || ''} ${item.dateHint || ''} ${item.postedAt || ''} ${item.snippet || ''}`
   if (/2025\b/.test(hay) && !/2026\b/.test(hay)) return false
-  if (/\b(January|February|March|April|May|June)\s+2026\b/i.test(hay) && !/\b(July|August|September|October|November|December)\s+2026\b/i.test(hay)) {
+  if (
+    /\b(January|February|March|April|May|June)\s+2026\b/i.test(hay) &&
+    !/\b(July|August|September|October|November|December)\s+2026\b/i.test(hay)
+  ) {
     // early 2026 dates are likely past relative to Jul 27 2026 unless still open language
     if (!/still open|extended|ongoing|rolling/i.test(hay)) return false
   }
-  if (/\b(July|August|September|October|November|December)\s+2026\b/i.test(hay)) return true
-  if (/deadline|apply|register|upcoming|this week|tomorrow|today/i.test(hay) && /2026|UTC/i.test(hay)) {
+  if (/\b(July|August|September|October|November|December)\s+2026\b/i.test(hay))
+    return true
+  if (
+    /deadline|apply|register|upcoming|this week|tomorrow|today/i.test(hay) &&
+    /2026|UTC/i.test(hay)
+  ) {
     return true
   }
   // posted in last ~60 days of export window
@@ -313,7 +352,9 @@ console.log(`inferredWg: ${summary.inferredWg}`)
 console.log(`\n=== OPPORTUNITIES (${summary.opportunities.length}) ===`)
 summary.opportunities.forEach((o, i) => {
   console.log(`\n${i + 1}. ${o.title}`)
-  console.log(`   posted: ${o.postedAt} | deadline: ${o.deadlineHint || '—'} | date: ${o.dateHint || '—'}`)
+  console.log(
+    `   posted: ${o.postedAt} | deadline: ${o.deadlineHint || '—'} | date: ${o.dateHint || '—'}`,
+  )
   console.log(`   kind→ ${o.suggestedKind} | from: ${o.from}`)
   console.log(`   links: ${(o.links || []).slice(0, 3).join(' | ') || '—'}`)
   console.log(`   ${o.snippet.slice(0, 180)}`)
@@ -327,7 +368,9 @@ summary.meetings.forEach((o, i) => {
 console.log(`\n=== WG ACTIVITIES (${summary.wgActivities.length}) ===`)
 summary.wgActivities.forEach((o, i) => {
   console.log(`\n${i + 1}. ${o.title}`)
-  console.log(`   posted: ${o.postedAt} | deadline: ${o.deadlineHint || '—'} | kind→ ${o.suggestedKind}`)
+  console.log(
+    `   posted: ${o.postedAt} | deadline: ${o.deadlineHint || '—'} | kind→ ${o.suggestedKind}`,
+  )
   console.log(`   ${o.snippet.slice(0, 180)}`)
 })
 console.log(`\n=== LIKELY CURRENT (relative to 2026-07-27) ===`)

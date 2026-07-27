@@ -234,7 +234,10 @@ export function listGroups() {
 }
 
 /** Fixture-backed shared opportunities for the member Opportunities board. */
-export function listFixtureOpportunities({ kind, format } = {}, now = new Date()) {
+export function listFixtureOpportunities(
+  { kind, format } = {},
+  now = new Date(),
+) {
   const cutoff = new Date(now.getTime() - DAY).toISOString()
   return (data.opportunities || [])
     .filter((row) => !row.endsAt || row.endsAt >= cutoff)

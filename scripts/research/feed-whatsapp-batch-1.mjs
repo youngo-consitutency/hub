@@ -198,10 +198,14 @@ const announcements = [
   },
 ]
 
-for (const item of opportunities) summary[item.slug] = upsertBySlug(fixtures.opportunities, item)
-for (const item of events) summary[item.slug] = upsertBySlug(fixtures.events, item)
-for (const item of submissions) summary[item.slug] = upsertBySlug(fixtures.submissions, item)
-for (const item of announcements) summary[item.slug] = upsertBySlug(fixtures.announcements, item)
+for (const item of opportunities)
+  summary[item.slug] = upsertBySlug(fixtures.opportunities, item)
+for (const item of events)
+  summary[item.slug] = upsertBySlug(fixtures.events, item)
+for (const item of submissions)
+  summary[item.slug] = upsertBySlug(fixtures.submissions, item)
+for (const item of announcements)
+  summary[item.slug] = upsertBySlug(fixtures.announcements, item)
 
 const finance = fixtures.groups.find((g) => g.slug === 'finance')
 if (finance) {
@@ -212,12 +216,14 @@ if (finance) {
   })
   upsertResource(finance, {
     label: 'MDB climate finance dashboard',
-    description: 'Multilateral development bank climate finance dashboard (ADB host).',
+    description:
+      'Multilateral development bank climate finance dashboard (ADB host).',
     url: 'https://data.adb.org/dashboard/mdb-climate-finance-dashboard',
   })
   upsertResource(finance, {
     label: '2026 workplan input doc',
-    description: 'Shared Google Doc to add ideas for the Finance & Markets 2026 workplan.',
+    description:
+      'Shared Google Doc to add ideas for the Finance & Markets 2026 workplan.',
     url: 'https://docs.google.com/document/d/1KveP7TnWO74Ceukxi-HDZZ1Vs6QSnV4jietTh2e89SA/edit?usp=sharing',
   })
   summary['finance.resources'] = 'updated'

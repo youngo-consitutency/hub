@@ -69,11 +69,7 @@ export function Statement() {
                       rel="noreferrer"
                     >
                       Submit inputs
-                      <ExternalLink
-                        size={14}
-                        strokeWidth={1.75}
-                        aria-hidden
-                      />
+                      <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
                     </a>
                   )}
                   {current.releaseUrl && (

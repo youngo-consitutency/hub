@@ -231,7 +231,10 @@ WhatsApp WG meeting-link extract (Baileys)
         try {
           groupMeta = await sock.groupFetchAllParticipating()
         } catch (err) {
-          console.warn('groupFetchAllParticipating failed:', err?.message || err)
+          console.warn(
+            'groupFetchAllParticipating failed:',
+            err?.message || err,
+          )
           groupMeta = {}
         }
         console.log(

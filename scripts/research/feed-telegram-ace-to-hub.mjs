@@ -55,7 +55,8 @@ function removeSlugs(list, slugs) {
 function upsertActivity(list, item) {
   const idx = list.findIndex(
     (row) =>
-      row.id === item.id || (row.wg_slug === item.wg_slug && row.title === item.title),
+      row.id === item.id ||
+      (row.wg_slug === item.wg_slug && row.title === item.title),
   )
   if (idx >= 0) {
     list[idx] = { ...list[idx], ...item }
@@ -314,12 +315,14 @@ const wgActivities = [
 const aceResources = [
   {
     label: 'COP31 ACE Day concept note',
-    description: 'Shared Google Doc for Presidency-requested ACE Day concept note inputs.',
+    description:
+      'Shared Google Doc for Presidency-requested ACE Day concept note inputs.',
     url: 'https://docs.google.com/document/d/16DdBPgsdpmPPFW1-Nb0JfY6QhXe50pFVCYBrjeuCr7E/edit?usp=sharing',
   },
   {
     label: 'ACE monthly Meet (latest shared)',
-    description: 'Google Meet used for the 27 June 2026 monthly meeting & SB64 debrief.',
+    description:
+      'Google Meet used for the 27 June 2026 monthly meeting & SB64 debrief.',
     url: 'https://meet.google.com/tjp-fcrx-vjt',
   },
 ]
@@ -352,7 +355,10 @@ for (const event of fixtureEvents) {
   summary.fixtures[event.slug] = upsertBySlug(fixtures.events, event)
 }
 for (const submission of fixtureSubmissions) {
-  summary.fixtures[submission.slug] = upsertBySlug(fixtures.submissions, submission)
+  summary.fixtures[submission.slug] = upsertBySlug(
+    fixtures.submissions,
+    submission,
+  )
 }
 for (const announcement of fixtureAnnouncements) {
   summary.fixtures[announcement.slug] = upsertBySlug(
