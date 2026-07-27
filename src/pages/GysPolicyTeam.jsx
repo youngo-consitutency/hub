@@ -298,14 +298,14 @@ export function GysPolicyTeam() {
                   {data.synthesis.bullets?.length > 0 && (
                     <ul className="gysSynthesisBullets">
                       {data.synthesis.bullets.map((bullet, index) => (
-                        <li key={`${bullet.citations[0]?.contributionId}-${index}`}>
+                        <li
+                          key={`${bullet.citations[0]?.contributionId}-${index}`}
+                        >
                           <div>
                             <p>{bullet.text}</p>
                             <p className="meta">
                               Cited:{' '}
-                              {bullet.citations
-                                .map((c) => c.title)
-                                .join(', ')}
+                              {bullet.citations.map((c) => c.title).join(', ')}
                             </p>
                           </div>
                           <Button

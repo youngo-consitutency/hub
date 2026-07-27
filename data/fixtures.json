@@ -1,88 +1,1318 @@
 {
   "groups": [
-    { "slug": "ace", "name": "ACE", "monogram": "AC", "focusLine": "Action for Climate Empowerment — education, training, public participation, and access to information", "tags": ["Education", "Participation", "ACE"], "resources": [ { "label": "UNFCCC ACE hub", "description": "Official ACE pages, dialogues, and Party/non-Party submission information.", "url": "https://unfccc.int/topics/education-youth/ace" }, { "label": "ACE Dialogue 2026 (SB64)", "description": "In-session ACE Dialogue and midterm-review context from SB64.", "url": "https://unfccc.int/event/in-session-action-for-climate-empowerment-ace-dialogue-2026" } ] },
-    { "slug": "finance", "name": "Finance & Markets", "monogram": "FI", "focusLine": "Climate finance, NCQG follow-up, markets, and youth access to funds", "tags": ["Finance", "Markets", "Policy"], "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW", "driveUrl": "https://drive.google.com/drive/folders/1bWbTwsHKTommF_Y4TccbSieN_qPkYV-0", "groupUrl": "https://linktr.ee/finance_and_markets_wg_youngo", "resources": [ { "label": "Finance & Markets Linktree", "description": "Drive, minutes, WhatsApp, join form, and LinkedIn entry points.", "url": "https://linktr.ee/finance_and_markets_wg_youngo" }, { "label": "Join form (Airtable)", "description": "Public join form for the Finance & Markets working group.", "url": "https://airtable.com/appUMHmaXPuborUFg/pagRl0evIzWCaaqpN/form" }, { "label": "WhatsApp channel", "description": "Public WhatsApp invite for Finance & Markets coordination.", "url": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW" }, { "label": "Shared Drive", "description": "WG documents and folders.", "url": "https://drive.google.com/drive/folders/1bWbTwsHKTommF_Y4TccbSieN_qPkYV-0" }, { "label": "LinkedIn — YOUNGO Climate Finance", "description": "Company page for Finance & Markets updates.", "url": "https://www.linkedin.com/company/youngoclimatefinance" }, { "label": "Instagram — @youngo.climatefinance", "description": "Public updates from the Finance & Markets working group.", "url": "https://www.instagram.com/youngo.climatefinance/" } ] },
-    { "slug": "adaptation", "name": "Adaptation", "monogram": "AD", "focusLine": "Adaptation, National Adaptation Plans, and locally led resilience", "tags": ["Adaptation", "Resilience"], "resources": [ { "label": "Child- and youth-responsive GGA brief (SB64)", "description": "YOUNGO Adaptation with UNICEF, UNFPA, Save the Children, and Young Lives on operationalising the Global Goal on Adaptation.", "url": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64" } ] },
-    { "slug": "loss-and-damage", "name": "Loss & Damage", "monogram": "LD", "focusLine": "Loss and damage finance, Fund for Responding to Loss and Damage, and justice for frontline communities", "tags": ["Loss and damage", "Finance", "Justice"], "resources": [ { "label": "Loss & Damage WG on LinkedIn", "description": "Santiago Network, WIM review, FRLD, and youth participation updates.", "url": "https://www.linkedin.com/company/youngo-loss-damage" }, { "label": "Instagram — @youngolandd", "description": "Loss & Damage WG public channel (handle reported publicly; confirm via Linktree/Notion).", "url": "https://www.instagram.com/youngolandd/" } ] },
-    { "slug": "health", "name": "Health", "monogram": "HE", "focusLine": "Climate and health intersections and WHO–UNFCCC engagement", "tags": ["Health", "Policy"], "resources": [ { "label": "Health WG on LinkedIn", "description": "Public posts on climate–health asks, including NDC and World Environmental Health Day framing.", "url": "https://www.linkedin.com/company/youngo-health-working-group/" } ] },
-    { "slug": "energy", "name": "Energy", "monogram": "EN", "focusLine": "Just energy transition, renewables scale-up, and phasing out fossil fuels", "tags": ["Energy", "Mitigation", "Policy"], "resources": [ { "label": "Energy WG on LinkedIn", "description": "GYS consultations, WG announcements, and follow-ups from Contact Points Saikat Das and Dimple Asopa.", "url": "https://www.linkedin.com/company/youngo-energy-working-group/" }, { "label": "Instagram — @youngo.energy", "description": "Energy WG public updates.", "url": "https://www.instagram.com/youngo.energy/" }, { "label": "Climate Watch — NDC tracker", "description": "Compare countries' Nationally Determined Contributions and climate targets.", "url": "https://www.climatewatchdata.org/ndc-tracker" }, { "label": "Climate Action Tracker — net-zero evaluations", "description": "Independent analysis of governments' net-zero pledges.", "url": "https://climateactiontracker.org/global/cat-net-zero-target-evaluations/" } ] },
-    { "slug": "mitigation", "name": "Mitigation", "monogram": "MI", "focusLine": "Emission pathways, just transition, and ambition in national climate plans", "tags": ["Mitigation", "Policy"] },
-    { "slug": "ndcs", "name": "NDCs", "monogram": "ND", "focusLine": "NDC enhancement, tracking, and youth inputs into national climate contributions", "tags": ["NDCs", "Mitigation", "Policy"], "resources": [ { "label": "NDCs WG join form", "description": "Public onboarding form for the NDCs working group (Contact Points Zipporah Njenga and Salsalina Larasati).", "url": "https://docs.google.com/forms/d/e/1FAIpQLSdzazENQbA9-WRXSX4vhy-aeKwO6F27ulDQlZjPuVUqi38p7A/viewform" }, { "label": "NDCs WG on LinkedIn", "description": "Active channel for GYS amplification, PAICC representation, and NDC process updates.", "url": "https://www.linkedin.com/company/youngondcwg" } ] },
-    { "slug": "oceans", "name": "Oceans", "monogram": "OC", "focusLine": "Ocean–climate nexus, blue carbon, and coastal resilience", "tags": ["Oceans", "Biodiversity"], "groupUrl": "https://linktr.ee/oceansvoice", "resources": [ { "label": "Oceans Voice Linktree", "description": "Join form, Ocean Talks+, and Oceans WG entry points.", "url": "https://linktr.ee/oceansvoice" }, { "label": "Instagram — @youngo_oceansvoice", "description": "Oceans WG public updates.", "url": "https://www.instagram.com/youngo_oceansvoice/" } ] },
-    { "slug": "agriculture", "name": "Food & Agriculture", "monogram": "AG", "focusLine": "Food systems, agriculture, and climate-resilient livelihoods — including the Food & Agriculture Academy toward COP31", "tags": ["Agriculture", "Food systems"], "groupUrl": "https://linktr.ee/youngofoodandagriculture", "resources": [ { "label": "Food & Agriculture Academy / WG site", "description": "Academy sessions (Jul–Dec 2026), onboarding handbook, youth project map, and WG join paths.", "url": "https://youngoagrifood.com/" }, { "label": "Food & Agriculture Linktree", "description": "Onboarding, Academy signup, and WG channels.", "url": "https://linktr.ee/youngofoodandagriculture" }, { "label": "WG onboarding form", "description": "Public onboarding form for Food & Agriculture (Contact Points Bruna, Imran, Laureen).", "url": "https://docs.google.com/forms/d/e/1FAIpQLScdQj8dPp6oiI7yxla0jAjS-J00F5ZO3qrttggLHvcr9aqSog/viewform" }, { "label": "Instagram — @youngo.foodandagriculture", "description": "Academy and WG updates.", "url": "https://www.instagram.com/youngo.foodandagriculture/" } ] },
-    { "slug": "nature", "name": "Nature", "monogram": "NA", "focusLine": "Biodiversity–climate nexus, Nature WG task forces, and youth inputs into nature-related UNFCCC and CBD spaces", "tags": ["Nature", "Biodiversity"], "resources": [ { "label": "Nature WG on LinkedIn", "description": "2026/27 term, task-force structure, and Contact Points Wening & Mustafa.", "url": "https://www.linkedin.com/company/youngo-nature-working-group" } ] },
-    { "slug": "gender", "name": "Gender", "monogram": "GE", "focusLine": "Gender-responsive climate policy and intergenerational equity", "tags": ["Gender", "Justice"] },
-    { "slug": "human-rights", "name": "Human Rights", "monogram": "HR", "focusLine": "Human rights, civic space, and rights-based climate action", "tags": ["Human rights", "Justice"], "resources": [ { "label": "SB64 AIM cross-constituency intervention", "description": "Cross-constituency intervention on defender safety, observer space, and accountability — relevant to civic space and rights-based asks.", "url": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/" } ] },
-    { "slug": "technology", "name": "Technology", "monogram": "TE", "focusLine": "Technology Mechanism, TEC/CTCN, and equitable technology access", "tags": ["Technology", "Policy"] },
-    { "slug": "conflict-of-interest", "name": "Conflict of Interest", "monogram": "CI", "focusLine": "Conflict of interest safeguards and fossil-fuel influence in climate spaces", "tags": ["Governance", "Integrity"], "resources": [ { "label": "SB64 AIM cross-constituency intervention", "description": "YOUNGO joined ENGO/TUNGO/WGC on defender safety, observer space, and accountability / conflicts of interest.", "url": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/" } ] },
-    { "slug": "coy", "name": "Conference of Youth", "monogram": "CY", "focusLine": "LCOY, RCOY, and COY coordination — conferences that feed the Global Youth Statement", "tags": ["COY", "Engagement"], "resources": [ { "label": "UNFCCC — Conference of Youth", "description": "Official COY background and updates (COY21 Antalya ahead of COP31).", "url": "https://unfccc.int/topics/education-and-youth/youngo/coy" }, { "label": "LCOY Linktree", "description": "LCOY programme links; 2026 liaisons Dr. Anirudh Janagam and Jeremy Nathanael.", "url": "https://linktr.ee/youngolcoys" }, { "label": "Instagram — @youngolcoys", "description": "LCOY working-group updates.", "url": "https://www.instagram.com/youngolcoys/" }, { "label": "YOUNGO WG & OT contacts (Notion)", "description": "Canonical Working Groups and Operational Teams roster (replaces the old Google Sheet).", "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e" }, { "label": "Constituency Linktree", "description": "Central YOUNGO entry points including membership and WG/OT roster.", "url": "https://linktr.ee/YOUNGO.UNFCCC" }, { "label": "Capacity Building series signup", "description": "Public signup for YOUNGO Capacity Building sessions (from constituency Linktree).", "url": "https://docs.google.com/forms/d/e/1FAIpQLSfL3zW1QqF8xgE-_uOksyrljjfcm6W9_cXDybPID3dNUrtYag/viewform" } ] }
+    {
+      "slug": "ace",
+      "name": "ACE",
+      "monogram": "AC",
+      "focusLine": "Action for Climate Empowerment — education, training, public participation, and access to information",
+      "tags": [
+        "Education",
+        "Participation",
+        "ACE"
+      ],
+      "resources": [
+        {
+          "label": "UNFCCC ACE hub",
+          "description": "Official ACE pages, dialogues, and Party/non-Party submission information.",
+          "url": "https://unfccc.int/topics/education-youth/ace"
+        },
+        {
+          "label": "ACE Dialogue 2026 (SB64)",
+          "description": "In-session ACE Dialogue and midterm-review context from SB64.",
+          "url": "https://unfccc.int/event/in-session-action-for-climate-empowerment-ace-dialogue-2026"
+        },
+        {
+          "label": "COP31 ACE Day concept note",
+          "description": "Shared Google Doc for Presidency-requested ACE Day concept note inputs.",
+          "url": "https://docs.google.com/document/d/16DdBPgsdpmPPFW1-Nb0JfY6QhXe50pFVCYBrjeuCr7E/edit?usp=sharing"
+        },
+        {
+          "label": "ACE monthly Meet (latest shared)",
+          "description": "Google Meet used for the 27 June 2026 monthly meeting & SB64 debrief.",
+          "url": "https://meet.google.com/tjp-fcrx-vjt"
+        },
+        {
+          "label": "Joint ACE Policy Paper (Mar 2026)",
+          "description": "Consolidated advocacy paper on GWP midterm review and ACE Action Plan (ACE Advocacy Network / YES Europe).",
+          "url": "https://yeseurope.org/wp-content/uploads/2026/03/Joint-ACE-Policy-Paper-2nd-March-2026.pdf"
+        }
+      ]
+    },
+    {
+      "slug": "finance",
+      "name": "Finance & Markets",
+      "monogram": "FI",
+      "focusLine": "Climate finance, NCQG follow-up, markets, and youth access to funds",
+      "tags": [
+        "Finance",
+        "Markets",
+        "Policy"
+      ],
+      "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW",
+      "driveUrl": "https://drive.google.com/drive/folders/1bWbTwsHKTommF_Y4TccbSieN_qPkYV-0",
+      "groupUrl": "https://linktr.ee/finance_and_markets_wg_youngo",
+      "resources": [
+        {
+          "label": "Finance & Markets Linktree",
+          "description": "Drive, minutes, WhatsApp, join form, and LinkedIn entry points.",
+          "url": "https://linktr.ee/finance_and_markets_wg_youngo"
+        },
+        {
+          "label": "Join form (Airtable)",
+          "description": "Public join form for the Finance & Markets working group.",
+          "url": "https://airtable.com/appUMHmaXPuborUFg/pagRl0evIzWCaaqpN/form"
+        },
+        {
+          "label": "WhatsApp channel",
+          "description": "Public WhatsApp invite for Finance & Markets coordination.",
+          "url": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW"
+        },
+        {
+          "label": "Shared Drive",
+          "description": "WG documents and folders.",
+          "url": "https://drive.google.com/drive/folders/1bWbTwsHKTommF_Y4TccbSieN_qPkYV-0"
+        },
+        {
+          "label": "LinkedIn — YOUNGO Climate Finance",
+          "description": "Company page for Finance & Markets updates.",
+          "url": "https://www.linkedin.com/company/youngoclimatefinance"
+        },
+        {
+          "label": "Instagram — @youngo.climatefinance",
+          "description": "Public updates from the Finance & Markets working group.",
+          "url": "https://www.instagram.com/youngo.climatefinance/"
+        },
+        {
+          "label": "2026 membership renewal form",
+          "description": "Confirm Finance & Markets WG membership for the 2026 term.",
+          "url": "https://forms.gle/2dM2Tm3bs9xgt5Rd6"
+        },
+        {
+          "label": "MDB climate finance dashboard",
+          "description": "Multilateral development bank climate finance dashboard (ADB host).",
+          "url": "https://data.adb.org/dashboard/mdb-climate-finance-dashboard"
+        },
+        {
+          "label": "2026 workplan input doc",
+          "description": "Shared Google Doc to add ideas for the Finance & Markets 2026 workplan.",
+          "url": "https://docs.google.com/document/d/1KveP7TnWO74Ceukxi-HDZZ1Vs6QSnV4jietTh2e89SA/edit?usp=sharing"
+        },
+        {
+          "label": "Turquoise Nexus Initiative (SB64)",
+          "description": "IISD ENB coverage of Turquoise Nexus / youth MoI materials from SB64.",
+          "url": "https://enb.iisd.org/turquoise-nexus-initiative"
+        }
+      ]
+    },
+    {
+      "slug": "adaptation",
+      "name": "Adaptation",
+      "monogram": "AD",
+      "focusLine": "Adaptation, National Adaptation Plans, and locally led resilience",
+      "tags": [
+        "Adaptation",
+        "Resilience"
+      ],
+      "resources": [
+        {
+          "label": "Child- and youth-responsive GGA brief (SB64)",
+          "description": "YOUNGO Adaptation with UNICEF, UNFPA, Save the Children, and Young Lives on operationalising the Global Goal on Adaptation.",
+          "url": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64"
+        },
+        {
+          "label": "SB64 Adaptation central working document",
+          "description": "Positions, negotiation notes, resources, and role coordination hub.",
+          "url": "https://docs.google.com/document/d/1-pHu4hLJV1ohRWDfkDqYPAmJYDlq3luAA-ljy20x02w/edit"
+        },
+        {
+          "label": "SB64 Adaptation coordination WhatsApp",
+          "description": "Day-to-day adaptation negotiation coordination channel.",
+          "url": "https://chat.whatsapp.com/G5aGCg0eIvL4MwOlwGLC8U"
+        },
+        {
+          "label": "SB64 prep slides (archive)",
+          "description": "Adaptation WG SB64 preparation slides and capacity-building archive.",
+          "url": "https://docs.google.com/presentation/d/11DJ1ZhxH3qcDza4UhmIfTNZpbssKshWf8yeMCIruzRM/edit"
+        }
+      ]
+    },
+    {
+      "slug": "loss-and-damage",
+      "name": "Loss & Damage",
+      "monogram": "LD",
+      "focusLine": "Loss and damage finance, Fund for Responding to Loss and Damage, and justice for frontline communities",
+      "tags": [
+        "Loss and damage",
+        "Finance",
+        "Justice"
+      ],
+      "resources": [
+        {
+          "label": "Loss & Damage WG on LinkedIn",
+          "description": "Santiago Network, WIM review, FRLD, and youth participation updates.",
+          "url": "https://www.linkedin.com/company/youngo-loss-damage"
+        },
+        {
+          "label": "Instagram — @youngolandd",
+          "description": "Loss & Damage WG public channel (handle reported publicly; confirm via Linktree/Notion).",
+          "url": "https://www.instagram.com/youngolandd/"
+        }
+      ]
+    },
+    {
+      "slug": "health",
+      "name": "Health",
+      "monogram": "HE",
+      "focusLine": "Climate and health intersections and WHO–UNFCCC engagement",
+      "tags": [
+        "Health",
+        "Policy"
+      ],
+      "resources": [
+        {
+          "label": "Health WG on LinkedIn",
+          "description": "Public posts on climate–health asks, including NDC and World Environmental Health Day framing.",
+          "url": "https://www.linkedin.com/company/youngo-health-working-group/"
+        }
+      ]
+    },
+    {
+      "slug": "energy",
+      "name": "Energy",
+      "monogram": "EN",
+      "focusLine": "Just energy transition, renewables scale-up, and phasing out fossil fuels",
+      "tags": [
+        "Energy",
+        "Mitigation",
+        "Policy"
+      ],
+      "resources": [
+        {
+          "label": "Energy WG on LinkedIn",
+          "description": "GYS consultations, WG announcements, and follow-ups from Contact Points Saikat Das and Dimple Asopa.",
+          "url": "https://www.linkedin.com/company/youngo-energy-working-group/"
+        },
+        {
+          "label": "Instagram — @youngo.energy",
+          "description": "Energy WG public updates.",
+          "url": "https://www.instagram.com/youngo.energy/"
+        },
+        {
+          "label": "Climate Watch — NDC tracker",
+          "description": "Compare countries' Nationally Determined Contributions and climate targets.",
+          "url": "https://www.climatewatchdata.org/ndc-tracker"
+        },
+        {
+          "label": "Climate Action Tracker — net-zero evaluations",
+          "description": "Independent analysis of governments' net-zero pledges.",
+          "url": "https://climateactiontracker.org/global/cat-net-zero-target-evaluations/"
+        },
+        {
+          "label": "Energy WG bi-weekly calendar",
+          "description": "Google Calendar link for Energy WG bi-weekly calls.",
+          "url": "https://calendar.app.google/jgZPg5Qf8RTjdyiy8"
+        }
+      ]
+    },
+    {
+      "slug": "mitigation",
+      "name": "Mitigation",
+      "monogram": "MI",
+      "focusLine": "Emission pathways, just transition, and ambition in national climate plans",
+      "tags": [
+        "Mitigation",
+        "Policy"
+      ]
+    },
+    {
+      "slug": "ndcs",
+      "name": "NDCs",
+      "monogram": "ND",
+      "focusLine": "NDC enhancement, tracking, and youth inputs into national climate contributions",
+      "tags": [
+        "NDCs",
+        "Mitigation",
+        "Policy"
+      ],
+      "resources": [
+        {
+          "label": "NDCs WG join form",
+          "description": "Public onboarding form for the NDCs working group (Contact Points Zipporah Njenga and Salsalina Larasati).",
+          "url": "https://docs.google.com/forms/d/e/1FAIpQLSdzazENQbA9-WRXSX4vhy-aeKwO6F27ulDQlZjPuVUqi38p7A/viewform"
+        },
+        {
+          "label": "NDCs WG on LinkedIn",
+          "description": "Active channel for GYS amplification, PAICC representation, and NDC process updates.",
+          "url": "https://www.linkedin.com/company/youngondcwg"
+        }
+      ]
+    },
+    {
+      "slug": "oceans",
+      "name": "Oceans",
+      "monogram": "OC",
+      "focusLine": "Ocean–climate nexus, blue carbon, and coastal resilience",
+      "tags": [
+        "Oceans",
+        "Biodiversity"
+      ],
+      "groupUrl": "https://linktr.ee/oceansvoice",
+      "resources": [
+        {
+          "label": "Oceans Voice Linktree",
+          "description": "Join form, Ocean Talks+, and Oceans WG entry points.",
+          "url": "https://linktr.ee/oceansvoice"
+        },
+        {
+          "label": "Community join form",
+          "description": "Public community signup (meeting links shared after join).",
+          "url": "https://forms.gle/ftxaxaR5DZ5t8aib7"
+        },
+        {
+          "label": "Instagram — @youngo_oceansvoice",
+          "description": "Oceans WG public updates.",
+          "url": "https://www.instagram.com/youngo_oceansvoice/"
+        }
+      ]
+    },
+    {
+      "slug": "agriculture",
+      "name": "Food & Agriculture",
+      "monogram": "AG",
+      "focusLine": "Food systems, agriculture, and climate-resilient livelihoods — including the Food & Agriculture Academy toward COP31",
+      "tags": [
+        "Agriculture",
+        "Food systems"
+      ],
+      "groupUrl": "https://linktr.ee/youngofoodandagriculture",
+      "resources": [
+        {
+          "label": "Food & Agriculture Academy / WG site",
+          "description": "Academy sessions (Jul–Dec 2026), onboarding handbook, youth project map, and WG join paths.",
+          "url": "https://youngoagrifood.com/"
+        },
+        {
+          "label": "Academy Session 2 Zoom register",
+          "description": "27 July 2026, 14:00 UTC — Food Systems: From Hunger and Crisis to Prosperity and Resilience.",
+          "url": "https://us06web.zoom.us/meeting/register/mHwhA7jKQW-8qMI6HJWSLg"
+        },
+        {
+          "label": "Food & Agriculture Linktree",
+          "description": "Onboarding, Academy signup, and WG channels.",
+          "url": "https://linktr.ee/youngofoodandagriculture"
+        },
+        {
+          "label": "WG onboarding form",
+          "description": "Public onboarding form for Food & Agriculture (Contact Points Bruna, Imran, Laureen).",
+          "url": "https://docs.google.com/forms/d/e/1FAIpQLScdQj8dPp6oiI7yxla0jAjS-J00F5ZO3qrttggLHvcr9aqSog/viewform"
+        },
+        {
+          "label": "Instagram — @youngo.foodandagriculture",
+          "description": "Academy and WG updates.",
+          "url": "https://www.instagram.com/youngo.foodandagriculture/"
+        },
+        {
+          "label": "GYS 2026 F&A draft inputs",
+          "description": "Shared Google Doc for Food & Agriculture GYS thematic inputs (Suggestion mode).",
+          "url": "https://docs.google.com/document/d/1hZRlinZEsJavOX7X9yFH0ZgI0JmPnCwB/edit?usp=sharing"
+        },
+        {
+          "label": "2026 LCOY organizers sheet",
+          "description": "Approved 2026 LCOY organizers — use to embed food & agriculture agenda toward GYS.",
+          "url": "https://docs.google.com/spreadsheets/d/1vwmkHG2isO5_7AwSPcml34UaZ_R3GdcowMpcw7IwG94/edit?gid=0#gid=0"
+        },
+        {
+          "label": "2026 RCOY organizers sheet",
+          "description": "Approved 2026 RCOY organizers by region.",
+          "url": "https://docs.google.com/spreadsheets/d/11FKC7oeO91qN2THiQDY9QKALrwhQbO7_Pm0EVnRscmc/edit?gid=1780124112#gid=1780124112"
+        }
+      ]
+    },
+    {
+      "slug": "nature",
+      "name": "Nature",
+      "monogram": "NA",
+      "focusLine": "Biodiversity–climate nexus, Nature WG task forces, and youth inputs into nature-related UNFCCC and CBD spaces",
+      "tags": [
+        "Nature",
+        "Biodiversity"
+      ],
+      "resources": [
+        {
+          "label": "Nature WG on LinkedIn",
+          "description": "2026/27 term, task-force structure, and Contact Points Wening & Mustafa.",
+          "url": "https://www.linkedin.com/company/youngo-nature-working-group"
+        },
+        {
+          "label": "Task-force interest sheet (closed 20 Jul)",
+          "description": "Four task-force structure interest sheet for the 2026/27 Nature WG term.",
+          "url": "https://docs.google.com/spreadsheets/d/1Q-G87MBnJZ7PBB3URlpxwsY1REs4kTOaGUEWP-bN4Sc/edit"
+        }
+      ]
+    },
+    {
+      "slug": "gender",
+      "name": "Gender",
+      "monogram": "GE",
+      "focusLine": "Gender-responsive climate policy and intergenerational equity",
+      "tags": [
+        "Gender",
+        "Justice"
+      ],
+      "whatsappUrl": "https://chat.whatsapp.com/C5hiNIm7A3gJdy7Mll6UNn",
+      "resources": [
+        {
+          "label": "WhatsApp — Women & Gender WG",
+          "description": "Public WhatsApp invite for the Women and Gender working group.",
+          "url": "https://chat.whatsapp.com/C5hiNIm7A3gJdy7Mll6UNn"
+        },
+        {
+          "label": "Gender WG on LinkedIn",
+          "description": "Women and Gender working group company page.",
+          "url": "https://www.linkedin.com/company/women-and-gender-working-group"
+        },
+        {
+          "label": "2026 policy & submissions roadmap",
+          "description": "CP-maintained Gender WG plan for 2026 submissions and processes.",
+          "url": "https://docs.google.com/document/d/14x8deg6vEu1oKLfWP_EzBtMqPFVGPNNePP9T4-EzE3E/edit"
+        },
+        {
+          "label": "Gender WG onboarding deck",
+          "description": "Onboarding slides for Women and Gender WG members.",
+          "url": "https://docs.google.com/presentation/d/1mqEYj6iIxXiQbXBReaEk5M78SdRdL_BRW3Ps_Bb6hYk/edit"
+        },
+        {
+          "label": "Gender WG resource bank",
+          "description": "Shared databank document for Gender WG members.",
+          "url": "https://docs.google.com/document/d/1NGyhHF2ppqrxG7y7aFLRtDxSHbD5a4th5_0YnxUA3Lc/edit"
+        }
+      ]
+    },
+    {
+      "slug": "human-rights",
+      "name": "Human Rights",
+      "monogram": "HR",
+      "focusLine": "Human rights, civic space, and rights-based climate action",
+      "tags": [
+        "Human rights",
+        "Justice"
+      ],
+      "resources": [
+        {
+          "label": "Human Rights WG membership form",
+          "description": "25/26 membership signup — WhatsApp and meeting links shared after confirmation.",
+          "url": "https://forms.gle/z3UFsD3bpvzKWysr9"
+        },
+        {
+          "label": "Human Rights WG on LinkedIn",
+          "description": "Public updates from the Human Rights working group.",
+          "url": "https://www.linkedin.com/company/youngo-human-rights-working-group"
+        },
+        {
+          "label": "SB64 AIM cross-constituency intervention",
+          "description": "Cross-constituency intervention on defender safety, observer space, and accountability — relevant to civic space and rights-based asks.",
+          "url": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/"
+        }
+      ]
+    },
+    {
+      "slug": "technology",
+      "name": "Technology",
+      "monogram": "TE",
+      "focusLine": "Technology Mechanism, TEC/CTCN, and equitable technology access",
+      "tags": [
+        "Technology",
+        "Policy"
+      ]
+    },
+    {
+      "slug": "conflict-of-interest",
+      "name": "Conflict of Interest",
+      "monogram": "CI",
+      "focusLine": "Conflict of interest safeguards and fossil-fuel influence in climate spaces",
+      "tags": [
+        "Governance",
+        "Integrity"
+      ],
+      "resources": [
+        {
+          "label": "SB64 AIM cross-constituency intervention",
+          "description": "YOUNGO joined ENGO/TUNGO/WGC on defender safety, observer space, and accountability / conflicts of interest.",
+          "url": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/"
+        }
+      ]
+    },
+    {
+      "slug": "coy",
+      "name": "Conference of Youth",
+      "monogram": "CY",
+      "focusLine": "LCOY, RCOY, and COY coordination — conferences that feed the Global Youth Statement",
+      "tags": [
+        "COY",
+        "Engagement"
+      ],
+      "resources": [
+        {
+          "label": "UNFCCC — Conference of Youth",
+          "description": "Official COY background and updates (COY21 Antalya ahead of COP31).",
+          "url": "https://unfccc.int/topics/education-and-youth/youngo/coy"
+        },
+        {
+          "label": "LCOY Linktree",
+          "description": "LCOY programme links; 2026 liaisons Dr. Anirudh Janagam and Jeremy Nathanael.",
+          "url": "https://linktr.ee/youngolcoys"
+        },
+        {
+          "label": "Instagram — @youngolcoys",
+          "description": "LCOY working-group updates.",
+          "url": "https://www.instagram.com/youngolcoys/"
+        },
+        {
+          "label": "YOUNGO WG & OT contacts (Notion)",
+          "description": "Canonical Working Groups and Operational Teams roster (replaces the old Google Sheet).",
+          "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+        },
+        {
+          "label": "Constituency Linktree",
+          "description": "Central YOUNGO entry points including membership and WG/OT roster.",
+          "url": "https://linktr.ee/YOUNGO.UNFCCC"
+        },
+        {
+          "label": "Capacity Building series signup",
+          "description": "Public signup for YOUNGO Capacity Building sessions (from constituency Linktree).",
+          "url": "https://docs.google.com/forms/d/e/1FAIpQLSfL3zW1QqF8xgE-_uOksyrljjfcm6W9_cXDybPID3dNUrtYag/viewform"
+        }
+      ]
+    }
   ],
   "events": [
-    { "slug": "energy-gys-consultation", "title": "Energy WG — GYS 2026 consultation (held)", "type": "wg_call", "dayOffset": -1, "hourUtc": 13.5, "durationMin": 90, "wg": "energy", "recordingUrl": "https://www.linkedin.com/company/youngo-energy-working-group/", "description": "Open consultation held 26 July 2026, 13:30 UTC, to co-create the Energy WG Global Youth Statement input (Contact Points Saikat Das and Dimple Asopa). Watch LinkedIn/IG for minutes, recording, and written-input follow-up before the 31 July GYS deadline." },
-    { "slug": "agriculture-academy-session-2", "title": "Food & Agriculture Academy — Session 2", "type": "webinar", "dayOffset": 1, "hourUtc": 16, "durationMin": 90, "wg": "agriculture", "description": "Academy Session 2 (food systems) on 27 July 2026 — confirm exact UTC time on the Linktree / youngoagrifood.com. Part of the Jul–Dec 2026 series toward COP31." },
-    { "slug": "constituency-call-live", "title": "Constituency call", "type": "constituency_call", "dayOffset": 7, "hourUtc": 13, "durationMin": 90, "description": "Monthly coordination (first Sunday cadence): COP31 logistics, WG round-robin, AOB. Confirm the next date on youngoclimate.org / mailing list." },
-    { "slug": "ace-follow-up-call", "title": "ACE WG — post-SB64 / annual summary huddle", "type": "wg_call", "dayOffset": 2, "hourUtc": 15, "durationMin": 60, "wg": "ace", "description": "Coordinate ACE annual-summary inputs to the UNFCCC (due 31 July) and follow-through from the SB64 ACE Dialogue and midterm review." },
-    { "slug": "finance-wg-forum", "title": "Finance WG forum", "type": "wgf", "dayOffset": 3, "hourUtc": 12, "durationMin": 90, "wg": "finance", "description": "NCQG follow-up, SCF, funds, and markets. Join via Airtable form, WhatsApp, or Linktree (Co-CP Patricia M. Longwani)." },
-    { "slug": "ndcs-wg-call", "title": "NDCs WG call", "type": "wg_call", "dayOffset": 5, "hourUtc": 15, "durationMin": 60, "wg": "ndcs", "description": "GYS inputs coordination, NDC 3.0 tracking, and process updates. Join form linked from the NDCs WG page." },
-    { "slug": "adaptation-call", "title": "Adaptation WG call", "type": "wg_call", "dayOffset": 6, "hourUtc": 14, "durationMin": 60, "wg": "adaptation", "description": "GGA follow-up after the child- and youth-responsive SB64 brief; NAP and locally led adaptation coordination." },
-    { "slug": "nature-wg-kickoff", "title": "Nature WG — 2026/27 task-force kickoff", "type": "wg_call", "dayOffset": 3, "hourUtc": 15, "durationMin": 60, "wg": "nature", "description": "Nature WG 2026/27 term with four task forces (Contact Points Wening & Mustafa). Interest-sheet window closed 20 July — watch LinkedIn for the first meeting." },
-    { "slug": "cop31-onboarding-webinar", "title": "COP31 first-timers onboarding", "type": "webinar", "dayOffset": 10, "hourUtc": 17, "durationMin": 75, "description": "How badges, plenaries, and YOUNGO coordination work at a COP — useful ahead of COY21 / COP31 in Antalya." },
-    { "slug": "health-wg-call", "title": "Health WG monthly call", "type": "wg_call", "dayOffset": 12, "hourUtc": 16, "durationMin": 60, "wg": "health", "description": "Climate and health intersections, NDC health asks, and WHO–UNFCCC engagement." }
+    {
+      "slug": "agriculture-july-wg-sb64-debrief-held",
+      "title": "Food & Agriculture WG — July call & SB64 debrief (held)",
+      "type": "wg_call",
+      "dayOffset": -10,
+      "hourUtc": 14,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "meetingUrl": "https://meet.google.com/trt-hpqi-yia",
+      "description": "Held 17 July 2026. SB64 outcomes, Academy, and GYS next steps. Slides: https://docs.google.com/presentation/d/1JjiZ-UAH7wX4eJcqyUANoSlmNlFHuiFI/edit"
+    },
+    {
+      "slug": "agriculture-gys-consultation-3",
+      "title": "Food & Agriculture WG — GYS Consultation #3",
+      "type": "wg_call",
+      "dayOffset": 51,
+      "hourUtc": 16,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "description": "Third F&A GYS consultation — Wednesday 16 September 2026, 18:00 CEST. Multilingual sessions promised later."
+    },
+    {
+      "slug": "agriculture-gys-consultation-2",
+      "title": "Food & Agriculture WG — GYS Consultation #2",
+      "type": "wg_call",
+      "dayOffset": 19,
+      "hourUtc": 9,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "description": "Second F&A GYS consultation — Saturday 15 August 2026, 11:00 CEST. Calendar invite to be shared in WG channels."
+    },
+    {
+      "slug": "agriculture-gys-consultation-1-held",
+      "title": "Food & Agriculture WG — GYS Consultation #1 (held)",
+      "type": "wg_call",
+      "dayOffset": -2,
+      "hourUtc": 15,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "meetingUrl": "https://meet.google.com/vjq-wxhd-pns",
+      "description": "Held 25 July 2026, 15:00–16:30 UTC. Written inputs to the F&A GYS draft close 29 July — use Suggestion mode in the shared doc."
+    },
+    {
+      "slug": "belem-adaptation-indicators-webinar-jul29",
+      "title": "Testing Belém Adaptation Indicators — global webinar",
+      "type": "webinar",
+      "dayOffset": 2,
+      "hourUtc": 12,
+      "durationMin": 90,
+      "wg": "adaptation",
+      "meetingUrl": "https://events.teams.microsoft.com/event/cda64415-9206-4ce9-bf6a-807726cf1867@1cc3c508-01c7-4460-bd2b-afe95e80b8af",
+      "description": "COP30/COP31 Presidencies webinar on piloting Belém Adaptation Indicators for NAPs, BTRs, and adaptation finance. 29 July 2026, 14:00 CEST. Source: Road to COP31 Friends / PYCC."
+    },
+    {
+      "slug": "finance-wg-sb64-debrief-held",
+      "title": "Finance WG — SB64 debrief & COP31 outlook (held)",
+      "type": "wg_call",
+      "dayOffset": -23,
+      "hourUtc": 10,
+      "durationMin": 60,
+      "wg": "finance",
+      "meetingUrl": "https://meet.google.com/ksq-qcpj-gtb",
+      "description": "Held 4 July 2026, 10:00 UTC. Recapped SB64 finance outcomes and first COP31 prep. Calendar: https://calendar.app.google/yRqpJqLU1RXPCp3VA. Source: Finance & Markets WhatsApp."
+    },
+    {
+      "slug": "ace-monthly-sb64-debrief-held",
+      "title": "ACE WG monthly meeting & SB64 debrief (held)",
+      "type": "wg_call",
+      "dayOffset": -30,
+      "hourUtc": 16,
+      "durationMin": 90,
+      "wg": "ace",
+      "meetingUrl": "https://meet.google.com/tjp-fcrx-vjt",
+      "description": "Held 27 June 2026, 16:00 UTC — ACE monthly meeting combined with SB64 debrief. Meet link retained for reference; watch the ACE channel for the next monthly call."
+    },
+    {
+      "slug": "energy-gys-consultation",
+      "title": "Energy WG — GYS 2026 consultation (held)",
+      "type": "wg_call",
+      "dayOffset": -1,
+      "hourUtc": 13.5,
+      "durationMin": 90,
+      "wg": "energy",
+      "recordingUrl": "https://www.linkedin.com/company/youngo-energy-working-group/",
+      "description": "Open consultation held 26 July 2026, 13:30 UTC, to co-create the Energy WG Global Youth Statement input (Contact Points Saikat Das and Dimple Asopa). Watch LinkedIn/IG for minutes, recording, and written-input follow-up before the 31 July GYS deadline."
+    },
+    {
+      "slug": "agriculture-academy-session-2",
+      "title": "Food & Agriculture Academy — Session 2",
+      "type": "webinar",
+      "dayOffset": 1,
+      "hourUtc": 14,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "meetingUrl": "https://us06web.zoom.us/meeting/register/mHwhA7jKQW-8qMI6HJWSLg",
+      "description": "Academy Session 2 — Food Systems: From Hunger and Crisis to Prosperity and Resilience. 27 July 2026, 14:00 UTC (16:00 CEST). Register on Zoom; personal join link follows signup. Part of the Jul–Dec 2026 series toward COP31."
+    },
+    {
+      "slug": "constituency-call-live",
+      "title": "Constituency call",
+      "type": "constituency_call",
+      "dayOffset": 7,
+      "hourUtc": 13,
+      "durationMin": 90,
+      "description": "Monthly coordination (first Sunday cadence): COP31 logistics, WG round-robin, AOB. Confirm the next date on youngoclimate.org / mailing list."
+    },
+    {
+      "slug": "ace-follow-up-call",
+      "title": "ACE WG — post-SB64 / annual summary huddle",
+      "type": "wg_call",
+      "dayOffset": 2,
+      "hourUtc": 15,
+      "durationMin": 60,
+      "wg": "ace",
+      "description": "Coordinate ACE annual-summary inputs to the UNFCCC (due 31 July) and follow-through from the SB64 ACE Dialogue and midterm review. Latest shared Meet link from the ACE Telegram series: https://meet.google.com/tjp-fcrx-vjt",
+      "meetingUrl": "https://meet.google.com/tjp-fcrx-vjt"
+    },
+    {
+      "slug": "finance-wg-forum",
+      "title": "Finance WG forum",
+      "type": "wgf",
+      "dayOffset": 3,
+      "hourUtc": 12,
+      "durationMin": 90,
+      "wg": "finance",
+      "description": "NCQG follow-up, SCF, funds, and markets. Latest shared Meet from the Jul 2026 SB64 debrief series: https://meet.google.com/ksq-qcpj-gtb. Join via Airtable, WhatsApp, or Linktree.",
+      "meetingUrl": "https://meet.google.com/ksq-qcpj-gtb"
+    },
+    {
+      "slug": "ndcs-wg-call",
+      "title": "NDCs WG call",
+      "type": "wg_call",
+      "dayOffset": 5,
+      "hourUtc": 15,
+      "durationMin": 60,
+      "wg": "ndcs",
+      "description": "GYS inputs coordination, NDC 3.0 tracking, and process updates. Join form linked from the NDCs WG page."
+    },
+    {
+      "slug": "adaptation-call",
+      "title": "Adaptation WG call",
+      "type": "wg_call",
+      "dayOffset": 6,
+      "hourUtc": 14,
+      "durationMin": 60,
+      "wg": "adaptation",
+      "description": "GGA follow-up after the child- and youth-responsive SB64 brief; NAP and locally led adaptation coordination. Climate Week 4 (Baku) nominations form: https://forms.gle/Xr5PnNGSfYSwo5HB6 (deadline 27 July 2026)."
+    },
+    {
+      "slug": "nature-wg-kickoff",
+      "title": "Nature WG — 2026/27 task-force kickoff",
+      "type": "wg_call",
+      "dayOffset": 3,
+      "hourUtc": 15,
+      "durationMin": 60,
+      "wg": "nature",
+      "description": "Nature WG 2026/27 term with four task forces (Contact Points Wening & Mustafa). Interest-sheet window closed 20 July — watch LinkedIn for the first meeting."
+    },
+    {
+      "slug": "cop31-onboarding-webinar",
+      "title": "COP31 first-timers onboarding",
+      "type": "webinar",
+      "dayOffset": 10,
+      "hourUtc": 17,
+      "durationMin": 75,
+      "description": "How badges, plenaries, and YOUNGO coordination work at a COP — useful ahead of COY21 / COP31 in Antalya."
+    },
+    {
+      "slug": "health-wg-call",
+      "title": "Health WG monthly call",
+      "type": "wg_call",
+      "dayOffset": 12,
+      "hourUtc": 16,
+      "durationMin": 60,
+      "wg": "health",
+      "description": "Climate and health intersections, NDC health asks, and WHO–UNFCCC engagement."
+    }
   ],
   "submissions": [
-    { "slug": "gys-2026-inputs", "title": "Global Youth Statement 2026 — call for inputs", "status": "open", "deadlineInDays": 5.2, "wg": null, "draftUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9", "unfcccUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy", "contributeNote": "Open to individuals, youth-led NGOs, LCOYs, and movements. Deadline 31 July 2026, 23:59 UTC. Submit through the official Global Youth Statement 2026 inputs form." },
-    { "slug": "ace-annual-summary-2026", "title": "ACE annual summary report — Party & non-Party inputs", "status": "open", "deadlineInDays": 5.2, "wg": "ace", "draftUrl": "https://www.unfccc.int/sites/default/files/resource/Info_session_ACE_SB64.pdf", "unfcccUrl": "https://unfccc.int/topics/education-youth/ace", "contributeNote": "UNFCCC invites Parties and non-Party stakeholders to submit progress, challenges, and support needs for the ACE annual summary report. Deadline 31 July 2026 — use the UNFCCC submission portal referenced in the SB64 ACE info session materials." },
-    { "slug": "energy-gys-input-2026", "title": "Energy WG — GYS 2026 thematic input", "status": "drafting", "deadlineInDays": 5.2, "wg": "energy", "draftUrl": "https://www.linkedin.com/company/youngo-energy-working-group/", "contributeNote": "Open consultation held 26 July 13:30 UTC (CPs Saikat Das and Dimple Asopa). Written follow-up may still be open via WG channels — align with the 31 July GYS deadline." },
-    { "slug": "adaptation-gga-youth-brief", "title": "Child- and youth-responsive GGA brief (SB64)", "status": "submitted", "deadlineDaysAgo": 28, "wg": "adaptation", "finalUrl": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64", "contributeNote": "Published ahead of SB64 with UNICEF, UNFPA, Save the Children, and Young Lives — use for ongoing GGA / Belém Addis Vision advocacy toward COP31–32." },
-    { "slug": "sb64-policy-position-2026", "title": "YOUNGO SB64 Policy Position 2026", "status": "submitted", "deadlineDaysAgo": 38, "wg": null, "finalUrl": "https://www.linkedin.com/company/youngo-unfccc/", "contributeNote": "Constituency policy position for bilaterals, interventions, and WG advocacy at SB64 (Bonn, June 2026). Circulated by the Policy Team for use with Parties and Presidencies." }
+    {
+      "slug": "adaptation-cw4-baku-nominations",
+      "title": "Climate Week 4 (Baku) — Adaptation WG nominations",
+      "status": "open",
+      "deadlineInDays": 0.5,
+      "wg": "adaptation",
+      "draftUrl": "https://forms.gle/Xr5PnNGSfYSwo5HB6",
+      "unfcccUrl": "https://www.unfccc.int/climate-week-baku/events",
+      "contributeNote": "Adaptation WG invitation for 4 in-person + online youth reps to CW4 Baku (7–11 Sep 2026): Adaptation Roadmap Workshop and Adaptation Forum. Self-funded; hybrid. Deadline 27 July 2026, 23:59 UTC."
+    },
+    {
+      "slug": "gender-csw71-youth-feminists",
+      "title": "CSW71 — young feminist community consultation representatives",
+      "status": "open",
+      "deadlineInDays": 45,
+      "wg": "gender",
+      "draftUrl": "https://forms.gle/8DBtc3Yi8VKfuozA9",
+      "contributeNote": "UN Women youth-feminist prep: young people under 35 connected to orgs/movements can apply to organize community consultations for CSW71. Source: Gender WG WhatsApp."
+    },
+    {
+      "slug": "agriculture-gys-2026-draft-inputs",
+      "title": "Food & Agriculture WG — GYS 2026 draft inputs",
+      "status": "open",
+      "deadlineInDays": 2,
+      "wg": "agriculture",
+      "draftUrl": "https://docs.google.com/document/d/1hZRlinZEsJavOX7X9yFH0ZgI0JmPnCwB/edit?usp=sharing",
+      "contributeNote": "Add food-systems and COP31 negotiation inputs in Suggestion mode by 29 July 2026. Align with the constituency GYS form (deadline 31 July 2026, 23:59 UTC)."
+    },
+    {
+      "slug": "finance-workplan-2026-inputs",
+      "title": "Finance WG 2026 workplan — add your ideas",
+      "status": "open",
+      "deadlineInDays": 21,
+      "wg": "finance",
+      "draftUrl": "https://docs.google.com/document/d/1KveP7TnWO74Ceukxi-HDZZ1Vs6QSnV4jietTh2e89SA/edit?usp=sharing",
+      "contributeNote": "Comment in the shared Google Doc. 2025 workplan for context: https://docs.google.com/document/d/1olSn-AN8vfsRzuZxbxq1Xjrvb4TIIEMgZnmXv9frBFg/edit. Source: Finance WhatsApp (13 May 2026)."
+    },
+    {
+      "slug": "cop31-ace-side-event-merges",
+      "title": "COP31 side-event merges — ACE, youth & disabilities",
+      "status": "open",
+      "deadlineInDays": 30,
+      "wg": "ace",
+      "draftUrl": "https://unfccc.int/topics/education-youth/ace",
+      "contributeNote": "ACE WG call for accredited NGOs interested in official COP31 side-event merges on ACE, youth, and disabilities. Coordinate via ACE Contact Points."
+    },
+    {
+      "slug": "ace-cop31-day-concept-note",
+      "title": "COP31 ACE Day — concept note inputs",
+      "status": "open",
+      "deadlineInDays": 14,
+      "wg": "ace",
+      "draftUrl": "https://docs.google.com/document/d/16DdBPgsdpmPPFW1-Nb0JfY6QhXe50pFVCYBrjeuCr7E/edit?usp=sharing",
+      "unfcccUrl": "https://unfccc.int/topics/education-youth/ace",
+      "contributeNote": "ACE WG is drafting a COP31 ACE Day concept note at the request of the COP31 Presidencies. Add comments and inputs in the shared Google Doc."
+    },
+    {
+      "slug": "gys-2026-inputs",
+      "title": "Global Youth Statement 2026 — call for inputs",
+      "status": "open",
+      "deadlineInDays": 5.2,
+      "wg": null,
+      "draftUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9",
+      "unfcccUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy",
+      "contributeNote": "Open to individuals, youth-led NGOs, LCOYs, and movements. Deadline 31 July 2026, 23:59 UTC. Submit through the official Global Youth Statement 2026 inputs form."
+    },
+    {
+      "slug": "ace-annual-summary-2026",
+      "title": "ACE annual summary report — Party & non-Party inputs",
+      "status": "open",
+      "deadlineInDays": 5.2,
+      "wg": "ace",
+      "draftUrl": "https://www.unfccc.int/sites/default/files/resource/Info_session_ACE_SB64.pdf",
+      "unfcccUrl": "https://unfccc.int/topics/education-youth/ace",
+      "contributeNote": "UNFCCC invites Parties and non-Party stakeholders to submit progress, challenges, and support needs for the ACE annual summary report. Deadline 31 July 2026 — use the UNFCCC submission portal referenced in the SB64 ACE info session materials."
+    },
+    {
+      "slug": "energy-gys-input-2026",
+      "title": "Energy WG — GYS 2026 thematic input",
+      "status": "open",
+      "deadlineInDays": 4.2,
+      "wg": "energy",
+      "draftUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9",
+      "contributeNote": "Open consultation held 26 July 13:30 UTC (CPs Saikat Das, Dimple Asopa). Submit written energy-policy inputs via the official GYS form before 31 July; watch Energy WG LinkedIn/IG for WG-specific draft/minutes."
+    },
+    {
+      "slug": "adaptation-gga-youth-brief",
+      "title": "Child- and youth-responsive GGA brief (SB64)",
+      "status": "submitted",
+      "deadlineDaysAgo": 28,
+      "wg": "adaptation",
+      "finalUrl": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64",
+      "contributeNote": "Published ahead of SB64 with UNICEF, UNFPA, Save the Children, and Young Lives — use for ongoing GGA / Belém Addis Vision advocacy toward COP31–32."
+    },
+    {
+      "slug": "sb64-policy-position-2026",
+      "title": "YOUNGO SB64 Policy Position 2026",
+      "status": "submitted",
+      "deadlineDaysAgo": 38,
+      "wg": null,
+      "finalUrl": "https://www.linkedin.com/company/youngo-unfccc/",
+      "contributeNote": "Constituency policy position for bilaterals, interventions, and WG advocacy at SB64 (Bonn, June 2026). Circulated by the Policy Team for use with Parties and Presidencies."
+    }
   ],
   "council": [
-    { "slug": "social-media-policy", "title": "Adopt YOUNGO social media policy", "status": "objection_window", "objectionInDays": 3, "proposer": "Focal points", "summary": "Codifies who can post from constituency accounts and the review flow for statements.", "proposalUrl": "https://docs.google.com/document/d/example-smp", "respondNote": "Raise objections by replying to the mailing-list thread or in Sunday's spokes call.", "log": [ { "status": "proposed", "daysAgo": 14, "note": "Circulated on the list by focal points" }, { "status": "open_for_input", "daysAgo": 10, "note": "Two-week comment window opened" }, { "status": "objection_window", "daysAgo": 2, "note": "Comments integrated; silence procedure started" } ] },
-    { "slug": "coy21-cohost-process", "title": "COY21 co-host partnership process", "status": "adopted", "decidedDaysAgo": 20, "proposer": "COY task force", "summary": "Criteria and timeline for local co-host organisations supporting COY21 in Antalya ahead of COP31. Türkiye/Australia EOI window ran in early June 2026.", "proposalUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy", "outcomeNote": "Treat the public EOI as closed unless reopened; watch UNFCCC COY page and youngo.unfccc@gmail.com for COY21 logistics.", "log": [ { "status": "proposed", "daysAgo": 50, "note": "Draft criteria shared by the task force" }, { "status": "open_for_input", "daysAgo": 45, "note": "EOI window opened for local co-hosts" }, { "status": "adopted", "daysAgo": 20, "note": "EOI window closed; logistics still TBC for early November Antalya" } ] },
-    { "slug": "wg-restructure-2026", "title": "Working group restructure 2026", "status": "adopted", "decidedDaysAgo": 32, "proposer": "Focal points", "summary": "Merged dormant WGs and set the two-admin minimum per active WG.", "finalUrl": "https://docs.google.com/document/d/example-restructure", "outcomeNote": "Adopted by consensus at the June spokes council.", "log": [ { "status": "proposed", "daysAgo": 70 }, { "status": "open_for_input", "daysAgo": 60 }, { "status": "objection_window", "daysAgo": 40 }, { "status": "adopted", "daysAgo": 32, "note": "No objections sustained" } ] }
+    {
+      "slug": "social-media-policy",
+      "title": "Adopt YOUNGO social media policy",
+      "status": "objection_window",
+      "objectionInDays": 3,
+      "proposer": "Focal points",
+      "summary": "Codifies who can post from constituency accounts and the review flow for statements.",
+      "proposalUrl": "https://docs.google.com/document/d/example-smp",
+      "respondNote": "Raise objections by replying to the mailing-list thread or in Sunday's spokes call.",
+      "log": [
+        {
+          "status": "proposed",
+          "daysAgo": 14,
+          "note": "Circulated on the list by focal points"
+        },
+        {
+          "status": "open_for_input",
+          "daysAgo": 10,
+          "note": "Two-week comment window opened"
+        },
+        {
+          "status": "objection_window",
+          "daysAgo": 2,
+          "note": "Comments integrated; silence procedure started"
+        }
+      ]
+    },
+    {
+      "slug": "coy21-cohost-process",
+      "title": "COY21 co-host partnership process",
+      "status": "adopted",
+      "decidedDaysAgo": 20,
+      "proposer": "COY task force",
+      "summary": "Criteria and timeline for local co-host organisations supporting COY21 in Antalya ahead of COP31. Türkiye/Australia EOI window ran in early June 2026.",
+      "proposalUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy",
+      "outcomeNote": "Treat the public EOI as closed unless reopened; watch UNFCCC COY page and youngo.unfccc@gmail.com for COY21 logistics.",
+      "log": [
+        {
+          "status": "proposed",
+          "daysAgo": 50,
+          "note": "Draft criteria shared by the task force"
+        },
+        {
+          "status": "open_for_input",
+          "daysAgo": 45,
+          "note": "EOI window opened for local co-hosts"
+        },
+        {
+          "status": "adopted",
+          "daysAgo": 20,
+          "note": "EOI window closed; logistics still TBC for early November Antalya"
+        }
+      ]
+    },
+    {
+      "slug": "wg-restructure-2026",
+      "title": "Working group restructure 2026",
+      "status": "adopted",
+      "decidedDaysAgo": 32,
+      "proposer": "Focal points",
+      "summary": "Merged dormant WGs and set the two-admin minimum per active WG.",
+      "finalUrl": "https://docs.google.com/document/d/example-restructure",
+      "outcomeNote": "Adopted by consensus at the June spokes council.",
+      "log": [
+        {
+          "status": "proposed",
+          "daysAgo": 70
+        },
+        {
+          "status": "open_for_input",
+          "daysAgo": 60
+        },
+        {
+          "status": "objection_window",
+          "daysAgo": 40
+        },
+        {
+          "status": "adopted",
+          "daysAgo": 32,
+          "note": "No objections sustained"
+        }
+      ]
+    }
   ],
   "coys": [
-    { "slug": "coy21", "type": "coy", "title": "COY21", "country": "Türkiye", "city": "Antalya", "region": "weog", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved", "organizerName": "YOUNGO", "organizerOrg": "Children and Youth Constituency to the UNFCCC" },
-    { "slug": "rcoy-apac-2026", "type": "rcoy", "title": "RCOY Asia-Pacific 2026", "country": "Bangladesh", "city": null, "region": "apac", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved", "organizerName": "SEECTO Bangladesh", "organizerOrg": "Host with 11 co-organisers across 10 APAC countries" },
-    { "slug": "rcoy-africa-2026", "type": "rcoy", "title": "RCOY Africa 2026", "country": null, "city": null, "region": "africa", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "rcoy-america-2026", "type": "rcoy", "title": "RCOY America 2026", "country": null, "city": null, "region": "noram", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "rcoy-europe-2026", "type": "rcoy", "title": "RCOY Europe 2026", "country": null, "city": null, "region": "eca", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "rcoy-latam-2026", "type": "rcoy", "title": "RCOY Latin America 2026", "country": null, "city": null, "region": "lac", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "rcoy-mena-2026", "type": "rcoy", "title": "RCOY MENA 2026", "country": null, "city": null, "region": "mena", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "rcoy-oceania-2026", "type": "rcoy", "title": "RCOY Oceania 2026", "country": null, "city": null, "region": "apac", "startsOn": null, "endsOn": null, "datesTbc": true, "status": "announced", "reviewStatus": "approved" },
-    { "slug": "lcoy-pending-example", "type": "lcoy", "title": "LCOY Pending (should never render)", "country": "Nowhere", "region": "eca", "status": "announced", "reviewStatus": "pending" }
+    {
+      "slug": "coy21",
+      "type": "coy",
+      "title": "COY21",
+      "country": "Türkiye",
+      "city": "Antalya",
+      "region": "weog",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved",
+      "organizerName": "YOUNGO",
+      "organizerOrg": "Children and Youth Constituency to the UNFCCC"
+    },
+    {
+      "slug": "rcoy-apac-2026",
+      "type": "rcoy",
+      "title": "RCOY Asia-Pacific 2026",
+      "country": "Bangladesh",
+      "city": null,
+      "region": "apac",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved",
+      "organizerName": "SEECTO Bangladesh",
+      "organizerOrg": "Host with 11 co-organisers across 10 APAC countries"
+    },
+    {
+      "slug": "rcoy-africa-2026",
+      "type": "rcoy",
+      "title": "RCOY Africa 2026",
+      "country": null,
+      "city": null,
+      "region": "africa",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "rcoy-america-2026",
+      "type": "rcoy",
+      "title": "RCOY America 2026",
+      "country": null,
+      "city": null,
+      "region": "noram",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "rcoy-europe-2026",
+      "type": "rcoy",
+      "title": "RCOY Europe 2026",
+      "country": null,
+      "city": null,
+      "region": "eca",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "rcoy-latam-2026",
+      "type": "rcoy",
+      "title": "RCOY Latin America 2026",
+      "country": null,
+      "city": null,
+      "region": "lac",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "rcoy-mena-2026",
+      "type": "rcoy",
+      "title": "RCOY MENA 2026",
+      "country": null,
+      "city": null,
+      "region": "mena",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "rcoy-oceania-2026",
+      "type": "rcoy",
+      "title": "RCOY Oceania 2026",
+      "country": null,
+      "city": null,
+      "region": "apac",
+      "startsOn": null,
+      "endsOn": null,
+      "datesTbc": true,
+      "status": "announced",
+      "reviewStatus": "approved"
+    },
+    {
+      "slug": "lcoy-pending-example",
+      "type": "lcoy",
+      "title": "LCOY Pending (should never render)",
+      "country": "Nowhere",
+      "region": "eca",
+      "status": "announced",
+      "reviewStatus": "pending"
+    }
   ],
   "announcements": [
-    { "slug": "gys-2026-inputs-closing", "title": "GYS 2026 call for inputs closes 31 July", "body": "Shape the children and youth policy demands for COP31. Individuals, youth-led NGOs, LCOYs, and movements can submit through the official Global Youth Statement 2026 form — deadline 31 July 2026, 23:59 UTC. Policy Team co-leads: Paul Jenkinson, Mara Ghilan, Mahdi Al Wakil.", "pinned": true, "daysAgo": 0, "ctaUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9", "ctaLabel": "Submit inputs", "ctaDeadlineAt": "2026-07-31T23:59:00.000Z" },
-    { "slug": "ace-annual-summary-deadline", "title": "ACE annual summary inputs due 31 July", "body": "After the SB64 ACE Dialogue and midterm review of the Glasgow Work Programme, Parties and non-Party stakeholders can submit progress, challenges, and support needs for the ACE annual summary report — deadline 31 July 2026.", "pinned": false, "daysAgo": 0, "ctaUrl": "https://www.unfccc.int/sites/default/files/resource/Info_session_ACE_SB64.pdf", "ctaLabel": "Read ACE SB64 info", "ctaDeadlineAt": "2026-07-31T23:59:00.000Z" },
-    { "slug": "food-agriculture-academy-session-2", "title": "Food & Agriculture Academy — Session 2 on 27 July", "body": "Session 2 of the Jul–Dec Academy (food systems) is listed for 27 July 2026. Confirm the exact UTC time on the Linktree; Contact Points Bruna, Imran, and Laureen · foodandagriculture.youngo@gmail.com.", "pinned": false, "daysAgo": 0, "ctaUrl": "https://linktr.ee/youngofoodandagriculture", "ctaLabel": "Academy Linktree" },
-    { "slug": "food-agriculture-academy-2026", "title": "Food & Agriculture Academy 2026 is open", "body": "Eight sessions from July to December 2026 on the road to COP31 — onboarding handbook, youth project map, and WG join paths at youngoagrifood.com.", "pinned": false, "daysAgo": 1, "ctaUrl": "https://youngoagrifood.com/", "ctaLabel": "Open Academy site" },
-    { "slug": "energy-gys-consultation", "title": "Energy WG GYS consultation — follow up in writing", "body": "The Energy WG open consultation ran on 26 July 2026 at 13:30 UTC (CPs Saikat Das and Dimple Asopa). Watch LinkedIn/IG for minutes and any remaining written-input path before the 31 July GYS deadline.", "pinned": false, "daysAgo": 0, "ctaUrl": "https://www.linkedin.com/company/youngo-energy-working-group/", "ctaLabel": "Energy WG on LinkedIn" },
-    { "slug": "wg-ot-contacts-notion", "title": "WG & Operational Team contacts moved to Notion", "body": "The canonical YOUNGO Working Groups and Operational Teams roster is now a Notion page (the old Google Sheet redirects there after email-volume issues). Use it to find Contact Points after you register as a member.", "pinned": false, "daysAgo": 1, "ctaUrl": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e", "ctaLabel": "Open WG/OT roster" },
-    { "slug": "join-youngo-membership", "title": "Register as a YOUNGO member", "body": "Constituency membership is the usual path into WG channels. Use the official membership form, then ask the relevant Contact Point (Notion roster) to add you.", "pinned": false, "daysAgo": 2, "ctaUrl": "https://forms.gle/SmLx8n3dezbtMWaC8", "ctaLabel": "Membership form" },
-    { "slug": "capacity-building-signup", "title": "YOUNGO Capacity Building series — sign up", "body": "Open signup for the constituency Capacity Building series (linked from linktr.ee/YOUNGO.UNFCCC). Useful alongside WG Academies such as Food & Agriculture.", "pinned": false, "daysAgo": 2, "ctaUrl": "https://docs.google.com/forms/d/e/1FAIpQLSfL3zW1QqF8xgE-_uOksyrljjfcm6W9_cXDybPID3dNUrtYag/viewform", "ctaLabel": "Capacity Building signup" },
-    { "slug": "rcoy-2026-hosts-selected", "title": "RCOY 2026 hosts selected across seven regions", "body": "YOUNGO has approved Regional Conferences of Youth for Africa, America, Asia-Pacific, Europe, Latin America, MENA, and Oceania. RCOY APAC will be hosted in Bangladesh by SEECTO Bangladesh with regional co-organisers. LCOY WG liaisons: Dr. Anirudh Janagam and Jeremy Nathanael · lcoywg@gmail.com.", "pinned": false, "daysAgo": 19 },
-    { "slug": "adaptation-gga-youth-brief", "title": "Child- and youth-responsive GGA brief published", "body": "YOUNGO Adaptation worked with UNICEF, UNFPA, Save the Children, and Young Lives on a Global Goal on Adaptation brief for SB64 — useful for ongoing GGA and Belém Addis Vision advocacy.", "pinned": false, "daysAgo": 3, "ctaUrl": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64", "ctaLabel": "Read the brief" },
-    { "slug": "sb64-aim-coi-intervention", "title": "SB64 AIM intervention on civic space and COI", "body": "YOUNGO joined ENGO, TUNGO, and the Women and Gender Constituency on an AIM intervention covering defender safety, observer space, and a conflicts-of-interest / accountability framework.", "pinned": false, "daysAgo": 40, "ctaUrl": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/", "ctaLabel": "Read the intervention" },
-    { "slug": "cop31-volunteers-open", "title": "COP31 Türkiye volunteer programme still open", "body": "Applications for the COP31 volunteer programme in Antalya (9–20 November 2026) remain open through August. More than 10,000 people from 104 countries have already applied — details at cop31volunteers.com.", "pinned": false, "daysAgo": 4 },
-    { "slug": "cop31-partnerships-side-events", "title": "COP31 partnerships and side events — apply by 14 August", "body": "The COP31 Presidency has opened applications for Partnerships and Türkiye Pavilion Side Events. National and international stakeholders can apply through the official portals until 14 August 2026 (cop31.tr).", "pinned": false, "daysAgo": 5 },
-    { "slug": "start-with-a-working-group", "title": "New here? Start with a working group", "body": "Register as a member, open the WG/OT Notion roster for Contact Points, then complete each group’s onboarding. Finance, Energy, NDCs, Food & Agriculture, Oceans, and Nature also publish public Linktree / LinkedIn / form entry points on their Hub pages.", "pinned": false, "daysAgo": 6 }
+    {
+      "slug": "cop31-children-youth-pavilion-watch",
+      "title": "Children & Youth Pavilion at COP31 — watch for confirmation",
+      "body": "Road to COP31 Friends discussion indicates a Children & Youth Pavilion is expected again at COP31, but details are not yet confirmed. Watch YOUNGO / YCC channels.",
+      "pinned": false,
+      "daysAgo": 6
+    },
+    {
+      "slug": "belem-adaptation-indicators-webinar",
+      "title": "Belém Adaptation Indicators webinar — 29 July",
+      "body": "COP30/COP31 Presidencies host a global webinar on piloting Belém Adaptation Indicators (29 July, 14:00 CEST).",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://events.teams.microsoft.com/event/cda64415-9206-4ce9-bf6a-807726cf1867@1cc3c508-01c7-4460-bd2b-afe95e80b8af",
+      "ctaLabel": "Register / join"
+    },
+    {
+      "slug": "wycj-icjao-actionversary-2026",
+      "title": "ICJ advisory opinion — one year on: join WYCJ Action-versary",
+      "body": "WYCJ is running a Global Action-versary (webinars, video campaign, implementation toolkit) through COP31. Register actions and submit clips via wy4cj.org.",
+      "pinned": false,
+      "daysAgo": 4,
+      "ctaUrl": "https://www.wy4cj.org/icj-actionversary",
+      "ctaLabel": "Action-versary hub"
+    },
+    {
+      "slug": "ycc-cop31-antalya-programmes",
+      "title": "Youth Climate Collaborative COP31 programmes — Antalya",
+      "body": "YCC is preparing Media Training (8 Nov), Field Trip (15 Nov), and Youth Gala (17 Nov). Seeking Antalya venue partners and local connectors.",
+      "pinned": false,
+      "daysAgo": 10,
+      "ctaUrl": "https://chat.whatsapp.com/BYeHHdJe1xt3o0YOu7cCJA",
+      "ctaLabel": "YCC COP WhatsApp"
+    },
+    {
+      "slug": "cop31-volunteer-video-aug2",
+      "title": "COP31 volunteer programme — video interview step due 2 August",
+      "body": "Volunteer applications for Antalya (9–20 Nov) remain open through August. Recent applicants report a ~3-minute video interview step — check Presidency Instagram guidance (due 2 August).",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://cop31volunteers.com",
+      "ctaLabel": "Volunteer site",
+      "ctaDeadlineAt": "2026-08-02T23:59:00.000Z"
+    },
+    {
+      "slug": "agriculture-gys-draft-deadline",
+      "title": "F&A GYS draft inputs due 29 July",
+      "body": "Food & Agriculture WG members: add comments in Suggestion mode to the shared GYS draft by 29 July, then submit via the official GYS form by 31 July.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://docs.google.com/document/d/1hZRlinZEsJavOX7X9yFH0ZgI0JmPnCwB/edit?usp=sharing",
+      "ctaLabel": "Open draft",
+      "ctaDeadlineAt": "2026-07-29T23:59:00.000Z"
+    },
+    {
+      "slug": "adaptation-cw4-baku-nominations",
+      "title": "Adaptation WG — Climate Week 4 (Baku) nominations close 27 July",
+      "body": "Apply for YOUNGO Adaptation nominations to CW4 Baku adaptation events (7–11 Sep). Self-funded; hybrid format. Deadline 27 July 2026, 23:59 UTC.",
+      "pinned": true,
+      "daysAgo": 0,
+      "ctaUrl": "https://forms.gle/Xr5PnNGSfYSwo5HB6",
+      "ctaLabel": "Apply",
+      "ctaDeadlineAt": "2026-07-27T23:59:00.000Z"
+    },
+    {
+      "slug": "finance-sb64-turquoise-nexus-brief",
+      "title": "Turquoise Nexus Initiative — YOUNGO views from SB64",
+      "body": "Press release and SB64 workshop materials on means of implementation for youth and children — useful finance/MoI reference toward COP31.",
+      "pinned": false,
+      "daysAgo": 23,
+      "ctaUrl": "https://enb.iisd.org/turquoise-nexus-initiative",
+      "ctaLabel": "Read press release"
+    },
+    {
+      "slug": "finance-membership-renewal-2026",
+      "title": "Renew Finance & Markets WG membership",
+      "body": "Confirm your 2026 Finance & Markets WG membership to stay on the roster and receive sub-group invites — even if you joined earlier via Airtable or WhatsApp.",
+      "pinned": false,
+      "daysAgo": 1,
+      "ctaUrl": "https://forms.gle/2dM2Tm3bs9xgt5Rd6",
+      "ctaLabel": "Membership form"
+    },
+    {
+      "slug": "youngo-gsfp-election-eft",
+      "title": "Volunteers needed — Global South FP Election Facilitation Team",
+      "body": "Neutral volunteers for the Global South Focal Point election (through Aug 2026). Deadline 30 July 2026, 23:59 UTC. EFT members cannot run as candidates.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://forms.gle/cDozBaw8bUQhrAwW9",
+      "ctaLabel": "Volunteer form",
+      "ctaDeadlineAt": "2026-07-30T23:59:00.000Z"
+    },
+    {
+      "slug": "youngo-reform-teams-closing",
+      "title": "YOUNGO Reform Teams EOI closes 27 July",
+      "body": "Expressions of interest for YOUNGO Reform Teams close 27 July 2026, 23:59 UTC. Strengthen internal systems, governance, and operations.",
+      "pinned": true,
+      "daysAgo": 0,
+      "ctaUrl": "https://forms.gle/D8EuPu8psbX4YkiVA",
+      "ctaLabel": "Apply",
+      "ctaDeadlineAt": "2026-07-27T23:59:00.000Z"
+    },
+    {
+      "slug": "cop31-ace-side-event-partners",
+      "title": "Seeking accredited NGOs for COP31 ACE side-event merges",
+      "body": "ACE WG is looking for accredited NGOs interested in official COP31 side-event merges on ACE, youth, and disabilities. Reach out via ACE Contact Points if you are planning something similar.",
+      "pinned": false,
+      "daysAgo": 1
+    },
+    {
+      "slug": "ace-cop31-day-inputs",
+      "title": "COP31 ACE Day concept note — inputs welcome",
+      "body": "The ACE Working Group is developing a COP31 ACE Day concept note following a request from the COP31 Presidencies. Comment in the shared Google Doc.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://docs.google.com/document/d/16DdBPgsdpmPPFW1-Nb0JfY6QhXe50pFVCYBrjeuCr7E/edit?usp=sharing",
+      "ctaLabel": "Open concept note"
+    },
+    {
+      "slug": "gys-2026-inputs-closing",
+      "title": "GYS 2026 call for inputs closes 31 July",
+      "body": "Shape the children and youth policy demands for COP31. Individuals, youth-led NGOs, LCOYs, and movements can submit through the official Global Youth Statement 2026 form — deadline 31 July 2026, 23:59 UTC. Policy Team co-leads: Paul Jenkinson, Mara Ghilan, Mahdi Al Wakil.",
+      "pinned": true,
+      "daysAgo": 0,
+      "ctaUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9",
+      "ctaLabel": "Submit inputs",
+      "ctaDeadlineAt": "2026-07-31T23:59:00.000Z"
+    },
+    {
+      "slug": "ace-annual-summary-deadline",
+      "title": "ACE annual summary inputs due 31 July",
+      "body": "After the SB64 ACE Dialogue and midterm review of the Glasgow Work Programme, Parties and non-Party stakeholders can submit progress, challenges, and support needs for the ACE annual summary report — deadline 31 July 2026.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://www.unfccc.int/sites/default/files/resource/Info_session_ACE_SB64.pdf",
+      "ctaLabel": "Read ACE SB64 info",
+      "ctaDeadlineAt": "2026-07-31T23:59:00.000Z"
+    },
+    {
+      "slug": "food-agriculture-academy-session-2",
+      "title": "Food & Agriculture Academy — Session 2 on 27 July",
+      "body": "Session 2 (food systems) is 27 July 2026 at 14:00 UTC. Register on Zoom for the join link; Contact Points Bruna, Imran, and Laureen · foodandagriculture.youngo@gmail.com.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://us06web.zoom.us/meeting/register/mHwhA7jKQW-8qMI6HJWSLg",
+      "ctaLabel": "Register on Zoom"
+    },
+    {
+      "slug": "food-agriculture-academy-2026",
+      "title": "Food & Agriculture Academy 2026 is open",
+      "body": "Eight sessions from July to December 2026 on the road to COP31 — onboarding handbook, youth project map, and WG join paths at youngoagrifood.com.",
+      "pinned": false,
+      "daysAgo": 1,
+      "ctaUrl": "https://youngoagrifood.com/",
+      "ctaLabel": "Open Academy site"
+    },
+    {
+      "slug": "energy-gys-consultation",
+      "title": "Energy WG GYS consultation — follow up in writing",
+      "body": "The Energy WG open consultation ran on 26 July 2026 at 13:30 UTC (CPs Saikat Das and Dimple Asopa). Watch LinkedIn/IG for minutes and any remaining written-input path before the 31 July GYS deadline.",
+      "pinned": false,
+      "daysAgo": 0,
+      "ctaUrl": "https://www.linkedin.com/company/youngo-energy-working-group/",
+      "ctaLabel": "Energy WG on LinkedIn"
+    },
+    {
+      "slug": "wg-ot-contacts-notion",
+      "title": "WG & Operational Team contacts moved to Notion",
+      "body": "The canonical YOUNGO Working Groups and Operational Teams roster is now a Notion page (the old Google Sheet redirects there after email-volume issues). Use it to find Contact Points after you register as a member.",
+      "pinned": false,
+      "daysAgo": 1,
+      "ctaUrl": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e",
+      "ctaLabel": "Open WG/OT roster"
+    },
+    {
+      "slug": "join-youngo-membership",
+      "title": "Register as a YOUNGO member",
+      "body": "Constituency membership is the usual path into WG channels. Use the official membership form, then ask the relevant Contact Point (Notion roster) to add you.",
+      "pinned": false,
+      "daysAgo": 2,
+      "ctaUrl": "https://forms.gle/SmLx8n3dezbtMWaC8",
+      "ctaLabel": "Membership form"
+    },
+    {
+      "slug": "capacity-building-signup",
+      "title": "YOUNGO Capacity Building series — sign up",
+      "body": "Open signup for the constituency Capacity Building series (linked from linktr.ee/YOUNGO.UNFCCC). Useful alongside WG Academies such as Food & Agriculture.",
+      "pinned": false,
+      "daysAgo": 2,
+      "ctaUrl": "https://docs.google.com/forms/d/e/1FAIpQLSfL3zW1QqF8xgE-_uOksyrljjfcm6W9_cXDybPID3dNUrtYag/viewform",
+      "ctaLabel": "Capacity Building signup"
+    },
+    {
+      "slug": "rcoy-2026-hosts-selected",
+      "title": "RCOY 2026 hosts selected across seven regions",
+      "body": "YOUNGO has approved Regional Conferences of Youth for Africa, America, Asia-Pacific, Europe, Latin America, MENA, and Oceania. RCOY APAC will be hosted in Bangladesh by SEECTO Bangladesh with regional co-organisers. LCOY WG liaisons: Dr. Anirudh Janagam and Jeremy Nathanael · lcoywg@gmail.com.",
+      "pinned": false,
+      "daysAgo": 19
+    },
+    {
+      "slug": "adaptation-gga-youth-brief",
+      "title": "Child- and youth-responsive GGA brief published",
+      "body": "YOUNGO Adaptation worked with UNICEF, UNFPA, Save the Children, and Young Lives on a Global Goal on Adaptation brief for SB64 — useful for ongoing GGA and Belém Addis Vision advocacy.",
+      "pinned": false,
+      "daysAgo": 3,
+      "ctaUrl": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64",
+      "ctaLabel": "Read the brief"
+    },
+    {
+      "slug": "sb64-aim-coi-intervention",
+      "title": "SB64 AIM intervention on civic space and COI",
+      "body": "YOUNGO joined ENGO, TUNGO, and the Women and Gender Constituency on an AIM intervention covering defender safety, observer space, and a conflicts-of-interest / accountability framework.",
+      "pinned": false,
+      "daysAgo": 40,
+      "ctaUrl": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/",
+      "ctaLabel": "Read the intervention"
+    },
+    {
+      "slug": "cop31-volunteers-open",
+      "title": "COP31 Türkiye volunteer programme still open",
+      "body": "Applications for the COP31 volunteer programme in Antalya (9–20 November 2026) remain open through August. More than 10,000 people from 104 countries have already applied — details at cop31volunteers.com. Recent applicants report a video interview step due around 2 August.",
+      "pinned": false,
+      "daysAgo": 4,
+      "ctaUrl": "https://cop31volunteers.com",
+      "ctaLabel": "Volunteer site"
+    },
+    {
+      "slug": "cop31-partnerships-side-events",
+      "title": "COP31 partnerships and side events — apply by 14 August",
+      "body": "The COP31 Presidency has opened applications for Partnerships and Türkiye Pavilion Side Events. National and international stakeholders can apply through the official portals until 14 August 2026 (cop31.tr).",
+      "pinned": false,
+      "daysAgo": 5
+    },
+    {
+      "slug": "start-with-a-working-group",
+      "title": "New here? Start with a working group",
+      "body": "Register as a member, open the WG/OT Notion roster for Contact Points, then complete each group’s onboarding. Finance, Energy, NDCs, Food & Agriculture, Oceans, and Nature also publish public Linktree / LinkedIn / form entry points on their Hub pages.",
+      "pinned": false,
+      "daysAgo": 6
+    }
   ],
   "directory": [
-    { "group": "focal_points", "roleTitle": "Constituency Focal Point", "description": "Megi Marku (Albania) — constituency coordination and UNFCCC liaison (listed on the UNFCCC YOUNGO page).", "publicEmail": "megimarku.climate@gmail.com" },
-    { "group": "focal_points", "roleTitle": "Constituency Focal Point", "description": "Timothy Sitanya (Zambia) — constituency coordination and UNFCCC liaison (listed on the UNFCCC YOUNGO page).", "publicEmail": "timothysitanya.climate@gmail.com" },
-    { "group": "operations", "roleTitle": "Membership", "description": "Questions about joining YOUNGO, membership forms, and onboarding calls. Membership form: forms.gle/SmLx8n3dezbtMWaC8.", "publicEmail": "youngomembership@gmail.com" },
-    { "group": "operations", "roleTitle": "General constituency contact", "description": "General YOUNGO enquiries. Instagram @youngo.unfccc · linktr.ee/YOUNGO.UNFCCC · WG/OT Notion roster linked from Linktree.", "publicEmail": "youngo.unfccc@gmail.com" },
-    { "group": "liaisons", "roleTitle": "Policy Team co-leads", "description": "Paul Jenkinson, Mara Ghilan, and Mahdi Al Wakil — GYS process, SB policy positions, and Policy Team coordination (publicly named)." },
-    { "group": "liaisons", "roleTitle": "LCOY / RCOY coordination", "description": "2026 liaisons Dr. Anirudh Janagam (India) and Jeremy Nathanael (Indonesia). Instagram @youngolcoys · linktr.ee/youngolcoys.", "publicEmail": "lcoywg@gmail.com" },
-    { "group": "wg_contacts", "roleTitle": "Finance & Markets WG", "wg": "finance", "description": "Co-CP Patricia M. Longwani. Join: Airtable form + WhatsApp + Linktree · Instagram @youngo.climatefinance." },
-    { "group": "wg_contacts", "roleTitle": "Energy WG", "wg": "energy", "description": "Contact Points Saikat Das and Dimple Asopa. LinkedIn + Instagram @youngo.energy." },
-    { "group": "wg_contacts", "roleTitle": "NDCs WG", "wg": "ndcs", "description": "Contact Points Zipporah Njenga and Salsalina Larasati. Public join form + LinkedIn youngondcwg." },
-    { "group": "wg_contacts", "roleTitle": "Food & Agriculture WG / Academy", "wg": "agriculture", "description": "Contact Points Bruna, Imran, and Laureen · youngoagrifood.com + Linktree.", "publicEmail": "foodandagriculture.youngo@gmail.com" },
-    { "group": "wg_contacts", "roleTitle": "Loss & Damage WG", "wg": "loss-and-damage", "description": "Contact Points Jasmima Sabatina (also FRLD Active Observer Liaison) and Kartik PSW. LinkedIn YOUNGO LOSS&DAMAGE." },
-    { "group": "wg_contacts", "roleTitle": "Nature WG", "wg": "nature", "description": "Contact Points Wening and Mustafa — 2026/27 term with four task forces. LinkedIn youngo-nature-working-group." },
-    { "group": "wg_contacts", "roleTitle": "Oceans WG", "wg": "oceans", "description": "Public entry: linktr.ee/oceansvoice · Instagram @youngo_oceansvoice." },
-    { "group": "wg_contacts", "roleTitle": "ACE WG", "wg": "ace", "description": "Public entry: UNFCCC ACE pages and SB64 ACE Dialogue materials for annual-summary inputs. Current CP names not confirmed publicly for 2026." }
+    {
+      "group": "focal_points",
+      "roleTitle": "Constituency Focal Point",
+      "description": "Megi Marku (Albania) — constituency coordination and UNFCCC liaison (listed on the UNFCCC YOUNGO page).",
+      "publicEmail": "megimarku.climate@gmail.com"
+    },
+    {
+      "group": "focal_points",
+      "roleTitle": "Constituency Focal Point",
+      "description": "Timothy Sitanya (Zambia) — constituency coordination and UNFCCC liaison (listed on the UNFCCC YOUNGO page).",
+      "publicEmail": "timothysitanya.climate@gmail.com"
+    },
+    {
+      "group": "operations",
+      "roleTitle": "Membership",
+      "description": "Questions about joining YOUNGO, membership forms, and onboarding calls. Membership form: forms.gle/SmLx8n3dezbtMWaC8.",
+      "publicEmail": "youngomembership@gmail.com"
+    },
+    {
+      "group": "operations",
+      "roleTitle": "General constituency contact",
+      "description": "General YOUNGO enquiries. Instagram @youngo.unfccc · linktr.ee/YOUNGO.UNFCCC · WG/OT Notion roster linked from Linktree.",
+      "publicEmail": "youngo.unfccc@gmail.com"
+    },
+    {
+      "group": "liaisons",
+      "roleTitle": "Policy Team co-leads",
+      "description": "Paul Jenkinson, Mara Ghilan, and Mahdi Al Wakil — GYS process, SB policy positions, and Policy Team coordination (publicly named)."
+    },
+    {
+      "group": "liaisons",
+      "roleTitle": "LCOY / RCOY coordination",
+      "description": "2026 liaisons Dr. Anirudh Janagam (India) and Jeremy Nathanael (Indonesia). Instagram @youngolcoys · linktr.ee/youngolcoys.",
+      "publicEmail": "lcoywg@gmail.com"
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Finance & Markets WG",
+      "wg": "finance",
+      "description": "2026 Contact Points Marguerita Delgado and Tim (Finance Markets Bonn), per Finance & Markets WhatsApp. Join: membership form + Airtable + WhatsApp + Linktree · Instagram @youngo.climatefinance."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Energy WG",
+      "wg": "energy",
+      "description": "Contact Points Saikat Das and Dimple Asopa. LinkedIn + Instagram @youngo.energy."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "NDCs WG",
+      "wg": "ndcs",
+      "description": "Contact Points Zipporah Njenga and Salsalina Larasati. Public join form + LinkedIn youngondcwg."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Food & Agriculture WG / Academy",
+      "wg": "agriculture",
+      "description": "Contact Points Bruna, Imran, and Laureen · youngoagrifood.com + Linktree.",
+      "publicEmail": "foodandagriculture.youngo@gmail.com"
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Loss & Damage WG",
+      "wg": "loss-and-damage",
+      "description": "Contact Points Jasmima Sabatina (also FRLD Active Observer Liaison) and Kartik PSW. LinkedIn YOUNGO LOSS&DAMAGE."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Nature WG",
+      "wg": "nature",
+      "description": "Contact Points Wening and Mustafa — 2026/27 term with four task forces. LinkedIn youngo-nature-working-group."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Oceans WG",
+      "wg": "oceans",
+      "description": "Public entry: linktr.ee/oceansvoice · Instagram @youngo_oceansvoice."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "ACE WG",
+      "wg": "ace",
+      "description": "Public entry: UNFCCC ACE pages, SB64 ACE Dialogue materials, Joint ACE Policy Paper, and COP31 ACE Day concept note. Current CP names not confirmed publicly for 2026."
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Adaptation WG",
+      "wg": "adaptation",
+      "description": "2026 Contact Points Gaël Bizet and Levina Oyugah. Email adaptation.youngo@gmail.com.",
+      "publicEmail": "adaptation.youngo@gmail.com"
+    },
+    {
+      "group": "wg_contacts",
+      "roleTitle": "Women and Gender WG",
+      "wg": "gender",
+      "description": "Public WhatsApp invite on WG page. 2026 policy roadmap and onboarding deck linked from Gender WG resources."
+    }
   ],
   "gys": {
     "current": {
@@ -93,30 +1323,450 @@
       "targetSession": "COP31",
       "intro": "The Global Youth Statement brings together policy priorities developed by children and young people through YOUNGO consultations, working groups, LCOYs, RCOYs, and the Global Conference of Youth.",
       "note": "The 2026 statement is being developed for COY21 ahead of COP31 in Antalya. The call for individual and organisation inputs closes 31 July 2026, 23:59 UTC — submit through the official Global Youth Statement 2026 form.",
-      "editions": ["Call for inputs", "Taskforce", "Advocacy"],
+      "editions": [
+        "Call for inputs",
+        "Taskforce",
+        "Advocacy"
+      ],
       "fullUrl": "https://youngoclimate.org/",
       "inputsUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9",
       "inputsDeadlineAt": "2026-07-31T23:59:00.000Z",
       "releaseUrl": "https://unfccc.int/topics/education-and-youth/youngo/coy"
     },
     "priorities": [
-      { "title": "Science-aligned NDCs", "body": "Nationally Determined Contributions that match the 1.5°C pathway and centre justice for young people and frontline communities." },
-      { "title": "Just energy transition", "body": "A full, fair, and fast phase-out of fossil fuels with renewables scale-up and energy access for all." },
-      { "title": "Meaningful youth inclusion", "body": "Intergenerational equity and the meaningful inclusion of children and youth in climate policymaking at every level." },
-      { "title": "Climate finance", "body": "Reforming climate finance so it is rooted in justice and accessible to the most vulnerable communities." },
-      { "title": "Adaptation & loss and damage", "body": "Prioritising adaptation and loss-and-damage responses as moral and political imperatives." }
+      {
+        "title": "Science-aligned NDCs",
+        "body": "Nationally Determined Contributions that match the 1.5°C pathway and centre justice for young people and frontline communities."
+      },
+      {
+        "title": "Just energy transition",
+        "body": "A full, fair, and fast phase-out of fossil fuels with renewables scale-up and energy access for all."
+      },
+      {
+        "title": "Meaningful youth inclusion",
+        "body": "Intergenerational equity and the meaningful inclusion of children and youth in climate policymaking at every level."
+      },
+      {
+        "title": "Climate finance",
+        "body": "Reforming climate finance so it is rooted in justice and accessible to the most vulnerable communities."
+      },
+      {
+        "title": "Adaptation & loss and damage",
+        "body": "Prioritising adaptation and loss-and-damage responses as moral and political imperatives."
+      }
     ],
     "process": [
-      { "step": "Collection of inputs", "body": "Gathering submissions from individuals, working groups, LCOYs, NGOs, and movements worldwide (2026 inputs deadline: 31 July)." },
-      { "step": "Regional & thematic synthesis", "body": "LCOY and RCOY outputs, plus WG policy work, feed into regional and thematic drafts." },
-      { "step": "Editing & endorsement", "body": "Inputs consolidated for clarity, balance, and alignment ahead of COY21." },
-      { "step": "Advocacy & handover", "body": "The final statement is presented around COY21 / COP31 and used in YOUNGO advocacy with Parties and the UNFCCC." }
+      {
+        "step": "Collection of inputs",
+        "body": "Gathering submissions from individuals, working groups, LCOYs, NGOs, and movements worldwide (2026 inputs deadline: 31 July)."
+      },
+      {
+        "step": "Regional & thematic synthesis",
+        "body": "LCOY and RCOY outputs, plus WG policy work, feed into regional and thematic drafts."
+      },
+      {
+        "step": "Editing & endorsement",
+        "body": "Inputs consolidated for clarity, balance, and alignment ahead of COY21."
+      },
+      {
+        "step": "Advocacy & handover",
+        "body": "The final statement is presented around COY21 / COP31 and used in YOUNGO advocacy with Parties and the UNFCCC."
+      }
     ],
     "archive": [
-      { "year": 2025, "edition": "COY20", "host": "ahead of COP30, Belém", "links": [{ "label": "Statement (Drive)", "url": "https://drive.google.com/file/d/1DSKx7UtyQODtQm2PNTspw7WU0_TI7q3p/view" }, { "label": "COY background", "url": "https://unfccc.int/topics/education-and-youth/youngo/coy" }] },
-      { "year": 2024, "edition": "COY19", "host": "ahead of COP29, Baku", "links": [{ "label": "Statement (NADs)", "url": "https://cdn.prod.website-files.com/65fec76b4b8a99e1c56af7ec/67ebe12619efc40d74fdadd9_The%20Global%20Youth%20Statement%20NADs%2003102024%20_compressed.pdf" }] },
-      { "year": 2022, "edition": "COY17", "host": "ahead of COP27, Egypt", "links": [{ "label": "Statement", "url": "https://coy17eg.com/globalyouthstatement/" }] },
-      { "year": 2021, "edition": "COY16", "host": "ahead of COP26, Glasgow", "links": [{ "label": "Statement (PDF)", "url": "https://unfccc.int/sites/default/files/resource/YOUNGO_COY16_Global%20Youth%20Statement_October%202021.pdf" }, { "label": "Host site", "url": "https://ukcoy16.org/global-youth-statement" }] }
+      {
+        "year": 2025,
+        "edition": "COY20",
+        "host": "ahead of COP30, Belém",
+        "links": [
+          {
+            "label": "Statement (Drive)",
+            "url": "https://drive.google.com/file/d/1DSKx7UtyQODtQm2PNTspw7WU0_TI7q3p/view"
+          },
+          {
+            "label": "COY background",
+            "url": "https://unfccc.int/topics/education-and-youth/youngo/coy"
+          }
+        ]
+      },
+      {
+        "year": 2024,
+        "edition": "COY19",
+        "host": "ahead of COP29, Baku",
+        "links": [
+          {
+            "label": "Statement (NADs)",
+            "url": "https://cdn.prod.website-files.com/65fec76b4b8a99e1c56af7ec/67ebe12619efc40d74fdadd9_The%20Global%20Youth%20Statement%20NADs%2003102024%20_compressed.pdf"
+          }
+        ]
+      },
+      {
+        "year": 2022,
+        "edition": "COY17",
+        "host": "ahead of COP27, Egypt",
+        "links": [
+          {
+            "label": "Statement",
+            "url": "https://coy17eg.com/globalyouthstatement/"
+          }
+        ]
+      },
+      {
+        "year": 2021,
+        "edition": "COY16",
+        "host": "ahead of COP26, Glasgow",
+        "links": [
+          {
+            "label": "Statement (PDF)",
+            "url": "https://unfccc.int/sites/default/files/resource/YOUNGO_COY16_Global%20Youth%20Statement_October%202021.pdf"
+          },
+          {
+            "label": "Host site",
+            "url": "https://ukcoy16.org/global-youth-statement"
+          }
+        ]
+      }
     ]
-  }
+  },
+  "opportunities": [
+    {
+      "slug": "pacific-climate-leaders-opportunity-2026",
+      "kind": "opportunity",
+      "title": "Calling young Pacific climate leaders",
+      "organizationName": "Pacific climate leadership call",
+      "summary": "Opportunity for young Pacific climate leaders (amplified by COP30/31 PYCC channels).",
+      "body": "Shared via Road to COP31 Friends (12–13 Jul 2026). Confirm eligibility on the LinkedIn post.",
+      "format": "hybrid",
+      "region": "Pacific",
+      "linkUrl": "https://www.linkedin.com/posts/zoraya-el-raiss-cordero-6418bb75_calling-all-young-pacific-climate-leaders-share-7481904339008110592-r3NC/",
+      "daysAgo": 14
+    },
+    {
+      "slug": "one-seed-cop31-global-choir",
+      "kind": "opportunity",
+      "title": "One Seed — global choir for COP31",
+      "organizationName": "One Seed",
+      "summary": "Low-friction cultural participation — join the global choir initiative toward COP31.",
+      "body": "Shared via Road to COP31 Friends. Confirm details on LinkedIn.",
+      "format": "online",
+      "linkUrl": "https://www.linkedin.com/posts/oneseed-cop31-globalchoir-share-7481149649043501056-sl73/",
+      "daysAgo": 14
+    },
+    {
+      "slug": "wycj-icjao-implementation-toolkit-2026",
+      "kind": "call",
+      "title": "Contribute to the Global ICJ AO Implementation Toolkit",
+      "organizationName": "World Youth for Climate Justice (WYCJ)",
+      "summary": "Share AO-related resources for a crowdsourced implementation hub.",
+      "body": "Email resources to nicole@wy4cj.org. Campaign channel, 15 Jul 2026.",
+      "format": "online",
+      "linkUrl": "https://www.wy4cj.org/icj-aonniversary",
+      "daysAgo": 12
+    },
+    {
+      "slug": "wycj-icjao-video-campaign-2026",
+      "kind": "call",
+      "title": "ICJ AO anniversary — submit a short video clip",
+      "organizationName": "World Youth for Climate Justice (WYCJ)",
+      "summary": "Film a personal clip on how the ICJ advisory opinion is shaping your climate advocacy, litigation, or policy work.",
+      "body": "Instructions at wy4cj.org/icj-aonniversary. Submit to doga@wy4cj.org and quint@wy4cj.org.",
+      "format": "online",
+      "linkUrl": "https://www.wy4cj.org/icj-aonniversary",
+      "daysAgo": 12
+    },
+    {
+      "slug": "wycj-icjao-actionversary-festival-2026",
+      "kind": "opportunity",
+      "title": "ICJ AO Action-versary — join the Global Festival",
+      "organizationName": "World Youth for Climate Justice (WYCJ)",
+      "summary": "Mark one year since the ICJ climate advisory opinion: register your org’s anniversary action or sign up as a Festival Partner.",
+      "body": "Shared via WYCJ / ICJAO campaign channel. Forms remain useful for COP31 implementation storytelling.",
+      "format": "online",
+      "linkUrl": "https://docs.google.com/forms/d/1ZNf9wswKG-UEhOvAg_CoSH2qP4D7ri-tkoDUHC0KHTo/edit",
+      "daysAgo": 12
+    },
+    {
+      "slug": "energy2026-global-conference",
+      "kind": "event",
+      "title": "ENERGY2026 — 8th Global Energy Conference",
+      "organizationName": "ENERGY Conference",
+      "summary": "Free virtual global energy conference, 6–7 October 2026.",
+      "body": "Shared via Energy WG WhatsApp.",
+      "format": "online",
+      "startsAt": "2026-10-06T00:00:00.000Z",
+      "endsAt": "2026-10-07T23:59:00.000Z",
+      "linkUrl": "https://live.letsgetdigital.com/5267-energy_2026/virtualevent/registered",
+      "daysAgo": 14
+    },
+    {
+      "slug": "nato-ensec-youth-video-2026",
+      "kind": "call",
+      "title": "NATO ENSEC COE — youth video competition",
+      "organizationName": "NATO ENSEC COE",
+      "summary": "Youth video competition on energy security / blackout resilience themes.",
+      "body": "Shared via Energy WG WhatsApp. Deadline 31 July 2026.",
+      "format": "online",
+      "deadlineAt": "2026-07-31T23:59:00.000Z",
+      "linkUrl": "https://www.enseccoe.org/projects/youth-video-competition/",
+      "daysAgo": 10
+    },
+    {
+      "slug": "connected-advocacy-localization-benin-2026",
+      "kind": "opportunity",
+      "title": "Global Localization Forum — Benin (road to COP31)",
+      "organizationName": "Connected Advocacy",
+      "summary": "Africa localization dialogue framed as a road-to-COP31 process (5–7 Aug 2026).",
+      "body": "Shared via Road to COP31 Friends.",
+      "format": "in_person",
+      "location": "Benin",
+      "region": "Africa",
+      "deadlineAt": "2026-08-05T23:59:00.000Z",
+      "linkUrl": "https://docs.google.com/forms/d/e/1FAIpQLScycmFoL-64HuFwT8R3X0zzLpWbb7eB7Vnvl5WNeT1f3V8RXA/viewform",
+      "daysAgo": 10
+    },
+    {
+      "slug": "australia-cop31-involvement-2026",
+      "kind": "opportunity",
+      "title": "Australia — new ways to get involved at COP31",
+      "organizationName": "Australian Government (DCCEEW)",
+      "summary": "Official Australian Government pathways to engage at COP31.",
+      "body": "Shared via Road to COP31 Friends. Also see AU overflow badges and travel support listings.",
+      "format": "hybrid",
+      "region": "Pacific",
+      "linkUrl": "https://www.dcceew.gov.au/about/news/applications-open-new-ways-get-involved-cop31",
+      "daysAgo": 12
+    },
+    {
+      "slug": "nyc-climate-week-2026-submit-events",
+      "kind": "opportunity",
+      "title": "NYC Climate Week — submit events (pay-what-you-can)",
+      "organizationName": "Climate Week NYC",
+      "summary": "Submit events before fees jump — $0 tier referenced before 7 August 2026.",
+      "body": "Shared via Road to COP31 Friends (15 Jul 2026). Confirm on the Climate Week NYC portal.",
+      "format": "in_person",
+      "location": "New York, USA",
+      "region": "North America",
+      "deadlineAt": "2026-08-07T23:59:00.000Z",
+      "linkUrl": "https://www.climateweeknyc.org/",
+      "daysAgo": 12
+    },
+    {
+      "slug": "glacier-nation-global-challenge-2026",
+      "kind": "opportunity",
+      "title": "Glacier Nation Global Challenge 2026",
+      "organizationName": "Glacier Nation",
+      "summary": "Cryosphere / high-mountain youth challenge. Registration window referenced as 27 July 2026.",
+      "body": "Broadcast via Road to COP31 Friends (21 Jul 2026). Confirm status on Mailchimp link.",
+      "format": "online",
+      "deadlineAt": "2026-07-27T23:59:00.000Z",
+      "linkUrl": "https://mailchi.mp/a16eaccb82e4/registro-global-challenge-2026",
+      "daysAgo": 6
+    },
+    {
+      "slug": "cset-youth-global-exco-2026",
+      "kind": "opportunity",
+      "title": "CSET Youth Global ExCo 2026–2027",
+      "organizationName": "CSET Youth",
+      "summary": "Commonwealth energy-youth leadership roles (Global Lead, Community, Capacity Building, Policy). Ages 18–29; ~5–10 h/week.",
+      "body": "Shared via Road to COP31 Friends (15 Jul 2026). Confirm application path on LinkedIn.",
+      "format": "online",
+      "linkUrl": "https://www.linkedin.com/company/csetyouth/",
+      "daysAgo": 12
+    },
+    {
+      "slug": "icpac-care-about-climate-2026",
+      "kind": "training",
+      "title": "International Climate Policy and Advocacy Course (ICPAC)",
+      "organizationName": "Care About Climate",
+      "summary": "8 self-paced modules + live sessions. Available in 7 languages including Turkish. Scholarship option. Does not provide COP accreditation.",
+      "body": "Shared via Road to COP31 Friends (17 Jul 2026).",
+      "format": "online",
+      "linkUrl": "https://www.careaboutclimate.org/climate-policy-and-advocacy",
+      "daysAgo": 10
+    },
+    {
+      "slug": "cop31-aus-travel-support-2026",
+      "kind": "opportunity",
+      "title": "COP31 Climate Conference Travel Support (Australia-registered)",
+      "organizationName": "Australian Government",
+      "summary": "AUD 15–20k travel support grants for COP31 — Australia residency required.",
+      "body": "Shared via Gender WG WhatsApp. Confirm eligibility on grants.gov.au.",
+      "format": "in_person",
+      "region": "Pacific",
+      "linkUrl": "https://www.grants.gov.au/Go/Show?GoUuid=92D60D01-4B15-445B-877C-99BD756C239A",
+      "daysAgo": 20
+    },
+    {
+      "slug": "cop31-aus-overflow-badges-2026",
+      "kind": "opportunity",
+      "title": "COP31 — Australian Party overflow badge applications",
+      "organizationName": "Australian Government (DCCEEW)",
+      "summary": "Overflow badge pathway for COP31 accreditation via the Australian Party process.",
+      "body": "Shared by Gender WG CP 7 Jul 2026. Confirm nationality/residency rules on the official portal.",
+      "format": "in_person",
+      "deadlineAt": "2026-08-13T23:59:00.000Z",
+      "linkUrl": "https://unfccc-cop.dcceew.gov.au/cop31-australian-party-overflow-badge-applications",
+      "daysAgo": 20
+    },
+    {
+      "slug": "pre-cop31-apycd-fiji-2026",
+      "kind": "opportunity",
+      "title": "Pre-COP31 Australia & Pacific Youth Climate Dialogue (APYCD)",
+      "organizationName": "UNICEF Pacific Islands",
+      "summary": "Fiji dialogue (Oct 2026) for young climate leaders aged 14–29 from Australia, Pacific, and NZ ahead of Pacific Pre-COP and COP31.",
+      "body": "Shared in Gender WG 15 Jul 2026. Confirm eligibility on the official UNICEF page.",
+      "format": "in_person",
+      "location": "Fiji",
+      "region": "Pacific",
+      "linkUrl": "https://www.unicef.org/pacificislands/call-applications-apycd",
+      "daysAgo": 12
+    },
+    {
+      "slug": "coy21-logo-design-2026",
+      "kind": "call",
+      "title": "COY21 logo design call",
+      "organizationName": "YOUNGO / COY21",
+      "summary": "Global call for COY21 Antalya logo designs from youth creatives.",
+      "body": "Shared via Energy and Gender WG channels. Deadline 31 July 2026.",
+      "format": "online",
+      "deadlineAt": "2026-07-31T23:59:00.000Z",
+      "linkUrl": "https://forms.gle/CSpp1owuqt32xavZ6",
+      "daysAgo": 10
+    },
+    {
+      "slug": "lcoy-2026-speaker-database",
+      "kind": "opportunity",
+      "title": "LCOY 2026 Opportunities & Speaker Database",
+      "organizationName": "YOUNGO LCOY Working Group",
+      "summary": "Register interest to be matched for LCOY/RCOY/GCOY panels, webinars, workshops, and partner events ahead of COP31.",
+      "body": "Does not guarantee selection. Liaisons: Jeremy & Anirudh · lcoywg@gmail.com. Shared via Nature WG WhatsApp.",
+      "format": "online",
+      "linkUrl": "https://docs.google.com/forms/d/e/1FAIpQLSe36c1SaZovXiyeOs48G9aVIjp-hEkK2xn8MvvPFv1OvkcY9g/viewform",
+      "daysAgo": 2
+    },
+    {
+      "slug": "cohab3-conference-2026-abstracts",
+      "kind": "call",
+      "title": "Cohab3 — abstracts & side events (Health & Biodiversity)",
+      "organizationName": "Cohab Initiative",
+      "summary": "Third International Conference on Health and Biodiversity — Galway, Ireland, 14–17 Sep 2026. Themes include climate–nature–food–water–health nexus.",
+      "body": "Deadline extended to 12 August 2026. Shared via Nature WG WhatsApp 24 July 2026.",
+      "format": "in_person",
+      "location": "Galway, Ireland",
+      "region": "Europe",
+      "deadlineAt": "2026-08-12T23:59:00.000Z",
+      "linkUrl": "https://cohabinitiative.org/conference",
+      "daysAgo": 3
+    },
+    {
+      "slug": "youngo-gsfp-election-eft-2026",
+      "kind": "call",
+      "title": "Volunteer — Global South FP Election Facilitation Team",
+      "organizationName": "YOUNGO",
+      "summary": "Neutral volunteers needed for the Global South Focal Point election (Jul–Aug 2026). EFT members cannot run as candidates.",
+      "body": "Shared via Nature WG WhatsApp 25 July 2026. Must stay reachable, confidential, and objective through the election period.",
+      "format": "online",
+      "deadlineAt": "2026-07-30T23:59:00.000Z",
+      "linkUrl": "https://forms.gle/cDozBaw8bUQhrAwW9",
+      "daysAgo": 2
+    },
+    {
+      "slug": "youngo-reform-teams-2026",
+      "kind": "call",
+      "title": "YOUNGO Reform Teams — expressions of interest",
+      "organizationName": "YOUNGO GCT",
+      "summary": "Join Reform Teams to strengthen YOUNGO internal systems, governance, and operations (mandates, guidelines).",
+      "body": "Shared via Nature WG WhatsApp 24 July 2026. Enquiries: cameron.smith@eyengineers.eu or gct-imt-group@googlegroups.com.",
+      "format": "online",
+      "deadlineAt": "2026-07-27T23:59:00.000Z",
+      "linkUrl": "https://forms.gle/D8EuPu8psbX4YkiVA",
+      "daysAgo": 3
+    },
+    {
+      "slug": "afs-youth-assembly-speaker-2026",
+      "kind": "call",
+      "title": "YOUNGO speaker — AFS Youth Assembly International Youth Day",
+      "organizationName": "AFS Youth Assembly",
+      "summary": "Tight-deadline call for a YOUNGO speaker at the AFS Youth Assembly International Youth Day high-level panel.",
+      "body": "Shared 20 July 2026 — likely closed; retained for traceability.",
+      "format": "hybrid",
+      "endsAt": "2026-07-22T23:59:00.000Z",
+      "deadlineAt": "2026-07-22T23:59:00.000Z",
+      "linkUrl": "https://forms.gle/DYYL8HUJoHFohawe7",
+      "daysAgo": 7
+    },
+    {
+      "slug": "iucn-youth-speaker-2026",
+      "kind": "call",
+      "title": "YOUNGO speaker — IUCN Commission Membership webinar",
+      "organizationName": "IUCN Youth Advisory Committee",
+      "summary": "YOUNGO speaker sought for “IUCN Commission Membership: youth in spotlight.”",
+      "body": "Apply-by date in channels was 22 July 2026 — may be closed.",
+      "format": "online",
+      "endsAt": "2026-07-22T23:59:00.000Z",
+      "deadlineAt": "2026-07-22T23:59:00.000Z",
+      "linkUrl": "https://forms.gle/VFH1S1cuiH74Rskj6",
+      "daysAgo": 7
+    },
+    {
+      "slug": "world-youth-skills-day-2026-webinar",
+      "kind": "workshop",
+      "title": "World Youth Skills Day 2026 — Skills for a Shared Future",
+      "organizationName": "World Youth Skills Day webinar",
+      "summary": "Webinar on skills for a shared future (AI, climate, digital transformation). Held 15 July 2026 — register link retained for late access.",
+      "body": "Shared via constituency channels. Event date has passed; listing kept briefly for follow-up.",
+      "format": "online",
+      "endsAt": "2026-07-16T00:00:00.000Z",
+      "linkUrl": "https://us06web.zoom.us/meeting/register/Orc6gZKIRf6vvoF2Awm6xg",
+      "daysAgo": 12
+    },
+    {
+      "slug": "mau-marathon-2026",
+      "kind": "event",
+      "title": "Mau Marathon 2nd Edition — register",
+      "organizationName": "Mau Marathon",
+      "summary": "Conservation and climate-action marathon protecting the Mau Forest Complex.",
+      "body": "Registration form shared via constituency channels.",
+      "format": "in_person",
+      "location": "Mau Forest Complex, Kenya",
+      "region": "Africa",
+      "linkUrl": "https://docs.google.com/forms/d/e/1FAIpQLSc6F24XOy8iq3cLN8N2OYyLNvFSPsQT1os_u_WW0KvJa-FuzQ/viewform?usp=header",
+      "daysAgo": 2
+    },
+    {
+      "slug": "youth-climate-leadership-speakers",
+      "kind": "call",
+      "title": "Call for speakers — Youth Climate Leadership",
+      "organizationName": "Youth Climate Leadership",
+      "summary": "Speakers sought for the global virtual event “Youth Climate Leadership: Connecting Local Action to Global Change.”",
+      "body": "Shared via constituency channels. Confirm whether the call remains open before applying.",
+      "format": "online",
+      "linkUrl": "https://forms.gle/qTh88xtS5yc2dgZs8",
+      "daysAgo": 1
+    },
+    {
+      "slug": "gffb-campus-ambassador-2026",
+      "kind": "opportunity",
+      "title": "Campus Ambassador — Global Front For Biodiversity",
+      "organizationName": "Global Front For Biodiversity",
+      "summary": "Join a global network of student changemakers focused on biodiversity, climate action, sustainability, and leadership.",
+      "body": "Open call shared via constituency channels on 26 July 2026.",
+      "format": "online",
+      "linkUrl": "https://forms.gle/G3SPtpd367vn8Bsp6",
+      "daysAgo": 0
+    },
+    {
+      "slug": "ccop-2026-applications",
+      "kind": "opportunity",
+      "title": "CCOP 2026 — call for applications",
+      "organizationName": "CCOP",
+      "summary": "Applications open for CCOP 2026. Use the official site for the invitation-letter / application pathway.",
+      "body": "Shared via constituency channels (ACE WG Telegram digest). Confirm deadline and eligibility on the official site before applying.",
+      "format": "hybrid",
+      "deadlineInDays": 5,
+      "deadlineAt": "2026-08-01T23:59:00.000Z",
+      "linkUrl": "https://www.ccopclimate.org/",
+      "daysAgo": 0
+    }
+  ]
 }

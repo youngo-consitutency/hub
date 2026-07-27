@@ -9,6 +9,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
+import { listFixtureOpportunities } from './store.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -261,12 +262,21 @@ export async function createOpportunity(input, { orgAccountId, createdBy }) {
 
 const PAST_GRACE_MS = 86400000
 
-/** The member-facing board: published postings that have not finished. */
+function sortPublished(items) {
+  return [...items].sort((a, b) => {
+    const aKey = a.deadlineAt || a.startsAt || '9999'
+    const bKey = b.deadlineAt || b.startsAt || '9999'
+    return String(aKey).localeCompare(String(bKey))
+  })
+}
+
+/** The member-facing board: fixture channel digests + NGO org postings. */
 export async function listPublishedOpportunities(
   { kind, format } = {},
   now = new Date(),
 ) {
   const cutoff = new Date(now.getTime() - PAST_GRACE_MS).toISOString()
+  const fixtureItems = listFixtureOpportunities({ kind, format }, now)
   const pool = getPool()
   if (pool) {
     const values = [cutoff]
@@ -291,25 +301,21 @@ export async function listPublishedOpportunities(
         LIMIT 200`,
       values,
     )
-    return rows.map(publicOpportunity)
+    return sortPublished([...fixtureItems, ...rows.map(publicOpportunity)])
   }
   const accounts = readJson(accountsPath, [])
-  return readJson(postingsPath, [])
+  const orgItems = readJson(postingsPath, [])
     .filter((row) => row.status === 'published')
     .filter((row) => !row.ends_at || row.ends_at >= cutoff)
     .filter((row) => !kind || kind === 'all' || row.kind === kind)
     .filter((row) => !format || format === 'all' || row.format === format)
-    .sort((a, b) =>
-      String(a.starts_at || '9999').localeCompare(
-        String(b.starts_at || '9999'),
-      ),
-    )
     .map((row) =>
       publicOpportunity({
         ...row,
         organization_name: orgNameFor(accounts, row.org_account_id),
       }),
     )
+  return sortPublished([...fixtureItems, ...orgItems])
 }
 
 /** Everything one organisation has posted, in any state. */

@@ -113,9 +113,8 @@ test('fixture-mode CSV import is idempotent', async (t) => {
     if (existsSync(workflowFile)) unlinkSync(workflowFile)
   })
 
-  const { importGysContributionsFromCsv, getGysWorkflow } = await import(
-    '../server/lib/gysWorkflow.js'
-  )
+  const { importGysContributionsFromCsv, getGysWorkflow } =
+    await import('../server/lib/gysWorkflow.js')
 
   const first = await importGysContributionsFromCsv({
     csvText: SAMPLE_CSV,

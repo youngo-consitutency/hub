@@ -135,7 +135,9 @@ export function detectColumnMap(headers, overrides = {}) {
     const used = new Set(Object.values(map).filter(Boolean))
     const candidates = headers.filter((header) => !used.has(header))
     map.body =
-      candidates.sort((a, b) => b.length - a.length)[0] || headers[headers.length - 1] || null
+      candidates.sort((a, b) => b.length - a.length)[0] ||
+      headers[headers.length - 1] ||
+      null
   }
 
   return map

@@ -23,10 +23,15 @@ const STATUSES = new Set([
 const connectionString =
   process.env.HUB_AGENT_RO_URL || process.env.DATABASE_URL || ''
 if (!connectionString) {
-  console.error('Set HUB_AGENT_RO_URL (preferred) or DATABASE_URL for hub_agent_ro.')
+  console.error(
+    'Set HUB_AGENT_RO_URL (preferred) or DATABASE_URL for hub_agent_ro.',
+  )
   process.exit(1)
 }
-if (/[?&]user=postgres\b/i.test(connectionString) || /:\/\/postgres[:@]/i.test(connectionString)) {
+if (
+  /[?&]user=postgres\b/i.test(connectionString) ||
+  /:\/\/postgres[:@]/i.test(connectionString)
+) {
   console.error(
     'Refusing to start: this MCP must use hub_agent_ro, not the owner role.',
   )

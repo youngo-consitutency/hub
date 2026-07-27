@@ -19,5 +19,14 @@ data/feedback-tickets.json
 data/ngo-opportunities.json
 data/ngo-opportunity-trust.json
 *.local
+.local/
+.wwebjs_cache/
+data/research/
 .claude/
 .codex-vault/
+
+# managed
+**.data.json
+**.node-persist**
+**_IGNORE_**
+# end managed
