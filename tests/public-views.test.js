@@ -50,6 +50,44 @@ test('verified member views retain private event and group fields', () => {
   )
 })
 
+test('join links quoted in prose are redacted, registration links are kept', () => {
+  const quoted = eventView({
+    slug: 'ace-call',
+    description:
+      'Latest Meet link: https://meet.google.com/tjp-fcrx-vjt. Register at https://us06web.zoom.us/meeting/register/abc123.',
+  })
+  assert.doesNotMatch(quoted.description, /meet\.google\.com/)
+  assert.match(quoted.description, /members-only link/)
+  // A registration page is published on purpose — newcomers need it.
+  assert.match(quoted.description, /zoom\.us\/meeting\/register/)
+  assert.equal(
+    eventView(
+      { slug: 'ace-call', description: 'Meet: https://meet.google.com/abc' },
+      { includePrivate: true },
+    ).description,
+    'Meet: https://meet.google.com/abc',
+  )
+})
+
+test('anonymous group resources drop join links and keep public materials', () => {
+  const result = groupView({
+    slug: 'ace',
+    name: 'ACE',
+    resources: [
+      { label: 'UNFCCC ACE hub', url: 'https://unfccc.int/topics/ace' },
+      { label: 'Monthly Meet', url: 'https://meet.google.com/tjp-fcrx-vjt' },
+      {
+        label: 'Academy register',
+        url: 'https://us06web.zoom.us/meeting/register/abc123',
+      },
+    ],
+  })
+  assert.deepEqual(
+    result.resources.map((resource) => resource.label),
+    ['UNFCCC ACE hub', 'Academy register'],
+  )
+})
+
 test('feed and search sanitization covers nested event and group objects', () => {
   assert.equal(
     feedView({ live: event, week: [event] }).live.meetingUrl,

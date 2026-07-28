@@ -206,20 +206,57 @@
   }
 }
 
+/* ── "More" sheet ──────────────────────────────────
+   A bottom sheet rather than a corner popover: with headings and up to a dozen
+   entries, a 210px-wide panel anchored to the corner ran off the top of the
+   screen and could not be scrolled or dismissed by tapping away. */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--bg-page) 55%, transparent);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
 .sheet {
   position: fixed;
-  bottom: 72px;
-  right: 12px;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  left: 8px;
+  right: 8px;
   z-index: 40;
-  min-width: 210px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-modal);
   box-shadow: var(--shadow-popover);
-  padding: 8px;
+  padding: 8px 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.sheetHandle {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin: 2px 0 6px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.sheet .navSection {
+  padding: 12px 10px 4px;
+}
+
+.sheetFooter {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 /* ── Profile ───────────────────────────────────────── */

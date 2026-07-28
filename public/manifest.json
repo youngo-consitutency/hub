@@ -38,13 +38,6 @@
   ],
   "shortcuts": [
     {
-      "name": "Messages",
-      "short_name": "Messages",
-      "description": "View your messages",
-      "url": "/messages",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
-    },
-    {
       "name": "Calendar",
       "short_name": "Calendar",
       "description": "View events and meetings",
@@ -52,10 +45,17 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Intelligence",
-      "short_name": "Intel",
-      "description": "Browse foresight signals and intelligence",
-      "url": "/intelligence",
+      "name": "Opportunities",
+      "short_name": "Opportunities",
+      "description": "Open calls, nominations, and deadlines",
+      "url": "/opportunities",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search events, groups, contacts, and decisions",
+      "url": "/search",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],

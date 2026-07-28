@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function FieldError({ msg }) {
   if (!msg) return null
@@ -10,13 +9,6 @@ export function FieldError({ msg }) {
   )
 }
 
-const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-const MONTH_FORMATTER = new Intl.DateTimeFormat('en', {
-  month: 'long',
-  year: 'numeric',
-})
-const DAY_FORMATTER = new Intl.DateTimeFormat('en', { dateStyle: 'long' })
-
 function matchingOptions(options, query) {
   const normalized = query.trim().toLocaleLowerCase()
   return normalized
@@ -26,164 +18,22 @@ function matchingOptions(options, query) {
     : options
 }
 
-function parseDate(value) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '')
-  if (!match) return null
-  const date = new Date(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-  )
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
-function dateKey(year, month, day) {
-  return [
-    String(year).padStart(4, '0'),
-    String(month + 1).padStart(2, '0'),
-    String(day).padStart(2, '0'),
-  ].join('-')
-}
-
-function monthFor(value) {
-  const date = parseDate(value) || new Date()
-  return { year: date.getFullYear(), month: date.getMonth() }
-}
-
-function typedMonth(value) {
-  const match = /^(\d{4})-(\d{1,2})/.exec(value || '')
-  if (!match) return null
-  const month = Number(match[2]) - 1
-  if (month < 0 || month > 11) return null
-  return { year: Number(match[1]), month }
-}
-
-export function DatePicker({
-  label,
-  value,
-  onChange,
-  error,
-  min,
-  max,
-  placeholder = 'YYYY-MM-DD',
-}) {
-  const [open, setOpen] = useState(false)
-  const [visibleMonth, setVisibleMonth] = useState(() => monthFor(value))
-  const { year, month } = visibleMonth
-  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const today = new Date()
-  const todayValue = dateKey(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  )
-  const monthLabel = MONTH_FORMATTER.format(new Date(year, month, 1))
-
-  const shiftMonth = (amount) => {
-    const next = new Date(year, month + amount, 1)
-    setVisibleMonth({ year: next.getFullYear(), month: next.getMonth() })
-  }
-
+/** Native date field with the same field chrome as other form controls. */
+export function DatePicker({ label, value, onChange, error, min, max }) {
   return (
-    <div
-      className={`field${error ? ' hasError' : ''} datePicker`}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
-      }}
-    >
+    <label className={`field${error ? ' hasError' : ''}`}>
       <span>{label}</span>
       <input
         className="input"
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        value={value}
-        placeholder={placeholder}
-        maxLength={10}
+        type="date"
+        value={value || ''}
+        min={min || undefined}
+        max={max || undefined}
         aria-invalid={!!error}
-        aria-expanded={open}
-        onFocus={() => {
-          setVisibleMonth(monthFor(value))
-          setOpen(true)
-        }}
-        onChange={(event) => {
-          const nextValue = event.target.value
-          onChange(nextValue)
-          const nextMonth = typedMonth(nextValue)
-          if (nextMonth) setVisibleMonth(nextMonth)
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setOpen(false)
-            event.currentTarget.blur()
-          }
-        }}
+        onChange={(event) => onChange(event.target.value)}
       />
-      {open && (
-        <div className="datePickerMenu" role="dialog" aria-label={label}>
-          <div className="datePickerHeader">
-            <strong>{monthLabel}</strong>
-            <div className="datePickerNav">
-              <button
-                type="button"
-                aria-label="Previous month"
-                onClick={() => shiftMonth(-1)}
-              >
-                <ChevronLeft size={18} strokeWidth={1.75} aria-hidden />
-              </button>
-              <button
-                type="button"
-                aria-label="Next month"
-                onClick={() => shiftMonth(1)}
-              >
-                <ChevronRight size={18} strokeWidth={1.75} aria-hidden />
-              </button>
-            </div>
-          </div>
-          <div className="datePickerGrid" aria-hidden>
-            {WEEKDAYS.map((weekday, index) => (
-              <span
-                key={`${weekday}-${index}`}
-                data-weekend={index >= 5 || undefined}
-              >
-                {weekday}
-              </span>
-            ))}
-          </div>
-          <div className="datePickerGrid">
-            {Array.from({ length: 42 }, (_, index) => {
-              const day = index - firstWeekday + 1
-              if (day < 1 || day > daysInMonth) {
-                return <span key={index} className="datePickerBlank" />
-              }
-              const nextValue = dateKey(year, month, day)
-              const disabled =
-                (min && nextValue < min) || (max && nextValue > max)
-              return (
-                <button
-                  key={nextValue}
-                  type="button"
-                  className="datePickerDay"
-                  aria-label={DAY_FORMATTER.format(new Date(year, month, day))}
-                  aria-pressed={nextValue === value}
-                  data-today={nextValue === todayValue || undefined}
-                  data-weekend={index % 7 >= 5 || undefined}
-                  disabled={disabled}
-                  onClick={() => {
-                    onChange(nextValue)
-                    setOpen(false)
-                  }}
-                >
-                  {day}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
       <FieldError msg={error} />
-    </div>
+    </label>
   )
 }
 

@@ -49,7 +49,24 @@ export function assembleFeed(data, now = new Date()) {
     .sort((a, b) => new Date(a.deadlineAt) - new Date(b.deadlineAt))
     .slice(0, 3)
 
-  const pinned = data.announcements.filter((a) => a.pinned).slice(0, 2)
+  // Home shows two pins. Without an order they were taken in fixture order, so
+  // a newly published pin never surfaced and a pin whose call to action had
+  // already closed kept the slot. Expired calls to action drop out; what is
+  // left is ranked by urgency, then by how recently it was published.
+  const pinned = data.announcements
+    .filter((a) => a.pinned)
+    .filter((a) => !a.ctaDeadlineAt || new Date(a.ctaDeadlineAt) > now)
+    .sort((a, b) => {
+      const deadlineA = a.ctaDeadlineAt
+        ? new Date(a.ctaDeadlineAt).getTime()
+        : Infinity
+      const deadlineB = b.ctaDeadlineAt
+        ? new Date(b.ctaDeadlineAt).getTime()
+        : Infinity
+      if (deadlineA !== deadlineB) return deadlineA - deadlineB
+      return new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
+    })
+    .slice(0, 2)
 
   const coys = data.coys
     .filter(

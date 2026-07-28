@@ -2,6 +2,7 @@ import { useAccount } from '../lib/accountContext.jsx'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
 import { MyFeedback } from '../components/MyFeedback.jsx'
+import { NotificationSettings } from '../components/NotificationSettings.jsx'
 import { workingGroupLabel } from '../../shared/workingGroups.js'
 import {
   BookOpenCheck,
@@ -107,6 +108,8 @@ export function Profile() {
           </p>
         </section>
       </div>
+
+      <NotificationSettings />
 
       <OrgAffiliation />
 

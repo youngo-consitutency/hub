@@ -68,6 +68,15 @@ function stationFor(path) {
   return match ? match[1] : 'Member hub'
 }
 
+// Four headings, each answering one question. Role-gated tools all land in
+// `mine` instead of adding a heading per responsibility.
+const SECTION = {
+  now: "What's on",
+  act: 'Take part',
+  people: 'People & groups',
+  mine: 'Your responsibilities',
+}
+
 export function Shell({ children }) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
@@ -108,134 +117,179 @@ export function Shell({ children }) {
 
   const verified = Boolean(account?.isVerified)
 
+  /**
+   * Navigation is declared as one flat list and grouped afterwards. The
+   * previous version pushed a new section per role, so an account holding
+   * several responsibilities saw seven headings, and `/staff/points` appeared
+   * twice because the de-duplication only looked inside one section.
+   *
+   * Sections answer one question each: What's on? · What I act on · Who's
+   * there · What I'm responsible for. Every role-gated destination lands in
+   * that last section rather than earning a heading of its own.
+   */
   const nav = useMemo(() => {
-    const sections = []
-    if (!verified) {
-      sections.push({
-        section: 'Start',
-        items: [
-          { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
-          { href: '/library', label: 'Library', icon: Library },
-        ],
-      })
-    }
-    if (verified) {
-      sections.push(
-        {
-          section: 'For you',
-          items: [
-            { href: '/', label: 'Home', icon: Home },
-            { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-          ],
-        },
-        {
-          section: 'Participate',
-          items: [
-            { href: '/submissions', label: 'Submissions', icon: FileText },
-            { href: '/coys', label: 'COY tracker', icon: MapPin },
-            { href: '/council', label: 'Council', icon: Gavel },
-            { href: '/gys', label: 'Youth Statement', icon: ScrollText },
-            {
-              href: '/opportunities',
-              label: 'Opportunities',
-              icon: Megaphone,
-            },
-          ],
-        },
-        {
-          section: 'Community',
-          items: [
-            { href: '/groups', label: 'Working groups', icon: Users },
-            { href: '/directory', label: 'Directory', icon: AtSign },
-            { href: '/recognition', label: 'NGO recognition', icon: Trophy },
-          ],
-        },
-      )
-    }
-    if (['admin', 'focal_point'].includes(account?.role)) {
-      sections.push({
-        section: 'Representation',
-        items: [
-          { href: '/focal', label: 'Focal Point', icon: Network },
-          { href: '/staff/points', label: 'NGO points', icon: Award },
-        ],
-      })
-    }
-    if (
-      access.ngo ||
-      account?.role === 'admin' ||
-      account?.role === 'ngo_admin'
-    ) {
-      sections.push({
-        section: 'Organisation',
-        items: [{ href: '/ngo', label: 'NGO platform', icon: Building2 }],
-      })
-    }
-    if (
-      account?.isWgContact ||
-      access.wgAssignments?.length ||
-      access.manageAllWgs
-    ) {
-      sections.push({
-        section: 'Your workspaces',
-        items: [{ href: '/cp', label: 'WG Contact Point', icon: Briefcase }],
-      })
-    }
-    if (access.teamRoles?.includes('membership_team')) {
-      const section = sections.find(
-        (item) => item.section === 'Your workspaces',
-      )
-      const items = [
-        {
-          href: '/team/membership',
-          label: 'Membership Team',
-          icon: ClipboardCheck,
-        },
-        { href: '/staff/points', label: 'NGO points', icon: Award },
-      ]
-      if (section)
-        section.items.push(
-          ...items.filter((i) => !section.items.some((x) => x.href === i.href)),
-        )
-      else sections.push({ section: 'Your workspaces', items })
-    }
-    if (access.teamRoles?.includes('gys_policy_team')) {
-      const section = sections.find(
-        (item) => item.section === 'Your workspaces',
-      )
-      const item = {
+    const isAdmin = account?.role === 'admin'
+    const teamRoles = access.teamRoles || []
+    const capabilities = access.capabilities || []
+
+    const entries = [
+      // Before the course is passed only these two are reachable.
+      {
+        section: SECTION.now,
+        href: '/onboarding',
+        label: 'Onboarding',
+        icon: GraduationCap,
+        when: !verified,
+      },
+      {
+        section: SECTION.now,
+        href: '/library',
+        label: 'Library',
+        icon: Library,
+        when: !verified,
+      },
+
+      { section: SECTION.now, href: '/', label: 'Home', icon: Home },
+      {
+        section: SECTION.now,
+        href: '/calendar',
+        label: 'Calendar',
+        icon: CalendarDays,
+      },
+      {
+        section: SECTION.now,
+        href: '/opportunities',
+        label: 'Opportunities',
+        icon: Megaphone,
+      },
+
+      {
+        section: SECTION.act,
+        href: '/submissions',
+        label: 'Submissions',
+        icon: FileText,
+      },
+      {
+        section: SECTION.act,
+        href: '/gys',
+        label: 'Youth Statement',
+        icon: ScrollText,
+      },
+      { section: SECTION.act, href: '/council', label: 'Council', icon: Gavel },
+      {
+        section: SECTION.act,
+        href: '/coys',
+        label: 'COY tracker',
+        icon: MapPin,
+      },
+
+      {
+        section: SECTION.people,
+        href: '/groups',
+        label: 'Working groups',
+        icon: Users,
+      },
+      {
+        section: SECTION.people,
+        href: '/directory',
+        label: 'Directory',
+        icon: AtSign,
+      },
+      {
+        section: SECTION.people,
+        href: '/recognition',
+        label: 'NGO recognition',
+        icon: Trophy,
+      },
+
+      {
+        section: SECTION.mine,
+        href: '/cp',
+        label: 'WG Contact Point',
+        icon: Briefcase,
+        when:
+          account?.isWgContact ||
+          access.wgAssignments?.length > 0 ||
+          access.manageAllWgs,
+      },
+      {
+        section: SECTION.mine,
+        href: '/team/membership',
+        label: 'Membership Team',
+        icon: ClipboardCheck,
+        when: teamRoles.includes('membership_team'),
+      },
+      {
+        section: SECTION.mine,
         href: '/team/gys',
         label: 'GYS Policy Team',
         icon: PenTool,
-      }
-      if (section) section.items.push(item)
-      else sections.push({ section: 'Your workspaces', items: [item] })
-    }
-    if (
-      access.capabilities?.includes('content.draft') ||
-      access.capabilities?.includes('content.review')
-    ) {
-      const section = sections.find(
-        (item) => item.section === 'Your workspaces',
-      )
-      const item = {
+        when: teamRoles.includes('gys_policy_team'),
+      },
+      {
+        section: SECTION.mine,
         href: '/staff/content',
         label: 'Content studio',
         icon: FilePenLine,
+        when:
+          capabilities.includes('content.draft') ||
+          capabilities.includes('content.review'),
+      },
+      {
+        section: SECTION.mine,
+        href: '/staff/points',
+        label: 'NGO points',
+        icon: Award,
+        when:
+          isAdmin ||
+          account?.role === 'focal_point' ||
+          teamRoles.includes('membership_team'),
+      },
+      {
+        section: SECTION.mine,
+        href: '/focal',
+        label: 'Focal Point',
+        icon: Network,
+        when: isAdmin || account?.role === 'focal_point',
+      },
+      {
+        section: SECTION.mine,
+        href: '/ngo',
+        label: 'NGO platform',
+        icon: Building2,
+        when: access.ngo || isAdmin || account?.role === 'ngo_admin',
+      },
+      {
+        section: SECTION.mine,
+        href: '/admin',
+        label: 'Admin',
+        icon: Shield,
+        when: isAdmin,
+      },
+    ]
+
+    const seen = new Set()
+    const sections = []
+    for (const entry of entries) {
+      // `when: undefined` means "any verified member"; the pre-course entries
+      // above set it explicitly.
+      const allowed = entry.when === undefined ? verified : Boolean(entry.when)
+      if (!allowed || seen.has(entry.href)) continue
+      seen.add(entry.href)
+      const group = sections.find((s) => s.section === entry.section)
+      const item = {
+        href: entry.href,
+        label: entry.label,
+        icon: entry.icon,
       }
-      if (section) section.items.push(item)
-      else sections.push({ section: 'Your workspaces', items: [item] })
-    }
-    if (account?.role === 'admin') {
-      sections.push({
-        section: 'Staff',
-        items: [{ href: '/admin', label: 'Admin', icon: Shield }],
-      })
+      if (group) group.items.push(item)
+      else sections.push({ section: entry.section, items: [item] })
     }
     return sections
   }, [
     account,
     verified,
+    access.ngo,
     access.manageAllWgs,
     access.teamRoles?.join(','),
     access.capabilities?.join(','),
@@ -255,10 +309,15 @@ export function Shell({ children }) {
         { href: '/library', label: 'Library', icon: Library },
       ]
 
+  // The sheet keeps the sidebar's headings: a flat list of sixteen entries
+  // gave a member no way to tell a personal tool from a constituency-wide one.
   const tabHrefs = new Set(tabs.map((item) => item.href))
   const more = nav
-    .flatMap((section) => section.items)
-    .filter((item) => !tabHrefs.has(item.href))
+    .map((group) => ({
+      section: group.section,
+      items: group.items.filter((item) => !tabHrefs.has(item.href)),
+    }))
+    .filter((group) => group.items.length > 0)
 
   const signOut = async () => {
     try {
@@ -380,18 +439,53 @@ export function Shell({ children }) {
       </div>
 
       {sheet && (
-        <div
-          className="sheet"
-          id="more-navigation"
-          aria-label="More navigation"
-        >
-          {more.map(({ href, label, icon: Icon }) => (
-            <A key={href} href={href} className="navItem">
-              <Icon size={18} strokeWidth={1.75} aria-hidden />
-              {label}
-            </A>
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            className="sheetBackdrop"
+            aria-label="Close navigation"
+            onClick={() => setSheet(false)}
+          />
+          <div
+            className="sheet"
+            id="more-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More navigation"
+          >
+            <div className="sheetHandle" aria-hidden />
+            {verified && (
+              <A href="/search" className="navItem">
+                <Search size={18} strokeWidth={1.75} aria-hidden />
+                Search
+              </A>
+            )}
+            {more.map((group) => (
+              <div key={group.section}>
+                <p className="navSection">{group.section}</p>
+                {group.items.map(({ href, label, icon: Icon }) => (
+                  <A
+                    key={href}
+                    href={href}
+                    className={`navItem ${isActive(path, href) ? 'active' : ''}`}
+                    aria-current={isActive(path, href) ? 'page' : undefined}
+                  >
+                    <Icon size={18} strokeWidth={1.75} aria-hidden />
+                    {label}
+                  </A>
+                ))}
+              </div>
+            ))}
+            {/* Sign out lived only in the sidebar, which is hidden below
+                900px — so it was unreachable on a phone. */}
+            <div className="sheetFooter">
+              <button type="button" className="navItem" onClick={signOut}>
+                <LogOut size={18} strokeWidth={1.75} aria-hidden />
+                Sign out
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <CommandPalette />
@@ -412,7 +506,9 @@ export function Shell({ children }) {
             {label}
           </A>
         ))}
-        {verified && (
+        {/* Shown for every signed-in account, not just verified ones: a member
+            still working through the course needs to be able to sign out. */}
+        {account && (
           <button
             type="button"
             className={`tab ${sheet ? 'active' : ''}`}

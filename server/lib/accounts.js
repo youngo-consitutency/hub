@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 import {
   hashPassword,
   verifyPassword,
@@ -38,20 +38,6 @@ const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 const NATIONALITY_SET = new Set(NATIONALITIES)
 
 export { AGE_BANDS, GENDERS, MINORITY_OPTIONS, REGIONS, YOUTH_AFFILIATIONS }
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 function publicAccount(row) {
   if (!row) return null

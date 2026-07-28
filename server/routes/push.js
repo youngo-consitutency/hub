@@ -29,6 +29,15 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 const sendLimit = createRateLimiter({ max: 10, windowMs: 60_000 })
 
+// Keyed on the session rather than the caller IP. At a COP the whole YOUNGO
+// delegation shares one venue network, so an IP-keyed budget would let the
+// first ten people to set notifications up lock out everyone else.
+const testLimit = createRateLimiter({
+  max: 5,
+  windowMs: 60_000,
+  key: (req) => bearerToken(req) || String(req.ip || 'unknown'),
+})
+
 /**
  * Resolve the current account or return 401. Do not use `authenticate` here;
  * that function checks an email and password and is not Express middleware.
@@ -164,11 +173,15 @@ pushRouter.get('/status', async (req, res, next) => {
   }
 })
 
-pushRouter.post('/test', sendLimit, async (req, res, next) => {
+/**
+ * Send a test to the caller's own devices. Any signed-in account may do this —
+ * it only ever reaches their own subscriptions, and confirming that alerts
+ * actually arrive is the whole point of the setting. The rate limiter caps it.
+ */
+pushRouter.post('/test', testLimit, async (req, res, next) => {
   try {
     const account = await requireAccount(req, res)
     if (!account) return
-    if (!requireAdmin(account, res)) return
     if (!requireConfigured(res)) return
     const rows = await listSubscriptionsForAccounts([account.id])
     if (!rows.length) {

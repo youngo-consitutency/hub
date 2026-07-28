@@ -3,30 +3,16 @@
  * keeps browser and server subscription state aligned across restarts.
  */
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 
 const dataDir = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '../../data',
 )
 const subscriptionsPath = path.join(dataDir, 'push-subscriptions.json')
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 function publicRow(row) {
   return {

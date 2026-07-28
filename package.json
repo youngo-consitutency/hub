@@ -45,7 +45,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@open-wa/wa-automate": "^4.76.0",
     "@vitejs/plugin-react": "^6.0.1",
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "concurrently": "^8.2.2",
@@ -55,11 +54,9 @@
     "playwright": "^1.62.0",
     "prettier": "3.9.6",
     "qrcode-terminal": "^0.12.0",
-    "vite": "^8.0.0",
-    "whatsapp-web.js": "^1.34.7"
+    "vite": "^8.0.0"
   },
   "allowScripts": {
-    "@open-wa/wa-automate@4.76.0": true,
     "puppeteer@23.11.1": true,
     "cloudflared@0.5.3": true
   }

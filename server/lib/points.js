@@ -3,10 +3,10 @@
  * and UNFCCC / constituency submissions.
  */
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 import { getAccessProfile } from './access.js'
 
 const dataDir = path.join(
@@ -88,20 +88,6 @@ export const RECOGNITION_TIERS = [
     blurb: 'Deep, ongoing support for YOUNGO processes.',
   },
 ]
-
-function readJson(file, fallback = []) {
-  try {
-    if (!existsSync(file)) return fallback
-    return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    return fallback
-  }
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 export function publicLedgerEntry(row) {
   if (!row) return null

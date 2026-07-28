@@ -1,10 +1,10 @@
 // Feedback tickets raised by members from anywhere in the Hub.
 // PostgreSQL when configured, a local JSON file in fixture mode.
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const ticketsPath = path.join(here, '../../data/feedback-tickets.json')
@@ -35,20 +35,6 @@ export const FEEDBACK_STATUSES = [
 
 const KIND_VALUES = new Set(FEEDBACK_KINDS.map((k) => k.value))
 const SEVERITY_VALUES = new Set(FEEDBACK_SEVERITIES.map((s) => s.value))
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 function trimmed(value, max) {
   return String(value ?? '')

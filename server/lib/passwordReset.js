@@ -1,12 +1,10 @@
-import { createHash, randomBytes } from 'node:crypto'
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
-import { findAccountByEmail } from './accounts.js'
+import { readJson, writeJson } from './jsonFile.js'
+import { findAccountByEmail, destroyAllSessions } from './accounts.js'
 import { hashPassword } from './password.js'
-import { destroyAllSessions } from './accounts.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../../data')
@@ -14,20 +12,6 @@ const tokensPath = path.join(dataDir, 'password-reset-tokens.json')
 const accountsPath = path.join(dataDir, 'hub-accounts.json')
 
 const TTL_MS = 60 * 60 * 1000 // 1 hour
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 export function hashToken(raw) {
   return createHash('sha256').update(raw).digest('hex')

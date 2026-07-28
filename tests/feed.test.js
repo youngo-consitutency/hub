@@ -108,3 +108,22 @@ test('pinned announcements only, unapproved and concluded COYs hidden', () => {
     ['ok'],
   )
 })
+
+test('pins rank by deadline then recency, and closed calls to action drop out', () => {
+  const feed = assembleFeed(
+    {
+      ...data,
+      announcements: [
+        { title: 'Closed', pinned: true, ctaDeadlineAt: iso(-1) },
+        { title: 'Evergreen', pinned: true, publishedAt: iso(-24 * 30) },
+        { title: 'Closing tomorrow', pinned: true, ctaDeadlineAt: iso(24) },
+        { title: 'Published today', pinned: true, publishedAt: iso(-1) },
+      ],
+    },
+    now,
+  )
+  assert.deepEqual(
+    feed.pinned.map((a) => a.title),
+    ['Closing tomorrow', 'Published today'],
+  )
+})

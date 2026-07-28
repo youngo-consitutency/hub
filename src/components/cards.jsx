@@ -166,9 +166,12 @@ export function GroupCard({ group }) {
   return (
     <div className="card groupCard entityCard">
       <div className="groupCardBody">
-        <A href={`/groups/${group.slug}`} className="monogram">
+        {/* Decorative: it repeats the destination of the group-name link
+            beside it, and as a second 40px link it was an easy mis-tap and a
+            duplicate tab stop. */}
+        <span className="monogram" aria-hidden>
           {group.monogram || group.name.slice(0, 2)}
-        </A>
+        </span>
         <div className="groupCardCopy">
           <h3>
             <A href={`/groups/${group.slug}`} className="inlineLink">
