@@ -8,6 +8,7 @@ import {
   PageHeader,
 } from '../components/ui.jsx'
 import { EventCard, SubmissionCard } from '../components/cards.jsx'
+import { ContactCard } from '../components/cards.jsx'
 import { CopyFeedButton } from '../components/Subscribe.jsx'
 import {
   Users,
@@ -26,73 +27,67 @@ export function GroupDetail({ slug }) {
       <Async query={query}>
         {(g) => (
           <>
-            <PageHeader
-              eyebrow={`${g.monogram || g.name.slice(0, 2)} · Working group`}
-              title={g.name}
-              description={g.focusLine}
-            >
+            <PageHeader title={g.name} description={g.focusLine}>
               {g.cadenceNote && (
                 <p className="metaMuted mono">{g.cadenceNote}</p>
               )}
             </PageHeader>
 
-            <div className="detailActions">
-              <A
-                href={`/workspace/${g.slug}`}
-                className="btn btn-primary btn-glow"
-              >
-                <Unlock size={18} strokeWidth={1.75} aria-hidden />
-                WG workspace
-              </A>
-              {g.whatsappUrl && (
-                <a
-                  className="btn btn-secondary"
-                  href={g.whatsappUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <MessageCircle size={18} strokeWidth={1.75} aria-hidden />
-                  WhatsApp
-                </a>
-              )}
-              {g.groupUrl && (
-                <a
-                  className="btn btn-secondary"
-                  href={g.groupUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Users size={18} strokeWidth={1.75} aria-hidden />
-                  Mailing list
-                </a>
-              )}
-              {g.driveUrl && (
-                <a
-                  className="btn btn-ghost"
-                  href={g.driveUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Drive
-                  <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
-                </a>
-              )}
-            </div>
-            <p className="metaMuted detailHelp">
-              Read the workspace introduction and accept the group rules to view
-              its WhatsApp link and full Contact Point details.
-            </p>
+            <section className="card groupOverview" aria-label="Group access">
+              <div className="groupOverviewCopy">
+                <h2>Member workspace</h2>
+                <p className="metaMuted detailHelp">
+                  Complete the short group introduction once to open member
+                  channels, activities, and full Contact Point details.
+                </p>
+              </div>
+              <div className="detailActions groupOverviewActions">
+                <A href={`/workspace/${g.slug}`} className="btn btn-primary">
+                  <Unlock size={18} strokeWidth={1.75} aria-hidden />
+                  Open workspace
+                </A>
+                {g.whatsappUrl && (
+                  <a
+                    className="btn btn-secondary"
+                    href={g.whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <MessageCircle size={18} strokeWidth={1.75} aria-hidden />
+                    WhatsApp
+                  </a>
+                )}
+                {g.groupUrl && (
+                  <a
+                    className="btn btn-secondary"
+                    href={g.groupUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Users size={18} strokeWidth={1.75} aria-hidden />
+                    Mailing list
+                  </a>
+                )}
+                {g.driveUrl && (
+                  <a
+                    className="btn btn-ghost"
+                    href={g.driveUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Drive
+                    <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
+                  </a>
+                )}
+              </div>
+            </section>
 
-            {g.contact?.publicEmail && (
-              <p className="meta detailContact">
-                Contact:{' '}
-                <a
-                  className="inlineLink"
-                  href={`mailto:${g.contact.publicEmail}`}
-                >
-                  {g.contact.publicEmail}
-                </a>
-              </p>
+            {g.contact && (
+              <Section label="Contact point">
+                <div className="groupContactGrid">
+                  <ContactCard contact={g.contact} />
+                </div>
+              </Section>
             )}
 
             <Section
@@ -134,30 +129,33 @@ export function GroupDetail({ slug }) {
 
             {g.resources?.length > 0 && (
               <Section label="Learning & resources">
-                <div className="grid2">
+                <div className="groupResourceGrid">
                   {g.resources.map((r) => (
                     <a
                       key={r.url}
-                      className="card cardTight"
+                      className="card cardTight groupResourceCard"
                       href={r.url}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <div className="rowGap">
-                        <BookOpen size={18} strokeWidth={1.75} aria-hidden />
+                      <BookOpen
+                        className="groupResourceIcon"
+                        size={20}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <div className="groupResourceCopy">
                         <strong>{r.label}</strong>
-                        <ArrowUpRight
-                          size={16}
-                          strokeWidth={1.75}
-                          aria-hidden
-                          style={{ marginLeft: 'auto' }}
-                        />
+                        {r.description && (
+                          <p className="meta">{r.description}</p>
+                        )}
                       </div>
-                      {r.description && (
-                        <p className="meta" style={{ marginTop: 6 }}>
-                          {r.description}
-                        </p>
-                      )}
+                      <ArrowUpRight
+                        className="groupResourceAction"
+                        size={17}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
                     </a>
                   ))}
                 </div>

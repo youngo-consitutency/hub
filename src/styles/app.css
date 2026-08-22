@@ -10,3 +10,5 @@
 @import './parts/gates.css';
 @import './parts/search.css';
 @import './parts/surfaces.css';
+/* Last: corrects touch-target sizes in the sheets above. */
+@import './parts/touch.css';

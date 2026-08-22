@@ -1,6 +1,6 @@
 import { useApi } from '../lib/api.js'
 import { Async, Empty, PageHeader } from '../components/ui.jsx'
-import { ContactCard } from '../components/cards.jsx'
+import { ContactCard, WorkingGroupContactCard } from '../components/cards.jsx'
 import { DIRECTORY_LAYERS } from '../content/directory.js'
 import { AtSign } from 'lucide-react'
 
@@ -54,12 +54,19 @@ export function Directory() {
                         {layer.description}
                       </p>
                       <div className="directoryContacts">
-                        {layer.contacts.map((contact) => (
-                          <ContactCard
-                            key={`${contact.group}-${contact.publicEmail || contact.roleTitle}`}
-                            contact={contact}
-                          />
-                        ))}
+                        {layer.contacts.map((contact) =>
+                          layer.id === 'working-groups' && contact.wg ? (
+                            <WorkingGroupContactCard
+                              key={`${contact.group}-${contact.roleTitle}`}
+                              contact={contact}
+                            />
+                          ) : (
+                            <ContactCard
+                              key={`${contact.group}-${contact.publicEmail || contact.roleTitle}`}
+                              contact={contact}
+                            />
+                          ),
+                        )}
                       </div>
                     </section>
                   </li>

@@ -1,9 +1,17 @@
 import { Fragment } from 'react'
 import { navigate } from '../lib/router.js'
-import { countdown } from '../lib/time.js'
-import { AlarmClock, RefreshCw, ArrowLeft } from 'lucide-react'
+import { countdown, formatCountdownLabel } from '../lib/time.js'
+import { AlarmClock, RefreshCw, ArrowLeft, Check, Minus } from 'lucide-react'
 
-export function A({ href, className, children, onClick, target, ...rest }) {
+export function A({
+  href,
+  className,
+  children,
+  onClick,
+  target,
+  peek = false,
+  ...rest
+}) {
   return (
     <a
       href={href}
@@ -22,8 +30,20 @@ export function A({ href, className, children, onClick, target, ...rest }) {
         )
           return
         e.preventDefault()
-        navigate(href)
+        navigate(
+          href,
+          peek
+            ? {
+                state: {
+                  peekBackground:
+                    window.location.pathname + window.location.search,
+                },
+                scroll: false,
+              }
+            : undefined,
+        )
       }}
+      aria-haspopup={peek ? 'dialog' : undefined}
       {...rest}
     >
       {children}
@@ -52,21 +72,72 @@ export function Button({
 
 export function FilterPill({
   active,
+  state,
   icon: Icon,
   children,
   className = '',
   ...rest
 }) {
+  const filterState = state || (active ? 'include' : 'neutral')
+  const stateLabel =
+    filterState === 'include'
+      ? 'included; activate to exclude'
+      : filterState === 'exclude'
+        ? 'excluded; activate to clear'
+        : 'not selected; activate to include'
   return (
     <button
       type="button"
-      className={`pill ${active ? 'active' : ''} ${className}`.trim()}
-      aria-pressed={active}
+      className={`pill ${filterState === 'include' ? 'active' : ''} ${className}`.trim()}
+      data-filter-state={filterState}
+      aria-label={state ? `${children}: ${stateLabel}` : undefined}
+      aria-pressed={state ? filterState !== 'neutral' : active}
       {...rest}
     >
       {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />}
       {children}
+      {state === 'include' && (
+        <Check
+          className="pillStateIcon"
+          size={13}
+          strokeWidth={2}
+          aria-hidden
+        />
+      )}
+      {state === 'exclude' && (
+        <Minus
+          className="pillStateIcon"
+          size={13}
+          strokeWidth={2}
+          aria-hidden
+        />
+      )}
     </button>
+  )
+}
+
+export function SortButton({ active, icon: Icon, children, ...rest }) {
+  return (
+    <button
+      type="button"
+      className={`sortOption ${active ? 'active' : ''}`}
+      aria-pressed={active}
+      {...rest}
+    >
+      {Icon && <Icon size={15} strokeWidth={1.75} aria-hidden />}
+      {children}
+    </button>
+  )
+}
+
+export function FilterMenu({ children, activeCount = 0, label = 'Filters' }) {
+  return (
+    <section className="filterMenu" aria-label={label}>
+      <span className="srOnly" role="status">
+        {activeCount} active filters
+      </span>
+      <div className="filterMenuPanel">{children}</div>
+    </section>
   )
 }
 
@@ -126,8 +197,7 @@ export function CountdownChip({ iso, label }) {
   return (
     <span className={`chip chip-${tone} chipMono`}>
       <AlarmClock size={12} strokeWidth={1.75} aria-hidden />
-      {label && <span className="chipPrefix">{label}</span>}
-      {countdownLabel}
+      {formatCountdownLabel(label, countdownLabel)}
     </span>
   )
 }
@@ -173,7 +243,7 @@ export function Empty({ icon: Icon, title, body, cta }) {
 
 export function ErrorCard({ message, onRetry }) {
   return (
-    <div className="card rowBetween" role="alert">
+    <div className="card rowBetween errorCard" role="alert">
       <span className="meta">
         {message || 'Couldn’t load this — try again.'}
       </span>

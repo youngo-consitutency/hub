@@ -21,9 +21,6 @@
 }
 
 .intelligenceTrust {
-  display: flex;
-  gap: 9px;
-  align-items: center;
   flex-shrink: 0;
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -31,6 +28,18 @@
   background: var(--accent-tint);
   color: var(--on-accent-tint);
   font-size: 13px;
+}
+
+.intelligenceTrust > span {
+  display: grid;
+  gap: 2px;
+}
+
+.intelligenceTrust strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
 }
 
 .intelligenceTrust small {

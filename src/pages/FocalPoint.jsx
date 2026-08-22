@@ -23,7 +23,7 @@ export function FocalPoint() {
     <div>
       <PageHeader
         eyebrow="Constituency representation"
-        title="Focal Point"
+        title="Global Focal Point"
         description="Track constituency signals, coordinate with mandate holders, and keep UNFCCC-facing work connected to what members are doing."
       />
 

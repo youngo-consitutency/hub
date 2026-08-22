@@ -1,12 +1,46 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, FilterPill, PageHeader } from '../components/ui.jsx'
+import {
+  Async,
+  Empty,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+} from '../components/ui.jsx'
 import { GroupCard } from '../components/cards.jsx'
-import { ArrowDownAZ, Search, Tags, Users } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  CloudSun,
+  GraduationCap,
+  HeartHandshake,
+  Leaf,
+  Search,
+  ShieldCheck,
+  Tags,
+  Users,
+  Zap,
+} from 'lucide-react'
+import { WORKING_GROUP_TOPICS } from '../../shared/workingGroups.js'
+import {
+  activeFilterCount,
+  matchesFilters,
+  toggleFilter,
+} from '../lib/filterState.js'
+
+const TOPIC_ICONS = {
+  'climate-action': CloudSun,
+  'nature-food': Leaf,
+  'people-rights': HeartHandshake,
+  'economy-technology': Zap,
+  'participation-learning': GraduationCap,
+  'governance-integrity': ShieldCheck,
+}
 
 export function Groups() {
   const [search, setSearch] = useState('')
-  const [tag, setTag] = useState('all')
+  const [topics, setTopics] = useState({})
   const [descending, setDescending] = useState(false)
   const query = useApi('/groups')
 
@@ -26,9 +60,6 @@ export function Groups() {
         }
       >
         {(data) => {
-          const tags = [
-            ...new Set(data.items.flatMap((group) => group.tags || [])),
-          ].sort((a, b) => a.localeCompare(b))
           const needle = search.trim().toLocaleLowerCase()
           const groups = data.items
             .filter((group) => {
@@ -38,8 +69,11 @@ export function Groups() {
                   .join(' ')
                   .toLocaleLowerCase()
                   .includes(needle)
-              const matchesTag = tag === 'all' || group.tags?.includes(tag)
-              return matchesSearch && matchesTag
+              const topicKey = WORKING_GROUP_TOPICS.find((item) =>
+                item.groups.includes(group.slug),
+              )?.key
+              const matchesTopic = matchesFilters(topicKey, topics)
+              return matchesSearch && matchesTopic
             })
             .sort((a, b) =>
               descending
@@ -50,51 +84,61 @@ export function Groups() {
           return (
             <>
               <div className="catalogTools">
-                <label className="searchInputWrap">
-                  <span className="srOnly">Search working groups</span>
-                  <Search size={18} strokeWidth={1.75} aria-hidden />
-                  <input
-                    className="input"
-                    type="search"
-                    placeholder="Search groups or topics"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                  />
-                </label>
-                <fieldset className="filterLevel">
-                  <legend>Topics</legend>
-                  <div className="pillRow">
-                    <FilterPill
-                      active={tag === 'all'}
-                      icon={Tags}
-                      onClick={() => setTag('all')}
+                <div className="catalogSearchRow">
+                  <label className="searchInputWrap">
+                    <span className="srOnly">Search working groups</span>
+                    <Search size={18} strokeWidth={1.75} aria-hidden />
+                    <input
+                      className="input"
+                      type="search"
+                      placeholder="Search groups or topics"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                  </label>
+                  <div className="sortControl" aria-label="Sort groups">
+                    <SortButton
+                      active
+                      icon={descending ? ArrowUpAZ : ArrowDownAZ}
+                      onClick={() => setDescending((current) => !current)}
                     >
-                      All topics
-                    </FilterPill>
-                    {tags.map((item) => (
-                      <FilterPill
-                        key={item}
-                        active={tag === item}
-                        onClick={() => setTag(item)}
-                      >
-                        {item}
-                      </FilterPill>
-                    ))}
+                      Name {descending ? 'Z–A' : 'A–Z'}
+                    </SortButton>
                   </div>
-                </fieldset>
-                <div className="catalogSummary">
-                  <p className="resultsSummary" role="status">
-                    {groups.length} of {data.items.length} groups
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setDescending((current) => !current)}
-                  >
-                    <ArrowDownAZ size={16} strokeWidth={1.75} aria-hidden />
-                    Name {descending ? 'Z–A' : 'A–Z'}
-                  </button>
                 </div>
+                <div className="catalogControlRow catalogFilterRow">
+                  <FilterMenu activeCount={activeFilterCount(topics)}>
+                    <fieldset className="filterLevel">
+                      <legend>Topics</legend>
+                      <div className="pillRow">
+                        <FilterPill
+                          active={activeFilterCount(topics) === 0}
+                          icon={Tags}
+                          onClick={() => setTopics({})}
+                        >
+                          All topics
+                        </FilterPill>
+                        {WORKING_GROUP_TOPICS.map((item) => (
+                          <FilterPill
+                            key={item.key}
+                            state={topics[item.key] || 'neutral'}
+                            icon={TOPIC_ICONS[item.key]}
+                            onClick={() =>
+                              setTopics((current) =>
+                                toggleFilter(current, item.key),
+                              )
+                            }
+                          >
+                            {item.label}
+                          </FilterPill>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </FilterMenu>
+                </div>
+                <p className="resultsSummary" role="status">
+                  {groups.length} of {data.items.length} groups
+                </p>
               </div>
               {groups.length ? (
                 <div className="cardGrid">

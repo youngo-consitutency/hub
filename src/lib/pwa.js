@@ -66,6 +66,55 @@ export async function registerServiceWorker() {
 }
 
 /**
+ * True when this browser can do Web Push at all. Safari on iOS reports both
+ * APIs but only honours them for a home-screen install; `canSubscribeToPush`
+ * below is the check the UI should gate its button on.
+ */
+export function isPushSupported() {
+  return (
+    typeof navigator !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    typeof window !== 'undefined' &&
+    'PushManager' in window &&
+    'Notification' in window
+  )
+}
+
+/** iPhone / iPad, including iPadOS reporting itself as a Mac with touch. */
+export function isIOS() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return (
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  )
+}
+
+/**
+ * iOS only delivers Web Push to a site installed on the Home Screen (16.4+).
+ * In a Safari tab the subscribe call fails, so the UI must show the install
+ * steps instead of an enable button.
+ */
+export function needsHomeScreenInstall() {
+  return isIOS() && !isPWA()
+}
+
+/**
+ * Resolve the active service worker registration without hanging.
+ * `navigator.serviceWorker.ready` never settles when nothing is registered —
+ * which is the normal state in local development, where the worker is
+ * deliberately unregistered.
+ */
+export async function getPushRegistration() {
+  if (!isPushSupported()) return null
+  try {
+    return (await navigator.serviceWorker.getRegistration('/')) || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Convert base64 string to Uint8Array for VAPID key
  */
 function urlBase64ToUint8Array(base64String) {
@@ -84,13 +133,20 @@ function urlBase64ToUint8Array(base64String) {
  * @param {string} vapidPublicKey - VAPID public key from backend
  */
 export async function subscribeToPush(vapidPublicKey) {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+  if (!isPushSupported()) {
     console.log('[Push] Push not supported')
     return { success: false, error: 'Push not supported' }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready
+    const registration =
+      (await getPushRegistration()) || (await registerServiceWorker())
+    if (!registration) {
+      return {
+        success: false,
+        error: 'Notifications need the installed app. Reload and try again.',
+      }
+    }
 
     let subscription = await registration.pushManager.getSubscription()
     const isNew = !subscription
@@ -126,12 +182,13 @@ export async function subscribeToPush(vapidPublicKey) {
  * Unsubscribe from push notifications
  */
 export async function unsubscribeFromPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+  if (!isPushSupported()) {
     return { success: false, error: 'Push not supported' }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready
+    const registration = await getPushRegistration()
+    if (!registration) return { success: true }
     const subscription = await registration.pushManager.getSubscription()
 
     if (subscription) {
@@ -158,17 +215,27 @@ export async function unsubscribeFromPush() {
  * Check current push subscription status
  */
 export async function getPushSubscriptionStatus() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+  if (!isPushSupported()) {
     return { supported: false, subscribed: false }
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready
+    const registration = await getPushRegistration()
+    if (!registration) {
+      // No worker yet: supported by the browser, not yet installed here.
+      return {
+        supported: true,
+        registered: false,
+        subscribed: false,
+        permission: Notification.permission,
+      }
+    }
     const subscription = await registration.pushManager.getSubscription()
     const permission = Notification.permission
 
     return {
       supported: true,
+      registered: true,
       subscribed: !!subscription,
       permission,
       subscription: subscription
@@ -258,7 +325,11 @@ export default {
   subscribeToPush,
   unsubscribeFromPush,
   getPushSubscriptionStatus,
+  getPushRegistration,
   requestNotificationPermission,
+  isPushSupported,
+  isIOS,
+  needsHomeScreenInstall,
   isPWA,
   setupInstallPrompt,
   promptInstall,

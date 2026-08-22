@@ -29,34 +29,37 @@ export function MembershipMandateGate({ onComplete }) {
   const gateRef = useRef(null)
   const bodyRef = useRef(null)
 
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
-
   const onScroll = useCallback(() => {
     const el = gateRef.current
     if (!el) return
-    const max = el.scrollHeight - el.clientHeight
+    const rootTop = el.getBoundingClientRect().top + window.scrollY
+    const max = Math.max(0, el.scrollHeight - window.innerHeight)
+    const scrollTop = Math.max(0, window.scrollY - rootTop)
     if (max <= 8) {
       setProgress(1)
       // Full legal text must still be opened when content fits without scroll.
       if (showFull) setScrolledToEnd(true)
       return
     }
-    const ratio = Math.min(1, el.scrollTop / max)
+    const ratio = Math.min(1, scrollTop / max)
     setProgress(ratio)
-    if (showFull && el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
+    if (
+      showFull &&
+      el.getBoundingClientRect().bottom <= window.innerHeight + 48
+    ) {
       setScrolledToEnd(true)
     }
   }, [showFull])
 
   useEffect(() => {
     const id = requestAnimationFrame(onScroll)
-    return () => cancelAnimationFrame(id)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(id)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [onScroll, showFull])
 
   const openFullPolicy = () => {
@@ -82,12 +85,9 @@ export function MembershipMandateGate({ onComplete }) {
   }
 
   return (
-    <div
+    <main
       className="mandateGate mandatePolicyGate"
       ref={gateRef}
-      onScroll={onScroll}
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="mandate-title"
       aria-describedby="mandate-desc"
     >
@@ -207,7 +207,7 @@ export function MembershipMandateGate({ onComplete }) {
               </Button>
             </div>
           ) : (
-            <div id="full-policy" className="mandatePolicy">
+            <div id="full-policy" className="mandatePolicy card">
               <p className="metaMuted" style={{ marginBottom: 12 }}>
                 Full policy text · scroll to the end to enable the checkbox
               </p>
@@ -304,6 +304,6 @@ export function MembershipMandateGate({ onComplete }) {
           </div>
         </footer>
       </div>
-    </div>
+    </main>
   )
 }

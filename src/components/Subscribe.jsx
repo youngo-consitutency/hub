@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { CalendarPlus, Check, Copy, ExternalLink } from 'lucide-react'
 import { googleAddByUrlPage, webcalFeedUrl } from '../lib/calendarLinks.js'
 
@@ -54,20 +54,48 @@ function FeedRow({ label, path }) {
 
 // Calendar "Subscribe" control: live feeds + one-click helper links.
 export function CalendarSubscribe({ type }) {
+  const panelId = useId()
   const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+  const triggerRef = useRef(null)
   const filtered = type && type !== 'all'
+
+  useEffect(() => {
+    if (!open) return undefined
+    const dismissOnOutsideClick = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+    const dismissOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('mousedown', dismissOnOutsideClick)
+    document.addEventListener('keydown', dismissOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', dismissOnOutsideClick)
+      document.removeEventListener('keydown', dismissOnEscape)
+    }
+  }, [open])
+
   return (
-    <div className="subscribeWrap">
+    <div className="subscribeWrap" ref={wrapRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`btn btn-secondary btn-sm ${open ? 'active' : ''}`}
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         <CalendarPlus size={16} strokeWidth={1.75} aria-hidden />
         Subscribe
       </button>
       {open && (
-        <div className="subscribePanel card">
+        <div className="subscribePanel card" id={panelId}>
           <div className="subscribeHeader">
             <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
             <div>

@@ -4,11 +4,11 @@
 // Review model: an organisation's first posting is held for staff review. Once
 // it has one published posting it is trusted and later postings go live
 // immediately. Staff can override the derivation in either direction.
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 import { listFixtureOpportunities } from './store.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -34,20 +34,6 @@ export const OPPORTUNITY_FORMATS = [
 
 const KIND_VALUES = new Set(OPPORTUNITY_KINDS.map((k) => k.value))
 const FORMAT_VALUES = new Set(OPPORTUNITY_FORMATS.map((f) => f.value))
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 function validationError(message) {
   return Object.assign(new Error(message), { code: 'validation' })

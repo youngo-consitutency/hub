@@ -1,7 +1,20 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, A, FilterPill, PageHeader } from '../components/ui.jsx'
+import {
+  Async,
+  Empty,
+  A,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+} from '../components/ui.jsx'
 import { DecisionCard } from '../components/cards.jsx'
+import {
+  activeFilterCount,
+  matchesFilters,
+  toggleFilter,
+} from '../lib/filterState.js'
 import {
   Archive,
   CalendarClock,
@@ -42,14 +55,14 @@ function decisionDate(decision) {
 
 export function Council() {
   const [state, setState] = useState('active')
-  const [status, setStatus] = useState('all')
+  const [statusFilters, setStatusFilters] = useState({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
   const query = useApi(`/council?state=${state}`, [state])
 
   const changeState = (nextState) => {
     setState(nextState)
-    setStatus('all')
+    setStatusFilters({})
     setSort('date')
   }
 
@@ -60,7 +73,7 @@ export function Council() {
         title="Council"
         description="Decisions moving through YOUNGO’s decision-making process."
       >
-        <div className="pillRow" aria-label="Filter Council decisions">
+        <div className="viewSwitch" aria-label="Council view">
           <FilterPill
             active={state === 'active'}
             icon={Gavel}
@@ -112,7 +125,7 @@ export function Council() {
           const decisions = data.items
             .filter(
               (decision) =>
-                (status === 'all' || decision.status === status) &&
+                matchesFilters(decision.status, statusFilters) &&
                 (!needle ||
                   [decision.title, decision.summary, decision.proposer]
                     .join(' ')
@@ -134,53 +147,77 @@ export function Council() {
           return (
             <>
               <div className="catalogTools">
-                <label className="searchInputWrap">
-                  <span className="srOnly">Search Council decisions</span>
-                  <Search size={18} strokeWidth={1.75} aria-hidden />
-                  <input
-                    className="input"
-                    type="search"
-                    placeholder="Search decisions or proposers"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                  />
-                </label>
-                <fieldset className="filterLevel">
-                  <legend>{state === 'active' ? 'Stage' : 'Outcome'}</legend>
-                  <div className="pillRow">
-                    {statuses.map((item) => (
-                      <FilterPill
-                        key={item.key}
-                        active={status === item.key}
-                        icon={item.icon}
-                        onClick={() => setStatus(item.key)}
-                      >
-                        {item.label}
-                      </FilterPill>
-                    ))}
-                  </div>
-                </fieldset>
-                <div className="catalogSummary">
-                  <p className="resultsSummary" role="status">
-                    {decisions.length} of {data.items.length} decisions
-                  </p>
-                  <div className="pillRow" aria-label="Sort Council decisions">
-                    <FilterPill
+                <div className="catalogSearchRow">
+                  <label className="searchInputWrap">
+                    <span className="srOnly">Search Council decisions</span>
+                    <Search size={18} strokeWidth={1.75} aria-hidden />
+                    <input
+                      className="input"
+                      type="search"
+                      placeholder="Search decisions or proposers"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                  </label>
+                  <div
+                    className="sortControl"
+                    aria-label="Sort Council decisions"
+                  >
+                    <SortButton
                       active={sort === 'date'}
                       icon={CalendarClock}
                       onClick={() => setSort('date')}
                     >
                       {state === 'active' ? 'Deadline' : 'Latest'}
-                    </FilterPill>
-                    <FilterPill
+                    </SortButton>
+                    <SortButton
                       active={sort === 'title'}
                       icon={ArrowDownAZ}
                       onClick={() => setSort('title')}
                     >
                       Title A–Z
-                    </FilterPill>
+                    </SortButton>
                   </div>
                 </div>
+                <div className="catalogControlRow catalogFilterRow">
+                  <FilterMenu activeCount={activeFilterCount(statusFilters)}>
+                    <fieldset className="filterLevel">
+                      <legend>
+                        {state === 'active' ? 'Stage' : 'Outcome'}
+                      </legend>
+                      <div className="pillRow">
+                        {statuses.map((item) => (
+                          <FilterPill
+                            key={item.key}
+                            active={
+                              item.key === 'all' &&
+                              activeFilterCount(statusFilters) === 0
+                            }
+                            state={
+                              item.key === 'all'
+                                ? undefined
+                                : statusFilters[item.key] || 'neutral'
+                            }
+                            icon={item.icon}
+                            onClick={() => {
+                              if (item.key === 'all') setStatusFilters({})
+                              else {
+                                setStatusFilters((current) =>
+                                  toggleFilter(current, item.key),
+                                )
+                              }
+                            }}
+                          >
+                            {item.label}
+                          </FilterPill>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </FilterMenu>
+                </div>
+                <p className="resultsSummary" role="status">
+                  {decisions.length} of {data.items.length} decisions
+                </p>
               </div>
               {decisions.length ? (
                 <div className="cardGrid">

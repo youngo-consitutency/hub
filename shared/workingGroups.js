@@ -21,6 +21,40 @@ export const WORKING_GROUPS = [
   { slug: 'coy', name: 'Conference of Youth' },
 ]
 
+/** Broad, member-facing topics. Each working group belongs to one category. */
+export const WORKING_GROUP_TOPICS = [
+  {
+    key: 'climate-action',
+    label: 'Climate action',
+    groups: ['adaptation', 'loss-and-damage', 'mitigation', 'ndcs'],
+  },
+  {
+    key: 'nature-food',
+    label: 'Nature & food',
+    groups: ['oceans', 'agriculture', 'nature'],
+  },
+  {
+    key: 'people-rights',
+    label: 'People & rights',
+    groups: ['health', 'gender', 'human-rights'],
+  },
+  {
+    key: 'economy-technology',
+    label: 'Finance, energy & tech',
+    groups: ['finance', 'energy', 'technology'],
+  },
+  {
+    key: 'participation-learning',
+    label: 'Participation & learning',
+    groups: ['ace', 'coy'],
+  },
+  {
+    key: 'governance-integrity',
+    label: 'Governance & integrity',
+    groups: ['conflict-of-interest'],
+  },
+]
+
 export const WORKING_GROUP_SLUGS = new Set(WORKING_GROUPS.map((g) => g.slug))
 
 const WORKING_GROUP_NAMES = Object.fromEntries(

@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { FloatingThemeToggle } from './FloatingThemeToggle.jsx'
 import { MembershipMandateGate } from './MembershipMandateGate.jsx'
 import { AuthGate } from './AuthGate.jsx'
 import { ResetPassword } from '../pages/ResetPassword.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
-import { applyTheme, getInitialTheme } from '../lib/theme.js'
 import { apiGet } from '../lib/api.js'
 import {
   clearSession,
@@ -40,7 +38,6 @@ export function AccessGate({ children }) {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      applyTheme(getInitialTheme())
       const policy = hasAcknowledgedMembershipPolicy()
       if (!alive) return
       setPolicyOk(policy)
@@ -59,66 +56,38 @@ export function AccessGate({ children }) {
   }, [refreshSession])
 
   if (path.startsWith('/reset-password')) {
-    return (
-      <>
-        <FloatingThemeToggle />
-        <ResetPassword />
-      </>
-    )
+    return <ResetPassword />
   }
 
   // The privacy notice must be readable before someone is asked for personal data.
   if (path.startsWith('/privacy')) {
-    return (
-      <>
-        <FloatingThemeToggle />
-        <Privacy standalone />
-      </>
-    )
+    return <Privacy standalone />
   }
 
   if (!ready) {
     return (
-      <>
-        <FloatingThemeToggle />
-        <div className="mandateGate" aria-busy="true">
-          <div
-            className="mandateShell"
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 24,
-            }}
-          >
-            <p className="meta">Loading YOUNGO Hub...</p>
-          </div>
+      <main className="mandateGate" aria-busy="true">
+        <div
+          className="mandateShell"
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+          }}
+        >
+          <p className="meta">Loading YOUNGO Hub...</p>
         </div>
-      </>
+      </main>
     )
   }
 
   if (!policyOk) {
-    return (
-      <>
-        <FloatingThemeToggle />
-        <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
-      </>
-    )
+    return <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
   }
 
   if (!account) {
-    return (
-      <>
-        <FloatingThemeToggle />
-        <AuthGate onAuthenticated={(acc) => setAccount(acc)} />
-      </>
-    )
+    return <AuthGate onAuthenticated={(acc) => setAccount(acc)} />
   }
 
-  return (
-    <>
-      <FloatingThemeToggle />
-      {typeof children === 'function' ? children(account) : children}
-    </>
-  )
+  return <>{typeof children === 'function' ? children(account) : children}</>
 }

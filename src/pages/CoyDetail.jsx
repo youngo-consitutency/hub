@@ -7,7 +7,7 @@ import {
   Section,
 } from '../components/ui.jsx'
 import { fmtDateRange } from '../lib/time.js'
-import { MapPin, ArrowUpRight } from 'lucide-react'
+import { Building2, CalendarDays, MapPin } from 'lucide-react'
 
 const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
 const REGION_LABEL = {
@@ -36,64 +36,81 @@ export function CoyDetail({ slug }) {
               <PageHeader
                 eyebrow={COY_LABEL[coy.type]}
                 title={coy.title}
-                description={`${place || 'Location to be announced'} · ${REGION_LABEL[coy.region] || coy.region}`}
-              >
-                <div className="detailHeaderMeta">
-                  <StatusChip status={coy.status} />
-                  <p className="mono">
-                    {fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}
-                  </p>
-                </div>
-              </PageHeader>
+                description={
+                  REGION_LABEL[coy.region] ||
+                  coy.region ||
+                  'Conference of Youth'
+                }
+              />
 
-              <div className="detailActions">
-                {cta && coy.registerUrl && (
-                  <a
-                    className="btn btn-primary"
-                    href={coy.registerUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {cta}
-                  </a>
-                )}
-                <a
-                  className="btn btn-secondary"
-                  href={`https://www.openstreetmap.org/search?query=${mapQuery}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <MapPin size={18} strokeWidth={1.75} aria-hidden />
-                  View on map
-                </a>
-              </div>
+              <section
+                className="card coyDetailOverview"
+                aria-label="Conference details"
+              >
+                <div className="coyDetailFacts">
+                  <div className="coyDetailFact">
+                    <span className="coyDetailFactIcon" aria-hidden>
+                      <MapPin size={18} strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <span className="detailMetaLabel">Location</span>
+                      <strong>{place || 'To be announced'}</strong>
+                    </div>
+                  </div>
+                  <div className="coyDetailFact">
+                    <span className="coyDetailFactIcon" aria-hidden>
+                      <CalendarDays size={18} strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <span className="detailMetaLabel">Dates</span>
+                      <strong className="mono">
+                        {fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}
+                      </strong>
+                    </div>
+                  </div>
+                  <div className="coyDetailFact coyDetailStatus">
+                    <span className="detailMetaLabel">Status</span>
+                    <StatusChip status={coy.status} />
+                  </div>
+                </div>
+
+                <div className="detailActions groupOverviewActions">
+                  {cta && coy.registerUrl && (
+                    <a
+                      className="btn btn-primary"
+                      href={coy.registerUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {cta}
+                    </a>
+                  )}
+                  {place && (
+                    <a
+                      className="btn btn-secondary"
+                      href={`https://www.openstreetmap.org/search?query=${mapQuery}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <MapPin size={18} strokeWidth={1.75} aria-hidden />
+                      View on map
+                    </a>
+                  )}
+                </div>
+              </section>
 
               {(coy.organizerName || coy.organizerOrg) && (
                 <Section label="Organiser">
-                  <div className="card detailPanel">
-                    <div>
-                      {coy.organizerName && (
-                        <p className="meta">{coy.organizerName}</p>
-                      )}
+                  <div className="card coyOrganiserCard">
+                    <span className="iconTile" aria-hidden>
+                      <Building2 size={20} strokeWidth={1.75} />
+                    </span>
+                    <div className="coyOrganiserCopy">
+                      {coy.organizerName && <h3>{coy.organizerName}</h3>}
                       {coy.organizerOrg && (
-                        <p className="metaMuted">{coy.organizerOrg}</p>
+                        <p className="meta">{coy.organizerOrg}</p>
                       )}
                     </div>
-                    {coy.registerUrl && (
-                      <a
-                        className="btn btn-ghost btn-sm detailInlineAction"
-                        href={coy.registerUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Website
-                        <ArrowUpRight
-                          size={16}
-                          strokeWidth={1.75}
-                          aria-hidden
-                        />
-                      </a>
-                    )}
                   </div>
                 </Section>
               )}

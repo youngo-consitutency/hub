@@ -48,11 +48,7 @@ export function DecisionDetail({ slug }) {
           const deadline = windowIso ? fmtMoment(windowIso) : null
           return (
             <>
-              <PageHeader
-                eyebrow="Council decision"
-                title={d.title}
-                description={d.summary}
-              >
+              <PageHeader title={d.title} description={d.summary}>
                 <div className="detailHeaderMeta">
                   <StatusChip status={d.status} />
                   <p className="metaMuted">Proposed by {d.proposer}</p>
@@ -83,12 +79,36 @@ export function DecisionDetail({ slug }) {
                     steps={STEPS}
                     currentIndex={STEP_INDEX[d.status] ?? 0}
                   />
+
+                  {d.statusLog?.length > 0 && (
+                    <div className="detailProcessActivity">
+                      <h3>Activity</h3>
+                      <ol className="statusLog">
+                        {d.statusLog.map((entry, i) => (
+                          <li key={i} className="logRow">
+                            <span className="logDot" />
+                            <div>
+                              <p className="logHead">
+                                {LOG_LABEL[entry.status] || entry.status}
+                                <span className="metaMuted mono logDate">
+                                  {fmtDay(entry.at, 'UTC')}
+                                </span>
+                              </p>
+                              {entry.note && (
+                                <p className="meta logNote">{entry.note}</p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               </Section>
 
               {!decided && (
                 <Section label="How to respond">
-                  <div className="card detailPanel">
+                  <div className="card detailPanel detailActionPanel">
                     {d.respondNote && <p className="meta">{d.respondNote}</p>}
                     {d.proposalUrl && (
                       <div className="detailActions">
@@ -109,7 +129,7 @@ export function DecisionDetail({ slug }) {
 
               {decided && (
                 <Section label="Outcome">
-                  <div className="card detailPanel">
+                  <div className="card detailPanel detailActionPanel">
                     {d.outcomeNote && <p className="meta">{d.outcomeNote}</p>}
                     {d.finalUrl && (
                       <div className="detailActions">
@@ -129,29 +149,6 @@ export function DecisionDetail({ slug }) {
                       </div>
                     )}
                   </div>
-                </Section>
-              )}
-
-              {d.statusLog?.length > 0 && (
-                <Section label="Activity">
-                  <ol className="card statusLog">
-                    {d.statusLog.map((entry, i) => (
-                      <li key={i} className="logRow">
-                        <span className="logDot" />
-                        <div>
-                          <p className="logHead">
-                            {LOG_LABEL[entry.status] || entry.status}
-                            <span className="metaMuted mono logDate">
-                              {fmtDay(entry.at, 'UTC')}
-                            </span>
-                          </p>
-                          {entry.note && (
-                            <p className="meta logNote">{entry.note}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
                 </Section>
               )}
             </>

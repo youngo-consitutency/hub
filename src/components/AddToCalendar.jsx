@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { CalendarPlus, ChevronDown, Download, ExternalLink } from 'lucide-react'
 import {
   googleCalendarUrl,
@@ -11,8 +11,10 @@ import {
  * Calendar actions for Google, Outlook, Microsoft 365, and ICS downloads.
  */
 export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
+  const panelId = useId()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
+  const triggerRef = useRef(null)
 
   useEffect(() => {
     if (!open) return undefined
@@ -20,7 +22,10 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
@@ -35,10 +40,11 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
   return (
     <div className="addCalWrap" ref={wrapRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`${className}${open ? ' active' : ''}`}
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
@@ -51,12 +57,11 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
         />
       </button>
       {open && (
-        <div className="addCalPanel card" role="menu">
+        <div className="addCalPanel card" id={panelId}>
           <p className="metaMuted" style={{ marginBottom: 4 }}>
             Opens your calendar app with this event pre-filled.
           </p>
           <a
-            role="menuitem"
             className="addCalItem"
             href={googleCalendarUrl(event)}
             target="_blank"
@@ -67,7 +72,6 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             Google Calendar
           </a>
           <a
-            role="menuitem"
             className="addCalItem"
             href={outlookWebUrl(event)}
             target="_blank"
@@ -78,7 +82,6 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             Outlook.com
           </a>
           <a
-            role="menuitem"
             className="addCalItem"
             href={outlookOfficeUrl(event)}
             target="_blank"
@@ -89,7 +92,6 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             Outlook 365
           </a>
           <a
-            role="menuitem"
             className="addCalItem"
             href={icsDownloadPath(event.slug)}
             onClick={() => setOpen(false)}

@@ -6,6 +6,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Empty, Skeletons } from './components/ui.jsx'
 import { Compass, Lock } from 'lucide-react'
 import { Privacy } from './pages/Privacy.jsx'
+import { RoutePeek } from './components/RoutePeek.jsx'
 
 const lazyPage = (loader, name) =>
   lazy(() => loader().then((module) => ({ default: module[name] })))
@@ -126,6 +127,27 @@ const ROUTES = [
   [/^\/search/, Search],
 ]
 
+const PEEK_ROUTES = [
+  /^\/calendar\/(.+)$/,
+  /^\/submissions\/(.+)$/,
+  /^\/council\/(.+)$/,
+  /^\/coys\/(.+)$/,
+  /^\/groups\/(.+)$/,
+]
+
+function routeFor(path) {
+  const match = ROUTES.find(([pattern]) => pattern.test(path))
+  if (!match) return { Page: NotFound, slug: null }
+  return {
+    Page: match[1],
+    slug: path.match(match[0])?.[1] ?? null,
+  }
+}
+
+function canPeek(path) {
+  return PEEK_ROUTES.some((pattern) => pattern.test(path))
+}
+
 function NotFound() {
   return (
     <Empty
@@ -172,9 +194,7 @@ function isPreVerify(path) {
 function AppRoutes() {
   const path = usePath()
   const { account } = useAccount()
-  const match = ROUTES.find(([re]) => re.test(path))
-  const Page = match ? match[1] : NotFound
-  const slug = match ? (path.match(match[0])?.[1] ?? null) : null
+  const { Page, slug } = routeFor(path)
 
   const verified = Boolean(account?.isVerified)
 
@@ -344,10 +364,27 @@ function AppRoutes() {
     )
   }
 
+  const peekBackground = window.history.state?.peekBackground
+  const peekRoute =
+    canPeek(path) && typeof peekBackground === 'string'
+      ? routeFor(peekBackground)
+      : null
+
   return (
     <Shell>
       <Suspense fallback={<Skeletons n={4} />}>
-        <Page slug={slug && decodeURIComponent(slug)} />
+        {peekRoute ? (
+          <>
+            <peekRoute.Page
+              slug={peekRoute.slug && decodeURIComponent(peekRoute.slug)}
+            />
+            <RoutePeek path={path}>
+              <Page slug={slug && decodeURIComponent(slug)} />
+            </RoutePeek>
+          </>
+        ) : (
+          <Page slug={slug && decodeURIComponent(slug)} />
+        )}
       </Suspense>
     </Shell>
   )

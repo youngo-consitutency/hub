@@ -2,20 +2,21 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useApi } from '../lib/api.js'
 import {
-  A,
   Button,
   Async,
+  BackLink,
   Section,
   Empty,
   ErrorCard,
   Skeletons,
   PageHeader,
 } from '../components/ui.jsx'
+import { ContactCard } from '../components/cards.jsx'
 import { getWgOnboarding } from '../content/wgOnboarding.js'
-import { Lock, Unlock, MessageCircle, AtSign } from 'lucide-react'
+import { CheckCircle2, Lock, Unlock, MessageCircle } from 'lucide-react'
 
 export function Workspace({ slug }) {
-  const groups = useApi('/groups')
+  const groupQuery = useApi(`/groups/${encodeURIComponent(slug)}`, [slug])
   const [state, setState] = useState({
     progress: null,
     activities: [],
@@ -75,27 +76,13 @@ export function Workspace({ slug }) {
   }
 
   return (
-    <div>
-      <A href="/groups" className="backLink">
-        ← Working groups
-      </A>
-      <Async query={groups} skeletons={2}>
-        {(gdata) => {
-          const group = (gdata.items || []).find((g) => g.slug === slug)
-          if (!group)
-            return (
-              <Empty
-                title="Unknown group"
-                body="That working group isn’t in the directory."
-              />
-            )
+    <div className="workspacePage">
+      <BackLink href="/groups">Working groups</BackLink>
+      <Async query={groupQuery} skeletons={2}>
+        {(group) => {
           return (
             <>
-              <PageHeader
-                eyebrow="Working group workspace"
-                title={group.name}
-                description={group.focusLine}
-              />
+              <PageHeader title={group.name} description={group.focusLine} />
 
               {state.loading && <Skeletons n={3} />}
               {state.error && (
@@ -103,74 +90,96 @@ export function Workspace({ slug }) {
               )}
 
               {!state.loading && !unlocked && (
-                <div className="stack" style={{ marginTop: 16 }}>
-                  <div className="card">
-                    <div className="rowGap" style={{ marginBottom: 8 }}>
-                      <Lock size={18} strokeWidth={1.75} aria-hidden />
-                      <h2>WG onboarding</h2>
-                    </div>
-                    <p className="meta">
-                      Read the introduction and accept the rules to view
-                      activities, channel links, and Contact Point details.
-                    </p>
-                  </div>
-                  <div className="card">
-                    <h3>Presentation</h3>
-                    {onboard.presentation.map((p, i) => (
-                      <p
-                        key={i}
-                        className="meta mandatePara"
-                        style={{ marginTop: 8 }}
-                      >
-                        {p}
+                <section
+                  className="card workspaceOnboarding"
+                  aria-labelledby="workspace-onboarding-title"
+                >
+                  <header className="workspaceOnboardingHeader">
+                    <span className="iconTile" aria-hidden>
+                      <Lock size={20} strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <p className="pageEyebrow">Two short steps</p>
+                      <h2 id="workspace-onboarding-title">Join this group</h2>
+                      <p className="meta">
+                        Read the introduction and accept the shared rules to
+                        open activities, channels, and Contact Point details.
                       </p>
-                    ))}
-                    <label className="authCheck" style={{ marginTop: 12 }}>
-                      <input
-                        type="checkbox"
-                        checked={presentationOk}
-                        onChange={(e) => setPresentationOk(e.target.checked)}
-                      />
-                      <span>I have read the WG presentation.</span>
-                    </label>
+                    </div>
+                  </header>
+
+                  <div className="workspaceOnboardingSteps">
+                    <fieldset className="workspaceOnboardingStep">
+                      <legend>
+                        <span>1</span> Group introduction
+                      </legend>
+                      <div className="workspaceIntroduction">
+                        {onboard.presentation.map((paragraph) => (
+                          <p key={paragraph} className="meta mandatePara">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                      <label className="authCheck workspaceAgreement">
+                        <input
+                          type="checkbox"
+                          checked={presentationOk}
+                          onChange={(event) =>
+                            setPresentationOk(event.target.checked)
+                          }
+                        />
+                        <span>I have read the group introduction.</span>
+                      </label>
+                    </fieldset>
+
+                    <fieldset className="workspaceOnboardingStep">
+                      <legend>
+                        <span>2</span> Shared rules
+                      </legend>
+                      <ul className="authBullet meta">
+                        {onboard.rules.map((rule) => (
+                          <li key={rule}>{rule}</li>
+                        ))}
+                      </ul>
+                      <label className="authCheck workspaceAgreement">
+                        <input
+                          type="checkbox"
+                          checked={rulesOk}
+                          onChange={(event) => setRulesOk(event.target.checked)}
+                        />
+                        <span>
+                          I agree to follow these group rules and YOUNGO
+                          policies.
+                        </span>
+                      </label>
+                    </fieldset>
                   </div>
-                  <div className="card">
-                    <h3>Rules</h3>
-                    <ul className="authBullet meta">
-                      {onboard.rules.map((r) => (
-                        <li key={r}>{r}</li>
-                      ))}
-                    </ul>
-                    <label className="authCheck" style={{ marginTop: 12 }}>
-                      <input
-                        type="checkbox"
-                        checked={rulesOk}
-                        onChange={(e) => setRulesOk(e.target.checked)}
-                      />
-                      <span>
-                        I agree to follow these WG rules and YOUNGO policies.
-                      </span>
-                    </label>
-                  </div>
-                  <Button
-                    variant="primary"
-                    glow
-                    disabled={!presentationOk || !rulesOk || saving}
-                    onClick={saveOnboard}
-                  >
-                    {saving ? 'Saving…' : 'Unlock WG workspace'}
-                  </Button>
-                </div>
+
+                  <footer className="workspaceOnboardingFooter">
+                    <p className="metaMuted">
+                      {presentationOk && rulesOk
+                        ? 'Ready to unlock.'
+                        : 'Complete both checks to continue.'}
+                    </p>
+                    <Button
+                      variant="primary"
+                      disabled={!presentationOk || !rulesOk || saving}
+                      onClick={saveOnboard}
+                    >
+                      {saving ? 'Saving…' : 'Unlock workspace'}
+                    </Button>
+                  </footer>
+                </section>
               )}
 
               {!state.loading && unlocked && (
-                <div className="stack" style={{ marginTop: 16 }}>
-                  <div className="card rowBetween">
+                <div className="workspaceUnlocked">
+                  <div className="card workspaceStatusCard">
                     <div className="rowGap">
                       <Unlock
                         size={18}
                         strokeWidth={1.75}
-                        color="var(--accent)"
+                        className="workspaceStatusIcon"
                         aria-hidden
                       />
                       <div>
@@ -180,12 +189,13 @@ export function Workspace({ slug }) {
                         </p>
                       </div>
                     </div>
+                    <CheckCircle2 size={20} strokeWidth={1.75} aria-hidden />
                   </div>
                   <Section label="Channels & contacts">
-                    <div className="grid2">
+                    <div className="workspaceContactGrid">
                       {group.whatsappUrl && (
                         <a
-                          className="card cardTight"
+                          className="card cardTight workspaceChannelCard"
                           href={group.whatsappUrl}
                           target="_blank"
                           rel="noreferrer"
@@ -198,35 +208,30 @@ export function Workspace({ slug }) {
                             />
                             <strong>WhatsApp</strong>
                           </div>
-                          <p className="meta" style={{ marginTop: 6 }}>
-                            Open the WG channel
-                          </p>
+                          <p className="meta">Open the WG channel</p>
                         </a>
                       )}
-                      <A href="/directory" className="card cardTight">
-                        <div className="rowGap">
-                          <AtSign size={18} strokeWidth={1.75} aria-hidden />
-                          <strong>Contact points</strong>
-                        </div>
-                        <p className="meta" style={{ marginTop: 6 }}>
-                          Directory of public CP emails
-                        </p>
-                      </A>
+                      {group.contact && <ContactCard contact={group.contact} />}
                     </div>
                   </Section>
                   <Section label="WG activities">
                     {state.activities?.length ? (
-                      state.activities.map((a) => (
-                        <div key={a.id} className="card cardTight">
-                          <span className="chip chip-neutral">{a.kind}</span>
-                          <h3 style={{ marginTop: 6 }}>{a.title}</h3>
-                          {a.body && (
-                            <p className="meta" style={{ marginTop: 4 }}>
-                              {a.body}
-                            </p>
-                          )}
-                        </div>
-                      ))
+                      <div className="cardGrid">
+                        {state.activities.map((activity) => (
+                          <article
+                            key={activity.id}
+                            className="card cardTight workspaceActivityCard"
+                          >
+                            <span className="chip chip-neutral">
+                              {activity.kind}
+                            </span>
+                            <h3>{activity.title}</h3>
+                            {activity.body && (
+                              <p className="meta">{activity.body}</p>
+                            )}
+                          </article>
+                        ))}
+                      </div>
                     ) : (
                       <Empty
                         title="No activities yet"

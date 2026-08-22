@@ -18,13 +18,15 @@ export function Recognition() {
           <>
             <Section label="Leaderboard">
               {!data.items?.length ? (
-                <Empty
-                  icon={Award}
-                  title="No points awarded yet"
-                  body="When staff verify badge support or UNFCCC submission help, organisations appear here."
-                />
+                <div className="recognitionEmpty">
+                  <Empty
+                    icon={Award}
+                    title="No points awarded yet"
+                    body="When staff verify badge support or UNFCCC submission help, organisations appear here."
+                  />
+                </div>
               ) : (
-                <div className="stackSm">
+                <div className="recognitionRankGrid">
                   {data.items.map((row) => (
                     <div
                       key={`${row.rank}-${row.name}`}

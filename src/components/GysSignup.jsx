@@ -10,7 +10,7 @@ const EMPTY = {
   website: '',
 }
 
-export function GysSignup() {
+export function GysSignup({ embedded = false }) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState('idle') // idle | submitting | done
@@ -36,23 +36,28 @@ export function GysSignup() {
 
   if (status === 'done') {
     return (
-      <div className="card gysSignupCard">
-        <h3>You’re on the participation list</h3>
-        <p className="meta gysSignupLead">
-          The GYS team will contact you when consultations or drafting sessions
-          open.
-        </p>
+      <div className={`gysSignupCard ${embedded ? '' : 'card'}`.trim()}>
+        <div className="gysSignupIntro">
+          <h3>You’re on the participation list</h3>
+          <p className="meta gysSignupLead">
+            The GYS team will contact you when consultations or drafting
+            sessions open.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="card gysSignupCard">
-      <h3>Join the next consultation cycle</h3>
-      <p className="meta gysSignupLead">
-        Leave your details to hear about regional consultations and drafting
-        sessions for the next Global Youth Statement.
-      </p>
+    <div
+      className={`gysSignupCard ${embedded ? '' : 'card'} ${open ? 'isOpen' : ''}`.trim()}
+    >
+      <div className="gysSignupIntro">
+        <h3>Join the next consultation cycle</h3>
+        <p className="meta gysSignupLead">
+          Get notified when regional consultations and drafting sessions open.
+        </p>
+      </div>
 
       {!open ? (
         <div className="detailActions">

@@ -1,13 +1,6 @@
-/* Mission-console and member surface registers.
-   Colours come from tokens.css variables only. */
-
-/* -- Mission-control surface (app-wide, both colour schemes) -- */
-[data-surface='mission'] {
-  --content-max: 1240px;
-  --card-padding: 14px;
-  --section-gap: 18px;
-  /* Accent treatments resolved per theme so light mode stays crisp
-     rather than inheriting the dark scheme's glows. */
+/* Mission-console components. Shared pages keep the same visual language. */
+.mcConsole,
+.homeHero {
   --mc-ring: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
   --mc-wash: linear-gradient(
     135deg,
@@ -16,26 +9,6 @@
   );
   --mc-halo: 0 0 22px color-mix(in srgb, var(--accent) 14%, transparent);
   --mc-numerals: clamp(56px, 9vw, 88px);
-}
-
-[data-surface='mission'] .content {
-  padding-top: 20px;
-}
-
-[data-surface='mission'] .sidebar {
-  background: color-mix(in srgb, var(--bg-card) 92%, var(--accent) 8%);
-  border-right-color: var(--border-strong);
-}
-
-[data-surface='mission'] .navSection {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-[data-surface='mission'] .navItem.active {
-  box-shadow: var(--mc-ring);
 }
 
 .mcConsole {
@@ -114,19 +87,6 @@ main > .mcStatusBar {
   border-radius: 50%;
   background: var(--live);
   color: var(--live);
-  animation: mcPulse 1.6s ease-out infinite;
-}
-
-@keyframes mcPulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 8px transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
 }
 
 .mcClock {
@@ -307,8 +267,8 @@ main > .mcStatusBar {
   border-radius: var(--radius-card);
   background: var(--bg-card);
   transition:
-    border-color 160ms ease,
-    background 160ms ease;
+    border-color 100ms linear,
+    background 100ms linear;
 }
 
 .mcWgTile:hover {
@@ -325,7 +285,7 @@ main > .mcStatusBar {
 .mcMonogram {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -471,82 +431,6 @@ main > .mcStatusBar {
   gap: 12px;
 }
 
-/* Mission density applied to the shared primitives, so every page picks up
-   the console treatment without a per-page rewrite. */
-[data-surface='mission'] .card {
-  border-radius: 10px;
-}
-
-[data-surface='mission'] .cardGrid,
-[data-surface='mission'] .grid2 {
-  gap: 10px;
-}
-
-[data-surface='mission'] .grid2 {
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-}
-
-[data-surface='mission'] .metricGrid {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-
-[data-surface='mission'] .metricCard {
-  padding: 11px 12px;
-  border-radius: 10px;
-  gap: 1px 8px;
-}
-
-[data-surface='mission'] .metricCard strong {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: var(--accent);
-}
-
-[data-surface='mission'] .metricCard span {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-
-[data-surface='mission'] .pageTitle {
-  letter-spacing: -0.03em;
-}
-
-[data-surface='mission'] .pageEyebrow {
-  font-family: var(--font-mono);
-  letter-spacing: 0.16em;
-}
-
-[data-surface='mission'] .sectionLabel {
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-[data-surface='mission'] .subsectionHeading,
-[data-surface='mission'] .sectionHeading {
-  font-family: var(--font-mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-[data-surface='mission'] .chip {
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
 @media (max-width: 900px) {
   .mcHero {
     grid-template-columns: 1fr;
@@ -572,125 +456,4 @@ main > .mcStatusBar {
   .mcQueueActions .btn {
     flex: 1;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mcLiveDot {
-    animation: none;
-  }
-}
-
-/* ── Member surface: the warmer, movement-forward register ─────────────
-   Operational routes keep data-surface='mission'. Member-facing pages get a
-   soft emerald ambient plus a woven texture reserved for empty states —
-   echoing the COY21 call's green world without the console density. */
-[data-surface='member'] .content {
-  background-image: radial-gradient(
-    130% 60% at 50% -12%,
-    color-mix(in srgb, var(--accent) 7%, transparent),
-    transparent 58%
-  );
-  background-repeat: no-repeat;
-}
-
-[data-surface='member'] .empty {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background-image: none;
-}
-
-[data-surface='member'] .empty::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.7;
-  background-image:
-    repeating-linear-gradient(
-      60deg,
-      transparent 0 20px,
-      color-mix(in srgb, var(--accent) 9%, transparent) 20px 21px
-    ),
-    repeating-linear-gradient(
-      -60deg,
-      transparent 0 20px,
-      color-mix(in srgb, var(--accent) 9%, transparent) 20px 21px
-    );
-  -webkit-mask-image: radial-gradient(
-    85% 85% at 50% 42%,
-    #000 26%,
-    transparent 76%
-  );
-  mask-image: radial-gradient(85% 85% at 50% 42%, #000 26%, transparent 76%);
-}
-
-/* PageHeader is the member hero moment — a bigger display title and a
-   branded eyebrow tick, propagated to every page via the shared primitive. */
-[data-surface='member'] .pageTitle {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(25px, 3.2vw, 31px);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-}
-
-[data-surface='member'] .pageEyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-[data-surface='member'] .pageEyebrow::before {
-  content: '';
-  width: 14px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-
-/* Section headers read as warm, sentence-case headings — not console labels. */
-[data-surface='member'] .sectionLabel {
-  text-transform: none;
-  letter-spacing: -0.01em;
-  color: var(--text-2);
-}
-
-[data-surface='member'] .sectionHeading {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-  text-transform: none;
-  color: var(--text-1);
-}
-
-[data-surface='member'] .subsectionHeading {
-  text-transform: none;
-  letter-spacing: -0.01em;
-  font-size: 13px;
-}
-
-/* Cards lift with an emerald-tinted edge — the green world, kept light. */
-[data-surface='member'] a.card:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-strong));
-  box-shadow: 0 8px 22px -14px
-    color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-/* A faint emerald wash unifies the member sidebar with the content field. */
-[data-surface='member'] .sidebar {
-  background: color-mix(in srgb, var(--bg-card) 94%, var(--accent) 6%);
-}
-
-/* Keep the loading shimmer visible on the pale member field. */
-[data-surface='member'] .skeleton::after {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--accent) 9%, transparent),
-    transparent
-  );
 }

@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { getPool } from './db.js'
+import { readJson, writeJson } from './jsonFile.js'
 import {
   publicAccount,
   findAccountByEmail,
@@ -22,20 +22,6 @@ const accountsPath = path.join(dataDir, 'hub-accounts.json')
 const progressPath = path.join(dataDir, 'wg-progress.json')
 const activitiesPath = path.join(dataDir, 'wg-activities.json')
 const requestsPath = path.join(dataDir, 'ngo-requests.json')
-
-function readJson(file, fallback) {
-  try {
-    if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
-  } catch {
-    /* empty */
-  }
-  return fallback
-}
-
-function writeJson(file, data) {
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(data, null, 2))
-}
 
 // Kept for newer route modules. Administrator status is changed only by the
 // explicit bootstrap/admin workflow, never implicitly from environment email.
