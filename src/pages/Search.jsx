@@ -204,10 +204,11 @@ export function Search() {
         description="Find a record directly or ask a question across the Hub. Answers use only evidence your account is allowed to access."
         action={
           <div className="intelligenceTrust">
-            <ShieldCheck size={18} aria-hidden />
             <span>
-              Citation-first
-              <br />
+              <strong>
+                <ShieldCheck size={18} aria-hidden />
+                Citation-first
+              </strong>
               <small>Private questions are audited</small>
             </span>
           </div>

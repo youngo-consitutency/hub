@@ -5,7 +5,7 @@
 .monogram {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -26,23 +26,7 @@
 }
 
 .skeleton::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
-  animation: shimmer 1.4s infinite;
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+  content: none;
 }
 
 .empty {
@@ -69,7 +53,7 @@
 .iconTile {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,7 +170,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
 }
 
 .adminDialog {
@@ -257,6 +241,130 @@
 
   .adminDialogFooter > *,
   .adminActionBlock > .btn {
+    width: 100%;
+  }
+}
+
+/* ── Working-group workspace ──────────────────────── */
+.workspaceOnboarding,
+.workspaceUnlocked {
+  margin-top: var(--space-4);
+}
+
+.workspaceOnboardingHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.workspaceOnboardingHeader .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.workspaceOnboardingHeader .meta {
+  max-width: 62ch;
+  margin-top: var(--space-1);
+}
+
+.workspaceOnboardingSteps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.workspaceOnboardingStep {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.workspaceOnboardingStep legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.workspaceOnboardingStep legend > span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 12px;
+}
+
+.workspaceIntroduction {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.workspaceAgreement {
+  margin-top: var(--space-4);
+}
+
+.workspaceOnboardingFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.workspaceStatusCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workspaceStatusCard > svg,
+.workspaceStatusIcon {
+  color: var(--accent);
+}
+
+.workspaceContactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.workspaceChannelCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.workspaceActivityCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+@media (max-width: 760px) {
+  .workspaceOnboardingSteps,
+  .workspaceContactGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspaceOnboardingFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspaceOnboardingFooter .btn {
     width: 100%;
   }
 }
@@ -397,6 +505,46 @@ a.monogram:hover {
   margin-top: 0;
 }
 
+.detailPageActions {
+  justify-content: flex-end;
+}
+
+.eventDetailPage {
+  width: 100%;
+  max-width: var(--detail-max);
+}
+
+.detailOverviewCard {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(360px, 600px);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.detailOverviewFacts {
+  display: grid;
+  align-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.detailOverviewFact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.detailOverviewCard .detailActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+}
+
+.detailOverviewCard .detailActions .btn,
+.detailOverviewCard .detailActions .calendarMenu {
+  width: 100%;
+}
+
 .detailProcess,
 .detailPanel {
   display: flex;
@@ -426,6 +574,220 @@ a.monogram:hover {
 
 .detailPanel .detailActions {
   margin-top: 0;
+}
+
+.detailActionPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.detailActionPanel .detailActions {
+  justify-content: flex-end;
+}
+
+.groupOverview {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(360px, 0.9fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.groupOverviewCopy {
+  min-width: 0;
+}
+
+.groupOverviewCopy h2 {
+  font-size: 18px;
+}
+
+.groupOverviewActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.groupOverviewActions .btn {
+  width: 100%;
+}
+
+.groupContactGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.groupContactGrid .contactCard {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.32fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+  height: auto;
+}
+
+.groupContactGrid .contactRole {
+  grid-row: 1 / span 2;
+}
+
+.groupContactGrid .contactDescription,
+.groupContactGrid .contactDetails,
+.groupContactGrid .contactUnavailable {
+  margin: 0;
+  padding: 0;
+}
+
+.groupResourceGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  gap: var(--space-3);
+}
+
+.roleHubGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  gap: var(--space-3);
+}
+
+.dashboardCardGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.dashboardCardGrid > * {
+  width: 100%;
+}
+
+.roleHubCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+.roleHubCopy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.groupResourceCard {
+  height: auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+.groupResourceCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.groupResourceCopy strong {
+  overflow-wrap: anywhere;
+}
+
+.groupResourceIcon,
+.groupResourceAction {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.detailProcessActivity {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.detailProcessActivity > h3 {
+  margin-bottom: var(--space-3);
+  font-size: 14px;
+}
+
+.detailProcessActivity .logRow:last-child {
+  padding-bottom: 0;
+}
+
+.coyDetailOverview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.coyDetailFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.coyDetailFact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) 0;
+}
+
+.coyDetailFactIcon {
+  color: var(--accent);
+}
+
+.coyDetailFact .detailMetaLabel,
+.coyDetailFact strong {
+  display: block;
+}
+
+.coyDetailStatus {
+  grid-template-columns: 1fr;
+  align-content: center;
+}
+
+.coyDetailStatus .chip {
+  width: max-content;
+}
+
+.coyOrganiserCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.coyOrganiserCopy h3 {
+  font-size: 16px;
+}
+
+.detailPage .section > .empty {
+  padding-block: var(--space-5);
+}
+
+.groupResourceCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+}
+
+@media (max-width: 560px) {
+  .groupContactGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .statusLog {
@@ -523,7 +885,8 @@ a.monogram:hover {
 
 .gysFacts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 260px));
+  justify-content: start;
   gap: var(--space-3);
 }
 
@@ -545,28 +908,93 @@ a.monogram:hover {
   gap: var(--space-2);
 }
 
+.gysParticipation {
+  padding: var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.gysPriorityGroups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gysPriorityGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.gysPriorityList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .gysPriority {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
 }
 
 .gysSteps {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
 }
 
 .gysStep {
+  position: relative;
   display: flex;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
 }
 
-.gysStep .meta {
-  margin-top: var(--space-1);
+.gysStepHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gysStepHeading h3 {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.gysStep > .meta {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gysStepArrow {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--bg);
+}
+
+.gysStepArrowRight {
+  top: 50%;
+  right: calc((var(--space-3) / -2) - 11px);
+  transform: translateY(-50%);
 }
 
 .stepNum {
@@ -585,13 +1013,47 @@ a.monogram:hover {
 }
 
 .gysArchiveItem {
+  min-width: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
+.gysArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gysArchiveItem .gysArchiveLinks {
+  width: 100%;
+  display: grid;
+  gap: var(--space-1);
+  margin-top: auto;
+}
+
+.gysArchiveItem .gysArchiveLinks .btn {
+  width: 100%;
+  height: 32px;
+  justify-content: space-between;
+  padding-inline: var(--space-2);
+  background: var(--bg-raised);
+}
+
 .gysSignupCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.gysSignupCard.isOpen {
+  grid-template-columns: 1fr;
+}
+
+.gysSignupIntro {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -680,6 +1142,10 @@ a.monogram:hover {
     flex-direction: column;
   }
 
+  .gysSignupCard {
+    grid-template-columns: 1fr;
+  }
+
   .formRow {
     grid-template-columns: 1fr;
   }
@@ -690,6 +1156,69 @@ a.monogram:hover {
 
   .gysSynthesisBullets li {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 900px) {
+  .detailOverviewCard {
+    grid-template-columns: 1fr;
+  }
+
+  .gysPriorityGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .gysSteps,
+  .gysArchiveGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gysStep:nth-child(2) .gysStepArrowRight {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .detailActionPanel,
+  .groupOverview,
+  .coyDetailOverview,
+  .detailOverviewCard {
+    grid-template-columns: 1fr;
+  }
+
+  .detailActionPanel .detailActions,
+  .groupOverviewActions,
+  .detailPageActions {
+    justify-content: flex-start;
+  }
+
+  .detailOverviewCard .detailActions {
+    grid-template-columns: 1fr;
+  }
+
+  .coyDetailFacts,
+  .groupContactGrid .contactCard {
+    grid-template-columns: 1fr;
+  }
+
+  .gysSteps,
+  .gysArchiveGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .gysStepArrowRight {
+    display: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .groupOverview {
+    grid-template-columns: 1fr;
+  }
+
+  .groupOverviewActions {
+    width: min(100%, 640px);
+    justify-self: end;
   }
 }
 
@@ -752,7 +1281,7 @@ a.monogram:hover {
   font-weight: 500;
   color: var(--danger);
   background: var(--danger-tint);
-  border-radius: 6px;
+  border-radius: var(--radius-chip);
   padding: 6px 8px;
   margin-top: 2px;
 }
@@ -849,7 +1378,22 @@ a.monogram:hover {
 /* ── Notification settings ─────────────────────────
    Lives on Profile. The instruction blocks carry real setup steps, so they are
    typeset as readable prose rather than dense console rows. */
+.notificationCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.notificationTitleRow {
+  grid-column: 1 / -1;
+}
+
 .notificationHeadingRow {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: flex-start;
   gap: var(--space-3);
 }
@@ -864,18 +1408,36 @@ a.monogram:hover {
   max-width: 54ch;
 }
 
+.notificationStatusActions {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.notificationHelpTrigger {
+  width: 32px;
+  height: 32px;
+}
+
 .notificationActions {
+  grid-column: 1 / -1;
   margin-top: var(--space-4);
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 
 .notificationHint {
-  margin-top: var(--space-3);
-  max-width: 60ch;
+  grid-column: 1 / -1;
+  margin-top: 0;
+  max-width: 64ch;
 }
 
 .notificationNotice {
+  grid-column: 1 / -1;
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
@@ -900,75 +1462,68 @@ a.monogram:hover {
   color: var(--warn);
 }
 
-.notificationInstall {
-  margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--accent);
-  background: var(--bg-raised);
-  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+.notificationHelpDialog {
+  width: min(520px, calc(100% - 32px));
+  max-height: min(80dvh, 640px);
+  margin: auto;
+  padding: var(--space-5);
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal);
+  background: var(--bg-popover);
+  color: var(--text-1);
+  box-shadow: var(--shadow-popover);
 }
 
-.notificationInstallLead {
+.notificationHelpDialog::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.notificationGuideHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.notificationGuideHeader .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.notificationGuideSteps {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+  padding-left: var(--space-5);
+  color: var(--text-2);
+}
+
+.notificationDeviceNote {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  margin: 0;
-  font-size: 14px;
-  max-width: 62ch;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--info-tint);
 }
 
-.notificationInstallLead > svg {
+.notificationDeviceNote > svg {
   flex: 0 0 auto;
-  margin-top: 3px;
-  color: var(--accent);
+  margin-top: 2px;
+  color: var(--info);
 }
 
-.notificationSteps {
-  margin: var(--space-3) 0 var(--space-2);
-  padding-left: var(--space-5);
-  display: grid;
-  gap: var(--space-2);
-  color: var(--text-2);
-  font-size: 14px;
-  max-width: 62ch;
-}
+@media (max-width: 560px) {
+  .notificationCard {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 
-.notificationInlineIcon {
-  vertical-align: -2px;
-  margin: 0 3px;
-}
+  .notificationHeadingRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
 
-.notificationHelp {
-  margin-top: var(--space-3);
-}
-
-.notificationHelp summary {
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-  /* Comfortably tappable without turning the row into a button. */
-  padding: var(--space-2) 0;
-}
-
-.notificationHelpBody {
-  display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
-}
-
-.notificationHelpBody h4 {
-  margin: 0 0 3px;
-  font-size: 14px;
-}
-
-.notificationHelpBody .meta {
-  max-width: 68ch;
-}
-
-@media (min-width: 720px) {
-  .notificationHelpBody {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .notificationHelpDialog {
+    padding: var(--space-4);
   }
 }

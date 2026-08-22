@@ -64,25 +64,13 @@
     inset: -12px -4px;
   }
 
-  /* ── Navigation ─────────────────────────────────────
-     Mobile "More" entries and the tab bar are the primary way around the app. */
+  /* ── Navigation ───────────────────────────────────── */
   .sheet .navItem,
   .sheet .sheetAction {
     min-height: 48px;
   }
 
-  .tab {
-    min-height: 48px;
-  }
-
-  /* ── Floating controls ──────────────────────────────
-     Both sit over content near a screen edge, where a miss costs a mis-tap on
-     whatever is underneath. */
-  .floatingThemeToggle {
-    width: 44px;
-    height: 44px;
-  }
-
+  /* ── Floating controls ────────────────────────────── */
   .feedbackTrigger {
     min-width: 44px;
     min-height: 44px;

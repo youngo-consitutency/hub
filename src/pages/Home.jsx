@@ -18,7 +18,7 @@ import {
   MissionMetric,
 } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
-import { BETA_CONTRIBUTORS, publishedLinks } from '../content/connect.js'
+import { useAccount } from '../lib/accountContext.jsx'
 import {
   Radio,
   CalendarOff,
@@ -26,6 +26,13 @@ import {
   ArrowUpRight,
   ExternalLink,
   Pin,
+  Briefcase,
+  ClipboardCheck,
+  PenTool,
+  FilePenLine,
+  Network,
+  Building2,
+  Shield,
 } from 'lucide-react'
 
 function LiveBanner({ event }) {
@@ -56,6 +63,8 @@ function LiveBanner({ event }) {
 export function Home() {
   const feed = useApi('/feed')
   const groups = useApi('/groups')
+  const workspaces = useApi('/workspace')
+  const { account } = useAccount()
 
   return (
     <div>
@@ -86,6 +95,26 @@ export function Home() {
                 />
               </div>
             </div>
+
+            <WorkspaceSection groups={groups} workspaces={workspaces} />
+            <ResponsibilitySection account={account} />
+
+            {data.closing.length > 0 && (
+              <Section
+                label="Closing soon"
+                action={
+                  <A href="/submissions" className="metaMuted">
+                    All →
+                  </A>
+                }
+              >
+                <div className="dashboardCardGrid">
+                  {data.closing.map((x) => (
+                    <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
+                  ))}
+                </div>
+              </Section>
+            )}
 
             {data.pinned.length > 0 && (
               <Section label="Pinned">
@@ -142,8 +171,8 @@ export function Home() {
               }
             >
               {data.week.length ? (
-                <div className="cardGrid">
-                  {data.week.slice(0, 6).map((e) => (
+                <div className="dashboardCardGrid">
+                  {data.week.map((e) => (
                     <EventCard key={e.slug} event={e} />
                   ))}
                 </div>
@@ -156,23 +185,6 @@ export function Home() {
               )}
             </Section>
 
-            {data.closing.length > 0 && (
-              <Section
-                label="Closing soon"
-                action={
-                  <A href="/submissions" className="metaMuted">
-                    All →
-                  </A>
-                }
-              >
-                <div className="cardGrid">
-                  {data.closing.slice(0, 3).map((x) => (
-                    <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
             {data.coys.length > 0 && (
               <Section
                 label="COYs"
@@ -182,8 +194,8 @@ export function Home() {
                   </A>
                 }
               >
-                <div className="cardGrid">
-                  {data.coys.slice(0, 6).map((c) => (
+                <div className="dashboardCardGrid">
+                  {data.coys.map((c) => (
                     <CoyCard key={c.slug} coy={c} />
                   ))}
                 </div>
@@ -192,107 +204,145 @@ export function Home() {
           </>
         )}
       </Async>
-
-      <Section
-        label="Working groups"
-        action={
-          <A href="/groups" className="metaMuted">
-            Browse →
-          </A>
-        }
-      >
-        <Async
-          query={groups}
-          skeletons={2}
-          empty={(d) =>
-            d.items.length === 0 ? (
-              <Empty
-                icon={Users}
-                title="No working groups yet"
-                body="Groups will appear here once they’re set up."
-              />
-            ) : null
-          }
-        >
-          {(data) => (
-            <div className="cardGrid">
-              {data.items.slice(0, 3).map((g) => (
-                <GroupCard key={g.slug} group={g} />
-              ))}
-            </div>
-          )}
-        </Async>
-      </Section>
-
-      <Section
-        label="NGO recognition"
-        action={
-          <A href="/recognition" className="metaMuted">
-            Board →
-          </A>
-        }
-      >
-        <A href="/recognition" className="card cardTight recognitionPromo">
-          <h3>
-            See which organisations are supporting badges &amp; submissions
-          </h3>
-          <p className="meta">
-            Staff-verified contribution points for UNFCCC-facing work.
-          </p>
-        </A>
-      </Section>
-
-      <ConnectAndCredits />
     </div>
   )
 }
 
-/**
- * Where to find YOUNGO outside the Hub, and who is building the beta. Links
- * appear only once a real address is set in content/connect.js.
- */
-function ConnectAndCredits() {
-  const links = publishedLinks()
+function ResponsibilitySection({ account }) {
+  const access = account?.access || {}
+  const teamRoles = access.teamRoles || account?.teamRoles || []
+  const capabilities = access.capabilities || []
+  const isAdmin = account?.role === 'admin'
+  const responsibilities = [
+    {
+      href: '/cp',
+      label: 'WG Contact Point',
+      detail: 'Manage your working groups, calls, channels, and member access.',
+      icon: Briefcase,
+      visible:
+        account?.isWgContact ||
+        access.wgAssignments?.length > 0 ||
+        access.manageAllWgs,
+    },
+    {
+      href: '/focal',
+      label: 'Global Focal Point',
+      detail: 'Coordinate constituency-wide mandates and UNFCCC-facing work.',
+      icon: Network,
+      visible: isAdmin || account?.role === 'focal_point',
+    },
+    {
+      href: '/team/membership',
+      label: 'Membership Team',
+      detail: 'Review membership and onboarding work.',
+      icon: ClipboardCheck,
+      visible: teamRoles.includes('membership_team'),
+    },
+    {
+      href: '/team/gys',
+      label: 'GYS Policy Team',
+      detail: 'Coordinate Global Youth Statement drafting.',
+      icon: PenTool,
+      visible: teamRoles.includes('gys_policy_team'),
+    },
+    {
+      href: '/staff/content',
+      label: 'Content operations',
+      detail: 'Draft, review, and publish Hub content.',
+      icon: FilePenLine,
+      visible:
+        capabilities.includes('content.draft') ||
+        capabilities.includes('content.review'),
+    },
+    {
+      href: '/ngo',
+      label: 'NGO workspace',
+      detail: 'Manage organisation participation and representatives.',
+      icon: Building2,
+      visible: access.ngo || isAdmin || account?.role === 'ngo_admin',
+    },
+    {
+      href: '/admin',
+      label: 'Platform administration',
+      detail: 'Manage system-wide access and operations.',
+      icon: Shield,
+      visible: isAdmin,
+    },
+  ].filter((item) => item.visible)
+
+  if (!responsibilities.length) return null
 
   return (
-    <Section label="Connect">
-      <div className="grid2">
-        {links.length > 0 && (
-          <div className="card cardTight connectCard">
-            <h3>YOUNGO elsewhere</h3>
-            <p className="meta">
-              Follow the constituency's public channels for announcements beyond
-              the Hub.
-            </p>
-            <ul className="connectLinks">
-              {links.map((link) => (
-                <li key={link.key}>
-                  <a href={link.url} target="_blank" rel="noreferrer">
-                    {link.label}
-                    <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="card cardTight connectCard">
-          <h3>
-            <span className="mono betaCount">{BETA_CONTRIBUTORS.length}</span>{' '}
-            people are shaping this beta
-          </h3>
-          <p className="meta">
-            The Hub is built in the open with the constituency. Thank you to
-            everyone testing it and sending feedback.
-          </p>
-          <ul className="contributorList">
-            {BETA_CONTRIBUTORS.map((person) => (
-              <li key={person}>{person}</li>
-            ))}
-          </ul>
-        </div>
+    <Section label="Your responsibilities">
+      <div className="roleHubGrid">
+        {responsibilities.map(({ href, label, detail, icon: Icon }) => (
+          <A key={href} href={href} className="card cardTight roleHubCard">
+            <span className="iconTile" aria-hidden>
+              <Icon size={20} strokeWidth={1.75} />
+            </span>
+            <span className="roleHubCopy">
+              <strong>{label}</strong>
+              <span className="meta">{detail}</span>
+            </span>
+            <ArrowUpRight size={17} strokeWidth={1.75} aria-hidden />
+          </A>
+        ))}
       </div>
+    </Section>
+  )
+}
+
+function WorkspaceSection({ groups, workspaces }) {
+  return (
+    <Section
+      label="Your workspaces"
+      action={
+        <A href="/groups" className="metaMuted">
+          Manage →
+        </A>
+      }
+    >
+      <Async query={workspaces} skeletons={2}>
+        {(workspaceData) => (
+          <Async query={groups} skeletons={2}>
+            {(groupData) => {
+              const progressBySlug = new Map(
+                workspaceData.items.map((item) => [item.wg_slug, item]),
+              )
+              const joined = groupData.items.filter((group) =>
+                progressBySlug.has(group.slug),
+              )
+              if (!joined.length) {
+                return (
+                  <Empty
+                    icon={Users}
+                    title="No group workspaces yet"
+                    body="Choose a working group to open its member workspace."
+                  />
+                )
+              }
+              return (
+                <div className="dashboardCardGrid">
+                  {joined.map((group) => {
+                    const progress = progressBySlug.get(group.slug)
+                    const ready = Boolean(
+                      progress?.presentation_ok && progress?.rules_ok,
+                    )
+                    return (
+                      <GroupCard
+                        key={group.slug}
+                        group={group}
+                        href={`/workspace/${group.slug}`}
+                        statusLabel={ready ? 'Workspace ready' : 'Finish setup'}
+                      />
+                    )
+                  })}
+                </div>
+              )
+            }}
+          </Async>
+        )}
+      </Async>
     </Section>
   )
 }

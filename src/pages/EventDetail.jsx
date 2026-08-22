@@ -9,7 +9,14 @@ import {
 } from '../components/ui.jsx'
 import { AddToCalendar } from '../components/AddToCalendar.jsx'
 import { fmtDual } from '../lib/time.js'
-import { Video, CalendarDays, Link2, Check, Play } from 'lucide-react'
+import {
+  Video,
+  CalendarDays,
+  Link2,
+  Check,
+  Play,
+  ExternalLink,
+} from 'lucide-react'
 
 function CopyLinkButton() {
   const [copied, setCopied] = useState(false)
@@ -54,31 +61,43 @@ function phaseOf(event) {
 export function EventDetail({ slug }) {
   const query = useApi(`/events/${slug}`)
   return (
-    <div className="detailPage">
+    <div className="detailPage eventDetailPage">
       <BackLink href="/calendar">Calendar</BackLink>
       <Async query={query}>
         {(event) => {
           const phase = phaseOf(event)
           const live = phase === 'live'
           const concluded = phase === 'concluded'
+          const descriptionUrl = event.description?.match(/https?:\/\/\S+/)?.[0]
+          const description = event.description
+            ?.replace(/\s*(?:Slides:\s*)?https?:\/\/\S+/i, '')
+            .trim()
           return (
             <>
               <PageHeader
                 eyebrow={TYPE_LABEL[event.type] || 'Event'}
                 title={event.title}
-                description={event.description}
+                description={description}
+              />
+
+              <section
+                className="card detailOverviewCard"
+                aria-label="Event details"
               >
-                <div className="detailHeaderMeta">
+                <div className="detailOverviewFacts">
                   {live ? (
                     <StatusChip status="live_now" />
                   ) : concluded ? (
                     <span className="chip chip-neutral">Concluded</span>
                   ) : null}
-                  <span className={`mono ${live ? 'detailLiveTime' : ''}`}>
+                  <span
+                    className={`detailOverviewFact mono ${live ? 'detailLiveTime' : ''}`}
+                  >
+                    <CalendarDays size={17} strokeWidth={1.75} aria-hidden />
                     {fmtDual(event.startsAt)}
                   </span>
                   {event.wg && (
-                    <span className="meta">
+                    <span className="detailOverviewFact meta">
                       Hosted by{' '}
                       <A
                         href={`/groups/${event.wg.slug}`}
@@ -89,35 +108,45 @@ export function EventDetail({ slug }) {
                     </span>
                   )}
                 </div>
-              </PageHeader>
-
-              <div className="detailActions">
-                {concluded
-                  ? event.recordingUrl && (
-                      <a
-                        className="btn btn-primary"
-                        href={event.recordingUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Play size={18} strokeWidth={1.75} aria-hidden />
-                        Watch recording
-                      </a>
-                    )
-                  : event.meetingUrl && (
-                      <a
-                        className={`btn ${live ? 'btn-primary btn-glow' : 'btn-primary'}`}
-                        href={event.meetingUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Video size={18} strokeWidth={1.75} aria-hidden />
-                        {live ? 'Join meeting — live now' : 'Join meeting'}
-                      </a>
-                    )}
-                {!concluded && <AddToCalendar event={event} />}
-                <CopyLinkButton />
-              </div>
+                <div className="detailActions detailPageActions">
+                  {concluded
+                    ? event.recordingUrl && (
+                        <a
+                          className="btn btn-primary"
+                          href={event.recordingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Play size={18} strokeWidth={1.75} aria-hidden />
+                          Watch recording
+                        </a>
+                      )
+                    : event.meetingUrl && (
+                        <a
+                          className={`btn ${live ? 'btn-primary btn-glow' : 'btn-primary'}`}
+                          href={event.meetingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Video size={18} strokeWidth={1.75} aria-hidden />
+                          {live ? 'Join meeting — live now' : 'Join meeting'}
+                        </a>
+                      )}
+                  {descriptionUrl && (
+                    <a
+                      className="btn btn-secondary"
+                      href={descriptionUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink size={17} strokeWidth={1.75} aria-hidden />
+                      Slides
+                    </a>
+                  )}
+                  {!concluded && <AddToCalendar event={event} />}
+                  <CopyLinkButton />
+                </div>
+              </section>
             </>
           )
         }}

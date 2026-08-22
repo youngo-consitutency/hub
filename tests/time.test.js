@@ -1,6 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { fmtDual, fmtMoment, countdown, fmtDateRange } from '../src/lib/time.js'
+import {
+  fmtDual,
+  fmtMoment,
+  countdown,
+  fmtDateRange,
+  formatCountdownLabel,
+} from '../src/lib/time.js'
 
 const now = new Date('2026-07-15T13:00:00Z')
 const at = (h) => new Date(now.getTime() + h * 3600000).toISOString()
@@ -42,6 +48,16 @@ test('countdown labels use largest units', () => {
   assert.equal(countdown(at(24 * 3 + 6), now).label, '3d 06h')
   assert.equal(countdown(at(26), now).label, '26h')
   assert.equal(countdown(at(0.5), now).label, '30m')
+})
+
+test('closed countdowns use natural copy without duplicated words', () => {
+  assert.equal(
+    formatCountdownLabel('Applications close', 'closed'),
+    'Applications closed',
+  )
+  assert.equal(formatCountdownLabel('Inputs close', 'closed'), 'Inputs closed')
+  assert.equal(formatCountdownLabel('Closes in', 'closed'), 'Closed')
+  assert.equal(formatCountdownLabel('Closes in', '5h'), 'Closes in 5h')
 })
 
 test('fmtDateRange handles ranges and TBC', () => {

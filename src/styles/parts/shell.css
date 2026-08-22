@@ -22,10 +22,18 @@
   overflow-y: auto;
 }
 
+.sidebarBrandRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding: 2px 4px 14px 10px;
+}
+
 .wordmark {
   display: flex;
   align-items: center;
-  padding: 2px 10px 16px;
+  min-width: 0;
 }
 
 .brandLockup {
@@ -39,7 +47,7 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 6px;
-  border-radius: 5px;
+  border-radius: var(--radius-chip);
   background: var(--brand-surface);
   /* Define the plate edge so it doesn't vanish white-on-near-white in light. */
   border: 1px solid var(--border);
@@ -109,12 +117,60 @@
   background: var(--accent-tint);
   color: var(--accent);
   border-left-color: var(--accent);
-  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  border-radius: var(--radius-control);
+}
+
+.sidebarSearch {
+  min-height: 42px;
+  margin: 2px 0 4px;
+  border: 1px solid var(--border-strong);
+  border-left-width: 1px;
+  background: var(--bg-raised);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.sidebarSearch:hover,
+.sidebarSearch:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
 }
 
 .accountChip:hover,
 .accountChip.active {
   background: var(--accent-tint);
+}
+
+.accountNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.accountChipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.accountChipArrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  transition: transform 0.1s linear;
+}
+
+.accountChip:hover .accountChipArrow,
+.accountChip:focus-visible .accountChipArrow {
+  transform: translateX(2px);
+  color: var(--accent);
+}
+
+.accountVerified {
+  flex: 0 0 auto;
+  color: var(--accent);
 }
 
 .sidebarFooter {
@@ -131,7 +187,7 @@
   min-width: 0;
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 32px 36px 48px;
+  padding: 32px clamp(24px, 3vw, 56px) 48px;
   width: 100%;
 }
 
@@ -144,17 +200,13 @@
   display: none;
 }
 
-.tabbar {
-  display: none;
-}
-
 @media (max-width: 900px) {
   .sidebar {
     display: none;
   }
 
   .content {
-    padding: 0 16px 96px;
+    padding: 0 16px calc(88px + env(safe-area-inset-bottom));
   }
 
   .topbar {
@@ -163,7 +215,7 @@
     justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 41;
     margin: 0 -16px 20px;
     padding: 12px 16px;
     background: color-mix(in srgb, var(--bg-page) 92%, transparent);
@@ -174,46 +226,15 @@
   .topbar .wordmark {
     padding: 0;
   }
-
-  .tabbar {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 30;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  }
-
-  .tab {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 4px 0;
-    color: var(--text-3);
-    font-size: 11px;
-    background: none;
-    border: none;
-    border-radius: 8px;
-  }
-
-  .tab.active {
-    color: var(--accent);
-  }
 }
 
-/* ── "More" sheet ──────────────────────────────────
-   A bottom sheet rather than a corner popover: with headings and up to a dozen
-   entries, a 210px-wide panel anchored to the corner ran off the top of the
-   screen and could not be scrolled or dismissed by tapping away. */
+/* Mobile navigation stays anchored to the menu trigger. It overlays the page
+   rather than changing layout, and scrolls independently when a role has many
+   destinations. */
 .sheetBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 39;
+  z-index: 59;
   border: 0;
   padding: 0;
   background: color-mix(in srgb, var(--bg-page) 55%, transparent);
@@ -223,40 +244,161 @@
 
 .sheet {
   position: fixed;
-  bottom: calc(64px + env(safe-area-inset-bottom));
-  left: 8px;
-  right: 8px;
-  z-index: 40;
-  max-height: min(70vh, 560px);
+  top: 68px;
+  right: 12px;
+  z-index: 60;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 84px);
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-modal);
   box-shadow: var(--shadow-popover);
-  padding: 8px 8px 12px;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-3);
 }
 
-.sheetHandle {
-  align-self: center;
-  width: 36px;
-  height: 4px;
-  margin: 2px 0 6px;
-  border-radius: 999px;
-  background: var(--border-strong);
+.sheetHeader {
+  display: grid;
+  gap: var(--space-2);
+  position: sticky;
+  top: calc(var(--space-3) * -1);
+  z-index: 1;
+  padding: var(--space-3) 0 var(--space-2);
+  background: var(--bg-popover);
+  border-bottom: 1px solid var(--border);
+}
+
+.sheetSearch,
+.sheetAccount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-2);
+}
+
+.sheetSearch span,
+.sheetAccount span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetAccount.active {
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.sheetAccount > :last-child {
+  margin-left: auto;
+}
+
+.sheetSections {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sheetSection {
+  min-width: 0;
 }
 
 .sheet .navSection {
-  padding: 12px 10px 4px;
+  padding: var(--space-2) var(--space-1) var(--space-1);
 }
 
-.sheetFooter {
-  margin-top: 8px;
-  padding-top: 8px;
+.sheetNavGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.sheetNavGrid .navItem {
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-left-width: 2px;
+}
+
+.sheetNavGrid .navItem span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetUtilities {
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border);
+}
+
+.mobileBottomNav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobileBottomNav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 42;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: calc(64px + env(safe-area-inset-bottom));
+    padding: 4px 8px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border-strong);
+    background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+    box-shadow: var(--shadow-sticky);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobileBottomItem {
+    min-width: 0;
+    min-height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text-2);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .mobileBottomItem.active {
+    background: var(--accent-tint);
+    color: var(--on-accent-tint);
+  }
+
+  .mobileBottomItem span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .sheet {
+    top: 64px;
+    right: 8px;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 76px - env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Profile ───────────────────────────────────────── */
@@ -264,12 +406,44 @@
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 14px;
+  align-items: stretch;
 }
 
 .profileSummary {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.profileHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.profileIdentity {
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  min-width: 0;
+}
+
+.profileSignOut {
+  flex: 0 0 auto;
+}
+
+.profileIdentity h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.profileVerified {
+  flex: 0 0 auto;
+  color: var(--accent);
 }
 
 .profileAvatar {
@@ -306,16 +480,21 @@
 
 .profileDetails {
   display: grid;
-  gap: 0;
-  margin: 12px 0 0;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+}
+
+.profileMembershipBlock {
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
 }
 
 .profileDetail {
   display: grid;
   grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.3fr);
   gap: 12px;
-  padding: 8px 0;
-  border-top: 1px solid var(--border);
+  padding: var(--space-1) 0;
 }
 
 .profileDetail dt {
@@ -331,7 +510,78 @@
 }
 
 .profileHelp {
-  margin-top: 12px;
+  min-width: 0;
+}
+
+.profileSummaryFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+@media (max-width: 560px) {
+  .profileHeader {
+    align-items: flex-start;
+  }
+
+  .profileSignOut {
+    padding-inline: var(--space-2);
+  }
+
+  .profileSignOut:not(:focus-visible) {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .profileSummaryFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.profileSideStack {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.organisationCard {
+  min-width: 0;
+}
+
+.organisationTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.organisationTitleRow .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.organisationBody {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.organisationSeat + .organisationSeat {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.organisationEmpty {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.organisationRequest {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
 }
 
 .profileList {
@@ -341,6 +591,33 @@
   padding-left: var(--space-5);
   color: var(--text-2);
   font-size: 14px;
+}
+
+.profileInterestCard {
+  grid-column: 1 / -1;
+}
+
+.profileInterestGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-3);
+}
+
+.profileInterestGroup h4 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profileInterestGroup ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .profileLinks {
@@ -381,6 +658,10 @@ a.profileLink {
   .profileLinks {
     grid-template-columns: 1fr;
   }
+
+  .profileInterestGroups {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Directory contact structure ───────────────────── */
@@ -389,6 +670,7 @@ a.profileLink {
   margin: -4px auto 16px;
   padding: 10px 12px;
   border-left: 3px solid var(--info);
+  border-radius: var(--radius-control);
   background: var(--info-tint);
 }
 
@@ -423,15 +705,15 @@ a.profileLink {
 }
 
 .directoryLayer-top {
-  max-width: 520px;
-}
-
-.directoryLayer-middle {
   max-width: 720px;
 }
 
+.directoryLayer-middle {
+  max-width: 1440px;
+}
+
 .directoryLayer-base {
-  max-width: 920px;
+  max-width: 1440px;
 }
 
 .directoryLayerDescription {
@@ -442,12 +724,27 @@ a.profileLink {
 .directoryContacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
   gap: 10px;
   margin-top: 14px;
 }
 
-.directoryLayer-top .directoryContacts {
-  grid-template-columns: 1fr;
+.directoryLayer-base .directoryContacts {
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  grid-auto-rows: auto;
+}
+
+.directoryLayer-middle .directoryContacts {
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
 }
 
 @media (max-width: 620px) {
@@ -463,5 +760,6 @@ a.profileLink {
 
   .directoryContacts {
     grid-template-columns: 1fr;
+    grid-auto-rows: auto;
   }
 }

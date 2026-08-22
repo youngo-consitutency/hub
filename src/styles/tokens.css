@@ -1,9 +1,8 @@
-/* Verdant design tokens — the ONLY file where colors exist.
-   Source of truth: docs/specs/youngo/02-design-system.md §2.5 */
+/* YOUNGO Hub design tokens — the only file where interface colors live. */
 :root {
-  --bg-page: #f5f9f6;
+  --bg-page: #f7faf8;
   --bg-card: #ffffff;
-  --bg-raised: #eef4f0;
+  --bg-raised: #eef3f0;
   --bg-popover: #ffffff;
   --brand-surface: #ffffff;
   --text-1: #122019;
@@ -11,8 +10,8 @@
   --text-3: #5e7064;
   --border: rgba(18, 32, 25, 0.1);
   --border-strong: rgba(18, 32, 25, 0.18);
-  --accent: #059669;
-  --accent-hover: #047857;
+  --accent: #047857;
+  --accent-hover: #065f46;
   --on-accent: #ffffff;
   --accent-tint: #d1fae5;
   --on-accent-tint: #065f46;
@@ -30,12 +29,18 @@
   --shadow-card:
     0 1px 2px rgba(18, 32, 25, 0.06), 0 4px 12px rgba(18, 32, 25, 0.05);
   --shadow-popover: 0 4px 24px rgba(18, 32, 25, 0.14);
+  --shadow-sticky: 0 -8px 24px rgba(18, 32, 25, 0.08);
+  --overlay: rgba(10, 18, 14, 0.56);
   --glow-accent: none;
   --radius-chip: 6px;
   --radius-control: 8px;
   --radius-card: 12px;
   --radius-modal: 16px;
-  --content-max: 960px;
+  --content-max: 1480px;
+  --detail-max: 1120px;
+  --catalog-card-min: 280px;
+  --catalog-card-max: 320px;
+  --catalog-columns: 4;
   --text-measure: 62ch;
   --card-padding: var(--space-4);
   --section-gap: var(--space-5);
@@ -47,27 +52,30 @@
   --space-6: 24px;
   --space-8: 32px;
   --font-size-sm: 13px;
-  --font-display:
-    'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
   --font-ui:
-    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
-  --font-mono:
-    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas,
-    'Liberation Mono', monospace;
-  --wg-accent: #0f766e;
-  --wg-accent-hover: #115e59;
-  --wg-accent-tint: #ccfbf1;
-  --wg-on-tint: #134e4a;
-  --membership-accent: #4338ca;
-  --membership-accent-hover: #3730a3;
-  --membership-accent-tint: #e0e7ff;
-  --membership-on-tint: #312e81;
-  --gys-accent: #6d28d9;
-  --gys-accent-hover: #5b21b6;
-  --gys-accent-tint: #ede9fe;
-  --gys-on-tint: #4c1d95;
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-display: var(--font-ui);
+  --font-mono: var(--font-ui);
+  --calendar-gys: #6d28d9;
+  --calendar-coordination: #4338ca;
+}
+
+@media (max-width: 1599px) {
+  :root {
+    --catalog-columns: 3;
+  }
+}
+
+@media (max-width: 1180px) {
+  :root {
+    --catalog-columns: 2;
+  }
+}
+
+@media (max-width: 620px) {
+  :root {
+    --catalog-columns: 1;
+  }
 }
 
 [data-theme='dark'] {
@@ -99,41 +107,12 @@
   --info-tint: rgba(14, 165, 233, 0.12);
   --shadow-card: none;
   --shadow-popover: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-sticky: 0 -8px 24px rgba(0, 0, 0, 0.35);
+  --overlay: rgba(0, 0, 0, 0.68);
   --glow-accent:
     0 0 0 1px rgba(52, 211, 153, 0.35), 0 0 24px rgba(52, 211, 153, 0.15);
-  --wg-accent: #5eead4;
-  --wg-accent-hover: #99f6e4;
-  --wg-accent-tint: rgba(45, 212, 191, 0.13);
-  --wg-on-tint: #99f6e4;
-  --membership-accent: #a5b4fc;
-  --membership-accent-hover: #c7d2fe;
-  --membership-accent-tint: rgba(129, 140, 248, 0.14);
-  --membership-on-tint: #c7d2fe;
-  --gys-accent: #c4b5fd;
-  --gys-accent-hover: #ddd6fe;
-  --gys-accent-tint: rgba(139, 92, 246, 0.14);
-  --gys-on-tint: #ddd6fe;
-}
-
-[data-workspace='wg'] {
-  --accent: var(--wg-accent);
-  --accent-hover: var(--wg-accent-hover);
-  --accent-tint: var(--wg-accent-tint);
-  --on-accent-tint: var(--wg-on-tint);
-}
-
-[data-workspace='membership'] {
-  --accent: var(--membership-accent);
-  --accent-hover: var(--membership-accent-hover);
-  --accent-tint: var(--membership-accent-tint);
-  --on-accent-tint: var(--membership-on-tint);
-}
-
-[data-workspace='gys'] {
-  --accent: var(--gys-accent);
-  --accent-hover: var(--gys-accent-hover);
-  --accent-tint: var(--gys-accent-tint);
-  --on-accent-tint: var(--gys-on-tint);
+  --calendar-gys: #c4b5fd;
+  --calendar-coordination: #a5b4fc;
 }
 
 /* Base */
@@ -188,6 +167,7 @@ body {
   font-size: 15px;
   line-height: 1.47;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1 {
@@ -245,6 +225,7 @@ button {
 
 .mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-weight: 500;
   font-size: 13px;
 }

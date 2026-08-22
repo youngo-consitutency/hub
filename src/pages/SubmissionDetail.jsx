@@ -34,7 +34,7 @@ export function SubmissionDetail({ slug }) {
           const deadline = fmtMoment(sub.deadlineAt)
           return (
             <>
-              <PageHeader eyebrow="Submission" title={sub.title}>
+              <PageHeader title={sub.title}>
                 <div className="detailHeaderMeta">
                   <StatusChip status={sub.status} />
                   {sub.wg && (
@@ -48,7 +48,7 @@ export function SubmissionDetail({ slug }) {
                 </div>
               </PageHeader>
 
-              <Section label="Submission process">
+              <Section label="Progress">
                 <div className="card detailProcess">
                   <div className="detailDeadline">
                     <div>
@@ -78,7 +78,7 @@ export function SubmissionDetail({ slug }) {
 
               {!archived && (
                 <Section label="How to contribute">
-                  <div className="card detailPanel">
+                  <div className="card detailPanel detailActionPanel">
                     {sub.contributeNote && (
                       <p className="meta">{sub.contributeNote}</p>
                     )}
@@ -120,7 +120,7 @@ export function SubmissionDetail({ slug }) {
 
               {archived && sub.finalUrl && (
                 <Section label="Published submission">
-                  <div className="detailActions detailStandaloneActions">
+                  <div className="detailActions detailStandaloneActions detailPageActions">
                     <a
                       className="btn btn-primary"
                       href={sub.finalUrl}

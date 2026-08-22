@@ -84,3 +84,11 @@ export function countdown(iso, now = new Date()) {
   const tone = totalH < 48 ? 'danger' : d <= 7 ? 'warn' : 'neutral'
   return { label, tone }
 }
+
+export function formatCountdownLabel(prefix, value) {
+  if (!prefix) return value === 'closed' ? 'Closed' : value
+  if (value !== 'closed') return `${prefix} ${value}`
+  if (/closes in$/i.test(prefix)) return 'Closed'
+  if (/close$/i.test(prefix)) return prefix.replace(/close$/i, 'closed')
+  return `${prefix} closed`
+}

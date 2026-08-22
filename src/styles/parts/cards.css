@@ -13,14 +13,12 @@
 a.card {
   display: block;
   transition:
-    border-color 0.12s cubic-bezier(0.2, 0, 0, 1),
-    background 0.12s cubic-bezier(0.2, 0, 0, 1),
-    transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+    border-color 0.1s linear,
+    background 0.1s linear;
 }
 
 a.card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 a.card.rowBetween,
@@ -34,9 +32,11 @@ a.card.rowGap {
 
 .entityCard,
 a.entityCard {
+  min-height: 0;
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(66px, auto) minmax(58px, 1fr) auto;
+  align-content: stretch;
   gap: var(--space-3);
 }
 
@@ -54,13 +54,21 @@ a.entityCard {
 
 .entityCardHeading {
   min-width: 0;
+  width: 100%;
 }
 
 .entityCardHeading h3 {
+  min-height: 40px;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 16px;
+  line-height: 1.25;
 }
 
-.entityCardStatus {
+.entityCardHeaderTags {
+  min-height: 24px;
   margin-top: var(--space-2);
 }
 
@@ -114,6 +122,11 @@ a.entityCard {
   flex-wrap: wrap;
 }
 
+.entityCardFooter {
+  min-height: 24px;
+  align-self: end;
+}
+
 .entityCardOwner {
   margin-left: auto;
 }
@@ -123,7 +136,11 @@ a.entityCard {
 }
 
 .coyCard {
-  min-height: 220px;
+  min-height: 0;
+}
+
+.coyCard .entityCardBody {
+  flex: 0;
 }
 
 .actionCard {
@@ -226,12 +243,219 @@ a.resourceRow:hover {
 .groupCard,
 .contactCard {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.contactRole {
+  font-size: 14px;
+}
+
+.contactDescription {
+  margin-top: var(--space-1);
+}
+
+.contactDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.contactPerson {
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.contactUnavailable {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.workingGroupContactCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+  height: 100%;
+  color: var(--text-1);
+}
+
+.workingGroupContactIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.workingGroupContactCopy {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(42px, 1fr) auto;
+  align-content: start;
+}
+
+.workingGroupContactTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: 22px;
+}
+
+.workingGroupContactCopy h3 {
+  font-size: 15px;
+}
+
+.workingGroupContactCopy .meta {
+  margin-top: var(--space-1);
+}
+
+.workingGroupContactMeta {
+  display: inline-block;
+  margin-top: var(--space-1);
+  color: var(--accent);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workingGroupContactAction {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  color: var(--accent);
+}
+
+.errorCard {
+  width: min(100%, 560px);
 }
 
 .groupCard {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  height: auto;
+  display: grid;
+  grid-template-rows: minmax(76px, 1fr) auto auto;
+  align-content: stretch;
   gap: var(--space-3);
+  cursor: pointer;
+  transition:
+    border-color 0.1s linear,
+    background 0.1s linear;
+}
+
+.groupCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: var(--bg-raised);
+}
+
+.groupCard:has(.groupCardLinkOverlay:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.groupCardLinkOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.groupCardLinkOverlay:focus-visible {
+  outline: none;
+}
+
+.groupCardFocus {
+  margin-top: 2px;
+}
+
+.opportunityCard {
+  min-height: 0;
+  grid-template-rows: auto minmax(132px, 1fr) auto auto;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+a.opportunityCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: var(--bg-raised);
+}
+
+.opportunityCardHeader,
+.opportunityTags {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.opportunityCardHeader {
+  justify-content: space-between;
+}
+
+.opportunityCardHeader > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.opportunityTags {
+  flex-wrap: wrap;
+}
+
+.opportunityCardCopy {
+  display: grid;
+  grid-template-rows: minmax(40px, auto) auto minmax(58px, 1fr);
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.opportunityCardCopy h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
+}
+
+.opportunityOrganisationRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.opportunityPlace {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.opportunityPlace::before {
+  content: '·';
+  margin-right: var(--space-1);
+  color: var(--text-3);
+}
+
+.opportunityCardCopy > .meta {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.opportunityMeta {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.opportunityDeadline {
+  margin-top: auto;
 }
 
 .groupCardBody {
@@ -245,7 +469,20 @@ a.resourceRow:hover {
   min-width: 0;
 }
 
+.groupCardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent);
+}
+
+.groupCardTitle h3 {
+  color: var(--text-1);
+}
+
 .groupCardActions {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -420,18 +657,7 @@ a.resourceRow:hover {
 }
 
 .pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
+  opacity: 1;
 }
 
 /* ── Buttons ───────────────────────────────────────── */
@@ -452,13 +678,13 @@ a.resourceRow:hover {
   line-height: 1;
   white-space: nowrap;
   transition:
-    background 0.12s cubic-bezier(0.2, 0, 0, 1),
-    border-color 0.12s cubic-bezier(0.2, 0, 0, 1),
-    color 0.12s cubic-bezier(0.2, 0, 0, 1);
+    background 0.1s linear,
+    border-color 0.1s linear,
+    color 0.1s linear;
 }
 
 .btn:active {
-  transform: scale(0.98);
+  filter: brightness(0.96);
 }
 
 .btn-primary {

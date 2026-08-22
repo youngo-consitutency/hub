@@ -1,6 +1,74 @@
 /* Subscribe, add-to-calendar and the command palette.
    Colours come from tokens.css variables only. */
 
+/* ── Route quick view ─────────────────────────────── */
+.routePeek {
+  width: min(760px, calc(100% - 48px));
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal) 0 0 var(--radius-modal);
+  background: var(--bg-page);
+  color: var(--text-1);
+  box-shadow: var(--shadow-popover);
+}
+
+.routePeek::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.routePeekToolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.routePeekToolbar .pageEyebrow {
+  margin: 0;
+}
+
+.routePeekActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.routePeekBody {
+  height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5);
+}
+
+.routePeekBody > .detailPage > .backLink {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .routePeek {
+    width: 100%;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .routePeekBody {
+    padding: var(--space-4);
+  }
+}
+
 /* ── Subscribe (ICS) ───────────────────────────────── */
 .subscribeWrap {
   position: relative;
@@ -128,7 +196,7 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -213,7 +281,7 @@
   font-size: 11px;
   color: var(--text-3);
   border: 1px solid var(--border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-chip);
   padding: 1px 5px;
   background: var(--bg-raised);
 }
@@ -251,16 +319,23 @@
   color: var(--accent);
 }
 
+.feedbackTrigger--menu {
+  position: static;
+  width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
 /* Clears the mobile tab bar so the trigger never covers navigation. */
 @media (max-width: 900px) {
-  .feedbackTrigger {
-    right: 16px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-    padding: 10px;
+  .feedbackTrigger--floating {
+    display: none;
   }
 
-  .feedbackTriggerLabel {
-    display: none;
+  .feedbackTrigger--menu .feedbackTriggerLabel {
+    display: inline;
   }
 }
 
@@ -268,7 +343,7 @@
   position: fixed;
   inset: 0;
   z-index: 110;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;

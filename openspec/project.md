@@ -20,19 +20,22 @@ Master handoff: `../docs/handoffs/youngo-app-plan-handoff.md`.
 
 - Member PWA: `/` home feed, `/calendar`, `/submissions`, `/council` (DMP decisions),
   `/coys`, `/groups`, `/directory`, `/search`, `/gallery` (component gallery, dev)
-- Admin panel: `/admin/*` (role-scoped; not yet built)
+- Role-scoped operations: `/admin`, `/staff/content`, `/staff/points`, `/cp`,
+  `/team/membership`, `/team/gys`, `/focal`, and `/ngo`. The shells and source-side
+  capability checks exist; collection coverage still expands through OpenSpec changes.
 - API: Express `/api/*`, ICS at `/ics/*`, OG share cards at `/og/*` (ICS/OG pending)
 
 ## Tech stack
 
 - React 19 + Vite (no router library; path-based routing per GYC convention), plain CSS.
   Design tokens live ONLY in `src/styles/tokens.css` (Verdant, dark-first).
-  Fonts self-hosted via @fontsource (Space Grotesk / Inter / JetBrains Mono). Icons: lucide-react.
+  Typography uses the operating system's native UI font stack to avoid font downloads and support older hardware. Icons: lucide-react.
 - Express in `server/` (`/api/*`). Data layer: `server/lib/store.js` — Postgres via `pg`
   when `DATABASE_URL` is set, JSON fixture fallback (`data/fixtures.json`) otherwise
   (same pattern as the SB64 platform). Postgres DDL in `migrations/`.
 - Pure logic in `server/lib/feed.js` and `src/lib/time.js`, covered by `node --test` in `tests/`.
 - Deploy target: Railway (staging + production) per `05-infrastructure.md`.
+- CRM and calendar-integration direction: `docs/CRM_SYSTEM_DESIGN.md`.
 
 ## Conventions
 

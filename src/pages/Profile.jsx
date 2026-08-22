@@ -3,19 +3,25 @@ import { A, PageHeader, Section } from '../components/ui.jsx'
 import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
 import { MyFeedback } from '../components/MyFeedback.jsx'
 import { NotificationSettings } from '../components/NotificationSettings.jsx'
-import { workingGroupLabel } from '../../shared/workingGroups.js'
+import { signOut } from '../lib/logout.js'
+import {
+  workingGroupLabel,
+  WORKING_GROUP_TOPICS,
+} from '../../shared/workingGroups.js'
 import {
   BookOpenCheck,
+  BadgeCheck,
   GraduationCap,
   Library,
   LockKeyhole,
+  LogOut,
   Mail,
   Users,
 } from 'lucide-react'
 
 const ROLE_LABELS = {
   admin: 'Administrator',
-  focal_point: 'Focal Point',
+  focal_point: 'Global Focal Point',
   ngo_admin: 'Organisation administrator',
   member: 'Member',
 }
@@ -43,6 +49,10 @@ export function Profile() {
   const teamRoles = access.teamRoles || account?.teamRoles || []
   const wgAssignments = access.wgAssignments || []
   const interests = account?.wgInterests || []
+  const interestGroups = WORKING_GROUP_TOPICS.map((topic) => ({
+    ...topic,
+    groups: topic.groups.filter((slug) => interests.includes(slug)),
+  })).filter((topic) => topic.groups.length > 0)
 
   return (
     <div>
@@ -57,61 +67,79 @@ export function Profile() {
           className="card profileSummary"
           aria-labelledby="profile-account-title"
         >
-          <div className="profileAvatar" aria-hidden>
-            {(account?.name || account?.email || '?')
-              .trim()
-              .slice(0, 1)
-              .toUpperCase()}
-          </div>
-          <div>
-            <h2 id="profile-account-title">
-              {account?.name || 'YOUNGO member'}
-            </h2>
-            <a className="profileEmail" href={`mailto:${account?.email}`}>
-              <Mail size={15} aria-hidden />
-              {account?.email}
-            </a>
-            <span
-              className={`chip ${account?.isVerified ? 'chip-accent' : 'chip-warn'} profileStatus`}
+          <div className="profileHeader">
+            <div className="profileIdentity">
+              <div className="profileAvatar" aria-hidden>
+                {(account?.name || account?.email || '?')
+                  .trim()
+                  .slice(0, 1)
+                  .toUpperCase()}
+              </div>
+              <div>
+                <h2 id="profile-account-title">
+                  {account?.name || 'YOUNGO member'}
+                  {account?.isVerified && (
+                    <BadgeCheck
+                      className="profileVerified"
+                      size={20}
+                      strokeWidth={2}
+                      aria-label="Verified member"
+                    />
+                  )}
+                </h2>
+                <a className="profileEmail" href={`mailto:${account?.email}`}>
+                  <Mail size={15} aria-hidden />
+                  {account?.email}
+                </a>
+                {!account?.isVerified && (
+                  <span className="chip chip-warn profileStatus">
+                    Onboarding in progress
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm profileSignOut"
+              onClick={signOut}
             >
-              {account?.isVerified
-                ? 'Verified member'
-                : 'Onboarding in progress'}
-            </span>
+              <LogOut size={16} strokeWidth={1.75} aria-hidden />
+              Sign out
+            </button>
+          </div>
+          <div className="profileMembershipBlock">
+            <p className="pageEyebrow">Membership</p>
+            <dl className="profileDetails">
+              <Detail term="Role">
+                {ROLE_LABELS[account?.role] || account?.role}
+              </Detail>
+              <Detail term="Country">{account?.country}</Detail>
+              <Detail term="Region">{account?.region}</Detail>
+              <Detail term="Course score">
+                {account?.courseScore == null
+                  ? null
+                  : `${account.courseScore} correct answers`}
+              </Detail>
+            </dl>
+          </div>
+          <div className="profileSummaryFooter">
+            <p className="metaMuted profileHelp">
+              Need a correction?{' '}
+              <a
+                className="inlineLink"
+                href="mailto:membership@youngoclimate.org"
+              >
+                Contact the Membership Team
+              </a>
+              .
+            </p>
           </div>
         </section>
-
-        <section className="card" aria-labelledby="profile-details-title">
-          <h2 id="profile-details-title">Membership details</h2>
-          <dl className="profileDetails">
-            <Detail term="Role">
-              {ROLE_LABELS[account?.role] || account?.role}
-            </Detail>
-            <Detail term="Country">{account?.country}</Detail>
-            <Detail term="Region">{account?.region}</Detail>
-            <Detail term="Organisation">{account?.organizationName}</Detail>
-            <Detail term="Course score">
-              {account?.courseScore == null
-                ? null
-                : `${account.courseScore} correct answers`}
-            </Detail>
-          </dl>
-          <p className="metaMuted profileHelp">
-            To correct membership details, contact{' '}
-            <a
-              className="inlineLink"
-              href="mailto:membership@youngoclimate.org"
-            >
-              membership@youngoclimate.org
-            </a>
-            .
-          </p>
-        </section>
+        <div className="profileSideStack">
+          <OrgAffiliation />
+          <NotificationSettings />
+        </div>
       </div>
-
-      <NotificationSettings />
-
-      <OrgAffiliation />
 
       <MyFeedback />
 
@@ -146,11 +174,22 @@ export function Profile() {
               </div>
             )}
             {interests.length > 0 && (
-              <div className="card cardTight">
+              <div className="card cardTight profileInterestCard">
                 <h3>Working-group interests</h3>
-                <p className="meta">
-                  {interests.map(workingGroupLabel).join(', ')}
-                </p>
+                <div className="profileInterestGroups">
+                  {interestGroups.map((topic) => (
+                    <section key={topic.key} className="profileInterestGroup">
+                      <h4>{topic.label}</h4>
+                      <ul>
+                        {topic.groups.map((slug) => (
+                          <li key={slug} className="chip chip-neutral">
+                            {workingGroupLabel(slug)}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
               </div>
             )}
           </div>

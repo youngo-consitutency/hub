@@ -281,12 +281,7 @@ export function AuthGate({ onAuthenticated }) {
   }
 
   return (
-    <div
-      className="mandateGate"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="auth-title"
-    >
+    <main className="mandateGate" aria-labelledby="auth-title">
       <div className="mandateShell authShell">
         <header className="mandateHeader">
           <div className="gateBrand">
@@ -496,6 +491,6 @@ export function AuthGate({ onAuthenticated }) {
           )}
         </div>
       </div>
-    </div>
+    </main>
   )
 }

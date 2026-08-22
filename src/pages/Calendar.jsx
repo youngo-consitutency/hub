@@ -1,8 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, FilterPill, PageHeader } from '../components/ui.jsx'
+import {
+  Async,
+  Empty,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+} from '../components/ui.jsx'
 import { EventCard } from '../components/cards.jsx'
 import { CalendarSubscribe } from '../components/Subscribe.jsx'
+import {
+  activeFilterCount,
+  matchesFilters,
+  toggleFilter,
+} from '../lib/filterState.js'
 import {
   buildCalendarDays,
   calendarMonth,
@@ -17,20 +28,21 @@ import {
   ChevronLeft,
   ChevronRight,
   ListFilter,
-  Users,
+  UsersRound,
   Network,
   Landmark,
-  MessageSquareText,
-  Presentation,
+  MessagesSquare,
+  MonitorPlay,
+  CalendarClock,
 } from 'lucide-react'
 
 const FILTERS = [
   { key: 'all', label: 'All', icon: ListFilter },
-  { key: 'constituency_call', label: 'Constituency', icon: Users },
+  { key: 'constituency_call', label: 'Constituency', icon: UsersRound },
   { key: 'wg_call', label: 'Working groups', icon: Network },
-  { key: 'wgf', label: 'Forums', icon: MessageSquareText },
+  { key: 'wgf', label: 'Forums', icon: MessagesSquare },
   { key: 'unfccc_session', label: 'UNFCCC', icon: Landmark },
-  { key: 'webinar', label: 'Webinars', icon: Presentation },
+  { key: 'webinar', label: 'Webinars', icon: MonitorPlay },
 ]
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -44,15 +56,48 @@ const EVENT_TYPES = {
   coordination: 'Coordination',
 }
 
+const EVENT_ICONS = {
+  constituency_call: UsersRound,
+  wg_call: Network,
+  wgf: MessagesSquare,
+  unfccc_session: Landmark,
+  webinar: MonitorPlay,
+  coordination: CalendarClock,
+}
+
+function CalendarEventIcon({ type }) {
+  const Icon = EVENT_ICONS[type] || CalendarClock
+  return (
+    <span className="calendarEventIcon" data-event-type={type} aria-hidden>
+      <Icon size={15} strokeWidth={1.8} />
+    </span>
+  )
+}
+
 export function Calendar() {
-  const [type, setType] = useState('all')
+  const [typeFilters, setTypeFilters] = useState({})
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState(null)
-  const query = useApi(`/events?type=${type}`, [type])
+  const [calendarPanel, setCalendarPanel] = useState(null)
+  const [calendarHeight, setCalendarHeight] = useState(null)
+  const query = useApi('/events?type=all')
   const today = new Date().toISOString().slice(0, 10)
 
+  useEffect(() => {
+    if (!calendarPanel) return undefined
+    const measure = () => setCalendarHeight(calendarPanel.offsetHeight)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(measure)
+    observer.observe(calendarPanel)
+    return () => observer.disconnect()
+  }, [calendarPanel])
+
   const changeType = (nextType) => {
-    setType(nextType)
+    if (nextType === 'all') setTypeFilters({})
+    else {
+      setTypeFilters((current) => toggleFilter(current, nextType))
+    }
     setSelectedDay(null)
   }
 
@@ -72,20 +117,39 @@ export function Calendar() {
         eyebrow="Schedule"
         title="Calendar"
         description="Calls, forums, sessions, and webinars in one UTC-first agenda."
-        action={<CalendarSubscribe type={type} />}
+        action={<CalendarSubscribe type="all" />}
       >
-        <div className="pillRow" aria-label="Filter events by type">
-          {FILTERS.map((f) => (
-            <FilterPill
-              key={f.key}
-              active={type === f.key}
-              icon={f.icon}
-              onClick={() => changeType(f.key)}
-            >
-              {f.label}
-            </FilterPill>
-          ))}
-        </div>
+        <FilterMenu
+          label={
+            activeFilterCount(typeFilters) === 0
+              ? 'Filter events'
+              : 'Event filters'
+          }
+          activeCount={activeFilterCount(typeFilters)}
+        >
+          <fieldset className="filterLevel">
+            <legend>Event type</legend>
+            <div className="pillRow">
+              {FILTERS.map((f) => (
+                <FilterPill
+                  key={f.key}
+                  active={
+                    f.key === 'all' && activeFilterCount(typeFilters) === 0
+                  }
+                  state={
+                    f.key === 'all'
+                      ? undefined
+                      : typeFilters[f.key] || 'neutral'
+                  }
+                  icon={f.icon}
+                  onClick={() => changeType(f.key)}
+                >
+                  {f.label}
+                </FilterPill>
+              ))}
+            </div>
+          </fieldset>
+        </FilterMenu>
       </PageHeader>
       <Async
         query={query}
@@ -100,9 +164,12 @@ export function Calendar() {
         }
       >
         {(data) => {
-          const grouped = groupEventsByDate(data.items)
+          const events = data.items.filter((event) =>
+            matchesFilters(event.type, typeFilters),
+          )
+          const grouped = groupEventsByDate(events)
           const days = buildCalendarDays(month, grouped)
-          const monthEvents = eventsInCalendarMonth(data.items, month)
+          const monthEvents = eventsInCalendarMonth(events, month)
           const activeDay =
             selectedDay && grouped.has(selectedDay) ? selectedDay : null
           const agendaEvents = activeDay ? grouped.get(activeDay) : monthEvents
@@ -113,6 +180,7 @@ export function Calendar() {
           return (
             <div className="calendarLayout">
               <section
+                ref={setCalendarPanel}
                 className="calendarPanel"
                 aria-label={`${formatCalendarMonth(month)} calendar`}
               >
@@ -161,18 +229,19 @@ export function Calendar() {
                     const label = `${formatCalendarDay(date.key)}: ${date.events.map((event) => event.title).join(', ')}`
                     const content = (
                       <>
-                        <span
+                        <time
+                          dateTime={date.key}
+                          aria-current={date.key === today ? 'date' : undefined}
                           className={`calendarDayNumber ${date.key === today ? 'today' : ''}`}
                         >
                           {date.day}
-                        </span>
+                        </time>
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
                             {dots.map((event) => (
-                              <span
+                              <CalendarEventIcon
                                 key={event.slug}
-                                className="calendarDot"
-                                data-event-type={event.type}
+                                type={event.type}
                               />
                             ))}
                             {date.events.length > dots.length && (
@@ -211,14 +280,10 @@ export function Calendar() {
                 </div>
 
                 {visibleTypes.length > 0 && (
-                  <div className="calendarLegend" aria-label="Event colours">
+                  <div className="calendarLegend" aria-label="Event types">
                     {visibleTypes.map((eventType) => (
                       <span key={eventType}>
-                        <span
-                          className="calendarDot"
-                          data-event-type={eventType}
-                          aria-hidden
-                        />
+                        <CalendarEventIcon type={eventType} />
                         {EVENT_TYPES[eventType] || eventType}
                       </span>
                     ))}
@@ -229,6 +294,9 @@ export function Calendar() {
               <aside
                 className="calendarAgenda"
                 aria-labelledby="calendar-agenda-title"
+                style={
+                  calendarHeight ? { height: `${calendarHeight}px` } : undefined
+                }
               >
                 <div className="calendarAgendaHeader">
                   <p className="eyebrow">

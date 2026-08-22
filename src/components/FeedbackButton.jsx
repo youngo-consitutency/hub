@@ -113,7 +113,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }) {
   )
 }
 
-export function FeedbackButton() {
+export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
   const path = usePath()
   const [open, setOpen] = useState(false)
   const [sent, setSent] = useState(false)
@@ -178,14 +178,13 @@ export function FeedbackButton() {
       <button
         type="button"
         ref={triggerRef}
-        className="feedbackTrigger"
+        className={`feedbackTrigger feedbackTrigger--${mode}`}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        // The visible label is hidden at mobile widths, so name the control here.
-        aria-label="Send feedback"
+        aria-label={label}
       >
         <MessageSquarePlus size={18} strokeWidth={1.75} aria-hidden />
-        <span className="feedbackTriggerLabel">Feedback</span>
+        <span className="feedbackTriggerLabel">{label}</span>
       </button>
 
       {open && (

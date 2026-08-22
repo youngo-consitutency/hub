@@ -3,16 +3,17 @@
 
 /* ── Membership mandate gate (first visit) ─────────── */
 .mandateGate {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  overflow-y: auto;
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
   background: var(--bg-page);
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
 }
 
 .mandateShell {
@@ -21,8 +22,12 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: calc(100dvh - 32px);
   background: var(--bg-page);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-popover);
+  overflow: clip;
 }
 
 .mandateHeader {
@@ -121,16 +126,24 @@
 }
 
 .mandatePolicy {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-1) 0 var(--space-2);
+  padding: var(--card-padding);
 }
 
 .mandateSection {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.mandateSection:first-of-type {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .mandateSection h2 {
@@ -257,7 +270,7 @@
 
 .mandatePara {
   margin: 0;
-  max-width: 62ch;
+  max-width: none;
   line-height: 1.55;
 }
 
@@ -298,11 +311,7 @@ ul.mandateBulletGroup {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
-}
-
-[data-theme='dark'] .mandateFooter {
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-sticky);
 }
 
 .mandateScrollHint {
@@ -337,6 +346,17 @@ ul.mandateBulletGroup {
 }
 
 @media (max-width: 560px) {
+  .mandateGate {
+    padding: max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .mandateShell {
+    min-height: calc(100dvh - 16px);
+    border-radius: var(--radius-card);
+  }
+
   .mandateHeader {
     padding: 16px 16px 0;
   }
@@ -346,27 +366,14 @@ ul.mandateBulletGroup {
   }
 
   .mandatePolicyGate .mandateProgress {
-    position: fixed;
-    left: 50%;
-    width: min(720px, 100%);
-    transform: translateX(-50%);
-    top: 0;
-    z-index: 3;
     border-radius: 0;
   }
 
   .mandatePolicyGate .mandateBody {
-    padding-bottom: calc(240px + env(safe-area-inset-bottom));
+    padding-bottom: 16px;
   }
 
   .mandatePolicyGate .mandateFooter {
-    position: fixed;
-    left: 50%;
-    right: auto;
-    bottom: 0;
-    z-index: 4;
-    width: min(720px, 100%);
-    transform: translateX(-50%);
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
     gap: 8px;
   }
@@ -393,14 +400,11 @@ ul.mandateBulletGroup {
 /* ── Auth gate (step 2) ────────────────────────────── */
 .authShell .mandateHeader {
   border-bottom: none;
-  border-radius: var(--radius-card);
 }
 
 .authShell {
   max-width: 720px;
   width: 100%;
-  min-height: 100%;
-  min-height: 100dvh;
 }
 
 .authHeading {
@@ -596,7 +600,16 @@ ul.mandateBulletGroup {
   position: relative;
 }
 
+.comboField:focus-within {
+  z-index: 20;
+}
+
 .comboMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1;
   max-height: 240px;
   overflow-y: auto;
   display: flex;
@@ -618,7 +631,7 @@ ul.mandateBulletGroup {
   gap: 9px;
   padding: 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-1);
   font: inherit;
@@ -676,7 +689,6 @@ ul.mandateBulletGroup {
   .authShell .mandateHeader {
     padding-left: 14px;
     padding-right: 14px;
-    border-radius: 0 0 var(--radius-card) var(--radius-card);
   }
 
   .authBody {
@@ -723,40 +735,9 @@ ul.mandateBulletGroup {
 }
 
 /* ── Onboarding FAQ ────────────────────────────────── */
-/* Floating theme toggle */
-.floatingThemeToggle {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 260;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-popover) 92%, transparent);
-  color: var(--text-1);
-  box-shadow: var(--shadow-popover);
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-}
-
-.floatingThemeToggle:hover {
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
-}
-
 @media (max-width: 900px) {
-  .floatingThemeToggle {
-    top: 12px;
-    right: 12px;
-  }
-
-  .topbar,
   .mandateHeader {
-    padding-right: 64px;
+    padding-right: 0;
   }
 }
 

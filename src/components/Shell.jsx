@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
 import { FeedbackButton } from './FeedbackButton.jsx'
 import { Brand } from './Brand.jsx'
 import { usePath } from '../lib/router.js'
-import { apiPost } from '../lib/api.js'
-import { clearSession } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { MissionStatusBar } from './MissionConsole.jsx'
 import {
@@ -17,9 +15,8 @@ import {
   Users,
   AtSign,
   Search,
-  MoreHorizontal,
+  Menu,
   ScrollText,
-  LogOut,
   GraduationCap,
   Library,
   Building2,
@@ -33,6 +30,9 @@ import {
   UserCircle,
   FilePenLine,
   Megaphone,
+  BadgeCheck,
+  ChevronRight,
+  MoreHorizontal,
 } from 'lucide-react'
 
 function isActive(path, href) {
@@ -46,7 +46,7 @@ const STATIONS = [
   ['/staff/content', 'Content ops'],
   ['/staff/points', 'NGO points'],
   ['/admin', 'Admin'],
-  ['/focal', 'Focal point'],
+  ['/focal', 'Global focal point'],
   ['/ngo', 'NGO platform'],
   ['/onboarding', 'Onboarding'],
   ['/library', 'Library'],
@@ -80,6 +80,8 @@ const SECTION = {
 export function Shell({ children }) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
+  const menuButtonRef = useRef(null)
+  const sheetRef = useRef(null)
   const { account } = useAccount()
   const access = account?.access || {
     teamRoles: account?.teamRoles || [],
@@ -90,30 +92,58 @@ export function Shell({ children }) {
     setSheet(false)
   }, [path])
 
-  const workspace = path.startsWith('/cp')
-    ? 'wg'
-    : path.startsWith('/team/membership')
-      ? 'membership'
-      : path.startsWith('/team/gys')
-        ? 'gys'
-        : 'member'
-
-  // Operational consoles keep the dense mission treatment; member-facing pages
-  // get the warmer register. Staff / admin / NGO tools count as operational even
-  // though they resolve to the default member workspace.
-  const surface =
-    workspace !== 'member' ||
-    ['/staff', '/admin', '/focal', '/ngo'].some((prefix) =>
-      path.startsWith(prefix),
-    )
-      ? 'mission'
-      : 'member'
-
   useEffect(() => {
-    const root = document.documentElement
-    root.dataset.workspace = workspace
-    root.dataset.surface = surface
-  }, [workspace, surface])
+    if (!sheet) return undefined
+    const sheetElement = sheetRef.current
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const focusable = () =>
+      Array.from(
+        sheetElement?.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) || [],
+      )
+
+    focusable()[0]?.focus()
+
+    const handleKeyboard = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setSheet(false)
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const controls = focusable()
+      if (!controls.length) return
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyboard)
+    return () => {
+      window.removeEventListener('keydown', handleKeyboard)
+      document.body.style.overflow = previousOverflow
+      menuButtonRef.current?.focus()
+    }
+  }, [sheet])
+
+  const isOperational = [
+    '/cp',
+    '/team',
+    '/staff',
+    '/admin',
+    '/focal',
+    '/ngo',
+  ].some((prefix) => path.startsWith(prefix))
 
   const verified = Boolean(account?.isVerified)
 
@@ -248,7 +278,7 @@ export function Shell({ children }) {
       {
         section: SECTION.mine,
         href: '/focal',
-        label: 'Focal Point',
+        label: 'Global Focal Point',
         icon: Network,
         when: isAdmin || account?.role === 'focal_point',
       },
@@ -296,7 +326,7 @@ export function Shell({ children }) {
     access.wgAssignments?.length,
   ])
 
-  const tabs = verified
+  const mobilePrimaryNav = verified
     ? [
         { href: '/', label: 'Home', icon: Home },
         { href: '/calendar', label: 'Calendar', icon: CalendarDays },
@@ -304,51 +334,34 @@ export function Shell({ children }) {
         { href: '/profile', label: 'Profile', icon: UserCircle },
       ]
     : [
-        { href: '/onboarding', label: 'Onboard', icon: GraduationCap },
-        { href: '/onboarding/course', label: 'Course', icon: GraduationCap },
+        { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
         { href: '/library', label: 'Library', icon: Library },
       ]
-
-  // The sheet keeps the sidebar's headings: a flat list of sixteen entries
-  // gave a member no way to tell a personal tool from a constituency-wide one.
-  const tabHrefs = new Set(tabs.map((item) => item.href))
-  const more = nav
-    .map((group) => ({
-      section: group.section,
-      items: group.items.filter((item) => !tabHrefs.has(item.href)),
-    }))
-    .filter((group) => group.items.length > 0)
-
-  const signOut = async () => {
-    try {
-      await apiPost('/auth/logout', {})
-    } catch {
-      // Clear the local session even when the server cannot be reached.
-    }
-    clearSession()
-    window.location.reload()
-  }
 
   return (
     <div className="shell">
       <a className="skipLink" href="#main-content">
         Skip to main content
       </a>
-      <nav className="sidebar" aria-label="Primary">
-        <A
-          href={verified ? '/' : '/onboarding'}
-          className="wordmark"
-          aria-label="YOUNGO Hub home"
-        >
-          <Brand />
-        </A>
+      <nav
+        className="sidebar"
+        aria-label="Primary"
+        inert={sheet ? true : undefined}
+        aria-hidden={sheet ? 'true' : undefined}
+      >
+        <div className="sidebarBrandRow">
+          <A
+            href={verified ? '/' : '/onboarding'}
+            className="wordmark"
+            aria-label="YOUNGO Hub home"
+          >
+            <Brand />
+          </A>
+        </div>
         {verified && (
-          <A href="/search" className="navItem">
+          <A href="/search" className="navItem sidebarSearch">
             <Search size={18} strokeWidth={1.75} aria-hidden />
-            Search
-            <kbd className="kbd" style={{ marginLeft: 'auto' }}>
-              ⌘K
-            </kbd>
+            <span>Search the Hub</span>
           </A>
         )}
         {nav.map((group) => (
@@ -375,12 +388,29 @@ export function Shell({ children }) {
               title={account.email}
               aria-current={isActive(path, '/profile') ? 'page' : undefined}
             >
-              <span className="accountName">{account.name}</span>
-              <span className="metaMuted">
-                {account.isVerified ? 'Verified' : 'Pending course'}
-                {account.role === 'admin' ? ' · Admin' : ''}
-                {account.role === 'focal_point' ? ' · Focal Point' : ''}
+              <span className="accountChipHeader">
+                <span className="accountNameRow">
+                  <span className="accountName">{account.name}</span>
+                  <BadgeCheck
+                    className="accountVerified"
+                    size={16}
+                    strokeWidth={2}
+                    aria-label="Verified member"
+                  />
+                </span>
+                <ChevronRight
+                  className="accountChipArrow"
+                  size={17}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
               </span>
+              {account.role === 'admin' && (
+                <span className="metaMuted">Administrator</span>
+              )}
+              {account.role === 'focal_point' && (
+                <span className="metaMuted">Global Focal Point</span>
+              )}
             </A>
           )}
           {account && !verified && (
@@ -389,14 +419,14 @@ export function Shell({ children }) {
               <span className="metaMuted">Pending course</span>
             </div>
           )}
-          <button type="button" className="navItem" onClick={signOut}>
-            <LogOut size={18} strokeWidth={1.75} aria-hidden />
-            Sign out
-          </button>
         </div>
       </nav>
 
-      <div className="content">
+      <div
+        className="content"
+        inert={sheet ? true : undefined}
+        aria-hidden={sheet ? 'true' : undefined}
+      >
         <header className="topbar">
           <A
             href={verified ? '/' : '/onboarding'}
@@ -406,23 +436,25 @@ export function Shell({ children }) {
             <Brand />
           </A>
           <div className="rowGap">
-            {verified && (
-              <A
-                href="/search"
-                className="btn btn-ghost btn-sm"
-                aria-label="Search"
-              >
-                <Search size={20} strokeWidth={1.75} aria-hidden />
-              </A>
-            )}
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className={`btn btn-ghost btn-sm mobileMenuButton ${sheet ? 'active' : ''}`}
+              onClick={() => setSheet((open) => !open)}
+              aria-label={
+                sheet ? 'Close navigation menu' : 'Open navigation menu'
+              }
+              aria-expanded={sheet}
+              aria-controls="mobile-navigation"
+            >
+              <Menu size={21} strokeWidth={1.75} aria-hidden />
+            </button>
           </div>
         </header>
         <main id="main-content" tabIndex="-1">
           {/* Operational consoles only — the COP31 clock is ops chrome, not
               something a member checking a deadline needs on every page. */}
-          {surface === 'mission' && (
-            <MissionStatusBar station={stationFor(path)} />
-          )}
+          {isOperational && <MissionStatusBar station={stationFor(path)} />}
           {!verified && (
             <div className="noticeBanner noticeBannerWarn">
               <span className="noticeDot" />
@@ -447,80 +479,98 @@ export function Shell({ children }) {
             onClick={() => setSheet(false)}
           />
           <div
+            ref={sheetRef}
             className="sheet"
-            id="more-navigation"
+            id="mobile-navigation"
             role="dialog"
             aria-modal="true"
-            aria-label="More navigation"
+            aria-label="Navigation menu"
           >
-            <div className="sheetHandle" aria-hidden />
-            {verified && (
-              <A href="/search" className="navItem">
-                <Search size={18} strokeWidth={1.75} aria-hidden />
-                Search
-              </A>
-            )}
-            {more.map((group) => (
-              <div key={group.section}>
-                <p className="navSection">{group.section}</p>
-                {group.items.map(({ href, label, icon: Icon }) => (
-                  <A
-                    key={href}
-                    href={href}
-                    className={`navItem ${isActive(path, href) ? 'active' : ''}`}
-                    aria-current={isActive(path, href) ? 'page' : undefined}
-                  >
-                    <Icon size={18} strokeWidth={1.75} aria-hidden />
-                    {label}
-                  </A>
-                ))}
-              </div>
-            ))}
-            {/* Sign out lived only in the sidebar, which is hidden below
-                900px — so it was unreachable on a phone. */}
-            <div className="sheetFooter">
-              <button type="button" className="navItem" onClick={signOut}>
-                <LogOut size={18} strokeWidth={1.75} aria-hidden />
-                Sign out
-              </button>
+            <div className="sheetHeader">
+              {verified && (
+                <A
+                  href="/search"
+                  className="sheetSearch"
+                  onClick={() => setSheet(false)}
+                >
+                  <Search size={19} strokeWidth={1.75} aria-hidden />
+                  <span>Search the Hub</span>
+                </A>
+              )}
+              {verified && (
+                <A
+                  href="/profile"
+                  className={`sheetAccount ${isActive(path, '/profile') ? 'active' : ''}`}
+                  aria-current={
+                    isActive(path, '/profile') ? 'page' : undefined
+                  }
+                  onClick={() => setSheet(false)}
+                >
+                  <UserCircle size={19} strokeWidth={1.75} aria-hidden />
+                  <span>{account?.name || 'Profile'}</span>
+                  <ChevronRight size={17} strokeWidth={1.75} aria-hidden />
+                </A>
+              )}
             </div>
+            <div className="sheetSections">
+              {nav.map((group) => (
+                <section className="sheetSection" key={group.section}>
+                  <p className="navSection">{group.section}</p>
+                  <div className="sheetNavGrid">
+                    {group.items.map(({ href, label, icon: Icon }) => (
+                      <A
+                        key={href}
+                        href={href}
+                        className={`navItem ${isActive(path, href) ? 'active' : ''}`}
+                        aria-current={isActive(path, href) ? 'page' : undefined}
+                        onClick={() => setSheet(false)}
+                      >
+                        <Icon size={18} strokeWidth={1.75} aria-hidden />
+                        <span>{label}</span>
+                      </A>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+            {account && (
+              <div className="sheetUtilities" aria-label="Support">
+                <FeedbackButton mode="menu" label="Report an issue" />
+              </div>
+            )}
           </div>
         </>
       )}
+
+      <nav className="mobileBottomNav" aria-label="Quick navigation">
+        {mobilePrimaryNav.map(({ href, label, icon: Icon }) => (
+          <A
+            key={href}
+            href={href}
+            className={`mobileBottomItem ${isActive(path, href) ? 'active' : ''}`}
+            aria-current={isActive(path, href) ? 'page' : undefined}
+          >
+            <Icon size={20} strokeWidth={1.75} aria-hidden />
+            <span>{label}</span>
+          </A>
+        ))}
+        <button
+          type="button"
+          className={`mobileBottomItem ${sheet ? 'active' : ''}`}
+          onClick={() => setSheet(true)}
+          aria-expanded={sheet}
+          aria-controls="mobile-navigation"
+        >
+          <MoreHorizontal size={20} strokeWidth={1.75} aria-hidden />
+          <span>Menu</span>
+        </button>
+      </nav>
 
       <CommandPalette />
 
       {/* Available on every page, including before the course is passed — a
           blocked member is exactly who needs to reach the team. */}
-      {account && <FeedbackButton />}
-
-      <nav className="tabbar" aria-label="Primary mobile">
-        {tabs.map(({ href, label, icon: Icon }) => (
-          <A
-            key={href}
-            href={href}
-            className={`tab ${isActive(path, href) ? 'active' : ''}`}
-            aria-current={isActive(path, href) ? 'page' : undefined}
-          >
-            <Icon size={22} strokeWidth={1.75} aria-hidden />
-            {label}
-          </A>
-        ))}
-        {/* Shown for every signed-in account, not just verified ones: a member
-            still working through the course needs to be able to sign out. */}
-        {account && (
-          <button
-            type="button"
-            className={`tab ${sheet ? 'active' : ''}`}
-            onClick={() => setSheet((s) => !s)}
-            aria-expanded={sheet}
-            aria-controls="more-navigation"
-          >
-            <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />
-            More
-          </button>
-        )}
-      </nav>
+      {account && <FeedbackButton mode="floating" />}
     </div>
   )
 }

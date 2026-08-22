@@ -1,21 +1,13 @@
-export const THEME_STORAGE_KEY = 'youngo-hub:theme-override'
 const THEMES = new Set(['light', 'dark'])
+export const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)'
 
-// Light is the product default. Dark renders only for members who opt in, so
-// the operating-system colour scheme never decides the first paint.
+// Light is the safe fallback when the browser does not expose its colour
+// preference. In supported browsers the operating system remains the single
+// source of truth; the Hub does not store a competing override.
 export const DEFAULT_THEME = 'light'
 
-export function storedTheme(storage = globalThis.localStorage) {
-  try {
-    const value = storage.getItem(THEME_STORAGE_KEY)
-    return THEMES.has(value) ? value : null
-  } catch {
-    return null
-  }
-}
-
-export function resolvedTheme({ override }) {
-  return THEMES.has(override) ? override : DEFAULT_THEME
+export function systemTheme(media) {
+  return media?.matches ? 'dark' : DEFAULT_THEME
 }
 
 export function applyTheme(theme, root = document.documentElement) {
@@ -27,33 +19,15 @@ export function applyTheme(theme, root = document.documentElement) {
   return next
 }
 
-export function getSavedTheme() {
-  return storedTheme()
-}
+export function watchSystemTheme({
+  root = globalThis.document?.documentElement,
+  media = globalThis.matchMedia?.(SYSTEM_THEME_QUERY),
+} = {}) {
+  if (!root) return () => {}
 
-export function getInitialTheme() {
-  return resolvedTheme({ override: getSavedTheme() })
-}
+  const update = () => applyTheme(systemTheme(media), root)
+  update()
+  media?.addEventListener?.('change', update)
 
-export function saveTheme(theme) {
-  const next = applyTheme(theme)
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, next)
-  } catch {
-    // Storage may be unavailable in privacy-restricted contexts.
-  }
-  return next
-}
-
-export function clearThemeOverride(storage = globalThis.localStorage) {
-  try {
-    storage.removeItem(THEME_STORAGE_KEY)
-  } catch {
-    // Storage may be unavailable in privacy-restricted contexts.
-  }
-  return DEFAULT_THEME
-}
-
-export function hasChosenTheme() {
-  return Boolean(getSavedTheme())
+  return () => media?.removeEventListener?.('change', update)
 }

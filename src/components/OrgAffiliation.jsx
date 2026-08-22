@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
-import { Button, Section, Empty } from './ui.jsx'
+import { Button } from './ui.jsx'
 import { SearchableSelect } from './FormControls.jsx'
 import { Building2 } from 'lucide-react'
 
@@ -77,8 +77,21 @@ export function OrgAffiliation() {
     }))
 
   return (
-    <Section label="Your organisation">
-      <div className="stack">
+    <section
+      className="card organisationCard"
+      aria-labelledby="organisation-title"
+    >
+      <div className="organisationTitleRow">
+        <span className="iconTile" aria-hidden>
+          <Building2 size={20} strokeWidth={1.75} />
+        </span>
+        <div>
+          <p className="pageEyebrow">Membership</p>
+          <h2 id="organisation-title">Your organisation</h2>
+        </div>
+      </div>
+
+      <div className="organisationBody">
         {(mine || []).map((seat) => {
           const copy = STATUS_COPY[seat.status] || {
             chip: 'chip-neutral',
@@ -86,7 +99,7 @@ export function OrgAffiliation() {
             note: '',
           }
           return (
-            <div key={seat.id} className="card cardTight rowBetween">
+            <div key={seat.id} className="organisationSeat rowBetween">
               <div>
                 <strong>{seat.organizationName || 'Organisation'}</strong>
                 <p className="meta">{copy.note}</p>
@@ -100,15 +113,17 @@ export function OrgAffiliation() {
         })}
 
         {mine && mine.length === 0 && (
-          <Empty
-            icon={Building2}
-            title="Not linked to an organisation"
-            body="If you take part through a youth organisation, ask them to confirm it here."
-          />
+          <div className="organisationEmpty">
+            <strong>Not linked to an organisation</strong>
+            <p className="meta">
+              If you take part through a youth organisation, ask them to confirm
+              it here.
+            </p>
+          </div>
         )}
 
         {options.length > 0 && (
-          <div className="card stack">
+          <div className="organisationRequest">
             <h3>Ask an organisation to confirm you</h3>
             <p className="meta">
               Choose the organisation you work with. They decide whether to
@@ -135,6 +150,6 @@ export function OrgAffiliation() {
           </div>
         )}
       </div>
-    </Section>
+    </section>
   )
 }

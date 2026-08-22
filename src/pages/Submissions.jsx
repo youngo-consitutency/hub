@@ -1,7 +1,20 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, A, FilterPill, PageHeader } from '../components/ui.jsx'
+import {
+  Async,
+  Empty,
+  A,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+} from '../components/ui.jsx'
 import { SubmissionCard } from '../components/cards.jsx'
+import {
+  activeFilterCount,
+  matchesFilters,
+  toggleFilter,
+} from '../lib/filterState.js'
 import {
   Archive,
   ArrowDownAZ,
@@ -11,6 +24,7 @@ import {
   FilePenLine,
   FileText,
   ListFilter,
+  Network,
   Search,
   Tags,
 } from 'lucide-react'
@@ -30,16 +44,16 @@ const ARCHIVE_STATUSES = [
 
 export function Submissions() {
   const [state, setState] = useState('open')
-  const [status, setStatus] = useState('all')
-  const [group, setGroup] = useState('all')
+  const [statusFilters, setStatusFilters] = useState({})
+  const [groupFilters, setGroupFilters] = useState({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
   const query = useApi(`/submissions?state=${state}`, [state])
 
   const changeState = (nextState) => {
     setState(nextState)
-    setStatus('all')
-    setGroup('all')
+    setStatusFilters({})
+    setGroupFilters({})
     setSort('date')
   }
 
@@ -50,7 +64,7 @@ export function Submissions() {
         title="Submissions"
         description="Open drafting processes and YOUNGO’s submitted positions."
       >
-        <div className="pillRow" aria-label="Filter submissions">
+        <div className="viewSwitch" aria-label="Submission view">
           <FilterPill
             active={state === 'open'}
             icon={FileText}
@@ -108,8 +122,8 @@ export function Submissions() {
           const submissions = data.items
             .filter(
               (submission) =>
-                (status === 'all' || submission.status === status) &&
-                (group === 'all' || submission.wg?.slug === group) &&
+                matchesFilters(submission.status, statusFilters) &&
+                matchesFilters(submission.wg?.slug, groupFilters) &&
                 (!needle ||
                   [
                     submission.title,
@@ -135,76 +149,105 @@ export function Submissions() {
           return (
             <>
               <div className="catalogTools">
-                <label className="searchInputWrap">
-                  <span className="srOnly">Search submissions</span>
-                  <Search size={18} strokeWidth={1.75} aria-hidden />
-                  <input
-                    className="input"
-                    type="search"
-                    placeholder="Search submissions or working groups"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                  />
-                </label>
-                <fieldset className="filterLevel">
-                  <legend>{state === 'open' ? 'Stage' : 'Outcome'}</legend>
-                  <div className="pillRow">
-                    {statuses.map((item) => (
-                      <FilterPill
-                        key={item.key}
-                        active={status === item.key}
-                        icon={item.icon}
-                        onClick={() => setStatus(item.key)}
-                      >
-                        {item.label}
-                      </FilterPill>
-                    ))}
-                  </div>
-                </fieldset>
-                {groups.length > 1 && (
-                  <fieldset className="filterLevel">
-                    <legend>Working group</legend>
-                    <div className="pillRow">
-                      <FilterPill
-                        active={group === 'all'}
-                        icon={Tags}
-                        onClick={() => setGroup('all')}
-                      >
-                        All groups
-                      </FilterPill>
-                      {groups.map((item) => (
-                        <FilterPill
-                          key={item.slug}
-                          active={group === item.slug}
-                          onClick={() => setGroup(item.slug)}
-                        >
-                          {item.name}
-                        </FilterPill>
-                      ))}
-                    </div>
-                  </fieldset>
-                )}
-                <div className="catalogSummary">
-                  <p className="resultsSummary" role="status">
-                    {submissions.length} of {data.items.length} submissions
-                  </p>
-                  <div className="pillRow" aria-label="Sort submissions">
-                    <FilterPill
+                <div className="catalogSearchRow">
+                  <label className="searchInputWrap">
+                    <span className="srOnly">Search submissions</span>
+                    <Search size={18} strokeWidth={1.75} aria-hidden />
+                    <input
+                      className="input"
+                      type="search"
+                      placeholder="Search submissions or working groups"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                  </label>
+                  <div className="sortControl" aria-label="Sort submissions">
+                    <SortButton
                       active={sort === 'date'}
                       icon={CalendarClock}
                       onClick={() => setSort('date')}
                     >
                       {state === 'open' ? 'Deadline' : 'Latest'}
-                    </FilterPill>
-                    <FilterPill
+                    </SortButton>
+                    <SortButton
                       active={sort === 'title'}
                       icon={ArrowDownAZ}
                       onClick={() => setSort('title')}
                     >
                       Title A–Z
-                    </FilterPill>
+                    </SortButton>
                   </div>
                 </div>
+                <div className="catalogControlRow catalogFilterRow">
+                  <FilterMenu
+                    activeCount={
+                      activeFilterCount(statusFilters) +
+                      activeFilterCount(groupFilters)
+                    }
+                  >
+                    <fieldset className="filterLevel">
+                      <legend>{state === 'open' ? 'Stage' : 'Outcome'}</legend>
+                      <div className="pillRow">
+                        {statuses.map((item) => (
+                          <FilterPill
+                            key={item.key}
+                            active={
+                              item.key === 'all' &&
+                              activeFilterCount(statusFilters) === 0
+                            }
+                            state={
+                              item.key === 'all'
+                                ? undefined
+                                : statusFilters[item.key] || 'neutral'
+                            }
+                            icon={item.icon}
+                            onClick={() => {
+                              if (item.key === 'all') setStatusFilters({})
+                              else {
+                                setStatusFilters((current) =>
+                                  toggleFilter(current, item.key),
+                                )
+                              }
+                            }}
+                          >
+                            {item.label}
+                          </FilterPill>
+                        ))}
+                      </div>
+                    </fieldset>
+                    {groups.length > 1 && (
+                      <fieldset className="filterLevel">
+                        <legend>Working group</legend>
+                        <div className="pillRow">
+                          <FilterPill
+                            active={activeFilterCount(groupFilters) === 0}
+                            icon={Tags}
+                            onClick={() => setGroupFilters({})}
+                          >
+                            All groups
+                          </FilterPill>
+                          {groups.map((item) => (
+                            <FilterPill
+                              key={item.slug}
+                              state={groupFilters[item.slug] || 'neutral'}
+                              icon={Network}
+                              onClick={() =>
+                                setGroupFilters((current) =>
+                                  toggleFilter(current, item.slug),
+                                )
+                              }
+                            >
+                              {item.name}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                    )}
+                  </FilterMenu>
+                </div>
+                <p className="resultsSummary" role="status">
+                  {submissions.length} of {data.items.length} submissions
+                </p>
               </div>
               {submissions.length ? (
                 <div className="cardGrid">

@@ -6,11 +6,17 @@ function emit() {
   listeners.forEach((l) => l())
 }
 
-export function navigate(to) {
+export function navigate(to, { state = {}, scroll = true } = {}) {
   if (to === window.location.pathname + window.location.search) return
-  window.history.pushState({}, '', to)
+  window.history.pushState(state, '', to)
   emit()
-  window.scrollTo(0, 0)
+  if (scroll) window.scrollTo(0, 0)
+}
+
+export function replace(to, { state = {}, scroll = true } = {}) {
+  window.history.replaceState(state, '', to)
+  emit()
+  if (scroll) window.scrollTo(0, 0)
 }
 
 if (typeof window !== 'undefined') {
@@ -29,5 +35,5 @@ export function usePath() {
 }
 
 export function useNavigate() {
-  return useCallback((to) => navigate(to), [])
+  return useCallback((to, options) => navigate(to, options), [])
 }

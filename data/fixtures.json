@@ -5,11 +5,7 @@
       "name": "ACE",
       "monogram": "AC",
       "focusLine": "Action for Climate Empowerment — education, training, public participation, and access to information",
-      "tags": [
-        "Education",
-        "Participation",
-        "ACE"
-      ],
+      "tags": ["Education", "Participation", "ACE"],
       "resources": [
         {
           "label": "UNFCCC ACE hub",
@@ -43,11 +39,7 @@
       "name": "Finance & Markets",
       "monogram": "FI",
       "focusLine": "Climate finance, NCQG follow-up, markets, and youth access to funds",
-      "tags": [
-        "Finance",
-        "Markets",
-        "Policy"
-      ],
+      "tags": ["Finance", "Markets", "Policy"],
       "whatsappUrl": "https://chat.whatsapp.com/HbpMTgBDM2x3kY6gVovDbW",
       "driveUrl": "https://drive.google.com/drive/folders/1bWbTwsHKTommF_Y4TccbSieN_qPkYV-0",
       "groupUrl": "https://linktr.ee/finance_and_markets_wg_youngo",
@@ -109,10 +101,7 @@
       "name": "Adaptation",
       "monogram": "AD",
       "focusLine": "Adaptation, National Adaptation Plans, and locally led resilience",
-      "tags": [
-        "Adaptation",
-        "Resilience"
-      ],
+      "tags": ["Adaptation", "Resilience"],
       "resources": [
         {
           "label": "Child- and youth-responsive GGA brief (SB64)",
@@ -141,11 +130,7 @@
       "name": "Loss & Damage",
       "monogram": "LD",
       "focusLine": "Loss and damage finance, Fund for Responding to Loss and Damage, and justice for frontline communities",
-      "tags": [
-        "Loss and damage",
-        "Finance",
-        "Justice"
-      ],
+      "tags": ["Loss and damage", "Finance", "Justice"],
       "resources": [
         {
           "label": "Loss & Damage WG on LinkedIn",
@@ -164,10 +149,7 @@
       "name": "Health",
       "monogram": "HE",
       "focusLine": "Climate and health intersections and WHO–UNFCCC engagement",
-      "tags": [
-        "Health",
-        "Policy"
-      ],
+      "tags": ["Health", "Policy"],
       "resources": [
         {
           "label": "Health WG on LinkedIn",
@@ -181,11 +163,7 @@
       "name": "Energy",
       "monogram": "EN",
       "focusLine": "Just energy transition, renewables scale-up, and phasing out fossil fuels",
-      "tags": [
-        "Energy",
-        "Mitigation",
-        "Policy"
-      ],
+      "tags": ["Energy", "Mitigation", "Policy"],
       "resources": [
         {
           "label": "Energy WG on LinkedIn",
@@ -219,21 +197,14 @@
       "name": "Mitigation",
       "monogram": "MI",
       "focusLine": "Emission pathways, just transition, and ambition in national climate plans",
-      "tags": [
-        "Mitigation",
-        "Policy"
-      ]
+      "tags": ["Mitigation", "Policy"]
     },
     {
       "slug": "ndcs",
       "name": "NDCs",
       "monogram": "ND",
       "focusLine": "NDC enhancement, tracking, and youth inputs into national climate contributions",
-      "tags": [
-        "NDCs",
-        "Mitigation",
-        "Policy"
-      ],
+      "tags": ["NDCs", "Mitigation", "Policy"],
       "resources": [
         {
           "label": "NDCs WG join form",
@@ -252,10 +223,7 @@
       "name": "Oceans",
       "monogram": "OC",
       "focusLine": "Ocean–climate nexus, blue carbon, and coastal resilience",
-      "tags": [
-        "Oceans",
-        "Biodiversity"
-      ],
+      "tags": ["Oceans", "Biodiversity"],
       "groupUrl": "https://linktr.ee/oceansvoice",
       "resources": [
         {
@@ -280,10 +248,7 @@
       "name": "Food & Agriculture",
       "monogram": "AG",
       "focusLine": "Food systems, agriculture, and climate-resilient livelihoods — including the Food & Agriculture Academy toward COP31",
-      "tags": [
-        "Agriculture",
-        "Food systems"
-      ],
+      "tags": ["Agriculture", "Food systems"],
       "groupUrl": "https://linktr.ee/youngofoodandagriculture",
       "resources": [
         {
@@ -333,10 +298,7 @@
       "name": "Nature",
       "monogram": "NA",
       "focusLine": "Biodiversity–climate nexus, Nature WG task forces, and youth inputs into nature-related UNFCCC and CBD spaces",
-      "tags": [
-        "Nature",
-        "Biodiversity"
-      ],
+      "tags": ["Nature", "Biodiversity"],
       "resources": [
         {
           "label": "Nature WG on LinkedIn",
@@ -355,10 +317,7 @@
       "name": "Gender",
       "monogram": "GE",
       "focusLine": "Gender-responsive climate policy and intergenerational equity",
-      "tags": [
-        "Gender",
-        "Justice"
-      ],
+      "tags": ["Gender", "Justice"],
       "whatsappUrl": "https://chat.whatsapp.com/C5hiNIm7A3gJdy7Mll6UNn",
       "resources": [
         {
@@ -393,10 +352,7 @@
       "name": "Human Rights",
       "monogram": "HR",
       "focusLine": "Human rights, civic space, and rights-based climate action",
-      "tags": [
-        "Human rights",
-        "Justice"
-      ],
+      "tags": ["Human rights", "Justice"],
       "resources": [
         {
           "label": "Human Rights WG membership form",
@@ -420,20 +376,14 @@
       "name": "Technology",
       "monogram": "TE",
       "focusLine": "Technology Mechanism, TEC/CTCN, and equitable technology access",
-      "tags": [
-        "Technology",
-        "Policy"
-      ]
+      "tags": ["Technology", "Policy"]
     },
     {
       "slug": "conflict-of-interest",
       "name": "Conflict of Interest",
       "monogram": "CI",
       "focusLine": "Conflict of interest safeguards and fossil-fuel influence in climate spaces",
-      "tags": [
-        "Governance",
-        "Integrity"
-      ],
+      "tags": ["Governance", "Integrity"],
       "resources": [
         {
           "label": "SB64 AIM cross-constituency intervention",
@@ -447,10 +397,7 @@
       "name": "Conference of Youth",
       "monogram": "CY",
       "focusLine": "LCOY, RCOY, and COY coordination — conferences that feed the Global Youth Statement",
-      "tags": [
-        "COY",
-        "Engagement"
-      ],
+      "tags": ["COY", "Engagement"],
       "resources": [
         {
           "label": "UNFCCC — Conference of Youth",
@@ -1323,11 +1270,6 @@
       "targetSession": "COP31",
       "intro": "The Global Youth Statement brings together policy priorities developed by children and young people through YOUNGO consultations, working groups, LCOYs, RCOYs, and the Global Conference of Youth.",
       "note": "The 2026 statement is being developed for COY21 ahead of COP31 in Antalya. The call for individual and organisation inputs closes 31 July 2026, 23:59 UTC — submit through the official Global Youth Statement 2026 form.",
-      "editions": [
-        "Call for inputs",
-        "Taskforce",
-        "Advocacy"
-      ],
       "fullUrl": "https://youngoclimate.org/",
       "inputsUrl": "https://forms.gle/7Hw2ZQoxPvWzaotL9",
       "inputsDeadlineAt": "2026-07-31T23:59:00.000Z",
@@ -1336,41 +1278,46 @@
     "priorities": [
       {
         "title": "Science-aligned NDCs",
+        "group": "Climate ambition",
         "body": "Nationally Determined Contributions that match the 1.5°C pathway and centre justice for young people and frontline communities."
       },
       {
         "title": "Just energy transition",
+        "group": "Climate ambition",
         "body": "A full, fair, and fast phase-out of fossil fuels with renewables scale-up and energy access for all."
       },
       {
         "title": "Meaningful youth inclusion",
+        "group": "Participation and rights",
         "body": "Intergenerational equity and the meaningful inclusion of children and youth in climate policymaking at every level."
       },
       {
         "title": "Climate finance",
+        "group": "Justice and resilience",
         "body": "Reforming climate finance so it is rooted in justice and accessible to the most vulnerable communities."
       },
       {
         "title": "Adaptation & loss and damage",
+        "group": "Justice and resilience",
         "body": "Prioritising adaptation and loss-and-damage responses as moral and political imperatives."
       }
     ],
     "process": [
       {
         "step": "Collection of inputs",
-        "body": "Gathering submissions from individuals, working groups, LCOYs, NGOs, and movements worldwide (2026 inputs deadline: 31 July)."
+        "body": "Collect submissions from young people, working groups, and regional COYs."
       },
       {
         "step": "Regional & thematic synthesis",
-        "body": "LCOY and RCOY outputs, plus WG policy work, feed into regional and thematic drafts."
+        "body": "Combine regional outputs and working-group policy drafts."
       },
       {
         "step": "Editing & endorsement",
-        "body": "Inputs consolidated for clarity, balance, and alignment ahead of COY21."
+        "body": "Edit a balanced draft and seek endorsement at COY21."
       },
       {
         "step": "Advocacy & handover",
-        "body": "The final statement is presented around COY21 / COP31 and used in YOUNGO advocacy with Parties and the UNFCCC."
+        "body": "Present the final statement at COP31 and use it in YOUNGO advocacy."
       }
     ],
     "archive": [
