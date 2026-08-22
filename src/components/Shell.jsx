@@ -501,9 +501,7 @@ export function Shell({ children }) {
                 <A
                   href="/profile"
                   className={`sheetAccount ${isActive(path, '/profile') ? 'active' : ''}`}
-                  aria-current={
-                    isActive(path, '/profile') ? 'page' : undefined
-                  }
+                  aria-current={isActive(path, '/profile') ? 'page' : undefined}
                   onClick={() => setSheet(false)}
                 >
                   <UserCircle size={19} strokeWidth={1.75} aria-hidden />
