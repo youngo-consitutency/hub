@@ -1,3 +1,5 @@
+import { isPublicGroupResource } from '../../shared/resourceCategories.js'
+
 // A conferencing *join* link is a credential: anyone holding one can walk into
 // a YOUNGO call. Deleting the `meetingUrl` field is not enough — the same link
 // is repeated in prose descriptions and in working-group resource lists, and
@@ -49,15 +51,25 @@ export function redactMeetingLinks(text) {
   })
 }
 
-/** Drop resources that are join links; redact join links quoted in the rest. */
-function resourceViews(resources) {
+/** Keep public media open while member workspace material stays source-gated. */
+function resourceViews(
+  resources,
+  { includePrivate = false, includeWorkspace = false } = {},
+) {
   if (!Array.isArray(resources)) return resources
   return resources
-    .filter((resource) => !isMeetingJoinLink(resource?.url || ''))
-    .map((resource) => ({
-      ...resource,
-      description: redactMeetingLinks(resource?.description),
-    }))
+    .filter((resource) => includeWorkspace || isPublicGroupResource(resource))
+    .filter(
+      (resource) => includeWorkspace || !isMeetingJoinLink(resource?.url || ''),
+    )
+    .map((resource) =>
+      includePrivate
+        ? { ...resource }
+        : {
+            ...resource,
+            description: redactMeetingLinks(resource?.description),
+          },
+    )
 }
 
 function contactView(contact, { includePrivate = false } = {}) {
@@ -78,7 +90,10 @@ export function eventView(event, { includePrivate = false } = {}) {
   return publicEvent
 }
 
-export function groupView(group, { includePrivate = false } = {}) {
+export function groupView(
+  group,
+  { includePrivate = false, includeWorkspace = false } = {},
+) {
   if (!group) return group
   const result = {
     ...group,
@@ -93,14 +108,23 @@ export function groupView(group, { includePrivate = false } = {}) {
       ? { contact: contactView(group.contact, { includePrivate }) }
       : {}),
   }
-  if (includePrivate) return result
   const publicGroup = { ...result }
-  delete publicGroup.whatsappUrl
-  delete publicGroup.groupUrl
-  delete publicGroup.driveUrl
-  publicGroup.description = redactMeetingLinks(publicGroup.description)
+  if (!includeWorkspace) {
+    delete publicGroup.whatsappUrl
+    delete publicGroup.groupUrl
+    delete publicGroup.driveUrl
+  }
+  if (!includePrivate) {
+    publicGroup.description = redactMeetingLinks(publicGroup.description)
+  }
   if (Array.isArray(publicGroup.resources)) {
-    publicGroup.resources = resourceViews(publicGroup.resources)
+    publicGroup.workspaceResourcesLocked =
+      !includeWorkspace &&
+      publicGroup.resources.some((resource) => !isPublicGroupResource(resource))
+    publicGroup.resources = resourceViews(publicGroup.resources, {
+      includePrivate,
+      includeWorkspace,
+    })
   }
   return publicGroup
 }

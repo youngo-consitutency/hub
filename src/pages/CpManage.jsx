@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
-import { A, Button, Async, Empty, ErrorCard } from '../components/ui.jsx'
+import {
+  A,
+  Async,
+  BackLink,
+  Button,
+  Empty,
+  ErrorCard,
+} from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import {
   MissionCountdown,
@@ -8,7 +15,6 @@ import {
   MissionMonogram,
 } from '../components/MissionConsole.jsx'
 import { WG_ACTIVITY_KINDS } from '../../shared/workflows.js'
-import { ArrowLeft } from 'lucide-react'
 
 export function CpManage({ slug }) {
   const groups = useApi('/groups')
@@ -74,10 +80,7 @@ export function CpManage({ slug }) {
 
   return (
     <div className="mcConsole">
-      <A href="/cp" className="mcBack">
-        <ArrowLeft size={16} strokeWidth={1.75} aria-hidden />
-        All WG consoles
-      </A>
+      <BackLink href="/cp">all WG consoles</BackLink>
 
       <Async query={groups} skeletons={2}>
         {(g) => {

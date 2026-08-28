@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react'
+import { TbExternalLink as ExternalLink } from 'react-icons/tb'
 import {
   PRIVACY_VERSION,
   CONSENT_STATEMENT,

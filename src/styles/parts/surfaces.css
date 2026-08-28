@@ -267,8 +267,8 @@ main > .mcStatusBar {
   border-radius: var(--radius-card);
   background: var(--bg-card);
   transition:
-    border-color 100ms linear,
-    background 100ms linear;
+    border-color var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease);
 }
 
 .mcWgTile:hover {
@@ -348,20 +348,6 @@ main > .mcStatusBar {
   color: var(--accent);
   font-size: 13px;
   font-weight: 600;
-}
-
-.mcBack {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.mcBack:hover {
-  color: var(--accent);
 }
 
 .mcFlash {

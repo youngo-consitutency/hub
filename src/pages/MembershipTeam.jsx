@@ -10,17 +10,18 @@ import {
   Section,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
+import { MemberAvatar } from '../components/MemberAvatar.jsx'
 import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
 import { OpportunityReview } from '../components/OpportunityReview.jsx'
 import {
-  ClipboardCheck,
-  Clock3,
-  Layers3,
-  RefreshCw,
-  Search,
-  ShieldCheck,
-  UserCheck,
-} from 'lucide-react'
+  TbClipboardCheck as ClipboardCheck,
+  TbClock as Clock3,
+  TbStack3 as Layers3,
+  TbRefresh as RefreshCw,
+  TbSearch as Search,
+  TbShieldCheck as ShieldCheck,
+  TbUserCheck as UserCheck,
+} from 'react-icons/tb'
 
 const STATUS_LABELS = {
   registered: 'Registered',
@@ -63,7 +64,6 @@ export function MembershipTeam() {
   return (
     <div>
       <PageHeader
-        eyebrow="Member lifecycle"
         title="Membership Team"
         description="Move applications from registration through onboarding, activation, renewal, and offboarding."
       />
@@ -148,26 +148,43 @@ export function MembershipTeam() {
                   <div className="stackSm">
                     {shown.map((item) => (
                       <div key={item.id} className="card cardTight queueRow">
-                        <div className="queueIdentity">
-                          <strong>{item.name}</strong>
-                          <p className="meta">
-                            {item.email} · {item.country || 'Country not set'}
-                          </p>
-                          <div className="rowGap" style={{ marginTop: 6 }}>
-                            <span
-                              className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
-                            >
-                              {STATUS_LABELS[item.membershipStatus] ||
-                                item.membershipStatus}
-                            </span>
-                            <span className="chip chip-neutral">
-                              Hub: {item.hubAccessStatus}
-                            </span>
-                            {item.teamRoles?.map((role) => (
-                              <span key={role} className="chip chip-neutral">
-                                {role.replaceAll('_', ' ')}
+                        <div className="queueIdentity membershipQueueIdentity">
+                          <MemberAvatar
+                            person={{
+                              name: item.name,
+                              displayName: item.profile?.displayName,
+                              photoUrl: item.profile?.photoUrl,
+                            }}
+                            size="sm"
+                          />
+                          <div>
+                            <strong>{item.name}</strong>
+                            <p className="meta">
+                              {item.email} · {item.country || 'Country not set'}
+                            </p>
+                            <div className="rowGap" style={{ marginTop: 6 }}>
+                              <span
+                                className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
+                              >
+                                {STATUS_LABELS[item.membershipStatus] ||
+                                  item.membershipStatus}
                               </span>
-                            ))}
+                              <span className="chip chip-neutral">
+                                Hub: {item.hubAccessStatus}
+                              </span>
+                              {item.teamRoles?.map((role) => (
+                                <span key={role} className="chip chip-neutral">
+                                  {role.replaceAll('_', ' ')}
+                                </span>
+                              ))}
+                              <span className="chip chip-neutral">
+                                Directory:{' '}
+                                {item.profile?.directoryVisibility || 'private'}
+                              </span>
+                              {item.profile?.hasPhoto && (
+                                <span className="chip chip-neutral">Photo</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <SearchableSelect

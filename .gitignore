@@ -30,3 +30,4 @@ data/research/
 **.node-persist**
 **_IGNORE_**
 # end managed
+.vercel

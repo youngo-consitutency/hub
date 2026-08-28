@@ -8,7 +8,10 @@ import {
   Section,
   Skeletons,
 } from './ui.jsx'
-import { MessageSquarePlus, ExternalLink } from 'lucide-react'
+import {
+  TbMessagePlus as MessageSquarePlus,
+  TbExternalLink as ExternalLink,
+} from 'react-icons/tb'
 
 const STATUS_FILTERS = [
   ['', 'All'],

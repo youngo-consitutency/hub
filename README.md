@@ -15,10 +15,11 @@ membership verification, role-based access, working-group tools, organisation
 seats, administration, cited search, and the first governed content workflow are
 implemented.
 
-Events and announcements can be drafted, reviewed, and published in the Hub.
-The remaining public directory, submission, Council, COY, and working-group
-content still comes from `data/fixtures.json`. Password-reset and invitation
-emails also need a delivery provider before production use.
+Events, announcements, and member-suggested Science Hub resources can be
+reviewed and published through the Hub's governed content workflow. The
+remaining public directory, submission, Council, COY, and working-group content
+still comes from `data/fixtures.json`. Password-reset and invitation emails also
+need a delivery provider before production use.
 
 ## Start locally
 
@@ -61,7 +62,7 @@ Browser
                  └─ fixtures and ignored JSON files in local fixture mode
 ```
 
-The frontend uses React, Vite, plain CSS, and Lucide icons. Pages are loaded
+The frontend uses React, Vite, plain CSS, and outlined Tabler icons. Pages are loaded
 only when their route is opened, which keeps the initial download smaller for
 members on slow connections or older devices.
 
@@ -69,9 +70,10 @@ The API owns authorization. React may hide controls that a member cannot use,
 but every protected operation is checked again by the server. Access profiles
 and capabilities are derived in `server/lib/access.js`.
 
-Public fixture content is read through `server/lib/store.js`. Published event
-and announcement revisions are layered over that content, so existing public
-routes do not need to know whether an item came from a fixture or the editor.
+Public fixture content is read through `server/lib/store.js`. Published event,
+announcement, and resource revisions are layered over that content, so public
+routes do not need to know whether an item came from a fixture or the governed
+workflow.
 
 ## Content editing
 
@@ -93,6 +95,15 @@ draft → in review → approved → published
 The author cannot approve or publish their own revision. Each transition is
 recorded in the audit log. Admins assign the two responsibilities from the
 account administration page.
+
+### Science resources
+
+The public catalogue is available at `/about/resources`, and verified members
+can suggest a resource at `/resources`. New suggestions enter the same
+independent review queue in **Content Studio**; they are not public until a
+different account with the `content_publisher` responsibility approves and
+publishes them. Canonical pathway, type, topic, region, and language values live
+in `shared/resourceHub.js` and are shared by validation, filters, and cards.
 
 ### Other public content
 
@@ -251,6 +262,7 @@ formal membership or governance records owned by the responsible team.
 | --- | --- | --- |
 | `DATABASE_URL` | Production | PostgreSQL connection string |
 | `APP_ORIGIN` | Production | Public HTTPS origin used for CORS and generated links |
+| `READ_ONLY_PREVIEW` | Preview only | Reject mutations when set to `1`; used by the consultation deployment |
 | `ADMIN_EMAILS` | Admin setup | Comma-separated accounts that `bootstrap-admin` may promote |
 | `PORT` | No | Express port; defaults to `8787` |
 | `LOG_PASSWORD_RESET_LINKS` | Local only | Print reset links during an explicit local test |
@@ -271,6 +283,7 @@ npm run setup:push
 
 ```text
 .github/workflows/       GitHub Actions
+api/                     Vercel consultation function entrypoint
 data/fixtures.json       Public fixture content
 docs/                    Maintainer and content-editing guides
 migrations/              Ordered PostgreSQL migrations
@@ -312,6 +325,28 @@ the authorization and audit boundaries remain server-side.
 
 ## Deployment
 
+### Consultation preview
+
+The public, read-only consultation build is available at:
+
+<https://youngo-hub-consultation.vercel.app>
+
+It uses `vercel.json` and the Express entrypoint in `api/index.js`. Public pages,
+fixture-backed content, the Science Resource Hub, GYS, and COY information are
+available for demonstrations. `READ_ONLY_PREVIEW=1` rejects every mutation, so
+accounts, registrations, submissions, and staff actions must not be presented
+as working until a dedicated PostgreSQL database is attached and the normal
+production configuration is verified.
+
+Deploy a new consultation snapshot from a verified worktree with:
+
+```bash
+vercel deploy
+vercel inspect https://youngo-hub-consultation.vercel.app
+```
+
+### Interactive Railway deployment
+
 Railway reads `railway.json` and performs these steps:
 
 1. build with `npm run build`
@@ -327,7 +362,7 @@ a Git commit and push it:
 ```bash
 npm run check
 git diff --check
-git add --all
+git add <reviewed-files>
 git status --short
 git commit -m "Describe the Hub change"
 git push origin main
@@ -336,10 +371,10 @@ git push origin main
 Check the `git status` output before committing. It is the final list of files
 that will be published.
 
-The independently controlled Railway project watches `Genn25369/YOUNGO-HUB`
-on `main`. A push starts GitHub **Verify**; Railway waits for those checks and
-then deploys the commit automatically. Confirm both Node versions pass and the
-Railway deployment shows the same commit SHA returned by:
+The previous Railway service watched `Genn25369/YOUNGO-HUB` on `main`. A push
+starts GitHub **Verify**; an active Railway service should wait for those checks
+and then deploy the commit automatically. Confirm both Node versions pass and
+the Railway deployment shows the same commit SHA returned by:
 
 ```bash
 git rev-parse HEAD
@@ -348,11 +383,9 @@ git ls-remote origin refs/heads/main
 
 Those two hashes must match.
 
-Current independent deployment:
-<https://youngo-hub-production-c0a0.up.railway.app>
-
-Health check:
-<https://youngo-hub-production-c0a0.up.railway.app/healthz>
+The former Railway URL currently returns `404 Application not found` and is not
+an active deployment. Reconnect or create a Railway project before treating it
+as an interactive environment.
 
 The Railway service uses its attached PostgreSQL database and runs migrations
 before each start. The generated public domain targets Railway's injected
@@ -364,8 +397,8 @@ repository, but existing members must be migrated before this URL replaces an
 established member service.
 
 If a push does not deploy, first confirm GitHub **Verify** completed, then check
-Railway's service source is still `Genn25369/YOUNGO-HUB`, branch `main`, with
-automatic deployment and **Wait for CI** enabled.
+that Railway has an active service sourced from `Genn25369/YOUNGO-HUB`, branch
+`main`, with automatic deployment and **Wait for CI** enabled.
 
 ## Known gaps
 

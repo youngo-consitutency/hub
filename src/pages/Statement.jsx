@@ -1,12 +1,16 @@
 import { useApi } from '../lib/api.js'
-import { Async, CountdownChip, PageHeader, Section } from '../components/ui.jsx'
-import { GysSignup } from '../components/GysSignup.jsx'
 import {
-  ArrowRight,
-  ArrowUpRight,
-  ExternalLink,
-  ScrollText,
-} from 'lucide-react'
+  Async,
+  LifecycleTiming,
+  PageHeader,
+  Section,
+} from '../components/ui.jsx'
+import { GysSignup } from '../components/GysSignup.jsx'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
+import {
+  TbArrowRight as ArrowRight,
+  TbArrowUpRight as ArrowUpRight,
+} from 'react-icons/tb'
 
 const PRIORITY_GROUP_ORDER = [
   'Climate ambition',
@@ -51,7 +55,6 @@ export function Statement() {
           return (
             <>
               <PageHeader
-                eyebrow="YOUNGO policy"
                 title={current.title}
                 description={current.intro}
                 action={
@@ -61,7 +64,7 @@ export function Statement() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <ScrollText size={18} strokeWidth={1.75} aria-hidden />
+                    <DestinationIcon url={current.fullUrl} size={18} />
                     Read the statement
                   </a>
                 }
@@ -88,7 +91,7 @@ export function Statement() {
                 <p className="meta">{current.note}</p>
                 <div className="gysResources" aria-label="Available resources">
                   {current.inputsDeadlineAt && (
-                    <CountdownChip
+                    <LifecycleTiming
                       iso={current.inputsDeadlineAt}
                       label="Inputs close"
                     />
@@ -100,8 +103,8 @@ export function Statement() {
                       target="_blank"
                       rel="noreferrer"
                     >
+                      <DestinationIcon url={current.inputsUrl} size={16} />
                       Submit inputs
-                      <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
                     </a>
                   )}
                   {current.releaseUrl && (
@@ -111,8 +114,8 @@ export function Statement() {
                       target="_blank"
                       rel="noreferrer"
                     >
+                      <DestinationIcon url={current.releaseUrl} size={16} />
                       UNFCCC background
-                      <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
                     </a>
                   )}
                 </div>
@@ -189,7 +192,12 @@ export function Statement() {
                               target="_blank"
                               rel="noreferrer"
                             >
-                              {link.label}
+                              <DestinationIcon
+                                url={link.url}
+                                size={17}
+                                className="gysArchiveLinkIcon"
+                              />
+                              <span>{link.label}</span>
                               <ArrowUpRight
                                 size={16}
                                 strokeWidth={1.75}

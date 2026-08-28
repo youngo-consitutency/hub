@@ -1,14 +1,14 @@
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  GraduationCap,
-  Library,
-  ShieldCheck,
-  Users,
-} from 'lucide-react'
+  TbArrowRight as ArrowRight,
+  TbBook as BookOpen,
+  TbCircleCheck as CheckCircle2,
+  TbSchool as GraduationCap,
+  TbLibrary as Library,
+  TbShieldCheck as ShieldCheck,
+  TbUsers as Users,
+} from 'react-icons/tb'
 import { PRIVACY_META } from '../../shared/privacyNotice.js'
 
 const FAQ_VERIFIED = [
@@ -57,7 +57,6 @@ export function Onboarding() {
   return (
     <div>
       <PageHeader
-        eyebrow="Membership journey"
         title="Onboarding"
         description={
           verified

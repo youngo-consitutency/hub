@@ -1,5 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { CalendarPlus, ChevronDown, Download, ExternalLink } from 'lucide-react'
+import {
+  TbCalendarPlus as CalendarPlus,
+  TbChevronDown as ChevronDown,
+  TbDownload as Download,
+} from 'react-icons/tb'
+import { DestinationIcon } from './DestinationLink.jsx'
 import {
   googleCalendarUrl,
   icsDownloadPath,
@@ -68,7 +73,7 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
           >
-            <ExternalLink size={16} strokeWidth={1.75} aria-hidden />
+            <DestinationIcon url={googleCalendarUrl(event)} size={17} />
             Google Calendar
           </a>
           <a
@@ -78,7 +83,7 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
           >
-            <ExternalLink size={16} strokeWidth={1.75} aria-hidden />
+            <DestinationIcon url={outlookWebUrl(event)} size={17} />
             Outlook.com
           </a>
           <a
@@ -88,7 +93,7 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
           >
-            <ExternalLink size={16} strokeWidth={1.75} aria-hidden />
+            <DestinationIcon url={outlookOfficeUrl(event)} size={17} />
             Outlook 365
           </a>
           <a

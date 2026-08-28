@@ -55,6 +55,17 @@ export const WORKING_GROUP_TOPICS = [
   },
 ]
 
+const WORKING_GROUP_TOPIC_BY_SLUG = new Map(
+  WORKING_GROUP_TOPICS.flatMap((topic) =>
+    topic.groups.map((slug) => [slug, topic]),
+  ),
+)
+
+/** Canonical broad topic shown by both group filters and group cards. */
+export function workingGroupTopic(slug) {
+  return WORKING_GROUP_TOPIC_BY_SLUG.get(slug) || null
+}
+
 export const WORKING_GROUP_SLUGS = new Set(WORKING_GROUPS.map((g) => g.slug))
 
 const WORKING_GROUP_NAMES = Object.fromEntries(

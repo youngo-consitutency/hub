@@ -17,24 +17,29 @@ import {
 import {
   buildCalendarDays,
   calendarMonth,
+  eventsInCalendarWeek,
   eventsInCalendarMonth,
+  eventsOnCalendarDay,
   formatCalendarDay,
   formatCalendarMonth,
   groupEventsByDate,
   shiftCalendarMonth,
 } from '../lib/monthCalendar.js'
 import {
-  CalendarOff,
-  ChevronLeft,
-  ChevronRight,
-  ListFilter,
-  UsersRound,
-  Network,
-  Landmark,
-  MessagesSquare,
-  MonitorPlay,
-  CalendarClock,
-} from 'lucide-react'
+  TbCalendarOff as CalendarOff,
+  TbChevronLeft as ChevronLeft,
+  TbChevronRight as ChevronRight,
+  TbFilter as ListFilter,
+  TbUsersGroup as UsersRound,
+  TbSitemap as Network,
+  TbBuildingBank as Landmark,
+  TbMessages as MessagesSquare,
+  TbDeviceDesktop as MonitorPlay,
+  TbCalendarTime as CalendarClock,
+  TbCalendarMonth as CalendarMonth,
+  TbCalendarWeek as CalendarWeek,
+  TbSun as Sun,
+} from 'react-icons/tb'
 
 const FILTERS = [
   { key: 'all', label: 'All', icon: ListFilter },
@@ -78,6 +83,7 @@ export function Calendar() {
   const [typeFilters, setTypeFilters] = useState({})
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState(null)
+  const [agendaScope, setAgendaScope] = useState('month')
   const [calendarPanel, setCalendarPanel] = useState(null)
   const [calendarHeight, setCalendarHeight] = useState(null)
   const query = useApi('/events?type=all')
@@ -99,22 +105,30 @@ export function Calendar() {
       setTypeFilters((current) => toggleFilter(current, nextType))
     }
     setSelectedDay(null)
+    if (agendaScope === 'day') setAgendaScope('month')
   }
 
   const changeMonth = (amount) => {
     setMonth((current) => shiftCalendarMonth(current, amount))
     setSelectedDay(null)
+    setAgendaScope('month')
   }
 
   const returnToThisMonth = () => {
     setMonth(calendarMonth())
     setSelectedDay(null)
+    setAgendaScope('month')
+  }
+
+  const changeAgendaScope = (scope) => {
+    setAgendaScope(scope)
+    setSelectedDay(null)
+    if (scope !== 'month') setMonth(calendarMonth())
   }
 
   return (
     <div>
       <PageHeader
-        eyebrow="Schedule"
         title="Calendar"
         description="Calls, forums, sessions, and webinars in one UTC-first agenda."
         action={<CalendarSubscribe type="all" />}
@@ -172,7 +186,27 @@ export function Calendar() {
           const monthEvents = eventsInCalendarMonth(events, month)
           const activeDay =
             selectedDay && grouped.has(selectedDay) ? selectedDay : null
-          const agendaEvents = activeDay ? grouped.get(activeDay) : monthEvents
+          const agendaEvents = activeDay
+            ? eventsOnCalendarDay(events, activeDay)
+            : agendaScope === 'today'
+              ? eventsOnCalendarDay(events, today)
+              : agendaScope === 'week'
+                ? eventsInCalendarWeek(events)
+                : monthEvents
+          const agendaGroups = [
+            ...groupEventsByDate(
+              [...agendaEvents].sort((a, b) =>
+                a.startsAt.localeCompare(b.startsAt),
+              ),
+            ),
+          ].sort(([a], [b]) => a.localeCompare(b))
+          const agendaTitle = activeDay
+            ? formatCalendarDay(activeDay)
+            : agendaScope === 'today'
+              ? 'Today'
+              : agendaScope === 'week'
+                ? 'This week'
+                : formatCalendarMonth(month)
           const visibleTypes = [
             ...new Set(monthEvents.map((event) => event.type)),
           ]
@@ -260,7 +294,10 @@ export function Calendar() {
                         key={date.key}
                         className={`calendarDay calendarDayButton ${selectedDay === date.key ? 'selected' : ''}`}
                         data-weekend={date.isWeekend || undefined}
-                        onClick={() => setSelectedDay(date.key)}
+                        onClick={() => {
+                          setSelectedDay(date.key)
+                          setAgendaScope('day')
+                        }}
                         aria-label={label}
                         aria-pressed={selectedDay === date.key}
                       >
@@ -299,36 +336,103 @@ export function Calendar() {
                 }
               >
                 <div className="calendarAgendaHeader">
-                  <p className="eyebrow">
-                    {activeDay ? 'Selected day' : 'This month'}
-                  </p>
-                  <h2 id="calendar-agenda-title">
-                    {activeDay
-                      ? formatCalendarDay(activeDay)
-                      : formatCalendarMonth(month)}
-                  </h2>
-                  <p className="meta">
-                    {agendaEvents.length
-                      ? `${agendaEvents.length} ${agendaEvents.length === 1 ? 'event' : 'events'}`
-                      : 'No events scheduled'}
-                  </p>
+                  <p className="eyebrow">Agenda</p>
+                  <div className="calendarAgendaSummary">
+                    <h2 id="calendar-agenda-title">{agendaTitle}</h2>
+                    <p className="meta">
+                      {agendaEvents.length
+                        ? `${agendaEvents.length} ${agendaEvents.length === 1 ? 'event' : 'events'}`
+                        : 'No events'}
+                    </p>
+                  </div>
+                  <div
+                    className="viewSwitch calendarAgendaScope"
+                    role="group"
+                    aria-label="Agenda range"
+                  >
+                    <FilterPill
+                      active={agendaScope === 'today'}
+                      icon={Sun}
+                      onClick={() => changeAgendaScope('today')}
+                    >
+                      Today
+                    </FilterPill>
+                    <FilterPill
+                      active={agendaScope === 'week'}
+                      icon={CalendarWeek}
+                      onClick={() => changeAgendaScope('week')}
+                    >
+                      This week
+                    </FilterPill>
+                    <FilterPill
+                      active={agendaScope === 'month'}
+                      icon={CalendarMonth}
+                      onClick={() => changeAgendaScope('month')}
+                    >
+                      Month
+                    </FilterPill>
+                  </div>
+                  {activeDay && (
+                    <button
+                      type="button"
+                      className="calendarAgendaClear"
+                      onClick={() => changeAgendaScope('month')}
+                    >
+                      Clear selected day
+                    </button>
+                  )}
                   <span className="srOnly" role="status">
                     {activeDay
                       ? `Showing events for ${formatCalendarDay(activeDay)}`
-                      : `Showing ${formatCalendarMonth(month)}`}
+                      : `Showing ${agendaTitle.toLowerCase()}`}
                   </span>
                 </div>
                 {agendaEvents.length ? (
                   <div className="calendarAgendaList">
-                    {agendaEvents.map((event) => (
-                      <EventCard key={event.slug} event={event} />
+                    {agendaGroups.map(([dateKey, dateEvents]) => (
+                      <section
+                        key={dateKey}
+                        className="calendarAgendaGroup"
+                        aria-label={formatCalendarDay(dateKey)}
+                      >
+                        {agendaScope !== 'today' && !activeDay && (
+                          <div className="calendarAgendaDate">
+                            <h3 id={`agenda-${dateKey}`}>
+                              {dateKey === today
+                                ? `Today · ${formatCalendarDay(dateKey)}`
+                                : formatCalendarDay(dateKey)}
+                            </h3>
+                            <span>
+                              {dateEvents.length}{' '}
+                              {dateEvents.length === 1 ? 'event' : 'events'}
+                            </span>
+                          </div>
+                        )}
+                        <div className="calendarAgendaCards">
+                          {dateEvents.map((event) => (
+                            <EventCard key={event.slug} event={event} />
+                          ))}
+                        </div>
+                      </section>
                     ))}
                   </div>
                 ) : (
                   <Empty
                     icon={CalendarOff}
-                    title="No events this month"
-                    body="Use the arrows to check another month."
+                    title={
+                      agendaScope === 'today'
+                        ? 'No events today'
+                        : agendaScope === 'week'
+                          ? 'No events this week'
+                          : activeDay
+                            ? 'No events on this day'
+                            : 'No events this month'
+                    }
+                    body={
+                      agendaScope === 'month'
+                        ? 'Use the arrows to check another month.'
+                        : 'Try another agenda range or event type.'
+                    }
                   />
                 )}
               </aside>

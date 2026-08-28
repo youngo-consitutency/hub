@@ -1,39 +1,38 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
-import { FeedbackButton } from './FeedbackButton.jsx'
 import { Brand } from './Brand.jsx'
 import { usePath } from '../lib/router.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { MissionStatusBar } from './MissionConsole.jsx'
 import {
-  Home,
-  CalendarDays,
-  FileText,
-  Gavel,
-  MapPin,
-  Users,
-  AtSign,
-  Search,
-  Menu,
-  ScrollText,
-  GraduationCap,
-  Library,
-  Building2,
-  Shield,
-  Briefcase,
-  ClipboardCheck,
-  PenTool,
-  Network,
-  Award,
-  Trophy,
-  UserCircle,
-  FilePenLine,
-  Megaphone,
-  BadgeCheck,
-  ChevronRight,
-  MoreHorizontal,
-} from 'lucide-react'
+  TbHome as Home,
+  TbCalendar as CalendarDays,
+  TbFileText as FileText,
+  TbGavel as Gavel,
+  TbMapPin as MapPin,
+  TbUsers as Users,
+  TbAt as AtSign,
+  TbSearch as Search,
+  TbMenu2 as Menu,
+  TbScript as ScrollText,
+  TbSchool as GraduationCap,
+  TbLibrary as Library,
+  TbBuilding as Building2,
+  TbShield as Shield,
+  TbBriefcase as Briefcase,
+  TbClipboardCheck as ClipboardCheck,
+  TbTools as PenTool,
+  TbSitemap as Network,
+  TbAward as Award,
+  TbTrophy as Trophy,
+  TbUserCircle as UserCircle,
+  TbFilePencil as FilePenLine,
+  TbSpeakerphone as Megaphone,
+  TbRosetteDiscountCheck as BadgeCheck,
+  TbChevronRight as ChevronRight,
+  TbHelpCircle as CircleHelp,
+} from 'react-icons/tb'
 
 function isActive(path, href) {
   return href === '/' ? path === '/' : path.startsWith(href)
@@ -50,6 +49,7 @@ const STATIONS = [
   ['/ngo', 'NGO platform'],
   ['/onboarding', 'Onboarding'],
   ['/library', 'Library'],
+  ['/resources', 'Science resources'],
   ['/calendar', 'Calendar'],
   ['/submissions', 'Submissions'],
   ['/council', 'Council'],
@@ -173,8 +173,8 @@ export function Shell({ children }) {
       },
       {
         section: SECTION.now,
-        href: '/library',
-        label: 'Library',
+        href: '/resources',
+        label: 'Science resources',
         icon: Library,
         when: !verified,
       },
@@ -191,6 +191,12 @@ export function Shell({ children }) {
         href: '/opportunities',
         label: 'Opportunities',
         icon: Megaphone,
+      },
+      {
+        section: SECTION.now,
+        href: '/resources',
+        label: 'Science resources',
+        icon: Library,
       },
 
       {
@@ -328,14 +334,20 @@ export function Shell({ children }) {
 
   const mobilePrimaryNav = verified
     ? [
-        { href: '/', label: 'Home', icon: Home },
         { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+        {
+          href: '/opportunities',
+          label: 'Opportunities',
+          mobileLabel: 'Calls',
+          icon: Megaphone,
+        },
+        { href: '/', label: 'Home', icon: Home },
         { href: '/groups', label: 'Groups', icon: Users },
         { href: '/profile', label: 'Profile', icon: UserCircle },
       ]
     : [
         { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
-        { href: '/library', label: 'Library', icon: Library },
+        { href: '/resources', label: 'Resources', icon: Library },
       ]
 
   return (
@@ -381,6 +393,14 @@ export function Shell({ children }) {
           </div>
         ))}
         <div className="sidebarFooter">
+          <A
+            href="/help"
+            className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
+            aria-current={isActive(path, '/help') ? 'page' : undefined}
+          >
+            <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
+            <span>Help &amp; support</span>
+          </A>
           {account && verified && (
             <A
               href="/profile"
@@ -422,11 +442,7 @@ export function Shell({ children }) {
         </div>
       </nav>
 
-      <div
-        className="content"
-        inert={sheet ? true : undefined}
-        aria-hidden={sheet ? 'true' : undefined}
-      >
+      <div className="content">
         <header className="topbar">
           <A
             href={verified ? '/' : '/onboarding'}
@@ -451,7 +467,12 @@ export function Shell({ children }) {
             </button>
           </div>
         </header>
-        <main id="main-content" tabIndex="-1">
+        <main
+          id="main-content"
+          tabIndex="-1"
+          inert={sheet ? true : undefined}
+          aria-hidden={sheet ? 'true' : undefined}
+        >
           {/* Operational consoles only — the COP31 clock is ops chrome, not
               something a member checking a deadline needs on every page. */}
           {isOperational && <MissionStatusBar station={stationFor(path)} />}
@@ -533,42 +554,42 @@ export function Shell({ children }) {
             </div>
             {account && (
               <div className="sheetUtilities" aria-label="Support">
-                <FeedbackButton mode="menu" label="Report an issue" />
+                <A
+                  href="/help"
+                  className="navItem"
+                  aria-current={isActive(path, '/help') ? 'page' : undefined}
+                  onClick={() => setSheet(false)}
+                >
+                  <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
+                  <span>Help &amp; support</span>
+                </A>
               </div>
             )}
           </div>
         </>
       )}
 
-      <nav className="mobileBottomNav" aria-label="Quick navigation">
-        {mobilePrimaryNav.map(({ href, label, icon: Icon }) => (
+      <nav
+        className={`mobileBottomNav ${verified ? '' : 'mobileBottomNavCompact'}`}
+        aria-label="Quick navigation"
+        inert={sheet ? true : undefined}
+        aria-hidden={sheet ? 'true' : undefined}
+      >
+        {mobilePrimaryNav.map(({ href, label, mobileLabel, icon: Icon }) => (
           <A
             key={href}
             href={href}
             className={`mobileBottomItem ${isActive(path, href) ? 'active' : ''}`}
             aria-current={isActive(path, href) ? 'page' : undefined}
+            aria-label={mobileLabel ? label : undefined}
           >
             <Icon size={20} strokeWidth={1.75} aria-hidden />
-            <span>{label}</span>
+            <span>{mobileLabel || label}</span>
           </A>
         ))}
-        <button
-          type="button"
-          className={`mobileBottomItem ${sheet ? 'active' : ''}`}
-          onClick={() => setSheet(true)}
-          aria-expanded={sheet}
-          aria-controls="mobile-navigation"
-        >
-          <MoreHorizontal size={20} strokeWidth={1.75} aria-hidden />
-          <span>Menu</span>
-        </button>
       </nav>
 
       <CommandPalette />
-
-      {/* Available on every page, including before the course is passed — a
-          blocked member is exactly who needs to reach the team. */}
-      {account && <FeedbackButton mode="floating" />}
     </div>
   )
 }

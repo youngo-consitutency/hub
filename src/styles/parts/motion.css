@@ -1,0 +1,94 @@
+/* YOUNGO Hub motion language.
+   Motion explains where a temporary surface came from; it never rearranges
+   page content, delays navigation, or animates a repeated card grid. */
+
+@keyframes hubFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes hubDialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-shift)) scale(0.985);
+  }
+}
+
+@keyframes hubPopoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--motion-shift) * -1)) scale(0.99);
+  }
+}
+
+@keyframes hubMenuIn {
+  from {
+    opacity: 0;
+    transform: translate(var(--motion-shift), calc(var(--motion-shift) * -1))
+      scale(0.985);
+  }
+}
+
+@keyframes hubRightPanelIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--motion-shift) * 3));
+  }
+}
+
+/* Backdrops occupy the viewport, so they only fade. Their child surface owns
+   the directional movement. */
+.sheetBackdrop,
+.paletteBackdrop,
+.feedbackBackdrop,
+.adminDialogBackdrop,
+.routePeek::backdrop,
+.notificationHelpDialog::backdrop {
+  animation: hubFadeIn var(--motion-fast) var(--motion-ease) both;
+}
+
+/* Centered dialogs appear in place. */
+.palette,
+.feedbackDialog,
+.adminDialog,
+.notificationHelpDialog {
+  transform-origin: center;
+  animation: hubDialogIn var(--motion-standard) var(--motion-ease-out) both;
+}
+
+/* Menus and listboxes come from the control directly above them. */
+.comboMenu,
+.addCalPanel,
+.subscribePanel,
+.siteMobileNav {
+  animation: hubPopoverIn var(--motion-standard) var(--motion-ease-out) both;
+}
+
+.comboMenu,
+.addCalPanel {
+  transform-origin: top left;
+}
+
+.subscribePanel,
+.siteMobileNav {
+  transform-origin: top right;
+}
+
+/* The authenticated menu is anchored to the top-right menu button. */
+.sheet {
+  transform-origin: top right;
+  animation: hubMenuIn var(--motion-standard) var(--motion-ease-out) both;
+}
+
+/* Quick views are right-side panels, so this is the only large directional
+   movement in the Hub. */
+.routePeek[open] {
+  animation: hubRightPanelIn var(--motion-standard) var(--motion-ease-out) both;
+}
+
+@media (max-width: 560px) {
+  .addCalPanel {
+    transform-origin: top right;
+  }
+}

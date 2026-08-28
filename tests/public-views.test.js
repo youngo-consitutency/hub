@@ -39,13 +39,20 @@ test('anonymous event and group views omit member-private links', () => {
   assert.equal(result.contact.channelValue, undefined)
 })
 
-test('verified member views retain private event and group fields', () => {
+test('verified members retain event links but group resources require an unlocked workspace', () => {
   assert.equal(
     eventView(event, { includePrivate: true }).meetingUrl,
     event.meetingUrl,
   )
   assert.equal(
     groupView(group, { includePrivate: true }).whatsappUrl,
+    undefined,
+  )
+  assert.equal(
+    groupView(group, {
+      includePrivate: true,
+      includeWorkspace: true,
+    }).whatsappUrl,
     group.whatsappUrl,
   )
 })
@@ -69,7 +76,7 @@ test('join links quoted in prose are redacted, registration links are kept', () 
   )
 })
 
-test('anonymous group resources drop join links and keep public materials', () => {
+test('locked group resources keep open media and hide member material', () => {
   const result = groupView({
     slug: 'ace',
     name: 'ACE',
@@ -80,12 +87,30 @@ test('anonymous group resources drop join links and keep public materials', () =
         label: 'Academy register',
         url: 'https://us06web.zoom.us/meeting/register/abc123',
       },
+      { label: 'Instagram', url: 'https://instagram.com/ace' },
+      { label: 'Shared Drive', url: 'https://drive.google.com/ace' },
     ],
   })
   assert.deepEqual(
     result.resources.map((resource) => resource.label),
-    ['UNFCCC ACE hub', 'Academy register'],
+    ['UNFCCC ACE hub', 'Instagram'],
   )
+  assert.equal(result.workspaceResourcesLocked, true)
+})
+
+test('an unlocked group view returns the complete member resource set', () => {
+  const resources = [
+    { label: 'Instagram', url: 'https://instagram.com/ace' },
+    { label: 'Join form', url: 'https://airtable.com/ace' },
+    { label: 'Shared Drive', url: 'https://drive.google.com/ace' },
+  ]
+  const result = groupView(
+    { slug: 'ace', name: 'ACE', resources },
+    { includePrivate: true, includeWorkspace: true },
+  )
+
+  assert.deepEqual(result.resources, resources)
+  assert.equal(result.workspaceResourcesLocked, false)
 })
 
 test('feed and search sanitization covers nested event and group objects', () => {

@@ -1,44 +1,36 @@
-import { A, StatusChip, CountdownChip } from './ui.jsx'
+import { A, StatusChip, FilterChip, LifecycleTiming } from './ui.jsx'
+import { MemberAvatar } from './MemberAvatar.jsx'
 import { fmtMoment, fmtDateRange } from '../lib/time.js'
+import { workingGroupTopic } from '../../shared/workingGroups.js'
+import { workingGroupIcon } from '../lib/workingGroupIcons.js'
+import { regionFilterPrefix } from '../lib/regions.js'
 import {
-  CircleDollarSign,
-  CloudRain,
-  Cpu,
-  CalendarDays,
-  GraduationCap,
-  HandHeart,
-  HeartPulse,
-  Leaf,
-  MapPin,
-  Scale,
-  ShieldCheck,
-  Sprout,
-  Target,
-  UsersRound,
-  Waves,
-  Wind,
-  Zap,
-  ArrowUpRight,
-} from 'lucide-react'
+  TbCalendar as CalendarDays,
+  TbMapPin as MapPin,
+  TbUsersGroup as UsersRound,
+  TbArrowUpRight as ArrowUpRight,
+  TbBuildingCommunity as Building,
+  TbBriefcase as Briefcase,
+  TbFileText as FileText,
+  TbGavel as Gavel,
+  TbGlobe as Globe,
+  TbMap as Map,
+  TbMessageCircle as MessageCircle,
+  TbPresentation as Presentation,
+  TbSitemap as Network,
+  TbTag as Tag,
+} from 'react-icons/tb'
 
-const GROUP_ICONS = {
-  ace: GraduationCap,
-  adaptation: CloudRain,
-  agriculture: Sprout,
-  'conflict-of-interest': ShieldCheck,
-  coy: UsersRound,
-  energy: Zap,
-  finance: CircleDollarSign,
-  gender: Scale,
-  health: HeartPulse,
-  'human-rights': HandHeart,
-  'loss-and-damage': Waves,
-  mitigation: Wind,
-  nature: Leaf,
-  ndcs: Target,
-  oceans: Waves,
-  technology: Cpu,
+const EVENT_ICONS = {
+  constituency_call: UsersRound,
+  wg_call: UsersRound,
+  wgf: MessageCircle,
+  unfccc_session: Globe,
+  webinar: Presentation,
+  coordination: Network,
 }
+
+const COY_ICONS = { lcoy: MapPin, rcoy: Map, coy: Globe }
 
 const EVENT_LABEL = {
   constituency_call: 'Constituency',
@@ -60,17 +52,52 @@ const REGION_LABEL = {
   weog: 'WEOG',
 }
 
-function EntityHeader({ title, status, children }) {
+function EntityHeader({
+  title,
+  icon: Icon,
+  status,
+  statusFilterState,
+  onStatusFilter,
+  children,
+}) {
   return (
     <div className="entityCardHeader">
       <div className="entityCardHeading">
         <h3>{title}</h3>
         <div className="entityCardTags entityCardHeaderTags">
-          {status && <StatusChip status={status} />}
+          {status && (
+            <StatusChip
+              status={status}
+              filterState={statusFilterState}
+              onClick={onStatusFilter}
+            />
+          )}
           {children}
         </div>
       </div>
+      {Icon && (
+        <Icon
+          className="cardCornerIcon entityCardCornerIcon"
+          size={18}
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      )}
     </div>
+  )
+}
+
+function LinkedEntityCard({ href, label, className = '', children }) {
+  return (
+    <article className={`card entityCard linkedEntityCard ${className}`.trim()}>
+      <A
+        href={href}
+        className="entityCardLinkOverlay"
+        aria-label={label}
+        peek
+      />
+      {children}
+    </article>
   )
 }
 
@@ -93,17 +120,22 @@ function MomentRow({ iso, label }) {
 }
 
 export function EventCard({ event }) {
+  const EventIcon = event.wg?.slug
+    ? workingGroupIcon(event.wg.slug)
+    : EVENT_ICONS[event.type] || CalendarDays
+  const TypeIcon = EVENT_ICONS[event.type] || CalendarDays
+  const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
     <A
       href={`/calendar/${event.slug}`}
       className="card cardTight entityCard"
       peek
     >
-      <EntityHeader title={event.title}>
-        <span className="chip chip-neutral">
+      <EntityHeader title={event.title} icon={EventIcon}>
+        <FilterChip icon={TypeIcon}>
           {EVENT_LABEL[event.type] || event.type}
-        </span>
-        {event.wg && <span className="chip chip-neutral">{event.wg.name}</span>}
+        </FilterChip>
+        {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
       </EntityHeader>
       <div className="entityCardBody">
         <MomentRow iso={event.startsAt} label="Starts" />
@@ -112,19 +144,41 @@ export function EventCard({ event }) {
   )
 }
 
-export function SubmissionCard({ sub }) {
+export function SubmissionCard({
+  sub,
+  statusFilterState,
+  groupFilterState,
+  onStatusFilter,
+  onGroupFilter,
+}) {
+  const SubmissionIcon = sub.wg?.slug ? workingGroupIcon(sub.wg.slug) : FileText
   return (
-    <A href={`/submissions/${sub.slug}`} className="card entityCard" peek>
-      <EntityHeader title={sub.title} status={sub.status}>
-        {sub.wg && <span className="chip chip-neutral">{sub.wg.name}</span>}
+    <LinkedEntityCard
+      href={`/submissions/${sub.slug}`}
+      label={`Open ${sub.title}`}
+    >
+      <EntityHeader title={sub.title} icon={SubmissionIcon}>
+        {sub.wg && (
+          <FilterChip
+            state={groupFilterState}
+            icon={workingGroupIcon(sub.wg.slug)}
+            onClick={onGroupFilter}
+          >
+            {sub.wg.name}
+          </FilterChip>
+        )}
       </EntityHeader>
-      <div className="entityCardBody">
-        <MomentRow iso={sub.deadlineAt} label="Deadline" />
-      </div>
-      <div className="entityCardFooter">
-        <CountdownChip iso={sub.deadlineAt} label="Closes in" />
-      </div>
-    </A>
+      <LifecycleTiming
+        status={sub.status}
+        iso={sub.deadlineAt}
+        relation={
+          ['submitted', 'archived'].includes(sub.status) ? 'on' : 'until'
+        }
+        showCountdown={!['submitted', 'archived'].includes(sub.status)}
+        statusFilterState={statusFilterState}
+        onStatusFilter={onStatusFilter}
+      />
+    </LinkedEntityCard>
   )
 }
 
@@ -132,50 +186,80 @@ export function SubmissionCard({ sub }) {
 export function ClosingCard({ item }) {
   const isDecision = item.kind === 'decision'
   const href = `${isDecision ? '/council' : '/submissions'}/${item.slug}`
+  const ClosingIcon = isDecision
+    ? Gavel
+    : item.wg?.slug
+      ? workingGroupIcon(item.wg.slug)
+      : FileText
   return (
     <A href={href} className="card entityCard" peek>
-      <EntityHeader title={item.title} status={item.status}>
-        {isDecision && <span className="chip chip-neutral">Council</span>}
+      <EntityHeader title={item.title} icon={ClosingIcon}>
+        {isDecision && <FilterChip icon={Gavel}>Council</FilterChip>}
       </EntityHeader>
-      <div className="entityCardBody">
-        <MomentRow iso={item.deadlineAt} label="Deadline" />
-      </div>
-      <div className="entityCardFooter">
-        <CountdownChip iso={item.deadlineAt} label="Closes in" />
-      </div>
+      <LifecycleTiming status={item.status} iso={item.deadlineAt} />
     </A>
   )
 }
 
-export function DecisionCard({ decision }) {
+export function DecisionCard({ decision, statusFilterState, onStatusFilter }) {
   const windowIso =
     decision.status === 'objection_window'
       ? decision.objectionDeadline
       : decision.inputDeadline
   return (
-    <A href={`/council/${decision.slug}`} className="card entityCard" peek>
-      <EntityHeader title={decision.title} status={decision.status} />
+    <LinkedEntityCard
+      href={`/council/${decision.slug}`}
+      label={`Open ${decision.title}`}
+    >
+      <EntityHeader title={decision.title} icon={Gavel} />
       <div className="entityCardBody">
         {decision.summary && <p className="meta">{decision.summary}</p>}
-        {windowIso && <MomentRow iso={windowIso} label="Decision window" />}
       </div>
       <div className="entityCardFooter">
-        {windowIso && <CountdownChip iso={windowIso} label="Closes in" />}
+        <LifecycleTiming
+          status={decision.status}
+          iso={windowIso}
+          label="Decision window"
+          showCountdown={Boolean(windowIso)}
+          statusFilterState={statusFilterState}
+          onStatusFilter={onStatusFilter}
+        />
         <span className="metaMuted entityCardOwner">{decision.proposer}</span>
       </div>
-    </A>
+    </LinkedEntityCard>
   )
 }
 
-export function CoyCard({ coy }) {
+export function CoyCard({
+  coy,
+  typeFilterState,
+  regionFilterState,
+  onTypeFilter,
+  onRegionFilter,
+}) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
+  const CoyIcon = COY_ICONS[coy.type] || Globe
   return (
-    <A href={`/coys/${coy.slug}`} className="card entityCard coyCard" peek>
-      <EntityHeader title={coy.title} status={coy.status}>
-        <span className="chip chip-neutral">{COY_LABEL[coy.type]}</span>
-        <span className="chip chip-neutral">
+    <LinkedEntityCard
+      href={`/coys/${coy.slug}`}
+      label={`Open ${coy.title}`}
+      className="coyCard"
+    >
+      <EntityHeader title={coy.title} icon={CoyIcon} status={coy.status}>
+        <FilterChip
+          state={typeFilterState}
+          icon={CoyIcon}
+          onClick={onTypeFilter}
+        >
+          {COY_LABEL[coy.type]}
+        </FilterChip>
+        <FilterChip
+          state={regionFilterState}
+          prefix={regionFilterPrefix(coy.region, REGION_LABEL[coy.region])}
+          onClick={onRegionFilter}
+        >
           {REGION_LABEL[coy.region] || coy.region}
-        </span>
+        </FilterChip>
       </EntityHeader>
       <div className="entityCardBody">
         <p className="entityCardMetaRow">
@@ -187,15 +271,24 @@ export function CoyCard({ coy }) {
           <span>{fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}</span>
         </p>
       </div>
-    </A>
+    </LinkedEntityCard>
   )
 }
 
-export function GroupCard({ group, href, statusLabel }) {
-  const GroupIcon = GROUP_ICONS[group.slug] || UsersRound
+export function GroupCard({
+  group,
+  href,
+  statusLabel,
+  statusIcon: StatusIcon,
+  topicIcon: TopicIcon,
+  topicFilterState,
+  onTopicFilter,
+}) {
+  const GroupIcon = workingGroupIcon(group.slug)
   const destination = href || `/groups/${group.slug}`
+  const topic = workingGroupTopic(group.slug)
   return (
-    <div className="card groupCard entityCard">
+    <div className="card cardTight groupCard entityCard">
       <A
         href={destination}
         className="groupCardLinkOverlay"
@@ -218,14 +311,122 @@ export function GroupCard({ group, href, statusLabel }) {
         </p>
       )}
       <div className="entityCardTags groupCardTags">
-        {statusLabel && <span className="chip chip-accent">{statusLabel}</span>}
-        {group.tags?.map((tag) => (
-          <span key={tag} className="chip chip-neutral">
-            {tag}
-          </span>
-        ))}
+        {statusLabel && (
+          <FilterChip tone="accent" icon={StatusIcon}>
+            {statusLabel}
+          </FilterChip>
+        )}
+        {topic && (
+          <FilterChip
+            tone="accent"
+            state={topicFilterState}
+            icon={TopicIcon}
+            onClick={onTopicFilter}
+          >
+            {topic.label}
+          </FilterChip>
+        )}
       </div>
     </div>
+  )
+}
+
+export function PersonCard({ person, onTagClick }) {
+  return (
+    <article className="card cardTight personCard">
+      <header className="personCardHeader">
+        <MemberAvatar person={person} size="lg" />
+        <div>
+          <h3>{person.displayName}</h3>
+          {person.pronouns && <p className="metaMuted">{person.pronouns}</p>}
+        </div>
+      </header>
+      {person.headline && <p className="personHeadline">{person.headline}</p>}
+      {person.bio && <p className="meta personBio">{person.bio}</p>}
+      {(person.country || person.organization) && (
+        <div className="personConnections">
+          {person.country && (
+            <p className="entityCardMetaRow">
+              <MapPin size={15} aria-hidden />
+              <span>{person.country}</span>
+            </p>
+          )}
+          {person.organization?.name && (
+            <p className="entityCardMetaRow">
+              <Building size={15} aria-hidden />
+              <span>
+                {person.organization.name}
+                {person.organization.seatRole
+                  ? ` · ${person.organization.seatRole}`
+                  : ''}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
+      {(person.teams?.length > 0 || person.platformRole) && (
+        <div className="personRoles" aria-label="Hub roles">
+          <Briefcase size={15} aria-hidden />
+          <span>
+            {[
+              ...person.teams.map((team) => team.name),
+              person.platformRole?.replaceAll('_', ' '),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        </div>
+      )}
+      {person.workingGroups?.length > 0 && (
+        <div
+          className="entityCardTags personGroupTags"
+          aria-label="Working groups"
+        >
+          {person.workingGroups.slice(0, 5).map((group) => {
+            const GroupIcon = workingGroupIcon(group.slug)
+            return (
+              <A
+                key={group.slug}
+                href={`/groups/${group.slug}`}
+                className="chip chip-neutral personLinkChip"
+                peek
+              >
+                <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
+                {group.name}
+                {['contact', 'lead'].includes(group.role)
+                  ? ` · ${group.role}`
+                  : ''}
+              </A>
+            )
+          })}
+        </div>
+      )}
+      {person.expertiseTags?.length > 0 && (
+        <div
+          className="entityCardTags personExpertiseTags"
+          aria-label="Skills and topics"
+        >
+          {person.expertiseTags.map((tag) =>
+            onTagClick ? (
+              <button
+                key={tag}
+                type="button"
+                className="chip chip-accent personTagButton"
+                onClick={() => onTagClick(tag)}
+              >
+                <Tag size={13} strokeWidth={1.75} aria-hidden />
+                {tag}
+              </button>
+            ) : (
+              <span key={tag} className="chip chip-accent">
+                <Tag size={13} strokeWidth={1.75} aria-hidden />
+                {tag}
+              </span>
+            ),
+          )}
+        </div>
+      )}
+    </article>
   )
 }
 
@@ -302,7 +503,7 @@ function workingGroupContactSummary(contact) {
 export function WorkingGroupContactCard({ contact }) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
-  const GroupIcon = GROUP_ICONS[slug] || UsersRound
+  const GroupIcon = workingGroupIcon(slug)
   return (
     <A
       href={`/groups/${slug}`}

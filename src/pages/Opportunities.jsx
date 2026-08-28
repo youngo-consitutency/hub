@@ -8,38 +8,43 @@ import {
 } from '../lib/filterState.js'
 import {
   Async,
-  CountdownChip,
   Empty,
+  FilterChip,
   FilterMenu,
   FilterPill,
   PageHeader,
+  Section,
   SortButton,
+  LifecycleTiming,
 } from '../components/ui.jsx'
 import {
-  ArrowDownAZ,
-  CalendarClock,
-  CalendarDays,
-  Code2,
-  ExternalLink,
-  GraduationCap,
-  Layers3,
-  Blend,
-  Megaphone,
-  MapPin,
-  MonitorSmartphone,
-  Presentation,
-  Search,
-  Sparkles,
-  Video,
-} from 'lucide-react'
+  TbSortAscendingLetters as ArrowDownAZ,
+  TbCalendarTime as CalendarClock,
+  TbCalendar as CalendarDays,
+  TbCode as Code2,
+  TbSchool as GraduationCap,
+  TbStack3 as Layers3,
+  TbBlendMode as Blend,
+  TbSpeakerphone as Megaphone,
+  TbMap as Map,
+  TbMapPin as MapPin,
+  TbDevices as MonitorSmartphone,
+  TbPresentation as Presentation,
+  TbSearch as Search,
+  TbSparkles as Sparkles,
+  TbVideo as Video,
+} from 'react-icons/tb'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
+import { groupOpportunitiesByStatus } from '../lib/opportunityStatus.js'
+import { regionFilterPrefix } from '../lib/regions.js'
 
 const KINDS = [
-  { key: 'all', label: 'All', icon: Layers3 },
-  { key: 'event', label: 'Events', icon: CalendarDays },
-  { key: 'workshop', label: 'Workshops', icon: Presentation },
-  { key: 'hackathon', label: 'Hackathons', icon: Code2 },
-  { key: 'opportunity', label: 'Opportunities', icon: Sparkles },
-  { key: 'call', label: 'Open calls', icon: Megaphone },
+  { key: 'all', label: 'All types', icon: Layers3 },
+  { key: 'event', label: 'Event', icon: CalendarDays },
+  { key: 'workshop', label: 'Workshop', icon: Presentation },
+  { key: 'hackathon', label: 'Hackathon', icon: Code2 },
+  { key: 'opportunity', label: 'Opportunity', icon: Sparkles },
+  { key: 'call', label: 'Open call', icon: Megaphone },
   { key: 'training', label: 'Training', icon: GraduationCap },
 ]
 
@@ -51,10 +56,7 @@ const FORMATS = [
 ]
 
 const KIND_LABEL = Object.fromEntries(
-  KINDS.filter((k) => k.key !== 'all').map((k) => [
-    k.key,
-    k.label.replace(/s$/, ''),
-  ]),
+  KINDS.filter((k) => k.key !== 'all').map((k) => [k.key, k.label]),
 )
 
 const FORMAT_LABEL = {
@@ -63,45 +65,81 @@ const FORMAT_LABEL = {
   hybrid: 'Hybrid',
 }
 
-function OpportunityCard({ item }) {
-  const where =
-    item.format === 'online'
-      ? 'Online'
-      : item.location || FORMAT_LABEL[item.format]
-  const Card = item.linkUrl ? 'a' : 'article'
+const KIND_ICON = Object.fromEntries(
+  KINDS.filter((item) => item.key !== 'all').map((item) => [
+    item.key,
+    item.icon,
+  ]),
+)
+
+const FORMAT_ICON = Object.fromEntries(
+  FORMATS.filter((item) => item.key !== 'all').map((item) => [
+    item.key,
+    item.icon,
+  ]),
+)
+
+function OpportunityCard({
+  item,
+  kindFilterState,
+  formatFilterState,
+  regionFilterState,
+  onKindFilter,
+  onFormatFilter,
+  onRegionFilter,
+}) {
+  const where = item.format === 'online' ? null : item.location
   return (
-    <Card
-      className="card entityCard opportunityCard"
-      href={item.linkUrl || undefined}
-      target={item.linkUrl ? '_blank' : undefined}
-      rel={item.linkUrl ? 'noreferrer noopener' : undefined}
-      aria-label={item.linkUrl ? `${item.title} — open details` : undefined}
-    >
+    <article className="card entityCard opportunityCard">
+      {item.linkUrl && (
+        <a
+          className="entityCardLinkOverlay"
+          href={item.linkUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label={`${item.title} — open details`}
+        />
+      )}
       <div className="opportunityCardHeader">
         <div className="opportunityTags">
-          <span className="chip chip-accent">
+          <FilterChip
+            tone="accent"
+            state={kindFilterState}
+            icon={KIND_ICON[item.kind]}
+            onClick={onKindFilter}
+          >
             {KIND_LABEL[item.kind] || item.kind}
-          </span>
-          <span className="chip chip-neutral">
+          </FilterChip>
+          <FilterChip
+            state={formatFilterState}
+            icon={FORMAT_ICON[item.format]}
+            onClick={onFormatFilter}
+          >
             {FORMAT_LABEL[item.format] || item.format}
-          </span>
+          </FilterChip>
           {item.region && (
-            <span className="chip chip-neutral">{item.region}</span>
+            <FilterChip
+              state={regionFilterState}
+              prefix={regionFilterPrefix(item.region)}
+              onClick={onRegionFilter}
+            >
+              {item.region}
+            </FilterChip>
           )}
         </div>
-        {item.linkUrl && (
-          <ExternalLink size={17} strokeWidth={1.75} aria-hidden />
-        )}
+        {item.linkUrl && <DestinationIcon url={item.linkUrl} size={17} />}
       </div>
 
       <div className="opportunityCardCopy">
         <h3>{item.title}</h3>
         <div className="opportunityOrganisationRow">
           <p className="metaMuted">{item.organizationName}</p>
-          <span className="opportunityPlace metaMuted">
-            <MapPin size={14} strokeWidth={1.75} aria-hidden />
-            {where}
-          </span>
+          {where && (
+            <span className="opportunityPlace metaMuted">
+              <MapPin size={14} strokeWidth={1.75} aria-hidden />
+              {where}
+            </span>
+          )}
         </div>
         {item.summary && <p className="meta">{item.summary}</p>}
       </div>
@@ -117,16 +155,17 @@ function OpportunityCard({ item }) {
 
       {item.deadlineAt && (
         <div className="opportunityDeadline">
-          <CountdownChip iso={item.deadlineAt} label="Applications close" />
+          <LifecycleTiming iso={item.deadlineAt} label="Applications close" />
         </div>
       )}
-    </Card>
+    </article>
   )
 }
 
 export function Opportunities() {
   const [kindFilters, setKindFilters] = useState({})
   const [formatFilters, setFormatFilters] = useState({})
+  const [regionFilters, setRegionFilters] = useState({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
   const query = useApi('/member/opportunities?kind=all&format=all')
@@ -134,7 +173,6 @@ export function Opportunities() {
   return (
     <div>
       <PageHeader
-        eyebrow="Open calls & postings"
         title="Opportunities"
         description="Shared open calls, fellowships, speaker slots, and events from constituency channels — plus postings from organisations in the Hub."
       />
@@ -151,12 +189,16 @@ export function Opportunities() {
         }
       >
         {(data) => {
+          const regions = [...new Set(data.items.map((item) => item.region))]
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
           const needle = search.trim().toLocaleLowerCase()
           const items = data.items
             .filter(
               (item) =>
                 matchesFilters(item.kind, kindFilters) &&
                 matchesFilters(item.format, formatFilters) &&
+                matchesFilters(item.region, regionFilters) &&
                 (!needle ||
                   [
                     item.title,
@@ -179,6 +221,33 @@ export function Opportunities() {
               if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1
               return aUpcoming ? aTime - bTime : bTime - aTime
             })
+          const groupedItems = groupOpportunitiesByStatus(items)
+          const renderCards = (group) =>
+            group.map((item) => (
+              <OpportunityCard
+                key={item.id}
+                item={item}
+                kindFilterState={kindFilters[item.kind] || 'neutral'}
+                formatFilterState={formatFilters[item.format] || 'neutral'}
+                regionFilterState={regionFilters[item.region] || 'neutral'}
+                onKindFilter={() =>
+                  setKindFilters((current) => toggleFilter(current, item.kind))
+                }
+                onFormatFilter={() =>
+                  setFormatFilters((current) =>
+                    toggleFilter(current, item.format),
+                  )
+                }
+                onRegionFilter={
+                  item.region
+                    ? () =>
+                        setRegionFilters((current) =>
+                          toggleFilter(current, item.region),
+                        )
+                    : undefined
+                }
+              />
+            ))
 
           return (
             <>
@@ -217,7 +286,8 @@ export function Opportunities() {
                     label="Filter opportunities"
                     activeCount={
                       activeFilterCount(kindFilters) +
-                      activeFilterCount(formatFilters)
+                      activeFilterCount(formatFilters) +
+                      activeFilterCount(regionFilters)
                     }
                   >
                     <fieldset className="filterLevel">
@@ -280,17 +350,65 @@ export function Opportunities() {
                         ))}
                       </div>
                     </fieldset>
+                    {regions.length > 0 && (
+                      <fieldset className="filterLevel">
+                        <legend>Region</legend>
+                        <div className="pillRow">
+                          <FilterPill
+                            active={activeFilterCount(regionFilters) === 0}
+                            icon={Map}
+                            onClick={() => setRegionFilters({})}
+                          >
+                            All regions
+                          </FilterPill>
+                          {regions.map((region) => (
+                            <FilterPill
+                              key={region}
+                              state={regionFilters[region] || 'neutral'}
+                              prefix={regionFilterPrefix(region)}
+                              onClick={() =>
+                                setRegionFilters((current) =>
+                                  toggleFilter(current, region),
+                                )
+                              }
+                            >
+                              {region}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                    )}
                   </FilterMenu>
                 </div>
               </div>
-              <p className="resultsSummary" role="status">
-                {items.length} of {data.items.length} postings
-              </p>
               {items.length ? (
-                <div className="cardGrid">
-                  {items.map((item) => (
-                    <OpportunityCard key={item.id} item={item} />
-                  ))}
+                <div className="opportunityGroups">
+                  {groupedItems.open.length > 0 && (
+                    <Section
+                      label="Open"
+                      meta={`${groupedItems.open.length} ${
+                        groupedItems.open.length === 1 ? 'posting' : 'postings'
+                      }`}
+                    >
+                      <div className="cardGrid">
+                        {renderCards(groupedItems.open)}
+                      </div>
+                    </Section>
+                  )}
+                  {groupedItems.closed.length > 0 && (
+                    <Section
+                      label="Closed"
+                      meta={`${groupedItems.closed.length} ${
+                        groupedItems.closed.length === 1
+                          ? 'posting'
+                          : 'postings'
+                      }`}
+                    >
+                      <div className="cardGrid">
+                        {renderCards(groupedItems.closed)}
+                      </div>
+                    </Section>
+                  )}
                 </div>
               ) : (
                 <Empty

@@ -14,13 +14,14 @@ import {
 import { FieldError, SearchableSelect } from '../components/FormControls.jsx'
 import { EVENT_TYPES } from '../../shared/contentValidation.js'
 import {
-  CalendarDays,
-  CheckCircle2,
-  FilePenLine,
-  Megaphone,
-  Send,
-  Upload,
-} from 'lucide-react'
+  TbCalendar as CalendarDays,
+  TbCircleCheck as CheckCircle2,
+  TbFilePencil as FilePenLine,
+  TbSpeakerphone as Megaphone,
+  TbSend as Send,
+  TbUpload as Upload,
+  TbBook2 as BookOpen,
+} from 'react-icons/tb'
 
 const EMPTY_EVENT = {
   slug: '',
@@ -204,7 +205,6 @@ export function ContentWorkspace() {
   return (
     <div>
       <PageHeader
-        eyebrow="Content operations"
         title="Content studio"
         description="Prepare public Hub updates, send them for independent review, and publish an approved version."
       />
@@ -462,6 +462,8 @@ export function ContentWorkspace() {
                           <div className="rowGap">
                             {item.contentType === 'event' ? (
                               <CalendarDays size={18} aria-hidden />
+                            ) : item.contentType === 'resource' ? (
+                              <BookOpen size={18} aria-hidden />
                             ) : (
                               <Megaphone size={18} aria-hidden />
                             )}
@@ -483,7 +485,7 @@ export function ContentWorkspace() {
                           )}
                         </div>
                         <div className="rowGap contentQueueActions">
-                          {editable && (
+                          {editable && item.contentType !== 'resource' && (
                             <Button
                               sm
                               variant="ghost"

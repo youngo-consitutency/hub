@@ -61,6 +61,19 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   )
   app.use(express.json({ limit: '256kb' }))
 
+  if (env.READ_ONLY_PREVIEW === '1') {
+    app.use((req, res, next) => {
+      if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
+      return res.status(503).json({
+        error: {
+          code: 'consultation_preview_read_only',
+          message:
+            'This consultation preview is read-only. Member accounts and publishing will open after the preview database is connected.',
+        },
+      })
+    })
+  }
+
   app.get('/healthz', (req, res) => {
     res.json({
       ok: true,

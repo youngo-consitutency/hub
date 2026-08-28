@@ -1,4 +1,7 @@
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import {
+  TbArrowLeft as ArrowLeft,
+  TbExternalLink as ExternalLink,
+} from 'react-icons/tb'
 import {
   PRIVACY_META,
   PRIVACY_VERSION,

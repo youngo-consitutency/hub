@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Bell,
-  BellOff,
-  BellRing,
-  CheckCircle2,
-  CircleHelp,
-  Info,
-  Laptop,
-  Smartphone,
-  TabletSmartphone,
-  TriangleAlert,
-  X,
-} from 'lucide-react'
+  TbBell as Bell,
+  TbBellOff as BellOff,
+  TbBellRinging as BellRing,
+  TbCircleCheck as CheckCircle2,
+  TbHelpCircle as CircleHelp,
+  TbInfoCircle as Info,
+  TbDeviceLaptop as Laptop,
+  TbDeviceMobile as Smartphone,
+  TbDevices as TabletSmartphone,
+  TbAlertTriangle as TriangleAlert,
+  TbX as X,
+} from 'react-icons/tb'
 import { apiGet, apiPost } from '../lib/api.js'
 import { currentDevice } from '../lib/device.js'
 import {
@@ -175,12 +175,8 @@ export function NotificationSettings() {
   return (
     <section
       className="card notificationCard"
-      aria-labelledby="notifications-title"
+      aria-label="Notification settings"
     >
-      <div className="notificationTitleRow">
-        <h2 id="notifications-title">Notifications</h2>
-      </div>
-
       {state.loading ? (
         <p className="meta notificationHint" role="status">
           Checking notification support on this device…
@@ -209,7 +205,7 @@ export function NotificationSettings() {
               {state.subscribed ? <BellRing size={20} /> : <Bell size={20} />}
             </span>
             <div className="notificationHeadingCopy">
-              <h3>Alerts on this device</h3>
+              <h2>Alerts on this device</h2>
               <p className="meta">
                 Deadlines, calls starting, and announcements the team pins —
                 delivered even when the Hub is closed.

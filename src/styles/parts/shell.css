@@ -159,7 +159,9 @@
 .accountChipArrow {
   flex: 0 0 auto;
   color: var(--text-3);
-  transition: transform 0.1s linear;
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
 }
 
 .accountChip:hover .accountChipArrow,
@@ -338,6 +340,8 @@
 }
 
 .sheetUtilities {
+  display: grid;
+  gap: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
@@ -359,6 +363,10 @@
     background: color-mix(in srgb, var(--bg-card) 96%, transparent);
     box-shadow: var(--shadow-sticky);
     backdrop-filter: blur(10px);
+  }
+
+  .mobileBottomNavCompact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mobileBottomItem {
@@ -393,6 +401,15 @@
 }
 
 @media (max-width: 420px) {
+  .content {
+    padding-inline: 12px;
+  }
+
+  .topbar {
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
   .sheet {
     top: 64px;
     right: 8px;
@@ -404,9 +421,9 @@
 /* ── Profile ───────────────────────────────────────── */
 .profileGrid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
   gap: 14px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .profileSummary {
@@ -446,7 +463,8 @@
   color: var(--accent);
 }
 
-.profileAvatar {
+.profileAvatar,
+.memberAvatar {
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
@@ -456,6 +474,154 @@
   background: var(--accent-tint);
   color: var(--on-accent-tint);
   font: 700 18px/1 var(--font-display);
+  overflow: hidden;
+}
+
+.memberAvatar-sm {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  font-size: 14px;
+}
+
+.memberAvatar-lg {
+  width: 72px;
+  height: 72px;
+  flex-basis: 72px;
+  font-size: 24px;
+}
+
+.memberAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memberProfileEditor {
+  min-width: 0;
+}
+
+.memberProfileEditor form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.memberProfileEditorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.memberProfileEditorHeader > div:first-child {
+  max-width: 66ch;
+}
+
+.memberProfileHeaderActions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+}
+
+.profilePhotoActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-width: 380px;
+}
+
+.profilePhotoActions small {
+  width: 100%;
+  color: var(--text-3);
+  text-align: right;
+}
+
+.memberProfileOverview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.9fr);
+  gap: var(--space-5);
+  align-items: start;
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--border);
+}
+
+.memberProfileOverview h3 {
+  margin-bottom: var(--space-2);
+}
+
+.memberProfileOverview .profileMembershipBlock {
+  padding: 0 0 0 var(--space-4);
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.memberProfileOverview .profileHelp {
+  margin-top: var(--space-3);
+}
+
+.memberProfileFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.memberProfileWide {
+  grid-column: 1 / -1;
+}
+
+.profileVisibility {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.profileVisibility legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--text-1);
+  font-weight: 650;
+}
+
+.profileVisibilityChecks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  align-content: end;
+}
+
+.memberProfileEditorFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.memberProfileEditorFooter p {
+  max-width: 68ch;
+}
+
+.memberProfileEditorFooterCopy {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.profileSaveMessage {
+  margin: 0;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .profileEmail {
@@ -528,11 +694,6 @@
 
   .profileSignOut {
     padding-inline: var(--space-2);
-  }
-
-  .profileSignOut:not(:focus-visible) {
-    font-size: 0;
-    gap: 0;
   }
 
   .profileSummaryFooter {
@@ -662,6 +823,52 @@ a.profileLink {
   .profileInterestGroups {
     grid-template-columns: 1fr;
   }
+
+  .memberProfileEditorHeader,
+  .memberProfileEditorFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .memberProfileHeaderActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .profilePhotoActions small {
+    text-align: left;
+  }
+
+  .memberProfileFields,
+  .memberProfileOverview,
+  .profileVisibility,
+  .profileVisibilityChecks {
+    grid-template-columns: 1fr;
+  }
+
+  .memberProfileOverview .profileMembershipBlock {
+    padding: var(--space-4) 0 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .memberProfileWide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .memberProfileHeaderActions {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .profilePhotoActions {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 /* ── Directory contact structure ───────────────────── */
@@ -730,13 +937,18 @@ a.profileLink {
   margin-top: 14px;
 }
 
+.directoryContacts > .card {
+  height: 100%;
+  align-self: stretch;
+}
+
 .directoryLayer-base .directoryContacts {
   grid-template-columns: repeat(
     var(--catalog-columns),
     minmax(0, var(--catalog-card-max))
   );
   justify-content: start;
-  grid-auto-rows: auto;
+  align-items: stretch;
 }
 
 .directoryLayer-middle .directoryContacts {
@@ -745,6 +957,7 @@ a.profileLink {
     minmax(0, var(--catalog-card-max))
   );
   justify-content: start;
+  align-items: stretch;
 }
 
 @media (max-width: 620px) {
@@ -760,6 +973,140 @@ a.profileLink {
 
   .directoryContacts {
     grid-template-columns: 1fr;
-    grid-auto-rows: auto;
+  }
+}
+
+/* ── Member CRM directory ─────────────────────────── */
+.peopleDirectoryIntro {
+  max-width: 72ch;
+  margin-bottom: var(--space-3);
+}
+
+.peopleDirectoryTools {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.peopleDirectoryTools .searchInputWrap {
+  flex: 1 1 280px;
+}
+
+.peopleGroupFilter {
+  flex: 0 1 260px;
+}
+
+.peopleGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  justify-content: start;
+  gap: var(--catalog-gap);
+}
+
+.peopleGrid > .card {
+  height: 100%;
+  align-self: stretch;
+}
+
+.personCard {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.personCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.personCardHeader h3 {
+  margin: 3px 0 0;
+}
+
+.personHeadline {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.personBio {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.personConnections {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.personRoles {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.personRoles svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--text-3);
+}
+
+.personLinkChip {
+  position: relative;
+  z-index: 1;
+}
+
+.personTagButton {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.personTagButton:hover {
+  filter: brightness(0.97);
+}
+
+.membershipQueueIdentity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.membershipQueueIdentity > div {
+  min-width: 0;
+}
+
+.groupPeopleNote {
+  max-width: 70ch;
+  margin-bottom: var(--space-3);
+}
+
+@media (max-width: 620px) {
+  .peopleDirectoryTools {
+    align-items: stretch;
+  }
+
+  .peopleDirectoryTools .searchInputWrap,
+  .peopleGroupFilter {
+    flex-basis: 100%;
+  }
+
+  .peopleGrid {
+    grid-template-columns: 1fr;
   }
 }

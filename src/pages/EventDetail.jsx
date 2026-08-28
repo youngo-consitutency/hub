@@ -8,15 +8,15 @@ import {
   PageHeader,
 } from '../components/ui.jsx'
 import { AddToCalendar } from '../components/AddToCalendar.jsx'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
 import { fmtDual } from '../lib/time.js'
 import {
-  Video,
-  CalendarDays,
-  Link2,
-  Check,
-  Play,
-  ExternalLink,
-} from 'lucide-react'
+  TbVideo as Video,
+  TbCalendar as CalendarDays,
+  TbLink as Link2,
+  TbCheck as Check,
+  TbPlayerPlay as Play,
+} from 'react-icons/tb'
 
 function CopyLinkButton() {
   const [copied, setCopied] = useState(false)
@@ -38,15 +38,6 @@ function CopyLinkButton() {
       {copied ? 'Copied' : 'Copy link'}
     </button>
   )
-}
-
-const TYPE_LABEL = {
-  constituency_call: 'Constituency call',
-  wg_call: 'Working group call',
-  wgf: 'WG forum',
-  unfccc_session: 'UNFCCC session',
-  webinar: 'Webinar',
-  coordination: 'Coordination',
 }
 
 // live → concluded → upcoming, so a past event drops the Join button per spec §2.
@@ -74,14 +65,10 @@ export function EventDetail({ slug }) {
             .trim()
           return (
             <>
-              <PageHeader
-                eyebrow={TYPE_LABEL[event.type] || 'Event'}
-                title={event.title}
-                description={description}
-              />
+              <PageHeader title={event.title} description={description} />
 
               <section
-                className="card detailOverviewCard"
+                className="card detailSummary detailOverviewCard"
                 aria-label="Event details"
               >
                 <div className="detailOverviewFacts">
@@ -139,7 +126,7 @@ export function EventDetail({ slug }) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <ExternalLink size={17} strokeWidth={1.75} aria-hidden />
+                      <DestinationIcon url={descriptionUrl} size={18} />
                       Slides
                     </a>
                   )}

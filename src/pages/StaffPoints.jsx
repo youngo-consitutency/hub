@@ -10,7 +10,11 @@ import {
   Skeletons,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
-import { BadgeCheck, Plus, Sparkles } from 'lucide-react'
+import {
+  TbRosetteDiscountCheck as BadgeCheck,
+  TbPlus as Plus,
+  TbSparkles as Sparkles,
+} from 'react-icons/tb'
 
 const EMPTY_FORM = {
   orgAccountId: '',
@@ -129,7 +133,6 @@ export function StaffPoints() {
   return (
     <div>
       <PageHeader
-        eyebrow="Staff · recognition"
         title="NGO contribution points"
         description="Award points when an NGO supports pool badges, contributes to UNFCCC submissions, or helps other constituency work. Staff verify every award."
       />

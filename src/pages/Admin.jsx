@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import {
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  KeyRound,
-  Mail,
-  Search,
-  Settings2,
-  ShieldCheck,
-  X,
-} from 'lucide-react'
+  TbChevronLeft as ChevronLeft,
+  TbChevronRight as ChevronRight,
+  TbCopy as Copy,
+  TbKey as KeyRound,
+  TbMail as Mail,
+  TbSearch as Search,
+  TbSettings as Settings2,
+  TbShieldCheck as ShieldCheck,
+  TbX as X,
+} from 'react-icons/tb'
 import { apiGet, apiPatch, apiPost } from '../lib/api.js'
 import {
   A,
@@ -361,7 +361,6 @@ export function Admin() {
   return (
     <div>
       <PageHeader
-        eyebrow="Staff"
         title="Admin"
         description="Find accounts, manage lifecycle and responsibilities, and review audited changes."
       />

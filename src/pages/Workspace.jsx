@@ -12,8 +12,14 @@ import {
   PageHeader,
 } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
 import { getWgOnboarding } from '../content/wgOnboarding.js'
-import { CheckCircle2, Lock, Unlock, MessageCircle } from 'lucide-react'
+import {
+  TbArrowUpRight as ArrowUpRight,
+  TbCircleCheck as CheckCircle2,
+  TbLock as Lock,
+  TbLockOpen as Unlock,
+} from 'react-icons/tb'
 
 export function Workspace({ slug }) {
   const groupQuery = useApi(`/groups/${encodeURIComponent(slug)}`, [slug])
@@ -200,15 +206,13 @@ export function Workspace({ slug }) {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <div className="rowGap">
-                            <MessageCircle
-                              size={18}
-                              strokeWidth={1.75}
-                              aria-hidden
-                            />
-                            <strong>WhatsApp</strong>
-                          </div>
-                          <p className="meta">Open the WG channel</p>
+                          <DestinationIcon url={group.whatsappUrl} size={20} />
+                          <strong>WhatsApp</strong>
+                          <ArrowUpRight
+                            size={17}
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
                         </a>
                       )}
                       {group.contact && <ContactCard contact={group.contact} />}

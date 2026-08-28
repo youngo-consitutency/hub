@@ -1,6 +1,6 @@
 import { useApi } from '../lib/api.js'
 import { Async, Empty, PageHeader, Section } from '../components/ui.jsx'
-import { Award } from 'lucide-react'
+import { TbArrowRight as ArrowRight, TbAward as Award } from 'react-icons/tb'
 
 export function Recognition() {
   const query = useApi('/recognition')
@@ -8,7 +8,6 @@ export function Recognition() {
   return (
     <div>
       <PageHeader
-        eyebrow="Community"
         title="NGO recognition"
         description="YOUNGO recognises verified organisational support for constituency work, including badge support and UNFCCC submissions."
       />
@@ -62,18 +61,24 @@ export function Recognition() {
                 <ol className="recognitionLadder">
                   {data.tiers.map((tier, index) => (
                     <li key={tier.id} className="card recognitionTier">
-                      <div className="recognitionTierMarker" aria-hidden>
-                        {index + 1}
+                      <div className="recognitionTierTopline">
+                        <div className="recognitionTierMarker" aria-hidden>
+                          {index + 1}
+                        </div>
+                        <span className="chip chip-neutral">
+                          {tier.minPoints}+ points
+                        </span>
                       </div>
                       <div className="recognitionTierCopy">
-                        <div className="recognitionTierHeading">
-                          <h3>{tier.label}</h3>
-                          <span className="chip chip-neutral">
-                            {tier.minPoints}+ points
-                          </span>
-                        </div>
+                        <h3>{tier.label}</h3>
                         <p className="meta">{tier.blurb}</p>
                       </div>
+                      {index < data.tiers.length - 1 && (
+                        <ArrowRight
+                          className="recognitionTierArrow"
+                          aria-hidden
+                        />
+                      )}
                     </li>
                   ))}
                 </ol>

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  BookOpen,
-  Check,
-  ChevronDown,
-  ExternalLink,
-  ScrollText,
-} from 'lucide-react'
+  TbBook as BookOpen,
+  TbCheck as Check,
+  TbChevronDown as ChevronDown,
+  TbExternalLink as ExternalLink,
+  TbScript as ScrollText,
+} from 'react-icons/tb'
 import {
   MANDATE_ANALYSIS,
   POLICY_META,

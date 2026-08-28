@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { Button, Empty, ErrorCard, Section, Skeletons } from './ui.jsx'
-import { Megaphone } from 'lucide-react'
+import { TbSpeakerphone as Megaphone } from 'react-icons/tb'
 
 const KIND_LABEL = {
   event: 'Event',

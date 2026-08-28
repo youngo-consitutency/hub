@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api.js'
 import { Empty, ErrorCard, Section, Skeletons } from './ui.jsx'
-import { MessageSquarePlus } from 'lucide-react'
+import { TbMessagePlus as MessageSquarePlus } from 'react-icons/tb'
 
 const KIND_LABEL = {
   bug: 'Broken',
@@ -41,7 +41,7 @@ export function MyFeedback() {
         <Empty
           icon={MessageSquarePlus}
           title="No reports yet"
-          body="Use the Feedback button on any page when something is wrong or missing."
+          body="Open Help & support when something is wrong or missing."
         />
       )}
       <div className="stackSm">

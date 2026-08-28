@@ -10,24 +10,24 @@ import {
   SortButton,
 } from '../components/ui.jsx'
 import { SubmissionCard } from '../components/cards.jsx'
+import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 import {
   activeFilterCount,
   matchesFilters,
   toggleFilter,
 } from '../lib/filterState.js'
 import {
-  Archive,
-  ArrowDownAZ,
-  CalendarClock,
-  CheckCircle2,
-  FileClock,
-  FilePenLine,
-  FileText,
-  ListFilter,
-  Network,
-  Search,
-  Tags,
-} from 'lucide-react'
+  TbArchive as Archive,
+  TbSortAscendingLetters as ArrowDownAZ,
+  TbCalendarTime as CalendarClock,
+  TbCircleCheck as CheckCircle2,
+  TbFileTime as FileClock,
+  TbFilePencil as FilePenLine,
+  TbFileText as FileText,
+  TbFilter as ListFilter,
+  TbSearch as Search,
+  TbTags as Tags,
+} from 'react-icons/tb'
 
 const OPEN_STATUSES = [
   { key: 'all', label: 'All stages', icon: ListFilter },
@@ -60,11 +60,10 @@ export function Submissions() {
   return (
     <div>
       <PageHeader
-        eyebrow="Policy work"
         title="Submissions"
         description="Open drafting processes and YOUNGO’s submitted positions."
       >
-        <div className="viewSwitch" aria-label="Submission view">
+        <div className="viewSwitch" role="group" aria-label="Submission view">
           <FilterPill
             active={state === 'open'}
             icon={FileText}
@@ -230,7 +229,7 @@ export function Submissions() {
                             <FilterPill
                               key={item.slug}
                               state={groupFilters[item.slug] || 'neutral'}
-                              icon={Network}
+                              icon={workingGroupIcon(item.slug)}
                               onClick={() =>
                                 setGroupFilters((current) =>
                                   toggleFilter(current, item.slug),
@@ -245,14 +244,33 @@ export function Submissions() {
                     )}
                   </FilterMenu>
                 </div>
-                <p className="resultsSummary" role="status">
-                  {submissions.length} of {data.items.length} submissions
-                </p>
               </div>
               {submissions.length ? (
                 <div className="cardGrid">
                   {submissions.map((submission) => (
-                    <SubmissionCard key={submission.slug} sub={submission} />
+                    <SubmissionCard
+                      key={submission.slug}
+                      sub={submission}
+                      statusFilterState={
+                        statusFilters[submission.status] || 'neutral'
+                      }
+                      groupFilterState={
+                        groupFilters[submission.wg?.slug] || 'neutral'
+                      }
+                      onStatusFilter={() =>
+                        setStatusFilters((current) =>
+                          toggleFilter(current, submission.status),
+                        )
+                      }
+                      onGroupFilter={
+                        submission.wg
+                          ? () =>
+                              setGroupFilters((current) =>
+                                toggleFilter(current, submission.wg.slug),
+                              )
+                          : undefined
+                      }
+                    />
                   ))}
                 </div>
               ) : (

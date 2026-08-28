@@ -16,6 +16,7 @@ import {
 } from '../../lib/gysWorkflow.js'
 import { previewCsvImport } from '../../lib/gysImport.js'
 import { listAccountsForAdmin, setAccountFields } from '../../lib/lifecycle.js'
+import { listMemberProfileSummaries } from '../../lib/memberProfiles.js'
 import { getGys, listCouncil, listSubmissions } from '../../lib/store.js'
 
 export const router = Router()
@@ -25,7 +26,13 @@ router.get('/team/membership/overview', async (req, res) => {
   if (!account) return
   if (!(await requireTeam(req, res, 'membership_team'))) return
   const items = await listAccountsForAdmin()
-  res.json({ items })
+  const profiles = await listMemberProfileSummaries(items)
+  res.json({
+    items: items.map((item) => ({
+      ...item,
+      profile: profiles.get(item.id),
+    })),
+  })
 })
 
 router.post('/team/membership/accounts/:id/verify', async (req, res) => {

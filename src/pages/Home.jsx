@@ -2,7 +2,7 @@ import { useApi } from '../lib/api.js'
 import {
   A,
   Async,
-  CountdownChip,
+  LifecycleTiming,
   Section,
   Empty,
   PageHeader,
@@ -19,21 +19,23 @@ import {
 } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
 import { useAccount } from '../lib/accountContext.jsx'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
 import {
-  Radio,
-  CalendarOff,
-  Users,
-  ArrowUpRight,
-  ExternalLink,
-  Pin,
-  Briefcase,
-  ClipboardCheck,
-  PenTool,
-  FilePenLine,
-  Network,
-  Building2,
-  Shield,
-} from 'lucide-react'
+  TbRadio as Radio,
+  TbCalendarOff as CalendarOff,
+  TbUsers as Users,
+  TbArrowUpRight as ArrowUpRight,
+  TbPin as Pin,
+  TbBriefcase as Briefcase,
+  TbClipboardCheck as ClipboardCheck,
+  TbTools as PenTool,
+  TbFilePencil as FilePenLine,
+  TbSitemap as Network,
+  TbBuilding as Building2,
+  TbShield as Shield,
+  TbCircleCheck as CircleCheck,
+  TbProgress as Progress,
+} from 'react-icons/tb'
 
 function LiveBanner({ event }) {
   return (
@@ -63,7 +65,7 @@ function LiveBanner({ event }) {
 export function Home() {
   const feed = useApi('/feed')
   const groups = useApi('/groups')
-  const workspaces = useApi('/workspace')
+  const workspaces = useApi('/member/workspace')
   const { account } = useAccount()
 
   return (
@@ -72,10 +74,7 @@ export function Home() {
         {(data) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <PageHeader
-              eyebrow="Member overview"
-              title="YOUNGO, in one place"
-            />
+            <PageHeader title="YOUNGO, in one place" />
 
             <div className="mcHero homeHero">
               <MissionCountdown label="Days to COP31 · Antalya, Türkiye" />
@@ -134,9 +133,9 @@ export function Home() {
                       {(a.ctaUrl || a.ctaDeadlineAt) && (
                         <div className="announcementActions pinnedBannerActions">
                           {a.ctaDeadlineAt && (
-                            <CountdownChip
+                            <LifecycleTiming
                               iso={a.ctaDeadlineAt}
-                              label="Closes in"
+                              label="Closes"
                             />
                           )}
                           {a.ctaUrl && (
@@ -146,12 +145,8 @@ export function Home() {
                               target="_blank"
                               rel="noreferrer"
                             >
+                              <DestinationIcon url={a.ctaUrl} size={16} />
                               {a.ctaLabel || 'Open'}
-                              <ExternalLink
-                                size={14}
-                                strokeWidth={1.75}
-                                aria-hidden
-                              />
                             </a>
                           )}
                         </div>
@@ -334,6 +329,7 @@ function WorkspaceSection({ groups, workspaces }) {
                         group={group}
                         href={`/workspace/${group.slug}`}
                         statusLabel={ready ? 'Workspace ready' : 'Finish setup'}
+                        statusIcon={ready ? CircleCheck : Progress}
                       />
                     )
                   })}

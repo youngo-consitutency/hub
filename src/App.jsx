@@ -4,7 +4,7 @@ import { AccountProvider, useAccount } from './lib/accountContext.jsx'
 import { usePath, navigate } from './lib/router.js'
 import { lazy, Suspense, useEffect } from 'react'
 import { Empty, Skeletons } from './components/ui.jsx'
-import { Compass, Lock } from 'lucide-react'
+import { TbCompass as Compass, TbLock as Lock } from 'react-icons/tb'
 import { Privacy } from './pages/Privacy.jsx'
 import { RoutePeek } from './components/RoutePeek.jsx'
 
@@ -49,6 +49,7 @@ const Onboarding = lazyPage(
 )
 const Course = lazyPage(() => import('./pages/Course.jsx'), 'Course')
 const Library = lazyPage(() => import('./pages/Library.jsx'), 'Library')
+const Resources = lazyPage(() => import('./pages/Resources.jsx'), 'Resources')
 const Workspace = lazyPage(() => import('./pages/Workspace.jsx'), 'Workspace')
 const CpManage = lazyPage(() => import('./pages/CpManage.jsx'), 'CpManage')
 const NgoPortal = lazyPage(() => import('./pages/NgoPortal.jsx'), 'NgoPortal')
@@ -82,19 +83,24 @@ const Recognition = lazyPage(
   'Recognition',
 )
 const Profile = lazyPage(() => import('./pages/Profile.jsx'), 'Profile')
+const Help = lazyPage(() => import('./pages/Help.jsx'), 'Help')
 
 // These pages remain available while the membership course is incomplete.
 const PRE_VERIFY = [
   /^\/onboarding/,
   /^\/library/,
+  /^\/resources/,
   /^\/recognition/,
   /^\/privacy/,
+  /^\/help/,
+  /^\/about/,
 ]
 
 const ROUTES = [
   [/^\/onboarding\/course$/, Course],
   [/^\/onboarding$/, Onboarding],
   [/^\/library$/, Library],
+  [/^\/resources$/, Resources],
   [/^\/privacy$/, Privacy],
   [/^\/workspace\/(.+)$/, Workspace],
   [/^\/focal$/, FocalPoint],
@@ -105,6 +111,7 @@ const ROUTES = [
   [/^\/staff\/points$/, StaffPoints],
   [/^\/staff\/content$/, ContentWorkspace],
   [/^\/recognition$/, Recognition],
+  [/^\/help$/, Help],
   [/^\/intelligence$/, SearchRedirect],
   [/^\/profile$/, Profile],
   [/^\/ngo\/accept$/, NgoPortal],

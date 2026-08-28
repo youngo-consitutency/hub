@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Check, KeyRound, UserPlus } from 'lucide-react'
+import {
+  TbCheck as Check,
+  TbKey as KeyRound,
+  TbUserPlus as UserPlus,
+} from 'react-icons/tb'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { POLICY_VERSION } from '../content/membershipPolicy.js'
 import { PRIVACY_VERSION } from '../../shared/privacyNotice.js'
 import { wordCount } from '../../shared/registration.js'
-import { Button } from './ui.jsx'
+import { A, Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
 import { FieldError } from './FormControls.jsx'
 import {
@@ -305,6 +309,11 @@ export function AuthGate({ onAuthenticated }) {
                   : mode === 'forgot'
                     ? 'Enter your account email. We’ll issue a one-time reset link (valid 1 hour).'
                     : 'Welcome back. Sign in with the email you used to register.'}
+              </p>
+              <p className="authAboutRow">
+                <A href="/about" className="authAboutLink">
+                  New to YOUNGO? Read what the constituency is and how to join
+                </A>
               </p>
             </div>
           </div>

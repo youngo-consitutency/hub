@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as store from '../lib/store.js'
 import { getSessionAccount } from '../lib/accounts.js'
+import { getWgProgress } from '../lib/lifecycle.js'
 import {
   eventView,
   groupView,
@@ -11,6 +12,15 @@ import {
 import { createRateLimiter } from '../lib/rateLimit.js'
 import { bearerToken } from '../lib/security.js'
 import { listPublicRecognitionBoard, RECOGNITION_TIERS } from '../lib/points.js'
+import { listContentPublications } from '../lib/contentWorkflow.js'
+import { readFileSync } from 'node:fs'
+
+const baselineResources = JSON.parse(
+  readFileSync(
+    new URL('../../data/resource-hub.json', import.meta.url),
+    'utf8',
+  ),
+)
 
 export const publicRouter = Router()
 const gysSignupLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 6 })
@@ -122,13 +132,30 @@ publicRouter.get('/groups', (req, res) => {
   })
 })
 
-publicRouter.get('/groups/:slug', (req, res) => {
-  const group = store.getGroup(req.params.slug)
-  if (!group)
-    return res
-      .status(404)
-      .json({ error: { code: 'not_found', message: 'Unknown working group' } })
-  res.json(groupView(group, viewOptions(req)))
+publicRouter.get('/groups/:slug', async (req, res, next) => {
+  try {
+    const group = store.getGroup(req.params.slug)
+    if (!group)
+      return res.status(404).json({
+        error: { code: 'not_found', message: 'Unknown working group' },
+      })
+
+    const progress = req.publicAccount
+      ? await getWgProgress(req.publicAccount.id, req.params.slug)
+      : null
+    const includeWorkspace = Boolean(
+      progress?.presentation_ok && progress?.rules_ok,
+    )
+
+    res.json(
+      groupView(group, {
+        ...viewOptions(req),
+        includeWorkspace,
+      }),
+    )
+  } catch (err) {
+    next(err)
+  }
 })
 
 publicRouter.get('/directory', (req, res) => {
@@ -147,6 +174,29 @@ publicRouter.get('/gys', (req, res) => {
       .status(404)
       .json({ error: { code: 'not_found', message: 'No statement available' } })
   res.json(gys)
+})
+
+/** Public, reviewed science-resource catalogue. Drafts never cross this API. */
+publicRouter.get('/resources', async (req, res, next) => {
+  try {
+    const publications = await listContentPublications()
+    const reviewed = publications
+      .filter((item) => item.contentType === 'resource')
+      .map((item) => ({
+        ...item.payload,
+        publishedAt: item.publishedAt,
+      }))
+    const bySlug = new Map(
+      baselineResources.map((resource) => [resource.slug, resource]),
+    )
+    reviewed.forEach((resource) => bySlug.set(resource.slug, resource))
+    const items = [...bySlug.values()].sort((a, b) =>
+      a.title.localeCompare(b.title),
+    )
+    res.json({ items })
+  } catch (error) {
+    next(error)
+  }
 })
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/

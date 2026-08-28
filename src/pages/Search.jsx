@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  CheckCircle2,
-  ExternalLink,
-  FilePlus2,
-  Search as SearchIcon,
-  ShieldCheck,
-} from 'lucide-react'
+  TbAddressBook as AddressBook,
+  TbCalendar as CalendarDays,
+  TbCircleCheck as CheckCircle2,
+  TbExternalLink as ExternalLink,
+  TbFilePlus as FilePlus2,
+  TbFileText as FileText,
+  TbGavel as Gavel,
+  TbGlobe as Globe,
+  TbSearch as SearchIcon,
+  TbShieldCheck as ShieldCheck,
+} from 'react-icons/tb'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui.jsx'
 import { fmtDual, fmtDateRange } from '../lib/time.js'
+import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 
 const GROUPS = [
   {
@@ -17,36 +23,44 @@ const GROUPS = [
     label: 'Events',
     to: (event) => `/calendar/${event.slug}`,
     line: (event) => fmtDual(event.startsAt),
+    icon: (event) =>
+      event.wg?.slug ? workingGroupIcon(event.wg.slug) : CalendarDays,
   },
   {
     key: 'submissions',
     label: 'Submissions',
     to: (submission) => `/submissions/${submission.slug}`,
     line: (submission) => submission.wg?.name || submission.status,
+    icon: (submission) =>
+      submission.wg?.slug ? workingGroupIcon(submission.wg.slug) : FileText,
   },
   {
     key: 'decisions',
     label: 'Council',
     to: (decision) => `/council/${decision.slug}`,
     line: (decision) => decision.proposer,
+    icon: () => Gavel,
   },
   {
     key: 'coys',
     label: 'COYs',
     to: (coy) => `/coys/${coy.slug}`,
     line: (coy) => fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc),
+    icon: () => Globe,
   },
   {
     key: 'groups',
     label: 'Working groups',
     to: (group) => `/groups/${group.slug}`,
     line: (group) => group.focusLine,
+    icon: (group) => workingGroupIcon(group.slug),
   },
   {
     key: 'contacts',
     label: 'Directory',
     to: () => '/directory',
     line: (contact) => contact.description,
+    icon: () => AddressBook,
   },
 ]
 
@@ -74,20 +88,29 @@ function DirectMatches({ query, data }) {
       {GROUPS.filter((group) => data[group.key]?.length).map((group) => (
         <Section key={group.key} label={group.label}>
           <div className="cardGrid">
-            {data[group.key].map((item, index) => (
-              <A
-                key={item.slug || item.id || index}
-                href={group.to(item)}
-                className="card cardTight searchResult"
-              >
-                <div className="searchResultCopy">
-                  <p className="searchResultTitle">
-                    {item.title || item.name || item.roleTitle}
-                  </p>
-                  <p className="metaMuted">{group.line(item)}</p>
-                </div>
-              </A>
-            ))}
+            {data[group.key].map((item, index) => {
+              const ResultIcon = group.icon(item)
+              return (
+                <A
+                  key={item.slug || item.id || index}
+                  href={group.to(item)}
+                  className="card cardTight searchResult"
+                >
+                  <div className="searchResultCopy">
+                    <p className="searchResultTitle">
+                      {item.title || item.name || item.roleTitle}
+                    </p>
+                    <p className="metaMuted">{group.line(item)}</p>
+                  </div>
+                  <ResultIcon
+                    className="cardCornerIcon searchResultIcon"
+                    size={18}
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </A>
+              )
+            })}
           </div>
         </Section>
       ))}
@@ -199,7 +222,6 @@ export function Search() {
   return (
     <div className="intelligencePage">
       <PageHeader
-        eyebrow="Across the hub"
         title="Search"
         description="Find a record directly or ask a question across the Hub. Answers use only evidence your account is allowed to access."
         action={

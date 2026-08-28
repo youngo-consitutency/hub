@@ -7,7 +7,13 @@ import {
   MissionMonogram,
 } from '../components/MissionConsole.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
-import { ArrowRight, Briefcase, ListChecks, Radio, Users } from 'lucide-react'
+import {
+  TbArrowRight as ArrowRight,
+  TbBriefcase as Briefcase,
+  TbListCheck as ListChecks,
+  TbRadio as Radio,
+  TbUsers as Users,
+} from 'react-icons/tb'
 
 function roleForGroup(access, slug) {
   return (
