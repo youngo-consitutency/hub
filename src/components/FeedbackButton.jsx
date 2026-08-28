@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { usePath } from '../lib/router.js'
 import { Button } from './ui.jsx'
-import { MessageSquarePlus, X, Check } from 'lucide-react'
+import {
+  TbMessagePlus as MessageSquarePlus,
+  TbX as X,
+  TbCheck as Check,
+} from 'react-icons/tb'
 
 const FALLBACK_KINDS = [
   { value: 'bug', label: 'Something is broken' },

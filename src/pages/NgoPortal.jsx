@@ -12,7 +12,13 @@ import {
 } from '../components/ui.jsx'
 import { DatePicker, SearchableSelect } from '../components/FormControls.jsx'
 import { NgoOpportunities } from '../components/NgoOpportunities.jsx'
-import { Award, BadgeCheck, UserPlus, Copy, Check } from 'lucide-react'
+import {
+  TbAward as Award,
+  TbRosetteDiscountCheck as BadgeCheck,
+  TbUserPlus as UserPlus,
+  TbCopy as Copy,
+  TbCheck as Check,
+} from 'react-icons/tb'
 
 export function NgoPortal() {
   const { account, setAccount } = useAccount()
@@ -152,7 +158,6 @@ export function NgoPortal() {
   return (
     <div>
       <PageHeader
-        eyebrow="Organisation"
         title="NGO platform"
         description={`${account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.`}
       />

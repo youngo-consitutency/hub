@@ -3,6 +3,7 @@ import { MembershipMandateGate } from './MembershipMandateGate.jsx'
 import { AuthGate } from './AuthGate.jsx'
 import { ResetPassword } from '../pages/ResetPassword.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
+import { PublicSite } from '../pages/site/PublicSite.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { apiGet } from '../lib/api.js'
 import {
@@ -62,6 +63,14 @@ export function AccessGate({ children }) {
   // The privacy notice must be readable before someone is asked for personal data.
   if (path.startsWith('/privacy')) {
     return <Privacy standalone />
+  }
+
+  // Public website: anyone curious about the constituency can browse it
+  // before any gate — no account, policy scroll, or cookies required. All
+  // data it shows comes from the public API, which redacts member-only
+  // details.
+  if (path.startsWith('/about')) {
+    return <PublicSite />
   }
 
   if (!ready) {

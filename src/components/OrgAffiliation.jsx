@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { Button } from './ui.jsx'
 import { SearchableSelect } from './FormControls.jsx'
-import { Building2 } from 'lucide-react'
+import { TbBuilding as Building2 } from 'react-icons/tb'
 
 const STATUS_COPY = {
   requested: {

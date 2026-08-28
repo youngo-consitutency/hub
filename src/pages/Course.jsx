@@ -9,7 +9,12 @@ import {
   PageHeader,
 } from '../components/ui.jsx'
 import { navigate } from '../lib/router.js'
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  TbArrowLeft as ArrowLeft,
+  TbCheck as Check,
+  TbChevronLeft as ChevronLeft,
+  TbChevronRight as ChevronRight,
+} from 'react-icons/tb'
 
 export function Course() {
   const { account, setAccount } = useAccount()
@@ -93,9 +98,8 @@ export function Course() {
   return (
     <div>
       <PageHeader
-        eyebrow={`Membership course · ${data.version}`}
         title="Membership course"
-        description={`Pass score: ${data.passScore}/${data.quiz.length}.${account?.isVerified ? ' You already passed — review anytime.' : ''}`}
+        description={`Version ${data.version} · Pass score: ${data.passScore}/${data.quiz.length}.${account?.isVerified ? ' You already passed — review anytime.' : ''}`}
       />
 
       {step === 'modules' && mod && (
@@ -187,9 +191,10 @@ export function Course() {
           <div className="courseQuizActions">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               onClick={() => setStep('modules')}
             >
+              <ArrowLeft size={18} strokeWidth={2} aria-hidden />
               Back to modules
             </Button>
             <Button type="submit" variant="primary" glow disabled={submitting}>

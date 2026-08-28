@@ -12,16 +12,16 @@ import {
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import {
-  PenTool,
-  Inbox,
-  Layers3,
-  MessagesSquare,
-  CheckCircle2,
-  ArrowRight,
-  Upload,
-  Sparkles,
-  ExternalLink,
-} from 'lucide-react'
+  TbTools as PenTool,
+  TbInbox as Inbox,
+  TbStack3 as Layers3,
+  TbMessages as MessagesSquare,
+  TbCircleCheck as CheckCircle2,
+  TbArrowRight as ArrowRight,
+  TbUpload as Upload,
+  TbSparkles as Sparkles,
+} from 'react-icons/tb'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
 
 const NEXT = {
   submitted: ['triaged', 'rejected'],
@@ -152,7 +152,6 @@ export function GysPolicyTeam() {
   return (
     <div>
       <PageHeader
-        eyebrow="Policy production"
         title="Global Youth Statement"
         description="Turn youth inputs into a reviewed statement with a visible handover."
       />
@@ -177,8 +176,8 @@ export function GysPolicyTeam() {
                     target="_blank"
                     rel="noreferrer"
                   >
+                    <DestinationIcon url={data.formUrl} size={17} />
                     Official inputs form
-                    <ExternalLink size={16} aria-hidden />
                   </a>
                 )}
                 <A href="/gys" className="btn btn-secondary">

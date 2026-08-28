@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { TbX as X } from 'react-icons/tb'
 
 export function RoutePeek({ children }) {
   const dialogRef = useRef(null)

@@ -1,7 +1,14 @@
 import { Fragment } from 'react'
 import { navigate } from '../lib/router.js'
-import { countdown, formatCountdownLabel } from '../lib/time.js'
-import { AlarmClock, RefreshCw, ArrowLeft, Check, Minus } from 'lucide-react'
+import { countdown, fmtMoment, formatCountdownLabel } from '../lib/time.js'
+import {
+  TbAlarm as AlarmClock,
+  TbCalendarTime as CalendarTime,
+  TbRefresh as RefreshCw,
+  TbArrowLeft as ArrowLeft,
+  TbCheck as Check,
+  TbMinus as Minus,
+} from 'react-icons/tb'
 
 export function A({
   href,
@@ -74,6 +81,7 @@ export function FilterPill({
   active,
   state,
   icon: Icon,
+  prefix,
   children,
   className = '',
   ...rest
@@ -95,6 +103,11 @@ export function FilterPill({
       {...rest}
     >
       {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />}
+      {prefix && (
+        <span className="pillPrefix" aria-hidden>
+          {prefix}
+        </span>
+      )}
       {children}
       {state === 'include' && (
         <Check
@@ -112,6 +125,54 @@ export function FilterPill({
           aria-hidden
         />
       )}
+    </button>
+  )
+}
+
+function filterStateLabel(filterState) {
+  return filterState === 'include'
+    ? 'included; activate to exclude'
+    : filterState === 'exclude'
+      ? 'excluded; activate to clear'
+      : 'not selected; activate to include'
+}
+
+/** Compact card metadata that controls the matching catalogue filter. */
+export function FilterChip({
+  children,
+  state = 'neutral',
+  tone = 'neutral',
+  onClick,
+  icon: Icon,
+  prefix,
+  className = '',
+}) {
+  const content = (
+    <>
+      {Icon && <Icon size={13} strokeWidth={1.75} aria-hidden />}
+      {prefix && (
+        <span className="chipPrefix" aria-hidden>
+          {prefix}
+        </span>
+      )}
+      {children}
+    </>
+  )
+
+  if (!onClick) {
+    return <span className={`chip chip-${tone} ${className}`}>{content}</span>
+  }
+
+  return (
+    <button
+      type="button"
+      className={`chip chip-${tone} cardFilterChip ${className}`.trim()}
+      data-filter-state={state}
+      aria-label={`${children}: ${filterStateLabel(state)}`}
+      aria-pressed={state !== 'neutral'}
+      onClick={onClick}
+    >
+      {content}
     </button>
   )
 }
@@ -141,10 +202,9 @@ export function FilterMenu({ children, activeCount = 0, label = 'Filters' }) {
   )
 }
 
-export function PageHeader({ eyebrow, title, description, action, children }) {
+export function PageHeader({ title, description, action, children }) {
   return (
     <header className="pageHeader">
-      {eyebrow && <p className="pageEyebrow">{eyebrow}</p>}
       <div className="pageHeaderRow">
         <div className="pageHeaderCopy">
           <h1 className="pageTitle">{title}</h1>
@@ -178,16 +238,31 @@ const CHIP = {
   withdrawn: ['chip-neutral', 'Withdrawn'],
 }
 
-export function StatusChip({ status }) {
+export function StatusChip({ status, filterState = 'neutral', onClick }) {
   const [cls, label, pulse] = CHIP[status] || [
     'chip-neutral',
     String(status || '').replaceAll('_', ' '),
   ]
-  return (
-    <span className={`chip ${cls}`}>
+  const content = (
+    <>
       <span className={`cdot ${pulse ? 'pulse' : ''}`} />
       {label}
-    </span>
+    </>
+  )
+
+  if (!onClick) return <span className={`chip ${cls}`}>{content}</span>
+
+  return (
+    <button
+      type="button"
+      className={`chip ${cls} cardFilterChip`}
+      data-filter-state={filterState}
+      aria-label={`${label}: ${filterStateLabel(filterState)}`}
+      aria-pressed={filterState !== 'neutral'}
+      onClick={onClick}
+    >
+      {content}
+    </button>
   )
 }
 
@@ -202,12 +277,67 @@ export function CountdownChip({ iso, label }) {
   )
 }
 
-export function Section({ label, action, children }) {
+export function LifecycleTiming({
+  status,
+  iso,
+  label = 'Deadline',
+  relation = 'until',
+  showCountdown = true,
+  statusFilterState = 'neutral',
+  onStatusFilter,
+  className = '',
+}) {
+  if (!status && !iso) return null
+
+  const moment = iso ? fmtMoment(iso) : null
+  const remaining = iso && showCountdown ? countdown(iso) : null
+
+  return (
+    <div className={`lifecycleTiming ${className}`.trim()} aria-label={label}>
+      {status && (
+        <StatusChip
+          status={status}
+          filterState={statusFilterState}
+          onClick={onStatusFilter}
+        />
+      )}
+      {moment && (
+        <div className="lifecycleTimingDate">
+          <CalendarTime size={15} strokeWidth={1.75} aria-hidden />
+          <time dateTime={iso}>
+            <span className="lifecycleTimingRelation">
+              {status ? relation : label}
+            </span>{' '}
+            {moment.day} · {moment.localTime} {moment.localZone}
+          </time>
+        </div>
+      )}
+      {moment && !moment.isUtc && (
+        <span className="lifecycleTimingSecondary">UTC {moment.utcTime}</span>
+      )}
+      {remaining && (
+        <span
+          className={`lifecycleTimingRemaining lifecycleTimingRemaining-${remaining.tone}`}
+        >
+          <AlarmClock size={13} strokeWidth={1.75} aria-hidden />
+          {remaining.label === 'closed'
+            ? 'Closed'
+            : `${remaining.label} remaining`}
+        </span>
+      )}
+    </div>
+  )
+}
+
+export function Section({ label, meta, action, children }) {
   return (
     <section className="section">
       {label && (
         <div className="sectionLabel">
-          <h2 className="sectionHeading">{label}</h2>
+          <h2 className="sectionHeading">
+            {label}
+            {meta && <span className="sectionHeadingMeta">{meta}</span>}
+          </h2>
           {action && <div className="sectionAction">{action}</div>}
         </div>
       )}
@@ -257,8 +387,8 @@ export function ErrorCard({ message, onRetry }) {
 export function BackLink({ href, children }) {
   return (
     <A href={href} className="backLink">
-      <ArrowLeft size={16} strokeWidth={1.75} aria-hidden />
-      {children}
+      <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+      <span>Back to {children}</span>
     </A>
   )
 }

@@ -1,0 +1,963 @@
+/* Public YOUNGO website. It uses the Hub's existing tokens, controls, cards,
+   typography, and focus treatment so the public and member experiences feel
+   like one product. */
+
+/* ── Shell and navigation ─────────────────────────── */
+.siteShell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+}
+
+.siteShell .brandHub {
+  display: none;
+}
+
+.siteHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.siteHeaderInner {
+  width: min(100%, 1240px);
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 8px clamp(16px, 4vw, 32px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.siteWordmark {
+  flex: 0 0 auto;
+}
+
+.siteNav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.siteNavDesktop {
+  margin-left: auto;
+}
+
+.siteNavItem {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.siteNavItem:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.siteNavItem.active {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.siteJoinBtn {
+  flex: 0 0 auto;
+}
+
+.siteMenuButton,
+.siteMobileNav {
+  display: none;
+}
+
+.siteMain {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 32px) var(--space-8);
+  flex: 1;
+}
+
+main#site-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* ── Home hero ────────────────────────────────────── */
+.siteHero {
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(
+      circle at 78% 12%,
+      color-mix(in srgb, var(--accent-tint) 72%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent-tint) 30%, var(--bg-page)),
+      var(--bg-page) 72%
+    );
+}
+
+.siteHero .siteMain {
+  padding-top: clamp(36px, 6vw, 72px);
+  padding-bottom: clamp(32px, 5vw, 56px);
+}
+
+.siteHeroLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 72px);
+}
+
+.siteHeroCopy {
+  min-width: 0;
+}
+
+.siteHero h1 {
+  max-width: 15ch;
+  font-size: clamp(38px, 6vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.siteHeroLead {
+  max-width: 61ch;
+  margin-top: var(--space-4);
+  color: var(--text-2);
+  font-size: clamp(16px, 1.6vw, 18px);
+  line-height: 1.55;
+}
+
+.siteHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.siteHeroReassurance {
+  margin-top: var(--space-3);
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.siteStartCard {
+  container: site-start / inline-size;
+  padding: var(--space-5);
+  border-top: 3px solid var(--accent);
+}
+
+.siteStartHeading {
+  display: grid;
+  gap: 2px;
+}
+
+.siteStartHeading .pageEyebrow {
+  margin-bottom: 2px;
+}
+
+.siteStartHeading h2 {
+  font-size: 18px;
+}
+
+.siteStartList {
+  display: grid;
+  gap: 0;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteStartList li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+}
+
+.siteStartList li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.siteStartList li:last-child {
+  padding-bottom: 0;
+}
+
+.siteStartIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.siteStartCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.siteStartStepLabel {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.siteStartList strong,
+.siteStartList .meta {
+  display: block;
+}
+
+.siteStartList strong {
+  font-size: 14px;
+}
+
+.siteStartList .meta {
+  margin-top: 0;
+}
+
+@container site-start (min-width: 600px) {
+  .siteStartList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .siteStartList li {
+    grid-template-columns: 1fr;
+    align-content: start;
+    padding: 0 var(--space-4);
+    border-top: 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .siteStartList li:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .siteStartList li:last-child {
+    padding-right: 0;
+  }
+}
+
+.siteHeroFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: clamp(28px, 5vw, 48px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteHeroFacts li {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.siteFactValue {
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* ── Public page structure ────────────────────────── */
+.siteSection {
+  margin-top: clamp(40px, 6vw, 64px);
+}
+
+.siteSection > .pageEyebrow {
+  margin-bottom: 2px;
+}
+
+.siteSection > h2,
+.sitePageHeader h1 {
+  scroll-margin-top: 84px;
+}
+
+.siteSection > h2 {
+  font-size: clamp(22px, 2.5vw, 28px);
+  line-height: 1.2;
+}
+
+.siteSectionLead {
+  max-width: var(--text-measure);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-5);
+  color: var(--text-2);
+  font-size: 15px;
+}
+
+.siteSectionHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.siteSectionHeadingRow h2 {
+  font-size: clamp(22px, 2.5vw, 28px);
+}
+
+.sitePageHeader {
+  margin-inline: calc(clamp(16px, 4vw, 32px) * -1);
+  padding: clamp(40px, 6vw, 64px) clamp(16px, 4vw, 32px) clamp(32px, 5vw, 48px);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent-tint) 28%, var(--bg-page));
+}
+
+.sitePageHeader h1 {
+  max-width: 18ch;
+  font-size: clamp(34px, 5vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+.sitePageLead {
+  max-width: 68ch;
+  margin-top: var(--space-3);
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.sitePageFootnote {
+  margin-top: var(--space-4);
+}
+
+.siteResourceCatalogue > .resourceSourceCard {
+  margin-top: clamp(32px, 5vw, 48px);
+}
+
+.siteResourceCatalogue .section {
+  margin-top: clamp(32px, 5vw, 48px);
+}
+
+.siteGysSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteGysSteps li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.siteGysSteps h3 {
+  font-size: 15px;
+}
+
+.siteGysSteps .meta {
+  margin-top: var(--space-1);
+}
+
+.siteCtaActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ── Content cards ────────────────────────────────── */
+.siteMissionGrid,
+.siteFormatGrid,
+.siteContactGrid,
+.siteOrgGrid,
+.siteDoGrid,
+.siteTimeline,
+.siteWgGrid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.siteMissionGrid,
+.siteFormatGrid,
+.siteContactGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.siteMissionCard,
+.siteFormatCard {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.siteMissionCard h3,
+.siteFormatCard h3,
+.siteContactCard h3,
+.siteDoCard h3,
+.siteWgCard h3,
+.siteCoyIdentity h3,
+.siteTimelineItem h3 {
+  font-size: 15px;
+}
+
+.siteMissionCard .iconTile,
+.siteFormatCard .iconTile,
+.siteContactCard .iconTile {
+  margin-bottom: var(--space-1);
+}
+
+.siteOrgGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.siteOrgCard {
+  min-height: 130px;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  border-top: 3px solid var(--accent);
+}
+
+.siteOrgCard strong {
+  font-size: 17px;
+}
+
+.siteOrgNote {
+  max-width: var(--text-measure);
+  margin-top: var(--space-4);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border-strong);
+}
+
+.siteDoGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.siteDoCard,
+.siteContactCard,
+.siteWgCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.siteDoCard {
+  min-height: 180px;
+}
+
+.siteDoCard .iconTile,
+.siteContactCard .iconTile {
+  margin-top: 2px;
+}
+
+.siteDoLink,
+.siteContactLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.siteDoLink:hover,
+.siteContactLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sitePrincipleChips,
+.siteWgTags,
+.siteSocialList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sitePrincipleChips .chip {
+  height: auto;
+  min-height: 32px;
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.siteTimeline {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: var(--space-5);
+}
+
+.siteTimelineItem {
+  position: relative;
+  min-height: 190px;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.siteTimelineYear {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── Shared call to action ────────────────────────── */
+.siteCtaBand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: clamp(40px, 6vw, 64px);
+  padding: var(--space-5);
+  border-top: 3px solid var(--accent);
+}
+
+.siteCtaBand > svg {
+  color: var(--accent);
+}
+
+.siteCtaBand h2 {
+  font-size: 18px;
+}
+
+.siteCtaBand .meta {
+  max-width: 62ch;
+  margin-top: var(--space-1);
+}
+
+/* ── Working groups and COYs ──────────────────────── */
+.siteWgGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.siteWgMonogram {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  border-radius: var(--radius-control);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-weight: 700;
+}
+
+.siteWgCard .meta {
+  margin-top: var(--space-1);
+}
+
+.siteWgTags {
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.siteCoyList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.siteCoyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.siteCoyRow + .siteCoyRow {
+  border-top: 1px solid var(--border);
+}
+
+.siteCoyIdentity {
+  min-width: 0;
+}
+
+.siteCoyIdentity .metaMuted {
+  margin-top: 1px;
+}
+
+.siteCoyRow .chip {
+  flex: 0 0 auto;
+}
+
+/* ── FAQ and contact ──────────────────────────────── */
+.siteFaqList {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteFaqItem {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.siteFaqItem summary {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--text-1);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.siteFaqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.siteFaqItem summary:hover {
+  background: var(--bg-raised);
+}
+
+.siteFaqItem summary > svg {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  transition: transform var(--motion-standard) var(--motion-ease);
+}
+
+.siteFaqItem[open] summary > svg {
+  transform: rotate(180deg);
+}
+
+.siteFaqItem[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.siteFaqItem p {
+  max-width: 82ch;
+  padding: var(--space-4);
+}
+
+.siteFaqMore {
+  margin-top: var(--space-4);
+}
+
+.siteSocialList a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.siteSocialList a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.siteContactNote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.siteContactNote > svg {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+/* ── Footer ───────────────────────────────────────── */
+.siteFooter {
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.siteFooterInner {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: var(--space-8) clamp(16px, 4vw, 32px) var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(140px, 1fr));
+  gap: clamp(24px, 4vw, 48px);
+}
+
+.siteFooterBrand .meta {
+  max-width: 34ch;
+  margin-top: var(--space-3);
+}
+
+.siteFooterCol {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.siteFooterCol h2 {
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.siteFooterCol a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.siteFooterCol a:hover {
+  color: var(--accent);
+}
+
+.siteFooterLegal {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: var(--space-3) clamp(16px, 4vw, 32px) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.siteFooterLegal a {
+  color: var(--text-2);
+  text-decoration: underline;
+}
+
+.siteHeroCard {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 980px) {
+  .siteHeroLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .siteStartCard {
+    max-width: 720px;
+  }
+
+  .siteOrgGrid,
+  .siteTimeline,
+  .siteWgGrid,
+  .siteDoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .siteFooterInner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .siteGysSteps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .siteHeaderInner {
+    min-height: 60px;
+  }
+
+  .siteNavDesktop {
+    display: none;
+  }
+
+  .siteJoinBtn {
+    margin-left: auto;
+  }
+
+  .siteMenuButton {
+    display: inline-grid;
+  }
+
+  .siteMobileNav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding: var(--space-3) clamp(16px, 4vw, 32px) var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .siteMobileNavItem {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .siteMobileNavItem.active {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    background: var(--accent-tint);
+    color: var(--on-accent-tint);
+  }
+
+  .siteHeroFacts,
+  .siteMissionGrid,
+  .siteFormatGrid,
+  .siteContactGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .siteMissionCard,
+  .siteFormatCard,
+  .siteDoCard,
+  .siteTimelineItem,
+  .siteOrgCard {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .siteHero h1 {
+    font-size: clamp(38px, 12vw, 50px);
+  }
+
+  .siteHeroLead {
+    font-size: 16px;
+  }
+
+  .siteHeroActions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .siteStartCard {
+    padding: var(--space-4);
+  }
+
+  .siteMissionGrid,
+  .siteFormatGrid,
+  .siteContactGrid,
+  .siteOrgGrid,
+  .siteDoGrid,
+  .siteTimeline,
+  .siteWgGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .siteCtaBand {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .siteCtaBand .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .siteGysSteps {
+    grid-template-columns: 1fr;
+  }
+
+  .siteSectionHeadingRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .siteCoyRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .siteFooterInner {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .siteJoinBtn {
+    padding-inline: var(--space-3);
+    font-size: 12px;
+  }
+
+  .siteJoinBtn svg {
+    display: none;
+  }
+
+  .siteHeroFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .siteFactValue {
+    font-size: 18px;
+  }
+
+  .siteMobileNav {
+    grid-template-columns: 1fr;
+  }
+
+  .siteDoCard,
+  .siteContactCard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .siteHeaderInner {
+    gap: var(--space-2);
+    padding-inline: var(--space-2);
+  }
+
+  .siteJoinBtn {
+    padding-inline: var(--space-2);
+  }
+}

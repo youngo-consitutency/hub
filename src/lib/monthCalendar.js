@@ -30,6 +30,28 @@ export function eventsInCalendarMonth(events, { year, month }) {
   )
 }
 
+export function eventsOnCalendarDay(events, key) {
+  return events.filter((event) => eventDateKey(event.startsAt) === key)
+}
+
+export function eventsInCalendarWeek(events, date = new Date()) {
+  const current = new Date(date)
+  const mondayOffset = (current.getUTCDay() + 6) % 7
+  const start =
+    Date.UTC(
+      current.getUTCFullYear(),
+      current.getUTCMonth(),
+      current.getUTCDate(),
+    ) -
+    mondayOffset * DAY_MS
+  const end = start + 7 * DAY_MS
+
+  return events.filter((event) => {
+    const startsAt = new Date(event.startsAt).getTime()
+    return startsAt >= start && startsAt < end
+  })
+}
+
 export function buildCalendarDays({ year, month }, groupedEvents) {
   const firstOfMonth = new Date(Date.UTC(year, month, 1))
   const mondayOffset = (firstOfMonth.getUTCDay() + 6) % 7

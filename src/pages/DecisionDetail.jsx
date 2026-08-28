@@ -3,13 +3,16 @@ import {
   Async,
   BackLink,
   StatusChip,
-  CountdownChip,
-  Timeline,
+  LifecycleTiming,
   PageHeader,
   Section,
 } from '../components/ui.jsx'
-import { fmtMoment, fmtDay } from '../lib/time.js'
-import { FileText, ExternalLink } from 'lucide-react'
+import { fmtDay } from '../lib/time.js'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
+import {
+  TbCircle as Circle,
+  TbCircleFilled as CircleFilled,
+} from 'react-icons/tb'
 
 const STEPS = ['Proposed', 'Open for input', 'Objection window', 'Outcome']
 const STEP_INDEX = {
@@ -31,6 +34,10 @@ const LOG_LABEL = {
   withdrawn: 'Withdrawn',
 }
 
+function processEntry(statusLog, stepIndex) {
+  return statusLog?.find((entry) => STEP_INDEX[entry.status] === stepIndex)
+}
+
 export function DecisionDetail({ slug }) {
   const query = useApi(`/council/${slug}`)
   return (
@@ -45,64 +52,80 @@ export function DecisionDetail({ slug }) {
               : d.status === 'open_for_input'
                 ? d.inputDeadline
                 : null
-          const deadline = windowIso ? fmtMoment(windowIso) : null
+          const currentStep = STEP_INDEX[d.status] ?? 0
           return (
             <>
               <PageHeader title={d.title} description={d.summary}>
                 <div className="detailHeaderMeta">
-                  <StatusChip status={d.status} />
+                  {!windowIso && <StatusChip status={d.status} />}
                   <p className="metaMuted">Proposed by {d.proposer}</p>
                 </div>
               </PageHeader>
 
               <Section label="Decision process">
                 <div className="card detailProcess">
-                  {deadline && (
-                    <div className="detailDeadline">
-                      <div>
-                        <p className="metaMuted detailMetaLabel">Deadline</p>
-                        <p className="mono">
-                          {deadline.day} · {deadline.localTime}{' '}
-                          {deadline.localZone}
-                        </p>
-                        {!deadline.isUtc && (
-                          <p className="metaMuted mono">
-                            UTC: {deadline.utcTime}
-                          </p>
-                        )}
-                      </div>
-                      <CountdownChip iso={windowIso} label="Closes in" />
-                    </div>
+                  {windowIso && (
+                    <LifecycleTiming
+                      status={d.status}
+                      iso={windowIso}
+                      label="Decision window"
+                      className="detailLifecycleTiming"
+                    />
                   )}
 
-                  <Timeline
-                    steps={STEPS}
-                    currentIndex={STEP_INDEX[d.status] ?? 0}
-                  />
+                  <ol
+                    className="decisionTimeline"
+                    aria-label="Decision timeline"
+                  >
+                    {STEPS.map((step, index) => {
+                      const entry = processEntry(d.statusLog, index)
+                      const state =
+                        index < currentStep
+                          ? 'done'
+                          : index === currentStep
+                            ? 'current'
+                            : 'future'
+                      const Marker = state === 'future' ? Circle : CircleFilled
 
-                  {d.statusLog?.length > 0 && (
-                    <div className="detailProcessActivity">
-                      <h3>Activity</h3>
-                      <ol className="statusLog">
-                        {d.statusLog.map((entry, i) => (
-                          <li key={i} className="logRow">
-                            <span className="logDot" />
-                            <div>
-                              <p className="logHead">
-                                {LOG_LABEL[entry.status] || entry.status}
-                                <span className="metaMuted mono logDate">
+                      return (
+                        <li
+                          key={step}
+                          className={`decisionTimelineStep ${state}`}
+                          aria-current={
+                            state === 'current' ? 'step' : undefined
+                          }
+                        >
+                          <Marker
+                            className="decisionTimelineMarker"
+                            size={11}
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                          <div className="decisionTimelineCopy">
+                            <p className="decisionTimelineHead">
+                              <span>
+                                {entry
+                                  ? LOG_LABEL[entry.status] || entry.status
+                                  : step}
+                              </span>
+                              {entry ? (
+                                <span className="metaMuted mono">
                                   {fmtDay(entry.at, 'UTC')}
                                 </span>
-                              </p>
-                              {entry.note && (
-                                <p className="meta logNote">{entry.note}</p>
+                              ) : (
+                                <span className="metaMuted">Pending</span>
                               )}
-                            </div>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
+                            </p>
+                            {entry?.note && (
+                              <p className="meta decisionTimelineNote">
+                                {entry.note}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ol>
                 </div>
               </Section>
 
@@ -118,7 +141,7 @@ export function DecisionDetail({ slug }) {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <FileText size={18} strokeWidth={1.75} aria-hidden />
+                          <DestinationIcon url={d.proposalUrl} size={18} />
                           Read the proposal
                         </a>
                       </div>
@@ -139,11 +162,7 @@ export function DecisionDetail({ slug }) {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <ExternalLink
-                            size={18}
-                            strokeWidth={1.75}
-                            aria-hidden
-                          />
+                          <DestinationIcon url={d.finalUrl} size={18} />
                           Final text
                         </a>
                       </div>

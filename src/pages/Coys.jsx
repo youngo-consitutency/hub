@@ -9,7 +9,15 @@ import {
   SortButton,
 } from '../components/ui.jsx'
 import { CoyCard } from '../components/cards.jsx'
-import { ArrowDownAZ, Globe2, Layers3, Map, MapPin, Search } from 'lucide-react'
+import { regionFilterPrefix } from '../lib/regions.js'
+import {
+  TbSortAscendingLetters as ArrowDownAZ,
+  TbGlobe as Globe2,
+  TbStack3 as Layers3,
+  TbMap as Map,
+  TbMapPin as MapPin,
+  TbSearch as Search,
+} from 'react-icons/tb'
 import {
   activeFilterCount,
   matchesFilters,
@@ -43,7 +51,6 @@ export function Coys() {
   return (
     <div>
       <PageHeader
-        eyebrow="Conferences of Youth"
         title="COY tracker"
         description="Find local, regional, and global Conferences of Youth, with dates and participation status."
       />
@@ -172,7 +179,12 @@ export function Coys() {
                                 ? undefined
                                 : regionFilters[item.key] || 'neutral'
                             }
-                            icon={item.key === 'all' ? Map : MapPin}
+                            icon={item.key === 'all' ? Map : undefined}
+                            prefix={
+                              item.key === 'all'
+                                ? undefined
+                                : regionFilterPrefix(item.key, item.label)
+                            }
                             onClick={() => {
                               if (item.key === 'all') setRegionFilters({})
                               else {
@@ -190,13 +202,25 @@ export function Coys() {
                   </FilterMenu>
                 </div>
               </div>
-              <p className="resultsSummary" role="status">
-                {items.length} of {data.items.length} conferences
-              </p>
               {items.length ? (
                 <div className="cardGrid">
                   {items.map((c) => (
-                    <CoyCard key={c.slug} coy={c} />
+                    <CoyCard
+                      key={c.slug}
+                      coy={c}
+                      typeFilterState={typeFilters[c.type] || 'neutral'}
+                      regionFilterState={regionFilters[c.region] || 'neutral'}
+                      onTypeFilter={() =>
+                        setTypeFilters((current) =>
+                          toggleFilter(current, c.type),
+                        )
+                      }
+                      onRegionFilter={() =>
+                        setRegionFilters((current) =>
+                          toggleFilter(current, c.region),
+                        )
+                      }
+                    />
                   ))}
                 </div>
               ) : (

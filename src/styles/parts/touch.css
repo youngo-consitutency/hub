@@ -38,6 +38,13 @@
     min-height: 44px;
   }
 
+  .iconButton,
+  .notificationHelpTrigger {
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+
   /* ── Section "see all" links ────────────────────────
      "Calendar →", "All →", "Browse →" are 14px tall text links that sit in the
      section header. Padding keeps the type size and alignment while giving the

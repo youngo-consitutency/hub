@@ -71,6 +71,38 @@ export async function apiPatch(path, body) {
   return data
 }
 
+async function apiMutation(path, { method, body, headers = {} }) {
+  const res = await fetch(`/api${path}`, {
+    method,
+    credentials: 'same-origin',
+    headers: authHeaders(headers),
+    body,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const err = new Error(
+      data?.error?.message || `Request failed (${res.status})`,
+    )
+    err.status = res.status
+    err.code = data?.error?.code
+    err.fields = data?.error?.fields
+    throw err
+  }
+  return data
+}
+
+export function apiPutFile(path, file) {
+  return apiMutation(path, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': file.type },
+  })
+}
+
+export function apiDelete(path) {
+  return apiMutation(path, { method: 'DELETE' })
+}
+
 // Fetch state for independently rendered sections, including retry support.
 export function useApi(path, deps = []) {
   const [state, setState] = useState({ data: null, error: null, loading: true })

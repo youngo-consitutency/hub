@@ -1,5 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { CalendarPlus, Check, Copy, ExternalLink } from 'lucide-react'
+import {
+  TbCalendarPlus as CalendarPlus,
+  TbCheck as Check,
+  TbCopy as Copy,
+  TbExternalLink as ExternalLink,
+} from 'react-icons/tb'
 import { googleAddByUrlPage, webcalFeedUrl } from '../lib/calendarLinks.js'
 
 // Copies the absolute ICS feed URL so a calendar app can subscribe (live feed),

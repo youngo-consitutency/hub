@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import {
   buildCalendarDays,
   eventDateKey,
+  eventsInCalendarWeek,
   eventsInCalendarMonth,
+  eventsOnCalendarDay,
   groupEventsByDate,
   shiftCalendarMonth,
 } from '../src/lib/monthCalendar.js'
@@ -55,5 +57,18 @@ test('the month agenda contains only events in the visible UTC month', () => {
       (event) => event.slug,
     ),
     ['july-call', 'july-forum'],
+  )
+})
+
+test('agenda ranges use UTC day and Monday-to-Sunday week boundaries', () => {
+  assert.deepEqual(
+    eventsOnCalendarDay(events, '2026-06-30').map((event) => event.slug),
+    ['late-june', 'july-one'],
+  )
+  assert.deepEqual(
+    eventsInCalendarWeek(events, new Date('2026-07-01T20:00:00-04:00')).map(
+      (event) => event.slug,
+    ),
+    ['late-june', 'july-one'],
   )
 })

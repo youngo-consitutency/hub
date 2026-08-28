@@ -16,19 +16,20 @@ import {
   toggleFilter,
 } from '../lib/filterState.js'
 import {
-  Archive,
-  CalendarClock,
-  CheckCircle2,
-  FilePlus2,
-  Gavel,
-  ListFilter,
-  MessageSquareText,
-  Search,
-  ShieldAlert,
-  Undo2,
-  XCircle,
-  ArrowDownAZ,
-} from 'lucide-react'
+  TbArchive as Archive,
+  TbCalendarTime as CalendarClock,
+  TbCircleCheck as CheckCircle2,
+  TbClock as Clock,
+  TbFilePlus as FilePlus2,
+  TbGavel as Gavel,
+  TbFilter as ListFilter,
+  TbMessage as MessageSquareText,
+  TbSearch as Search,
+  TbShieldExclamation as ShieldAlert,
+  TbArrowBackUp as Undo2,
+  TbCircleX as XCircle,
+  TbSortAscendingLetters as ArrowDownAZ,
+} from 'react-icons/tb'
 
 const ACTIVE_STATUSES = [
   { key: 'all', label: 'All stages', icon: ListFilter },
@@ -69,14 +70,13 @@ export function Council() {
   return (
     <div>
       <PageHeader
-        eyebrow="Governance"
         title="Council"
         description="Decisions moving through YOUNGO’s decision-making process."
       >
-        <div className="viewSwitch" aria-label="Council view">
+        <div className="viewSwitch" role="group" aria-label="Council view">
           <FilterPill
             active={state === 'active'}
-            icon={Gavel}
+            icon={Clock}
             onClick={() => changeState('active')}
           >
             In progress
@@ -215,14 +215,22 @@ export function Council() {
                     </fieldset>
                   </FilterMenu>
                 </div>
-                <p className="resultsSummary" role="status">
-                  {decisions.length} of {data.items.length} decisions
-                </p>
               </div>
               {decisions.length ? (
                 <div className="cardGrid">
                   {decisions.map((decision) => (
-                    <DecisionCard key={decision.slug} decision={decision} />
+                    <DecisionCard
+                      key={decision.slug}
+                      decision={decision}
+                      statusFilterState={
+                        statusFilters[decision.status] || 'neutral'
+                      }
+                      onStatusFilter={() =>
+                        setStatusFilters((current) =>
+                          toggleFilter(current, decision.status),
+                        )
+                      }
+                    />
                   ))}
                 </div>
               ) : (

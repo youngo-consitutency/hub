@@ -1,23 +1,22 @@
 import { useAccount } from '../lib/accountContext.jsx'
+import { useApi } from '../lib/api.js'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
 import { MyFeedback } from '../components/MyFeedback.jsx'
+import { MemberProfileEditor } from '../components/MemberProfileEditor.jsx'
 import { NotificationSettings } from '../components/NotificationSettings.jsx'
-import { signOut } from '../lib/logout.js'
+import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 import {
   workingGroupLabel,
   WORKING_GROUP_TOPICS,
 } from '../../shared/workingGroups.js'
 import {
-  BookOpenCheck,
-  BadgeCheck,
-  GraduationCap,
-  Library,
-  LockKeyhole,
-  LogOut,
-  Mail,
-  Users,
-} from 'lucide-react'
+  TbBook2 as BookOpenCheck,
+  TbSchool as GraduationCap,
+  TbLibrary as Library,
+  TbLock as LockKeyhole,
+  TbUsers as Users,
+} from 'react-icons/tb'
 
 const ROLE_LABELS = {
   admin: 'Administrator',
@@ -33,18 +32,9 @@ const TEAM_LABELS = {
   content_publisher: 'Content publisher',
 }
 
-function Detail({ term, children }) {
-  if (!children) return null
-  return (
-    <div className="profileDetail">
-      <dt>{term}</dt>
-      <dd>{children}</dd>
-    </div>
-  )
-}
-
 export function Profile() {
   const { account } = useAccount()
+  const profileQuery = useApi('/member/profile')
   const access = account?.access || {}
   const teamRoles = access.teamRoles || account?.teamRoles || []
   const wgAssignments = access.wgAssignments || []
@@ -57,84 +47,16 @@ export function Profile() {
   return (
     <div>
       <PageHeader
-        eyebrow="Your account"
         title="Profile"
         description="Your membership details, roles, and useful starting points."
       />
 
       <div className="profileGrid">
-        <section
-          className="card profileSummary"
-          aria-labelledby="profile-account-title"
-        >
-          <div className="profileHeader">
-            <div className="profileIdentity">
-              <div className="profileAvatar" aria-hidden>
-                {(account?.name || account?.email || '?')
-                  .trim()
-                  .slice(0, 1)
-                  .toUpperCase()}
-              </div>
-              <div>
-                <h2 id="profile-account-title">
-                  {account?.name || 'YOUNGO member'}
-                  {account?.isVerified && (
-                    <BadgeCheck
-                      className="profileVerified"
-                      size={20}
-                      strokeWidth={2}
-                      aria-label="Verified member"
-                    />
-                  )}
-                </h2>
-                <a className="profileEmail" href={`mailto:${account?.email}`}>
-                  <Mail size={15} aria-hidden />
-                  {account?.email}
-                </a>
-                {!account?.isVerified && (
-                  <span className="chip chip-warn profileStatus">
-                    Onboarding in progress
-                  </span>
-                )}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm profileSignOut"
-              onClick={signOut}
-            >
-              <LogOut size={16} strokeWidth={1.75} aria-hidden />
-              Sign out
-            </button>
-          </div>
-          <div className="profileMembershipBlock">
-            <p className="pageEyebrow">Membership</p>
-            <dl className="profileDetails">
-              <Detail term="Role">
-                {ROLE_LABELS[account?.role] || account?.role}
-              </Detail>
-              <Detail term="Country">{account?.country}</Detail>
-              <Detail term="Region">{account?.region}</Detail>
-              <Detail term="Course score">
-                {account?.courseScore == null
-                  ? null
-                  : `${account.courseScore} correct answers`}
-              </Detail>
-            </dl>
-          </div>
-          <div className="profileSummaryFooter">
-            <p className="metaMuted profileHelp">
-              Need a correction?{' '}
-              <a
-                className="inlineLink"
-                href="mailto:membership@youngoclimate.org"
-              >
-                Contact the Membership Team
-              </a>
-              .
-            </p>
-          </div>
-        </section>
+        <MemberProfileEditor
+          query={profileQuery}
+          account={account}
+          roleLabel={ROLE_LABELS[account?.role] || account?.role}
+        />
         <div className="profileSideStack">
           <OrgAffiliation />
           <NotificationSettings />
@@ -166,8 +88,15 @@ export function Profile() {
                     <li
                       key={`${assignment.wgSlug}-${assignment.role || 'member'}`}
                     >
-                      {assignment.wgName || assignment.wgSlug} ·{' '}
-                      {assignment.role || 'member'}
+                      <A
+                        href={`/groups/${assignment.wgSlug}`}
+                        className="inlineLink"
+                        peek
+                      >
+                        {assignment.wgName ||
+                          workingGroupLabel(assignment.wgSlug)}
+                      </A>{' '}
+                      · {assignment.role || 'member'}
                     </li>
                   ))}
                 </ul>
@@ -181,11 +110,25 @@ export function Profile() {
                     <section key={topic.key} className="profileInterestGroup">
                       <h4>{topic.label}</h4>
                       <ul>
-                        {topic.groups.map((slug) => (
-                          <li key={slug} className="chip chip-neutral">
-                            {workingGroupLabel(slug)}
-                          </li>
-                        ))}
+                        {topic.groups.map((slug) => {
+                          const GroupIcon = workingGroupIcon(slug)
+                          return (
+                            <li key={slug}>
+                              <A
+                                href={`/groups/${slug}`}
+                                className="chip chip-neutral personLinkChip"
+                                peek
+                              >
+                                <GroupIcon
+                                  size={13}
+                                  strokeWidth={1.75}
+                                  aria-hidden
+                                />
+                                {workingGroupLabel(slug)}
+                              </A>
+                            </li>
+                          )
+                        })}
                       </ul>
                     </section>
                   ))}

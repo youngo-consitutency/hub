@@ -189,6 +189,10 @@
     right: auto;
     left: 0;
   }
+
+  .subscribeSteps li {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Command palette ───────────────────────────────── */
@@ -226,6 +230,7 @@
 
 .paletteInput {
   flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   outline: none;

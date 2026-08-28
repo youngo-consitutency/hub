@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react'
 import { apiPost } from '../lib/api.js'
 import { Button } from '../components/ui.jsx'
 import { navigate } from '../lib/router.js'
-import { KeyRound, Check } from 'lucide-react'
+import {
+  TbArrowLeft as ArrowLeft,
+  TbCheck as Check,
+  TbKey as KeyRound,
+} from 'react-icons/tb'
 
 function tokenFromUrl() {
   try {
@@ -56,7 +60,8 @@ export function ResetPassword() {
             </p>
             <div className="detailActions">
               <Button variant="primary" onClick={() => navigate('/')}>
-                Back to hub
+                <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+                Back to Hub
               </Button>
             </div>
           </div>

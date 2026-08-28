@@ -10,19 +10,22 @@ import {
 } from '../components/ui.jsx'
 import { GroupCard } from '../components/cards.jsx'
 import {
-  ArrowDownAZ,
-  ArrowUpAZ,
-  CloudSun,
-  GraduationCap,
-  HeartHandshake,
-  Leaf,
-  Search,
-  ShieldCheck,
-  Tags,
-  Users,
-  Zap,
-} from 'lucide-react'
-import { WORKING_GROUP_TOPICS } from '../../shared/workingGroups.js'
+  TbSortAscendingLetters as ArrowDownAZ,
+  TbSortDescendingLetters as ArrowUpAZ,
+  TbCloud as CloudSun,
+  TbSchool as GraduationCap,
+  TbHeartHandshake as HeartHandshake,
+  TbLeaf as Leaf,
+  TbSearch as Search,
+  TbShieldCheck as ShieldCheck,
+  TbTags as Tags,
+  TbUsers as Users,
+  TbBolt as Zap,
+} from 'react-icons/tb'
+import {
+  WORKING_GROUP_TOPICS,
+  workingGroupTopic,
+} from '../../shared/workingGroups.js'
 import {
   activeFilterCount,
   matchesFilters,
@@ -47,7 +50,6 @@ export function Groups() {
   return (
     <div>
       <PageHeader
-        eyebrow="Community"
         title="Working groups"
         description="Search by topic, compare meeting schedules, and open a group workspace."
       />
@@ -65,13 +67,15 @@ export function Groups() {
             .filter((group) => {
               const matchesSearch =
                 !needle ||
-                [group.name, group.focusLine, ...(group.tags || [])]
+                [
+                  group.name,
+                  group.focusLine,
+                  workingGroupTopic(group.slug)?.label,
+                ]
                   .join(' ')
                   .toLocaleLowerCase()
                   .includes(needle)
-              const topicKey = WORKING_GROUP_TOPICS.find((item) =>
-                item.groups.includes(group.slug),
-              )?.key
+              const topicKey = workingGroupTopic(group.slug)?.key
               const matchesTopic = matchesFilters(topicKey, topics)
               return matchesSearch && matchesTopic
             })
@@ -136,14 +140,25 @@ export function Groups() {
                     </fieldset>
                   </FilterMenu>
                 </div>
-                <p className="resultsSummary" role="status">
-                  {groups.length} of {data.items.length} groups
-                </p>
               </div>
               {groups.length ? (
                 <div className="cardGrid">
                   {groups.map((group) => (
-                    <GroupCard key={group.slug} group={group} />
+                    <GroupCard
+                      key={group.slug}
+                      group={group}
+                      topicFilterState={
+                        topics[workingGroupTopic(group.slug)?.key] || 'neutral'
+                      }
+                      topicIcon={
+                        TOPIC_ICONS[workingGroupTopic(group.slug)?.key]
+                      }
+                      onTopicFilter={() => {
+                        const topicKey = workingGroupTopic(group.slug)?.key
+                        if (!topicKey) return
+                        setTopics((current) => toggleFilter(current, topicKey))
+                      }}
+                    />
                   ))}
                 </div>
               ) : (

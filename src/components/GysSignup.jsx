@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { apiPost } from '../lib/api.js'
-import { UserPlus } from 'lucide-react'
+import { TbUserPlus as UserPlus } from 'react-icons/tb'
 
 const EMPTY = {
   name: '',

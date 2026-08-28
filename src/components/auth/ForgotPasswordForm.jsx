@@ -1,3 +1,4 @@
+import { TbArrowLeft as ArrowLeft } from 'react-icons/tb'
 import { Button } from '../ui.jsx'
 import { FieldError } from '../FormControls.jsx'
 import { fieldClass } from './helpers.js'
@@ -47,7 +48,8 @@ export function ForgotPasswordForm({
         Admin.
       </p>
       <div className="detailActions">
-        <Button type="button" variant="ghost" onClick={onBack}>
+        <Button type="button" variant="secondary" onClick={onBack}>
+          <ArrowLeft size={18} strokeWidth={2} aria-hidden />
           Back to sign in
         </Button>
         <Button

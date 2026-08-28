@@ -9,20 +9,19 @@ import {
 } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
 import {
-  CalendarDays,
-  FileText,
-  Gavel,
-  Network,
-  Radio,
-  Users,
-} from 'lucide-react'
+  TbCalendar as CalendarDays,
+  TbFileText as FileText,
+  TbGavel as Gavel,
+  TbSitemap as Network,
+  TbRadio as Radio,
+  TbUsers as Users,
+} from 'react-icons/tb'
 
 export function FocalPoint() {
   const query = useApi('/member/focal/overview')
   return (
     <div>
       <PageHeader
-        eyebrow="Constituency representation"
         title="Global Focal Point"
         description="Track constituency signals, coordinate with mandate holders, and keep UNFCCC-facing work connected to what members are doing."
       />

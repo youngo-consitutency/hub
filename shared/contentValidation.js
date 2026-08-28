@@ -1,3 +1,11 @@
+import {
+  RESOURCE_LANGUAGES,
+  RESOURCE_PATHWAYS,
+  RESOURCE_REGIONS,
+  RESOURCE_TOPICS,
+  RESOURCE_TYPES,
+} from './resourceHub.js'
+
 const REQUIRED_LISTS = [
   'groups',
   'events',
@@ -196,10 +204,10 @@ export function validateEditableContent(
   const slug = cleanText(payload.slug).toLowerCase()
   const title = cleanText(payload.title)
 
-  if (!['event', 'announcement'].includes(contentType)) {
+  if (!['event', 'announcement', 'resource'].includes(contentType)) {
     return {
       ok: false,
-      errors: { contentType: 'Choose events or announcements.' },
+      errors: { contentType: 'Choose events, announcements, or resources.' },
     }
   }
   if (!SLUG_PATTERN.test(slug) || slug.length > 100) {
@@ -207,6 +215,50 @@ export function validateEditableContent(
   }
   if (title.length < 3 || title.length > 160) {
     errors.title = 'Enter a title between 3 and 160 characters.'
+  }
+
+  if (contentType === 'resource') {
+    const url = cleanText(payload.url)
+    const summary = cleanText(payload.summary)
+    const publisher = cleanText(payload.publisher)
+    const pathway = cleanText(payload.pathway)
+    const type = cleanText(payload.type)
+    const topic = cleanText(payload.topic)
+    const region = cleanText(payload.region) || 'global'
+    const language = cleanText(payload.language) || 'English'
+    const pathwayValues = new Set(RESOURCE_PATHWAYS.map((item) => item.value))
+    const typeValues = new Set(RESOURCE_TYPES.map((item) => item.value))
+    const regionValues = new Set(RESOURCE_REGIONS.map((item) => item.value))
+
+    if (!isWebUrl(url)) errors.url = 'Enter a full http:// or https:// URL.'
+    if (summary.length < 20 || summary.length > 600) {
+      errors.summary = 'Enter a summary between 20 and 600 characters.'
+    }
+    if (publisher.length > 120)
+      errors.publisher = 'Publisher must be 120 characters or fewer.'
+    if (!pathwayValues.has(pathway)) errors.pathway = 'Choose a pathway.'
+    if (!typeValues.has(type)) errors.type = 'Choose a resource type.'
+    if (!RESOURCE_TOPICS.includes(topic)) errors.topic = 'Choose a topic.'
+    if (!regionValues.has(region)) errors.region = 'Choose a region.'
+    if (!RESOURCE_LANGUAGES.includes(language))
+      errors.language = 'Choose a language.'
+
+    return {
+      ok: Object.keys(errors).length === 0,
+      errors,
+      value: {
+        slug,
+        title,
+        url,
+        summary,
+        publisher: publisher || null,
+        pathway,
+        type,
+        topic,
+        region,
+        language,
+      },
+    }
   }
 
   if (contentType === 'event') {

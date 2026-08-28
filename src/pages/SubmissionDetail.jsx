@@ -2,15 +2,13 @@ import { useApi } from '../lib/api.js'
 import {
   Async,
   BackLink,
-  StatusChip,
-  CountdownChip,
+  LifecycleTiming,
   Timeline,
   A,
   PageHeader,
   Section,
 } from '../components/ui.jsx'
-import { fmtMoment } from '../lib/time.js'
-import { FileText, ArrowUpRight, ExternalLink } from 'lucide-react'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
 
 const STEPS = ['Open', 'Drafting', 'Internal review', 'Submitted']
 const STEP_INDEX = {
@@ -31,12 +29,10 @@ export function SubmissionDetail({ slug }) {
           const archived = !['open', 'drafting', 'internal_review'].includes(
             sub.status,
           )
-          const deadline = fmtMoment(sub.deadlineAt)
           return (
             <>
               <PageHeader title={sub.title}>
                 <div className="detailHeaderMeta">
-                  <StatusChip status={sub.status} />
                   {sub.wg && (
                     <A
                       href={`/groups/${sub.wg.slug}`}
@@ -50,25 +46,14 @@ export function SubmissionDetail({ slug }) {
 
               <Section label="Progress">
                 <div className="card detailProcess">
-                  <div className="detailDeadline">
-                    <div>
-                      <p className="metaMuted detailMetaLabel">
-                        {archived ? 'Submitted' : 'Deadline'}
-                      </p>
-                      <p className="mono">
-                        {deadline.day} · {deadline.localTime}{' '}
-                        {deadline.localZone}
-                      </p>
-                      {!deadline.isUtc && (
-                        <p className="metaMuted mono">
-                          UTC: {deadline.utcTime}
-                        </p>
-                      )}
-                    </div>
-                    {!archived && (
-                      <CountdownChip iso={sub.deadlineAt} label="Closes in" />
-                    )}
-                  </div>
+                  <LifecycleTiming
+                    status={sub.status}
+                    iso={sub.deadlineAt}
+                    label={archived ? 'Submitted' : 'Deadline'}
+                    relation={archived ? 'on' : 'until'}
+                    showCountdown={!archived}
+                    className="detailLifecycleTiming"
+                  />
                   <Timeline
                     steps={STEPS}
                     currentIndex={STEP_INDEX[sub.status] ?? 0}
@@ -90,7 +75,7 @@ export function SubmissionDetail({ slug }) {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <FileText size={18} strokeWidth={1.75} aria-hidden />
+                          <DestinationIcon url={sub.draftUrl} size={18} />
                           {/forms\.gle|docs\.google\.com\/forms/i.test(
                             sub.draftUrl,
                           )
@@ -105,12 +90,8 @@ export function SubmissionDetail({ slug }) {
                           target="_blank"
                           rel="noreferrer"
                         >
+                          <DestinationIcon url={sub.unfcccUrl} size={18} />
                           UNFCCC reference
-                          <ArrowUpRight
-                            size={16}
-                            strokeWidth={1.75}
-                            aria-hidden
-                          />
                         </a>
                       )}
                     </div>
@@ -127,7 +108,7 @@ export function SubmissionDetail({ slug }) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <ExternalLink size={18} strokeWidth={1.75} aria-hidden />
+                      <DestinationIcon url={sub.finalUrl} size={18} />
                       Final submission
                     </a>
                     {sub.unfcccUrl && (
@@ -137,12 +118,8 @@ export function SubmissionDetail({ slug }) {
                         target="_blank"
                         rel="noreferrer"
                       >
+                        <DestinationIcon url={sub.unfcccUrl} size={18} />
                         UNFCCC reference
-                        <ArrowUpRight
-                          size={16}
-                          strokeWidth={1.75}
-                          aria-hidden
-                        />
                       </a>
                     )}
                   </div>

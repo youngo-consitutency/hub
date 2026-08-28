@@ -1,0 +1,5 @@
+.codex-vault/
+docs/design-qa/
+docs/mobile-audit/
+node_modules/
+test-results/

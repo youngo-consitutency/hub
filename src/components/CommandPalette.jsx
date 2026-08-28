@@ -3,15 +3,15 @@ import { useApi } from '../lib/api.js'
 import { navigate } from '../lib/router.js'
 import { fmtDual, fmtDateRange } from '../lib/time.js'
 import {
-  Search,
-  CalendarDays,
-  FileText,
-  Gavel,
-  MapPin,
-  Users,
-  CornerDownLeft,
-  Megaphone,
-} from 'lucide-react'
+  TbSearch as Search,
+  TbCalendar as CalendarDays,
+  TbFileText as FileText,
+  TbGavel as Gavel,
+  TbMapPin as MapPin,
+  TbUsers as Users,
+  TbCornerDownLeft as CornerDownLeft,
+  TbSpeakerphone as Megaphone,
+} from 'react-icons/tb'
 
 // Hub pages that are useful as palette shortcuts even when search returns nothing.
 const PAGE_SHORTCUTS = [
