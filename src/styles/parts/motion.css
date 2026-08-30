@@ -92,3 +92,12 @@
     transform-origin: top right;
   }
 }
+
+/* On phones the peek is a centred full-screen window, so it appears in place
+   rather than sliding in from the right. */
+@media (max-width: 900px) {
+  .routePeek[open] {
+    transform-origin: center;
+    animation: hubDialogIn var(--motion-standard) var(--motion-ease-out) both;
+  }
+}

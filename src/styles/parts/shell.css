@@ -70,7 +70,7 @@
 .skipLink {
   position: fixed;
   left: 12px;
-  top: 8px;
+  top: calc(8px + env(safe-area-inset-top));
   z-index: 500;
   transform: translateY(-160%);
   padding: 9px 12px;
@@ -219,7 +219,7 @@
     top: 0;
     z-index: 41;
     margin: 0 -16px 20px;
-    padding: 12px 16px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
     background: color-mix(in srgb, var(--bg-page) 92%, transparent);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(14px);
@@ -246,11 +246,11 @@
 
 .sheet {
   position: fixed;
-  top: 68px;
+  top: calc(68px + env(safe-area-inset-top));
   right: 12px;
   z-index: 60;
   width: min(380px, calc(100vw - 24px));
-  max-height: calc(100dvh - 84px);
+  max-height: calc(100dvh - 84px - env(safe-area-inset-top));
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--bg-popover);
@@ -411,10 +411,12 @@
   }
 
   .sheet {
-    top: 64px;
+    top: calc(64px + env(safe-area-inset-top));
     right: 8px;
     width: calc(100vw - 16px);
-    max-height: calc(100dvh - 76px - env(safe-area-inset-bottom));
+    max-height: calc(
+      100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
   }
 }
 
