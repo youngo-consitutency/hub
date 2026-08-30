@@ -16,15 +16,24 @@ import {
 import { navigate, usePath } from '../lib/router.js'
 
 /**
- * Controls access before the main application loads. Visitors first read the
- * Membership Policy, then create an account or sign in. App.jsx handles
- * course-verification and role-specific routes.
+ * Controls access before the main application loads. Signed-out visitors land
+ * on a member desk where they can sign in. New members still accept the
+ * membership policy before registering. App.jsx handles course-verification
+ * and role-specific routes.
  */
 export function AccessGate({ children }) {
   const path = usePath()
   const [ready, setReady] = useState(false)
   const [policyOk, setPolicyOk] = useState(false)
   const [account, setAccount] = useState(null)
+
+  const handleAuthenticated = useCallback(
+    (acc) => {
+      setAccount(acc)
+      if (path === '/join' || path === '/signin') navigate('/')
+    },
+    [path],
+  )
 
   const refreshSession = useCallback(async () => {
     try {
@@ -45,9 +54,11 @@ export function AccessGate({ children }) {
       setPolicyOk(policy)
       // The session cookie is HttpOnly, so the client cannot inspect it — the
       // server is asked on every load. Cached profile data only pre-fills the
-      // first paint; `/auth/me` confirms or clears it.
-      if (policy) {
-        if (hasCachedSession()) setAccount(getCachedAccount())
+      // first paint; `/auth/me` confirms or clears it. Anonymous visitors see
+      // the member desk immediately; a background 401 must not clear a login
+      // that happens on that desk.
+      if (hasCachedSession()) {
+        setAccount(getCachedAccount())
         await refreshSession()
       }
       if (alive) setReady(true)
@@ -91,30 +102,27 @@ export function AccessGate({ children }) {
     )
   }
 
-  // The public platform introduction is the signed-out front door. A signed-in
-  // member keeps the existing dashboard at the same URL.
-  if (path === '/' && !account) {
-    return <PlatformLanding />
+  // Signed-in members always enter the Hub. The membership policy is only a
+  // gate for people who do not yet have an account.
+  if (account) {
+    return <>{typeof children === 'function' ? children(account) : children}</>
+  }
+
+  // The signed-out front door is a member desk: sign in here, or go to /join.
+  if (path === '/') {
+    return <PlatformLanding onAuthenticated={handleAuthenticated} />
   }
 
   if (!policyOk) {
     return <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
   }
 
-  if (!account) {
-    const initialMode = path === '/join' ? 'register' : 'signin'
-    const returnPath = path === '/join' || path === '/signin' ? '/' : path
-    return (
-      <AuthGate
-        key={initialMode}
-        initialMode={initialMode}
-        onAuthenticated={(acc) => {
-          setAccount(acc)
-          navigate(returnPath)
-        }}
-      />
-    )
-  }
-
-  return <>{typeof children === 'function' ? children(account) : children}</>
+  const initialMode = path === '/join' ? 'register' : 'signin'
+  return (
+    <AuthGate
+      key={initialMode}
+      initialMode={initialMode}
+      onAuthenticated={handleAuthenticated}
+    />
+  )
 }

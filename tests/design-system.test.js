@@ -283,6 +283,18 @@ test('mobile catalogue filters stay in compact horizontally scrollable rows', as
   )
 })
 
+test('admins compose device alerts from the Admin page', async () => {
+  const [admin, composer] = await Promise.all([
+    read('src/pages/Admin.jsx'),
+    read('src/components/PushBroadcast.jsx'),
+  ])
+  assert.match(admin, /<PushBroadcast \/>/)
+  assert.match(composer, /label="Device alerts"/)
+  assert.match(composer, /apiPost\('\/push\/send'/)
+  assert.match(composer, /Everyone with alerts on/)
+  assert.match(composer, /ALL_CONFIRM = 'SEND'/)
+})
+
 test('notification settings start with the device alert heading', async () => {
   const [component, css] = await Promise.all([
     read('src/components/NotificationSettings.jsx'),
@@ -296,6 +308,21 @@ test('notification settings start with the device alert heading', async () => {
     css,
     /\.notificationStatusActions\s*{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/,
   )
+})
+
+test('install and alert setup is offered on every member page, not only Profile', async () => {
+  const [shell, settings, help, guide] = await Promise.all([
+    read('src/components/Shell.jsx'),
+    read('src/components/NotificationSettings.jsx'),
+    read('src/pages/Help.jsx'),
+    read('src/components/NotificationGuide.jsx'),
+  ])
+  assert.match(shell, /<AlertSetupNotice \/>/)
+  assert.match(settings, /id="alerts"/)
+  assert.match(settings, /notificationInstallSteps/)
+  assert.match(settings, /Show me where to tap/)
+  assert.match(help, /href: '\/profile#alerts'/)
+  assert.match(guide, /Add to Home Screen/)
 })
 
 test('Help and support is the only global support launcher', async () => {
@@ -871,20 +898,29 @@ test('landing-page onboarding steps adapt to their own available width', async (
 })
 
 test('the signed-out platform landing has distinct join and sign-in paths', async () => {
-  const [accessGate, authGate, landing] = await Promise.all([
+  const [accessGate, authGate, landing, desk] = await Promise.all([
     read('src/components/AccessGate.jsx'),
     read('src/components/AuthGate.jsx'),
     read('src/pages/PlatformLanding.jsx'),
+    read('src/components/auth/LandingSignIn.jsx'),
   ])
 
-  assert.match(accessGate, /path === '\/' && !account/)
-  assert.match(accessGate, /<PlatformLanding \/>/)
+  assert.match(accessGate, /if \(account\)/)
+  assert.match(accessGate, /if \(path === '\/'\)/)
+  assert.match(
+    accessGate,
+    /<PlatformLanding onAuthenticated={handleAuthenticated} \/>/,
+  )
   assert.match(accessGate, /path === '\/join' \? 'register' : 'signin'/)
   assert.match(authGate, /initialMode = 'register'/)
   assert.match(landing, /href="\/join"/)
   assert.match(landing, /href="\/signin"/)
   assert.match(landing, /id="what-it-does"/)
   assert.match(landing, /id="trust"/)
+  assert.match(landing, /<LandingSignIn onAuthenticated={onAuthenticated} \/>/)
+  assert.match(desk, /id="signin"/)
+  assert.match(desk, /apiPost\('\/auth\/login'/)
+  assert.match(desk, /href="\/join"/)
 })
 
 test('working-group contact cards keep their icon beside the group name', async () => {
