@@ -941,6 +941,30 @@ test('motion follows surface geometry and continuous animation stays disabled', 
   }
 })
 
+test('route peeks fill and centre the phone viewport', async () => {
+  const [css, motion] = await Promise.all([
+    read('src/styles/parts/overlays.css'),
+    read('src/styles/parts/motion.css'),
+  ])
+  const peek = css.match(/(?:^|\n)\.routePeek\s*{([^}]+)}/)?.[1] || ''
+
+  assert.match(peek, /max-width:\s*none/)
+  assert.match(peek, /max-height:\s*none/)
+  assert.match(peek, /margin:\s*0 0 0 auto/)
+  assert.match(
+    css,
+    /@media \(max-width: 900px\)\s*{[\s\S]*?\.routePeek\s*{[\s\S]*?margin:\s*0 auto/,
+  )
+  assert.match(
+    css,
+    /@media \(max-width: 900px\)\s*{[\s\S]*?\.routePeekToolbar\s*{[\s\S]*?safe-area-inset-top/,
+  )
+  assert.match(
+    motion,
+    /@media \(max-width: 900px\)\s*{[\s\S]*?\.routePeek\[open\]\s*{[\s\S]*?hubDialogIn/,
+  )
+})
+
 test('calendar agenda groups natural cards and keeps range filters visible', async () => {
   const calendar = await read('src/pages/Calendar.jsx')
   const css = await read('src/styles/parts/calendar.css')
