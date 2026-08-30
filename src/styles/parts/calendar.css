@@ -45,6 +45,7 @@
 
 .noticeBanner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
@@ -58,6 +59,11 @@
   border-color: color-mix(in srgb, var(--warn) 35%, transparent);
 }
 
+.noticeBannerInfo {
+  background: var(--accent-tint);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
 .noticeDot {
   width: 8px;
   height: 8px;
@@ -66,11 +72,36 @@
   flex-shrink: 0;
 }
 
+.noticeDotInfo {
+  background: var(--accent);
+}
+
 .noticeCopy {
   flex: 1;
   min-width: 0;
   font-size: 14px;
   font-weight: 500;
+}
+
+.noticeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 560px) {
+  .noticeBanner {
+    align-items: flex-start;
+  }
+
+  .noticeActions {
+    width: 100%;
+  }
+
+  .noticeActions .btn {
+    flex: 1;
+  }
 }
 
 /* ── Calendar ──────────────────────────────────────── */

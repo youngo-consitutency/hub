@@ -15,6 +15,7 @@ const {
   deleteSubscription,
   listSubscriptionsForAccounts,
   listAllSubscriptions,
+  listSubscriberAccounts,
   pruneEndpoints,
   toWebPushSubscription,
 } = await import('../server/lib/pushStore.js')
@@ -155,6 +156,15 @@ describe('push subscription store', () => {
   it('returns every subscription for a broadcast', async () => {
     const all = await listAllSubscriptions()
     assert.equal(all.length, 2)
+  })
+
+  it('lists subscriber accounts without endpoints or keys', async () => {
+    const items = await listSubscriberAccounts()
+    assert.equal(items.length, 1)
+    assert.equal(items[0].id, ACCOUNT_B)
+    assert.equal(items[0].devices, 2)
+    assert.equal(JSON.stringify(items).includes('https://push.example'), false)
+    assert.equal(JSON.stringify(items).includes('auth-'), false)
   })
 
   it('shapes a stored row back into what web-push expects', async () => {

@@ -5,6 +5,7 @@ import { Brand } from './Brand.jsx'
 import { usePath } from '../lib/router.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { MissionStatusBar } from './MissionConsole.jsx'
+import { AlertSetupNotice } from './AlertSetupNotice.jsx'
 import {
   TbHome as Home,
   TbCalendar as CalendarDays,
@@ -487,6 +488,7 @@ export function Shell({ children }) {
               </A>
             </div>
           )}
+          {verified && <AlertSetupNotice />}
           {children}
         </main>
       </div>

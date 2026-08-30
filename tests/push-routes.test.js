@@ -144,6 +144,51 @@ test('the notification settings a member needs are reachable without staff right
   })
 })
 
+test('admins can see who has device alerts without reading endpoints', async (t) => {
+  await withServer(t, async ({ call, member, admin }) => {
+    const asMember = await call('/api/push/admin/summary', { token: member })
+    assert.equal(asMember.status, 403)
+
+    const empty = await call('/api/push/admin/summary', { token: admin })
+    assert.equal(empty.status, 200)
+    assert.deepEqual(await empty.json(), {
+      configured: true,
+      accounts: 0,
+      devices: 0,
+    })
+
+    await call('/api/push/subscribe', {
+      token: member,
+      method: 'POST',
+      body: {
+        subscription: {
+          endpoint: 'https://push.example/member-device',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
+      },
+    })
+
+    const summary = await call('/api/push/admin/summary', { token: admin })
+    assert.deepEqual(await summary.json(), {
+      configured: true,
+      accounts: 1,
+      devices: 1,
+    })
+
+    const listed = await call('/api/push/admin/subscribers', { token: admin })
+    assert.equal(listed.status, 200)
+    const payload = await listed.json()
+    assert.equal(payload.items.length, 1)
+    assert.equal(payload.items[0].email, 'push-member@example.org')
+    assert.equal(payload.items[0].devices, 1)
+    assert.equal(
+      JSON.stringify(payload).includes('https://push.example'),
+      false,
+    )
+    assert.equal(JSON.stringify(payload).includes('"p"'), false)
+  })
+})
+
 test('broadcasting to other members stays admin-only', async (t) => {
   await withServer(t, async ({ call, member, admin }) => {
     const body = { userIds: 'all', title: 'Plenary moved', body: 'Room 3.' }
