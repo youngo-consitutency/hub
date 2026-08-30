@@ -58,8 +58,8 @@ export function Profile() {
           roleLabel={ROLE_LABELS[account?.role] || account?.role}
         />
         <div className="profileSideStack">
-          <OrgAffiliation />
           <NotificationSettings />
+          <OrgAffiliation />
         </div>
       </div>
 

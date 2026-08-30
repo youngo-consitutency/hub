@@ -1,5 +1,6 @@
 import {
   TbArrowRight as ArrowRight,
+  TbBell as Bell,
   TbCalendar as CalendarDays,
   TbClipboardCheck as ClipboardCheck,
   TbFileText as FileText,
@@ -22,6 +23,12 @@ const HUB_DESTINATIONS = [
     title: 'Start and unlock the Hub',
     body: 'Complete the short membership introduction.',
     href: '/onboarding',
+  },
+  {
+    icon: Bell,
+    title: 'Install the app and turn on alerts',
+    body: 'Add the Hub to your phone, then allow banners for meetings and announcements.',
+    href: '/profile#alerts',
   },
   {
     icon: UserCircle,

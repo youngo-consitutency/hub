@@ -10,6 +10,7 @@ import {
   deleteSubscription,
   listSubscriptionsForAccounts,
   listAllSubscriptions,
+  listSubscriberAccounts,
   pruneEndpoints,
   toWebPushSubscription,
 } from '../lib/pushStore.js'
@@ -149,6 +150,37 @@ pushRouter.post('/unsubscribe', async (req, res, next) => {
       endpoint: req.body?.endpoint || null,
     })
     res.json({ ok: true, removed })
+  } catch (error) {
+    next(error)
+  }
+})
+
+pushRouter.get('/admin/summary', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account) return
+    if (!requireAdmin(account, res)) return
+    const subscribers = await listSubscriberAccounts()
+    res.json({
+      configured: Boolean(vapidPublicKey && vapidPrivateKey),
+      accounts: subscribers.length,
+      devices: subscribers.reduce((total, row) => total + row.devices, 0),
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+pushRouter.get('/admin/subscribers', async (req, res, next) => {
+  try {
+    const account = await requireAccount(req, res)
+    if (!account) return
+    if (!requireAdmin(account, res)) return
+    const subscribers = await listSubscriberAccounts()
+    res.json({
+      configured: Boolean(vapidPublicKey && vapidPrivateKey),
+      items: subscribers,
+    })
   } catch (error) {
     next(error)
   }

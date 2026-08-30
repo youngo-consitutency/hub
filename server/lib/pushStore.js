@@ -13,6 +13,7 @@ const dataDir = path.join(
   '../../data',
 )
 const subscriptionsPath = path.join(dataDir, 'push-subscriptions.json')
+const accountsPath = path.join(dataDir, 'hub-accounts.json')
 
 function publicRow(row) {
   return {
@@ -103,6 +104,56 @@ export async function listAllSubscriptions() {
     return rows.map(publicRow)
   }
   return readJson(subscriptionsPath, []).map(publicRow)
+}
+
+function accountLabel(row) {
+  return (
+    row.name ||
+    [row.first_name ?? row.firstName, row.last_name ?? row.lastName]
+      .filter(Boolean)
+      .join(' ') ||
+    row.email
+  )
+}
+
+/**
+ * Accounts that currently have at least one device endpoint. Never returns
+ * endpoints or keys — those stay server-side for delivery.
+ */
+export async function listSubscriberAccounts() {
+  const pool = getPool()
+  if (pool) {
+    const { rows } = await pool.query(
+      `SELECT a.id, a.email, a.name, a.first_name, a.last_name,
+              count(*)::int AS devices
+       FROM push_subscriptions s
+       JOIN hub_accounts a ON a.id = s.account_id
+       GROUP BY a.id, a.email, a.name, a.first_name, a.last_name
+       ORDER BY max(COALESCE(s.last_used_at, s.created_at)) DESC`,
+    )
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: accountLabel(row),
+      devices: row.devices,
+    }))
+  }
+
+  const counts = new Map()
+  for (const row of readJson(subscriptionsPath, [])) {
+    const id = String(row.accountId)
+    counts.set(id, (counts.get(id) || 0) + 1)
+  }
+  const accounts = readJson(accountsPath, [])
+  return [...counts.entries()].map(([id, devices]) => {
+    const account = accounts.find((row) => String(row.id) === id)
+    return {
+      id,
+      email: account?.email || null,
+      name: account ? accountLabel(account) : 'Unknown account',
+      devices,
+    }
+  })
 }
 
 export async function deleteSubscription({ accountId, endpoint = null }) {

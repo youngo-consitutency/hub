@@ -1008,6 +1008,7 @@ test('the mobile header clears the iPhone status bar', async () => {
       /@media \(max-width: 900px\)\s*{[\s\S]*?\.topbar\s*{([^}]+)}/,
     )?.[1] || ''
   const sheet = css.match(/(?:^|\n)\.sheet\s*{([^}]+)}/)?.[1] || ''
+  const skip = css.match(/(?:^|\n)\.skipLink\s*{([^}]+)}/)?.[1] || ''
 
   assert.match(topbar, /padding:\s*calc\(12px \+ env\(safe-area-inset-top\)\)/)
   assert.match(sheet, /top:\s*calc\(68px \+ env\(safe-area-inset-top\)\)/)
@@ -1015,6 +1016,11 @@ test('the mobile header clears the iPhone status bar', async () => {
     sheet,
     /max-height:\s*calc\(100dvh - 84px - env\(safe-area-inset-top\)\)/,
   )
+  assert.match(
+    skip,
+    /transform:\s*translateY\(calc\(-100% - 8px - env\(safe-area-inset-top\)\)\)/,
+  )
+  assert.match(css, /\.skipLink:focus-visible\s*{[^}]*translateY\(0\)/)
 })
 
 test('calendar agenda groups natural cards and keeps range filters visible', async () => {

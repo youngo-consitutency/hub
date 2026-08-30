@@ -1,64 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   TbBell as Bell,
   TbBellOff as BellOff,
   TbBellRinging as BellRing,
   TbCircleCheck as CheckCircle2,
   TbHelpCircle as CircleHelp,
-  TbInfoCircle as Info,
-  TbDeviceLaptop as Laptop,
   TbDeviceMobile as Smartphone,
-  TbDevices as TabletSmartphone,
+  TbPlus as Plus,
+  TbShare2 as Share,
   TbAlertTriangle as TriangleAlert,
-  TbX as X,
 } from 'react-icons/tb'
-import { apiGet, apiPost } from '../lib/api.js'
 import { currentDevice } from '../lib/device.js'
-import {
-  getPushSubscriptionStatus,
-  isPushSupported,
-  needsHomeScreenInstall,
-  requestNotificationPermission,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from '../lib/pwa.js'
+import { isPushSupported } from '../lib/pwa.js'
+import { useAlertSetup } from '../lib/useAlertSetup.js'
+import { DEVICE_GUIDES, NotificationGuide } from './NotificationGuide.jsx'
 import { Button } from './ui.jsx'
 
-const DEVICE_GUIDES = {
-  ios: {
-    title: 'iPhone or iPad',
-    Icon: TabletSmartphone,
-    steps: [
-      'Open YOUNGO Hub in Safari.',
-      'Choose Share, then Add to Home Screen.',
-      'Open the Hub from its new icon and sign in.',
-      'Return to Profile, turn notifications on, and choose Allow.',
-    ],
-    note: 'Web notifications require iOS or iPadOS 16.4 or later.',
-  },
-  android: {
-    title: 'Android phone or tablet',
-    Icon: Smartphone,
-    steps: [
-      'Open YOUNGO Hub in your browser. Installing it is optional.',
-      'Open Profile and turn notifications on.',
-      'Choose Allow when the browser asks.',
-      'If alerts stop, check app notification and battery settings.',
-    ],
-    note: 'This permission applies only to the browser you are using now.',
-  },
-  desktop: {
-    title: 'Laptop or desktop',
-    Icon: Laptop,
-    steps: [
-      'Open Profile and turn notifications on.',
-      'Choose Allow when the browser asks.',
-      'Allow the browser in macOS or Windows notification settings too.',
-      'Keep the browser running; the Hub tab may be closed.',
-    ],
-    note: 'Each browser has its own notification permission.',
-  },
-}
+export { DEVICE_GUIDES, NotificationGuide }
 
 /**
  * Per-device notification control.
@@ -68,32 +26,16 @@ const DEVICE_GUIDES = {
  * phone has not enabled them on the shared laptop in the delegation office.
  */
 export function NotificationSettings() {
-  const [state, setState] = useState({ loading: true })
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState(null)
-  const [error, setError] = useState(null)
+  const setup = useAlertSetup()
   const [helpDevice, setHelpDevice] = useState(null)
   const helpDialogRef = useRef(null)
   const helpTriggerRef = useRef(null)
-
-  const refresh = useCallback(async () => {
-    const browser = await getPushSubscriptionStatus()
-    let configured
-    try {
-      await apiGet('/push/vapid-key')
-      configured = true
-    } catch (fetchError) {
-      // 503 is the server saying it holds no VAPID keys — a deployment
-      // setting, not something the member did wrong. Any other failure is
-      // treated as "reachable", so a flaky network does not hide the control.
-      configured = fetchError.status !== 503
-    }
-    setState({ loading: false, configured, ...browser })
-  }, [])
+  const cardRef = useRef(null)
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    if (window.location.hash !== '#alerts') return
+    cardRef.current?.scrollIntoView({ block: 'start' })
+  }, [])
 
   useEffect(() => {
     if (helpDevice && !helpDialogRef.current?.open) {
@@ -101,79 +43,17 @@ export function NotificationSettings() {
     }
   }, [helpDevice])
 
-  const enable = async () => {
-    setBusy(true)
-    setError(null)
-    setMessage(null)
-    try {
-      const permission = await requestNotificationPermission()
-      if (!permission.granted) {
-        setError(
-          permission.error === 'Permission denied'
-            ? 'Notifications are blocked for this site. Allow them in your device settings, then try again.'
-            : 'Notifications were not allowed on this device.',
-        )
-        return
-      }
-      const { publicKey } = await apiGet('/push/vapid-key')
-      const result = await subscribeToPush(publicKey)
-      if (!result.success) {
-        setError(result.error || 'Could not turn notifications on.')
-        return
-      }
-      setMessage('Notifications are on for this device.')
-      await refresh()
-    } catch (thrown) {
-      setError(thrown.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const disable = async () => {
-    setBusy(true)
-    setError(null)
-    setMessage(null)
-    try {
-      const result = await unsubscribeFromPush()
-      if (!result.success) {
-        setError(result.error || 'Could not turn notifications off.')
-        return
-      }
-      setMessage('Notifications are off for this device.')
-      await refresh()
-    } catch (thrown) {
-      setError(thrown.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const sendTest = async () => {
-    setBusy(true)
-    setError(null)
-    setMessage(null)
-    try {
-      await apiPost('/push/test', {
-        title: 'YOUNGO Hub',
-        body: 'Notifications are working on this device.',
-      })
-      setMessage('Test sent — it should appear within a few seconds.')
-    } catch (thrown) {
-      setError(thrown.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
+  const { state, busy, message, error } = setup
   const supported = !state.loading && isPushSupported()
-  const installFirst = !state.loading && needsHomeScreenInstall()
-  const blocked = state.permission === 'denied'
+  const installFirst = setup.installFirst
+  const blocked = setup.blocked
   const openHelp = () => setHelpDevice(currentDevice())
   const closeHelp = () => helpDialogRef.current?.close()
 
   return (
     <section
+      ref={cardRef}
+      id="alerts"
       className="card notificationCard"
       aria-label="Notification settings"
     >
@@ -246,10 +126,28 @@ export function NotificationSettings() {
               admin team enables them once the server keys are in place.
             </p>
           ) : installFirst ? (
-            <p className="meta notificationHint">
-              Add the Hub to your iPhone or iPad Home Screen before turning
-              alerts on. Use the help button above for the steps.
-            </p>
+            <div className="notificationInstall">
+              <p className="meta notificationHint">
+                iPhone and iPad only deliver alerts from the Home Screen app,
+                not from a Safari tab. Follow these taps:
+              </p>
+              <ol className="notificationInstallSteps">
+                {DEVICE_GUIDES.ios.steps.map((step, index) => (
+                  <li key={step}>
+                    {index === 0 && (
+                      <Share size={16} strokeWidth={1.75} aria-hidden />
+                    )}
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <div className="rowGap notificationActions">
+                <Button variant="primary" onClick={openHelp}>
+                  <Smartphone size={16} strokeWidth={1.75} aria-hidden />
+                  Show me where to tap
+                </Button>
+              </div>
+            </div>
           ) : blocked ? (
             <p className="meta notificationHint">
               Notifications are blocked in this device’s settings. Use the help
@@ -259,19 +157,43 @@ export function NotificationSettings() {
             <div className="rowGap notificationActions">
               {state.subscribed ? (
                 <>
-                  <Button variant="secondary" onClick={disable} disabled={busy}>
+                  <Button
+                    variant="secondary"
+                    onClick={setup.disable}
+                    disabled={busy}
+                  >
                     <BellOff size={16} strokeWidth={1.75} aria-hidden />
                     Turn off
                   </Button>
-                  <Button variant="ghost" onClick={sendTest} disabled={busy}>
+                  <Button
+                    variant="ghost"
+                    onClick={setup.sendTest}
+                    disabled={busy}
+                  >
                     Send a test
                   </Button>
                 </>
               ) : (
-                <Button variant="primary" onClick={enable} disabled={busy}>
-                  <Bell size={16} strokeWidth={1.75} aria-hidden />
-                  Turn on notifications
-                </Button>
+                <>
+                  {setup.installAvailable && (
+                    <Button
+                      variant="secondary"
+                      onClick={setup.install}
+                      disabled={busy}
+                    >
+                      <Plus size={16} strokeWidth={1.75} aria-hidden />
+                      Install app
+                    </Button>
+                  )}
+                  <Button
+                    variant="primary"
+                    onClick={setup.enable}
+                    disabled={busy}
+                  >
+                    <Bell size={16} strokeWidth={1.75} aria-hidden />
+                    Turn on alerts
+                  </Button>
+                </>
               )}
             </div>
           )}
@@ -290,51 +212,5 @@ export function NotificationSettings() {
         />
       )}
     </section>
-  )
-}
-
-function NotificationGuide({ device, dialogRef, onClose, onClosed }) {
-  const guide = DEVICE_GUIDES[device] || DEVICE_GUIDES.desktop
-  const GuideIcon = guide.Icon
-
-  return (
-    <dialog
-      ref={dialogRef}
-      className="notificationHelpDialog"
-      aria-labelledby="notification-help-title"
-      onClose={onClosed}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
-    >
-      <div className="notificationGuideHeader">
-        <span className="iconTile" aria-hidden>
-          <GuideIcon size={21} strokeWidth={1.75} />
-        </span>
-        <div>
-          <p className="pageEyebrow">Detected device</p>
-          <h2 id="notification-help-title">{guide.title}</h2>
-        </div>
-        <button
-          type="button"
-          className="iconButton"
-          aria-label="Close notification help"
-          onClick={onClose}
-        >
-          <X size={18} strokeWidth={1.75} aria-hidden />
-        </button>
-      </div>
-      <ol className="notificationGuideSteps">
-        {guide.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-      <aside className="notificationDeviceNote">
-        <Info size={17} strokeWidth={1.75} aria-hidden />
-        <p className="meta">
-          {guide.note} Setup is separate on every browser and device.
-        </p>
-      </aside>
-    </dialog>
   )
 }

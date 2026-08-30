@@ -23,6 +23,7 @@ import {
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
 import { OpportunityReview } from '../components/OpportunityReview.jsx'
+import { PushBroadcast } from '../components/PushBroadcast.jsx'
 
 const ENTITY_OPTIONS = [
   { value: '', label: 'All account types' },
@@ -362,10 +363,12 @@ export function Admin() {
     <div>
       <PageHeader
         title="Admin"
-        description="Find accounts, manage lifecycle and responsibilities, and review audited changes."
+        description="Find accounts, send device alerts, manage lifecycle and responsibilities, and review audited changes."
       />
 
       {error && <ErrorCard message={error} />}
+
+      <PushBroadcast />
 
       <div className="catalogTools adminTools">
         <label className="searchInputWrap">
