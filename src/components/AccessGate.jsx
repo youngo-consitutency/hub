@@ -4,6 +4,7 @@ import { AuthGate } from './AuthGate.jsx'
 import { ResetPassword } from '../pages/ResetPassword.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { PublicSite } from '../pages/site/PublicSite.jsx'
+import { PlatformLanding } from '../pages/PlatformLanding.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { apiGet } from '../lib/api.js'
 import {
@@ -12,7 +13,7 @@ import {
   hasCachedSession,
   setSession,
 } from '../lib/session.js'
-import { usePath } from '../lib/router.js'
+import { navigate, usePath } from '../lib/router.js'
 
 /**
  * Controls access before the main application loads. Visitors first read the
@@ -90,12 +91,29 @@ export function AccessGate({ children }) {
     )
   }
 
+  // The public platform introduction is the signed-out front door. A signed-in
+  // member keeps the existing dashboard at the same URL.
+  if (path === '/' && !account) {
+    return <PlatformLanding />
+  }
+
   if (!policyOk) {
     return <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
   }
 
   if (!account) {
-    return <AuthGate onAuthenticated={(acc) => setAccount(acc)} />
+    const initialMode = path === '/join' ? 'register' : 'signin'
+    const returnPath = path === '/join' || path === '/signin' ? '/' : path
+    return (
+      <AuthGate
+        key={initialMode}
+        initialMode={initialMode}
+        onAuthenticated={(acc) => {
+          setAccount(acc)
+          navigate(returnPath)
+        }}
+      />
+    )
   }
 
   return <>{typeof children === 'function' ? children(account) : children}</>

@@ -92,6 +92,19 @@ test('the UI uses the operating system font stack', async () => {
   assert.match(tokens, /--font-ui:\s*\n?\s*system-ui/)
 })
 
+test('the Hub and constituency use the correct brand lockups', async () => {
+  const [brand, publicSite] = await Promise.all([
+    read('src/components/Brand.jsx'),
+    read('src/pages/site/PublicSite.jsx'),
+  ])
+
+  assert.match(brand, /youngo-hub-logo\.png/)
+  assert.match(brand, /youngo-logo\.png/)
+  assert.match(brand, /data-brand=/)
+  assert.doesNotMatch(brand, /className="brandHub"/)
+  assert.match(publicSite, /<Brand constituencyOnly \/>/)
+})
+
 test('catalog controls keep expanded filters below search and sort', async () => {
   const css = await read('src/styles/parts/layout.css')
   const popover = css.match(/(?:^|\n)\.filterMenuPanel\s*{([^}]+)}/)?.[1] || ''
@@ -855,6 +868,23 @@ test('landing-page onboarding steps adapt to their own available width', async (
     css,
     /@media \(max-width: 340px\)[\s\S]*?\.siteHeaderInner\s*{[^}]*padding-inline:\s*var\(--space-2\)/,
   )
+})
+
+test('the signed-out platform landing has distinct join and sign-in paths', async () => {
+  const [accessGate, authGate, landing] = await Promise.all([
+    read('src/components/AccessGate.jsx'),
+    read('src/components/AuthGate.jsx'),
+    read('src/pages/PlatformLanding.jsx'),
+  ])
+
+  assert.match(accessGate, /path === '\/' && !account/)
+  assert.match(accessGate, /<PlatformLanding \/>/)
+  assert.match(accessGate, /path === '\/join' \? 'register' : 'signin'/)
+  assert.match(authGate, /initialMode = 'register'/)
+  assert.match(landing, /href="\/join"/)
+  assert.match(landing, /href="\/signin"/)
+  assert.match(landing, /id="what-it-does"/)
+  assert.match(landing, /id="trust"/)
 })
 
 test('working-group contact cards keep their icon beside the group name', async () => {

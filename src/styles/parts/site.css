@@ -10,10 +10,6 @@
   background: var(--bg-page);
 }
 
-.siteShell .brandHub {
-  display: none;
-}
-
 .siteHeader {
   position: sticky;
   top: 0;
@@ -71,6 +67,17 @@
 
 .siteJoinBtn {
   flex: 0 0 auto;
+}
+
+.siteSignInLink {
+  flex: 0 0 auto;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .siteMenuButton,
@@ -815,6 +822,14 @@ main#site-main {
     margin-left: auto;
   }
 
+  .siteSignInLink {
+    margin-left: auto;
+  }
+
+  .siteSignInLink + .siteJoinBtn {
+    margin-left: 0;
+  }
+
   .siteMenuButton {
     display: inline-grid;
   }
@@ -927,6 +942,10 @@ main#site-main {
   .siteJoinBtn {
     padding-inline: var(--space-3);
     font-size: 12px;
+  }
+
+  .siteSignInLink {
+    display: none;
   }
 
   .siteJoinBtn svg {

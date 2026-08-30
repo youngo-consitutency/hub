@@ -187,10 +187,10 @@ export function SiteCoy() {
             team and take part.
           </p>
         </div>
-        <a className="btn btn-primary" href="/">
+        <A className="btn btn-primary" href="/join">
           Join YOUNGO Hub
           <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-        </a>
+        </A>
       </section>
     </div>
   )

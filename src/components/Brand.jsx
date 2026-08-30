@@ -1,10 +1,22 @@
-export function Brand() {
+export function Brand({ constituencyOnly = false }) {
+  const src = constituencyOnly
+    ? '/brand/youngo-logo.png'
+    : '/brand/youngo-hub-logo.png'
+
   return (
-    <span className="brandLockup" aria-hidden="true">
+    <span
+      className="brandLockup"
+      data-brand={constituencyOnly ? 'youngo' : 'hub'}
+      aria-hidden="true"
+    >
       <span className="brandLogoPlate">
-        <img src="/brand/youngo-logo.png" alt="" width="336" height="98" />
+        <img
+          src={src}
+          alt=""
+          width={constituencyOnly ? 336 : 768}
+          height={constituencyOnly ? 98 : 139}
+        />
       </span>
-      <span className="brandHub">Hub</span>
     </span>
   )
 }

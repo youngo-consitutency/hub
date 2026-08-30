@@ -55,16 +55,16 @@
 
 .brandLogoPlate img {
   display: block;
-  width: 103px;
   height: 30px;
   object-fit: contain;
 }
 
-.brandHub {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--text-1);
+.brandLockup[data-brand='hub'] .brandLogoPlate img {
+  width: 142px;
+}
+
+.brandLockup[data-brand='youngo'] .brandLogoPlate img {
+  width: 103px;
 }
 
 .skipLink {

@@ -434,6 +434,29 @@
   ],
   "events": [
     {
+      "slug": "agriculture-gys-arabic-consultation-2026",
+      "title": "Food & Agriculture WG — GYS 2026 Arabic consultation (held)",
+      "type": "wg_call",
+      "dayOffset": -2,
+      "hourUtc": 17,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "meetingUrl": "https://us06web.zoom.us/meeting/register/amvKhXw-Su6veI_HitzUvQ",
+      "description": "Held 28 Aug 2026, 20:00 AST (17:00 UTC). Global Youth Statement 2026 Food & Agriculture Arabic-language consultation. Zoom registration page still up as of 30 Aug — treat as trail, not an open RSVP."
+    },
+    {
+      "slug": "agriculture-gys-spanish-consultation-2026",
+      "title": "Food & Agriculture WG — GYS 2026 Spanish consultation (held)",
+      "type": "wg_call",
+      "dayOffset": -3,
+      "hourUtc": 21,
+      "durationMin": 90,
+      "wg": "agriculture",
+      "meetingUrl": "https://us06web.zoom.us/meeting/register/XphF6DjSTiSAZuE1-scoNw",
+      "description": "Held 27 Aug 2026, 16:00 Bogotá (21:00 UTC). Declaración Mundial de la Juventud (GYS) 2026, consulta en español. Zoom registration page still up as of 30 Aug — treat as trail, not an open RSVP."
+    },
+
+    {
       "slug": "agriculture-july-wg-sb64-debrief-held",
       "title": "Food & Agriculture WG — July call & SB64 debrief (held)",
       "type": "wg_call",
@@ -612,6 +635,17 @@
     }
   ],
   "submissions": [
+    {
+      "slug": "finance-cfwp-inputs-sept-2026",
+      "title": "Climate Finance Work Programme — YOUNGO inputs due 6 Sep",
+      "status": "open",
+      "deadlineInDays": 7,
+      "wg": "finance",
+      "draftUrl": "https://unfccc.int/topics/climate-finance/workstreams/work-programme-on-climate-finance",
+      "unfcccUrl": "https://unfccc.int/documents/659829",
+      "contributeNote": "Observer views on the vision, modalities, and elements of the Climate Finance Work Programme (Art. 9.1) are due 6 Sep 2026 to climatefinance@unfccc.int. Official call and co-chairs message (17 Jul 2026) are linked. Source: Finance & Markets WG, 29 Aug scan."
+    },
+
     {
       "slug": "adaptation-cw4-baku-nominations",
       "title": "Climate Week 4 (Baku) — Adaptation WG nominations",
@@ -921,6 +955,14 @@
     }
   ],
   "announcements": [
+    {
+      "slug": "climatecoy-website-2026",
+      "title": "New COY / GYS website is live",
+      "body": "YOUNGO Council (28 Aug 2026): the new Conference of Youth site covers COY 2026, LCOY, RCOY, and GYS at https://climatecoy.com/. History of COY10–COY21 remains on the UNFCCC COY page.",
+      "pinned": false,
+      "daysAgo": 2
+    },
+
     {
       "slug": "cop31-children-youth-pavilion-watch",
       "title": "Children & Youth Pavilion at COP31 — watch for confirmation",
@@ -1376,6 +1418,19 @@
     ]
   },
   "opportunities": [
+    {
+      "slug": "climatecoy-website-2026",
+      "kind": "opportunity",
+      "title": "Conference of Youth — new COY / LCOY / RCOY / GYS site",
+      "organizationName": "YOUNGO / Conference of Youth",
+      "summary": "New public site for COY 2026 (21st year), LCOY, RCOY, and GYS.",
+      "body": "Shared after YOUNGO Council on 28 Aug 2026. COY10–COY21 archive listing is on the UNFCCC COY page.",
+      "format": "online",
+      "region": "Global",
+      "linkUrl": "https://climatecoy.com/",
+      "daysAgo": 2
+    },
+
     {
       "slug": "pacific-climate-leaders-opportunity-2026",
       "kind": "opportunity",

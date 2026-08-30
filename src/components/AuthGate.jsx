@@ -29,8 +29,8 @@ import { RegisterOrgForm } from './auth/RegisterOrgForm.jsx'
 /**
  * Sign-in and registration for individuals and organisations.
  */
-export function AuthGate({ onAuthenticated }) {
-  const [mode, setMode] = useState('register')
+export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
+  const [mode, setMode] = useState(initialMode)
   const [login, setLogin] = useState({ email: '', password: '', website: '' })
   const [form, setForm] = useState(initialRegistrationForm)
   const [countryOptions, setCountryOptions] = useState([])
