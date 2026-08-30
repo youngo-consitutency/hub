@@ -129,6 +129,12 @@ Agents can triage the queue over a scoped Postgres role and the
 [`docs/AGENT_TICKET_ACCESS.md`](docs/AGENT_TICKET_ACCESS.md). Members can see
 their own reports on Profile.
 
+Agents that need to **add Hub information** (opportunities, resources, events,
+announcements) without a deploy use a Hub account and
+`scripts/agent/hub-content-mcp.mjs`. Writes go through the live member API, so
+review queues still apply. See
+[`docs/AGENT_CONTENT.md`](docs/AGENT_CONTENT.md).
+
 ## NGO postings
 
 Accredited organisations post events, online workshops, hackathons, open calls

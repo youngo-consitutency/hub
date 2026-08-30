@@ -19,42 +19,42 @@ const MODULES = [
   {
     icon: Calendar,
     title: 'Calendar',
-    body: 'Meetings, calls, events, and deadlines, with calendar links ready.',
+    body: 'See upcoming meetings, calls, events, and deadlines, with calendar links when you need them.',
   },
   {
     icon: Users,
     title: 'Working groups',
-    body: 'See what each group does and join the spaces that match your work.',
+    body: 'Read what each group does and how to join the spaces that already exist in YOUNGO.',
   },
   {
     icon: FileText,
     title: 'Submissions',
-    body: 'Follow open policy inputs and know when your contribution is needed.',
+    body: 'Follow open policy inputs and know when YOUNGO is asking for contributions.',
   },
   {
     icon: Gavel,
     title: 'Decisions',
-    body: 'Return to constituency decisions without searching old chat threads.',
+    body: 'Find constituency decisions without searching through old chat threads.',
   },
   {
     icon: BookOpen,
     title: 'Resources',
-    body: 'Keep reviewed knowledge findable when you need to brief or share.',
+    body: 'Look up reviewed knowledge when you need to brief someone or find your way in.',
   },
 ]
 
 const STEPS = [
   {
-    title: 'Create a free account',
-    body: 'Register as an individual or a youth-led organisation.',
+    title: 'Create a Hub account',
+    body: 'Register as an individual or a youth-led organisation so member information is available to you.',
   },
   {
-    title: 'Learn the shared ground',
-    body: 'Complete the short introduction to YOUNGO’s structure and principles.',
+    title: 'Learn YOUNGO’s shared ground',
+    body: 'A short introduction to structure and principles — the same ground the constituency already uses.',
   },
   {
-    title: 'Open the tools you need',
-    body: 'Choose interests and responsibilities; the matching workspaces appear.',
+    title: 'Find where you fit',
+    body: 'Follow the groups, calls, and deadlines that match your interests. The work itself stays with YOUNGO.',
   },
 ]
 
@@ -84,8 +84,8 @@ function PlatformHeader() {
           <Brand />
         </A>
         <nav className="platformNav" aria-label="Platform overview">
-          <a href="#what-it-does">What’s inside</a>
-          <a href="#how-it-works">How to join</a>
+          <a href="#what-it-does">What you can look up</a>
+          <a href="#how-it-works">Getting oriented</a>
           <a href="#trust">Trust</a>
           <A href="/about">About YOUNGO</A>
         </nav>
@@ -110,8 +110,8 @@ function PlatformFooter() {
         <div className="platformFooterLead">
           <Brand />
           <p>
-            The shared workspace for the children and youth constituency of the
-            UNFCCC.
+            An information tool for members of the children and youth
+            constituency of the UNFCCC.
           </p>
         </div>
         <nav aria-label="Platform links">
@@ -123,23 +123,23 @@ function PlatformFooter() {
         <div className="platformFooterActions">
           <A href="/signin">Sign in</A>
           <A className="btn btn-primary" href="/join">
-            Join YOUNGO
+            Join the Hub
             <ArrowRight size={15} strokeWidth={1.8} aria-hidden="true" />
           </A>
         </div>
       </div>
       <p className="platformFooterLegal">
-        Membership is free · Built with youth, for youth · YOUNGO Hub
+        Hub accounts are free · Built with youth, for youth · YOUNGO Hub
       </p>
     </footer>
   )
 }
 
-/** Signed-out front door: members sign in or register. */
+/** Signed-out front door: an information tool for how to engage with YOUNGO. */
 export function PlatformLanding({ onAuthenticated }) {
   useEffect(() => {
     const previousTitle = document.title
-    document.title = 'YOUNGO Hub · Sign in or join'
+    document.title = 'YOUNGO Hub · How to take part'
     return () => {
       document.title = previousTitle
     }
@@ -157,26 +157,27 @@ export function PlatformLanding({ onAuthenticated }) {
           <div className="platformHeroInner">
             <div className="platformHeroCopy">
               <p className="platformKicker">
-                Children and youth constituency · UNFCCC
+                For members of YOUNGO · UNFCCC children and youth constituency
               </p>
-              <h1 id="platform-title">Your YOUNGO workspace.</h1>
+              <h1 id="platform-title">See how to take part.</h1>
               <p className="platformHeroLead">
-                Sign in to continue, or create a free account. The Hub is where
-                members follow meetings, working groups, submissions, and
-                decisions — without hunting through chats.
+                The Hub is an information tool for YOUNGO members. It gathers
+                meetings, working groups, submissions, and decisions so you can
+                find where to engage — the work itself stays with the
+                constituency.
               </p>
               <ul className="platformBenefitList">
-                <li>See what needs you this week</li>
-                <li>Find the working group that fits</li>
-                <li>Keep policy work and decisions in one place</li>
+                <li>What is coming up this week</li>
+                <li>Which working groups you can join</li>
+                <li>Open submissions and recent decisions</li>
               </ul>
               <div className="platformHeroActions">
                 <A className="btn btn-primary platformHeroPrimary" href="/join">
-                  Join the Hub — it’s free
+                  Create a Hub account
                   <ArrowRight size={17} strokeWidth={1.8} aria-hidden="true" />
                 </A>
                 <a className="platformTextLink" href="#what-it-does">
-                  See what’s inside
+                  What you can look up
                   <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" />
                 </a>
               </div>
@@ -197,12 +198,13 @@ export function PlatformLanding({ onAuthenticated }) {
           <div className="platformSectionInner">
             <div className="platformSectionHeading">
               <div>
-                <p className="platformSectionLabel">Inside the Hub</p>
-                <h2 id="modules-title">The work, in one shared place.</h2>
+                <p className="platformSectionLabel">What you can look up</p>
+                <h2 id="modules-title">A map of how YOUNGO engages.</h2>
               </div>
               <p>
-                Members, contact points, YOUNGO teams, and organisations each
-                see the tools attached to their responsibilities.
+                Use it to find the meeting, the group, or the deadline. Members,
+                contact points, teams, and organisations each see the
+                information attached to their responsibilities.
               </p>
             </div>
             <ul className="platformModuleGrid">
@@ -227,12 +229,12 @@ export function PlatformLanding({ onAuthenticated }) {
           <div className="platformSectionInner">
             <div className="platformSectionHeading platformStepsHeading">
               <div>
-                <p className="platformSectionLabel">New here</p>
-                <h2 id="steps-title">From joining to contributing.</h2>
+                <p className="platformSectionLabel">Getting oriented</p>
+                <h2 id="steps-title">From curious to finding your place.</h2>
               </div>
               <p>
-                You do not need to understand the UN climate process before you
-                arrive. The Hub helps you learn your way into it.
+                You do not need to already know the UN climate process. The Hub
+                helps you see how YOUNGO works, so you can take part in it.
               </p>
             </div>
             <ol className="platformSteps">
@@ -284,14 +286,14 @@ export function PlatformLanding({ onAuthenticated }) {
 
         <section className="platformFinalCta" aria-labelledby="final-cta-title">
           <p className="platformSectionLabel">Ready when you are</p>
-          <h2 id="final-cta-title">Join the Hub, or sign in to continue.</h2>
+          <h2 id="final-cta-title">Look up how to engage, then take part.</h2>
           <p>
-            Membership is free. After you join, a short introduction unlocks the
-            rest of the workspace.
+            Hub accounts are free. A short introduction unlocks member
+            information. YOUNGO’s own processes stay where they are.
           </p>
           <div className="platformFinalActions">
             <A className="btn btn-primary" href="/join">
-              Join YOUNGO Hub
+              Create a Hub account
               <ArrowRight size={16} strokeWidth={1.8} aria-hidden="true" />
             </A>
             <a className="btn btn-secondary" href="#signin">
