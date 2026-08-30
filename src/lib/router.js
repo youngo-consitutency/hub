@@ -6,17 +6,34 @@ function emit() {
   listeners.forEach((l) => l())
 }
 
+function scrollAfterNavigate(to, scroll) {
+  if (!scroll) return
+  const hashIndex = String(to).indexOf('#')
+  const hash = hashIndex >= 0 ? String(to).slice(hashIndex) : ''
+  if (hash.length > 1) {
+    requestAnimationFrame(() => {
+      document.querySelector(hash)?.scrollIntoView({ block: 'start' })
+    })
+    return
+  }
+  window.scrollTo(0, 0)
+}
+
 export function navigate(to, { state = {}, scroll = true } = {}) {
-  if (to === window.location.pathname + window.location.search) return
+  if (
+    to ===
+    window.location.pathname + window.location.search + window.location.hash
+  )
+    return
   window.history.pushState(state, '', to)
   emit()
-  if (scroll) window.scrollTo(0, 0)
+  scrollAfterNavigate(to, scroll)
 }
 
 export function replace(to, { state = {}, scroll = true } = {}) {
   window.history.replaceState(state, '', to)
   emit()
-  if (scroll) window.scrollTo(0, 0)
+  scrollAfterNavigate(to, scroll)
 }
 
 if (typeof window !== 'undefined') {

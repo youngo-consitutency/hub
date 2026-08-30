@@ -96,10 +96,10 @@ export function SiteWorkingGroups() {
                     finish each group’s short introduction to get started.
                   </p>
                 </div>
-                <a className="btn btn-primary" href="/">
+                <A className="btn btn-primary" href="/join">
                   Join YOUNGO Hub
                   <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-                </a>
+                </A>
               </section>
 
               <p className="metaMuted sitePageFootnote">

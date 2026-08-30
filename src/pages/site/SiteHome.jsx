@@ -181,10 +181,10 @@ export function SiteHome() {
                 action around the world.
               </p>
               <div className="siteHeroActions">
-                <a className="btn btn-primary btn-glow" href="/">
+                <A className="btn btn-primary btn-glow" href="/join">
                   Join YOUNGO — it’s free
                   <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-                </a>
+                </A>
                 <A href="/about/working-groups" className="btn btn-secondary">
                   Explore working groups
                 </A>
@@ -353,10 +353,10 @@ export function SiteHome() {
               submissions, and more.
             </p>
           </div>
-          <a className="btn btn-primary" href="/">
+          <A className="btn btn-primary" href="/join">
             Join YOUNGO Hub
             <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-          </a>
+          </A>
         </section>
       </div>
     </>

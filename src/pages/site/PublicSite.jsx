@@ -59,7 +59,7 @@ function SiteHeader() {
           className="wordmark siteWordmark"
           aria-label="YOUNGO home"
         >
-          <Brand />
+          <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
           {NAV.map(({ href, label }) => (
@@ -73,10 +73,13 @@ function SiteHeader() {
             </A>
           ))}
         </nav>
-        <a className="btn btn-primary btn-sm siteJoinBtn" href="/">
-          Join or sign in
+        <A className="siteSignInLink" href="/signin">
+          Sign in
+        </A>
+        <A className="btn btn-primary btn-sm siteJoinBtn" href="/join">
+          Join YOUNGO
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
-        </a>
+        </A>
         <button
           ref={menuButtonRef}
           className="iconButton siteMenuButton"
@@ -122,7 +125,7 @@ function SiteFooter() {
     <footer className="siteFooter">
       <div className="siteFooterInner">
         <div className="siteFooterBrand">
-          <Brand />
+          <Brand constituencyOnly />
           <p className="meta">
             The official children and youth constituency of the UNFCCC. By
             youth, with youth, for youth.
@@ -139,7 +142,8 @@ function SiteFooter() {
         </nav>
         <div className="siteFooterCol">
           <h2>Get involved</h2>
-          <a href="/">Join or sign in</a>
+          <A href="/join">Join YOUNGO</A>
+          <A href="/signin">Sign in</A>
           <a
             href="https://unfccc.int/topics/action-for-climate-empowerment-children-and-youth/youth/youngo"
             target="_blank"
