@@ -843,13 +843,15 @@
       "country": "Türkiye",
       "city": "Antalya",
       "region": "weog",
-      "startsOn": null,
-      "endsOn": null,
-      "datesTbc": true,
-      "status": "announced",
+      "startsOn": "2026-11-05",
+      "endsOn": "2026-11-07",
+      "datesTbc": false,
+      "status": "applications_open",
       "reviewStatus": "approved",
       "organizerName": "YOUNGO",
-      "organizerOrg": "Children and Youth Constituency to the UNFCCC"
+      "organizerOrg": "Children and Youth Constituency to the UNFCCC",
+      "registerUrl": "https://docs.google.com/forms/d/e/1FAIpQLSczcCs1LIiua67wsR6kZN2yIzRo7Now-dSIPiZkwdscZHvNqg/viewform",
+      "websiteUrl": "https://climatecoy.com/"
     },
     {
       "slug": "rcoy-apac-2026",
@@ -955,6 +957,16 @@
     }
   ],
   "announcements": [
+    {
+      "slug": "coy21-delegates-eoi-2026",
+      "title": "Call for COY21 Delegates — Expression of Interest closes 5 September",
+      "body": "YOUNGO is inviting young climate leaders under 35 to join the COY21 Delegation in Antalya, Türkiye, 5–7 November 2026, ahead of COP31. Travel is self-funded. Selection balances gender, geography, and thematic expertise. Applications written with AI will be disqualified.",
+      "pinned": true,
+      "daysAgo": 0,
+      "ctaUrl": "https://docs.google.com/forms/d/e/1FAIpQLSczcCs1LIiua67wsR6kZN2yIzRo7Now-dSIPiZkwdscZHvNqg/viewform",
+      "ctaLabel": "Apply now",
+      "ctaDeadlineAt": "2026-09-05T23:59:00.000Z"
+    },
     {
       "slug": "climatecoy-website-2026",
       "title": "New COY / GYS website is live",
@@ -1418,6 +1430,22 @@
     ]
   },
   "opportunities": [
+    {
+      "slug": "coy21-delegates-eoi-2026",
+      "kind": "call",
+      "title": "Call for COY21 Delegates — Expression of Interest",
+      "organizationName": "YOUNGO / COY21",
+      "summary": "Join the COY21 Delegation in Antalya, Türkiye, 5–7 November 2026, ahead of COP31. Open to young climate leaders under 35. Deadline 5 September 2026.",
+      "body": "The 21st Conference of Children and Youth on Climate Change is YOUNGO’s global gathering immediately before COP31. Selected delegates represent their community, country, or region, contribute to workshops, advocacy, and Global Youth Statement co-creation, and take commitments home.\n\nEligibility: under 35 at the time of COY21; demonstrated climate action, youth leadership, or policy advocacy; commitment to pre- and post-COY21 preparations; ability to self-fund travel to Antalya. Final selection balances gender, geographic regions, and thematic expertise.\n\nThe use of AI to complete the application is prohibited — those applications will be disqualified. Circulated 30 August 2026 via YOUNGO / COY21 channels.",
+      "format": "in_person",
+      "location": "Antalya, Türkiye",
+      "region": "Global",
+      "startsAt": "2026-11-05T00:00:00.000Z",
+      "endsAt": "2026-11-07T23:59:00.000Z",
+      "deadlineAt": "2026-09-05T23:59:00.000Z",
+      "linkUrl": "https://docs.google.com/forms/d/e/1FAIpQLSczcCs1LIiua67wsR6kZN2yIzRo7Now-dSIPiZkwdscZHvNqg/viewform",
+      "daysAgo": 0
+    },
     {
       "slug": "climatecoy-website-2026",
       "kind": "opportunity",
