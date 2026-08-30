@@ -13,9 +13,11 @@ export function ForgotPasswordForm({
   setLog,
   onSubmit,
   onBack,
+  className = 'authForm card',
+  hideOperatorNote = false,
 }) {
   return (
-    <form className="authForm card" onSubmit={onSubmit} noValidate>
+    <form className={className} onSubmit={onSubmit} noValidate>
       <FormAlert>{error}</FormAlert>
       <label className={fieldClass(fields.email)}>
         <span>Email *</span>
@@ -42,11 +44,13 @@ export function ForgotPasswordForm({
           {forgotMsg}
         </p>
       )}
-      <p className="metaMuted">
-        Until email delivery is connected, reset links appear in Railway
-        deploy/runtime logs for operators. Admins can also issue links from
-        Admin.
-      </p>
+      {hideOperatorNote ? null : (
+        <p className="metaMuted">
+          Until email delivery is connected, reset links appear in Railway
+          deploy/runtime logs for operators. Admins can also issue links from
+          Admin.
+        </p>
+      )}
       <div className="detailActions">
         <Button type="button" variant="secondary" onClick={onBack}>
           <ArrowLeft size={18} strokeWidth={2} aria-hidden />

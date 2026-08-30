@@ -11,9 +11,10 @@ export function SignInForm({
   setLog,
   onSubmit,
   onForgot,
+  className = 'authForm card',
 }) {
   return (
-    <form className="authForm card" onSubmit={onSubmit} noValidate>
+    <form className={className} onSubmit={onSubmit} noValidate>
       <FormAlert>{error}</FormAlert>
       <label className={fieldClass(fields.email)}>
         <span>Email *</span>
