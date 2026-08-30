@@ -965,6 +965,22 @@ test('route peeks fill and centre the phone viewport', async () => {
   )
 })
 
+test('the mobile header clears the iPhone status bar', async () => {
+  const css = await read('src/styles/parts/shell.css')
+  const topbar =
+    css.match(
+      /@media \(max-width: 900px\)\s*{[\s\S]*?\.topbar\s*{([^}]+)}/,
+    )?.[1] || ''
+  const sheet = css.match(/(?:^|\n)\.sheet\s*{([^}]+)}/)?.[1] || ''
+
+  assert.match(topbar, /padding:\s*calc\(12px \+ env\(safe-area-inset-top\)\)/)
+  assert.match(sheet, /top:\s*calc\(68px \+ env\(safe-area-inset-top\)\)/)
+  assert.match(
+    sheet,
+    /max-height:\s*calc\(100dvh - 84px - env\(safe-area-inset-top\)\)/,
+  )
+})
+
 test('calendar agenda groups natural cards and keeps range filters visible', async () => {
   const calendar = await read('src/pages/Calendar.jsx')
   const css = await read('src/styles/parts/calendar.css')
