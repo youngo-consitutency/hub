@@ -64,6 +64,43 @@ Reload MCP servers after setting the variables. Run locally with:
 node scripts/agent/hub-content-mcp.mjs
 ```
 
+### Railway HTTP (Grok Build on a phone)
+
+The stdio process only works on the machine that can spawn `node`. Grok on a
+phone needs a public Streamable HTTP endpoint. Host `mcp-content/` as its own
+Railway service in the GYC AI Labs project — **not** on the Hub web service, and
+**never** with `DATABASE_URL`.
+
+```bash
+export MCP_ALLOW_ANONYMOUS=1   # phone Grok Connectors: no OAuth, no bearer
+export HUB_ORIGIN="https://youngohub.org"
+export HUB_EMAIL="content-bot@example.org"
+export HUB_PASSWORD="..."
+node mcp-content/server.mjs
+```
+
+Grok does not use Hub OAuth. The service signs in with `HUB_EMAIL` /
+`HUB_PASSWORD` on the server. Grok Connectors only need a public `/mcp` URL.
+
+If `MCP_ALLOW_ANONYMOUS` is off, pass the shared secret on the URL instead of
+OAuth: `https://<host>/mcp?token=<MCP_TOKEN>` or `/t/<MCP_TOKEN>/mcp`.
+
+Grok Build CLI (anonymous):
+
+```toml
+[mcp_servers.youngo-hub-content-http]
+url = "https://<railway-domain>/mcp"
+enabled = true
+```
+
+Production (GYC AI Labs project, service `youngo-hub-content-mcp`):
+
+- URL: `https://youngo-hub-content-mcp-production.up.railway.app/mcp`
+- Client auth: none when `MCP_ALLOW_ANONYMOUS=1`
+
+Anyone who can reach that URL can use the Hub account configured on the
+service. Prefer a dedicated content-bot seat, not a personal admin login.
+
 ## 3. Tools
 
 - `whoami` — what this account is allowed to do
@@ -71,11 +108,32 @@ node scripts/agent/hub-content-mcp.mjs
 - `list_opportunities` / `create_opportunity` / `list_org_opportunities` / `withdraw_opportunity`
 - `list_opportunity_review` / `review_opportunity` — Membership Team / admin
 - `submit_resource` / `list_my_resource_submissions`
-- `list_content` / `create_content_draft` / `submit_content_draft` / `review_content_draft` / `publish_content_draft`
+- `list_content` / `get_content` / `create_content_draft` / `submit_content_draft` / `review_content_draft` / `publish_content_draft`
+- `update_content` — patch a live event or announcement by slug (`mode=draft` or `mode=apply`)
+- `unpublish_content` — remove a live event or announcement from the calendar/board; keep history
 
 Postings and resources still go through the Hub’s review rules. The first
 opportunity from an organisation is held for review. Events and announcements
 are not live until someone with publish permission publishes the approved draft.
+
+### Same-slug publish already replaced live items
+
+`publish_content_draft` writes `hub_content_publications` with primary key
+`(content_type, content_key)` and `ON CONFLICT DO UPDATE`. The in-memory store
+merges published payloads over fixture events/announcements by slug. A second
+publish of the same slug replaces the live item; it does not create a duplicate.
+
+`update_content` reuses that replacement path:
+
+- `mode=draft` (default, `content.draft`) creates a draft targeting the live
+  slug. Submit / review / publish still apply. Publishing that draft replaces
+  the live record.
+- `mode=apply` (`content.review` **and** `content.publish`) writes through now,
+  records who/when/before/after in the audit log, and upserts the same slug.
+- `unpublish_content` (`content.publish`) hides the slug from the live
+  calendar/board, including fixture-backed items, without deleting the
+  publication row. Publishing or applying the same slug later clears unpublished
+  status and restores one live item.
 
 ## 4. What an agent should and should not do
 

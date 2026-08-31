@@ -49,6 +49,7 @@ const WRITABLE_ACCOUNT_COLUMNS = new Set([
   'membership_ended_at',
   'membership_end_reason',
   'last_login_at',
+  'email_verified_at',
 ])
 
 export async function setAccountFields(id, fields) {
@@ -109,7 +110,7 @@ export async function listAccountsForAdmin() {
               nationality, wg_interests, course_passed_at, course_score, verified_at,
               membership_track, constituency_work_status, hub_access_status, membership_status,
               onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
-              created_at, last_login_at, phone
+              created_at, last_login_at, phone, email_verified_at
        FROM hub_accounts
        ORDER BY created_at DESC
        LIMIT 500`,
@@ -200,7 +201,7 @@ export async function queryAccountsForAdmin({
               nationality, wg_interests, course_passed_at, course_score, verified_at,
               membership_track, constituency_work_status, hub_access_status, membership_status,
               onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
-              created_at, last_login_at, phone
+              created_at, last_login_at, phone, email_verified_at
        FROM hub_accounts
        ${filter}
        ORDER BY ${ACCOUNT_SORTS[cleanSort]}

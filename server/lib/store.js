@@ -160,6 +160,8 @@ function materialize(raw, now = new Date()) {
 const data = materialize(raw)
 let publishedEvents = new Map()
 let publishedAnnouncements = new Map()
+let unpublishedEventSlugs = new Set()
+let unpublishedAnnouncementSlugs = new Set()
 
 function mergedBySlug(base, additions) {
   const items = new Map(base.map((item) => [item.slug, item]))
@@ -168,11 +170,15 @@ function mergedBySlug(base, additions) {
 }
 
 function allEvents() {
-  return mergedBySlug(data.events, publishedEvents)
+  return mergedBySlug(data.events, publishedEvents).filter(
+    (event) => !unpublishedEventSlugs.has(event.slug),
+  )
 }
 
 function allAnnouncements() {
-  return mergedBySlug(data.announcements, publishedAnnouncements)
+  return mergedBySlug(data.announcements, publishedAnnouncements).filter(
+    (item) => !unpublishedAnnouncementSlugs.has(item.slug),
+  )
 }
 
 export function setPublishedContent(items = []) {
@@ -214,6 +220,21 @@ export function setPublishedContent(items = []) {
   }
   publishedEvents = nextEvents
   publishedAnnouncements = nextAnnouncements
+}
+
+export function setUnpublishedContent(items = []) {
+  const nextEvents = new Set()
+  const nextAnnouncements = new Set()
+  for (const item of items) {
+    if (item?.contentType === 'event' && item.contentKey) {
+      nextEvents.add(item.contentKey)
+    }
+    if (item?.contentType === 'announcement' && item.contentKey) {
+      nextAnnouncements.add(item.contentKey)
+    }
+  }
+  unpublishedEventSlugs = nextEvents
+  unpublishedAnnouncementSlugs = nextAnnouncements
 }
 
 export function getFeed(now = new Date()) {
@@ -281,6 +302,16 @@ export function getGroup(slug, now = new Date()) {
 
 export function getEvent(slug) {
   return allEvents().find((e) => e.slug === slug) || null
+}
+
+export function getAnnouncement(slug) {
+  return allAnnouncements().find((item) => item.slug === slug) || null
+}
+
+export function getLiveContent(contentType, slug) {
+  if (contentType === 'event') return getEvent(slug)
+  if (contentType === 'announcement') return getAnnouncement(slug)
+  return null
 }
 
 export function listAnnouncements() {

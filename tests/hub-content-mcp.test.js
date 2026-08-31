@@ -13,16 +13,20 @@ import {
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
 test('content MCP talks to the Hub HTTP API and not the database', async () => {
-  const [server, client] = await Promise.all([
+  const [stdio, client, http] = await Promise.all([
     read('scripts/agent/hub-content-mcp.mjs'),
-    read('scripts/agent/hubContentClient.mjs'),
+    read('mcp-content/lib/client.mjs'),
+    read('mcp-content/server.mjs'),
   ])
-  assert.match(server, /youngo-hub-content/)
-  assert.match(server, /HUB_EMAIL/)
-  assert.match(server, /HUB_PASSWORD/)
-  assert.doesNotMatch(server, /from ['"]pg['"]/)
+  assert.match(stdio, /HUB_EMAIL/)
+  assert.match(stdio, /HUB_PASSWORD/)
+  assert.doesNotMatch(stdio, /from ['"]pg['"]/)
   assert.doesNotMatch(client, /from ['"]pg['"]/)
-  assert.doesNotMatch(client, /getPool|DATABASE_URL/)
+  assert.doesNotMatch(client, /getPool/)
+  assert.doesNotMatch(client, /process\.env\.DATABASE_URL/)
+  assert.doesNotMatch(http, /from ['"]pg['"]/)
+  assert.doesNotMatch(http, /getPool/)
+  assert.doesNotMatch(http, /process\.env\.DATABASE_URL/)
   assert.match(client, /\/api\/auth\/login/)
   assert.match(client, /\/api\/member\/ngo\/opportunities/)
   assert.match(client, /\/api\/member\/resources\/submissions/)
@@ -39,6 +43,9 @@ test('content MCP exposes posting, resource, and governed content tools', () => 
     'submit_resource',
     'create_content_draft',
     'publish_content_draft',
+    'get_content',
+    'update_content',
+    'unpublish_content',
   ]) {
     assert.ok(names.includes(name), name)
   }
@@ -50,6 +57,7 @@ test('catalog options reuse Hub posting and resource lists', () => {
     options.opportunityKinds.some((item) => item.value === 'opportunity'),
   )
   assert.ok(options.eventTypes.includes('wg_call'))
+  assert.ok(options.workingGroups.some((item) => item.slug === 'agriculture'))
   assert.ok(options.resourceTopics.includes('Youth and community'))
 })
 
@@ -171,4 +179,95 @@ test('create_content_draft fills a slug from the title when omitted', async () =
   const posted = JSON.parse(calls.at(-1).body)
   assert.equal(posted.contentType, 'announcement')
   assert.equal(posted.payload.slug, 'open-call-for-gys-inputs')
+})
+
+test('get_content, update_content apply, and unpublish_content call live member APIs', async () => {
+  const calls = []
+  const fetchImpl = async (url, options = {}) => {
+    const href = String(url)
+    calls.push({
+      href,
+      method: options.method || 'GET',
+      body: options.body,
+    })
+    if (href.endsWith('/api/auth/me')) {
+      return {
+        ok: true,
+        json: async () => ({ account: { id: 'admin-1' } }),
+      }
+    }
+    if (href.includes('/api/member/content/live/event/ace-follow-up-call')) {
+      if ((options.method || 'GET') === 'PATCH') {
+        return {
+          ok: true,
+          json: async () => ({
+            mode: 'apply',
+            slug: 'ace-follow-up-call',
+            item: {
+              slug: 'ace-follow-up-call',
+              title: 'ACE follow-up (updated)',
+            },
+          }),
+        }
+      }
+      if (href.endsWith('/unpublish')) {
+        return {
+          ok: true,
+          json: async () => ({ unpublished: true, slug: 'ace-follow-up-call' }),
+        }
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          contentType: 'event',
+          slug: 'ace-follow-up-call',
+          item: { slug: 'ace-follow-up-call', title: 'ACE follow-up call' },
+        }),
+      }
+    }
+    throw new Error(`unexpected ${href} ${options.method}`)
+  }
+
+  const client = createHubClient({
+    origin: 'https://youngohub.org',
+    token: 'already-signed-in',
+    fetchImpl,
+  })
+
+  const loaded = await callHubContentTool(
+    'get_content',
+    { contentType: 'event', slug: 'ace-follow-up-call' },
+    client,
+  )
+  assert.equal(loaded.item.slug, 'ace-follow-up-call')
+
+  await callHubContentTool(
+    'update_content',
+    {
+      contentType: 'event',
+      slug: 'ace-follow-up-call',
+      mode: 'apply',
+      payload: { title: 'ACE follow-up (updated)' },
+    },
+    client,
+  )
+  await callHubContentTool(
+    'unpublish_content',
+    {
+      contentType: 'event',
+      slug: 'ace-follow-up-call',
+      reason: 'Duplicate listing',
+    },
+    client,
+  )
+
+  assert.equal(calls[1].method, 'GET')
+  assert.match(
+    calls[1].href,
+    /\/api\/member\/content\/live\/event\/ace-follow-up-call$/,
+  )
+  assert.equal(calls[2].method, 'PATCH')
+  assert.equal(JSON.parse(calls[2].body).mode, 'apply')
+  assert.equal(calls[3].method, 'POST')
+  assert.match(calls[3].href, /\/unpublish$/)
 })

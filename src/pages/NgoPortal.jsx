@@ -16,8 +16,6 @@ import {
   TbAward as Award,
   TbRosetteDiscountCheck as BadgeCheck,
   TbUserPlus as UserPlus,
-  TbCopy as Copy,
-  TbCheck as Check,
 } from 'react-icons/tb'
 
 export function NgoPortal() {
@@ -39,7 +37,6 @@ export function NgoPortal() {
   // Seat role the organisation intends to grant, per pending request.
   const [decisionRole, setDecisionRole] = useState({})
   const [inviteResult, setInviteResult] = useState(null)
-  const [copied, setCopied] = useState(false)
   const [acceptMsg, setAcceptMsg] = useState(null)
   const [inviteToken, setInviteToken] = useState(null)
   const [invitePreview, setInvitePreview] = useState(null)
@@ -146,13 +143,6 @@ export function NgoPortal() {
     } catch (err) {
       setError(err.message)
     }
-  }
-
-  const copyLink = async () => {
-    if (!inviteResult?.inviteUrl) return
-    await navigator.clipboard.writeText(inviteResult.inviteUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -543,27 +533,6 @@ export function NgoPortal() {
             {data.permissions?.canManageSeats && inviteResult && (
               <div className="card cardTight" style={{ marginTop: 12 }}>
                 <p className="meta">{inviteResult.note}</p>
-                {inviteResult.inviteUrl && (
-                  <div
-                    className="rowBetween"
-                    style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}
-                  >
-                    <code
-                      className="mono"
-                      style={{ fontSize: 12, wordBreak: 'break-all' }}
-                    >
-                      {inviteResult.inviteUrl}
-                    </code>
-                    <Button sm variant="secondary" onClick={copyLink}>
-                      {copied ? (
-                        <Check size={16} strokeWidth={1.75} aria-hidden />
-                      ) : (
-                        <Copy size={16} strokeWidth={1.75} aria-hidden />
-                      )}
-                      {copied ? 'Copied' : 'Copy link'}
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
           </Section>

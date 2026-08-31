@@ -5,15 +5,24 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { getAccessProfile, hasCapability } from '../server/lib/access.js'
 import {
+  applyLiveContentUpdate,
   createContentRevision,
+  draftLiveContentUpdate,
   getContentRevision,
+  getLiveContentRecord,
   listContentPublications,
   publishContentRevision,
   reviewContentRevision,
   submitContentRevision,
+  unpublishLiveContent,
   updateContentRevision,
 } from '../server/lib/contentWorkflow.js'
-import { getEvent, getFeed, setPublishedContent } from '../server/lib/store.js'
+import {
+  getEvent,
+  getFeed,
+  setPublishedContent,
+  setUnpublishedContent,
+} from '../server/lib/store.js'
 import { validateEditableContent } from '../shared/contentValidation.js'
 
 const groups = ['ace', 'finance', 'adaptation', 'health']
@@ -92,6 +101,7 @@ test('content follows draft, independent review, and publish before changing the
   process.env.CONTENT_WORKFLOW_DIR = directory
   t.after(async () => {
     setPublishedContent([])
+    setUnpublishedContent([])
     if (previous == null) delete process.env.CONTENT_WORKFLOW_DIR
     else process.env.CONTENT_WORKFLOW_DIR = previous
     await rm(directory, { recursive: true, force: true })
@@ -145,6 +155,7 @@ test('requested changes return to the editor and published announcements reach t
   process.env.CONTENT_WORKFLOW_DIR = directory
   t.after(async () => {
     setPublishedContent([])
+    setUnpublishedContent([])
     if (previous == null) delete process.env.CONTENT_WORKFLOW_DIR
     else process.env.CONTENT_WORKFLOW_DIR = previous
     await rm(directory, { recursive: true, force: true })
@@ -193,4 +204,153 @@ test('requested changes return to the editor and published announcements reach t
     ),
     true,
   )
+})
+
+test('same-slug publish replaces the live event; apply patches without duplicating', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'youngo-live-update-'))
+  const previous = process.env.CONTENT_WORKFLOW_DIR
+  process.env.CONTENT_WORKFLOW_DIR = directory
+  t.after(async () => {
+    setPublishedContent([])
+    setUnpublishedContent([])
+    if (previous == null) delete process.env.CONTENT_WORKFLOW_DIR
+    else process.env.CONTENT_WORKFLOW_DIR = previous
+    await rm(directory, { recursive: true, force: true })
+  })
+
+  const draft = await createContentRevision({
+    actorId: 'editor-a',
+    contentType: 'event',
+    payload: eventPayload(),
+    groupSlugs: groups,
+  })
+  await submitContentRevision({ id: draft.id, actorId: 'editor-a' })
+  await reviewContentRevision({
+    id: draft.id,
+    actorId: 'publisher-b',
+    decision: 'approve',
+  })
+  await publishContentRevision({ id: draft.id, actorId: 'publisher-b' })
+  assert.equal((await listContentPublications()).length, 1)
+
+  const live = await getLiveContentRecord('event', 'finance-review-call')
+  assert.equal(live.item.title, 'Finance review call')
+  assert.equal(live.item.meetingUrl, 'https://example.org/meeting')
+
+  const applied = await applyLiveContentUpdate({
+    actorId: 'publisher-b',
+    contentType: 'event',
+    slug: 'finance-review-call',
+    payload: {
+      title: 'Finance review call (updated)',
+      startsAt: '2026-08-14T13:00:00.000Z',
+      endsAt: '2026-08-14T14:00:00.000Z',
+      meetingUrl: 'https://example.org/meeting-2',
+    },
+    groupSlugs: groups,
+  })
+  assert.equal(applied.slug, 'finance-review-call')
+  assert.equal(applied.item.title, 'Finance review call (updated)')
+  assert.equal(applied.item.meetingUrl, 'https://example.org/meeting-2')
+  assert.equal(applied.item.type, 'wg_call')
+  assert.equal(
+    getEvent('finance-review-call').description,
+    'Review the current finance work.',
+  )
+  assert.equal((await listContentPublications()).length, 1)
+  assert.equal(
+    (await listContentPublications()).filter(
+      (item) => item.contentKey === 'finance-review-call',
+    ).length,
+    1,
+  )
+
+  await assert.rejects(
+    applyLiveContentUpdate({
+      actorId: 'publisher-b',
+      contentType: 'event',
+      slug: 'finance-review-call',
+      payload: { type: 'party' },
+      groupSlugs: groups,
+    }),
+    (error) => error.code === 'validation' && Boolean(error.fields?.type),
+  )
+  await assert.rejects(
+    applyLiveContentUpdate({
+      actorId: 'publisher-b',
+      contentType: 'event',
+      slug: 'finance-review-call',
+      payload: { startsAt: 'next Tuesday' },
+      groupSlugs: groups,
+    }),
+    (error) => error.code === 'validation' && Boolean(error.fields?.startsAt),
+  )
+  await assert.rejects(
+    applyLiveContentUpdate({
+      actorId: 'publisher-b',
+      contentType: 'event',
+      slug: 'finance-review-call',
+      payload: {},
+      groupSlugs: groups,
+    }),
+    (error) => error.code === 'validation',
+  )
+  assert.equal(getEvent('finance-review-call').type, 'wg_call')
+  assert.equal(
+    getEvent('finance-review-call').title,
+    'Finance review call (updated)',
+  )
+
+  const queued = await draftLiveContentUpdate({
+    actorId: 'editor-a',
+    contentType: 'event',
+    slug: 'finance-review-call',
+    payload: { title: 'Finance review call (queued)' },
+    groupSlugs: groups,
+  })
+  assert.equal(queued.status, 'draft')
+  assert.equal(queued.contentKey, 'finance-review-call')
+  assert.equal(
+    getEvent('finance-review-call').title,
+    'Finance review call (updated)',
+  )
+
+  const unpublished = await unpublishLiveContent({
+    actorId: 'publisher-b',
+    contentType: 'event',
+    slug: 'finance-review-call',
+    reason: 'Session already held.',
+  })
+  assert.equal(unpublished.unpublished, true)
+  assert.equal(getEvent('finance-review-call'), null)
+  assert.equal((await listContentPublications())[0].status, 'unpublished')
+  await assert.rejects(
+    getLiveContentRecord('event', 'finance-review-call'),
+    (error) => error.code === 'not_found',
+  )
+})
+
+test('unpublish hides a fixture event until overlays are cleared', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'youngo-unpublish-'))
+  const previous = process.env.CONTENT_WORKFLOW_DIR
+  process.env.CONTENT_WORKFLOW_DIR = directory
+  t.after(async () => {
+    setPublishedContent([])
+    setUnpublishedContent([])
+    if (previous == null) delete process.env.CONTENT_WORKFLOW_DIR
+    else process.env.CONTENT_WORKFLOW_DIR = previous
+    await rm(directory, { recursive: true, force: true })
+  })
+
+  assert.ok(getEvent('constituency-call-live'))
+  await unpublishLiveContent({
+    actorId: 'admin-1',
+    contentType: 'event',
+    slug: 'constituency-call-live',
+    reason: 'Hide demo event from the live calendar.',
+  })
+  assert.equal(getEvent('constituency-call-live'), null)
+  const history = await listContentPublications()
+  assert.equal(history[0].contentKey, 'constituency-call-live')
+  assert.equal(history[0].status, 'unpublished')
 })

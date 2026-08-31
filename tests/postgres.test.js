@@ -32,12 +32,15 @@ test(
      FROM information_schema.columns
      WHERE table_schema = 'public'
        AND (
-         (table_name = 'hub_accounts' AND column_name IN ('password_hash', 'password_salt', 'role', 'member_status'))
+         (table_name = 'hub_accounts' AND column_name IN ('password_hash', 'password_salt', 'role', 'member_status', 'email_verified_at'))
          OR (table_name = 'hub_sessions' AND column_name IN ('token', 'expires_at'))
          OR (table_name = 'password_reset_tokens' AND column_name IN ('token_hash', 'expires_at', 'used_at'))
          OR (table_name = 'ngo_seats' AND column_name IN ('invite_token_hash', 'invite_expires_at', 'seat_role', 'status'))
          OR (table_name = 'hub_content_revisions' AND column_name IN ('content_type', 'payload', 'status', 'created_by'))
          OR (table_name = 'hub_content_publications' AND column_name IN ('content_type', 'content_key', 'payload', 'revision_id'))
+         OR (table_name = 'notification_preferences' AND column_name IN ('category', 'enabled'))
+         OR (table_name = 'notification_outbox' AND column_name IN ('deduplication_key', 'status', 'payload'))
+         OR (table_name = 'email_suppressions' AND column_name IN ('address_hash', 'reason'))
        )`,
     )
     const actualColumns = new Set(
@@ -48,6 +51,7 @@ test(
       'hub_accounts.password_salt',
       'hub_accounts.role',
       'hub_accounts.member_status',
+      'hub_accounts.email_verified_at',
       'hub_sessions.token',
       'hub_sessions.expires_at',
       'password_reset_tokens.token_hash',
@@ -65,6 +69,13 @@ test(
       'hub_content_publications.content_key',
       'hub_content_publications.payload',
       'hub_content_publications.revision_id',
+      'notification_preferences.category',
+      'notification_preferences.enabled',
+      'notification_outbox.deduplication_key',
+      'notification_outbox.status',
+      'notification_outbox.payload',
+      'email_suppressions.address_hash',
+      'email_suppressions.reason',
     ]
     for (const column of requiredColumns) {
       assert.ok(actualColumns.has(column), `missing migrated column: ${column}`)
@@ -78,7 +89,9 @@ test(
          'idx_ngo_seats_invite_hash',
          'idx_ngo_seats_active_member',
          'password_reset_tokens_token_hash_key',
-         'uq_push_subscriptions_endpoint'
+         'uq_push_subscriptions_endpoint',
+         'idx_notification_outbox_due',
+         'idx_notification_outbox_account_active'
        )`,
     )
     assert.deepEqual(
@@ -88,6 +101,8 @@ test(
         'idx_ngo_seats_active_member',
         'password_reset_tokens_token_hash_key',
         'uq_push_subscriptions_endpoint',
+        'idx_notification_outbox_due',
+        'idx_notification_outbox_account_active',
       ]),
     )
   },
