@@ -57,9 +57,9 @@ function SiteHeader() {
         <A
           href="/about"
           className="wordmark siteWordmark"
-          aria-label="YOUNGO home"
+          aria-label="YOUNGO Hub home"
         >
-          <Brand constituencyOnly />
+          <Brand />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
           {NAV.map(({ href, label }) => (

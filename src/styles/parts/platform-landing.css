@@ -110,30 +110,44 @@
 
 .platformHero {
   position: relative;
-  isolation: isolate;
   overflow: clip;
   display: grid;
   align-items: start;
   border-bottom: 1px solid var(--landing-line);
-  background: var(--landing-canvas);
+  background:
+    linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--landing-teal) 62%, var(--brand-surface)) 0%,
+      color-mix(in srgb, var(--landing-lime) 52%, var(--brand-surface)) 36%,
+      color-mix(in srgb, var(--landing-forest) 8%, var(--landing-canvas)) 64%,
+      var(--landing-canvas) 100%
+    );
 }
 
 .platformHero::before {
   position: absolute;
-  z-index: 0;
-  right: auto;
-  bottom: -10%;
-  left: -4%;
-  width: min(70%, 720px);
-  height: 68%;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
   content: '';
   pointer-events: none;
-  opacity: 0.2;
-  background: url('/brand/youngo-logo.png') left center / contain no-repeat;
+  background: linear-gradient(
+    90deg,
+    var(--landing-teal) 0%,
+    var(--landing-lime) 46%,
+    var(--landing-forest) 100%
+  );
 }
 
-[data-theme='dark'] .platformHero::before {
-  opacity: 0.28;
+[data-theme='dark'] .platformHero {
+  background:
+    linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--landing-teal) 28%, var(--landing-canvas)) 0%,
+      color-mix(in srgb, var(--landing-lime) 20%, var(--landing-canvas)) 38%,
+      var(--landing-canvas) 74%
+    );
 }
 
 .platformHeroInner,
@@ -726,16 +740,6 @@
 @media (max-width: 800px) {
   .platformHeaderInner {
     min-height: 64px;
-  }
-
-  .platformHero::before {
-    top: 6%;
-    right: -18%;
-    bottom: auto;
-    left: auto;
-    width: min(92%, 420px);
-    height: 32%;
-    opacity: 0.14;
   }
 
   .platformHeroInner {

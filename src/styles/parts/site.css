@@ -265,32 +265,6 @@ main#site-main {
   }
 }
 
-.siteHeroFacts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin: clamp(28px, 5vw, 48px) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.siteHeroFacts li {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-card);
-}
-
-.siteFactValue {
-  color: var(--accent);
-  font-size: 20px;
-  font-weight: 700;
-}
-
 /* ── Public page structure ────────────────────────── */
 .siteSection {
   margin-top: clamp(40px, 6vw, 64px);
@@ -887,7 +861,6 @@ main#site-main {
     color: var(--on-accent-tint);
   }
 
-  .siteHeroFacts,
   .siteMissionGrid,
   .siteFormatGrid,
   .siteContactGrid {
@@ -974,14 +947,6 @@ main#site-main {
 
   .siteJoinBtn svg {
     display: none;
-  }
-
-  .siteHeroFacts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .siteFactValue {
-    font-size: 18px;
   }
 
   .siteMobileNav {
