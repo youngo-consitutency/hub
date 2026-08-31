@@ -496,7 +496,11 @@
 }
 
 .platformNetworkCard:hover {
-  border-color: color-mix(in srgb, var(--landing-forest) 42%, var(--landing-line));
+  border-color: color-mix(
+    in srgb,
+    var(--landing-forest) 42%,
+    var(--landing-line)
+  );
 }
 
 .platformNetworkCard:hover .platformNetworkHost svg {
