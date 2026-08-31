@@ -179,12 +179,11 @@ export function PlatformLanding({ onAuthenticated }) {
               <p className="platformKicker">
                 For members of YOUNGO · UNFCCC children and youth constituency
               </p>
-              <h1 id="platform-title">See how to take part.</h1>
+              <h1 id="platform-title">What is happening in YOUNGO?</h1>
               <p className="platformHeroLead">
                 The Hub is an information tool for YOUNGO members. It gathers
                 meetings, working groups, submissions, and decisions so you can
-                find where to engage — the work itself stays with the
-                constituency.
+                find where to engage.
               </p>
               <ul className="platformBenefitList">
                 <li>What is coming up this week</li>
