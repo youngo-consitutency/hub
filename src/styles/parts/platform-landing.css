@@ -114,14 +114,13 @@
   display: grid;
   align-items: start;
   border-bottom: 1px solid var(--landing-line);
-  background:
-    linear-gradient(
-      105deg,
-      color-mix(in srgb, var(--landing-teal) 62%, var(--brand-surface)) 0%,
-      color-mix(in srgb, var(--landing-lime) 52%, var(--brand-surface)) 36%,
-      color-mix(in srgb, var(--landing-forest) 8%, var(--landing-canvas)) 64%,
-      var(--landing-canvas) 100%
-    );
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--landing-teal) 62%, var(--brand-surface)) 0%,
+    color-mix(in srgb, var(--landing-lime) 52%, var(--brand-surface)) 36%,
+    color-mix(in srgb, var(--landing-forest) 8%, var(--landing-canvas)) 64%,
+    var(--landing-canvas) 100%
+  );
 }
 
 .platformHero::before {
@@ -141,13 +140,12 @@
 }
 
 [data-theme='dark'] .platformHero {
-  background:
-    linear-gradient(
-      105deg,
-      color-mix(in srgb, var(--landing-teal) 28%, var(--landing-canvas)) 0%,
-      color-mix(in srgb, var(--landing-lime) 20%, var(--landing-canvas)) 38%,
-      var(--landing-canvas) 74%
-    );
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--landing-teal) 28%, var(--landing-canvas)) 0%,
+    color-mix(in srgb, var(--landing-lime) 20%, var(--landing-canvas)) 38%,
+    var(--landing-canvas) 74%
+  );
 }
 
 .platformHeroInner,
