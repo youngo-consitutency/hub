@@ -18,8 +18,8 @@ implemented.
 Events, announcements, and member-suggested Science Hub resources can be
 reviewed and published through the Hub's governed content workflow. The
 remaining public directory, submission, Council, COY, and working-group content
-still comes from `data/fixtures.json`. Password-reset and invitation emails also
-need a delivery provider before production use.
+still comes from `data/fixtures.json`. Email delivery is provider-neutral SMTP;
+production must configure an authenticated relay and the worker service.
 
 ## Start locally
 
@@ -150,20 +150,20 @@ unpublish, and override trust on `/admin` and `/team/membership` (APIs:
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev-all` | Start Vite and the API |
-| `npm run build` | Build the frontend into `dist/` |
-| `npm start` | Serve the API and built frontend |
-| `npm run content:check` | Validate fixture content |
-| `npm run format` | Format source and configuration files |
-| `npm run format:check` | Report files that need formatting |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run the Node test suite |
-| `npm run check` | Validate content and formatting, then lint, test, and build |
-| `npm run migrate` | Apply pending PostgreSQL migrations |
+| Command                   | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `npm run dev-all`         | Start Vite and the API                                      |
+| `npm run build`           | Build the frontend into `dist/`                             |
+| `npm start`               | Serve the API and built frontend                            |
+| `npm run content:check`   | Validate fixture content                                    |
+| `npm run format`          | Format source and configuration files                       |
+| `npm run format:check`    | Report files that need formatting                           |
+| `npm run lint`            | Run ESLint                                                  |
+| `npm test`                | Run the Node test suite                                     |
+| `npm run check`           | Validate content and formatting, then lint, test, and build |
+| `npm run migrate`         | Apply pending PostgreSQL migrations                         |
 | `npm run bootstrap-admin` | Promote existing verified accounts listed in `ADMIN_EMAILS` |
-| `npm run screenshots` | Refresh README screenshots |
+| `npm run screenshots`     | Refresh README screenshots                                  |
 
 Run `npm run check` before opening a pull request.
 
@@ -254,9 +254,9 @@ organisation account is required before assigning the organisation
 administrator role.
 
 Password-reset links expire after one hour and work once. The Hub currently
-shows the link once and can open a pre-addressed email draft, but it does not
-send the message automatically. Deliver the link only to the account owner
-through a trusted channel. The raw link is not stored in the audit record.
+hands the link directly to the configured SMTP relay and never returns it to an
+administrator or stores it in the notification outbox, audit record, or
+production logs. If SMTP does not accept the message, the token is invalidated.
 
 The **Governance audit** section shows the latest 30 entries. Use it to confirm
 who made a sensitive change and when; do not treat it as a replacement for the
@@ -264,26 +264,61 @@ formal membership or governance records owned by the responsible team.
 
 ## Environment variables
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | Production | PostgreSQL connection string |
-| `APP_ORIGIN` | Production | Public HTTPS origin used for CORS and generated links |
-| `READ_ONLY_PREVIEW` | Preview only | Reject mutations when set to `1`; used by the consultation deployment |
-| `ADMIN_EMAILS` | Admin setup | Comma-separated accounts that `bootstrap-admin` may promote |
-| `PORT` | No | Express port; defaults to `8787` |
-| `LOG_PASSWORD_RESET_LINKS` | Local only | Print reset links during an explicit local test |
-| `VAPID_PUBLIC_KEY` | Push only | Web Push public key used by the server |
-| `VAPID_PRIVATE_KEY` | Push only | Web Push private key |
-| `VAPID_SUBJECT` | Push only | Web Push contact URI, such as `mailto:ops@example.org` |
-| `VITE_VAPID_PUBLIC_KEY` | Push only | Public key included in the frontend build |
-| `GITHUB_ISSUE_TOKEN` | Optional | Mirrors feedback tickets into GitHub issues |
-| `GITHUB_ISSUE_REPO` | Optional | Target `owner/repo` for mirrored tickets |
+| Variable                    | Required      | Purpose                                                               |
+| --------------------------- | ------------- | --------------------------------------------------------------------- |
+| `DATABASE_URL`              | Production    | PostgreSQL connection string                                          |
+| `APP_ORIGIN`                | Production    | Public HTTPS origin used for CORS and generated links                 |
+| `READ_ONLY_PREVIEW`         | Preview only  | Reject mutations when set to `1`; used by the consultation deployment |
+| `ADMIN_EMAILS`              | Admin setup   | Comma-separated accounts that `bootstrap-admin` may promote           |
+| `PORT`                      | No            | Express port; defaults to `8787`                                      |
+| `EMAIL_ENABLED`             | Email rollout | Set `true` only after SMTP and domain authentication are ready        |
+| `SMTP_HOST` / `SMTP_PORT`   | Email         | SMTP relay host and submission port (default `587`)                   |
+| `SMTP_USER` / `SMTP_PASS`   | Email         | SMTP relay credentials where required                                 |
+| `SMTP_SECURE`               | Email         | Set `true` for implicit TLS, normally on port `465`                   |
+| `EMAIL_FROM`                | Email         | Stable sender, such as `YOUNGO Hub <updates@notify.example.org>`      |
+| `EMAIL_REPLY_TO`            | Optional      | Monitored mailbox for member replies                                  |
+| `EMAIL_UNSUBSCRIBE_SECRET`  | Email         | Long random secret for signed category unsubscribe links              |
+| `EMAIL_WEBHOOK_SECRET`      | Email         | Shared secret for the provider bounce/complaint adapter               |
+| `EMAIL_ADDRESS_HASH_SECRET` | Optional      | Separate HMAC secret for suppression address fingerprints             |
+| `EMAIL_MAX_PER_SECOND`      | Optional      | Worker throughput cap; defaults to `1`                                |
+| `EMAIL_MAX_PER_DAY`         | Optional      | Global optional-email cap; defaults to `500`                          |
+| `EMAIL_WORKER_POLL_MS`      | Optional      | Outbox poll interval; defaults to `15000`                             |
+| `EMAIL_RECIPIENT_ALLOWLIST` | Staging       | Comma-separated addresses that may receive staging mail               |
+| `EMAIL_MESSAGE_DOMAIN`      | Optional      | Domain used for deterministic `Message-ID` values                     |
+| `VAPID_PUBLIC_KEY`          | Push only     | Web Push public key used by the server                                |
+| `VAPID_PRIVATE_KEY`         | Push only     | Web Push private key                                                  |
+| `VAPID_SUBJECT`             | Push only     | Web Push contact URI, such as `mailto:ops@example.org`                |
+| `VITE_VAPID_PUBLIC_KEY`     | Push only     | Public key included in the frontend build                             |
+| `GITHUB_ISSUE_TOKEN`        | Optional      | Mirrors feedback tickets into GitHub issues                           |
+| `GITHUB_ISSUE_REPO`         | Optional      | Target `owner/repo` for mirrored tickets                              |
 
 Push notifications are optional. Generate a VAPID key pair with:
 
 ```bash
 npm run setup:push
 ```
+
+Email templates and queueing use open-source Nodemailer, MJML, and PostgreSQL.
+Production sends through a provider-neutral SMTP relay; the Hub does not run a
+public mail-transfer agent. Add a second Railway service using the same image
+with `npm run worker` as its start command. Configure SPF, DKIM, DMARC, a bounce
+return path, TLS, and a staging capture/allowlist before setting
+`EMAIL_ENABLED=true`. Set `EMAIL_RECIPIENT_ALLOWLIST` in staging so a copied
+database or mistaken scope cannot contact real members. Optional email defaults
+off and requires an explicitly verified account address.
+
+Before production, name the selected relay in `shared/privacyNotice.js`, add
+notification preferences and suppression records to the notice, bump its
+version, and complete the required governance approval. This is intentionally
+left pending until a processor is selected; no unnamed provider should receive
+member addresses.
+
+Map the selected relay's signed bounce/complaint webhook into
+`POST /api/notifications/provider-events` with the
+`x-email-webhook-secret` header and a JSON body shaped as
+`{ "event": "hard_bounce" | "complaint", "email": "…", "providerEventId": "…" }`.
+The adapter resolves the account in memory and stores only an account ID and an
+HMAC address fingerprint in the suppression record.
 
 ## Repository map
 
@@ -409,7 +444,8 @@ that Railway has an active service sourced from `Genn25369/YOUNGO-HUB`, branch
 ## Known gaps
 
 - Most public content types still require a fixture change and pull request.
-- Password-reset and invitation links do not have an email provider.
+- Production still needs an SMTP relay selection, DNS authentication, provider
+  bounce/complaint webhook mapping, and staged sender-reputation warm-up.
 - Registration still collects several fields that should be reviewed against
   the final membership process and data-minimisation requirements.
 - PostgreSQL authorization and simultaneous invitation acceptance need broader

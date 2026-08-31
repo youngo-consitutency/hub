@@ -31,6 +31,25 @@ export const EVENT_TYPES = Object.freeze([
   'webinar',
   'coordination',
 ])
+export const LIVE_CONTENT_TYPES = Object.freeze(['event', 'announcement'])
+export const EVENT_PATCH_FIELDS = Object.freeze([
+  'title',
+  'type',
+  'startsAt',
+  'endsAt',
+  'description',
+  'wg',
+  'meetingUrl',
+  'recordingUrl',
+])
+export const ANNOUNCEMENT_PATCH_FIELDS = Object.freeze([
+  'title',
+  'body',
+  'pinned',
+  'ctaUrl',
+  'ctaLabel',
+  'ctaDeadlineAt',
+])
 const EVENT_TYPE_SET = new Set(EVENT_TYPES)
 const DIRECTORY_GROUPS = new Set([
   'focal_points',
@@ -189,8 +208,22 @@ function cleanText(value) {
   return String(value || '').trim()
 }
 
-function validDate(value) {
-  return Boolean(value) && Number.isFinite(new Date(value).getTime())
+export function isIsoDateTime(value) {
+  const text = cleanText(value)
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
+      text,
+    )
+  ) {
+    return false
+  }
+  return Number.isFinite(new Date(text).getTime())
+}
+
+export function normalizeWorkingGroupRef(wg) {
+  if (wg == null || wg === '') return ''
+  if (typeof wg === 'object' && !Array.isArray(wg)) return cleanText(wg.slug)
+  return cleanText(wg)
 }
 
 export function validateEditableContent(
@@ -272,12 +305,13 @@ export function validateEditableContent(
 
     if (!EVENT_TYPE_SET.has(type))
       errors.type = 'Choose a supported event type.'
-    if (!validDate(startsAt))
-      errors.startsAt = 'Enter a valid start date and time.'
-    if (!validDate(endsAt)) errors.endsAt = 'Enter a valid end date and time.'
+    if (!isIsoDateTime(startsAt))
+      errors.startsAt = 'Enter a valid ISO start date and time.'
+    if (!isIsoDateTime(endsAt))
+      errors.endsAt = 'Enter a valid ISO end date and time.'
     if (
-      validDate(startsAt) &&
-      validDate(endsAt) &&
+      isIsoDateTime(startsAt) &&
+      isIsoDateTime(endsAt) &&
       new Date(endsAt) <= new Date(startsAt)
     ) {
       errors.endsAt = 'End time must be after the start time.'
@@ -298,10 +332,10 @@ export function validateEditableContent(
         slug,
         title,
         type,
-        startsAt: validDate(startsAt)
+        startsAt: isIsoDateTime(startsAt)
           ? new Date(startsAt).toISOString()
           : startsAt,
-        endsAt: validDate(endsAt) ? new Date(endsAt).toISOString() : endsAt,
+        endsAt: isIsoDateTime(endsAt) ? new Date(endsAt).toISOString() : endsAt,
         description: description || null,
         wg: wg || null,
         meetingUrl: meetingUrl || null,
@@ -326,8 +360,8 @@ export function validateEditableContent(
   if (ctaUrl && !ctaLabel) {
     errors.ctaLabel = 'Add a label for the call-to-action button.'
   }
-  if (ctaDeadlineAt && !validDate(ctaDeadlineAt)) {
-    errors.ctaDeadlineAt = 'Enter a valid deadline date and time.'
+  if (ctaDeadlineAt && !isIsoDateTime(ctaDeadlineAt)) {
+    errors.ctaDeadlineAt = 'Enter a valid ISO deadline date and time.'
   }
   return {
     ok: Object.keys(errors).length === 0,
@@ -339,7 +373,7 @@ export function validateEditableContent(
       pinned: Boolean(payload.pinned),
       ctaUrl: ctaUrl || null,
       ctaLabel: ctaLabel || null,
-      ctaDeadlineAt: validDate(ctaDeadlineAt)
+      ctaDeadlineAt: isIsoDateTime(ctaDeadlineAt)
         ? new Date(ctaDeadlineAt).toISOString()
         : null,
     },

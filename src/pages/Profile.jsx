@@ -5,6 +5,7 @@ import { OrgAffiliation } from '../components/OrgAffiliation.jsx'
 import { MyFeedback } from '../components/MyFeedback.jsx'
 import { MemberProfileEditor } from '../components/MemberProfileEditor.jsx'
 import { NotificationSettings } from '../components/NotificationSettings.jsx'
+import { EmailNotificationSettings } from '../components/EmailNotificationSettings.jsx'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 import {
   workingGroupLabel,
@@ -59,6 +60,7 @@ export function Profile() {
         />
         <div className="profileSideStack">
           <NotificationSettings />
+          <EmailNotificationSettings />
           <OrgAffiliation />
         </div>
       </div>

@@ -82,6 +82,7 @@ export async function getAccessProfile(account) {
       'intelligence.operations.read',
       'intelligence.writeback.approve',
       'intelligence.writeback.apply',
+      'notifications.send',
     ].forEach((x) => capabilities.add(x))
   if (account.role === 'focal_point') {
     capabilities.add('constituency.coordinate')
