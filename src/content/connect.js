@@ -23,11 +23,50 @@ export const SOCIAL_LINKS = [
     label: 'LinkedIn',
     url: 'https://www.linkedin.com/company/youngo-unfccc',
   },
-  { key: 'youtube', label: 'YouTube', url: '' },
+  {
+    key: 'youtube',
+    label: 'YouTube',
+    url: 'https://www.youtube.com/@youngo.unfccc',
+  },
   { key: 'whatsapp', label: 'WhatsApp channel', url: '' },
 ]
 
 export const publishedLinks = () => SOCIAL_LINKS.filter((link) => link.url)
+
+export const COY_CURRENT = {
+  title: 'COY21: Climate on Every Coast',
+  url: 'https://climatecoy.com/history/coy21',
+  note: 'The 21st Conference of Youth, ahead of COP31 in Antalya.',
+}
+
+/**
+ * Public YOUNGO sites that sit beside the Hub: the Science Working Group
+ * directory and the official Conference of Youth site.
+ */
+export const YOUNGO_NETWORK = [
+  {
+    key: 'science',
+    title: 'Climate Resource Hub',
+    host: 'youngo-science.org',
+    url: 'https://youngo-science.org/',
+    body: 'A public directory of climate work, evidence, learning, and funding, curated with the YOUNGO Science Working Group.',
+  },
+  {
+    key: 'coy',
+    title: 'Conference of Youth',
+    host: 'climatecoy.com',
+    url: 'https://climatecoy.com/',
+    body: 'Gathers before COP31 in Antalya. LCOY, RCOY, and the Global Youth Statement live on the official site.',
+    current: COY_CURRENT,
+  },
+]
+
+export const COY_SITE_LINKS = [
+  { label: 'LCOY', href: 'https://climatecoy.com/lcoy' },
+  { label: 'RCOY', href: 'https://climatecoy.com/rcoy' },
+  { label: 'GYS', href: 'https://climatecoy.com/gys' },
+  { label: 'COY21', href: 'https://climatecoy.com/history/coy21' },
+]
 
 /**
  * The two people who launched the Hub and keep it running. Names are shown as

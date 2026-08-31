@@ -75,7 +75,7 @@ export const RESOURCE_SOURCE = Object.freeze({
   title: 'YOUNGO Science Resource Hub',
   url: 'https://youngo-science.org/',
   description:
-    'The existing curated directory for climate work, research, learning, and funding.',
+    'The public directory curated with the YOUNGO Science Working Group — climate work, research, learning, and funding.',
 })
 
 export function resourceLabel(items, value) {

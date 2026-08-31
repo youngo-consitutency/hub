@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import {
   TbArrowRight as ArrowRight,
+  TbArrowUpRight as ArrowUpRight,
   TbBook2 as BookOpen,
   TbCalendarTime as Calendar,
   TbChecks as Checks,
@@ -8,12 +9,20 @@ import {
   TbFileDescription as FileText,
   TbFingerprint as Fingerprint,
   TbGavel as Gavel,
+  TbMicroscope as Microscope,
   TbShieldCheck as ShieldCheck,
+  TbSpeakerphone as Megaphone,
   TbUsersGroup as Users,
 } from 'react-icons/tb'
 import { LandingSignIn } from '../components/auth/LandingSignIn.jsx'
 import { Brand } from '../components/Brand.jsx'
+import { YOUNGO_NETWORK } from '../content/connect.js'
 import { A } from '../components/ui.jsx'
+
+const NETWORK_ICONS = {
+  science: Microscope,
+  coy: Megaphone,
+}
 
 const MODULES = [
   {
@@ -86,6 +95,7 @@ function PlatformHeader() {
         <nav className="platformNav" aria-label="Platform overview">
           <a href="#what-it-does">What you can look up</a>
           <a href="#how-it-works">Getting oriented</a>
+          <a href="#around-youngo">Around YOUNGO</a>
           <a href="#trust">Trust</a>
           <A href="/about">About YOUNGO</A>
         </nav>
@@ -118,6 +128,16 @@ function PlatformFooter() {
           <A href="/about">About YOUNGO</A>
           <A href="/about/working-groups">Working groups</A>
           <A href="/about/resources">Resources</A>
+          {YOUNGO_NETWORK.map((site) => (
+            <a
+              key={site.key}
+              href={site.url}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {site.title}
+            </a>
+          ))}
           <a href="/privacy">Privacy</a>
         </nav>
         <div className="platformFooterActions">
@@ -249,6 +269,56 @@ export function PlatformLanding({ onAuthenticated }) {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <section
+          className="platformSection platformNetworkSection"
+          id="around-youngo"
+          aria-labelledby="network-title"
+        >
+          <div className="platformSectionInner">
+            <div className="platformSectionHeading">
+              <div>
+                <p className="platformSectionLabel">Around YOUNGO</p>
+                <h2 id="network-title">Public sites the constituency keeps.</h2>
+              </div>
+              <p>
+                The Hub is the member desk. These two YOUNGO sites hold the
+                Science Working Group’s resource directory and the official
+                Conference of Youth — useful before you have an account.
+              </p>
+            </div>
+            <ul className="platformNetworkGrid">
+              {YOUNGO_NETWORK.map((site) => {
+                const Icon = NETWORK_ICONS[site.key] || BookOpen
+                return (
+                  <li key={site.key}>
+                    <a
+                      className="platformNetworkCard"
+                      href={site.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      <span className="platformModuleIcon" aria-hidden="true">
+                        <Icon size={20} strokeWidth={1.7} />
+                      </span>
+                      <strong>{site.title}</strong>
+                      {site.current && (
+                        <p className="platformNetworkCurrent">
+                          {site.current.title}
+                        </p>
+                      )}
+                      <p>{site.body}</p>
+                      <span className="platformNetworkHost">
+                        {site.host}
+                        <ArrowUpRight size={15} strokeWidth={1.8} />
+                      </span>
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         </section>
 

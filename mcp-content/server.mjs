@@ -26,7 +26,9 @@ function mcpToken(env = process.env) {
 }
 
 function allowAnonymous(env = process.env) {
-  const raw = String(env.MCP_ALLOW_ANONYMOUS || '').trim().toLowerCase()
+  const raw = String(env.MCP_ALLOW_ANONYMOUS || '')
+    .trim()
+    .toLowerCase()
   return raw === '1' || raw === 'true' || raw === 'yes'
 }
 
@@ -43,7 +45,8 @@ function parseMcpPath(pathname) {
 function providedToken(req, url, pathToken) {
   const header = String(req.headers.authorization || '')
   if (header.startsWith('Bearer ')) return header.slice('Bearer '.length).trim()
-  const query = url.searchParams.get('token') || url.searchParams.get('access_token')
+  const query =
+    url.searchParams.get('token') || url.searchParams.get('access_token')
   if (query) return query.trim()
   return String(pathToken || '').trim()
 }
