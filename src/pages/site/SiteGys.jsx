@@ -58,11 +58,11 @@ export function SiteGys() {
               <div className="siteCtaActions">
                 <a
                   className="btn btn-secondary"
-                  href="https://climatecoy.com/"
+                  href="https://climatecoy.com/gys"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                 >
-                  GYS background
+                  GYS on climatecoy.com
                   <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
                 </a>
                 <a className="btn btn-primary" href="/gys">

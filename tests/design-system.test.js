@@ -345,6 +345,10 @@ test('Help and support is the only global support launcher', async () => {
     /name: 'Jaloliddin Ismailov',[\s\S]*?focus: 'Product, engineering, policy & governance'/,
   )
   assert.match(connect, /name: 'Genaro Matías Godoy González'/)
+  assert.match(connect, /url: 'https:\/\/youngo-science\.org\/'/)
+  assert.match(connect, /url: 'https:\/\/climatecoy\.com\/'/)
+  assert.match(connect, /COY21: Climate on Every Coast/)
+  assert.match(connect, /url: 'https:\/\/www\.youtube\.com\/@youngo\.unfccc'/)
   assert.doesNotMatch(connect, /Genn|Imran Shaik|Leticia|BETA_CONTRIBUTORS/)
   assert.match(
     pages,
@@ -898,11 +902,12 @@ test('landing-page onboarding steps adapt to their own available width', async (
 })
 
 test('the signed-out platform landing has distinct join and sign-in paths', async () => {
-  const [accessGate, authGate, landing, desk] = await Promise.all([
+  const [accessGate, authGate, landing, desk, css] = await Promise.all([
     read('src/components/AccessGate.jsx'),
     read('src/components/AuthGate.jsx'),
     read('src/pages/PlatformLanding.jsx'),
     read('src/components/auth/LandingSignIn.jsx'),
+    read('src/styles/parts/platform-landing.css'),
   ])
 
   assert.match(accessGate, /if \(account\)/)
@@ -916,6 +921,10 @@ test('the signed-out platform landing has distinct join and sign-in paths', asyn
   assert.match(landing, /href="\/join"/)
   assert.match(landing, /href="\/signin"/)
   assert.match(landing, /id="what-it-does"/)
+  assert.match(landing, /id="around-youngo"/)
+  assert.match(landing, /YOUNGO_NETWORK/)
+  assert.match(landing, /site\.current/)
+  assert.match(css, /\.platformNetworkCard p\.platformNetworkCurrent\s*{/)
   assert.match(landing, /id="trust"/)
   assert.match(landing, /<LandingSignIn onAuthenticated={onAuthenticated} \/>/)
   assert.match(desk, /id="signin"/)

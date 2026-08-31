@@ -8,7 +8,7 @@ import { A } from '../../components/ui.jsx'
 import { Brand } from '../../components/Brand.jsx'
 import { DestinationIcon } from '../../components/DestinationLink.jsx'
 import { usePath } from '../../lib/router.js'
-import { publishedLinks } from '../../content/connect.js'
+import { publishedLinks, YOUNGO_NETWORK } from '../../content/connect.js'
 import { SiteHome } from './SiteHome.jsx'
 import { SiteWorkingGroups } from './SiteWorkingGroups.jsx'
 import { SiteCoy } from './SiteCoy.jsx'
@@ -152,6 +152,17 @@ function SiteFooter() {
             YOUNGO on UNFCCC
             <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
           </a>
+          {YOUNGO_NETWORK.map((site) => (
+            <a
+              key={site.key}
+              href={site.url}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {site.title}
+              <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
+            </a>
+          ))}
         </div>
         {socials.length > 0 && (
           <div className="siteFooterCol">

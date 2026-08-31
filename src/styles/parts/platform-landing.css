@@ -469,6 +469,75 @@
   line-height: 1.55;
 }
 
+.platformNetworkSection {
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.platformNetworkGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.platformNetworkCard {
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: clamp(20px, 2.6vw, 28px);
+  border: 1px solid var(--landing-line);
+  border-radius: var(--radius-card);
+  background: var(--landing-surface);
+  color: inherit;
+}
+
+.platformNetworkCard:hover {
+  border-color: color-mix(in srgb, var(--landing-forest) 42%, var(--landing-line));
+}
+
+.platformNetworkCard:hover .platformNetworkHost svg {
+  transform: translate(2px, -2px);
+}
+
+.platformNetworkCard strong {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.platformNetworkCard p {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.platformNetworkCard p.platformNetworkCurrent {
+  color: var(--landing-forest);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.platformNetworkHost {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--landing-forest);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.platformNetworkHost svg {
+  transition: transform var(--motion-standard) var(--motion-ease-out);
+}
+
 .platformTrust {
   padding-block: clamp(56px, 8vw, 96px);
 }
@@ -625,6 +694,10 @@
 
   .platformModuleGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .platformNetworkGrid {
+    grid-template-columns: 1fr;
   }
 
   .platformModuleGrid li:last-child {
@@ -797,7 +870,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .platformNav a::after,
-  .platformTextLink svg {
+  .platformTextLink svg,
+  .platformNetworkHost svg {
     transition: none;
   }
 }

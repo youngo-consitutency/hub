@@ -8,6 +8,7 @@ import {
   TbArrowUpRight as ArrowUpRight,
 } from 'react-icons/tb'
 import { A, Async, Empty } from '../../components/ui.jsx'
+import { COY_CURRENT, COY_SITE_LINKS } from '../../content/connect.js'
 import { useApi } from '../../lib/api.js'
 
 const FORMATS = [
@@ -19,12 +20,12 @@ const FORMATS = [
   {
     icon: Map,
     title: 'RCOY — Regional COY',
-    body: 'Regional Conferences of Youth bring the process to each UN region, so young people who cannot travel to the global COY still shape the collective input.',
+    body: 'Regional Conferences of Youth bring LCOY inputs together by UN region, draft a Regional Youth Statement (RYS), and feed that into the Global Youth Statement.',
   },
   {
     icon: MapPin,
     title: 'LCOY — Local COY',
-    body: 'Local Conferences of Youth are organised by YOUNGO members in countries and cities worldwide. The LCOY name is collectively owned by YOUNGO and its use is endorsed through an official approval process.',
+    body: 'National and sub-national gatherings hosted by children and young people. Each LCOY builds a National Youth Statement (NYS) for home advocacy and for the global statement.',
   },
   {
     icon: Video,
@@ -107,7 +108,7 @@ export function SiteCoy() {
             className="btn btn-secondary btn-sm"
             href="https://climatecoy.com/"
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
           >
             Official COY site
             <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
@@ -126,8 +127,32 @@ export function SiteCoy() {
         </div>
       </section>
 
+      <section className="siteSection" aria-labelledby="current-coy-heading">
+        <article className="card siteCurrentCoy">
+          <div>
+            <p className="pageEyebrow">This cycle on climatecoy.com</p>
+            <h2 id="current-coy-heading">{COY_CURRENT.title}</h2>
+            <p className="meta">{COY_CURRENT.note}</p>
+          </div>
+          <div className="siteCtaActions">
+            {COY_SITE_LINKS.map((link) => (
+              <a
+                key={link.href}
+                className="btn btn-secondary btn-sm"
+                href={link.href}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {link.label}
+                <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden />
+              </a>
+            ))}
+          </div>
+        </article>
+      </section>
+
       <section className="siteSection" aria-labelledby="upcoming-heading">
-        <h2 id="upcoming-heading">This cycle</h2>
+        <h2 id="upcoming-heading">Listed in the Hub</h2>
         <p className="siteSectionLead">
           Conferences of Youth currently listed by the constituency. Dates and
           registration details are confirmed by each organising team.
