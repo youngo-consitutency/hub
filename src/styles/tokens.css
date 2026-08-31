@@ -70,8 +70,6 @@
   --landing-lime: #8bc65e;
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
-  --landing-soft-line: rgba(11, 46, 34, 0.08);
-  --landing-glow: rgba(98, 196, 187, 0.3);
   --landing-shadow: 0 24px 70px rgba(11, 46, 34, 0.13);
 }
 
@@ -142,8 +140,6 @@
   --landing-lime: #a5d978;
   --landing-forest: #57b875;
   --landing-line: rgba(165, 217, 120, 0.18);
-  --landing-soft-line: rgba(165, 217, 120, 0.09);
-  --landing-glow: rgba(98, 196, 187, 0.2);
   --landing-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
 }
 
