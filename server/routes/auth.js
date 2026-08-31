@@ -11,9 +11,15 @@ import { getPool } from '../lib/db.js'
 import {
   createPasswordResetToken,
   consumePasswordResetToken,
+  invalidatePasswordResetToken,
   resetLink,
 } from '../lib/passwordReset.js'
 import { appOrigin } from '../lib/config.js'
+import {
+  deliveryFailure,
+  emailConfigured,
+  sendTemplatedEmail,
+} from '../lib/emailTransport.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import {
   bearerToken,
@@ -39,6 +45,14 @@ const loginAccountLimit = createRateLimiter({
 const resetRequestLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 8,
+})
+const resetRecipientLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 4,
+  key: (req) =>
+    `reset:${String(req.body?.email || '')
+      .trim()
+      .toLowerCase()}`,
 })
 const resetConsumeLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000,
@@ -229,59 +243,81 @@ authRouter.post('/logout', async (req, res) => {
 const GENERIC_FORGOT =
   'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
 
-authRouter.post('/forgot-password', resetRequestLimit, async (req, res) => {
-  try {
-    const b = req.body || {}
-    if (b.website) return res.json({ ok: true, message: GENERIC_FORGOT })
-    const email = String(b.email || '')
-      .trim()
-      .toLowerCase()
-    if (!email) {
-      return res.status(400).json({
+authRouter.post(
+  '/forgot-password',
+  resetRequestLimit,
+  resetRecipientLimit,
+  async (req, res) => {
+    try {
+      const b = req.body || {}
+      if (b.website) return res.json({ ok: true, message: GENERIC_FORGOT })
+      const email = String(b.email || '')
+        .trim()
+        .toLowerCase()
+      if (!email) {
+        return res.status(400).json({
+          error: {
+            code: 'validation',
+            message: 'Please enter your email.',
+            fields: { email: 'Email is required.' },
+          },
+        })
+      }
+
+      const created = await createPasswordResetToken(email)
+      if (created) {
+        if (emailConfigured()) {
+          try {
+            await sendTemplatedEmail({
+              to: created.email,
+              templateKey: 'password-reset',
+              data: {
+                actionUrl: resetLink(appOrigin(), created.rawToken),
+                actionLabel: 'Reset password',
+              },
+            })
+            console.log(
+              JSON.stringify({
+                event: 'password_reset_email_accepted',
+                accountId: created.accountId,
+                expiresAt: created.expiresAt,
+              }),
+            )
+          } catch (error) {
+            await invalidatePasswordResetToken(created.rawToken)
+            const failure = deliveryFailure(error)
+            console.warn(
+              JSON.stringify({
+                event: 'password_reset_email_failed',
+                accountId: created.accountId,
+                code: failure.code,
+              }),
+            )
+          }
+        } else {
+          await invalidatePasswordResetToken(created.rawToken)
+          console.log(
+            JSON.stringify({
+              event: 'password_reset_requested',
+              accountId: created.accountId,
+              deliveryConfigured: false,
+            }),
+          )
+        }
+      }
+
+      res.json({ ok: true, message: GENERIC_FORGOT })
+    } catch (err) {
+      console.error('forgot-password failed:', err.message)
+      res.status(500).json({
         error: {
-          code: 'validation',
-          message: 'Please enter your email.',
-          fields: { email: 'Email is required.' },
+          code: 'server_error',
+          message: 'Could not process reset request.',
         },
       })
     }
-
-    const created = await createPasswordResetToken(email)
-    if (created) {
-      if (
-        process.env.NODE_ENV !== 'production' &&
-        process.env.LOG_PASSWORD_RESET_LINKS === 'true'
-      ) {
-        console.log(
-          JSON.stringify({
-            event: 'password_reset_development_link',
-            resetUrl: resetLink(appOrigin(), created.rawToken),
-            expiresAt: created.expiresAt,
-          }),
-        )
-      } else {
-        console.log(
-          JSON.stringify({
-            event: 'password_reset_requested',
-            accountId: created.accountId,
-            expiresAt: created.expiresAt,
-            deliveryConfigured: false,
-          }),
-        )
-      }
-    }
-
-    res.json({ ok: true, message: GENERIC_FORGOT })
-  } catch (err) {
-    console.error('forgot-password failed:', err.message)
-    res.status(500).json({
-      error: {
-        code: 'server_error',
-        message: 'Could not process reset request.',
-      },
-    })
-  }
-})
+  },
+)
 
 authRouter.post('/reset-password', resetConsumeLimit, async (req, res) => {
   try {

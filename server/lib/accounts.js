@@ -77,6 +77,7 @@ function publicAccount(row) {
     privacyNoticeVersion:
       row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
     privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
+    emailVerifiedAt: row.email_verified_at ?? row.emailVerifiedAt ?? null,
     memberStatus,
     hubAccessStatus,
     membershipStatus:

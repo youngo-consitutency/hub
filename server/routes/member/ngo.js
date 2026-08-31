@@ -9,6 +9,11 @@ import {
 } from '../../lib/authorization.js'
 import { appOrigin } from '../../lib/config.js'
 import {
+  deliveryFailure,
+  emailConfigured,
+  sendTemplatedEmail,
+} from '../../lib/emailTransport.js'
+import {
   AFFILIATION_ROLES,
   acceptNgoInvite,
   addNgoRequest,
@@ -32,8 +37,14 @@ import {
   tiersForBalance,
 } from '../../lib/points.js'
 import { bearerToken } from '../../lib/security.js'
+import { createRateLimiter } from '../../lib/rateLimit.js'
 
 export const router = Router()
+const inviteEmailLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  key: (req) => bearerToken(req) || String(req.ip || 'unknown'),
+})
 
 router.get('/ngo/requests', async (req, res) => {
   const account = await requireOrgScope(req, res)
@@ -181,10 +192,18 @@ router.get('/ngo/seats', async (req, res) => {
   res.json({ seats, orgAccountId: req.orgAccountId })
 })
 
-router.post('/ngo/seats/invite', async (req, res) => {
+router.post('/ngo/seats/invite', inviteEmailLimit, async (req, res) => {
   const account = await requireOrgScope(req, res, 'seats')
   if (!account) return
   try {
+    if (!emailConfigured()) {
+      return res.status(503).json({
+        error: {
+          code: 'email_not_configured',
+          message: 'Email delivery must be configured before inviting a seat.',
+        },
+      })
+    }
     const result = await inviteNgoSeat({
       orgAccountId: req.orgAccountId,
       email: req.body?.email,
@@ -195,18 +214,49 @@ router.post('/ngo/seats/invite', async (req, res) => {
     const inviteUrl = result.inviteToken
       ? `${appOrigin()}/ngo/accept?token=${result.inviteToken}`
       : null
+    try {
+      await sendTemplatedEmail({
+        to: result.seat.email,
+        templateKey: 'invitation',
+        data: {
+          actionUrl: inviteUrl,
+          actionLabel: 'Review invitation',
+          seatRole: result.seat.seatRole,
+        },
+      })
+    } catch (error) {
+      await revokeNgoSeat(result.seat.id, req.orgAccountId)
+      const failure = deliveryFailure(error)
+      console.warn(
+        JSON.stringify({
+          event: 'ngo_invitation_email_failed',
+          actorId: account.id,
+          seatId: result.seat.id,
+          code: failure.code,
+        }),
+      )
+      return res.status(502).json({
+        error: {
+          code: 'email_delivery_failed',
+          message: 'The email provider did not accept the invitation.',
+        },
+      })
+    }
     await recordAudit({
       actorId: account.id,
       action: 'ngo.seat_invited',
       targetType: 'ngo_seat',
       targetId: result.seat.id,
-      after: result.seat,
+      after: {
+        seatRole: result.seat.seatRole,
+        status: result.seat.status,
+        inviteExpiresAt: result.seat.inviteExpiresAt,
+      },
       requestId: req.requestId,
     })
     res.status(201).json({
       seat: result.seat,
-      inviteUrl,
-      note: 'Share this one-time link with the invited representative. It expires in 7 days.',
+      note: 'The invitation was sent to the representative. It expires in 7 days.',
     })
   } catch (err) {
     const status = err.code === 'duplicate' ? 409 : 400

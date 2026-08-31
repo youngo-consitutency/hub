@@ -165,6 +165,28 @@ export async function consumePasswordResetToken(rawToken, newPassword) {
   return { accountId: row.account_id }
 }
 
+export async function invalidatePasswordResetToken(rawToken) {
+  if (!rawToken) return false
+  const tokenHash = hashToken(rawToken)
+  const pool = getPool()
+  if (pool) {
+    const { rowCount } = await pool.query(
+      `UPDATE password_reset_tokens SET used_at=now()
+       WHERE token_hash=$1 AND used_at IS NULL`,
+      [tokenHash],
+    )
+    return rowCount > 0
+  }
+  const list = readJson(tokensPath, [])
+  const row = list.find(
+    (item) => item.token_hash === tokenHash && !item.used_at,
+  )
+  if (!row) return false
+  row.used_at = new Date().toISOString()
+  writeJson(tokensPath, list)
+  return true
+}
+
 export function resetLink(origin, rawToken) {
   const base = (origin || '').replace(/\/$/, '')
   return `${base}/reset-password?token=${encodeURIComponent(rawToken)}`

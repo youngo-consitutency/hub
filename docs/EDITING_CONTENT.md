@@ -18,7 +18,8 @@ responsibilities from the account administration page.
 
 Use the form validation messages to correct missing or invalid fields. Published
 events replace fixture events with the same slug; published announcements work
-the same way.
+the same way. The content MCP `update_content` tool uses that same-slug replace
+(never a duplicate). `unpublish_content` hides a live slug while keeping history.
 
 ## Fixture-backed content
 

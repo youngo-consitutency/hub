@@ -6,6 +6,15 @@
       "env": {
         "HUB_AGENT_RO_URL": "${env:HUB_AGENT_RO_URL}"
       }
+    },
+    "youngo-hub-content": {
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/agent/hub-content-mcp.mjs"],
+      "env": {
+        "HUB_ORIGIN": "https://youngohub.org",
+        "HUB_EMAIL": "${env:HUB_EMAIL}",
+        "HUB_PASSWORD": "${env:HUB_PASSWORD}"
+      }
     }
   }
 }

@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   TbChevronLeft as ChevronLeft,
   TbChevronRight as ChevronRight,
-  TbCopy as Copy,
   TbKey as KeyRound,
-  TbMail as Mail,
   TbSearch as Search,
   TbSettings as Settings2,
   TbShieldCheck as ShieldCheck,
@@ -23,6 +21,7 @@ import {
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
 import { OpportunityReview } from '../components/OpportunityReview.jsx'
+import { AdminEmailBroadcast } from '../components/AdminEmailBroadcast.jsx'
 import { PushBroadcast } from '../components/PushBroadcast.jsx'
 
 const ENTITY_OPTIONS = [
@@ -254,41 +253,21 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
 }
 
 function ResetHandoff({ reset, onClose }) {
-  const [copied, setCopied] = useState(false)
-  const subject = encodeURIComponent('Your YOUNGO Hub password reset')
-  const body = encodeURIComponent(
-    `Use this one-time link to reset your YOUNGO Hub password:\n\n${reset.resetUrl}\n\nIt expires ${new Date(reset.expiresAt).toLocaleString()}.`,
-  )
-
   return (
-    <AdminDialog title="Deliver password reset" onClose={onClose}>
+    <AdminDialog title="Password reset sent" onClose={onClose}>
       <p className="meta">
-        This link is for <strong>{reset.email}</strong>. It expires{' '}
-        {new Date(reset.expiresAt).toLocaleString()} and can be used once.
+        The Hub sent password-reset instructions to the account address. The
+        link expires {new Date(reset.expiresAt).toLocaleString()} and can be
+        used once.
       </p>
-      <code className="adminResetUrl">{reset.resetUrl}</code>
       <div className="adminDialogFooter">
-        <Button
-          variant="secondary"
-          onClick={async () => {
-            await navigator.clipboard.writeText(reset.resetUrl)
-            setCopied(true)
-          }}
-        >
-          <Copy size={16} aria-hidden />
-          {copied ? 'Copied' : 'Copy link'}
+        <Button variant="primary" onClick={onClose}>
+          Done
         </Button>
-        <a
-          className="btn btn-primary"
-          href={`mailto:${encodeURIComponent(reset.email)}?subject=${subject}&body=${body}`}
-        >
-          <Mail size={16} aria-hidden />
-          Open email draft
-        </a>
       </div>
       <p className="metaMuted">
-        The Hub does not send this automatically yet. Deliver it only to the
-        account owner through a trusted channel, then dismiss this window.
+        The reset credential is not shown here and is not stored in the audit
+        trail or notification outbox.
       </p>
     </AdminDialog>
   )
@@ -498,6 +477,8 @@ export function Admin() {
           </Button>
         </nav>
       </Section>
+
+      <AdminEmailBroadcast />
 
       <FeedbackQueue />
 

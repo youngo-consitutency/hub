@@ -15,7 +15,16 @@ import {
   queryAccountsForAdmin,
   setAccountFields,
 } from '../../lib/lifecycle.js'
-import { createPasswordResetToken, resetLink } from '../../lib/passwordReset.js'
+import {
+  createPasswordResetToken,
+  invalidatePasswordResetToken,
+  resetLink,
+} from '../../lib/passwordReset.js'
+import {
+  deliveryFailure,
+  emailConfigured,
+  sendTemplatedEmail,
+} from '../../lib/emailTransport.js'
 
 export const router = Router()
 
@@ -237,7 +246,7 @@ router.post('/admin/accounts/:id/team-role', async (req, res) => {
   res.json({ account: updated })
 })
 
-/** Admin: issue a password-reset link (returned once for copy — no SMTP yet). */
+/** Admin: issue and deliver a password-reset link without exposing the token. */
 
 router.post('/admin/accounts/:id/reset-link', async (req, res) => {
   const account = await requireAccount(req, res)
@@ -250,6 +259,14 @@ router.post('/admin/accounts/:id/reset-link', async (req, res) => {
   const reason = adminReason(req, res)
   if (!reason) return
   try {
+    if (!emailConfigured()) {
+      return res.status(503).json({
+        error: {
+          code: 'email_not_configured',
+          message: 'Email delivery must be configured before issuing a reset.',
+        },
+      })
+    }
     const list = await listAccountsForAdmin()
     const target = list.find((a) => a.id === req.params.id)
     if (!target) {
@@ -264,11 +281,35 @@ router.post('/admin/accounts/:id/reset-link', async (req, res) => {
         .json({ error: { code: 'not_found', message: 'Account not found.' } })
     }
     const url = resetLink(appOrigin(), created.rawToken)
+    try {
+      await sendTemplatedEmail({
+        to: created.email,
+        templateKey: 'password-reset',
+        data: { actionUrl: url, actionLabel: 'Reset password' },
+      })
+    } catch (error) {
+      await invalidatePasswordResetToken(created.rawToken)
+      const failure = deliveryFailure(error)
+      console.warn(
+        JSON.stringify({
+          event: 'admin_password_reset_email_failed',
+          actorId: account.id,
+          targetId: target.id,
+          code: failure.code,
+        }),
+      )
+      return res.status(502).json({
+        error: {
+          code: 'email_delivery_failed',
+          message: 'The email provider did not accept the reset message.',
+        },
+      })
+    }
     console.log(
       JSON.stringify({
-        event: 'admin_password_reset_issued',
-        by: account.email,
-        for: target.email,
+        event: 'admin_password_reset_email_accepted',
+        actorId: account.id,
+        targetId: target.id,
         expiresAt: created.expiresAt,
       }),
     )
@@ -283,11 +324,8 @@ router.post('/admin/accounts/:id/reset-link', async (req, res) => {
     })
     res.json({
       ok: true,
-      email: target.email,
-      resetUrl: url,
       expiresAt: created.expiresAt,
-      message:
-        'Share this link with the user. It expires in 1 hour and can be used once.',
+      message: 'Password-reset instructions were sent to the account address.',
     })
   } catch (err) {
     console.error('admin reset-link failed:', err.message)

@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.js'
 import { memberRouter } from './routes/member/index.js'
 import { intelligenceRouter } from './routes/intelligence.js'
 import { pushRouter } from './routes/push.js'
+import { notificationRouter } from './routes/notifications.js'
 import { appOrigin } from './lib/config.js'
 import { requestSecurity } from './lib/security.js'
 
@@ -92,6 +93,7 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.use('/api/member', memberRouter)
   app.use('/api/intelligence', intelligenceRouter)
   app.use('/api/push', pushRouter)
+  app.use('/api/notifications', notificationRouter)
   app.use('/api', publicRouter)
   app.use('/ics', icsRouter)
 

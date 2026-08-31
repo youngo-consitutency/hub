@@ -13,6 +13,7 @@ import { router as feedback } from './feedback.js'
 import { router as opportunities } from './opportunities.js'
 import { router as admin } from './admin.js'
 import { router as resources } from './resources.js'
+import { router as notifications } from './notifications.js'
 
 export const memberRouter = Router()
 
@@ -31,6 +32,7 @@ memberRouter.use(points)
 memberRouter.use(teams)
 memberRouter.use(content)
 memberRouter.use(resources)
+memberRouter.use(notifications)
 memberRouter.use(feedback)
 memberRouter.use(opportunities)
 memberRouter.use(admin)
