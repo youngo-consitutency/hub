@@ -13,7 +13,6 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 import { A } from '../../components/ui.jsx'
-import { useApi } from '../../lib/api.js'
 
 const MISSION = [
   {
@@ -162,8 +161,6 @@ const START_STEPS = [
 ]
 
 export function SiteHome() {
-  const groups = useApi('/groups')
-
   return (
     <>
       <section className="siteHero">
@@ -217,26 +214,6 @@ export function SiteHome() {
               </ol>
             </aside>
           </div>
-          <ul className="siteHeroFacts">
-            <li>
-              <span className="siteFactValue">Free</span>
-              <span className="metaMuted">membership</span>
-            </li>
-            <li>
-              <span className="siteFactValue">35 &amp; under</span>
-              <span className="metaMuted">individual members</span>
-            </li>
-            <li>
-              <span className="siteFactValue">
-                {groups.data ? groups.data.items.length : '16'}
-              </span>
-              <span className="metaMuted">working groups</span>
-            </li>
-            <li>
-              <span className="siteFactValue">1 of 9</span>
-              <span className="metaMuted">UNFCCC constituencies</span>
-            </li>
-          </ul>
         </div>
       </section>
 
