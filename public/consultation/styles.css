@@ -529,6 +529,44 @@ ul.plain li {
   gap: 10px;
   margin-top: 16px;
 }
+.join-path {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: join;
+}
+.join-path li {
+  counter-increment: join;
+  position: relative;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(11, 46, 34, 0.08);
+  border-radius: 14px;
+  padding: 36px 12px 12px;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 10px 24px rgba(11, 46, 34, 0.05);
+}
+.join-path li::before {
+  content: counter(join);
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--canopy);
+}
+.join-path strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--forest);
+}
 .feature-hint {
   margin: -2px 0 10px;
   font-size: 16px;
@@ -1040,7 +1078,8 @@ kbd {
   .who,
   .capture,
   .six,
-  .feature-board {
+  .feature-board,
+  .join-path {
     grid-template-columns: 1fr;
   }
   .compare .was,

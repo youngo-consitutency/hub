@@ -81,6 +81,8 @@ test('consultation page and public floor work, including read-only preview', asy
   assert.equal(page.status, 200)
   const html = await page.text()
   assert.match(html, /Help shape a shared YOUNGO Hub/)
+  assert.match(html, /Joining takes one to two months/)
+  assert.match(html, /once every six months/)
   assert.match(html, /title-slide/)
   assert.match(html, />YOUNGO Hub</)
   assert.match(html, /id="fullscreen"/)
