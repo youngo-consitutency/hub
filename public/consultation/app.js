@@ -126,8 +126,14 @@ function show(i) {
   closeFeatureCards()
   index = Math.max(0, Math.min(slides.length - 1, i))
   slides.forEach((slide, n) => slide.classList.toggle('is-on', n === index))
-  counter.textContent = `${index + 1} / ${slides.length}`
-  bar.style.width = `${((index + 1) / slides.length) * 100}%`
+  const contentCount = slides.length - 1
+  const label = slides[index].dataset.path === 'title' ? 0 : index
+  counter.textContent = `${label} / ${contentCount}`
+  bar.style.width = `${(index / Math.max(contentCount, 1)) * 100}%`
+  document.getElementById('deck').classList.toggle(
+    'is-title',
+    slides[index].dataset.path === 'title',
+  )
   const path = slides[index].dataset.path
   pathButtons.forEach((button) => {
     button.setAttribute(
@@ -137,7 +143,7 @@ function show(i) {
   })
   notesEl.textContent = slides[index].dataset.notes || ''
   const url = new URL(location.href)
-  history.replaceState(null, '', `${url.pathname}${url.search}#${index + 1}`)
+  history.replaceState(null, '', `${url.pathname}${url.search}#${index}`)
 }
 
 function timeLabel(iso) {
@@ -381,9 +387,8 @@ document.addEventListener('keydown', (event) => {
   else if (!typing && (event.key === 'l' || event.key === 'L') && !open)
     openFloor('hear')
   else if (!typing && (event.key === 'f' || event.key === 'F') && !open) {
-    if (!document.fullscreenElement)
-      document.getElementById('deck').requestFullscreen()
-    else document.exitFullscreen()
+    event.preventDefault()
+    toggleFullscreen()
   } else if (
     !typing &&
     !open &&
@@ -398,9 +403,37 @@ document.addEventListener('keydown', (event) => {
   else if (!typing && !open && event.key === 'End') show(slides.length - 1)
 })
 
+function isFullscreen() {
+  return Boolean(document.fullscreenElement || document.webkitFullscreenElement)
+}
+
+function toggleFullscreen() {
+  const root = document.documentElement
+  if (isFullscreen()) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen
+    exit?.call(document)
+    return
+  }
+  const enter = root.requestFullscreen || root.webkitRequestFullscreen
+  enter?.call(root)
+}
+
+function syncFullscreenButton() {
+  const button = document.getElementById('fullscreen')
+  const on = isFullscreen()
+  document.documentElement.classList.toggle('is-full', on)
+  button.textContent = on ? 'Exit full' : 'Fullscreen'
+  button.setAttribute('aria-pressed', String(on))
+}
+
+document.getElementById('fullscreen').addEventListener('click', toggleFullscreen)
+document.addEventListener('fullscreenchange', syncFullscreenButton)
+document.addEventListener('webkitfullscreenchange', syncFullscreenButton)
+
 fillSectionSelects()
 loadNotes()
-const fromHash = Number((location.hash || '').replace('#', '')) - 1
+const rawHash = (location.hash || '').replace('#', '')
+const fromHash = rawHash === '' ? 0 : Number(rawHash)
 show(Number.isFinite(fromHash) && fromHash >= 0 ? fromHash : 0)
 loadFloor()
 setInterval(loadFloor, 4000)
