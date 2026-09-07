@@ -17,25 +17,25 @@
       <div class="deck" id="deck">
         <div class="chrome chrome-top">
           <span>YOUNGO Hub consultation</span>
-          <span id="counter">1 / 18</span>
+          <span id="counter">0 / 18</span>
         </div>
         <nav class="path" aria-label="Consultation path">
-          <button type="button" data-go="0" data-station="open">Open</button>
-          <button type="button" data-go="1" data-station="aims">Aims</button>
-          <button type="button" data-go="3" data-station="need">Need</button>
-          <button type="button" data-go="6" data-station="security">Security</button>
-          <button type="button" data-go="9" data-station="concerns">Concerns</button>
-          <button type="button" data-go="10" data-station="uses">Features</button>
-          <button type="button" data-go="12" data-station="serve">Who it serves</button>
-          <button type="button" data-go="14" data-station="safeguards">Safeguards</button>
-          <button type="button" data-go="15" data-station="agree">Agree</button>
-          <button type="button" data-go="16" data-station="next">Next steps</button>
+          <button type="button" data-go="1" data-station="open">Open</button>
+          <button type="button" data-go="2" data-station="aims">Aims</button>
+          <button type="button" data-go="4" data-station="need">Need</button>
+          <button type="button" data-go="7" data-station="security">Security</button>
+          <button type="button" data-go="10" data-station="concerns">Concerns</button>
+          <button type="button" data-go="11" data-station="uses">Features</button>
+          <button type="button" data-go="13" data-station="serve">Who it serves</button>
+          <button type="button" data-go="15" data-station="safeguards">Safeguards</button>
+          <button type="button" data-go="16" data-station="agree">Agree</button>
+          <button type="button" data-go="17" data-station="next">Next steps</button>
         </nav>
         <div class="stage" id="stage"></div>
         <div class="chrome chrome-bottom">
           <span>← → slides · C contribute · L live floor · F fullscreen</span>
           <div class="progress" aria-hidden="true"><i id="bar"></i></div>
-          <span>7–8 Sep 2026</span>
+          <button class="chrome-full" type="button" id="fullscreen" aria-pressed="false">Fullscreen</button>
         </div>
         <aside class="help" id="help">
           <p><kbd>→</kbd> next · <kbd>←</kbd> back</p>
@@ -132,6 +132,11 @@
   </dialog>
 
   <template id="slides">
+    <section class="slide forest title-slide" data-path="title" data-notes="Go fullscreen. Hold on the name. Then move forward into the consultation.">
+      <img class="logo title-logo" src="/consultation/assets/youngo-hub-logo.png" alt="" />
+      <h1>YOUNGO Hub</h1>
+    </section>
+
     <section class="slide forest" data-path="open" data-notes="Welcome people. Share the join link for phones. Confirm this is a consultation, not a ratification meeting.">
       <p class="kicker">Community consultation</p>
       <img class="logo" src="/consultation/assets/youngo-hub-logo.png" alt="YOUNGO Hub" />

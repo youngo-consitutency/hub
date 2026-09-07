@@ -115,6 +115,25 @@ body {
   left: 22px;
   right: 22px;
 }
+.chrome-full {
+  appearance: none;
+  border: 1px solid rgba(98, 196, 187, 0.4);
+  background: rgba(8, 36, 27, 0.55);
+  color: var(--lime);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: 600 11px var(--display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.chrome-full:hover,
+.chrome-full:focus-visible,
+.chrome-full[aria-pressed='true'] {
+  border-color: var(--lime);
+  color: var(--white);
+  outline: none;
+}
 .progress {
   flex: 1;
   height: 3px;
@@ -206,6 +225,49 @@ body {
 }
 .slide.forest {
   padding: 8px 6px 4px 2px;
+}
+.slide.title-slide {
+  place-content: center;
+  place-items: center;
+  text-align: center;
+  padding: 0;
+}
+.slide.title-slide h1 {
+  max-width: none;
+  font-size: clamp(52px, 7.2vw, 92px);
+  letter-spacing: -0.04em;
+}
+.title-logo {
+  height: 78px;
+  margin-bottom: 18px;
+}
+.deck.is-title .path {
+  opacity: 0;
+  pointer-events: none;
+}
+.deck.is-title .stage {
+  inset: 50px 20px 42px;
+}
+
+html.is-full .shell {
+  min-height: 100vh;
+}
+html.is-full .stage-wrap {
+  padding: 12px;
+  min-height: 100vh;
+}
+html.is-full .deck {
+  width: min(100%, calc((100dvh - 24px) * 16 / 9));
+  height: min(100dvh - 24px, calc((100vw - 24px) * 9 / 16));
+  max-height: calc(100dvh - 24px);
+}
+.deck:fullscreen,
+.deck:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
 }
 
 .kicker {
@@ -1029,6 +1091,7 @@ kbd {
   .contours,
   .path,
   .chrome,
+  .chrome-full,
   .floor-actions,
   .floor-btn,
   .sheet,
