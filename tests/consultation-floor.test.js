@@ -100,6 +100,16 @@ test('consultation page and public floor work, including read-only preview', asy
   assert.match(html, /See the floor/)
   assert.match(html, /What do you want to add/)
   assert.match(html, /Point this to/)
+  assert.match(html, /\/consultation\/recap/)
+
+  const recap = await fetch(`${origin}/consultation/recap`)
+  assert.equal(recap.status, 200)
+  const recapHtml = await recap.text()
+  assert.match(recapHtml, /Consultation 1 recap/)
+  assert.match(recapHtml, /complete ownership and control/)
+  assert.match(recapHtml, /YOUNGO capacity/)
+  assert.match(recapHtml, /dual-key lock/)
+  assert.match(recapHtml, /written and signed/)
 
   const created = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',

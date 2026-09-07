@@ -143,6 +143,7 @@ function SiteFooter() {
         <div className="siteFooterCol">
           <h2>Get involved</h2>
           <A href="/join">Join YOUNGO</A>
+          <a href="/consultation/recap">Hub consultation recap</a>
           <A href="/signin">Sign in</A>
           <a
             href="https://unfccc.int/topics/action-for-climate-empowerment-children-and-youth/youth/youngo"
@@ -228,6 +229,16 @@ export function PublicSite() {
       <a className="skipLink" href="#site-main">
         Skip to main content
       </a>
+      <p className="siteConsultBanner">
+        <span>
+          <strong>Hub consultation 1 · 7 Sep 2026.</strong> The first session
+          locked complete YOUNGO ownership and control.
+        </span>
+        <span className="siteConsultBannerActions">
+          <a href="/consultation/recap">Read the recap</a>
+          <a href="/consultation">Join session 2</a>
+        </span>
+      </p>
       <SiteHeader />
       <main id="site-main" tabIndex="-1">
         <Page />

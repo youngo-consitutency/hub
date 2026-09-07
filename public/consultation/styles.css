@@ -346,6 +346,16 @@ li {
   color: var(--white);
   padding: 9px 14px;
   font-size: 14px;
+  text-decoration: none;
+}
+a.chip:hover,
+a.chip:focus-visible {
+  border-color: var(--lime);
+  color: var(--lime);
+}
+.paper a,
+.forest a {
+  color: inherit;
 }
 .chip strong {
   color: var(--lime);

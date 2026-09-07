@@ -10,6 +10,32 @@
   background: var(--bg-page);
 }
 
+.siteConsultBanner {
+  margin: 0;
+  padding: 10px clamp(16px, 4vw, 32px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 18px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-card));
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+  font-size: 14px;
+  text-align: center;
+}
+
+.siteConsultBannerActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.siteConsultBanner a {
+  font-weight: 700;
+  color: var(--on-accent-tint);
+}
+
 .siteHeader {
   position: sticky;
   top: 0;

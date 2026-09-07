@@ -117,14 +117,18 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.use('/api', publicRouter)
   app.use('/ics', icsRouter)
 
-  const sendConsultationPage = (req, res, next) => {
+  const sendConsultationFile = (file) => (req, res, next) => {
     res.set('Content-Security-Policy', CONSULTATION_CSP)
     res.set('Cache-Control', 'no-store')
-    res.sendFile(path.join(dist, 'consultation/index.html'), (err) =>
+    res.sendFile(path.join(dist, 'consultation', file), (err) =>
       err ? next() : undefined,
     )
   }
-  app.get(['/consultation', '/consultation/'], sendConsultationPage)
+  app.get(['/consultation', '/consultation/'], sendConsultationFile('index.html'))
+  app.get(
+    ['/consultation/recap', '/consultation/recap/'],
+    sendConsultationFile('recap.html'),
+  )
 
   app.use(express.static(dist))
   app.get(/^\/(?!api|ics|og|healthz|consultation).*/, (req, res, next) => {
