@@ -124,7 +124,10 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
       err ? next() : undefined,
     )
   }
-  app.get(['/consultation', '/consultation/'], sendConsultationFile('index.html'))
+  app.get(
+    ['/consultation', '/consultation/'],
+    sendConsultationFile('index.html'),
+  )
   app.get(
     ['/consultation/recap', '/consultation/recap/'],
     sendConsultationFile('recap.html'),
