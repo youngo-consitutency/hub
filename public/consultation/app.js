@@ -13,7 +13,7 @@ const SECTIONS = {
   need: 'Need',
   security: 'Security',
   concerns: 'Concerns',
-  uses: 'Uses',
+  uses: 'Features',
   serve: 'Who it serves',
   safeguards: 'Safeguards',
   agree: 'Agree',

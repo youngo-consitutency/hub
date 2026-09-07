@@ -22,7 +22,7 @@ export const CONTRIBUTION_SECTIONS = [
   { value: 'need', label: 'Need' },
   { value: 'security', label: 'Security' },
   { value: 'concerns', label: 'Concerns' },
-  { value: 'uses', label: 'Uses' },
+  { value: 'uses', label: 'Features' },
   { value: 'serve', label: 'Who it serves' },
   { value: 'safeguards', label: 'Safeguards' },
   { value: 'agree', label: 'Agree' },
