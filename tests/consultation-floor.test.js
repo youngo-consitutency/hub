@@ -84,6 +84,8 @@ test('consultation page and public floor work, including read-only preview', asy
   assert.match(html, /Joining takes one to two months/)
   assert.match(html, /once every six months/)
   assert.match(html, /YOUNGO has maximum ownership/)
+  assert.match(html, /shared within groups within the constituency/)
+  assert.match(html, /not with whoever develops it/)
   assert.match(html, /title-slide/)
   assert.match(html, />YOUNGO Hub</)
   assert.match(html, /id="fullscreen"/)
