@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/consultation/styles.css" />
 </head>
 <body>
-  <a class="skip" href="#open-floor">Skip to add to the floor</a>
+  <a class="skip" href="#open-hear">Skip to the live floor</a>
   <div class="contours" aria-hidden="true"></div>
   <div class="shell">
     <div class="stage-wrap">
@@ -33,13 +33,13 @@
         </nav>
         <div class="stage" id="stage"></div>
         <div class="chrome chrome-bottom">
-          <span>← → slides · C contribute · F fullscreen</span>
+          <span>← → slides · C contribute · L live floor · F fullscreen</span>
           <div class="progress" aria-hidden="true"><i id="bar"></i></div>
           <span>7–8 Sep 2026</span>
         </div>
         <aside class="help" id="help">
           <p><kbd>→</kbd> next · <kbd>←</kbd> back</p>
-          <p><kbd>C</kbd> contribute · <kbd>Esc</kbd> close</p>
+          <p><kbd>C</kbd> contribute · <kbd>L</kbd> live floor · <kbd>Esc</kbd> close</p>
           <p><kbd>F</kbd> fullscreen · <kbd>N</kbd> notes</p>
         </aside>
         <aside class="notes" id="notes"></aside>
@@ -47,10 +47,13 @@
     </div>
   </div>
 
-  <button class="floor-btn" type="button" id="open-floor">
-    Add to the floor
-    <span class="floor-count" id="count-badge" hidden>0</span>
-  </button>
+  <div class="floor-actions">
+    <button class="floor-btn ghost" type="button" id="open-hear">
+      See the floor
+      <span class="floor-count" id="count-badge" hidden>0</span>
+    </button>
+    <button class="floor-btn" type="button" id="open-floor">Add to the floor</button>
+  </div>
 
   <dialog class="sheet" id="floor-dialog" aria-labelledby="sheet-title">
     <div class="sheet-card">
@@ -92,6 +95,9 @@
           <label class="field" for="body"><span>Your contribution</span>
             <textarea id="body" name="body" required minlength="8" maxlength="800" placeholder="Write it so the room can act on it."></textarea>
           </label>
+          <label class="field" for="section"><span>Point this to</span>
+            <select id="section" name="section" required></select>
+          </label>
           <label class="field" for="name"><span>Name or group · optional</span>
             <input id="name" name="name" type="text" maxlength="80" placeholder="Leave blank to stay unnamed" />
           </label>
@@ -104,7 +110,7 @@
 
       <section class="sheet-step" data-step="hear">
         <p class="kicker">Live floor</p>
-        <h2>What the room has named</h2>
+        <h2>Inputs from the room</h2>
         <p class="notice" id="count-line">Live contributions will appear here.</p>
         <div class="filters" role="group" aria-label="Filter the floor">
           <button class="filter" type="button" data-filter="" aria-pressed="true">All</button>
@@ -113,6 +119,9 @@
           <button class="filter" type="button" data-filter="comment" aria-pressed="false">Comments</button>
           <button class="filter" type="button" data-filter="feature" aria-pressed="false">Features</button>
         </div>
+        <label class="field" for="section-filter"><span>Show section</span>
+          <select id="section-filter"></select>
+        </label>
         <div class="feed" id="feed" aria-live="polite"></div>
         <div class="actions">
           <button class="btn" type="button" id="add-another">Add something</button>

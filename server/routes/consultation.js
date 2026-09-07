@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import {
   CONTRIBUTION_KINDS,
+  CONTRIBUTION_SECTIONS,
   createContribution,
   listContributions,
 } from '../lib/consultationContributions.js'
@@ -11,7 +12,7 @@ const submitLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8 })
 
 consultationRouter.get('/kinds', (_req, res) => {
   res.set('Cache-Control', 'no-store')
-  res.json({ kinds: CONTRIBUTION_KINDS })
+  res.json({ kinds: CONTRIBUTION_KINDS, sections: CONTRIBUTION_SECTIONS })
 })
 
 consultationRouter.get('/contributions', async (req, res) => {
@@ -19,6 +20,7 @@ consultationRouter.get('/contributions', async (req, res) => {
   try {
     const items = await listContributions({
       kind: req.query.kind,
+      section: req.query.section,
       limit: req.query.limit,
     })
     res.json({ items })

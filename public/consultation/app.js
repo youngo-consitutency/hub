@@ -6,6 +6,19 @@ const KINDS = {
   comment: 'Comment',
   feature: 'New feature',
 }
+const SECTIONS = {
+  general: 'Whole consultation',
+  open: 'Open',
+  aims: 'Aims',
+  need: 'Need',
+  security: 'Security',
+  concerns: 'Concerns',
+  uses: 'Uses',
+  serve: 'Who it serves',
+  safeguards: 'Safeguards',
+  agree: 'Agree',
+  next: 'Next steps',
+}
 
 const stage = document.getElementById('stage')
 const notesEl = document.getElementById('notes')
@@ -22,6 +35,8 @@ const backBtn = document.getElementById('sheet-back')
 const pathButtons = [...document.querySelectorAll('.path button')]
 const filterButtons = [...document.querySelectorAll('.filter')]
 const steps = [...document.querySelectorAll('.sheet-step')]
+const sectionSelect = document.getElementById('section')
+const sectionFilter = document.getElementById('section-filter')
 
 stage.append(
   ...document.getElementById('slides').content.cloneNode(true).children,
@@ -31,8 +46,22 @@ const slides = [...stage.querySelectorAll('.slide')]
 let index = 0
 let kind = 'question'
 let filter = ''
+let sectionView = ''
 let items = []
 let step = 'choose'
+
+function fillSectionSelects() {
+  const options = Object.entries(SECTIONS)
+    .map(([value, label]) => `<option value="${value}">${label}</option>`)
+    .join('')
+  sectionSelect.innerHTML = options
+  sectionFilter.innerHTML = `<option value="">All sections</option>${options}`
+}
+
+function currentSection() {
+  const path = slides[index]?.dataset.path
+  return SECTIONS[path] ? path : 'general'
+}
 
 function joinUrl() {
   const url = new URL(location.href)
@@ -51,6 +80,7 @@ function setStep(name) {
     document.getElementById('write-kicker').textContent = KINDS[kind]
     document.getElementById('write-title').textContent =
       `Write your ${KINDS[kind].toLowerCase()}`
+    if (!sectionSelect.value) sectionSelect.value = currentSection()
     document.getElementById('body').focus()
   }
 }
@@ -95,7 +125,11 @@ function timeLabel(iso) {
 }
 
 function renderFeed() {
-  const visible = items.filter((item) => !filter || item.kind === filter)
+  const visible = items.filter(
+    (item) =>
+      (!filter || item.kind === filter) &&
+      (!sectionView || item.section === sectionView),
+  )
   countLine.textContent = items.length
     ? `${items.length} contribution${items.length === 1 ? '' : 's'} on the floor.`
     : 'Live contributions will appear here.'
@@ -108,7 +142,7 @@ function renderFeed() {
   feedEl.innerHTML = visible
     .map(
       (item) => `<article class="feed-item ${item.kind}">
-        <div class="feed-meta"><span>${KINDS[item.kind] || item.kind}</span><span>${item.name || 'Unnamed'} · ${timeLabel(item.createdAt)}</span></div>
+        <div class="feed-meta"><span>${KINDS[item.kind] || item.kind} · ${SECTIONS[item.section] || SECTIONS.general}</span><span>${item.name || 'Unnamed'} · ${timeLabel(item.createdAt)}</span></div>
         <p>${escapeHtml(item.body)}</p>
       </article>`,
     )
@@ -125,8 +159,7 @@ function escapeHtml(value) {
 
 async function loadFloor() {
   try {
-    const query = filter ? `?kind=${encodeURIComponent(filter)}` : ''
-    const response = await fetch(`${API}${query}`, {
+    const response = await fetch(API, {
       headers: { accept: 'application/json' },
     })
     if (!response.ok) throw new Error('load failed')
@@ -182,6 +215,9 @@ function loadNotes() {
 document
   .getElementById('open-floor')
   .addEventListener('click', () => openFloor('choose'))
+document
+  .getElementById('open-hear')
+  .addEventListener('click', () => openFloor('hear'))
 document.getElementById('sheet-close').addEventListener('click', closeFloor)
 document
   .getElementById('see-floor')
@@ -199,8 +235,14 @@ dialog.addEventListener('click', (event) => {
 document.querySelectorAll('.choose-btn').forEach((button) => {
   button.addEventListener('click', () => {
     kind = button.dataset.kind
+    sectionSelect.value = currentSection()
     setStep('write')
   })
+})
+
+sectionFilter.addEventListener('change', () => {
+  sectionView = sectionFilter.value
+  renderFeed()
 })
 
 filterButtons.forEach((button) => {
@@ -228,6 +270,7 @@ form.addEventListener('submit', async (event) => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         kind,
+        section: sectionSelect.value,
         body: document.getElementById('body').value,
         name: document.getElementById('name').value,
         website: form.website.value,
@@ -278,7 +321,10 @@ document.getElementById('copy').addEventListener('click', async () => {
     raw.actions || '- None recorded',
     '',
     'Live floor',
-    ...items.map((item) => `- [${item.kind}] ${item.body}`),
+    ...items.map(
+      (item) =>
+        `- [${item.kind}] [${item.section || 'general'}] ${item.body}`,
+    ),
   ].join('\n')
   try {
     await navigator.clipboard.writeText(text)
@@ -294,7 +340,7 @@ document.getElementById('copy').addEventListener('click', async () => {
 document.getElementById('principles').addEventListener('change', saveNotes)
 
 document.addEventListener('keydown', (event) => {
-  const typing = /^(INPUT|TEXTAREA)$/.test(event.target.tagName)
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)
   const open = dialog.open
   if (event.key === 'Escape' && open) return
   if (event.key === '?') helpEl.classList.toggle('is-on')
@@ -302,6 +348,8 @@ document.addEventListener('keydown', (event) => {
     notesEl.classList.toggle('is-on')
   else if (!typing && (event.key === 'c' || event.key === 'C') && !open)
     openFloor('choose')
+  else if (!typing && (event.key === 'l' || event.key === 'L') && !open)
+    openFloor('hear')
   else if (!typing && (event.key === 'f' || event.key === 'F') && !open) {
     if (!document.fullscreenElement)
       document.getElementById('deck').requestFullscreen()
@@ -320,6 +368,7 @@ document.addEventListener('keydown', (event) => {
   else if (!typing && !open && event.key === 'End') show(slides.length - 1)
 })
 
+fillSectionSelects()
 loadNotes()
 const fromHash = Number((location.hash || '').replace('#', '')) - 1
 show(Number.isFinite(fromHash) && fromHash >= 0 ? fromHash : 0)

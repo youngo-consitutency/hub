@@ -521,11 +521,16 @@ ul.plain li {
   max-width: 18ch;
 }
 
-.floor-btn {
+.floor-actions {
   position: fixed;
   right: max(24px, env(safe-area-inset-right));
   bottom: max(24px, env(safe-area-inset-bottom));
   z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.floor-btn {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -538,6 +543,11 @@ ul.plain li {
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(11, 46, 34, 0.35);
 }
+.floor-btn.ghost {
+  background: rgba(8, 36, 27, 0.92);
+  color: var(--white);
+  border: 1px solid rgba(98, 196, 187, 0.35);
+}
 .floor-btn:focus-visible {
   outline: 3px solid var(--teal);
   outline-offset: 3px;
@@ -547,11 +557,15 @@ ul.plain li {
   height: 22px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--lime);
+  background: var(--lime);
+  color: var(--ink);
   font-size: 12px;
   line-height: 22px;
   text-align: center;
+}
+.floor-btn:not(.ghost) .floor-count {
+  background: var(--ink);
+  color: var(--lime);
 }
 
 .sheet {
@@ -561,7 +575,7 @@ ul.plain li {
   max-width: 360px;
   width: min(360px, calc(100vw - 32px));
   height: fit-content;
-  max-height: min(62dvh, 520px);
+  max-height: min(72dvh, 620px);
   margin: 0;
   position: fixed;
   inset: auto 24px 92px auto;
@@ -577,7 +591,7 @@ ul.plain li {
   border-radius: 22px;
   padding: 14px 16px 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-  max-height: min(62dvh, 520px);
+  max-height: min(72dvh, 620px);
   overflow: auto;
 }
 .sheet-top {
@@ -612,6 +626,13 @@ ul.plain li {
   font-size: 22px;
   max-width: 16ch;
   margin-bottom: 6px;
+}
+.sheet-step[data-step='hear'] h2 {
+  font-size: 20px;
+  max-width: none;
+}
+.sheet-step[data-step='hear'] .field {
+  margin-top: 4px;
 }
 .floor-lead {
   margin: 0 0 14px;
@@ -662,7 +683,8 @@ ul.plain li {
   margin-top: 10px;
 }
 textarea,
-input[type='text'] {
+input[type='text'],
+select {
   width: 100%;
   font: 16px/1.4 var(--body);
   border: 1px solid rgba(98, 196, 187, 0.22);
@@ -671,8 +693,19 @@ input[type='text'] {
   background: rgba(247, 253, 248, 0.96);
   color: var(--ink);
 }
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #0f4a32 50%),
+    linear-gradient(135deg, #0f4a32 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
 #body {
-  min-height: 120px;
+  min-height: 88px;
   resize: vertical;
 }
 .btn {
@@ -716,7 +749,7 @@ input[type='text'] {
 
 .feed {
   min-height: 0;
-  max-height: 280px;
+  max-height: 240px;
   overflow: auto;
   display: grid;
   align-content: start;
@@ -851,10 +884,15 @@ kbd {
   li {
     font-size: 17px;
   }
-  .floor-btn {
+  .floor-actions {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
+    max-width: calc(100vw - 24px);
+  }
+  .floor-btn {
+    padding: 12px 14px;
+    font-size: 14px;
   }
   .sheet {
     inset: auto 12px 84px 12px;
@@ -877,6 +915,7 @@ kbd {
   .contours,
   .path,
   .chrome,
+  .floor-actions,
   .floor-btn,
   .sheet,
   .help,

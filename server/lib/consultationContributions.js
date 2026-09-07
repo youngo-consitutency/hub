@@ -15,7 +15,24 @@ export const CONTRIBUTION_KINDS = [
   { value: 'feature', label: 'New feature' },
 ]
 
+export const CONTRIBUTION_SECTIONS = [
+  { value: 'general', label: 'Whole consultation' },
+  { value: 'open', label: 'Open' },
+  { value: 'aims', label: 'Aims' },
+  { value: 'need', label: 'Need' },
+  { value: 'security', label: 'Security' },
+  { value: 'concerns', label: 'Concerns' },
+  { value: 'uses', label: 'Uses' },
+  { value: 'serve', label: 'Who it serves' },
+  { value: 'safeguards', label: 'Safeguards' },
+  { value: 'agree', label: 'Agree' },
+  { value: 'next', label: 'Next steps' },
+]
+
 const KIND_VALUES = new Set(CONTRIBUTION_KINDS.map((kind) => kind.value))
+const SECTION_VALUES = new Set(
+  CONTRIBUTION_SECTIONS.map((section) => section.value),
+)
 const BODY_MIN = 8
 const BODY_MAX = 800
 const NAME_MAX = 80
@@ -46,10 +63,14 @@ export function normalizeContributionInput(input = {}) {
     )
   }
   const displayName = trimmed(input.name, NAME_MAX)
+  const section = SECTION_VALUES.has(String(input.section || ''))
+    ? String(input.section)
+    : 'general'
   return {
     kind,
     body,
     displayName: displayName || null,
+    section,
   }
 }
 
@@ -60,6 +81,7 @@ function publicContribution(row) {
     kind: row.kind,
     body: row.body,
     name: row.display_name || null,
+    section: SECTION_VALUES.has(row.section) ? row.section : 'general',
     createdAt: row.created_at,
   }
 }
@@ -69,10 +91,10 @@ export async function createContribution(input) {
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
-      `INSERT INTO consultation_contributions (kind, body, display_name)
-       VALUES ($1, $2, $3)
+      `INSERT INTO consultation_contributions (kind, body, display_name, section)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [payload.kind, payload.body, payload.displayName],
+      [payload.kind, payload.body, payload.displayName, payload.section],
     )
     return publicContribution(rows[0])
   }
@@ -81,6 +103,7 @@ export async function createContribution(input) {
     kind: payload.kind,
     body: payload.body,
     display_name: payload.displayName,
+    section: payload.section,
     created_at: new Date().toISOString(),
   }
   const list = readJson(storePath, [])
@@ -89,7 +112,7 @@ export async function createContribution(input) {
   return publicContribution(row)
 }
 
-export async function listContributions({ kind, limit = 100 } = {}) {
+export async function listContributions({ kind, section, limit = 100 } = {}) {
   const capped = Math.min(Math.max(Number(limit) || 100, 1), 200)
   const pool = getPool()
   if (pool) {
@@ -99,9 +122,13 @@ export async function listContributions({ kind, limit = 100 } = {}) {
       values.push(kind)
       filters.push(`kind = $${values.length}`)
     }
+    if (section && SECTION_VALUES.has(section)) {
+      values.push(section)
+      filters.push(`section = $${values.length}`)
+    }
     values.push(capped)
     const { rows } = await pool.query(
-      `SELECT id, kind, body, display_name, created_at
+      `SELECT id, kind, body, display_name, section, created_at
          FROM consultation_contributions
         ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''}
         ORDER BY created_at DESC
@@ -112,6 +139,7 @@ export async function listContributions({ kind, limit = 100 } = {}) {
   }
   return readJson(storePath, [])
     .filter((row) => !kind || row.kind === kind)
+    .filter((row) => !section || row.section === section)
     .slice(0, capped)
     .map(publicContribution)
 }
