@@ -12,7 +12,7 @@ function startApp(env = {}) {
   const app = createApp({ env, dist: publicDir })
   return new Promise((resolve) => {
     const server = app.listen(0, () => {
-        const { port } = server.address()
+      const { port } = server.address()
       resolve({
         server,
         origin: `http://127.0.0.1:${port}`,
@@ -37,12 +37,19 @@ test('consultation contribution input keeps a usable public note', () => {
 })
 
 test('consultation contribution input rejects empty or unknown kinds', () => {
-  assert.throws(() => normalizeContributionInput({ kind: 'rant', body: 'This is long enough' }), {
-    code: 'validation',
-  })
-  assert.throws(() => normalizeContributionInput({ kind: 'question', body: 'Hi' }), {
-    code: 'validation',
-  })
+  assert.throws(
+    () =>
+      normalizeContributionInput({ kind: 'rant', body: 'This is long enough' }),
+    {
+      code: 'validation',
+    },
+  )
+  assert.throws(
+    () => normalizeContributionInput({ kind: 'question', body: 'Hi' }),
+    {
+      code: 'validation',
+    },
+  )
 })
 
 test('consultation contribution input strips markup and caps length', () => {
