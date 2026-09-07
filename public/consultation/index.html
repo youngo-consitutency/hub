@@ -306,18 +306,61 @@
       </div>
     </section>
 
-    <section class="slide paper" data-path="uses" data-notes="Walk the six features. Ask which they already need, which they do not, and which is missing. Park new ideas on the floor as New feature. Do not present planned agent writeback as live.">
+    <section class="slide paper" data-path="uses" data-notes="Open a card so the room can see the screen. Ask which they already need, which they do not, and which is missing. Park new ideas on the floor as New feature. Do not present planned agent writeback as live.">
       <p class="kicker">Features</p>
       <h2>This is what the Hub is built to do.</h2>
-      <div class="six">
-        <div class="cell"><strong>Membership path</strong> Create an account, take the membership course, and wait for human review where policy requires it. Under-18s need guardian permission.</div>
-        <div class="cell"><strong>Working groups</strong> See enough to choose a group, finish that group’s onboarding, then unlock its channel links and Contact Point.</div>
-        <div class="cell"><strong>Calendar and events</strong> Find live and upcoming meetings in your time zone, with a two-person path before an event is published.</div>
-        <div class="cell"><strong>Opportunities</strong> Browse calls, training, funding, and events. A posting is not a YOUNGO endorsement. Items need a source, eligibility, and a deadline.</div>
-        <div class="cell"><strong>Organisations</strong> Hold organisation seats and recognition without inventing UNFCCC status. The NGO board is a separate publisher path.</div>
-        <div class="cell"><strong>Search and publishing</strong> Cited search that never includes personal contact or guardian fields. Announcements and science resources go through the same two-person workflow.</div>
+      <p class="feature-hint">Click a card to see how that part of the Hub looks.</p>
+      <div class="feature-board" id="feature-board">
+        <button class="feature-card" type="button" data-feature="membership" aria-expanded="false">
+          <span class="feature-head"><strong>Membership path</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">Create an account, take the membership course, and wait for human review where policy requires it.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/membership.jpg" alt="The Hub membership desk, with sign-in and the path to join YOUNGO." />
+            <p>A person creates an individual or organisation account, accepts the current policy version, and takes the short membership course. Human review happens where policy requires it. Under-18s need guardian permission before the account can finish.</p>
+          </div>
+        </button>
+        <button class="feature-card" type="button" data-feature="groups" aria-expanded="false">
+          <span class="feature-head"><strong>Working groups</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">See enough to choose a group, finish that group’s onboarding, then unlock its channel links and Contact Point.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/groups.jpg" alt="Working groups on the Hub, with enough public information to choose a group." />
+            <p>Members can read what a group does before they join. Restricted chats and Contact Point details appear only after that group’s onboarding is completed, so a forwarded WhatsApp link is no longer the join path.</p>
+          </div>
+        </button>
+        <button class="feature-card" type="button" data-feature="calendar" aria-expanded="false">
+          <span class="feature-head"><strong>Calendar and events</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">Find live and upcoming meetings in your time zone, with a two-person path before an event is published.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/calendar.jpg" alt="Constituency events and COY information as they appear on the Hub." />
+            <p>The calendar is meant to answer “what is happening?” in the member’s own time zone. Events, announcements, and similar items go through a two-person content path before they are published, so one volunteer cannot put a date in front of the whole constituency alone.</p>
+          </div>
+        </button>
+        <button class="feature-card" type="button" data-feature="opportunities" aria-expanded="false">
+          <span class="feature-head"><strong>Opportunities</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">Browse calls, training, funding, and events. A posting is not a YOUNGO endorsement.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/opportunities.jpg" alt="Resources and opportunities collected for members on the Hub." />
+            <p>The board should help members find calls, training, funding, and events without treating a posting as a YOUNGO endorsement. Every item needs a source, eligibility, a deadline, and a way to expire or withdraw it.</p>
+          </div>
+        </button>
+        <button class="feature-card" type="button" data-feature="organisations" aria-expanded="false">
+          <span class="feature-head"><strong>Organisations</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">Hold organisation seats and recognition without inventing UNFCCC status.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/organisations.jpg" alt="The public YOUNGO Hub site, which organisations and new members meet first." />
+            <p>YOUNGO is a constituency, not one NGO. Records distinguish observer NGOs, groups, movements, and networks without inventing UNFCCC status. Verification and renewal must not privilege already-accredited or well-resourced groups.</p>
+          </div>
+        </button>
+        <button class="feature-card" type="button" data-feature="search" aria-expanded="false">
+          <span class="feature-head"><strong>Search and publishing</strong><span class="feature-close">Close</span></span>
+          <span class="feature-teaser">Cited search that never includes personal contact or guardian fields.</span>
+          <div class="feature-detail">
+            <img src="/consultation/assets/features/search.jpg" alt="The Hub trust and search promises on the public membership desk." />
+            <p>Hub search keeps citations and a verification note. Credentials, guardian data, minority data, and personal email or phone fields never enter it — including for administrators. Announcements and science resources use the same two-person publishing workflow as events.</p>
+          </div>
+        </button>
       </div>
-      <p class="muted" style="margin-top:14px">This is a working pre-production product. If a feature is missing or should wait, send it to the floor as a new feature.</p>
+      <p class="muted feature-foot">This is a working pre-production product. If a feature is missing or should wait, send it to the floor as a new feature.</p>
     </section>
 
     <section class="slide paper" data-path="uses" data-notes="Keep this honest: pre-production. Do not present planned agent writeback as live.">

@@ -82,6 +82,8 @@ test('consultation page and public floor work, including read-only preview', asy
   const html = await page.text()
   assert.match(html, /Help shape a shared YOUNGO Hub/)
   assert.match(html, /This is what the Hub is built to do/)
+  assert.match(html, /Click a card to see how that part of the Hub looks/)
+  assert.match(html, /consultation\/assets\/features\/membership\.jpg/)
   assert.match(html, /Add to the floor/)
   assert.match(html, /See the floor/)
   assert.match(html, /What do you want to add/)

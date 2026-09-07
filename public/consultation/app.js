@@ -42,6 +42,32 @@ stage.append(
   ...document.getElementById('slides').content.cloneNode(true).children,
 )
 const slides = [...stage.querySelectorAll('.slide')]
+const featureBoard = document.getElementById('feature-board')
+const featureCards = featureBoard
+  ? [...featureBoard.querySelectorAll('.feature-card')]
+  : []
+
+function closeFeatureCards() {
+  if (!featureBoard) return false
+  const open = featureBoard.classList.contains('is-open')
+  featureBoard.classList.remove('is-open')
+  featureCards.forEach((card) => {
+    card.classList.remove('is-open')
+    card.setAttribute('aria-expanded', 'false')
+  })
+  return open
+}
+
+featureCards.forEach((card) => {
+  card.addEventListener('click', () => {
+    const already = card.classList.contains('is-open')
+    closeFeatureCards()
+    if (already) return
+    featureBoard.classList.add('is-open')
+    card.classList.add('is-open')
+    card.setAttribute('aria-expanded', 'true')
+  })
+})
 
 let index = 0
 let kind = 'question'
@@ -97,6 +123,7 @@ function closeFloor() {
 }
 
 function show(i) {
+  closeFeatureCards()
   index = Math.max(0, Math.min(slides.length - 1, i))
   slides.forEach((slide, n) => slide.classList.toggle('is-on', n === index))
   counter.textContent = `${index + 1} / ${slides.length}`
@@ -342,6 +369,10 @@ document.addEventListener('keydown', (event) => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)
   const open = dialog.open
   if (event.key === 'Escape' && open) return
+  if (event.key === 'Escape' && closeFeatureCards()) {
+    event.preventDefault()
+    return
+  }
   if (event.key === '?') helpEl.classList.toggle('is-on')
   else if (!typing && (event.key === 'n' || event.key === 'N') && !open)
     notesEl.classList.toggle('is-on')
