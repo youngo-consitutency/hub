@@ -322,8 +322,7 @@ document.getElementById('copy').addEventListener('click', async () => {
     '',
     'Live floor',
     ...items.map(
-      (item) =>
-        `- [${item.kind}] [${item.section || 'general'}] ${item.body}`,
+      (item) => `- [${item.kind}] [${item.section || 'general'}] ${item.body}`,
     ),
   ].join('\n')
   try {

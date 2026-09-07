@@ -695,7 +695,8 @@ select {
 }
 select {
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #0f4a32 50%),
+  background-image:
+    linear-gradient(45deg, transparent 50%, #0f4a32 50%),
     linear-gradient(135deg, #0f4a32 50%, transparent 50%);
   background-position:
     calc(100% - 18px) calc(50% - 3px),
