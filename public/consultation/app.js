@@ -130,10 +130,9 @@ function show(i) {
   const label = slides[index].dataset.path === 'title' ? 0 : index
   counter.textContent = `${label} / ${contentCount}`
   bar.style.width = `${(index / Math.max(contentCount, 1)) * 100}%`
-  document.getElementById('deck').classList.toggle(
-    'is-title',
-    slides[index].dataset.path === 'title',
-  )
+  document
+    .getElementById('deck')
+    .classList.toggle('is-title', slides[index].dataset.path === 'title')
   const path = slides[index].dataset.path
   pathButtons.forEach((button) => {
     button.setAttribute(
@@ -426,7 +425,9 @@ function syncFullscreenButton() {
   button.setAttribute('aria-pressed', String(on))
 }
 
-document.getElementById('fullscreen').addEventListener('click', toggleFullscreen)
+document
+  .getElementById('fullscreen')
+  .addEventListener('click', toggleFullscreen)
 document.addEventListener('fullscreenchange', syncFullscreenButton)
 document.addEventListener('webkitfullscreenchange', syncFullscreenButton)
 
