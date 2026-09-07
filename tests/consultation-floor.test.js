@@ -70,7 +70,8 @@ test('consultation page and public floor work, including read-only preview', asy
   assert.equal(page.status, 200)
   const html = await page.text()
   assert.match(html, /Help shape a shared YOUNGO Hub/)
-  assert.match(html, /\/consultation\/app\.js/)
+  assert.match(html, /Add to the floor/)
+  assert.match(html, /What do you want to add/)
 
   const created = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',

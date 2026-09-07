@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/consultation/styles.css" />
 </head>
 <body>
-  <a class="skip" href="#floor-form">Skip to the contribution form</a>
+  <a class="skip" href="#open-floor">Skip to add to the floor</a>
   <div class="contours" aria-hidden="true"></div>
   <div class="shell">
     <div class="stage-wrap">
@@ -33,47 +33,79 @@
         </nav>
         <div class="stage" id="stage"></div>
         <div class="chrome chrome-bottom">
-          <span>← → slides · J join view · F fullscreen</span>
+          <span>← → slides · C contribute · F fullscreen</span>
           <div class="progress" aria-hidden="true"><i id="bar"></i></div>
           <span>7–8 Sep 2026</span>
         </div>
         <aside class="help" id="help">
           <p><kbd>→</kbd> next · <kbd>←</kbd> back</p>
-          <p><kbd>J</kbd> join / present · <kbd>F</kbd> fullscreen</p>
-          <p><kbd>N</kbd> notes · <kbd>?</kbd> keys</p>
+          <p><kbd>C</kbd> contribute · <kbd>Esc</kbd> close</p>
+          <p><kbd>F</kbd> fullscreen · <kbd>N</kbd> notes</p>
         </aside>
         <aside class="notes" id="notes"></aside>
       </div>
     </div>
+  </div>
 
-    <aside class="floor" id="floor">
-      <div>
-        <p class="kicker">The floor is open</p>
-        <h2>Add to the conversation</h2>
-        <p class="floor-lead">Questions, concerns, comments, and feature ideas appear here for everyone in the session. Do not include private safeguarding details or other people’s personal data.</p>
+  <button class="floor-btn" type="button" id="open-floor">
+    Add to the floor
+    <span class="floor-count" id="count-badge" hidden>0</span>
+  </button>
+
+  <dialog class="sheet" id="floor-dialog" aria-labelledby="sheet-title">
+    <div class="sheet-card">
+      <div class="sheet-top">
+        <button class="sheet-back" type="button" id="sheet-back" hidden>Back</button>
+        <button class="sheet-close" type="button" id="sheet-close" aria-label="Close">Close</button>
       </div>
-      <form id="floor-form">
-        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
-        <div class="kinds" role="group" aria-label="Contribution type">
-          <button class="kind kind-question" type="button" data-kind="question" aria-pressed="true">Question</button>
-          <button class="kind kind-concern" type="button" data-kind="concern" aria-pressed="false">Concern</button>
-          <button class="kind kind-comment" type="button" data-kind="comment" aria-pressed="false">Comment</button>
-          <button class="kind kind-feature" type="button" data-kind="feature" aria-pressed="false">New feature</button>
+
+      <section class="sheet-step is-on" data-step="choose">
+        <p class="kicker">The floor is open</p>
+        <h2 id="sheet-title">What do you want to add?</h2>
+        <p class="floor-lead">Pick one, then write. Keep the slides in view. Do not include private safeguarding details or other people’s personal data.</p>
+        <div class="choose" role="group" aria-label="Contribution type">
+          <button class="choose-btn kind-question" type="button" data-kind="question">
+            <strong>Question</strong>
+            <span>Something the room should answer</span>
+          </button>
+          <button class="choose-btn kind-concern" type="button" data-kind="concern">
+            <strong>Concern</strong>
+            <span>A risk or worry to name</span>
+          </button>
+          <button class="choose-btn kind-comment" type="button" data-kind="comment">
+            <strong>Comment</strong>
+            <span>A view, example, or clarification</span>
+          </button>
+          <button class="choose-btn kind-feature" type="button" data-kind="feature">
+            <strong>New feature</strong>
+            <span>Something the Hub should do</span>
+          </button>
         </div>
-        <label class="field" for="body"><span>Your contribution</span>
-          <textarea id="body" name="body" required minlength="8" maxlength="800" placeholder="Write it so the room can act on it."></textarea>
-        </label>
-        <label class="field" for="name" style="margin-top:8px"><span>Name or group · optional</span>
-          <input id="name" name="name" type="text" maxlength="80" placeholder="Leave blank to stay unnamed" />
-        </label>
-        <div class="actions">
-          <button class="btn" type="submit" id="send">Send to the floor</button>
-          <button class="btn ghost" type="button" id="copy-link">Copy join link</button>
-          <span class="status" id="form-status"></span>
-        </div>
-        <p class="notice" id="count-line">Live contributions will appear below.</p>
-      </form>
-      <div>
+        <button class="btn ghost" type="button" id="see-floor">See the live floor</button>
+      </section>
+
+      <section class="sheet-step" data-step="write">
+        <p class="kicker" id="write-kicker">Question</p>
+        <h2 id="write-title">Write it for the room</h2>
+        <form id="floor-form">
+          <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
+          <label class="field" for="body"><span>Your contribution</span>
+            <textarea id="body" name="body" required minlength="8" maxlength="800" placeholder="Write it so the room can act on it."></textarea>
+          </label>
+          <label class="field" for="name"><span>Name or group · optional</span>
+            <input id="name" name="name" type="text" maxlength="80" placeholder="Leave blank to stay unnamed" />
+          </label>
+          <div class="actions">
+            <button class="btn" type="submit" id="send">Send to the floor</button>
+            <span class="status" id="form-status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="sheet-step" data-step="hear">
+        <p class="kicker">Live floor</p>
+        <h2>What the room has named</h2>
+        <p class="notice" id="count-line">Live contributions will appear here.</p>
         <div class="filters" role="group" aria-label="Filter the floor">
           <button class="filter" type="button" data-filter="" aria-pressed="true">All</button>
           <button class="filter" type="button" data-filter="question" aria-pressed="false">Questions</button>
@@ -82,9 +114,13 @@
           <button class="filter" type="button" data-filter="feature" aria-pressed="false">Features</button>
         </div>
         <div class="feed" id="feed" aria-live="polite"></div>
-      </div>
-    </aside>
-  </div>
+        <div class="actions">
+          <button class="btn" type="button" id="add-another">Add something</button>
+          <button class="btn ghost" type="button" id="copy-link">Copy join link</button>
+        </div>
+      </section>
+    </div>
+  </dialog>
 
   <template id="slides">
     <section class="slide forest" data-path="open" data-notes="Welcome people. Share the join link for phones. Confirm this is a consultation, not a ratification meeting.">
@@ -95,11 +131,11 @@
       <div class="sessions">
         <span class="chip"><strong>Mon 7 Sep</strong> · 18:00 UTC</span>
         <span class="chip"><strong>Tue 8 Sep</strong> · 08:00 UTC</span>
-        <span class="chip" id="join-chip">Join on your phone from this page</span>
+        <span class="chip" id="join-chip">Use Add to the floor from any slide</span>
       </div>
     </section>
 
-    <section class="slide paper" data-path="aims" data-notes="Read the five aims once. Point people to the floor on the right or below.">
+    <section class="slide paper" data-path="aims" data-notes="Read the five aims once. Point people to Add to the floor.">
       <p class="kicker">Why we are here</p>
       <h2>This consultation will do five things.</h2>
       <ol class="aims-list">
@@ -109,7 +145,7 @@
         <li>Explore potential applications and improvements.</li>
         <li>Discuss the safeguards the Hub must uphold, and how it should serve members, organisations, working groups, and opportunity publishers.</li>
       </ol>
-      <p class="muted" style="margin-top:14px">We aim to leave with agreed principles, decisions, outstanding questions, and assigned next steps. Use the floor at any time.</p>
+      <p class="muted" style="margin-top:14px">We aim to leave with agreed principles, decisions, outstanding questions, and assigned next steps. Use Add to the floor at any time.</p>
     </section>
 
     <section class="slide paper" data-path="aims" data-notes="Protect the last ten minutes. Park overflow on the floor rather than skipping the close.">
