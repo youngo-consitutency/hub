@@ -687,15 +687,15 @@ ul.plain li {
 }
 .agree-slide h2 {
   max-width: none;
-  font-size: clamp(24px, 2.6vw, 32px);
+  font-size: clamp(22px, 2.4vw, 30px);
 }
 .agree-slide .kicker {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .principles {
-  margin-top: 8px;
+  margin-top: 6px;
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 .principles label {
   display: grid;
@@ -704,7 +704,7 @@ ul.plain li {
   background: #fff;
   border: 1px solid rgba(11, 46, 34, 0.1);
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   font-size: 14px;
   cursor: pointer;
 }
