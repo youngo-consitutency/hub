@@ -558,17 +558,17 @@ ul.plain li {
   border: 0;
   padding: 0;
   background: transparent;
-  max-width: 380px;
-  width: min(380px, calc(100vw - 32px));
+  max-width: 360px;
+  width: min(360px, calc(100vw - 32px));
+  height: fit-content;
+  max-height: min(62dvh, 520px);
   margin: 0;
   position: fixed;
-  top: auto;
-  left: auto;
-  right: 24px;
-  bottom: 92px;
+  inset: auto 24px 92px auto;
+  translate: none;
 }
 .sheet::backdrop {
-  background: rgba(6, 21, 15, 0.22);
+  background: rgba(6, 21, 15, 0.18);
 }
 .sheet-card {
   background: linear-gradient(180deg, #0e3a2c, #08241b);
@@ -577,7 +577,7 @@ ul.plain li {
   border-radius: 22px;
   padding: 14px 16px 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-  max-height: min(70dvh, 560px);
+  max-height: min(62dvh, 520px);
   overflow: auto;
 }
 .sheet-top {
@@ -819,6 +819,15 @@ kbd {
   .path {
     display: none;
   }
+  .stage-wrap {
+    padding: 12px 12px 84px;
+    min-height: 100dvh;
+  }
+  .deck {
+    width: calc(100vw - 24px);
+    height: calc(100dvh - 96px);
+    max-height: none;
+  }
   .stage {
     inset: 50px 14px 42px;
   }
@@ -842,9 +851,20 @@ kbd {
   li {
     font-size: 17px;
   }
+  .floor-btn {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
   .sheet {
-    margin: auto 12px 84px;
-    width: calc(100vw - 24px);
+    inset: auto 12px 84px 12px;
+    width: auto;
+    max-width: none;
+    max-height: min(68dvh, 560px);
+    margin: 0;
+  }
+  .sheet-card {
+    max-height: min(68dvh, 560px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
