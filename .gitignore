@@ -16,6 +16,7 @@ data/ngo-requests.json
 data/content-revisions.json
 data/content-publications.json
 data/feedback-tickets.json
+data/consultation-contributions.json
 data/ngo-opportunities.json
 data/ngo-opportunity-trust.json
 *.local

@@ -18,7 +18,7 @@ async function startPreview() {
   }
 }
 
-test('consultation preview serves public reads and rejects mutations', async (t) => {
+test('consultation preview serves public reads and rejects member mutations', async (t) => {
   const { server, origin } = await startPreview()
   t.after(() => server.close())
 

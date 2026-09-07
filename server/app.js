@@ -9,8 +9,21 @@ import { memberRouter } from './routes/member/index.js'
 import { intelligenceRouter } from './routes/intelligence.js'
 import { pushRouter } from './routes/push.js'
 import { notificationRouter } from './routes/notifications.js'
+import { consultationRouter } from './routes/consultation.js'
 import { appOrigin } from './lib/config.js'
 import { requestSecurity } from './lib/security.js'
+
+const CONSULTATION_CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ')
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const defaultDist = path.join(here, '../dist')
@@ -65,6 +78,12 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   if (env.READ_ONLY_PREVIEW === '1') {
     app.use((req, res, next) => {
       if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
+      if (
+        req.method === 'POST' &&
+        req.path === '/api/consultation/contributions'
+      ) {
+        return next()
+      }
       return res.status(503).json({
         error: {
           code: 'consultation_preview_read_only',
@@ -94,11 +113,21 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.use('/api/intelligence', intelligenceRouter)
   app.use('/api/push', pushRouter)
   app.use('/api/notifications', notificationRouter)
+  app.use('/api/consultation', consultationRouter)
   app.use('/api', publicRouter)
   app.use('/ics', icsRouter)
 
+  const sendConsultationPage = (req, res, next) => {
+    res.set('Content-Security-Policy', CONSULTATION_CSP)
+    res.set('Cache-Control', 'no-store')
+    res.sendFile(path.join(dist, 'consultation/index.html'), (err) =>
+      err ? next() : undefined,
+    )
+  }
+  app.get(['/consultation', '/consultation/'], sendConsultationPage)
+
   app.use(express.static(dist))
-  app.get(/^\/(?!api|ics|og|healthz).*/, (req, res, next) => {
+  app.get(/^\/(?!api|ics|og|healthz|consultation).*/, (req, res, next) => {
     res.sendFile(path.join(dist, 'index.html'), (err) =>
       err ? next() : undefined,
     )
