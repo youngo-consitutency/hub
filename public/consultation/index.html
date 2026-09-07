@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YOUNGO Hub Consultation · 7–8 September 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/consultation/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#floor-form">Skip to the contribution form</a>
+  <div class="contours" aria-hidden="true"></div>
+  <div class="shell">
+    <div class="stage-wrap">
+      <div class="deck" id="deck">
+        <div class="chrome chrome-top">
+          <span>YOUNGO Hub consultation</span>
+          <span id="counter">1 / 17</span>
+        </div>
+        <nav class="path" aria-label="Consultation path">
+          <button type="button" data-go="0" data-station="open">Open</button>
+          <button type="button" data-go="1" data-station="aims">Aims</button>
+          <button type="button" data-go="3" data-station="need">Need</button>
+          <button type="button" data-go="6" data-station="security">Security</button>
+          <button type="button" data-go="9" data-station="concerns">Concerns</button>
+          <button type="button" data-go="10" data-station="uses">Uses</button>
+          <button type="button" data-go="11" data-station="serve">Who it serves</button>
+          <button type="button" data-go="13" data-station="safeguards">Safeguards</button>
+          <button type="button" data-go="14" data-station="agree">Agree</button>
+          <button type="button" data-go="15" data-station="next">Next steps</button>
+        </nav>
+        <div class="stage" id="stage"></div>
+        <div class="chrome chrome-bottom">
+          <span>← → slides · J join view · F fullscreen</span>
+          <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+          <span>7–8 Sep 2026</span>
+        </div>
+        <aside class="help" id="help">
+          <p><kbd>→</kbd> next · <kbd>←</kbd> back</p>
+          <p><kbd>J</kbd> join / present · <kbd>F</kbd> fullscreen</p>
+          <p><kbd>N</kbd> notes · <kbd>?</kbd> keys</p>
+        </aside>
+        <aside class="notes" id="notes"></aside>
+      </div>
+    </div>
+
+    <aside class="floor" id="floor">
+      <div>
+        <p class="kicker">The floor is open</p>
+        <h2>Add to the conversation</h2>
+        <p class="floor-lead">Questions, concerns, comments, and feature ideas appear here for everyone in the session. Do not include private safeguarding details or other people’s personal data.</p>
+      </div>
+      <form id="floor-form">
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
+        <div class="kinds" role="group" aria-label="Contribution type">
+          <button class="kind kind-question" type="button" data-kind="question" aria-pressed="true">Question</button>
+          <button class="kind kind-concern" type="button" data-kind="concern" aria-pressed="false">Concern</button>
+          <button class="kind kind-comment" type="button" data-kind="comment" aria-pressed="false">Comment</button>
+          <button class="kind kind-feature" type="button" data-kind="feature" aria-pressed="false">New feature</button>
+        </div>
+        <label class="field" for="body"><span>Your contribution</span>
+          <textarea id="body" name="body" required minlength="8" maxlength="800" placeholder="Write it so the room can act on it."></textarea>
+        </label>
+        <label class="field" for="name" style="margin-top:8px"><span>Name or group · optional</span>
+          <input id="name" name="name" type="text" maxlength="80" placeholder="Leave blank to stay unnamed" />
+        </label>
+        <div class="actions">
+          <button class="btn" type="submit" id="send">Send to the floor</button>
+          <button class="btn ghost" type="button" id="copy-link">Copy join link</button>
+          <span class="status" id="form-status"></span>
+        </div>
+        <p class="notice" id="count-line">Live contributions will appear below.</p>
+      </form>
+      <div>
+        <div class="filters" role="group" aria-label="Filter the floor">
+          <button class="filter" type="button" data-filter="" aria-pressed="true">All</button>
+          <button class="filter" type="button" data-filter="question" aria-pressed="false">Questions</button>
+          <button class="filter" type="button" data-filter="concern" aria-pressed="false">Concerns</button>
+          <button class="filter" type="button" data-filter="comment" aria-pressed="false">Comments</button>
+          <button class="filter" type="button" data-filter="feature" aria-pressed="false">Features</button>
+        </div>
+        <div class="feed" id="feed" aria-live="polite"></div>
+      </div>
+    </aside>
+  </div>
+
+  <template id="slides">
+    <section class="slide forest" data-path="open" data-notes="Welcome people. Share the join link for phones. Confirm this is a consultation, not a ratification meeting.">
+      <p class="kicker">Community consultation</p>
+      <img class="logo" src="/consultation/assets/youngo-hub-logo.png" alt="YOUNGO Hub" />
+      <h1 style="margin-top:16px">Help shape a shared YOUNGO Hub.</h1>
+      <p class="lead">A working session on why the Hub is needed, how it should hold data, and the safeguards it must uphold for the constituency.</p>
+      <div class="sessions">
+        <span class="chip"><strong>Mon 7 Sep</strong> · 18:00 UTC</span>
+        <span class="chip"><strong>Tue 8 Sep</strong> · 08:00 UTC</span>
+        <span class="chip" id="join-chip">Join on your phone from this page</span>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="aims" data-notes="Read the five aims once. Point people to the floor on the right or below.">
+      <p class="kicker">Why we are here</p>
+      <h2>This consultation will do five things.</h2>
+      <ol class="aims-list">
+        <li>Present the proposal and discuss the need for a shared YOUNGO Hub.</li>
+        <li>Explain how the proposed data-management system would improve security compared with the previous membership system.</li>
+        <li>Address questions and concerns.</li>
+        <li>Explore potential applications and improvements.</li>
+        <li>Discuss the safeguards the Hub must uphold, and how it should serve members, organisations, working groups, and opportunity publishers.</li>
+      </ol>
+      <p class="muted" style="margin-top:14px">We aim to leave with agreed principles, decisions, outstanding questions, and assigned next steps. Use the floor at any time.</p>
+    </section>
+
+    <section class="slide paper" data-path="aims" data-notes="Protect the last ten minutes. Park overflow on the floor rather than skipping the close.">
+      <p class="kicker">120 minutes · adjust if needed</p>
+      <h2>A path, not a lecture.</h2>
+      <table class="agenda">
+        <thead>
+          <tr><th>Time</th><th>Session</th><th>What we should have</th><th>Min</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>00:00</td><td>Welcome</td><td>Purpose, participation rules, who can decide what.</td><td>10</td></tr>
+          <tr><td>00:10</td><td>Need for a shared Hub</td><td>Problems the Hub should solve — and what it should not replace.</td><td>15</td></tr>
+          <tr><td>00:25</td><td>Security and data management</td><td>What improves on the previous membership system.</td><td>20</td></tr>
+          <tr><td>00:45</td><td>Questions and concerns</td><td>Named worries, evidence, and what would resolve them.</td><td>20</td></tr>
+          <tr><td>01:05</td><td>Applications and improvements</td><td>What is useful now, what can wait, what should never be built.</td><td>15</td></tr>
+          <tr><td>01:20</td><td>Safeguards and who it serves</td><td>Members, organisations, working groups, publishers.</td><td>30</td></tr>
+          <tr><td>01:50</td><td>Close</td><td>Principles, decisions, owners, dates.</td><td>10</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide forest" data-path="need" data-notes="Ask which of these people still lose time to. Do not claim the Hub already replaces every channel.">
+      <p class="kicker">The need</p>
+      <h2>YOUNGO work is real. The map of it is not.</h2>
+      <p class="lead">Meetings, membership, working groups, submissions, and opportunities still live across WhatsApp, mailing lists, Google Forms, shared spreadsheets, Airtable, Drive, and Linktree.</p>
+      <div class="aims" style="margin-top:20px">
+        <article class="card">
+          <h3>What that costs</h3>
+          <p>New members cannot reliably find what is happening, who to contact, or how to join work. Personal records sit in files that can be forwarded. Channel links leak. Volunteer teams reconstruct the same lists every cycle.</p>
+        </article>
+        <article class="card">
+          <h3>What a shared Hub is for</h3>
+          <p>One constituency place that organises those signals, points back to the channels people already use, and holds membership data under role, consent, and audit — rather than under whoever has the spreadsheet link.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="need" data-notes="The six questions are the product test.">
+      <p class="kicker">Member test</p>
+      <h2>A member should answer six questions in about thirty seconds.</h2>
+      <div class="six">
+        <div class="cell"><strong>What is happening?</strong> Live and upcoming meetings in their time zone.</div>
+        <div class="cell"><strong>What can I contribute to?</strong> Open submissions, consultations, and tasks.</div>
+        <div class="cell"><strong>Where can I go?</strong> COYs, events, and opportunities that fit them.</div>
+        <div class="cell"><strong>Who do I contact?</strong> The right Contact Point or team, not a forwarded chat.</div>
+        <div class="cell"><strong>What is my WG doing?</strong> Focus, calls, and how to join safely.</div>
+        <div class="cell"><strong>What is being decided?</strong> Council and DMP items, with a trail.</div>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="need" data-notes="Hold the room on the ‘is not’ list.">
+      <p class="kicker">The proposal</p>
+      <h2>The Hub is YOUNGO infrastructure. It is not a new organisation.</h2>
+      <div class="who">
+        <article class="card">
+          <h3>It is</h3>
+          <ul class="plain">
+            <li>A member and mission-control product for the constituency.</li>
+            <li>A governed place for accounts, onboarding, working groups, organisations, and opportunities.</li>
+            <li>A pointer back to WhatsApp, Drive, and mailing lists where those remain the working channels.</li>
+            <li>Accountable to YOUNGO Council, with the Hub Team operating day to day.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>It is not</h3>
+          <ul class="plain">
+            <li>A separate NGO, brand, or a mandate to speak for YOUNGO.</li>
+            <li>A replacement for Contact Points, Council, or existing collaboration chats.</li>
+            <li>A public social network, or a search engine over private lives.</li>
+            <li>Finished policy. This consultation feeds the establishment data-management discussion.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="security" data-notes="Be respectful of the Membership Team. The previous system made YOUNGO possible.">
+      <p class="kicker">Data management</p>
+      <h2>The previous membership system was a set of files. The Hub is a set of permissions.</h2>
+      <div class="compare">
+        <div class="was">
+          <h3>Previously</h3>
+          <ul class="plain">
+            <li>Google Forms and shared spreadsheets as the membership record.</li>
+            <li>Airtable, Linktree, and chat invites as the join path into groups.</li>
+            <li>Anyone with a link could often see, copy, or forward many records.</li>
+            <li>Guardian, age, and contact details sat beside general lists.</li>
+            <li>Hard to prove who changed a row, or when a person left.</li>
+            <li>Policy “acceptance” was a checkbox without a stored version.</li>
+          </ul>
+        </div>
+        <div class="proposed">
+          <h3>Proposed Hub</h3>
+          <ul class="plain">
+            <li>Individual accounts. Passwords and sessions stored only as hashes.</li>
+            <li>The server grants access by role and assignment, not by hiding a button.</li>
+            <li>Membership Team review in a queue, not a shared sheet.</li>
+            <li>Date of birth, guardian, and minority fields never enter search or ordinary member views.</li>
+            <li>Role changes, publishing, and sensitive transitions write to an audit log.</li>
+            <li>Each privacy notice and policy version is recorded at consent.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="security" data-notes="Walk three rows, then ask which should be non-negotiable.">
+      <p class="kicker">Security in practice</p>
+      <h2>What actually gets harder to misuse.</h2>
+      <table class="matrix">
+        <thead>
+          <tr><th>Risk</th><th>Previous membership files</th><th>Proposed Hub controls</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Shared access</td><td>A forwarded spreadsheet or Airtable link often exposes the whole list.</td><td>Contact Points see members of their own group. Ordinary members do not browse personal records.</td></tr>
+          <tr><td>Under-18s</td><td>Guardian details can sit in the same sheet as everyone else.</td><td>Guardian permission is required to finish registration, and those fields stay with admins and the Membership Team only.</td></tr>
+          <tr><td>Passwords and sessions</td><td>No member accounts, or credentials living in inboxes and docs.</td><td>Hashed passwords, hashed sessions, HttpOnly cookies, single-use reset links that expire in an hour.</td></tr>
+          <tr><td>Working-group chats</td><td>WhatsApp links circulate and outlive the person who was trusted with them.</td><td>Channel links and CP contacts unlock only after that group’s onboarding is completed.</td></tr>
+          <tr><td>Search and tools</td><td>A document search can sweep up whatever was pasted into Drive.</td><td>Hub search is walled off from credentials, sessions, guardian data, minority data, and personal email or phone fields — including for administrators.</td></tr>
+          <tr><td>Leaving YOUNGO</td><td>Rows linger. Age-35 expiry and deletion are manual and uneven.</td><td>Resignation, expiry at 35, and termination follow the Membership Policy clocks, then the Hub account is closed.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide paper" data-path="security" data-notes="Invite challenge: is any audience seeing too much, or too little to do their job?">
+      <p class="kicker">Who can see what</p>
+      <h2>Visibility is a design choice, not a courtesy.</h2>
+      <table class="matrix">
+        <thead>
+          <tr><th>Audience</th><th>Can see</th><th>Cannot see</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Other members</td><td>Name, and working groups joined.</td><td>Date of birth, phone, motivation, minority fields, guardian details.</td></tr>
+          <tr><td>Working Group Contact Points</td><td>Name and email of people who joined their own group.</td><td>Guardian data, full membership files, other groups’ members.</td></tr>
+          <tr><td>Membership Team and Hub admins</td><td>The membership record needed to verify and support people.</td><td>Passwords. Nobody can recover those, including administrators.</td></tr>
+          <tr><td>Nobody outside YOUNGO</td><td>Only what a member has asked YOUNGO to send, such as a badge request.</td><td>Sale, advertising, or third-party tracking. There is none on the Hub.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide paper" data-path="concerns" data-notes="Take comments from the floor. Do not argue people out of a concern; ask what safeguard would settle it.">
+      <p class="kicker">Open floor</p>
+      <h2>Name the questions. Do not smooth them over.</h2>
+      <div class="prompts">
+        <div class="prompt">Who is accountable if a record is wrong, over-shared, or kept too long?</div>
+        <div class="prompt">What data is truly necessary to register, and what can wait?</div>
+        <div class="prompt">How do low-bandwidth, shared-device, language, and disability needs change the design?</div>
+        <div class="prompt">What happens when an account, role, or channel link is compromised?</div>
+        <div class="prompt">Which actions need two-person approval, and which need only an audit trail?</div>
+        <div class="prompt">Where do people report a security, privacy, or safeguarding concern without using the system they distrust?</div>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="uses" data-notes="Keep this honest: pre-production. Do not present planned agent writeback as live.">
+      <p class="kicker">Applications and improvements</p>
+      <h2>Use what already helps. Do not pretend the rest is finished.</h2>
+      <div class="cards horizon">
+        <article class="card">
+          <span class="tag tag-now">Working now</span>
+          <h3>Constituency daily path</h3>
+          <p>Registration and sign-in, membership course, Membership Team review, working-group onboarding, organisation seats, calendar, opportunities, cited search, and a two-person content workflow for events, announcements, and resources.</p>
+        </article>
+        <article class="card">
+          <span class="tag tag-next">Next, if we agree</span>
+          <h3>Deeper coordination</h3>
+          <p>Richer live directories and submissions, clearer Council and COY coverage, tighter opportunity moderation, and negotiation workspaces where humans — not tools — still approve, endorse, and transmit.</p>
+        </article>
+        <article class="card">
+          <span class="tag tag-later">Only with a mandate</span>
+          <h3>Do not build by default</h3>
+          <p>Surveillance of participation, public ranking of members, silent policy changes, or agents that can change canonical records, grant endorsement, or message on YOUNGO’s behalf.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="serve" data-notes="Spend time on the first meaningful action for a new member.">
+      <p class="kicker">Who the Hub must serve</p>
+      <h2>Members and organisations are not the same journey.</h2>
+      <div class="who">
+        <article class="card">
+          <h3>Members</h3>
+          <p>A path from first contact to useful work: minimum data to create an account, a course that explains YOUNGO, then human review where policy requires it. Network membership stays lighter than Constituency Work. Under-18s need guardian permission.</p>
+        </article>
+        <article class="card">
+          <h3>Organisations</h3>
+          <p>YOUNGO is a constituency, not one NGO. Records should distinguish observer NGOs, groups, movements, and networks without inventing UNFCCC status. Verification and renewal must not privilege already-accredited or well-resourced groups.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="serve" data-notes="Ask Contact Points what they can actually keep up to date.">
+      <p class="kicker">Who the Hub must serve</p>
+      <h2>Working groups and publishers need gates, not more forwarding.</h2>
+      <div class="who">
+        <article class="card">
+          <h3>Working Groups</h3>
+          <p>Members should see enough to choose a group, then complete that group’s onboarding before restricted chats and Contact Point details appear. Nobody speaks for a WG or for YOUNGO without a mandate.</p>
+        </article>
+        <article class="card">
+          <h3>Opportunity publishers</h3>
+          <p>The board should help members find calls, training, funding, and events without treating a posting as a YOUNGO endorsement. Every item needs a source, eligibility, deadline, and a way to expire or withdraw it.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="safeguards" data-notes="Offer these as a proposed floor. Invite additions from the live feed.">
+      <p class="kicker">Safeguards</p>
+      <h2>A floor we should not bargain away.</h2>
+      <div class="aims">
+        <article class="card">
+          <h3>People</h3>
+          <ul class="plain">
+            <li>Membership is for children and youth up to 35, with guardian permission under 18.</li>
+            <li>Conduct, safeguarding, and conflict-of-interest rules stay in force on the Hub.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Data</h3>
+          <ul class="plain">
+            <li>Collect the minimum. Separate consent to the platform from membership itself.</li>
+            <li>Personal data never enters Hub search. Public, member, and restricted channels stay distinct.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Power</h3>
+          <ul class="plain">
+            <li>Editorial approval, constituency endorsement, and external transmission stay separate.</li>
+            <li>Tools may prepare unpublished proposals. They may not approve or send them.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Stewardship</h3>
+          <ul class="plain">
+            <li>The Hub Team operates; Council remains accountable.</li>
+            <li>This meeting records recommendations until the proper body ratifies them.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="agree" data-notes="Tick only what the room can live with. Unticked items become open questions.">
+      <p class="kicker">To agree or amend</p>
+      <h2>Proposed principles. Tick what this session can stand behind.</h2>
+      <div class="principles" id="principles">
+        <label><input type="checkbox" data-p="1" /> The Hub is shared YOUNGO infrastructure, not a parallel organisation or a new mandate to speak for the constituency.</label>
+        <label><input type="checkbox" data-p="2" /> It complements WhatsApp, mailing lists, and Drive. It does not replace them.</label>
+        <label><input type="checkbox" data-p="3" /> Access is granted by role and assignment, not by possessing a file link.</label>
+        <label><input type="checkbox" data-p="4" /> Collect the minimum necessary. Credentials, guardian data, minority data, and personal email or phone fields never enter search.</label>
+        <label><input type="checkbox" data-p="5" /> Under-18 participation requires guardian permission and stricter visibility.</label>
+        <label><input type="checkbox" data-p="6" /> Members, organisations, working groups, and publishers have different duties and different views of the same system.</label>
+        <label><input type="checkbox" data-p="7" /> Humans approve, endorse, and transmit. Tools may only prepare unpublished proposals.</label>
+        <label><input type="checkbox" data-p="8" /> Outcomes of this consultation are recommendations until Council or the named authority ratifies them.</label>
+      </div>
+    </section>
+
+    <section class="slide paper" data-path="next" data-notes="Fill this live. If there is no owner, it is not a next step.">
+      <p class="kicker">Close</p>
+      <h2>Decisions, outstanding questions, next steps.</h2>
+      <div class="capture">
+        <label class="field"><span>Decisions or recommendations</span>
+          <textarea id="decisions" placeholder="D1 … Status: recommendation / agreed. Authority: …"></textarea>
+        </label>
+        <label class="field"><span>Outstanding questions</span>
+          <textarea id="questions" placeholder="What still needs policy, legal, safeguarding, or technical advice?"></textarea>
+        </label>
+        <label class="field"><span>Next steps · owner · date</span>
+          <textarea id="actions" placeholder="Action — owner — support — target date — done when…"></textarea>
+        </label>
+        <label class="field"><span>Messages back to the membership</span>
+          <textarea id="messages" placeholder="What should participants take to their groups after this call?"></textarea>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="copy">Copy facilitator notes</button>
+        <span class="muted" id="copy-status"></span>
+      </div>
+    </section>
+
+    <section class="slide forest" data-path="next" data-notes="Thank people. Confirm when the floor record will be shared.">
+      <p class="kicker">Stay in the work</p>
+      <p class="close-mark">The Hub should make YOUNGO easier to join, safer to hold, and clearer to use.</p>
+      <p class="lead" style="margin-top:24px">Keep using the floor after the call if something still needs naming.</p>
+      <p class="muted" style="margin-top:20px">Mon 7 Sep 18:00 UTC · Tue 8 Sep 08:00 UTC · youngohub.org/consultation</p>
+    </section>
+  </template>
+
+  <script src="/consultation/app.js" defer></script>
+</body>
+</html>
