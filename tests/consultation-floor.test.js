@@ -30,10 +30,21 @@ test('consultation contribution input keeps a usable public note', () => {
     kind: 'feature',
     body: '  Add regional filters on opportunities. ',
     name: 'WG contact',
+    section: 'uses',
   })
   assert.equal(item.kind, 'feature')
   assert.equal(item.body, 'Add regional filters on opportunities.')
   assert.equal(item.displayName, 'WG contact')
+  assert.equal(item.section, 'uses')
+})
+
+test('consultation contribution input defaults unknown sections to the whole consultation', () => {
+  const item = normalizeContributionInput({
+    kind: 'comment',
+    body: 'Keep this attached to the whole session.',
+    section: 'not-a-slide',
+  })
+  assert.equal(item.section, 'general')
 })
 
 test('consultation contribution input rejects empty or unknown kinds', () => {
@@ -71,7 +82,9 @@ test('consultation page and public floor work, including read-only preview', asy
   const html = await page.text()
   assert.match(html, /Help shape a shared YOUNGO Hub/)
   assert.match(html, /Add to the floor/)
+  assert.match(html, /See the floor/)
   assert.match(html, /What do you want to add/)
+  assert.match(html, /Point this to/)
 
   const created = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',
@@ -80,12 +93,14 @@ test('consultation page and public floor work, including read-only preview', asy
       kind: 'question',
       body: 'How will under-18 guardian data be reviewed?',
       name: 'Member',
+      section: 'security',
     }),
   })
   assert.equal(created.status, 201)
   const payload = await created.json()
   assert.equal(payload.item.kind, 'question')
   assert.equal(payload.item.name, 'Member')
+  assert.equal(payload.item.section, 'security')
 
   const honeypot = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',
@@ -101,7 +116,16 @@ test('consultation page and public floor work, including read-only preview', asy
   const listed = await fetch(`${origin}/api/consultation/contributions`)
   assert.equal(listed.status, 200)
   const board = await listed.json()
-  assert.ok(board.items.some((item) => item.body.includes('guardian data')))
+  assert.ok(
+    board.items.some(
+      (item) =>
+        item.body.includes('guardian data') && item.section === 'security',
+    ),
+  )
+  const kinds = await fetch(`${origin}/api/consultation/kinds`)
+  assert.equal(kinds.status, 200)
+  const catalog = await kinds.json()
+  assert.ok(catalog.sections.some((section) => section.value === 'need'))
   assert.equal(
     board.items.some((item) => item.body.includes('This should be ignored')),
     false,
