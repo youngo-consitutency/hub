@@ -31,9 +31,12 @@ function trimmed(value, max) {
 export function normalizeContributionInput(input = {}) {
   const kind = String(input.kind || '')
   if (!KIND_VALUES.has(kind)) {
-    throw Object.assign(new Error('Choose question, concern, comment, or new feature.'), {
-      code: 'validation',
-    })
+    throw Object.assign(
+      new Error('Choose question, concern, comment, or new feature.'),
+      {
+        code: 'validation',
+      },
+    )
   }
   const body = trimmed(input.body, BODY_MAX)
   if (body.length < BODY_MIN) {

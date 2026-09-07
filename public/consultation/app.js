@@ -16,9 +16,12 @@ const feedEl = document.getElementById("feed");
 const form = document.getElementById("floor-form");
 const statusEl = document.getElementById("form-status");
 const countLine = document.getElementById("count-line");
+const countBadge = document.getElementById("count-badge");
+const dialog = document.getElementById("floor-dialog");
+const backBtn = document.getElementById("sheet-back");
 const pathButtons = [...document.querySelectorAll(".path button")];
-const kindButtons = [...document.querySelectorAll(".kind")];
 const filterButtons = [...document.querySelectorAll(".filter")];
+const steps = [...document.querySelectorAll(".sheet-step")];
 
 stage.append(...document.getElementById("slides").content.cloneNode(true).children);
 const slides = [...stage.querySelectorAll(".slide")];
@@ -27,20 +30,35 @@ let index = 0;
 let kind = "question";
 let filter = "";
 let items = [];
+let step = "choose";
 
 function joinUrl() {
   const url = new URL(location.href);
   url.hash = "";
-  url.searchParams.set("view", "join");
-  return url.toString();
+  url.searchParams.delete("view");
+  return `${url.origin}${url.pathname}`;
 }
 
-function setJoinMode(on) {
-  document.documentElement.classList.toggle("is-join", on);
-  const url = new URL(location.href);
-  if (on) url.searchParams.set("view", "join");
-  else url.searchParams.delete("view");
-  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash || `#${index + 1}`}`);
+function setStep(name) {
+  step = name;
+  steps.forEach((node) => node.classList.toggle("is-on", node.dataset.step === name));
+  backBtn.hidden = name === "choose";
+  if (name === "write") {
+    document.getElementById("write-kicker").textContent = KINDS[kind];
+    document.getElementById("write-title").textContent = `Write your ${KINDS[kind].toLowerCase()}`;
+    document.getElementById("body").focus();
+  }
+}
+
+function openFloor(start = "choose") {
+  setStep(start);
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+}
+
+function closeFloor() {
+  if (dialog.open) dialog.close();
+  statusEl.textContent = "";
 }
 
 function show(i) {
@@ -72,7 +90,9 @@ function renderFeed() {
   const visible = items.filter((item) => !filter || item.kind === filter);
   countLine.textContent = items.length
     ? `${items.length} contribution${items.length === 1 ? "" : "s"} on the floor.`
-    : "Live contributions will appear below.";
+    : "Live contributions will appear here.";
+  countBadge.hidden = !items.length;
+  countBadge.textContent = String(items.length);
   if (!visible.length) {
     feedEl.innerHTML = `<p class="empty-floor">${items.length ? "Nothing in this filter yet." : "Be the first to send something to the floor."}</p>`;
     return;
@@ -144,10 +164,19 @@ function loadNotes() {
   }
 }
 
-kindButtons.forEach((button) => {
+document.getElementById("open-floor").addEventListener("click", () => openFloor("choose"));
+document.getElementById("sheet-close").addEventListener("click", closeFloor);
+document.getElementById("see-floor").addEventListener("click", () => setStep("hear"));
+document.getElementById("add-another").addEventListener("click", () => setStep("choose"));
+backBtn.addEventListener("click", () => setStep(step === "write" ? "choose" : "choose"));
+dialog.addEventListener("click", (event) => {
+  if (event.target === dialog) closeFloor();
+});
+
+document.querySelectorAll(".choose-btn").forEach((button) => {
   button.addEventListener("click", () => {
     kind = button.dataset.kind;
-    kindButtons.forEach((node) => node.setAttribute("aria-pressed", node === button ? "true" : "false"));
+    setStep("write");
   });
 });
 
@@ -182,8 +211,9 @@ form.addEventListener("submit", async (event) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error?.message || "Could not send.");
     document.getElementById("body").value = "";
-    statusEl.textContent = "On the floor.";
+    statusEl.textContent = "";
     await loadFloor();
+    setStep("hear");
   } catch (err) {
     statusEl.textContent = err.message || "Could not send. Try again.";
   } finally {
@@ -194,9 +224,9 @@ form.addEventListener("submit", async (event) => {
 document.getElementById("copy-link").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(joinUrl());
-    statusEl.textContent = "Join link copied.";
+    countLine.textContent = "Link copied. Anyone can open the slides and add to the floor.";
   } catch {
-    statusEl.textContent = joinUrl();
+    countLine.textContent = joinUrl();
   }
 });
 
@@ -237,27 +267,27 @@ document.getElementById("principles").addEventListener("change", saveNotes);
 
 document.addEventListener("keydown", (event) => {
   const typing = /^(INPUT|TEXTAREA)$/.test(event.target.tagName);
+  const open = dialog.open;
+  if (event.key === "Escape" && open) return;
   if (event.key === "?") helpEl.classList.toggle("is-on");
-  else if (!typing && (event.key === "n" || event.key === "N")) notesEl.classList.toggle("is-on");
-  else if (!typing && (event.key === "j" || event.key === "J")) {
-    setJoinMode(!document.documentElement.classList.contains("is-join"));
-  } else if (!typing && (event.key === "f" || event.key === "F")) {
+  else if (!typing && (event.key === "n" || event.key === "N") && !open) notesEl.classList.toggle("is-on");
+  else if (!typing && (event.key === "c" || event.key === "C") && !open) openFloor("choose");
+  else if (!typing && (event.key === "f" || event.key === "F") && !open) {
     if (!document.fullscreenElement) document.getElementById("deck").requestFullscreen();
     else document.exitFullscreen();
-  } else if (!typing && ["ArrowRight", "PageDown"].includes(event.key)) {
+  } else if (!typing && !open && ["ArrowRight", "PageDown"].includes(event.key)) {
     event.preventDefault();
     show(index + 1);
-  } else if (!typing && ["ArrowLeft", "PageUp"].includes(event.key)) {
+  } else if (!typing && !open && ["ArrowLeft", "PageUp"].includes(event.key)) {
     event.preventDefault();
     show(index - 1);
-  } else if (!typing && event.key === "Home") show(0);
-  else if (!typing && event.key === "End") show(slides.length - 1);
+  } else if (!typing && !open && event.key === "Home") show(0);
+  else if (!typing && !open && event.key === "End") show(slides.length - 1);
 });
 
-const params = new URLSearchParams(location.search);
-setJoinMode(params.get("view") === "join");
 loadNotes();
 const fromHash = Number((location.hash || "").replace("#", "")) - 1;
 show(Number.isFinite(fromHash) && fromHash >= 0 ? fromHash : 0);
 loadFloor();
 setInterval(loadFloor, 4000);
+if (new URLSearchParams(location.search).get("view") === "join") openFloor("choose");

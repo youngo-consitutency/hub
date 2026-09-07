@@ -12,7 +12,7 @@ function startApp(env = {}) {
   const app = createApp({ env, dist: publicDir })
   return new Promise((resolve) => {
     const server = app.listen(0, () => {
-        const { port } = server.address()
+      const { port } = server.address()
       resolve({
         server,
         origin: `http://127.0.0.1:${port}`,
@@ -37,12 +37,19 @@ test('consultation contribution input keeps a usable public note', () => {
 })
 
 test('consultation contribution input rejects empty or unknown kinds', () => {
-  assert.throws(() => normalizeContributionInput({ kind: 'rant', body: 'This is long enough' }), {
-    code: 'validation',
-  })
-  assert.throws(() => normalizeContributionInput({ kind: 'question', body: 'Hi' }), {
-    code: 'validation',
-  })
+  assert.throws(
+    () =>
+      normalizeContributionInput({ kind: 'rant', body: 'This is long enough' }),
+    {
+      code: 'validation',
+    },
+  )
+  assert.throws(
+    () => normalizeContributionInput({ kind: 'question', body: 'Hi' }),
+    {
+      code: 'validation',
+    },
+  )
 })
 
 test('consultation contribution input strips markup and caps length', () => {
@@ -63,7 +70,8 @@ test('consultation page and public floor work, including read-only preview', asy
   assert.equal(page.status, 200)
   const html = await page.text()
   assert.match(html, /Help shape a shared YOUNGO Hub/)
-  assert.match(html, /\/consultation\/app\.js/)
+  assert.match(html, /Add to the floor/)
+  assert.match(html, /What do you want to add/)
 
   const created = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',
