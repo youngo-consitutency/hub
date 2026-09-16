@@ -14,12 +14,12 @@
  * Council confirmation through the Hub establishment DMP.
  */
 
-export const PRIVACY_VERSION = 'v1-2026-07-24'
+export const PRIVACY_VERSION = 'v2-2026-09-16'
 
 export const PRIVACY_META = {
   name: 'YOUNGO Hub Privacy Notice',
   version: PRIVACY_VERSION,
-  effectiveFrom: '24 July 2026',
+  effectiveFrom: '16 September 2026',
   status:
     'Proposed — pending Council approval via the YOUNGO Hub establishment DMP',
   controller: 'YOUNGO — the Children and Youth Constituency of the UNFCCC',
@@ -55,6 +55,29 @@ export const PRIVACY_META = {
  * Add any new registration field here in the same change.
  */
 export const DATA_CATEGORIES = [
+  {
+    id: 'operations',
+    label: 'Participation and responsibilities',
+    fields: [
+      'Body memberships, dated assignments and appointment evidence',
+      'Work ownership, deadlines, proposals, comments, flags and process history',
+    ],
+    purpose:
+      'Coordinate constituency work and keep an accountable decision record.',
+    whoSees:
+      'Members of the relevant body; authorised membership reviewers and platform administrators see the records needed for their work. A publisher must separately approve public body information and adopted decisions.',
+  },
+  {
+    id: 'partner-enquiries',
+    label: 'Partnership enquiries',
+    fields: [
+      'Organisation, contact name and email, enquiry message, consent time',
+      'Assigned coordinator, follow-up date, review status and approving decision',
+    ],
+    purpose: 'Respond to collaboration proposals and track their review.',
+    whoSees:
+      'The assigned Partnerships team. Contact name, email and enquiry message are not included in the public listing. An approved organisation name, summary and website may be listed with its published approving decision.',
+  },
   {
     id: 'identity',
     label: 'Who you are',

@@ -1,10 +1,10 @@
+import { SidePanel } from './SidePanel.tsx'
 import {
   TbInfoCircle as Info,
   TbDeviceLaptop as Laptop,
   TbDeviceMobile as Smartphone,
   TbDevices as TabletSmartphone,
   TbShare2 as Share,
-  TbX as X,
 } from 'react-icons/tb'
 
 export const DEVICE_GUIDES = {
@@ -43,20 +43,12 @@ export const DEVICE_GUIDES = {
   },
 }
 
-export function NotificationGuide({ device, dialogRef, onClose, onClosed }) {
+export function NotificationGuide({ device, onClose }) {
   const guide = DEVICE_GUIDES[device] || DEVICE_GUIDES.desktop
   const GuideIcon = guide.Icon
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="notificationHelpDialog"
-      aria-labelledby="notification-help-title"
-      onClose={onClosed}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
-    >
+    <SidePanel title="Notification setup" onClose={onClose}>
       <div className="notificationGuideHeader">
         <span className="iconTile" aria-hidden>
           <GuideIcon size={21} strokeWidth={1.75} />
@@ -65,14 +57,6 @@ export function NotificationGuide({ device, dialogRef, onClose, onClosed }) {
           <p className="pageEyebrow">Detected device</p>
           <h2 id="notification-help-title">{guide.title}</h2>
         </div>
-        <button
-          type="button"
-          className="iconButton"
-          aria-label="Close notification help"
-          onClick={onClose}
-        >
-          <X size={18} strokeWidth={1.75} aria-hidden />
-        </button>
       </div>
       <ol className="notificationGuideSteps">
         {guide.steps.map((step, index) => (
@@ -90,6 +74,6 @@ export function NotificationGuide({ device, dialogRef, onClose, onClosed }) {
           {guide.note} Setup is separate on every browser and device.
         </p>
       </aside>
-    </dialog>
+    </SidePanel>
   )
 }

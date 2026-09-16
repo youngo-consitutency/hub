@@ -6,7 +6,6 @@ import { router as core } from './core.js'
 import { router as people } from './people.js'
 import { router as wg } from './wg.js'
 import { router as ngo } from './ngo.js'
-import { router as points } from './points.js'
 import { router as teams } from './teams.js'
 import { router as content } from './content.js'
 import { router as feedback } from './feedback.js'
@@ -28,7 +27,14 @@ memberRouter.use(core)
 memberRouter.use(people)
 memberRouter.use(wg)
 memberRouter.use(ngo)
-memberRouter.use(points)
+memberRouter.use('/staff/points', (_req, res) =>
+  res.status(410).json({
+    error: {
+      code: 'retired',
+      message: 'Contribution points have been retired. Use work and follow-up.',
+    },
+  }),
+)
 memberRouter.use(teams)
 memberRouter.use(content)
 memberRouter.use(resources)

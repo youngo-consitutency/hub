@@ -1,3 +1,4 @@
+import { formatDateTime } from '../lib/dateTime.js'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api.js'
 import {
@@ -83,9 +84,7 @@ function TicketCard({ ticket, onUpdate }) {
           {ticket.reporterName || ticket.reporterEmail || 'Unknown member'}
           {ticket.pagePath ? ` · ${ticket.pagePath}` : ''}
           {ticket.viewport ? ` · ${ticket.viewport}` : ''}
-          {ticket.createdAt
-            ? ` · ${new Date(ticket.createdAt).toLocaleString()}`
-            : ''}
+          {ticket.createdAt ? ` · ${formatDateTime(ticket.createdAt)}` : ''}
         </p>
         {ticket.githubIssueUrl && (
           <a

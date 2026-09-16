@@ -28,8 +28,6 @@ export { DEVICE_GUIDES, NotificationGuide }
 export function NotificationSettings() {
   const setup = useAlertSetup()
   const [helpDevice, setHelpDevice] = useState(null)
-  const helpDialogRef = useRef(null)
-  const helpTriggerRef = useRef(null)
   const cardRef = useRef(null)
 
   useEffect(() => {
@@ -37,18 +35,12 @@ export function NotificationSettings() {
     cardRef.current?.scrollIntoView({ block: 'start' })
   }, [])
 
-  useEffect(() => {
-    if (helpDevice && !helpDialogRef.current?.open) {
-      helpDialogRef.current?.showModal()
-    }
-  }, [helpDevice])
-
   const { state, busy, message, error } = setup
   const supported = !state.loading && isPushSupported()
   const installFirst = setup.installFirst
   const blocked = setup.blocked
   const openHelp = () => setHelpDevice(currentDevice())
-  const closeHelp = () => helpDialogRef.current?.close()
+  const closeHelp = () => setHelpDevice(null)
 
   return (
     <section
@@ -70,7 +62,6 @@ export function NotificationSettings() {
               {state.subscribed ? 'On' : 'Off'}
             </span>
             <button
-              ref={helpTriggerRef}
               type="button"
               className="iconButton notificationHelpTrigger"
               aria-label="How to turn on notifications on this device"
@@ -201,15 +192,7 @@ export function NotificationSettings() {
       )}
 
       {helpDevice && (
-        <NotificationGuide
-          device={helpDevice}
-          dialogRef={helpDialogRef}
-          onClose={closeHelp}
-          onClosed={() => {
-            setHelpDevice(null)
-            helpTriggerRef.current?.focus()
-          }}
-        />
+        <NotificationGuide device={helpDevice} onClose={closeHelp} />
       )}
     </section>
   )

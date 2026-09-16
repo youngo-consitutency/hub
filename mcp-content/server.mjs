@@ -241,9 +241,17 @@ export function createMcpHttpServer({
   }
 
   const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url || '/', 'http://localhost')
+    let url, mcp
+    try {
+      url = new URL(req.url || '/', 'http://localhost')
+      mcp = parseMcpPath(url.pathname)
+    } catch {
+      sendJson(res, 400, {
+        error: { code: 'invalid_path', message: 'Invalid request path.' },
+      })
+      return
+    }
     const path = url.pathname.replace(/\/+$/, '') || '/'
-    const mcp = parseMcpPath(url.pathname)
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204, corsHeaders(req))

@@ -16,6 +16,10 @@ import {
 } from '../lib/pushStore.js'
 
 export const pushRouter = Router()
+pushRouter.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  next()
+})
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
@@ -30,13 +34,13 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 const sendLimit = createRateLimiter({ max: 10, windowMs: 60_000 })
 
-// Keyed on the session rather than the caller IP. At a COP the whole YOUNGO
+// Keyed on the account rather than the caller IP. At a COP the whole YOUNGO
 // delegation shares one venue network, so an IP-keyed budget would let the
 // first ten people to set notifications up lock out everyone else.
 const testLimit = createRateLimiter({
   max: 5,
   windowMs: 60_000,
-  key: (req) => bearerToken(req) || String(req.ip || 'unknown'),
+  key: (req) => req.account.id,
 })
 
 /**
@@ -86,11 +90,19 @@ function requireConfigured(res) {
  * expired.
  */
 async function deliver(rows, payload) {
-  const results = await Promise.allSettled(
-    rows.map((row) =>
-      webPush.sendNotification(toWebPushSubscription(row), payload),
-    ),
-  )
+  const results = []
+  // Bound parallel network connections and validate persisted legacy rows too.
+  for (let offset = 0; offset < rows.length; offset += 10) {
+    results.push(
+      ...(await Promise.allSettled(
+        rows.slice(offset, offset + 10).map(async (row) =>
+          webPush.sendNotification(toWebPushSubscription(row), payload, {
+            timeout: 10_000,
+          }),
+        ),
+      )),
+    )
+  }
   const expired = []
   results.forEach((result, index) => {
     const status =
@@ -137,6 +149,13 @@ pushRouter.post('/subscribe', async (req, res, next) => {
       subscription: { id: saved.id, endpoint: saved.endpoint },
     })
   } catch (error) {
+    if (
+      ['invalid_push_endpoint', 'push_subscription_limit'].includes(error.code)
+    ) {
+      return res
+        .status(400)
+        .json({ error: { code: error.code, message: error.message } })
+    }
     next(error)
   }
 })
@@ -210,33 +229,43 @@ pushRouter.get('/status', async (req, res, next) => {
  * it only ever reaches their own subscriptions, and confirming that alerts
  * actually arrive is the whole point of the setting. The rate limiter caps it.
  */
-pushRouter.post('/test', testLimit, async (req, res, next) => {
-  try {
-    const account = await requireAccount(req, res)
-    if (!account) return
-    if (!requireConfigured(res)) return
-    const rows = await listSubscriptionsForAccounts([account.id])
-    if (!rows.length) {
-      return res.status(404).json({
-        error: {
-          code: 'no_subscriptions',
-          message: 'Subscribe on this device first.',
-        },
-      })
+pushRouter.post(
+  '/test',
+  async (req, res, next) => {
+    try {
+      if (await requireAccount(req, res)) next()
+    } catch (error) {
+      next(error)
     }
-    const payload = JSON.stringify({
-      title: req.body?.title || 'YOUNGO Hub',
-      body: req.body?.body || 'Test notification.',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-72.png',
-      tag: 'test-notification',
-      data: { url: '/' },
-    })
-    res.json({ ok: true, ...(await deliver(rows, payload)) })
-  } catch (error) {
-    next(error)
-  }
-})
+  },
+  testLimit,
+  async (req, res, next) => {
+    try {
+      const account = req.account
+      if (!requireConfigured(res)) return
+      const rows = await listSubscriptionsForAccounts([account.id])
+      if (!rows.length) {
+        return res.status(404).json({
+          error: {
+            code: 'no_subscriptions',
+            message: 'Subscribe on this device first.',
+          },
+        })
+      }
+      const payload = JSON.stringify({
+        title: req.body?.title || 'YOUNGO Hub',
+        body: req.body?.body || 'Test notification.',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-72.png',
+        tag: 'test-notification',
+        data: { url: '/' },
+      })
+      res.json({ ok: true, ...(await deliver(rows, payload)) })
+    } catch (error) {
+      next(error)
+    }
+  },
+)
 
 /**
  * Send an audited admin notification to selected members or all members.

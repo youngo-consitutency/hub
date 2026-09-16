@@ -62,7 +62,7 @@ function GroupCommunity({ slug }) {
               <Empty
                 icon={UserQuestion}
                 title="No linked Contact Point account"
-                body="An assigned contact or lead will appear here after publishing their member profile."
+                body="An assigned Contact Point will appear here after publishing their member profile."
               />
             )
           }

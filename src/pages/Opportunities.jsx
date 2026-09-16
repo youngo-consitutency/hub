@@ -1,6 +1,7 @@
+import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { fmtDual } from '../lib/time.js'
+import { CardSchedule } from '../components/cards.jsx'
 import {
   activeFilterCount,
   matchesFilters,
@@ -34,9 +35,8 @@ import {
   TbSparkles as Sparkles,
   TbVideo as Video,
 } from 'react-icons/tb'
-import { DestinationIcon } from '../components/DestinationLink.jsx'
 import { groupOpportunitiesByStatus } from '../lib/opportunityStatus.js'
-import { regionFilterPrefix } from '../lib/regions.js'
+import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions.js'
 
 const KINDS = [
   { key: 'all', label: 'All types', icon: Layers3 },
@@ -65,20 +65,6 @@ const FORMAT_LABEL = {
   hybrid: 'Hybrid',
 }
 
-const KIND_ICON = Object.fromEntries(
-  KINDS.filter((item) => item.key !== 'all').map((item) => [
-    item.key,
-    item.icon,
-  ]),
-)
-
-const FORMAT_ICON = Object.fromEntries(
-  FORMATS.filter((item) => item.key !== 'all').map((item) => [
-    item.key,
-    item.icon,
-  ]),
-)
-
 function OpportunityCard({
   item,
   kindFilterState,
@@ -100,62 +86,42 @@ function OpportunityCard({
           aria-label={`${item.title} — open details`}
         />
       )}
-      <div className="opportunityCardHeader">
-        <div className="opportunityTags">
-          <FilterChip
-            tone="accent"
-            state={kindFilterState}
-            icon={KIND_ICON[item.kind]}
-            onClick={onKindFilter}
-          >
-            {KIND_LABEL[item.kind] || item.kind}
-          </FilterChip>
-          <FilterChip
-            state={formatFilterState}
-            icon={FORMAT_ICON[item.format]}
-            onClick={onFormatFilter}
-          >
-            {FORMAT_LABEL[item.format] || item.format}
-          </FilterChip>
-          {item.region && (
-            <FilterChip
-              state={regionFilterState}
-              prefix={regionFilterPrefix(item.region)}
-              onClick={onRegionFilter}
-            >
-              {item.region}
-            </FilterChip>
-          )}
-        </div>
-        {item.linkUrl && <DestinationIcon url={item.linkUrl} size={17} />}
-      </div>
-
-      <div className="opportunityCardCopy">
+      <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
-        <div className="opportunityOrganisationRow">
+        {item.organizationName && (
           <p className="metaMuted">{item.organizationName}</p>
-          {where && (
-            <span className="opportunityPlace metaMuted">
-              <MapPin size={14} strokeWidth={1.75} aria-hidden />
-              {where}
-            </span>
-          )}
-        </div>
-        {item.summary && <p className="meta">{item.summary}</p>}
-      </div>
-
-      <div className="opportunityMeta">
-        {item.startsAt && (
-          <p className="entityCardMetaRow">
-            <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
-            <span>{fmtDual(item.startsAt)}</span>
-          </p>
         )}
       </div>
-
-      {item.deadlineAt && (
-        <div className="opportunityDeadline">
-          <LifecycleTiming iso={item.deadlineAt} label="Applications close" />
+      <div className="entityCardTags">
+        <FilterChip
+          tone="accent"
+          state={kindFilterState}
+          onClick={onKindFilter}
+        >
+          {KIND_LABEL[item.kind] || item.kind}
+        </FilterChip>
+        <FilterChip state={formatFilterState} onClick={onFormatFilter}>
+          {FORMAT_LABEL[item.format] || item.format}
+        </FilterChip>
+        {item.region && (
+          <FilterChip state={regionFilterState} onClick={onRegionFilter}>
+            {regionLabel(item.region)}
+          </FilterChip>
+        )}
+      </div>
+      {item.summary && <p className="entityCardSummary">{item.summary}</p>}
+      {where && (
+        <p className="entityCardMetaRow">
+          <MapPin size={14} aria-hidden />
+          <span>{where}</span>
+        </p>
+      )}
+      {(item.startsAt || item.deadlineAt) && (
+        <div className="entityCardFooter">
+          {item.startsAt && <CardSchedule iso={item.startsAt} label="Starts" />}
+          {item.deadlineAt && (
+            <LifecycleTiming iso={item.deadlineAt} label="Apply by" />
+          )}
         </div>
       )}
     </article>
@@ -173,6 +139,7 @@ export function Opportunities() {
   return (
     <div>
       <PageHeader
+        icon={OpportunitiesIcon}
         title="Opportunities"
         description="Shared open calls, fellowships, speaker slots, and events from constituency channels — plus postings from organisations in the Hub."
       />
@@ -189,11 +156,17 @@ export function Opportunities() {
         }
       >
         {(data) => {
-          const regions = [...new Set(data.items.map((item) => item.region))]
+          const normalizedItems = data.items.map((item) => ({
+            ...item,
+            region: regionKey(item.region),
+          }))
+          const regions = [
+            ...new Set(normalizedItems.map((item) => item.region)),
+          ]
             .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b))
+            .sort((a, b) => regionLabel(a).localeCompare(regionLabel(b)))
           const needle = search.trim().toLocaleLowerCase()
-          const items = data.items
+          const items = normalizedItems
             .filter(
               (item) =>
                 matchesFilters(item.kind, kindFilters) &&
@@ -205,7 +178,7 @@ export function Opportunities() {
                     item.organizationName,
                     item.summary,
                     item.location,
-                    item.region,
+                    regionLabel(item.region),
                   ]
                     .join(' ')
                     .toLocaleLowerCase()
@@ -283,6 +256,11 @@ export function Opportunities() {
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
                   <FilterMenu
+                    onClear={() => {
+                      setKindFilters({})
+                      setFormatFilters({})
+                      setRegionFilters({})
+                    }}
                     label="Filter opportunities"
                     activeCount={
                       activeFilterCount(kindFilters) +
@@ -365,14 +343,17 @@ export function Opportunities() {
                             <FilterPill
                               key={region}
                               state={regionFilters[region] || 'neutral'}
-                              prefix={regionFilterPrefix(region)}
+                              prefix={regionFilterPrefix(
+                                region,
+                                regionLabel(region),
+                              )}
                               onClick={() =>
                                 setRegionFilters((current) =>
                                   toggleFilter(current, region),
                                 )
                               }
                             >
-                              {region}
+                              {regionLabel(region)}
                             </FilterPill>
                           ))}
                         </div>

@@ -1,3 +1,4 @@
+import { TbSchool as OnboardingIcon } from 'react-icons/tb'
 import { useAccount } from '../lib/accountContext.jsx'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import {
@@ -57,6 +58,7 @@ export function Onboarding() {
   return (
     <div>
       <PageHeader
+        icon={OnboardingIcon}
         title="Onboarding"
         description={
           verified

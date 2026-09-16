@@ -1,3 +1,4 @@
+import { TbHelpCircle as HelpIcon } from 'react-icons/tb'
 import {
   TbArrowRight as ArrowRight,
   TbBell as Bell,
@@ -116,6 +117,7 @@ export function Help() {
   return (
     <div className="detailPage helpPage">
       <PageHeader
+        icon={HelpIcon}
         title="Help &amp; support"
         description="Find the right Hub page, get help with access, or report a problem."
       />

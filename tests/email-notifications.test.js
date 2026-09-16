@@ -17,8 +17,8 @@ import {
   emailConfigured,
   resetEmailTransportForTests,
   sendTemplatedEmail,
-} from '../server/lib/emailTransport.js'
-import { renderEmailTemplate } from '../server/lib/emailTemplates.js'
+} from '../server/lib/notifications/transport.js'
+import { renderEmailTemplate } from '../server/lib/notifications/templates.js'
 import {
   claimDueNotifications,
   deliveryDecision,
@@ -27,11 +27,11 @@ import {
   markNotificationSent,
   setEmailPreference,
   updateNotificationPreferences,
-} from '../server/lib/notificationStore.js'
+} from '../server/lib/notifications/store.js'
 import {
   createUnsubscribeToken,
   verifyUnsubscribeToken,
-} from '../server/lib/unsubscribe.js'
+} from '../server/lib/notifications/unsubscribe.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(here, '../data')
@@ -438,5 +438,192 @@ test('production email rollout requires signing and webhook secrets', () => {
         EMAIL_MAX_PER_SECOND: 'not-a-number',
       }),
     /EMAIL_MAX_PER_SECOND/,
+  )
+})
+
+test('frequency caps defer until eligible rather than losing weekly digests', async (t) => {
+  fixtureSandbox(t, [account('cap-member')])
+  await updateNotificationPreferences('cap-member', { email: { digest: true } })
+  const first = await enqueueNotification({
+    accountId: 'cap-member',
+    category: 'digest',
+    templateKey: 'digest',
+    deduplicationKey: 'first',
+    payload: { title: 'First', message: 'One' },
+  })
+  const [claimed] = await claimDueNotifications()
+  await markNotificationSent(claimed, 'first')
+  const rows = JSON.parse(
+    readFileSync(path.join(dataDir, 'notification-outbox.json')),
+  )
+  const sentAt = new Date(rows.find((row) => row.id === first.item.id).sentAt)
+  const second = await enqueueNotification({
+    accountId: 'cap-member',
+    category: 'digest',
+    templateKey: 'digest',
+    deduplicationKey: 'second',
+    payload: { title: 'Second', message: 'Two' },
+  })
+  const before = await deliveryDecision(
+    second.item,
+    new Date(sentAt.getTime() + 7 * 86400000 - 1000),
+  )
+  assert.equal(before.allowed, false)
+  assert.equal(
+    before.retryAt,
+    new Date(sentAt.getTime() + 7 * 86400000).toISOString(),
+  )
+  assert.equal(
+    (await deliveryDecision(second.item, new Date(before.retryAt))).allowed,
+    true,
+  )
+  const { processNotification } = await import('../server/worker.js')
+  const [next] = await claimDueNotifications()
+  assert.equal((await processNotification(next, {})).status, 'retry')
+  const deferred = JSON.parse(
+    readFileSync(path.join(dataDir, 'notification-outbox.json')),
+  ).find((row) => row.id === next.id)
+  assert.equal(deferred.status, 'retry')
+  assert.equal(deferred.availableAt, before.retryAt)
+})
+
+test('expired workers cannot overwrite a newer notification claim', async (t) => {
+  fixtureSandbox(t, [account('lease-member')])
+  const {
+    requeueExpiredLeases,
+    markNotificationFailed,
+    notificationClaimIsCurrent,
+  } = await import('../server/lib/notifications/store.js')
+  await enqueueNotification({
+    accountId: 'lease-member',
+    category: 'digest',
+    templateKey: 'digest',
+    deduplicationKey: 'lease',
+    payload: { title: 'Lease', message: 'One' },
+  })
+  const [old] = await claimDueNotifications({ leaseMs: 1 })
+  await new Promise((resolve) => setTimeout(resolve, 5))
+  await requeueExpiredLeases()
+  const [current] = await claimDueNotifications()
+  assert.equal(await notificationClaimIsCurrent(old), false)
+  assert.equal(await notificationClaimIsCurrent(current), true)
+  await markNotificationSent(old, 'stale')
+  await markNotificationFailed(old, { permanent: true })
+  const row = JSON.parse(
+    readFileSync(path.join(dataDir, 'notification-outbox.json')),
+  )[0]
+  assert.equal(row.status, 'sending')
+  assert.equal(row.attempts, current.attempts)
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(dataDir, 'notification-attempts.json'))),
+    [],
+  )
+  await markNotificationSent(current, 'current')
+  assert.equal(
+    JSON.parse(readFileSync(path.join(dataDir, 'notification-outbox.json')))[0]
+      .status,
+    'sent',
+  )
+})
+
+test('scheduler uses published site content and stable complete-day deadlines', async () => {
+  const { notificationContent, deadlineBatchKey } =
+    await import('../server/lib/notifications/scheduler.js')
+  const now = new Date('2026-09-16T06:00:00Z')
+  const publications = [
+    {
+      contentType: 'event',
+      contentKey: 'live',
+      status: 'published',
+      payload: {
+        title: 'Live event',
+        startsAt: '2026-09-18T12:00:00Z',
+        wg: 'ace',
+      },
+    },
+    {
+      contentType: 'event',
+      contentKey: 'hidden',
+      status: 'unpublished',
+      payload: { title: 'Hidden event', startsAt: '2026-09-18T12:00:00Z' },
+    },
+    {
+      contentType: 'announcement',
+      contentKey: 'first',
+      status: 'published',
+      publishedAt: '2026-09-15T12:00:00Z',
+      payload: { title: 'First call', ctaDeadlineAt: '2026-09-18T07:00:00Z' },
+    },
+    {
+      contentType: 'announcement',
+      contentKey: 'later',
+      status: 'published',
+      publishedAt: '2026-09-15T12:00:00Z',
+      payload: { title: 'Later call', ctaDeadlineAt: '2026-09-18T23:00:00Z' },
+    },
+    {
+      contentType: 'announcement',
+      contentKey: 'no-date',
+      status: 'published',
+      publishedAt: '2026-09-15T12:00:00Z',
+      payload: { title: 'News' },
+    },
+  ]
+  const content = notificationContent(publications, now)
+  assert.deepEqual(
+    content.events.map((row) => row.title),
+    ['Live event'],
+  )
+  assert.deepEqual(
+    content.deadlines.map((row) => row.title),
+    ['First call', 'Later call'],
+  )
+  assert.deepEqual(notificationContent([], now).events, [])
+  assert.equal(
+    deadlineBatchKey(content.deadlines, now),
+    deadlineBatchKey([...content.deadlines].reverse(), now),
+  )
+  assert.notEqual(
+    deadlineBatchKey(content.deadlines, now),
+    deadlineBatchKey(content.deadlines.slice(0, 1), now),
+  )
+})
+
+test('capped deadline reminders never survive past their advertised deadlines', async (t) => {
+  fixtureSandbox(t, [account('expiry-member')])
+  await updateNotificationPreferences('expiry-member', {
+    email: { deadline: true, digest: true, announcement: true },
+  })
+  const now = new Date()
+  writeFileSync(
+    path.join(dataDir, 'notification-outbox.json'),
+    JSON.stringify(
+      ['digest', 'announcement', 'deadline'].map((category, index) => ({
+        id: String(index),
+        accountId: 'expiry-member',
+        category,
+        status: 'sent',
+        sentAt: new Date(now.getTime() - 86400000).toISOString(),
+      })),
+    ),
+  )
+  const reminder = {
+    accountId: 'expiry-member',
+    category: 'deadline',
+    payload: {
+      expiresAt: new Date(now.getTime() + 2 * 86400000).toISOString(),
+    },
+  }
+  const blocked = await deliveryDecision(reminder, now)
+  assert.equal(blocked.reason, 'expires_before_delivery')
+  assert.equal(blocked.retryAt, undefined)
+  assert.equal(
+    (await deliveryDecision(reminder, new Date(now.getTime() + 6 * 86400000)))
+      .reason,
+    'content_expired',
+  )
+  assert.equal(
+    (await deliveryDecision({ ...reminder, payload: {} }, now)).reason,
+    'deadline_expiry_missing',
   )
 })

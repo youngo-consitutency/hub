@@ -1,4 +1,4 @@
-// Canonical time display + countdown — spec: docs/specs/youngo/02-design-system.md §3
+// Canonical time display and countdown.
 // All params explicit so node --test can pin tz/now.
 
 export function localTz() {

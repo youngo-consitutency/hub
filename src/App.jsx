@@ -1,9 +1,9 @@
 import { Shell } from './components/Shell.jsx'
 import { AccessGate } from './components/AccessGate.jsx'
 import { AccountProvider, useAccount } from './lib/accountContext.jsx'
-import { usePath, navigate } from './lib/router.js'
+import { usePath, navigate, replace } from './lib/router.js'
 import { lazy, Suspense, useEffect } from 'react'
-import { Empty, Skeletons } from './components/ui.jsx'
+import { A, Empty, Skeletons, PageHeader } from './components/ui.jsx'
 import { TbCompass as Compass, TbLock as Lock } from 'react-icons/tb'
 import { Privacy } from './pages/Privacy.jsx'
 import { RoutePeek } from './components/RoutePeek.jsx'
@@ -16,9 +16,22 @@ const Submissions = lazyPage(
   () => import('./pages/Submissions.jsx'),
   'Submissions',
 )
-const Council = lazyPage(() => import('./pages/Council.jsx'), 'Council')
+const Council = lazyPage(
+  () => import('./features/platform/Platform.tsx'),
+  'Decisions',
+)
+const Platform = lazyPage(
+  () => import('./features/platform/Platform.tsx'),
+  'Platform',
+)
+const Work = lazyPage(() => import('./features/platform/Platform.tsx'), 'Work')
 const Coys = lazyPage(() => import('./pages/Coys.jsx'), 'Coys')
 const Groups = lazyPage(() => import('./pages/Groups.jsx'), 'Groups')
+const Members = lazyPage(() => import('./pages/Directory.jsx'), 'Members')
+const MembershipLifecycle = lazyPage(
+  () => import('./features/platform/MembershipLifecycle.tsx'),
+  'MembershipLifecycle',
+)
 const Directory = lazyPage(() => import('./pages/Directory.jsx'), 'Directory')
 const Search = lazyPage(() => import('./pages/Search.jsx'), 'Search')
 const Statement = lazyPage(() => import('./pages/Statement.jsx'), 'Statement')
@@ -35,8 +48,8 @@ const SubmissionDetail = lazyPage(
   'SubmissionDetail',
 )
 const DecisionDetail = lazyPage(
-  () => import('./pages/DecisionDetail.jsx'),
-  'DecisionDetail',
+  () => import('./features/platform/DecisionPage.tsx'),
+  'DecisionPage',
 )
 const CoyDetail = lazyPage(() => import('./pages/CoyDetail.jsx'), 'CoyDetail')
 const GroupDetail = lazyPage(
@@ -49,6 +62,10 @@ const Onboarding = lazyPage(
 )
 const Course = lazyPage(() => import('./pages/Course.jsx'), 'Course')
 const Library = lazyPage(() => import('./pages/Library.jsx'), 'Library')
+const ResourceIssues = lazyPage(
+  () => import('./pages/ResourceIssues.jsx'),
+  'ResourceIssues',
+)
 const Resources = lazyPage(() => import('./pages/Resources.jsx'), 'Resources')
 const Workspace = lazyPage(() => import('./pages/Workspace.jsx'), 'Workspace')
 const CpManage = lazyPage(() => import('./pages/CpManage.jsx'), 'CpManage')
@@ -70,19 +87,15 @@ const GysPolicyTeam = lazyPage(
   () => import('./pages/GysPolicyTeam.jsx'),
   'GysPolicyTeam',
 )
-const StaffPoints = lazyPage(
-  () => import('./pages/StaffPoints.jsx'),
-  'StaffPoints',
-)
 const ContentWorkspace = lazyPage(
   () => import('./pages/ContentWorkspace.jsx'),
   'ContentWorkspace',
 )
-const Recognition = lazyPage(
-  () => import('./pages/Recognition.jsx'),
-  'Recognition',
-)
 const Profile = lazyPage(() => import('./pages/Profile.jsx'), 'Profile')
+const ReviewQueue = lazyPage(
+  () => import('./pages/ReviewQueue.jsx'),
+  'ReviewQueue',
+)
 const Help = lazyPage(() => import('./pages/Help.jsx'), 'Help')
 
 // These pages remain available while the membership course is incomplete.
@@ -97,20 +110,26 @@ const PRE_VERIFY = [
 ]
 
 const ROUTES = [
+  [/^\/platform\/people$/, PeopleRedirect],
+  [/^\/platform(?:\/(partnerships))?$/, Platform],
+  [/^\/work$/, Work],
   [/^\/onboarding\/course$/, Course],
   [/^\/onboarding$/, Onboarding],
   [/^\/library$/, Library],
   [/^\/resources$/, Resources],
+  [/^\/resources\/issues$/, ResourceIssues],
   [/^\/privacy$/, Privacy],
   [/^\/workspace\/(.+)$/, Workspace],
   [/^\/focal$/, FocalPoint],
   [/^\/cp$/, CpOverview],
   [/^\/cp\/(.+)$/, CpManage],
   [/^\/team\/membership$/, MembershipTeam],
+  [/^\/team\/membership\/renewals$/, MembershipLifecycle],
   [/^\/team\/gys$/, GysPolicyTeam],
-  [/^\/staff\/points$/, StaffPoints],
+  [/^\/staff\/points$/, RetiredPoints],
   [/^\/staff\/content$/, ContentWorkspace],
-  [/^\/recognition$/, Recognition],
+  [/^\/staff\/review(?:\/(opportunities))?$/, ReviewQueue],
+  [/^\/recognition$/, RetiredPoints],
   [/^\/help$/, Help],
   [/^\/intelligence$/, SearchRedirect],
   [/^\/profile$/, Profile],
@@ -129,6 +148,7 @@ const ROUTES = [
   [/^\/groups\/(.+)$/, GroupDetail],
   [/^\/groups/, Groups],
   [/^\/opportunities/, Opportunities],
+  [/^\/directory\/people$/, Members],
   [/^\/directory/, Directory],
   [/^\/gys/, Statement],
   [/^\/search/, Search],
@@ -165,6 +185,34 @@ function NotFound() {
   )
 }
 
+function RetiredPoints() {
+  return (
+    <div className="stack">
+      <h1>Contribution points have been retired</h1>
+      <p>
+        Track responsibilities, decisions and completed work in the operational
+        workspace. Existing award records are retained for the audit trail.
+      </p>
+      <a className="btn btn-primary" href="/work">
+        Open work and follow-up
+      </a>
+    </div>
+  )
+}
+
+function PeopleRedirect() {
+  const { account } = useAccount()
+  const membershipTeam = (
+    account?.access?.teamRoles ||
+    account?.teamRoles ||
+    []
+  ).includes('membership_team')
+  useEffect(() => {
+    replace(membershipTeam ? '/team/membership/renewals' : '/directory/people')
+  }, [membershipTeam])
+  return <Skeletons n={2} />
+}
+
 function SearchRedirect() {
   useEffect(() => {
     navigate('/search')
@@ -172,25 +220,25 @@ function SearchRedirect() {
   return <Skeletons n={2} />
 }
 
-function Locked() {
+function Locked({
+  title = 'Complete your membership course',
+  body = 'Your account is registered. Pass the short membership course to use the rest of the Hub.',
+  course = false,
+}) {
   return (
-    <Empty
-      icon={Lock}
-      title="Complete membership course first"
-      body="Your account is registered. Pass the short membership course to use the rest of the Hub."
-      cta={
-        <a
-          className="btn btn-primary btn-glow"
-          href="/onboarding/course"
-          onClick={(e) => {
-            e.preventDefault()
-            navigate('/onboarding/course')
-          }}
-        >
-          Start course
-        </a>
-      }
-    />
+    <div>
+      <PageHeader icon={Lock} title={title} />
+      <Empty
+        body={body}
+        cta={
+          course ? (
+            <A className="btn btn-primary" href="/onboarding/course">
+              Start course
+            </A>
+          ) : undefined
+        }
+      />
+    </div>
   )
 }
 
@@ -215,7 +263,22 @@ function AppRoutes() {
   if (account && !verified && !isPreVerify(path)) {
     return (
       <Shell>
-        <Locked />
+        <Locked course />
+      </Shell>
+    )
+  }
+
+  if (
+    path.startsWith('/staff/review') &&
+    account?.role !== 'admin' &&
+    !account?.access?.teamRoles?.includes('membership_team')
+  ) {
+    return (
+      <Shell>
+        <Locked
+          title="Review team only"
+          body="Feedback and posting review are available to admins and the Membership Team."
+        />
       </Shell>
     )
   }
@@ -224,32 +287,12 @@ function AppRoutes() {
   if (path.startsWith('/admin') && account && account.role !== 'admin') {
     return (
       <Shell>
-        <Empty
-          icon={Lock}
+        <Locked
           title="Admin only"
-          body="An existing verified account must be promoted with the explicit bootstrap command."
+          body="This workspace requires platform administration access."
         />
       </Shell>
     )
-  }
-  if (path.startsWith('/staff/points') && account) {
-    const canAward =
-      account.role === 'admin' ||
-      account.role === 'focal_point' ||
-      account.teamRoles?.includes('membership_team') ||
-      account.access?.teamRoles?.includes('membership_team') ||
-      account.access?.capabilities?.includes('points.award')
-    if (!canAward) {
-      return (
-        <Shell>
-          <Empty
-            icon={Lock}
-            title="Staff only"
-            body="Contribution points are awarded by admins, Focal Points, or Membership Team."
-          />
-        </Shell>
-      )
-    }
   }
   if (path.startsWith('/staff/content') && account) {
     const capabilities = account.access?.capabilities || []
@@ -259,10 +302,9 @@ function AppRoutes() {
     ) {
       return (
         <Shell>
-          <Empty
-            icon={Lock}
-            title="Content team only"
-            body="Ask an admin to assign the content editor or publisher responsibility."
+          <Locked
+            title="Website permission required"
+            body="Ask a platform administrator to record your approved website drafting or publishing access."
           />
         </Shell>
       )
@@ -275,19 +317,17 @@ function AppRoutes() {
   ) {
     return (
       <Shell>
-        <Empty
-          icon={Lock}
+        <Locked
           title="Focal Points only"
           body="This workspace is for constituency Focal Points and admins."
         />
       </Shell>
     )
   }
-  // The NGO portal is available to admins and accounts with an organisation seat.
+  // The NGO portal needs an organisation context, including for administrators.
   if (
     path.startsWith('/ngo') &&
     account &&
-    account.role !== 'admin' &&
     account.role !== 'ngo_admin' &&
     !account.access?.ngo
   ) {
@@ -295,8 +335,7 @@ function AppRoutes() {
     if (!path.startsWith('/ngo/accept')) {
       return (
         <Shell>
-          <Empty
-            icon={Lock}
+          <Locked
             title="NGO access required"
             body="An approved organisation seat is required. You can also accept a seat invite."
           />
@@ -312,10 +351,9 @@ function AppRoutes() {
     if (!managesRequestedWg) {
       return (
         <Shell>
-          <Empty
-            icon={Lock}
+          <Locked
             title="WG Contact Points only"
-            body="A contact or lead assignment for this working group is required."
+            body="A current Contact Point assignment for this working group is required."
           />
         </Shell>
       )
@@ -330,10 +368,9 @@ function AppRoutes() {
   if (path === '/cp' && account && access && !hasCpWorkspace) {
     return (
       <Shell>
-        <Empty
-          icon={Lock}
+        <Locked
           title="WG Contact Points only"
-          body="Ask an admin to grant the WG CP role."
+          body="A current Working Group Contact Point mandate must be recorded for your account."
         />
       </Shell>
     )
@@ -346,8 +383,7 @@ function AppRoutes() {
   ) {
     return (
       <Shell>
-        <Empty
-          icon={Lock}
+        <Locked
           title="Membership Team only"
           body="Ask an admin to add this team responsibility to your account."
         />
@@ -362,8 +398,7 @@ function AppRoutes() {
   ) {
     return (
       <Shell>
-        <Empty
-          icon={Lock}
+        <Locked
           title="GYS Policy Team only"
           body="Ask an admin to add this team responsibility to your account."
         />
@@ -377,20 +412,18 @@ function AppRoutes() {
       ? routeFor(peekBackground)
       : null
 
+  const BackgroundPage = peekRoute?.Page || Page
+  const backgroundSlug = peekRoute ? peekRoute.slug : slug
   return (
     <Shell>
       <Suspense fallback={<Skeletons n={4} />}>
-        {peekRoute ? (
-          <>
-            <peekRoute.Page
-              slug={peekRoute.slug && decodeURIComponent(peekRoute.slug)}
-            />
-            <RoutePeek path={path}>
-              <Page slug={slug && decodeURIComponent(slug)} />
-            </RoutePeek>
-          </>
-        ) : (
-          <Page slug={slug && decodeURIComponent(slug)} />
+        <BackgroundPage
+          slug={backgroundSlug && decodeURIComponent(backgroundSlug)}
+        />
+        {peekRoute && (
+          <RoutePeek key={path}>
+            <Page slug={slug && decodeURIComponent(slug)} />
+          </RoutePeek>
         )}
       </Suspense>
     </Shell>

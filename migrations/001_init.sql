@@ -1,4 +1,4 @@
--- YOUNGO Hub schema v1 — from docs/specs/youngo/04-api-data-spec.md §2
+-- YOUNGO Hub schema v1
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
 CREATE TABLE users (

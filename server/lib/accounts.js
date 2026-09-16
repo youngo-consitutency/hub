@@ -805,9 +805,20 @@ export async function createAccount(data, client = null) {
   return publicAccount(row)
 }
 
+// Pending members can sign in to finish onboarding; removed members cannot.
+export function accountCanSignIn(row) {
+  return (
+    Boolean(row) &&
+    (row.hub_access_status ?? row.hubAccessStatus) !== 'suspended' &&
+    !['expired', 'terminated'].includes(
+      row.membership_status ?? row.membershipStatus,
+    )
+  )
+}
+
 export async function authenticate(email, password) {
   const row = await findAccountByEmail(email)
-  if (!row) return null
+  if (!accountCanSignIn(row)) return null
   const ok = await verifyPassword(
     password,
     row.password_salt,
@@ -823,16 +834,24 @@ export async function createSession(accountId, client = null) {
   const expiresAt = sessionExpiry(30)
   const pool = client || getPool()
   if (pool) {
-    await pool.query(
-      'INSERT INTO hub_sessions(token, account_id, expires_at) VALUES ($1, $2, $3)',
+    const inserted = await pool.query(
+      `INSERT INTO hub_sessions(token, account_id, expires_at)
+       SELECT $1, id, $3 FROM hub_accounts WHERE id=$2
+         AND hub_access_status IS DISTINCT FROM 'suspended'
+         AND COALESCE(membership_status, '') NOT IN ('expired','terminated')
+       RETURNING account_id`,
       [storedToken, accountId, expiresAt.toISOString()],
     )
+    if (!inserted.rowCount) return null
     await pool.query(
       'UPDATE hub_accounts SET last_login_at = now() WHERE id = $1',
       [accountId],
     )
     return { token, expiresAt: expiresAt.toISOString() }
   }
+  const accounts = readJson(accountsPath, [])
+  const idx = accounts.findIndex((a) => a.id === accountId)
+  if (!accountCanSignIn(accounts[idx])) return null
   const sessions = readJson(sessionsPath, [])
   sessions.push({
     token: storedToken,
@@ -841,8 +860,6 @@ export async function createSession(accountId, client = null) {
     expires_at: expiresAt.toISOString(),
   })
   writeJson(sessionsPath, sessions)
-  const accounts = readJson(accountsPath, [])
-  const idx = accounts.findIndex((a) => a.id === accountId)
   if (idx >= 0) {
     accounts[idx].last_login_at = new Date().toISOString()
     writeJson(accountsPath, accounts)
@@ -862,13 +879,18 @@ export async function getSessionAccount(token) {
        LIMIT 1`,
       [storedToken],
     )
-    if (rows[0]) return enrichAccountAccess(publicAccount(rows[0]))
+    if (rows[0])
+      return accountCanSignIn(rows[0])
+        ? enrichAccountAccess(publicAccount(rows[0]))
+        : null
     const legacy = await pool.query(
       `SELECT a.* FROM hub_sessions s JOIN hub_accounts a ON a.id=s.account_id
        WHERE s.token=$1 AND s.expires_at > now() LIMIT 1`,
       [token],
     )
-    return enrichAccountAccess(publicAccount(legacy.rows[0] || null))
+    return accountCanSignIn(legacy.rows[0])
+      ? enrichAccountAccess(publicAccount(legacy.rows[0]))
+      : null
   }
   const sessions = readJson(sessionsPath, [])
   const session = sessions.find(
@@ -878,7 +900,7 @@ export async function getSessionAccount(token) {
   if (new Date(session.expires_at) <= new Date()) return null
   const accounts = readJson(accountsPath, [])
   const row = accounts.find((a) => a.id === session.account_id)
-  return enrichAccountAccess(publicAccount(row || null))
+  return accountCanSignIn(row) ? enrichAccountAccess(publicAccount(row)) : null
 }
 
 export async function destroySession(token) {

@@ -1,3 +1,4 @@
+import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import {
@@ -9,7 +10,7 @@ import {
   SortButton,
 } from '../components/ui.jsx'
 import { CoyCard } from '../components/cards.jsx'
-import { regionFilterPrefix } from '../lib/regions.js'
+import { regionFilterPrefix, regionLabel } from '../lib/regions.js'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
   TbGlobe as Globe2,
@@ -32,13 +33,13 @@ const TYPES = [
 ]
 const REGIONS = [
   { key: 'all', label: 'All regions' },
-  { key: 'africa', label: 'Africa' },
-  { key: 'apac', label: 'Asia-Pacific' },
-  { key: 'eca', label: 'ECA' },
-  { key: 'lac', label: 'LAC' },
-  { key: 'mena', label: 'MENA' },
-  { key: 'noram', label: 'North America' },
-  { key: 'weog', label: 'WEOG' },
+  { key: 'africa', label: regionLabel('africa') },
+  { key: 'apac', label: regionLabel('apac') },
+  { key: 'eca', label: regionLabel('eca') },
+  { key: 'lac', label: regionLabel('lac') },
+  { key: 'mena', label: regionLabel('mena') },
+  { key: 'noram', label: regionLabel('noram') },
+  { key: 'weog', label: regionLabel('weog') },
 ]
 
 export function Coys() {
@@ -51,6 +52,7 @@ export function Coys() {
   return (
     <div>
       <PageHeader
+        icon={CoysIcon}
         title="COY tracker"
         description="Find local, regional, and global Conferences of Youth, with dates and participation status."
       />
@@ -128,6 +130,10 @@ export function Coys() {
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
                   <FilterMenu
+                    onClear={() => {
+                      setTypeFilters({})
+                      setRegionFilters({})
+                    }}
                     label="Filter conferences"
                     activeCount={
                       activeFilterCount(typeFilters) +

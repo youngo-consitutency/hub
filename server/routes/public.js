@@ -11,16 +11,7 @@ import {
 } from '../lib/publicViews.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import { bearerToken } from '../lib/security.js'
-import { listPublicRecognitionBoard, RECOGNITION_TIERS } from '../lib/points.js'
-import { listContentPublications } from '../lib/contentWorkflow.js'
-import { readFileSync } from 'node:fs'
-
-const baselineResources = JSON.parse(
-  readFileSync(
-    new URL('../../data/resource-hub.json', import.meta.url),
-    'utf8',
-  ),
-)
+import { listResourceCatalogue } from '../lib/resourceCatalogue.js'
 
 export const publicRouter = Router()
 const gysSignupLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 6 })
@@ -40,26 +31,13 @@ publicRouter.use(async (req, res, next) => {
 
 const viewOptions = (req) => ({ includePrivate: Boolean(req.publicAccount) })
 
-/** Public NGO contribution recognition board (names + points only). */
-publicRouter.get('/recognition', async (req, res) => {
-  try {
-    const items = await listPublicRecognitionBoard({
-      limit: Number(req.query.limit) || 50,
-    })
-    res.json({
-      items,
-      tiers: RECOGNITION_TIERS,
-      note: 'Hub recognition for verified NGO contributions (badge support, UNFCCC submissions). Not an official UNFCCC credential.',
-    })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({
-      error: {
-        code: 'server_error',
-        message: 'Could not load recognition board.',
-      },
-    })
-  }
+publicRouter.get('/recognition', (_req, res) => {
+  res.status(410).json({
+    error: {
+      code: 'retired',
+      message: 'Contribution points have been retired.',
+    },
+  })
 })
 
 publicRouter.get('/feed', (req, res) => {
@@ -176,23 +154,10 @@ publicRouter.get('/gys', (req, res) => {
   res.json(gys)
 })
 
-/** Public, reviewed science-resource catalogue. Drafts never cross this API. */
+/** Public catalogue with explicit verification state. Drafts never cross this API. */
 publicRouter.get('/resources', async (req, res, next) => {
   try {
-    const publications = await listContentPublications()
-    const reviewed = publications
-      .filter((item) => item.contentType === 'resource')
-      .map((item) => ({
-        ...item.payload,
-        publishedAt: item.publishedAt,
-      }))
-    const bySlug = new Map(
-      baselineResources.map((resource) => [resource.slug, resource]),
-    )
-    reviewed.forEach((resource) => bySlug.set(resource.slug, resource))
-    const items = [...bySlug.values()].sort((a, b) =>
-      a.title.localeCompare(b.title),
-    )
+    const items = await listResourceCatalogue()
     res.json({ items })
   } catch (error) {
     next(error)

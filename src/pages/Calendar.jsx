@@ -1,3 +1,4 @@
+import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api.js'
 import {
@@ -129,11 +130,15 @@ export function Calendar() {
   return (
     <div>
       <PageHeader
+        icon={CalendarIcon}
         title="Calendar"
         description="Calls, forums, sessions, and webinars in one UTC-first agenda."
         action={<CalendarSubscribe type="all" />}
       >
         <FilterMenu
+          onClear={() => {
+            setTypeFilters({})
+          }}
           label={
             activeFilterCount(typeFilters) === 0
               ? 'Filter events'

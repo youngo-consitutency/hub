@@ -1,3 +1,5 @@
+import { formatDateTime } from '../lib/dateTime.js'
+import { regionLabel } from '../lib/regions.js'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { Button, Empty, ErrorCard, Section, Skeletons } from './ui.jsx'
@@ -21,13 +23,13 @@ function PostingMeta({ item }) {
         </span>
         <span className="chip chip-neutral">{item.format}</span>
         {item.region && (
-          <span className="chip chip-neutral">{item.region}</span>
+          <span className="chip chip-neutral">{regionLabel(item.region)}</span>
         )}
       </div>
       <h3>{item.title}</h3>
       <p className="meta">
         {item.organizationName || 'Unknown organisation'}
-        {item.startsAt ? ` · ${new Date(item.startsAt).toLocaleString()}` : ''}
+        {item.startsAt ? ` · ${formatDateTime(item.startsAt)}` : ''}
         {item.location ? ` · ${item.location}` : ''}
       </p>
       {item.summary && <p className="meta">{item.summary}</p>}

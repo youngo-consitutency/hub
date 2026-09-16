@@ -25,9 +25,54 @@ function publicRow(row) {
   }
 }
 
+// Push endpoints are browser-issued capabilities, never arbitrary webhook URLs.
+export function validatedPushEndpoint(value) {
+  const invalid = () =>
+    Object.assign(new Error('Use a supported browser push endpoint.'), {
+      code: 'invalid_push_endpoint',
+    })
+  if (
+    typeof value !== 'string' ||
+    value.length > 4096 ||
+    // Reject controls before URL parsing can silently strip them.
+    // eslint-disable-next-line no-control-regex
+    /[\\\s\u0000-\u001f\u007f]/u.test(value)
+  )
+    throw invalid()
+  let url
+  try {
+    url = new URL(value)
+  } catch {
+    throw invalid()
+  }
+  const allowed =
+    [
+      'fcm.googleapis.com',
+      'updates.push.services.mozilla.com',
+      'web.push.apple.com',
+    ].includes(url.hostname) || url.hostname.endsWith('.notify.windows.com')
+  if (
+    !allowed ||
+    url.protocol !== 'https:' ||
+    url.port ||
+    url.username ||
+    url.password ||
+    url.hash
+  )
+    throw invalid()
+  return url.href
+}
+
 /** Shape a stored row back into the object web-push expects. */
 export function toWebPushSubscription(row) {
-  return { endpoint: row.endpoint, keys: row.keys || {} }
+  return { endpoint: validatedPushEndpoint(row.endpoint), keys: row.keys || {} }
+}
+
+function subscriptionLimitError() {
+  return Object.assign(
+    new Error('Remove an old device before adding another (maximum 20).'),
+    { code: 'push_subscription_limit' },
+  )
 }
 
 export async function saveSubscription({
@@ -35,8 +80,7 @@ export async function saveSubscription({
   subscription,
   userAgent = null,
 }) {
-  const endpoint = String(subscription?.endpoint || '').trim()
-  if (!endpoint) throw new Error('subscription.endpoint is required')
+  const endpoint = validatedPushEndpoint(subscription?.endpoint)
   const keys =
     subscription?.keys && typeof subscription.keys === 'object'
       ? subscription.keys
@@ -44,19 +88,45 @@ export async function saveSubscription({
 
   const pool = getPool()
   if (pool) {
-    const { rows } = await pool.query(
-      `INSERT INTO push_subscriptions (account_id, endpoint, keys, user_agent)
+    const client = await pool.connect()
+    try {
+      await client.query('BEGIN')
+      await client.query('SELECT id FROM hub_accounts WHERE id=$1 FOR UPDATE', [
+        accountId,
+      ])
+      const count = await client.query(
+        'SELECT count(*)::int AS count FROM push_subscriptions WHERE account_id=$1 AND endpoint<>$2',
+        [accountId, endpoint],
+      )
+      if (count.rows[0].count >= 20) throw subscriptionLimitError()
+      const { rows } = await client.query(
+        `INSERT INTO push_subscriptions (account_id, endpoint, keys, user_agent)
        VALUES ($1,$2,$3,$4)
        ON CONFLICT (endpoint)
        DO UPDATE SET account_id = EXCLUDED.account_id, keys = EXCLUDED.keys,
                      user_agent = EXCLUDED.user_agent, last_used_at = now()
        RETURNING *`,
-      [accountId, endpoint, keys, userAgent],
-    )
-    return publicRow(rows[0])
+        [accountId, endpoint, keys, userAgent],
+      )
+      await client.query('COMMIT')
+      return publicRow(rows[0])
+    } catch (error) {
+      await client.query('ROLLBACK')
+      throw error
+    } finally {
+      client.release()
+    }
   }
 
   const list = readJson(subscriptionsPath, [])
+  if (
+    list.filter(
+      (row) =>
+        (row.account_id ?? row.accountId) === accountId &&
+        row.endpoint !== endpoint,
+    ).length >= 20
+  )
+    throw subscriptionLimitError()
   const existing = list.find((s) => s.endpoint === endpoint)
   if (existing) {
     existing.accountId = accountId

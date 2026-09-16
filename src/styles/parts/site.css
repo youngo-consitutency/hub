@@ -91,6 +91,10 @@
   color: var(--on-accent-tint);
 }
 
+.siteMobileNavItem.siteMobileSignIn {
+  display: none;
+}
+
 .siteJoinBtn {
   flex: 0 0 auto;
 }
@@ -399,22 +403,6 @@ main#site-main {
 }
 
 /* ── Content cards ────────────────────────────────── */
-.siteMissionGrid,
-.siteFormatGrid,
-.siteContactGrid,
-.siteOrgGrid,
-.siteDoGrid,
-.siteTimeline,
-.siteWgGrid {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.siteMissionGrid,
-.siteFormatGrid,
-.siteContactGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
 
 .siteMissionCard,
 .siteFormatCard {
@@ -441,10 +429,6 @@ main#site-main {
   margin-bottom: var(--space-1);
 }
 
-.siteOrgGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .siteOrgCard {
   min-height: 130px;
   display: grid;
@@ -462,10 +446,6 @@ main#site-main {
   margin-top: var(--space-4);
   padding-left: var(--space-4);
   border-left: 2px solid var(--border-strong);
-}
-
-.siteDoGrid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .siteDoCard,
@@ -522,7 +502,6 @@ main#site-main {
 }
 
 .siteTimeline {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: var(--space-5);
 }
 
@@ -533,7 +512,7 @@ main#site-main {
   align-content: start;
   gap: var(--space-2);
   padding: var(--space-4);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-card);
   background: var(--bg-card);
@@ -593,9 +572,6 @@ main#site-main {
 }
 
 /* ── Working groups and COYs ──────────────────────── */
-.siteWgGrid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 
 .siteWgMonogram {
   width: 44px;
@@ -661,7 +637,7 @@ main#site-main {
 
 .siteFaqItem {
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
@@ -717,7 +693,8 @@ main#site-main {
   align-items: center;
   gap: var(--space-2);
   padding: 7px 13px;
-  border: 1px solid var(--border-strong);
+  border: 0;
+  background: var(--bg-raised);
   border-radius: var(--radius-control);
   color: var(--text-2);
   font-size: 13px;
@@ -816,13 +793,6 @@ main#site-main {
     max-width: 720px;
   }
 
-  .siteOrgGrid,
-  .siteTimeline,
-  .siteWgGrid,
-  .siteDoGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .siteFooterInner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -832,7 +802,7 @@ main#site-main {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1199px) {
   .siteHeaderInner {
     min-height: 60px;
   }
@@ -865,6 +835,9 @@ main#site-main {
     border-top: 1px solid var(--border);
     background: var(--bg-card);
     box-shadow: var(--shadow-popover);
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .siteMobileNavItem {
@@ -874,7 +847,7 @@ main#site-main {
     justify-content: space-between;
     gap: var(--space-2);
     padding: 0 var(--space-3);
-    border: 1px solid var(--border);
+    border: 0;
     border-radius: var(--radius-control);
     color: var(--text-2);
     font-size: 14px;
@@ -886,13 +859,9 @@ main#site-main {
     background: var(--accent-tint);
     color: var(--on-accent-tint);
   }
+}
 
-  .siteMissionGrid,
-  .siteFormatGrid,
-  .siteContactGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+@media (max-width: 760px) {
   .siteMissionCard,
   .siteFormatCard,
   .siteDoCard,
@@ -918,16 +887,6 @@ main#site-main {
 
   .siteStartCard {
     padding: var(--space-4);
-  }
-
-  .siteMissionGrid,
-  .siteFormatGrid,
-  .siteContactGrid,
-  .siteOrgGrid,
-  .siteDoGrid,
-  .siteTimeline,
-  .siteWgGrid {
-    grid-template-columns: 1fr;
   }
 
   .siteCtaBand,
@@ -969,6 +928,10 @@ main#site-main {
 
   .siteSignInLink {
     display: none;
+  }
+
+  .siteMobileNavItem.siteMobileSignIn {
+    display: flex;
   }
 
   .siteJoinBtn svg {

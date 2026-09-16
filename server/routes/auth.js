@@ -19,7 +19,7 @@ import {
   deliveryFailure,
   emailConfigured,
   sendTemplatedEmail,
-} from '../lib/emailTransport.js'
+} from '../lib/notifications/transport.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import {
   bearerToken,
@@ -130,7 +130,16 @@ authRouter.post('/register', registerLimit, async (req, res) => {
       const createdAccount = await createAccount(result.data)
       session = await createSession(createdAccount.id)
     }
-    const account = await getSessionAccount(session.token)
+    const account = session && (await getSessionAccount(session.token))
+    if (!account) {
+      if (session) await destroySession(session.token)
+      return res.status(401).json({
+        error: {
+          code: 'invalid_credentials',
+          message: 'Email or password is incorrect.',
+        },
+      })
+    }
     console.log(
       JSON.stringify({
         event: 'hub_register',
@@ -201,7 +210,16 @@ authRouter.post('/login', loginLimit, loginAccountLimit, async (req, res) => {
     }
 
     const session = await createSession(row.id)
-    const account = await getSessionAccount(session.token)
+    const account = session && (await getSessionAccount(session.token))
+    if (!account) {
+      if (session) await destroySession(session.token)
+      return res.status(401).json({
+        error: {
+          code: 'invalid_credentials',
+          message: 'Email or password is incorrect.',
+        },
+      })
+    }
     console.log(
       JSON.stringify({
         event: 'hub_login',

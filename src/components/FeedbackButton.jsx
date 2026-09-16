@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { SidePanel } from './SidePanel.tsx'
+import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { usePath } from '../lib/router.js'
 import { Button } from './ui.jsx'
 import {
   TbMessagePlus as MessageSquarePlus,
-  TbX as X,
   TbCheck as Check,
 } from 'react-icons/tb'
 
@@ -125,21 +125,6 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
     kinds: FALLBACK_KINDS,
     severities: FALLBACK_SEVERITIES,
   })
-  const dialogRef = useRef(null)
-  const triggerRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event) => event.key === 'Escape' && setOpen(false)
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open])
-
-  useEffect(() => {
-    if (open) dialogRef.current?.querySelector('select, input')?.focus()
-    else triggerRef.current?.focus()
-  }, [open])
-
   useEffect(() => {
     if (!open) return
     apiGet('/member/feedback/options')
@@ -158,30 +143,10 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
     setSent(false)
   }
 
-  const keepFocusInside = (event) => {
-    if (event.key !== 'Tab') return
-    const focusable = [
-      ...(dialogRef.current?.querySelectorAll(
-        'input, select, textarea, button, a[href]',
-      ) || []),
-    ]
-    if (focusable.length === 0) return
-    const first = focusable[0]
-    const last = focusable.at(-1)
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first.focus()
-    }
-  }
-
   return (
     <>
       <button
         type="button"
-        ref={triggerRef}
         className={`feedbackTrigger feedbackTrigger--${mode}`}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
@@ -192,53 +157,34 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
       </button>
 
       {open && (
-        <div className="feedbackBackdrop" onMouseDown={close}>
-          <section
-            className="feedbackDialog card"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Send feedback to the YOUNGO Hub team"
-            ref={dialogRef}
-            onKeyDown={keepFocusInside}
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <header className="feedbackHeader">
-              <div>
-                <h2>Send feedback</h2>
-                <p className="meta">
-                  Bugs, design problems, blockers and ideas all go to the YOUNGO
-                  Hub team.
-                </p>
+        <SidePanel title="Send feedback" onClose={close}>
+          <p className="meta">
+            Bugs, design problems, blockers and ideas all go to the YOUNGO Hub
+            team.
+          </p>
+          {sent ? (
+            <div className="feedbackSent" role="status">
+              <div className="iconTile">
+                <Check size={22} strokeWidth={1.75} aria-hidden />
               </div>
-              <Button sm variant="ghost" onClick={close} aria-label="Close">
-                <X size={18} strokeWidth={1.75} aria-hidden />
+              <h3>Thank you — the team has it</h3>
+              <p className="meta">
+                Your report is in the triage queue. We may follow up on the
+                email attached to your account.
+              </p>
+              <Button variant="primary" onClick={close}>
+                Done
               </Button>
-            </header>
-
-            {sent ? (
-              <div className="feedbackSent" role="status">
-                <div className="iconTile">
-                  <Check size={22} strokeWidth={1.75} aria-hidden />
-                </div>
-                <h3>Thank you — the team has it</h3>
-                <p className="meta">
-                  Your report is in the triage queue. We may follow up on the
-                  email attached to your account.
-                </p>
-                <Button variant="primary" onClick={close}>
-                  Done
-                </Button>
-              </div>
-            ) : (
-              <FeedbackForm
-                pagePath={path}
-                kinds={options.kinds}
-                severities={options.severities}
-                onDone={() => setSent(true)}
-              />
-            )}
-          </section>
-        </div>
+            </div>
+          ) : (
+            <FeedbackForm
+              pagePath={path}
+              kinds={options.kinds}
+              severities={options.severities}
+              onDone={() => setSent(true)}
+            />
+          )}
+        </SidePanel>
       )}
     </>
   )

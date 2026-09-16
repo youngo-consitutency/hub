@@ -180,7 +180,12 @@ export function Council() {
                   </div>
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu activeCount={activeFilterCount(statusFilters)}>
+                  <FilterMenu
+                    onClear={() => {
+                      setStatusFilters({})
+                    }}
+                    activeCount={activeFilterCount(statusFilters)}
+                  >
                     <fieldset className="filterLevel">
                       <legend>
                         {state === 'active' ? 'Stage' : 'Outcome'}

@@ -1,4 +1,5 @@
 .codex-vault/
+.local-demo/
 docs/design-qa/
 docs/mobile-audit/
 node_modules/

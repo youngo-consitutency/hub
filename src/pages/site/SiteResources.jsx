@@ -12,9 +12,10 @@ export function SiteResources() {
         <p className="pageEyebrow">Open climate knowledge</p>
         <h1>Science Resource Hub</h1>
         <p className="sitePageLead">
-          Explore reviewed resources for climate work, research, learning, and
+          Explore climate resources for climate work, research, learning, and
           funding. The catalogue is public; YOUNGO members can suggest additions
-          for independent review.
+          for independent review. Each listing shows whether its link has been
+          checked.
         </p>
       </header>
       <div className="siteResourceCatalogue">

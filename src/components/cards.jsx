@@ -3,7 +3,7 @@ import { MemberAvatar } from './MemberAvatar.jsx'
 import { fmtMoment, fmtDateRange } from '../lib/time.js'
 import { workingGroupTopic } from '../../shared/workingGroups.js'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
-import { regionFilterPrefix } from '../lib/regions.js'
+import { regionLabel, regionFilterPrefix } from '../lib/regions.js'
 import {
   TbCalendar as CalendarDays,
   TbMapPin as MapPin,
@@ -11,7 +11,6 @@ import {
   TbArrowUpRight as ArrowUpRight,
   TbBuildingCommunity as Building,
   TbBriefcase as Briefcase,
-  TbFileText as FileText,
   TbGavel as Gavel,
   TbGlobe as Globe,
   TbMap as Map,
@@ -42,19 +41,9 @@ const EVENT_LABEL = {
 }
 
 const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
-const REGION_LABEL = {
-  africa: 'Africa',
-  apac: 'Asia-Pacific',
-  eca: 'ECA',
-  lac: 'LAC',
-  mena: 'MENA',
-  noram: 'North America',
-  weog: 'WEOG',
-}
 
 function EntityHeader({
   title,
-  icon: Icon,
   status,
   statusFilterState,
   onStatusFilter,
@@ -75,14 +64,6 @@ function EntityHeader({
           {children}
         </div>
       </div>
-      {Icon && (
-        <Icon
-          className="cardCornerIcon entityCardCornerIcon"
-          size={18}
-          strokeWidth={1.75}
-          aria-hidden
-        />
-      )}
     </div>
   )
 }
@@ -101,7 +82,7 @@ function LinkedEntityCard({ href, label, className = '', children }) {
   )
 }
 
-function MomentRow({ iso, label }) {
+export function CardSchedule({ iso, label }) {
   const moment = fmtMoment(iso)
   return (
     <div className="entityCardSchedule">
@@ -111,18 +92,12 @@ function MomentRow({ iso, label }) {
         <span>
           {moment.day} · {moment.localTime} {moment.localZone}
         </span>
-        {!moment.isUtc && (
-          <span className="entityCardSecondary">UTC: {moment.utcTime}</span>
-        )}
       </div>
     </div>
   )
 }
 
 export function EventCard({ event }) {
-  const EventIcon = event.wg?.slug
-    ? workingGroupIcon(event.wg.slug)
-    : EVENT_ICONS[event.type] || CalendarDays
   const TypeIcon = EVENT_ICONS[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
@@ -131,14 +106,14 @@ export function EventCard({ event }) {
       className="card cardTight entityCard"
       peek
     >
-      <EntityHeader title={event.title} icon={EventIcon}>
+      <EntityHeader title={event.title}>
         <FilterChip icon={TypeIcon}>
           {EVENT_LABEL[event.type] || event.type}
         </FilterChip>
         {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
       </EntityHeader>
-      <div className="entityCardBody">
-        <MomentRow iso={event.startsAt} label="Starts" />
+      <div className="entityCardFooter">
+        <CardSchedule iso={event.startsAt} label="Starts" />
       </div>
     </A>
   )
@@ -151,13 +126,12 @@ export function SubmissionCard({
   onStatusFilter,
   onGroupFilter,
 }) {
-  const SubmissionIcon = sub.wg?.slug ? workingGroupIcon(sub.wg.slug) : FileText
   return (
     <LinkedEntityCard
       href={`/submissions/${sub.slug}`}
       label={`Open ${sub.title}`}
     >
-      <EntityHeader title={sub.title} icon={SubmissionIcon}>
+      <EntityHeader title={sub.title}>
         {sub.wg && (
           <FilterChip
             state={groupFilterState}
@@ -171,10 +145,6 @@ export function SubmissionCard({
       <LifecycleTiming
         status={sub.status}
         iso={sub.deadlineAt}
-        relation={
-          ['submitted', 'archived'].includes(sub.status) ? 'on' : 'until'
-        }
-        showCountdown={!['submitted', 'archived'].includes(sub.status)}
         statusFilterState={statusFilterState}
         onStatusFilter={onStatusFilter}
       />
@@ -186,14 +156,9 @@ export function SubmissionCard({
 export function ClosingCard({ item }) {
   const isDecision = item.kind === 'decision'
   const href = `${isDecision ? '/council' : '/submissions'}/${item.slug}`
-  const ClosingIcon = isDecision
-    ? Gavel
-    : item.wg?.slug
-      ? workingGroupIcon(item.wg.slug)
-      : FileText
   return (
     <A href={href} className="card entityCard" peek>
-      <EntityHeader title={item.title} icon={ClosingIcon}>
+      <EntityHeader title={item.title}>
         {isDecision && <FilterChip icon={Gavel}>Council</FilterChip>}
       </EntityHeader>
       <LifecycleTiming status={item.status} iso={item.deadlineAt} />
@@ -211,7 +176,7 @@ export function DecisionCard({ decision, statusFilterState, onStatusFilter }) {
       href={`/council/${decision.slug}`}
       label={`Open ${decision.title}`}
     >
-      <EntityHeader title={decision.title} icon={Gavel} />
+      <EntityHeader title={decision.title} />
       <div className="entityCardBody">
         {decision.summary && <p className="meta">{decision.summary}</p>}
       </div>
@@ -220,7 +185,6 @@ export function DecisionCard({ decision, statusFilterState, onStatusFilter }) {
           status={decision.status}
           iso={windowIso}
           label="Decision window"
-          showCountdown={Boolean(windowIso)}
           statusFilterState={statusFilterState}
           onStatusFilter={onStatusFilter}
         />
@@ -245,7 +209,7 @@ export function CoyCard({
       label={`Open ${coy.title}`}
       className="coyCard"
     >
-      <EntityHeader title={coy.title} icon={CoyIcon} status={coy.status}>
+      <EntityHeader title={coy.title} status={coy.status}>
         <FilterChip
           state={typeFilterState}
           icon={CoyIcon}
@@ -255,13 +219,13 @@ export function CoyCard({
         </FilterChip>
         <FilterChip
           state={regionFilterState}
-          prefix={regionFilterPrefix(coy.region, REGION_LABEL[coy.region])}
+          prefix={regionFilterPrefix(coy.region, regionLabel(coy.region))}
           onClick={onRegionFilter}
         >
-          {REGION_LABEL[coy.region] || coy.region}
+          {regionLabel(coy.region)}
         </FilterChip>
       </EntityHeader>
-      <div className="entityCardBody">
+      <div className="entityCardFooter">
         <p className="entityCardMetaRow">
           <MapPin size={16} strokeWidth={1.75} aria-hidden />
           <span>{place || 'Location to be announced'}</span>
@@ -280,7 +244,6 @@ export function GroupCard({
   href,
   statusLabel,
   statusIcon: StatusIcon,
-  topicIcon: TopicIcon,
   topicFilterState,
   onTopicFilter,
 }) {
@@ -317,12 +280,7 @@ export function GroupCard({
           </FilterChip>
         )}
         {topic && (
-          <FilterChip
-            tone="accent"
-            state={topicFilterState}
-            icon={TopicIcon}
-            onClick={onTopicFilter}
-          >
+          <FilterChip state={topicFilterState} onClick={onTopicFilter}>
             {topic.label}
           </FilterChip>
         )}
@@ -331,13 +289,28 @@ export function GroupCard({
   )
 }
 
-export function PersonCard({ person, onTagClick }) {
+export function PersonCard({ person, onTagClick, onOpen, expanded = false }) {
   return (
-    <article className="card cardTight personCard">
+    <article
+      className={`card cardTight personCard ${expanded ? 'personDetail' : ''}`}
+    >
       <header className="personCardHeader">
         <MemberAvatar person={person} size="lg" />
         <div>
-          <h3>{person.displayName}</h3>
+          <h3>
+            {onOpen ? (
+              <button
+                className="personNameButton"
+                type="button"
+                aria-haspopup="dialog"
+                onClick={onOpen}
+              >
+                {person.displayName}
+              </button>
+            ) : (
+              person.displayName
+            )}
+          </h3>
           {person.pronouns && <p className="metaMuted">{person.pronouns}</p>}
         </div>
       </header>
@@ -382,23 +355,25 @@ export function PersonCard({ person, onTagClick }) {
           className="entityCardTags personGroupTags"
           aria-label="Working groups"
         >
-          {person.workingGroups.slice(0, 5).map((group) => {
-            const GroupIcon = workingGroupIcon(group.slug)
-            return (
-              <A
-                key={group.slug}
-                href={`/groups/${group.slug}`}
-                className="chip chip-neutral personLinkChip"
-                peek
-              >
-                <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
-                {group.name}
-                {['contact', 'lead'].includes(group.role)
-                  ? ` · ${group.role}`
-                  : ''}
-              </A>
-            )
-          })}
+          {person.workingGroups
+            .slice(0, expanded ? undefined : 5)
+            .map((group) => {
+              const GroupIcon = workingGroupIcon(group.slug)
+              return (
+                <A
+                  key={group.slug}
+                  href={`/groups/${group.slug}`}
+                  className="chip chip-neutral personLinkChip"
+                  peek
+                >
+                  <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
+                  {group.name}
+                  {['contact', 'lead'].includes(group.role)
+                    ? ` · ${group.role === 'contact' ? 'Contact Point' : 'Legacy access'}`
+                    : ''}
+                </A>
+              )
+            })}
         </div>
       )}
       {person.expertiseTags?.length > 0 && (
@@ -431,7 +406,12 @@ export function PersonCard({ person, onTagClick }) {
 }
 
 export function ContactCard({ contact }) {
-  const channel = contact.channelValue?.trim()
+  const rawChannel = contact.channelValue?.trim()
+  const channel =
+    rawChannel?.replace(/^mailto:/i, '').toLowerCase() ===
+    contact.publicEmail?.trim().toLowerCase()
+      ? null
+      : rawChannel
   const channelHref = channel
     ? /^https?:\/\//i.test(channel)
       ? channel

@@ -1,8 +1,9 @@
+import { findAccountById } from '../../lib/accounts.js'
 // Working-group contact-point console: roster and activity management.
 import { Router } from 'express'
 import { requireAccount, requireVerified } from './guards.js'
 import { WG_ACTIVITY_KIND_VALUES } from '../../../shared/workflows.js'
-import { canManageWg, syncWgAssignment } from '../../lib/access.js'
+import { canManageWg } from '../../lib/access.js'
 import { recordAudit } from '../../lib/audit.js'
 import {
   addWgActivity,
@@ -21,7 +22,7 @@ async function requireWgManager(req, res) {
     res.status(403).json({
       error: {
         code: 'forbidden',
-        message: 'Contact or lead access for this working group is required.',
+        message: 'Contact Point access for this working group is required.',
       },
     })
     return null
@@ -42,11 +43,15 @@ router.post('/cp/:wg/members/:accountId/role', async (req, res) => {
   const role = String(req.body?.role || 'member')
   const status = String(req.body?.status || 'active')
   if (
-    !['member', 'contact', 'lead'].includes(role) ||
+    role !== 'member' ||
     !['interested', 'pending_approval', 'active', 'rejected'].includes(status)
   ) {
     return res.status(400).json({
-      error: { code: 'validation', message: 'Invalid WG role or status.' },
+      error: {
+        code: 'validation',
+        message:
+          'Use a membership status here. Contact Point appointments must be recorded with evidence in Bodies & mandates.',
+      },
     })
   }
   const before = await getWgProgress(req.params.accountId, req.params.wg)
@@ -58,16 +63,22 @@ router.post('/cp/:wg/members/:accountId/role', async (req, res) => {
       },
     })
   }
+  const target = await findAccountById(req.params.accountId)
+  if (
+    (before && ['contact', 'lead'].includes(before.role_in_wg)) ||
+    (target && (await canManageWg(target, req.params.wg)))
+  ) {
+    return res.status(409).json({
+      error: {
+        code: 'conflict',
+        message:
+          'Manage this mandate through its assignment record, not the membership queue.',
+      },
+    })
+  }
   const progress = await upsertWgProgress(req.params.accountId, req.params.wg, {
     role_in_wg: role,
     status,
-  })
-  await syncWgAssignment({
-    accountId: req.params.accountId,
-    wgSlug: req.params.wg,
-    role,
-    status,
-    assignedBy: account.id,
   })
   await recordAudit({
     actorId: account.id,

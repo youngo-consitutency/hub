@@ -113,7 +113,7 @@ export function AccessGate({ children }) {
     return <PlatformLanding onAuthenticated={handleAuthenticated} />
   }
 
-  if (!policyOk) {
+  if (path === '/join' && !policyOk) {
     return <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
   }
 

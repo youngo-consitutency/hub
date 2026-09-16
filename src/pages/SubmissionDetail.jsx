@@ -50,7 +50,6 @@ export function SubmissionDetail({ slug }) {
                     status={sub.status}
                     iso={sub.deadlineAt}
                     label={archived ? 'Submitted' : 'Deadline'}
-                    relation={archived ? 'on' : 'until'}
                     showCountdown={!archived}
                     className="detailLifecycleTiming"
                   />

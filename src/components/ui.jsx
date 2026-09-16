@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { navigate } from '../lib/router.js'
+import { navigate, replace } from '../lib/router.js'
 import { countdown, fmtMoment, formatCountdownLabel } from '../lib/time.js'
 import {
   TbAlarm as AlarmClock,
@@ -10,13 +10,16 @@ import {
   TbMinus as Minus,
 } from 'react-icons/tb'
 
+/** @param {import("react").AnchorHTMLAttributes<HTMLAnchorElement> & { peek?: boolean }} props */
 export function A({
   href,
   className,
   children,
   onClick,
   target,
-  peek = false,
+  peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(
+    href || '',
+  ),
   ...rest
 }) {
   return (
@@ -37,12 +40,15 @@ export function A({
         )
           return
         e.preventDefault()
-        navigate(
+        const background = window.history.state?.peekBackground
+        const go = peek && background ? replace : navigate
+        go(
           href,
           peek
             ? {
                 state: {
                   peekBackground:
+                    background ||
                     window.location.pathname + window.location.search,
                 },
                 scroll: false,
@@ -77,6 +83,7 @@ export function Button({
   return <button type="button" className={cls} {...rest} />
 }
 
+/** @param {import("react").ButtonHTMLAttributes<HTMLButtonElement> & {active?: boolean, state?: string, icon?: import("react").ElementType, prefix?: string}} props */
 export function FilterPill({
   active,
   state,
@@ -109,21 +116,14 @@ export function FilterPill({
         </span>
       )}
       {children}
-      {state === 'include' && (
-        <Check
-          className="pillStateIcon"
-          size={13}
-          strokeWidth={2}
-          aria-hidden
-        />
-      )}
-      {state === 'exclude' && (
-        <Minus
-          className="pillStateIcon"
-          size={13}
-          strokeWidth={2}
-          aria-hidden
-        />
+      {state !== undefined && (
+        <span className="pillStateIcon" aria-hidden>
+          {state === 'exclude' ? (
+            <Minus size={13} strokeWidth={2} />
+          ) : (
+            <Check size={13} strokeWidth={2} />
+          )}
+        </span>
       )}
     </button>
   )
@@ -137,7 +137,10 @@ function filterStateLabel(filterState) {
       : 'not selected; activate to include'
 }
 
-/** Compact card metadata that controls the matching catalogue filter. */
+/**
+ * Compact card metadata that controls the matching catalogue filter.
+ * @param {{children?: import("react").ReactNode, state?: string, tone?: string, onClick?: import("react").MouseEventHandler<HTMLButtonElement>, icon?: import("react").ElementType, prefix?: string, className?: string}} props
+ */
 export function FilterChip({
   children,
   state = 'neutral',
@@ -191,23 +194,66 @@ export function SortButton({ active, icon: Icon, children, ...rest }) {
   )
 }
 
-export function FilterMenu({ children, activeCount = 0, label = 'Filters' }) {
+export function FilterMenu({
+  children,
+  activeCount = 0,
+  label = 'Filters',
+  onClear,
+}) {
   return (
     <section className="filterMenu" aria-label={label}>
-      <span className="srOnly" role="status">
-        {activeCount} active filters
-      </span>
+      <div className="filterSummary">
+        <span role="status">
+          {activeCount > 0
+            ? `${activeCount} active ${activeCount === 1 ? 'filter' : 'filters'}`
+            : ''}
+        </span>
+        {onClear && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            disabled={activeCount === 0}
+            onClick={(event) => {
+              const firstFilter = event.currentTarget
+                .closest('.filterMenu')
+                ?.querySelector('.filterMenuPanel button')
+              onClear()
+              firstFilter?.focus({ preventScroll: true })
+            }}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
       <div className="filterMenuPanel">{children}</div>
     </section>
   )
 }
 
-export function PageHeader({ title, description, action, children }) {
+/** @param {{ title: import("react").ReactNode, description?: import("react").ReactNode, action?: import("react").ReactNode, icon?: import("react").ElementType, children?: import("react").ReactNode }} props */
+export function PageHeader({
+  title,
+  description,
+  action,
+  children,
+  icon: Icon,
+}) {
   return (
     <header className="pageHeader">
       <div className="pageHeaderRow">
         <div className="pageHeaderCopy">
-          <h1 className="pageTitle">{title}</h1>
+          <h1 className="pageTitle">
+            {Icon && (
+              <Icon
+                className="pageTitleIcon"
+                size={26}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                focusable="false"
+              />
+            )}
+            <span>{title}</span>
+          </h1>
           {description && <p className="pageLead">{description}</p>}
         </div>
         {action && <div className="pageHeaderAction">{action}</div>}
@@ -281,8 +327,7 @@ export function LifecycleTiming({
   status,
   iso,
   label = 'Deadline',
-  relation = 'until',
-  showCountdown = true,
+  showCountdown = false,
   statusFilterState = 'neutral',
   onStatusFilter,
   className = '',
@@ -305,15 +350,12 @@ export function LifecycleTiming({
         <div className="lifecycleTimingDate">
           <CalendarTime size={15} strokeWidth={1.75} aria-hidden />
           <time dateTime={iso}>
-            <span className="lifecycleTimingRelation">
-              {status ? relation : label}
-            </span>{' '}
+            {!status && label !== 'Deadline' && (
+              <span className="lifecycleTimingRelation">{label}</span>
+            )}
             {moment.day} · {moment.localTime} {moment.localZone}
           </time>
         </div>
-      )}
-      {moment && !moment.isUtc && (
-        <span className="lifecycleTimingSecondary">UTC {moment.utcTime}</span>
       )}
       {remaining && (
         <span
@@ -364,7 +406,7 @@ export function Empty({ icon: Icon, title, body, cta }) {
           <Icon size={22} strokeWidth={1.75} aria-hidden />
         </div>
       )}
-      <h3>{title}</h3>
+      {title && <h3>{title}</h3>}
       {body && <p className="meta emptyBody">{body}</p>}
       {cta && <div className="emptyCta">{cta}</div>}
     </div>
@@ -377,9 +419,11 @@ export function ErrorCard({ message, onRetry }) {
       <span className="meta">
         {message || 'Couldn’t load this — try again.'}
       </span>
-      <Button sm variant="ghost" onClick={onRetry}>
-        <RefreshCw size={16} strokeWidth={1.75} aria-hidden /> Retry
-      </Button>
+      {onRetry && (
+        <Button sm variant="ghost" onClick={onRetry}>
+          <RefreshCw size={16} strokeWidth={1.75} aria-hidden /> Retry
+        </Button>
+      )}
     </div>
   )
 }

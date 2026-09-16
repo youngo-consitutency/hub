@@ -36,10 +36,9 @@
   gap: var(--space-2);
   text-align: center;
   padding: 40px 16px;
-  border: 1px dashed var(--border-strong);
+  border: 0;
   border-radius: var(--radius-card);
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background: var(--bg-raised);
 }
 
 .emptyBody {
@@ -165,34 +164,6 @@
 
 .pagination {
   margin-top: var(--space-4);
-}
-
-.adminDialogBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background: var(--overlay);
-}
-
-.adminDialog {
-  width: min(100%, 640px);
-  max-height: min(780px, calc(100vh - var(--space-8)));
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  border-radius: var(--radius-modal);
-  box-shadow: var(--shadow-popover);
-}
-
-.adminDialogHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .adminDialogIdentity {
@@ -464,9 +435,9 @@
   min-height: 40px;
   width: fit-content;
   padding: 8px 12px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid transparent;
   border-radius: var(--radius-control);
-  background: var(--bg-card);
+  background: var(--bg-raised);
   box-shadow: var(--shadow-card);
   font-size: 13px;
   font-weight: 600;
@@ -475,7 +446,6 @@
 }
 
 .backLink:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
   background: var(--accent-tint);
   color: var(--on-accent-tint);
 }
@@ -1088,7 +1058,7 @@ a.monogram:hover {
   height: 22px;
   border-radius: 50%;
   color: var(--accent);
-  background: var(--bg);
+  background: var(--bg-page);
 }
 
 .gysStepArrowRight {
@@ -1360,10 +1330,6 @@ a.monogram:hover {
     flex-direction: column;
   }
 
-  .focalGrid {
-    grid-template-columns: 1fr;
-  }
-
   .queueSearch {
     min-width: 0;
     width: 100%;
@@ -1611,24 +1577,6 @@ a.monogram:hover {
 .notificationNoticeWarn {
   background: var(--warn-tint);
   color: var(--warn);
-}
-
-.notificationHelpDialog {
-  width: min(520px, calc(100% - 32px));
-  max-height: min(80dvh, 640px);
-  margin: auto;
-  padding: var(--space-5);
-  overflow-y: auto;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-modal);
-  background: var(--bg-popover);
-  color: var(--text-1);
-  box-shadow: var(--shadow-popover);
-}
-
-.notificationHelpDialog::backdrop {
-  background: var(--overlay);
-  backdrop-filter: blur(2px);
 }
 
 .notificationGuideHeader {

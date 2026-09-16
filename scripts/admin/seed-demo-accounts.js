@@ -181,24 +181,24 @@ const PERSONAS = [
   },
   {
     key: 'wg_lead',
-    label: 'WG lead (ACE)',
+    label: 'WG Contact Point (ACE)',
     data: baseIndividual({
       email: email('demo-wg-lead'),
       firstName: 'Demo',
       lastName: 'WgLead',
-      name: 'Demo WgLead',
+      name: 'Demo Education Contact Point',
       phone: '+254 700 000 006',
       wgInterests: ['ace'],
     }),
     after: {
       role: 'member',
       verified: true,
-      wg: { slug: 'ace', role: 'lead' },
+      wg: { slug: 'ace', role: 'contact' },
     },
   },
   {
     key: 'membership_team',
-    label: 'Membership team',
+    label: 'GCT · Membership',
     data: baseIndividual({
       email: email('demo-membership'),
       firstName: 'Demo',
@@ -230,7 +230,7 @@ const PERSONAS = [
   },
   {
     key: 'content_editor',
-    label: 'Content editor',
+    label: 'Member with website drafting access',
     data: baseIndividual({
       email: email('demo-editor'),
       firstName: 'Demo',
@@ -246,7 +246,7 @@ const PERSONAS = [
   },
   {
     key: 'content_publisher',
-    label: 'Content publisher',
+    label: 'Member with website publishing access',
     data: baseIndividual({
       email: email('demo-publisher'),
       firstName: 'Demo',

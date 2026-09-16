@@ -279,6 +279,7 @@ function publishedRecord({
 export async function listContentRevisions({
   actorId,
   canReview = false,
+  contentType = null,
   limit = 200,
 }) {
   const safeLimit = Math.min(Math.max(Number(limit) || 200, 1), 500)
@@ -290,15 +291,20 @@ export async function listContentRevisions({
        FROM hub_content_revisions r
        JOIN hub_accounts creator ON creator.id=r.created_by
        LEFT JOIN hub_accounts reviewer ON reviewer.id=r.reviewed_by
-       WHERE ($1::boolean OR r.created_by=$2)
+       WHERE ($1::boolean OR r.created_by=$2) AND ($4::text IS NULL OR r.content_type=$4)
        ORDER BY r.updated_at DESC
        LIMIT $3`,
-      [canReview, actorId, safeLimit],
+      [canReview, actorId, safeLimit, contentType],
     )
     return rows.map(rowView)
   }
   return readArray(revisionsPath())
-    .filter((item) => canReview || item.createdBy === actorId)
+    .filter(
+      (item) =>
+        (canReview || item.createdBy === actorId) &&
+        (!contentType ||
+          (item.contentType || item.content_type) === contentType),
+    )
     .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
     .slice(0, safeLimit)
     .map(rowView)

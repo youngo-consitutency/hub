@@ -92,7 +92,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
-  padding: 16px 10px 5px;
+  padding: 8px 10px 5px;
 }
 
 .navItem {
@@ -102,13 +102,21 @@
   width: 100%;
   padding: 9px 10px;
   border-radius: var(--radius-control);
-  color: var(--text-2);
+  color: var(--text-1);
   font-size: 14px;
+  font-weight: 600;
+  min-height: 42px;
   border: 0;
   border-left: 2px solid transparent;
   cursor: pointer;
   background: transparent;
   text-align: left;
+}
+
+.navItem > svg {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .navItem:hover {
@@ -117,8 +125,8 @@
 }
 
 .navItem.active {
-  background: var(--accent-tint);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
   border-left-color: var(--accent);
   border-radius: var(--radius-control);
 }
@@ -146,6 +154,7 @@
 }
 
 .accountNameRow {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -457,6 +466,10 @@
   flex: 0 0 auto;
 }
 
+.profileIdentity > div {
+  min-width: 0;
+}
+
 .profileIdentity h2 {
   display: flex;
   align-items: center;
@@ -513,12 +526,15 @@
 
 .memberProfileEditorHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-5);
 }
 
 .memberProfileEditorHeader > div:first-child {
+  flex: 1 1 auto;
+  min-width: min(100%, 300px);
   max-width: 66ch;
 }
 
@@ -542,7 +558,7 @@
 .profilePhotoActions small {
   width: 100%;
   color: var(--text-3);
-  text-align: right;
+  text-align: left;
 }
 
 .memberProfileOverview {
@@ -900,7 +916,7 @@ a.profileLink {
   position: relative;
   width: 100%;
   padding: 18px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
@@ -1012,7 +1028,7 @@ a.profileLink {
   grid-auto-rows: 1fr;
   align-items: stretch;
   justify-content: start;
-  gap: var(--catalog-gap);
+  gap: var(--space-3);
 }
 
 .peopleGrid > .card {
@@ -1021,7 +1037,9 @@ a.profileLink {
 }
 
 .personCard {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   gap: var(--space-3);
 }
 
@@ -1029,6 +1047,11 @@ a.profileLink {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
+}
+
+.personCardHeader > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .personCardHeader h3 {
@@ -1114,4 +1137,26 @@ a.profileLink {
   .peopleGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.navGroup + .navGroup {
+  margin-top: var(--space-2);
+}
+
+.personNameButton {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.personNameButton:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.personDetail .personBio {
+  display: block;
+  -webkit-line-clamp: unset;
 }

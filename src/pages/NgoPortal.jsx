@@ -1,3 +1,5 @@
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbBuildingCommunity as OrganisationIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
@@ -19,6 +21,7 @@ import {
 } from 'react-icons/tb'
 
 export function NgoPortal() {
+  const [panel, setPanel] = useState(null)
   const { account, setAccount } = useAccount()
   const path = usePath()
   const [data, setData] = useState(null)
@@ -89,6 +92,7 @@ export function NgoPortal() {
           : null,
       })
       setForm({ kind: 'endorse', title: '', body: '', deadlineAt: '' })
+      setPanel(null)
       load()
     } catch (err) {
       setError(err.message)
@@ -135,9 +139,7 @@ export function NgoPortal() {
         status: 'done',
       })
       if (res?.awardSuggestion) {
-        setAcceptMsg(
-          `Marked done. Staff can award ~${res.awardSuggestion.suggestedPoints} pts (${res.awardSuggestion.suggestedReasonLabel}) from the NGO points queue.`,
-        )
+        setAcceptMsg('Request marked done.')
       }
       load()
     } catch (err) {
@@ -148,15 +150,42 @@ export function NgoPortal() {
   return (
     <div>
       <PageHeader
+        icon={OrganisationIcon}
         title="NGO platform"
-        description={`${account?.organizationName || 'Your organisation'} — deadlines, requests, contribution points, and team seats.`}
+        action={
+          <div className="rowGap">
+            {data?.permissions?.canWriteRequests && (
+              <Button
+                onClick={() => {
+                  setError(null)
+                  setPanel('request')
+                }}
+              >
+                Log a request
+              </Button>
+            )}
+            {data?.permissions?.canManageSeats && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setError(null)
+                  setPanel('invite')
+                }}
+              >
+                <UserPlus size={17} aria-hidden />
+                Invite representative
+              </Button>
+            )}
+          </div>
+        }
+        description={`${account?.organizationName || 'Your organisation'} — requests, opportunities, and team seats.`}
       />
       {acceptMsg && (
         <p className="meta" style={{ color: 'var(--accent)' }}>
           {acceptMsg}
         </p>
       )}
-      {error && <ErrorCard message={error} onRetry={load} />}
+      {error && !panel && <ErrorCard message={error} onRetry={load} />}
       {invitePreview && (
         <div className="card stack" style={{ marginTop: 16 }}>
           <h2>Join {invitePreview.organizationName || 'organisation team'}?</h2>
@@ -168,101 +197,6 @@ export function NgoPortal() {
             Accept invitation
           </Button>
         </div>
-      )}
-
-      {data?.points && (
-        <Section label="Contribution points">
-          <div className="card">
-            <div
-              className="rowBetween"
-              style={{ alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}
-            >
-              <div>
-                <p className="metaMuted rowGap">
-                  <Award size={16} strokeWidth={1.75} aria-hidden /> Recognition
-                  ledger
-                </p>
-                <p
-                  className="mono"
-                  style={{ fontSize: 32, fontWeight: 600, marginTop: 4 }}
-                >
-                  {data.points.balance}
-                </p>
-                <p className="meta">points for verified contributions</p>
-              </div>
-              <div style={{ maxWidth: 280 }}>
-                {data.points.recognition?.current ? (
-                  <p className="meta rowGap">
-                    <BadgeCheck
-                      size={16}
-                      strokeWidth={1.75}
-                      aria-hidden
-                      color="var(--accent)"
-                    />
-                    <strong>{data.points.recognition.current.label}</strong>
-                  </p>
-                ) : (
-                  <p className="meta">
-                    No recognition tier yet — staff awards points after verified
-                    badge or UNFCCC submission support.
-                  </p>
-                )}
-                {data.points.recognition?.next && (
-                  <p className="metaMuted" style={{ marginTop: 6 }}>
-                    {data.points.recognition.pointsToNext} pts to{' '}
-                    {data.points.recognition.next.label}
-                  </p>
-                )}
-              </div>
-            </div>
-            <p className="metaMuted" style={{ marginTop: 12 }}>
-              Points are awarded by YOUNGO staff (admins, Focal Points,
-              Membership Team) when your organisation supports pool badges,
-              endorses documents, or contributes to UNFCCC submissions — not
-              self-claimed.
-            </p>
-            {data.points.recognition?.earned?.length > 0 && (
-              <div
-                className="rowGap"
-                style={{ marginTop: 10, flexWrap: 'wrap' }}
-              >
-                {data.points.recognition.earned.map((t) => (
-                  <span key={t.id} className="chip chip-accent">
-                    {t.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {(data.points.ledger || []).length > 0 && (
-            <div className="stackSm" style={{ marginTop: 12 }}>
-              {data.points.ledger.map((entry) => (
-                <div key={entry.id} className="card cardTight rowBetween">
-                  <div>
-                    <strong>{entry.title}</strong>
-                    <p className="meta">
-                      {entry.reasonLabel} ·{' '}
-                      {entry.createdAt
-                        ? new Date(entry.createdAt).toLocaleDateString()
-                        : ''}
-                    </p>
-                  </div>
-                  <span
-                    className="mono"
-                    style={{
-                      color:
-                        entry.points > 0 ? 'var(--accent)' : 'var(--danger)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {entry.points > 0 ? `+${entry.points}` : entry.points}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
       )}
 
       {data && <NgoOpportunities />}
@@ -292,35 +226,43 @@ export function NgoPortal() {
           {!data?.items?.length ? (
             <Empty
               title="No requests yet"
-              body="Log endorsement or submission requests below."
+              body="Use Log a request to track an endorsement or submission."
             />
           ) : (
-            data.items.map((r) => (
-              <div key={r.id} className="card cardTight rowBetween">
-                <div>
-                  <span className="chip chip-info">{r.kind}</span>
-                  <h3 style={{ marginTop: 6 }}>{r.title}</h3>
-                  <p className="meta">
-                    {r.status}
-                    {r.deadline_at
-                      ? ` · due ${new Date(r.deadline_at).toLocaleDateString()}`
-                      : ''}
-                  </p>
+            <div className="stackSm">
+              {data.items.map((r) => (
+                <div key={r.id} className="card cardTight rowBetween">
+                  <div>
+                    <span className="chip chip-info">{r.kind}</span>
+                    <h3 style={{ marginTop: 6 }}>{r.title}</h3>
+                    <p className="meta">
+                      {r.status}
+                      {r.deadline_at
+                        ? ` · due ${new Date(r.deadline_at).toLocaleDateString()}`
+                        : ''}
+                    </p>
+                  </div>
+                  {data.permissions?.canWriteRequests &&
+                    r.status === 'open' && (
+                      <Button
+                        sm
+                        variant="secondary"
+                        onClick={() => markDone(r.id)}
+                      >
+                        Mark done
+                      </Button>
+                    )}
                 </div>
-                {data.permissions?.canWriteRequests && r.status === 'open' && (
-                  <Button sm variant="secondary" onClick={() => markDone(r.id)}>
-                    Mark done
-                  </Button>
-                )}
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </Section>
       )}
 
-      {data?.permissions?.canWriteRequests && (
-        <Section label="Log a request">
-          <form className="card stack" onSubmit={create}>
+      {data?.permissions?.canWriteRequests && panel === 'request' && (
+        <SidePanel title="Log a request" onClose={() => setPanel(null)}>
+          {error && <ErrorCard message={error} />}
+          <form className="stack" onSubmit={create}>
             <SearchableSelect
               label="Type"
               options={[
@@ -342,8 +284,7 @@ export function NgoPortal() {
               searchPlaceholder="Search request types…"
             >
               <p className="metaMuted" style={{ marginTop: 4 }}>
-                Logging a request tracks work; contribution points are awarded
-                separately by staff after verification.
+                Log a request to keep its owner, status and follow-up visible.
               </p>
             </SearchableSelect>
             <label className="field">
@@ -379,7 +320,7 @@ export function NgoPortal() {
               Save request
             </Button>
           </form>
-        </Section>
+        </SidePanel>
       )}
 
       {data && (
@@ -480,54 +421,60 @@ export function NgoPortal() {
               )}
             </div>
 
-            {data.permissions?.canManageSeats && (
-              <form
-                className="card stack"
-                style={{ marginTop: 12 }}
-                onSubmit={sendInvite}
+            {data.permissions?.canManageSeats && panel === 'invite' && (
+              <SidePanel
+                title="Invite representative"
+                onClose={() => setPanel(null)}
               >
-                <h3>Invite representative</h3>
-                <div className="formRow">
-                  <label className="field">
-                    <span>Email *</span>
-                    <input
-                      className="input"
-                      type="email"
-                      required
-                      value={invite.email}
-                      onChange={(e) =>
-                        setInvite((f) => ({ ...f, email: e.target.value }))
-                      }
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Name</span>
-                    <input
-                      className="input"
-                      value={invite.name}
-                      onChange={(e) =>
-                        setInvite((f) => ({ ...f, name: e.target.value }))
-                      }
-                    />
-                  </label>
-                </div>
-                <SearchableSelect
-                  label="Seat role"
-                  options={[
-                    { value: 'representative', label: 'Representative' },
-                    { value: 'viewer', label: 'Viewer' },
-                  ]}
-                  value={invite.seatRole}
-                  onChange={(seatRole) =>
-                    setInvite((current) => ({ ...current, seatRole }))
-                  }
-                  searchPlaceholder="Search seat roles…"
-                />
-                <Button type="submit" variant="primary">
-                  <UserPlus size={18} strokeWidth={1.75} aria-hidden />
-                  Send invite
-                </Button>
-              </form>
+                {error && <ErrorCard message={error} />}
+                {inviteResult && <p role="status">{inviteResult.note}</p>}
+                <form
+                  className="stack"
+                  style={{ marginTop: 12 }}
+                  onSubmit={sendInvite}
+                >
+                  <div className="formRow">
+                    <label className="field">
+                      <span>Email *</span>
+                      <input
+                        className="input"
+                        type="email"
+                        required
+                        value={invite.email}
+                        onChange={(e) =>
+                          setInvite((f) => ({ ...f, email: e.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Name</span>
+                      <input
+                        className="input"
+                        value={invite.name}
+                        onChange={(e) =>
+                          setInvite((f) => ({ ...f, name: e.target.value }))
+                        }
+                      />
+                    </label>
+                  </div>
+                  <SearchableSelect
+                    label="Seat role"
+                    options={[
+                      { value: 'representative', label: 'Representative' },
+                      { value: 'viewer', label: 'Viewer' },
+                    ]}
+                    value={invite.seatRole}
+                    onChange={(seatRole) =>
+                      setInvite((current) => ({ ...current, seatRole }))
+                    }
+                    searchPlaceholder="Search seat roles…"
+                  />
+                  <Button type="submit" variant="primary">
+                    <UserPlus size={18} strokeWidth={1.75} aria-hidden />
+                    Send invite
+                  </Button>
+                </form>
+              </SidePanel>
             )}
 
             {data.permissions?.canManageSeats && inviteResult && (

@@ -85,6 +85,24 @@ test('offboarding suspends Hub access, revokes sessions, and protects platform s
     }
   })
 
+  for (const role of ['contact', 'lead']) {
+    const result = await fetch(
+      `${origin}/api/member/cp/ace/members/departing-member/role`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-session-token': adminSession.token,
+        },
+        body: JSON.stringify({ role, status: 'active' }),
+      },
+    )
+    assert.equal(
+      result.status,
+      400,
+      'The membership queue cannot bypass evidenced appointments.',
+    )
+  }
   const terminated = await fetch(
     `${origin}/api/member/team/membership/accounts/departing-member/status`,
     {
@@ -163,4 +181,152 @@ test('offboarding suspends Hub access, revokes sessions, and protects platform s
   )
   assert.equal(selfSuspend.status, 400)
   assert.equal((await selfSuspend.json()).error.code, 'self_suspend')
+})
+
+test('membership gates cover new logins, retained sessions, course completion and retakes', async (t) => {
+  const { authenticate, accountCanSignIn } =
+    await import('../server/lib/accounts.js')
+  const { completeCourse } = await import('../server/lib/lifecycle.js')
+  const { hashPassword } = await import('../server/lib/password.js')
+  const backups = new Map(
+    [accountsPath, sessionsPath].map((p) => [
+      p,
+      existsSync(p) ? readFileSync(p) : null,
+    ]),
+  )
+  t.after(() => {
+    for (const [p, data] of backups) {
+      if (data) writeFileSync(p, data)
+      else rmSync(p, { force: true })
+    }
+  })
+  const { salt, hash } = await hashPassword('Correct Horse Battery Staple 7!')
+  const base = account('gate', { password_salt: salt, password_hash: hash })
+  for (const blocked of [
+    { hub_access_status: 'suspended' },
+    { membership_status: 'terminated' },
+    { membership_status: 'expired' },
+  ]) {
+    for (const role of ['member', 'admin', 'focal_point']) {
+      writeFileSync(accountsPath, JSON.stringify([{ ...base, role }]))
+      writeFileSync(sessionsPath, '[]')
+      const old = await createSession(base.id)
+      const legacy = {
+        token: 'legacy-token',
+        account_id: base.id,
+        expires_at: '2099-01-01',
+      }
+      const sessions = JSON.parse(readFileSync(sessionsPath))
+      writeFileSync(sessionsPath, JSON.stringify([...sessions, legacy]))
+      writeFileSync(
+        accountsPath,
+        JSON.stringify([{ ...base, role, ...blocked }]),
+      )
+      assert.equal(
+        await authenticate(base.email, 'Correct Horse Battery Staple 7!'),
+        null,
+      )
+      assert.equal(await createSession(base.id), null)
+      assert.equal(await getSessionAccount(old.token), null)
+      assert.equal(await getSessionAccount(legacy.token), null)
+      assert.equal(await completeCourse(base.id, { score: 10 }), null)
+      assert.deepEqual(JSON.parse(readFileSync(accountsPath))[0], {
+        ...base,
+        role,
+        ...blocked,
+      })
+    }
+  }
+  assert.equal(accountCanSignIn({ hubAccessStatus: 'suspended' }), false)
+  assert.equal(accountCanSignIn({ membershipStatus: 'terminated' }), false)
+  for (const track of ['network', 'constituency_work']) {
+    writeFileSync(
+      accountsPath,
+      JSON.stringify([
+        {
+          ...base,
+          member_status: 'pending_course',
+          hub_access_status: 'pending_course',
+          membership_status: 'registered',
+          membership_track: track,
+          course_passed_at: null,
+        },
+      ]),
+    )
+    assert.ok(await authenticate(base.email, 'Correct Horse Battery Staple 7!'))
+    const session = await createSession(base.id)
+    assert.ok(await getSessionAccount(session.token))
+    const updated = await completeCourse(base.id, { score: 10 })
+    assert.equal(
+      updated.membershipStatus,
+      track === 'network' ? 'course_passed' : 'awaiting_onboarding',
+    )
+  }
+  for (const status of ['active', 'renewal_due', 'awaiting_onboarding']) {
+    writeFileSync(
+      accountsPath,
+      JSON.stringify([{ ...base, membership_status: status }]),
+    )
+    assert.equal(
+      (await completeCourse(base.id, { score: 10 })).membershipStatus,
+      status,
+    )
+  }
+})
+
+test('malformed cookies do not crash asynchronous member routes', async (t) => {
+  const server = createApp({ env: {} }).listen(0, '127.0.0.1')
+  await new Promise((resolve) => server.once('listening', resolve))
+  t.after(() => new Promise((resolve) => server.close(resolve)))
+  const origin = `http://127.0.0.1:${server.address().port}`
+  for (const cookie of ['%ZZ', '%', '%E0%A4']) {
+    const result = await fetch(`${origin}/api/member/access`, {
+      headers: { cookie: `youngo_session=${cookie}` },
+    })
+    assert.equal(result.status, 401)
+  }
+  assert.equal((await fetch(`${origin}/healthz`)).status, 200)
+})
+
+test('access refresh preserves organisation seats and reflects revocation', async (t) => {
+  const seatsPath = path.join(dataDir, 'ngo-seats.json')
+  const backups = new Map(
+    [accountsPath, sessionsPath, seatsPath].map((file) => [
+      file,
+      existsSync(file) ? readFileSync(file, 'utf8') : null,
+    ]),
+  )
+  const server = createApp({ env: {} }).listen(0, '127.0.0.1')
+  t.after(async () => {
+    await new Promise((resolve) => server.close(resolve))
+    for (const [file, content] of backups) {
+      if (content == null) rmSync(file, { force: true })
+      else writeFileSync(file, content)
+    }
+  })
+  mkdirSync(dataDir, { recursive: true })
+  writeFileSync(accountsPath, JSON.stringify([account('demo-representative')]))
+  writeFileSync(sessionsPath, '[]')
+  const seat = {
+    org_account_id: 'demo-organisation',
+    member_account_id: 'demo-representative',
+    seat_role: 'representative',
+    status: 'active',
+  }
+  writeFileSync(seatsPath, JSON.stringify([seat]))
+  const session = await createSession('demo-representative')
+  await new Promise((resolve) => server.once('listening', resolve))
+  const origin = `http://127.0.0.1:${server.address().port}`
+  const headers = { cookie: `youngo_session=${session.token}` }
+  const response = await fetch(`${origin}/api/member/access`, { headers })
+  assert.equal(response.status, 200)
+  const access = await response.json()
+  assert.deepEqual(access.ngo, {
+    orgAccountId: 'demo-organisation',
+    seatRole: 'representative',
+  })
+  assert.equal(access.isAdmin, false)
+  writeFileSync(seatsPath, JSON.stringify([{ ...seat, status: 'revoked' }]))
+  const revoked = await fetch(`${origin}/api/member/access`, { headers })
+  assert.equal((await revoked.json()).ngo, null)
 })

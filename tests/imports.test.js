@@ -10,9 +10,17 @@ import { fileURLToPath } from 'node:url'
 // This walks every source file and checks each relative specifier resolves.
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
-const ROOTS = ['src', 'server', 'shared', 'scripts', 'tests']
+const ROOTS = [
+  'src',
+  'server',
+  'shared',
+  'scripts',
+  'tests',
+  'api',
+  'mcp-content',
+]
 const SKIP = new Set(['node_modules', 'dist', '.git'])
-const SOURCE = /\.(js|jsx|mjs)$/
+const SOURCE = /\.(js|jsx|mjs|ts|tsx)$/
 
 function sourceFiles(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

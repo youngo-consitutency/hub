@@ -1,4 +1,4 @@
-// Pure home-feed assembly — spec: docs/specs/youngo/01-product-spec.md (home-feed)
+// Pure home-feed assembly.
 const DAY = 86400000
 
 export function assembleFeed(data, now = new Date()) {

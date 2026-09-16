@@ -24,13 +24,13 @@ export async function getAccessProfile(account) {
       capabilities: [],
       manageAllWgs: false,
     }
-  const teamRoles = new Set(account.teamRoles || [])
-  const wgAssignments = []
   const pool = getPool()
+  const teamRoles = new Set(pool ? [] : account.teamRoles || [])
+  const wgAssignments = []
   if (pool) {
     const { rows } = await pool.query(
       `SELECT scope_type, scope_id, role FROM account_assignments
-       WHERE account_id=$1 AND status='active' AND (ends_at IS NULL OR ends_at > now())`,
+       WHERE account_id=$1 AND status='active' AND starts_at <= now() AND (ends_at IS NULL OR ends_at > now())`,
       [account.id],
     )
     for (const row of rows) {
@@ -38,14 +38,6 @@ export async function getAccessProfile(account) {
       if (row.scope_type === 'working_group')
         wgAssignments.push({ wgSlug: row.scope_id, role: row.role })
     }
-    const legacy = await pool.query(
-      `SELECT wg_slug, role_in_wg FROM wg_workspace_progress
-       WHERE account_id=$1 AND status='active' AND role_in_wg IN ('contact','lead')`,
-      [account.id],
-    )
-    for (const row of legacy.rows)
-      if (!wgAssignments.some((item) => item.wgSlug === row.wg_slug))
-        wgAssignments.push({ wgSlug: row.wg_slug, role: row.role_in_wg })
   } else {
     for (const row of readJson('wg-progress.json')) {
       if (
@@ -56,11 +48,11 @@ export async function getAccessProfile(account) {
         wgAssignments.push({ wgSlug: row.wg_slug, role: row.role_in_wg })
     }
   }
-  if (account.role === 'wg_contact')
+  if (!pool && account.role === 'wg_contact')
     for (const wgSlug of account.wgInterests || [])
       if (!wgAssignments.some((item) => item.wgSlug === wgSlug))
         wgAssignments.push({ wgSlug, role: 'contact' })
-  if (account.role === 'admin') {
+  if (!pool && account.role === 'admin') {
     teamRoles.add('membership_team')
     teamRoles.add('gys_policy_team')
   }

@@ -2,12 +2,12 @@ import { timingSafeEqual } from 'node:crypto'
 import express, { Router } from 'express'
 import { findAccountByEmail } from '../lib/accounts.js'
 import { recordAudit } from '../lib/audit.js'
-import { consumeEmailVerificationToken } from '../lib/emailVerification.js'
+import { consumeEmailVerificationToken } from '../lib/notifications/verification.js'
 import {
   setEmailPreference,
   suppressAccountEmail,
-} from '../lib/notificationStore.js'
-import { verifyUnsubscribeToken } from '../lib/unsubscribe.js'
+} from '../lib/notifications/store.js'
+import { verifyUnsubscribeToken } from '../lib/notifications/unsubscribe.js'
 
 export const notificationRouter = Router()
 

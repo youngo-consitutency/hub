@@ -1,3 +1,7 @@
+import { TEAM_LABELS } from '../../shared/responsibilities.js'
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbUserCheck as MembershipIcon } from 'react-icons/tb'
+import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { apiPatch, useApi } from '../lib/api.js'
 import {
@@ -11,8 +15,6 @@ import {
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { MemberAvatar } from '../components/MemberAvatar.jsx'
-import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
-import { OpportunityReview } from '../components/OpportunityReview.jsx'
 import {
   TbClipboardCheck as ClipboardCheck,
   TbClock as Clock3,
@@ -34,17 +36,20 @@ const STATUS_LABELS = {
 }
 
 export function MembershipTeam() {
+  const [ending, setEnding] = useState(null)
+  const [reason, setReason] = useState('')
   const query = useApi('/member/team/membership/overview')
   const [filter, setFilter] = useState('pending')
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(null)
   const [actionError, setActionError] = useState(null)
 
-  const setStatus = async (id, status) => {
-    let reason
-    if (status === 'terminated') {
-      reason = window.prompt('Why is this membership being terminated?')?.trim()
-      if (!reason) return
+  const setStatus = async (id, status, confirmed = false) => {
+    if (status === 'terminated' && !confirmed) {
+      setReason('')
+      setActionError(null)
+      setEnding(id)
+      return
     }
     setBusy(id)
     try {
@@ -53,6 +58,7 @@ export function MembershipTeam() {
         status,
         reason,
       })
+      setEnding(null)
       query.retry()
     } catch (error) {
       setActionError(error.message)
@@ -64,9 +70,12 @@ export function MembershipTeam() {
   return (
     <div>
       <PageHeader
-        title="Membership Team"
+        icon={MembershipIcon}
+        title="GCT · Membership"
         description="Move applications from registration through onboarding, activation, renewal, and offboarding."
-      />
+      >
+        <PageSectionNav section="membership" />
+      </PageHeader>
       <Async query={query} skeletons={5}>
         {(data) => {
           const active = data.items.filter(
@@ -111,7 +120,7 @@ export function MembershipTeam() {
                 </div>
               </div>
               <Section label="Application queue">
-                {actionError && <ErrorCard message={actionError} />}
+                {actionError && !ending && <ErrorCard message={actionError} />}
                 <div className="queueToolbar">
                   <div className="pillRow" aria-label="Filter applications">
                     {[
@@ -174,7 +183,8 @@ export function MembershipTeam() {
                               </span>
                               {item.teamRoles?.map((role) => (
                                 <span key={role} className="chip chip-neutral">
-                                  {role.replaceAll('_', ' ')}
+                                  {TEAM_LABELS[role] ||
+                                    role.replaceAll('_', ' ')}
                                 </span>
                               ))}
                               <span className="chip chip-neutral">
@@ -218,10 +228,40 @@ export function MembershipTeam() {
           )
         }}
       </Async>
-
-      <FeedbackQueue />
-
-      <OpportunityReview />
+      {ending && (
+        <SidePanel title="End membership" onClose={() => setEnding(null)}>
+          <p>
+            Record the reason for ending this membership. This removes the
+            member’s Hub access.
+          </p>
+          {actionError && <ErrorCard message={actionError} />}
+          <form
+            className="stack"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setStatus(ending, 'terminated', true)
+            }}
+          >
+            <label className="field">
+              <span>Decision and reason</span>
+              <textarea
+                className="input textarea"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                required
+                minLength={8}
+              />
+            </label>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={busy || reason.trim().length < 8}
+            >
+              Confirm end of membership
+            </Button>
+          </form>
+        </SidePanel>
+      )}
     </div>
   )
 }

@@ -1,3 +1,7 @@
+import {
+  TEAM_LABELS,
+  WEBSITE_PERMISSIONS,
+} from '../../shared/responsibilities.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getPool } from './db.js'
@@ -18,13 +22,6 @@ export const MEMBER_PHOTO_TYPES = new Set([
   'image/png',
   'image/webp',
 ])
-
-const TEAM_LABELS = {
-  membership_team: 'Membership Team',
-  gys_policy_team: 'Global Youth Statement Policy Team',
-  content_editor: 'Content editor',
-  content_publisher: 'Content publisher',
-}
 
 function profileShape(row, account) {
   const updatedAt = row?.updated_at ?? row?.updatedAt ?? null
@@ -211,10 +208,12 @@ function relationshipsFor(account, maps) {
       })
   return {
     workingGroups: [...bySlug.values()],
-    teams: (account.teamRoles || []).map((slug) => ({
-      slug,
-      name: TEAM_LABELS[slug] || slug.replaceAll('_', ' '),
-    })),
+    teams: (account.teamRoles || [])
+      .filter((role) => !WEBSITE_PERMISSIONS.includes(role))
+      .map((slug) => ({
+        slug,
+        name: TEAM_LABELS[slug] || slug.replaceAll('_', ' '),
+      })),
     organization: maps.orgByAccount.get(account.id) || null,
     platformRole:
       account.role && account.role !== 'member' ? account.role : null,

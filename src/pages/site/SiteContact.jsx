@@ -8,6 +8,7 @@ import {
 } from 'react-icons/tb'
 import { A } from '../../components/ui.jsx'
 import { DestinationIcon } from '../../components/DestinationLink.jsx'
+import { PartnerEnquiry } from '../../features/platform/PublicPlatform.tsx'
 import { publishedLinks } from '../../content/connect.js'
 
 const ROUTES = [
@@ -56,7 +57,7 @@ export function SiteContact() {
 
       <section className="siteSection" aria-labelledby="routes-heading">
         <h2 id="routes-heading">Contact routes</h2>
-        <div className="siteContactGrid">
+        <div className="cardGrid">
           {ROUTES.map(({ icon: Icon, title, body, cta }) => (
             <article key={title} className="card siteContactCard">
               <span className="iconTile" aria-hidden>
@@ -90,6 +91,15 @@ export function SiteContact() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="siteSection">
+        <h2>Partnership enquiries</h2>
+        <p className="siteSectionLead">
+          Tell us about your organisation and proposed collaboration. The
+          responsible team will review your enquiry.
+        </p>
+        <PartnerEnquiry />
       </section>
 
       {socials.length > 0 && (

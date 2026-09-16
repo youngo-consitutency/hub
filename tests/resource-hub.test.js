@@ -184,7 +184,12 @@ test('an ordinary verified member can submit without receiving Content Studio po
   const submission = await fetch(`${origin}/api/member/resources/submissions`, {
     method: 'POST',
     headers,
-    body: JSON.stringify(resourcePayload({ slug: undefined })),
+    body: JSON.stringify(
+      resourcePayload({
+        slug: undefined,
+        url: 'https://example.org/member-resource',
+      }),
+    ),
   })
   assert.equal(submission.status, 201)
   const submitted = await submission.json()

@@ -11,14 +11,13 @@ const CATEGORIES = [
   {
     key: 'digest',
     label: 'Weekly digest',
-    description:
-      'Upcoming events, submissions, and announcements in your scope.',
+    description: 'Published events and announcements in your scope.',
   },
   {
     key: 'deadline',
     label: 'Deadline reminders',
     description:
-      'Batched reminders seven days and 48 hours before relevant deadlines.',
+      'Published announcement deadlines, grouped seven and two days ahead (UTC).',
   },
   {
     key: 'announcement',

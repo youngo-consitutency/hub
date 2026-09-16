@@ -1,3 +1,6 @@
+import { SidePanel } from './SidePanel.tsx'
+import { SiteFavicon } from './SiteFavicon.jsx'
+import { regionLabel } from '../lib/regions.js'
 import { useMemo, useState } from 'react'
 import {
   TbArrowUpRight as ArrowUpRight,
@@ -21,7 +24,7 @@ import {
   RESOURCE_LANGUAGES,
   RESOURCE_PATHWAYS,
   RESOURCE_REGIONS,
-  RESOURCE_SOURCE,
+  RESOURCE_ISSUE_KINDS,
   RESOURCE_TOPICS,
   RESOURCE_TYPES,
   resourceLabel,
@@ -67,19 +70,17 @@ const EMPTY_RESOURCE = {
   pathway: 'research',
   type: 'guide',
   topic: 'Climate basics',
+  topics: ['Climate basics'],
   region: 'global',
   language: 'English',
 }
 
-function ResourceCard({ resource }) {
-  const PathwayIcon = PATHWAY_ICONS[resource.pathway] || BookOpen
+export function ResourceCard({ resource, onReport, onCorrect, onReview }) {
   const TypeIcon = TYPE_ICONS[resource.type] || BookOpen
   return (
     <article className="card resourceHubCard">
       <div className="resourceHubCardTop">
-        <span className="iconTile" aria-hidden>
-          <PathwayIcon size={19} strokeWidth={1.75} />
-        </span>
+        <SiteFavicon url={resource.url} />
         <a
           className="resourceHubOpen"
           href={resource.url}
@@ -101,20 +102,60 @@ function ResourceCard({ resource }) {
         <FilterChip icon={TypeIcon} tone="accent">
           {resourceLabel(RESOURCE_TYPES, resource.type)}
         </FilterChip>
-        <FilterChip icon={Filter}>{resource.topic}</FilterChip>
-        <FilterChip icon={Map}>
-          {resourceLabel(RESOURCE_REGIONS, resource.region)}
-        </FilterChip>
+        {(resource.topics || [resource.topic]).map((topic) => (
+          <FilterChip key={topic} icon={Filter}>
+            {topic}
+          </FilterChip>
+        ))}
+        <FilterChip icon={Map}>{regionLabel(resource.region)}</FilterChip>
         <FilterChip icon={Language}>{resource.language}</FilterChip>
+      </div>
+      <div className="resourceCardFooter">
+        <p className="metaMuted">
+          {resource.verification?.status === 'verified'
+            ? `Checked ${new Date(resource.verification.checkedAt).toLocaleDateString()}`
+            : resource.verification?.status === 'needs_changes'
+              ? 'Needs attention'
+              : resource.verification?.status === 'retired'
+                ? 'Retired'
+                : 'Needs verification'}
+          {resource.verification?.openIssues > 0 ? ' · Issue reported' : ''}
+        </p>
+        <div className="resourceCardActions">
+          {onReport && (
+            <Button sm variant="ghost" onClick={() => onReport(resource)}>
+              Report issue
+            </Button>
+          )}
+          {onCorrect && (
+            <Button sm variant="ghost" onClick={() => onCorrect(resource)}>
+              Suggest edit
+            </Button>
+          )}
+          {onReview && (
+            <Button sm variant="secondary" onClick={() => onReview(resource)}>
+              Review resource
+            </Button>
+          )}
+        </div>
       </div>
     </article>
   )
 }
 
-export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
+export function ResourceCatalogue({
+  heading = 'Resource catalogue',
+  onCorrect,
+}) {
   const query = useApi('/resources')
+  const { account } = useAccount()
+  const [reported, setReported] = useState(null)
+  const [notice, setNotice] = useState('')
+  const [limit, setLimit] = useState(12)
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [pathway, setPathway] = useState('all')
+  const [groupBy, setGroupBy] = useState('pathway')
   const [type, setType] = useState('all')
   const [topic, setTopic] = useState('all')
 
@@ -125,7 +166,7 @@ export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
         item.title,
         item.summary,
         item.publisher,
-        item.topic,
+        ...(item.topics || [item.topic]),
         item.type,
         item.pathway,
       ]
@@ -136,78 +177,127 @@ export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
         words.every((word) => haystack.includes(word)) &&
         (pathway === 'all' || item.pathway === pathway) &&
         (type === 'all' || item.type === type) &&
-        (topic === 'all' || item.topic === topic)
+        (topic === 'all' || (item.topics || [item.topic]).includes(topic)) &&
+        (!verifiedOnly ||
+          (item.verification?.status === 'verified' &&
+            !item.verification.openIssues))
       )
     })
-  }, [pathway, query.data?.items, search, topic, type])
+  }, [pathway, query.data?.items, search, topic, type, verifiedOnly])
 
   return (
     <>
-      <section
-        className="card resourceSourceCard"
-        aria-labelledby="science-source-title"
-      >
-        <span className="iconTile" aria-hidden>
-          <Research size={21} strokeWidth={1.75} />
-        </span>
-        <div>
-          <p className="pageEyebrow">Existing collection</p>
-          <h2 id="science-source-title">{RESOURCE_SOURCE.title}</h2>
-          <p className="meta">{RESOURCE_SOURCE.description}</p>
-        </div>
+      <p className="sectionIntro resourceAttribution">
+        Includes the full{' '}
         <a
-          className="btn btn-secondary btn-sm"
-          href={RESOURCE_SOURCE.url}
+          className="inlineLink"
+          href="https://github.com/unnobatroo/climate-resource-hub"
           target="_blank"
           rel="noreferrer"
         >
-          Browse collection
-          <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
-        </a>
-      </section>
-
+          Climate Resource Hub collection
+        </a>{' '}
+        and member contributions. Imported links await human verification; a
+        listing is not an endorsement.
+      </p>
+      {reported && (
+        <SidePanel
+          title="Report a resource issue"
+          onClose={() => setReported(null)}
+        >
+          <ResourceReport
+            key={reported.slug}
+            resource={reported}
+            onClose={() => setReported(null)}
+            onSaved={() => {
+              setReported(null)
+              setNotice(
+                'Issue reported. A Content Publisher can now review it.',
+              )
+              query.retry()
+            }}
+          />
+        </SidePanel>
+      )}
+      {notice && (
+        <p role="status" className="noticeBanner">
+          {notice}
+        </p>
+      )}
       <Section
         label={heading}
         meta={query.data ? `${items.length} listed` : null}
       >
         <div className="resourceHubControls">
-          <label className="searchInputWrap resourceHubSearch">
-            <Search size={18} strokeWidth={1.75} aria-hidden />
-            <span className="srOnly">Search resources</span>
-            <input
-              className="input"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search resources"
-            />
-          </label>
-          <div className="resourceHubFilterRows">
-            <div className="pillRow" aria-label="Pathway">
-              <FilterPill
-                active={pathway === 'all'}
-                icon={World}
-                onClick={() => setPathway('all')}
+          <div className="catalogSearchRow">
+            <label className="searchInputWrap resourceHubSearch">
+              <Search size={18} strokeWidth={1.75} aria-hidden />
+              <span className="srOnly">Search resources</span>
+              <input
+                className="input"
+                type="search"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setLimit(12)
+                }}
+                placeholder="Search resources"
+              />
+            </label>
+            <label className="catalogSelect">
+              Group by
+              <select
+                className="input"
+                value={groupBy}
+                onChange={(event) => {
+                  setGroupBy(event.target.value)
+                  setLimit(12)
+                }}
               >
-                All pathways
-              </FilterPill>
-              {RESOURCE_PATHWAYS.map((item) => (
+                <option value="pathway">Pathway</option>
+                <option value="none">None — A–Z</option>
+              </select>
+            </label>
+          </div>
+          <div className="resourceHubFilterRows">
+            <fieldset className="filterLevel">
+              <legend>Pathway</legend>
+              <div className="pillRow" aria-label="Pathway">
                 <FilterPill
-                  key={item.value}
-                  active={pathway === item.value}
-                  icon={PATHWAY_ICONS[item.value]}
-                  onClick={() => setPathway(item.value)}
+                  active={pathway === 'all'}
+                  icon={World}
+                  onClick={() => {
+                    setPathway('all')
+                    setLimit(12)
+                  }}
                 >
-                  {item.label}
+                  All pathways
                 </FilterPill>
-              ))}
-            </div>
+                {RESOURCE_PATHWAYS.map((item) => (
+                  <FilterPill
+                    key={item.value}
+                    active={pathway === item.value}
+                    icon={PATHWAY_ICONS[item.value]}
+                    onClick={() => {
+                      setPathway(item.value)
+                      setLimit(12)
+                    }}
+                  >
+                    {item.label}
+                  </FilterPill>
+                ))}
+              </div>
+            </fieldset>
             <div className="resourceHubSelects">
               <label>
                 <span>Type</span>
                 <select
+                  className="input"
                   value={type}
-                  onChange={(event) => setType(event.target.value)}
+                  onChange={(event) => {
+                    setType(event.target.value)
+                    setLimit(12)
+                  }}
                 >
                   <option value="all">All types</option>
                   {RESOURCE_TYPES.map((item) => (
@@ -220,8 +310,12 @@ export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
               <label>
                 <span>Topic</span>
                 <select
+                  className="input"
                   value={topic}
-                  onChange={(event) => setTopic(event.target.value)}
+                  onChange={(event) => {
+                    setTopic(event.target.value)
+                    setLimit(12)
+                  }}
                 >
                   <option value="all">All topics</option>
                   {RESOURCE_TOPICS.map((item) => (
@@ -233,16 +327,73 @@ export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
               </label>
             </div>
           </div>
+          <div className="resourceFilterFooter">
+            <label className="resourceCheck">
+              <input
+                type="checkbox"
+                checked={verifiedOnly}
+                onChange={(event) => {
+                  setVerifiedOnly(event.target.checked)
+                  setLimit(12)
+                }}
+              />{' '}
+              Only checked links without open issues
+            </label>
+            <Button
+              sm
+              variant="secondary"
+              disabled={
+                !search &&
+                pathway === 'all' &&
+                type === 'all' &&
+                topic === 'all' &&
+                !verifiedOnly
+              }
+              onClick={() => {
+                setSearch('')
+                setPathway('all')
+                setType('all')
+                setTopic('all')
+                setVerifiedOnly(false)
+                setLimit(12)
+              }}
+            >
+              Clear filters
+            </Button>
+          </div>
         </div>
-
         <Async query={query} skeletons={4}>
           {() =>
             items.length ? (
-              <div className="resourceHubGrid">
-                {items.map((resource) => (
-                  <ResourceCard key={resource.slug} resource={resource} />
-                ))}
-              </div>
+              groupBy === 'pathway' && pathway === 'all' ? (
+                <div className="catalogGroups">
+                  {RESOURCE_PATHWAYS.map((group) => {
+                    const matches = items.filter(
+                      (item) => item.pathway === group.value,
+                    )
+                    return matches.length ? (
+                      <ResourcePathwayGroup
+                        key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
+                        group={group}
+                        items={matches}
+                        onReport={account?.isVerified ? setReported : null}
+                        onCorrect={onCorrect}
+                      />
+                    ) : null
+                  })}
+                </div>
+              ) : (
+                <div className="resourceHubGrid cardGrid">
+                  {items.slice(0, limit).map((resource) => (
+                    <ResourceCard
+                      key={resource.slug}
+                      resource={resource}
+                      onReport={account?.isVerified ? setReported : null}
+                      onCorrect={onCorrect}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
               <Empty
                 icon={BookOpen}
@@ -260,26 +411,78 @@ export function ResourceCatalogue({ heading = 'Reviewed resources' }) {
             )
           }
         </Async>
+        {(groupBy === 'none' || pathway !== 'all') && items.length > limit && (
+          <div className="resourceLoadMore">
+            <Button
+              variant="secondary"
+              onClick={() => setLimit((value) => value + 12)}
+            >
+              Show more resources ({items.length - limit} remaining)
+            </Button>
+          </div>
+        )}
       </Section>
     </>
   )
 }
 
-export function ResourceSubmissionPanel() {
-  const { account } = useAccount()
+function ResourcePathwayGroup({ group, items, onReport, onCorrect }) {
+  const [visible, setVisible] = useState(3)
+  return (
+    <Section label={group.label} meta={`${items.length} resources`}>
+      <p className="catalogGroupDescription">{group.description}</p>
+      <div className="cardGrid resourceHubGrid">
+        {items.slice(0, visible).map((resource) => (
+          <ResourceCard
+            key={resource.slug}
+            resource={resource}
+            onReport={onReport}
+            onCorrect={onCorrect}
+          />
+        ))}
+      </div>
+      {items.length > visible && (
+        <Button
+          sm
+          variant="secondary"
+          onClick={() => setVisible((count) => count + 6)}
+        >
+          Show more in {group.label} ({items.length - visible} remaining)
+        </Button>
+      )}
+    </Section>
+  )
+}
+
+export function ResourceSubmissionPanel({ initialResource, onCancel }) {
   const submissions = useApi('/member/resources/submissions/mine')
-  const [payload, setPayload] = useState(EMPTY_RESOURCE)
+  const [payload, setPayload] = useState(
+    initialResource
+      ? { ...EMPTY_RESOURCE, ...initialResource }
+      : EMPTY_RESOURCE,
+  )
   const [editingId, setEditingId] = useState(null)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(Boolean(initialResource))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [fields, setFields] = useState({})
 
-  if (!account?.isVerified) return null
-
   const set = (key, value) =>
-    setPayload((current) => ({ ...current, [key]: value }))
+    setPayload((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'topic'
+        ? {
+            topics: [
+              value,
+              ...current.topics.filter(
+                (t) => t !== current.topic && t !== value,
+              ),
+            ],
+          }
+        : {}),
+    }))
   const reset = () => {
     setPayload(EMPTY_RESOURCE)
     setEditingId(null)
@@ -287,12 +490,15 @@ export function ResourceSubmissionPanel() {
     setFields({})
   }
   const edit = (item) => {
-    setPayload({ ...EMPTY_RESOURCE, ...item.payload })
+    setPayload({
+      ...EMPTY_RESOURCE,
+      ...item.payload,
+      topics: item.payload.topics || [item.payload.topic],
+    })
     setEditingId(item.id)
     setOpen(true)
     setMessage('')
     setError('')
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
   }
   const submit = async (event) => {
     event.preventDefault()
@@ -303,10 +509,16 @@ export function ResourceSubmissionPanel() {
     try {
       if (editingId)
         await apiPatch(`/member/resources/submissions/${editingId}`, payload)
+      else if (initialResource)
+        await apiPost(
+          `/member/resources/${initialResource.slug}/corrections`,
+          payload,
+        )
       else await apiPost('/member/resources/submissions', payload)
       setMessage('Resource sent to the Content Publisher review queue.')
       reset()
       submissions.retry()
+      if (initialResource) onCancel?.()
     } catch (submissionError) {
       setError(submissionError.message)
       setFields(submissionError.fields || {})
@@ -317,7 +529,11 @@ export function ResourceSubmissionPanel() {
 
   return (
     <Section
-      label="Suggest a resource"
+      label={
+        initialResource
+          ? `Suggest an edit: ${initialResource.title}`
+          : 'Suggest a resource'
+      }
       action={
         <Button
           sm
@@ -338,137 +554,200 @@ export function ResourceSubmissionPanel() {
           <p>{message}</p>
         </div>
       )}
-      {error && <ErrorCard message={error} />}
       {open && (
-        <form className="card resourceSubmissionForm" onSubmit={submit}>
-          <div className="formGrid">
+        <SidePanel
+          title={
+            initialResource
+              ? 'Suggest a resource edit'
+              : editingId
+                ? 'Edit resource submission'
+                : 'Add a resource'
+          }
+          onClose={() => {
+            setOpen(false)
+            onCancel?.()
+          }}
+        >
+          {error && <ErrorCard message={error} />}
+          <form className="card resourceSubmissionForm" onSubmit={submit}>
+            <div className="formGrid">
+              <label>
+                Title
+                <input
+                  className="input"
+                  required
+                  value={payload.title}
+                  onChange={(event) => set('title', event.target.value)}
+                />
+                <FieldError msg={fields.title} />
+              </label>
+              <label>
+                Public link
+                <input
+                  className="input"
+                  required
+                  type="url"
+                  value={payload.url}
+                  onChange={(event) => set('url', event.target.value)}
+                  placeholder="https://…"
+                />
+                <FieldError msg={fields.url} />
+              </label>
+            </div>
             <label>
-              Title
-              <input
+              Why it is useful
+              <textarea
+                className="input textarea"
                 required
-                value={payload.title}
-                onChange={(event) => set('title', event.target.value)}
+                rows="4"
+                value={payload.summary}
+                onChange={(event) => set('summary', event.target.value)}
               />
-              <FieldError msg={fields.title} />
+              <FieldError msg={fields.summary} />
             </label>
-            <label>
-              Public link
-              <input
-                required
-                type="url"
-                value={payload.url}
-                onChange={(event) => set('url', event.target.value)}
-                placeholder="https://…"
-              />
-              <FieldError msg={fields.url} />
-            </label>
-          </div>
-          <label>
-            Why it is useful
-            <textarea
-              required
-              rows="4"
-              value={payload.summary}
-              onChange={(event) => set('summary', event.target.value)}
-            />
-            <FieldError msg={fields.summary} />
-          </label>
-          <div className="formGrid resourceFormTaxonomy">
-            <label>
-              Pathway
-              <select
-                value={payload.pathway}
-                onChange={(event) => set('pathway', event.target.value)}
-              >
-                {RESOURCE_PATHWAYS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
+            <div className="formGrid resourceFormTaxonomy">
+              <label>
+                Pathway
+                <select
+                  className="input"
+                  value={payload.pathway}
+                  onChange={(event) => set('pathway', event.target.value)}
+                >
+                  {RESOURCE_PATHWAYS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={fields.pathway} />
+              </label>
+              <label>
+                Type
+                <select
+                  className="input"
+                  value={payload.type}
+                  onChange={(event) => set('type', event.target.value)}
+                >
+                  {RESOURCE_TYPES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={fields.type} />
+              </label>
+              <label>
+                Topic
+                <select
+                  className="input"
+                  value={payload.topic}
+                  onChange={(event) => set('topic', event.target.value)}
+                >
+                  {RESOURCE_TOPICS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={fields.topic} />
+              </label>
+              <label>
+                Region
+                <select
+                  className="input"
+                  value={payload.region}
+                  onChange={(event) => set('region', event.target.value)}
+                >
+                  {RESOURCE_REGIONS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={fields.region} />
+              </label>
+              <label>
+                Language
+                <select
+                  className="input"
+                  value={payload.language}
+                  onChange={(event) => set('language', event.target.value)}
+                >
+                  {RESOURCE_LANGUAGES.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={fields.language} />
+              </label>
+              <label>
+                Publisher or author{' '}
+                <span className="metaMuted">(optional)</span>
+                <input
+                  className="input"
+                  value={payload.publisher}
+                  onChange={(event) => set('publisher', event.target.value)}
+                />
+                <FieldError msg={fields.publisher} />
+              </label>
+            </div>
+            <fieldset className="resourceTopicPicker">
+              <legend>
+                Additional topic tags{' '}
+                <span className="metaMuted">
+                  (up to five including the main topic)
+                </span>
+              </legend>
+              <div className="resourceTopicOptions">
+                {RESOURCE_TOPICS.map((topic) => (
+                  <label key={topic} className="resourceCheck">
+                    <input
+                      type="checkbox"
+                      checked={payload.topics.includes(topic)}
+                      disabled={
+                        topic === payload.topic ||
+                        (!payload.topics.includes(topic) &&
+                          payload.topics.length >= 5)
+                      }
+                      onChange={(event) =>
+                        set(
+                          'topics',
+                          event.target.checked
+                            ? [...payload.topics, topic]
+                            : payload.topics.filter((t) => t !== topic),
+                        )
+                      }
+                    />
+                    {topic}
+                  </label>
                 ))}
-              </select>
-              <FieldError msg={fields.pathway} />
-            </label>
-            <label>
-              Type
-              <select
-                value={payload.type}
-                onChange={(event) => set('type', event.target.value)}
-              >
-                {RESOURCE_TYPES.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-              <FieldError msg={fields.type} />
-            </label>
-            <label>
-              Topic
-              <select
-                value={payload.topic}
-                onChange={(event) => set('topic', event.target.value)}
-              >
-                {RESOURCE_TOPICS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-              <FieldError msg={fields.topic} />
-            </label>
-            <label>
-              Region
-              <select
-                value={payload.region}
-                onChange={(event) => set('region', event.target.value)}
-              >
-                {RESOURCE_REGIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-              <FieldError msg={fields.region} />
-            </label>
-            <label>
-              Language
-              <select
-                value={payload.language}
-                onChange={(event) => set('language', event.target.value)}
-              >
-                {RESOURCE_LANGUAGES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-              <FieldError msg={fields.language} />
-            </label>
-            <label>
-              Publisher or author <span className="metaMuted">(optional)</span>
-              <input
-                value={payload.publisher}
-                onChange={(event) => set('publisher', event.target.value)}
-              />
-              <FieldError msg={fields.publisher} />
-            </label>
-          </div>
-          <div className="resourceSubmissionActions">
-            <Button type="submit" variant="primary" disabled={busy}>
-              <Send size={16} strokeWidth={1.75} aria-hidden />
-              {busy
-                ? 'Sending…'
-                : editingId
-                  ? 'Resubmit for review'
-                  : 'Send for review'}
-            </Button>
-            {editingId && (
-              <Button variant="ghost" onClick={reset}>
-                Cancel
+              </div>
+              <FieldError msg={fields.topics} />
+            </fieldset>
+            <div className="resourceSubmissionActions">
+              <Button type="submit" variant="primary" disabled={busy}>
+                <Send size={16} strokeWidth={1.75} aria-hidden />
+                {busy
+                  ? 'Sending…'
+                  : editingId
+                    ? 'Resubmit for review'
+                    : 'Send for review'}
               </Button>
-            )}
-          </div>
-        </form>
+              {(editingId || initialResource) && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    reset()
+                    onCancel?.()
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+        </SidePanel>
       )}
 
       <Async query={submissions} skeletons={2}>
@@ -504,5 +783,71 @@ export function ResourceSubmissionPanel() {
         }
       </Async>
     </Section>
+  )
+}
+
+function ResourceReport({ resource, onClose, onSaved }) {
+  const [kind, setKind] = useState('broken')
+  const [detail, setDetail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function submit(event) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await apiPost(`/member/resources/${resource.slug}/issues`, {
+        kind,
+        detail,
+      })
+      onSaved()
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <form className="card resourceSubmissionForm" onSubmit={submit}>
+      <h2>Report an issue: {resource.title}</h2>
+      <p className="meta">
+        Your report goes privately to Content Publishers for verification.
+      </p>
+      {error && <ErrorCard message={error} />}
+      <label>
+        Issue type
+        <select
+          className="input"
+          value={kind}
+          onChange={(event) => setKind(event.target.value)}
+        >
+          {RESOURCE_ISSUE_KINDS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        What needs attention?
+        <textarea
+          className="input textarea"
+          required
+          minLength={8}
+          maxLength={2000}
+          value={detail}
+          onChange={(event) => setDetail(event.target.value)}
+          rows={3}
+        />
+      </label>
+      <div className="resourceCardActions">
+        <Button type="submit" variant="primary" disabled={busy}>
+          {busy ? 'Sending…' : 'Send report'}
+        </Button>
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   )
 }

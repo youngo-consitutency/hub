@@ -23,7 +23,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 12px;
-  border: 1px solid var(--border-strong);
+  border: 0;
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-control);
   background: var(--bg-card);
@@ -101,10 +101,10 @@ main > .mcStatusBar {
   grid-template-columns: 1.2fr 1fr;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
-  background: var(--mc-wash), var(--bg-card);
-  box-shadow: var(--mc-ring);
+  background: var(--bg-card);
+  box-shadow: none;
 }
 
 /* Outside .mcConsole the hero has no flex gap to lean on. */
@@ -189,7 +189,7 @@ main > .mcStatusBar {
 
 .mcMetric {
   padding: 10px 11px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-control);
   background: var(--bg-raised);
   display: flex;
@@ -225,7 +225,7 @@ main > .mcStatusBar {
 
 .mcPanel {
   padding: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   background: var(--bg-card);
 }
@@ -263,7 +263,7 @@ main > .mcStatusBar {
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   background: var(--bg-card);
   transition:
@@ -376,7 +376,7 @@ main > .mcStatusBar {
   justify-content: space-between;
   gap: 12px;
   padding: 9px 11px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-control);
   background: var(--bg-raised);
 }

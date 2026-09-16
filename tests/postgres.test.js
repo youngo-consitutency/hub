@@ -144,7 +144,7 @@ test(
      RETURNING id`,
     )
     const [accountA, accountB] = accounts.map((row) => row.id)
-    const endpoint = 'https://push.example/postgres-shared-device'
+    const endpoint = 'https://fcm.googleapis.com/postgres-shared-device'
     await pushStore.saveSubscription({
       accountId: accountA,
       subscription: { endpoint, keys: { p256dh: 'a', auth: 'a' } },

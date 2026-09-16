@@ -1,18 +1,18 @@
 /* Cards, chips, buttons and filter pills.
    Colours come from tokens.css variables only. */
 
-/* ── Cards ─────────────────────────────────────────── */
+/* Shared content surface: distinct body, quiet outline, clear state cues. */
 .card {
   min-width: 0;
   max-width: 100%;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   padding: var(--card-padding);
   box-shadow: var(--shadow-card);
 }
 
-a.card {
+:where(a).card {
   display: block;
   transition:
     border-color var(--motion-fast) var(--motion-ease),
@@ -20,7 +20,7 @@ a.card {
 }
 
 a.card:hover {
-  border-color: var(--border-strong);
+  background: var(--bg-raised);
 }
 
 a.card.rowBetween,
@@ -36,9 +36,8 @@ a.card.rowGap {
 a.entityCard {
   min-height: 0;
   height: auto;
-  display: grid;
-  grid-auto-rows: auto;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
@@ -74,10 +73,6 @@ a.entityCard {
   color: var(--accent);
 }
 
-.entityCardCornerIcon {
-  margin-top: 1px;
-}
-
 .entityCardIcon {
   flex: 0 0 auto;
   margin-top: 2px;
@@ -89,12 +84,18 @@ a.entityCard {
   min-width: 0;
 }
 
+.entityCard h3 {
+  color: var(--text-1);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 .entityCardHeading h3 {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: 16px;
   line-height: 1.25;
 }
 
@@ -153,8 +154,27 @@ a.entityCard {
   flex-wrap: wrap;
 }
 
+.entityCardFooter,
+.entityCard > .lifecycleTiming {
+  align-self: stretch;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
 .entityCardFooter {
-  align-self: start;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.entityCardSummary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .entityCardOwner {
@@ -185,17 +205,30 @@ a.entityCard {
   flex: 0 0 auto;
 }
 
+.lifecycleTimingDate {
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.lifecycleTimingDate > svg {
+  margin-top: 2px;
+}
+
 .lifecycleTimingDate time {
   min-width: 0;
+  color: var(--text-1);
+  font-weight: 500;
 }
 
 .lifecycleTimingRelation {
+  display: block;
+  margin-bottom: 1px;
   color: var(--text-3);
-}
-
-.lifecycleTimingSecondary {
-  color: var(--text-3);
-  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .lifecycleTimingRemaining {
@@ -258,7 +291,7 @@ a.entityCard {
 
 .resourceList {
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   background: var(--bg-card);
 }
@@ -589,7 +622,19 @@ a.resourceRow:hover {
 }
 
 .groupCardFocus {
-  margin-top: 2px;
+  margin-top: var(--space-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.groupCardTags {
+  padding-top: var(--space-2);
+}
+
+.groupCardTitle > svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .entityCard.opportunityCard {
@@ -600,78 +645,12 @@ a.resourceRow:hover {
   color: var(--text-1);
 }
 
-.opportunityCardHeader,
-.opportunityTags {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
-.opportunityCardHeader {
-  justify-content: space-between;
-}
-
-.opportunityCardHeader > svg {
-  flex: 0 0 auto;
-  color: var(--accent);
-}
-
-.opportunityTags {
-  flex-wrap: wrap;
-}
-
 .opportunityCardCopy {
   display: grid;
   grid-template-rows: auto;
   align-content: start;
-  gap: var(--space-2);
-}
-
-.opportunityCardCopy h3 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-height: 1.25;
-}
-
-.opportunityOrganisationRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-}
-
-.opportunityPlace {
-  display: inline-flex;
-  align-items: center;
   gap: var(--space-1);
-}
-
-.opportunityPlace::before {
-  content: '·';
-  margin-right: var(--space-1);
-  color: var(--text-3);
-}
-
-.opportunityCardCopy > .meta {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.opportunityMeta {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.opportunityMeta:empty {
-  display: none;
-}
-
-.opportunityDeadline {
-  margin-top: 0;
+  flex: none;
 }
 
 .groupCardBody {
@@ -945,6 +924,7 @@ a.resourceRow:hover {
 }
 
 .btn-primary {
+  border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -958,11 +938,12 @@ a.resourceRow:hover {
 }
 
 .btn-secondary {
-  border-color: var(--border-strong);
+  background: var(--bg-raised);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-raised);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
 }
 
 .btn-ghost {
@@ -978,4 +959,12 @@ a.resourceRow:hover {
   height: 32px;
   padding: 0 var(--space-3);
   font-size: 13px;
+}
+
+.entityCard > .chip {
+  align-self: flex-start;
+}
+.entityCard > .inlineLink:last-child,
+.entityCard > .btn:last-child {
+  margin-top: auto;
 }

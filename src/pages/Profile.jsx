@@ -1,3 +1,9 @@
+import {
+  TEAM_LABELS,
+  ASSIGNMENT_LABELS,
+  WEBSITE_PERMISSIONS,
+} from '../../shared/responsibilities.js'
+import { TbUserCircle as ProfileIcon } from 'react-icons/tb'
 import { useAccount } from '../lib/accountContext.jsx'
 import { useApi } from '../lib/api.js'
 import { A, PageHeader, Section } from '../components/ui.jsx'
@@ -26,18 +32,17 @@ const ROLE_LABELS = {
   member: 'Member',
 }
 
-const TEAM_LABELS = {
-  membership_team: 'Membership Team',
-  gys_policy_team: 'Global Youth Statement Policy Team',
-  content_editor: 'Content editor',
-  content_publisher: 'Content publisher',
-}
-
 export function Profile() {
   const { account } = useAccount()
   const profileQuery = useApi('/member/profile')
   const access = account?.access || {}
-  const teamRoles = access.teamRoles || account?.teamRoles || []
+  const permissions = access.teamRoles || account?.teamRoles || []
+  const teamRoles = permissions.filter(
+    (role) => !WEBSITE_PERMISSIONS.includes(role),
+  )
+  const websitePermissions = permissions.filter((role) =>
+    WEBSITE_PERMISSIONS.includes(role),
+  )
   const wgAssignments = access.wgAssignments || []
   const interests = account?.wgInterests || []
   const interestGroups = WORKING_GROUP_TOPICS.map((topic) => ({
@@ -48,6 +53,7 @@ export function Profile() {
   return (
     <div>
       <PageHeader
+        icon={ProfileIcon}
         title="Profile"
         description="Your membership details, roles, and useful starting points."
       />
@@ -68,6 +74,7 @@ export function Profile() {
       <MyFeedback />
 
       {(teamRoles.length > 0 ||
+        websitePermissions.length > 0 ||
         wgAssignments.length > 0 ||
         interests.length > 0) && (
         <Section label="Your participation">
@@ -82,13 +89,26 @@ export function Profile() {
                 </ul>
               </div>
             )}
+            {websitePermissions.length > 0 && (
+              <div className="card cardTight">
+                <h3>Website permissions</h3>
+                <ul className="profileList">
+                  {websitePermissions.map((role) => (
+                    <li key={role}>{TEAM_LABELS[role]}</li>
+                  ))}
+                </ul>
+                <p className="meta">
+                  These permissions do not appoint a YOUNGO mandate holder.
+                </p>
+              </div>
+            )}
             {wgAssignments.length > 0 && (
               <div className="card cardTight">
                 <h3>Working-group roles</h3>
                 <ul className="profileList">
                   {wgAssignments.map((assignment) => (
                     <li
-                      key={`${assignment.wgSlug}-${assignment.role || 'member'}`}
+                      key={`${assignment.wgSlug}-${ASSIGNMENT_LABELS[assignment.role] || 'Member'}`}
                     >
                       <A
                         href={`/groups/${assignment.wgSlug}`}
@@ -98,7 +118,7 @@ export function Profile() {
                         {assignment.wgName ||
                           workingGroupLabel(assignment.wgSlug)}
                       </A>{' '}
-                      · {assignment.role || 'member'}
+                      · {ASSIGNMENT_LABELS[assignment.role] || 'Member'}
                     </li>
                   ))}
                 </ul>

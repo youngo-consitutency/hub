@@ -114,7 +114,7 @@
 
 .calendarPanel,
 .calendarAgenda {
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
