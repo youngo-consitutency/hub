@@ -114,7 +114,11 @@ export function CpCallBook() {
               <Section label="Open times">
                 {data.slots.length ? (
                   groupByDay(data.slots).map(([day, slots]) => (
-                    <div key={day} className="stackSm" style={{ marginBottom: 16 }}>
+                    <div
+                      key={day}
+                      className="stackSm"
+                      style={{ marginBottom: 16 }}
+                    >
                       <h3>{day}</h3>
                       <div className="dashboardCardGrid">
                         {slots.map((slot) => (

@@ -29,10 +29,18 @@ const optionalUrl = (value, name) => {
   try {
     url = new URL(value)
   } catch {
-    throw new ContributionError(422, 'validation', `${name} must be a valid URL.`)
+    throw new ContributionError(
+      422,
+      'validation',
+      `${name} must be a valid URL.`,
+    )
   }
   if (!['http:', 'https:'].includes(url.protocol))
-    throw new ContributionError(422, 'validation', `${name} must use HTTP or HTTPS.`)
+    throw new ContributionError(
+      422,
+      'validation',
+      `${name} must use HTTP or HTTPS.`,
+    )
   return url.toString()
 }
 
@@ -60,15 +68,16 @@ function citations(input) {
       'sourceVersionId',
       100,
     ),
-    location: citation?.location && typeof citation.location === 'object'
-      ? citation.location
-      : (() => {
-          throw new ContributionError(
-            422,
-            'validation',
-            'Each citation requires a source location.',
-          )
-        })(),
+    location:
+      citation?.location && typeof citation.location === 'object'
+        ? citation.location
+        : (() => {
+            throw new ContributionError(
+              422,
+              'validation',
+              'Each citation requires a source location.',
+            )
+          })(),
     quote: citation?.quote ? String(citation.quote).slice(0, 2000) : null,
   }))
 }
@@ -120,10 +129,15 @@ export function normalizeAmendmentInput(input = {}) {
     throw new ContributionError(422, 'validation', 'Invalid amendment target.')
   const operation = String(input.operation || '')
   if (!['insert', 'replace', 'delete'].includes(operation))
-    throw new ContributionError(422, 'validation', 'Invalid amendment operation.')
-  const proposedText = operation === 'delete'
-    ? null
-    : requiredText(input.proposedText, 'proposedText', 100_000)
+    throw new ContributionError(
+      422,
+      'validation',
+      'Invalid amendment operation.',
+    )
+  const proposedText =
+    operation === 'delete'
+      ? null
+      : requiredText(input.proposedText, 'proposedText', 100_000)
   if (!input.stableAnchor || typeof input.stableAnchor !== 'object')
     throw new ContributionError(
       422,
@@ -169,9 +183,17 @@ export function normalizeAmendmentRevisionInput(input = {}) {
     )
   const operation = String(input.operation || '')
   if (!['insert', 'replace', 'delete'].includes(operation))
-    throw new ContributionError(422, 'validation', 'Invalid amendment operation.')
+    throw new ContributionError(
+      422,
+      'validation',
+      'Invalid amendment operation.',
+    )
   if (!input.stableAnchor || typeof input.stableAnchor !== 'object')
-    throw new ContributionError(422, 'validation', 'A stable paragraph anchor is required.')
+    throw new ContributionError(
+      422,
+      'validation',
+      'A stable paragraph anchor is required.',
+    )
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedVersion,
@@ -190,14 +212,33 @@ export function normalizeAmendmentRevisionInput(input = {}) {
 export function normalizeReconciliationSuggestionInput(input = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
   const confidence = Number(input.confidence)
-  if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
-    throw new ContributionError(422, 'validation', 'Expected amendment version is required.')
+  if (
+    !Number.isInteger(expectedAmendmentVersion) ||
+    expectedAmendmentVersion < 1
+  )
+    throw new ContributionError(
+      422,
+      'validation',
+      'Expected amendment version is required.',
+    )
   if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1)
-    throw new ContributionError(422, 'validation', 'Mapping confidence must be between 0 and 1.')
+    throw new ContributionError(
+      422,
+      'validation',
+      'Mapping confidence must be between 0 and 1.',
+    )
   if (!input.suggestedAnchor || typeof input.suggestedAnchor !== 'object')
-    throw new ContributionError(422, 'validation', 'A suggested anchor is required.')
+    throw new ContributionError(
+      422,
+      'validation',
+      'A suggested anchor is required.',
+    )
   if (!input.mappingEvidence || typeof input.mappingEvidence !== 'object')
-    throw new ContributionError(422, 'validation', 'Mapping evidence is required.')
+    throw new ContributionError(
+      422,
+      'validation',
+      'Mapping evidence is required.',
+    )
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedAmendmentVersion,
@@ -214,8 +255,15 @@ export function normalizeReconciliationSuggestionInput(input = {}) {
 
 export function normalizeReconciliationConfirmationInput(input = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
-  if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
-    throw new ContributionError(422, 'validation', 'Expected amendment version is required.')
+  if (
+    !Number.isInteger(expectedAmendmentVersion) ||
+    expectedAmendmentVersion < 1
+  )
+    throw new ContributionError(
+      422,
+      'validation',
+      'Expected amendment version is required.',
+    )
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedAmendmentVersion,
@@ -236,7 +284,9 @@ const stableValue = (value) => {
 }
 
 const contentHash = (payload) =>
-  `sha256:${createHash('sha256').update(JSON.stringify(stableValue(payload))).digest('hex')}`
+  `sha256:${createHash('sha256')
+    .update(JSON.stringify(stableValue(payload)))
+    .digest('hex')}`
 
 async function beginIdempotentMutation(
   client,
@@ -319,7 +369,10 @@ async function insertEvidence(client, table, ownerColumn, ownerId, evidence) {
   }
 }
 
-async function writeAudit(client, { accountId, action, targetType, targetId, detail }) {
+async function writeAudit(
+  client,
+  { accountId, action, targetType, targetId, detail },
+) {
   await client.query(
     `INSERT INTO governance_audit(
       actor_id,action,target_type,target_id,after_data,reason
@@ -345,7 +398,11 @@ function requirePool(pool) {
   return pool
 }
 
-export async function createSubmissionProject({ account, input, pool = getPool() }) {
+export async function createSubmissionProject({
+  account,
+  input,
+  pool = getPool(),
+}) {
   const data = normalizeProjectInput(input)
   const client = await requirePool(pool).connect()
   try {
@@ -405,12 +462,21 @@ export async function createSubmissionProject({ account, input, pool = getPool()
        VALUES($1,$2,'owner',$2)`,
       [project.rows[0].id, account.id],
     )
-    const hash = contentHash({ contentText: data.contentText, citations: data.citations })
+    const hash = contentHash({
+      contentText: data.contentText,
+      citations: data.citations,
+    })
     const version = await client.query(
       `INSERT INTO negotiation_submission_versions(
         project_id,version,content_text,content_hash,external_snapshot_url,authored_by
        ) VALUES($1,1,$2,$3,$4,$5) RETURNING id,version,content_hash,created_at`,
-      [project.rows[0].id, data.contentText, hash, data.externalDraftUrl, account.id],
+      [
+        project.rows[0].id,
+        data.contentText,
+        hash,
+        data.externalDraftUrl,
+        account.id,
+      ],
     )
     await insertEvidence(
       client,
@@ -486,7 +552,12 @@ async function assertAmendmentWrite(client, amendmentId, accountId) {
   return amendment.rows[0]
 }
 
-export async function appendSubmissionVersion({ account, projectId, input, pool = getPool() }) {
+export async function appendSubmissionVersion({
+  account,
+  projectId,
+  input,
+  pool = getPool(),
+}) {
   const data = normalizeDraftVersionInput(input)
   const client = await requirePool(pool).connect()
   try {
@@ -511,7 +582,10 @@ export async function appendSubmissionVersion({ account, projectId, input, pool 
       [projectId, data.expectedVersion],
     )
     const nextVersion = data.expectedVersion + 1
-    const hash = contentHash({ contentText: data.contentText, citations: data.citations })
+    const hash = contentHash({
+      contentText: data.contentText,
+      citations: data.citations,
+    })
     const version = await client.query(
       `INSERT INTO negotiation_submission_versions(
         project_id,version,base_version_id,content_text,content_hash,
@@ -587,7 +661,8 @@ export async function createAmendment({ account, input, pool = getPool() }) {
       await client.query('COMMIT')
       return idempotency.response
     }
-    if (data.projectId) await assertProjectWrite(client, data.projectId, account.id)
+    if (data.projectId)
+      await assertProjectWrite(client, data.projectId, account.id)
     if (data.targetType === 'official_document') {
       const target = await client.query(
         `SELECT 1 FROM negotiation_document_versions v
@@ -597,7 +672,11 @@ export async function createAmendment({ account, input, pool = getPool() }) {
         [data.targetDocumentVersionId],
       )
       if (!target.rows[0])
-        throw new ContributionError(404, 'not_found', 'Target version not found.')
+        throw new ContributionError(
+          404,
+          'not_found',
+          'Target version not found.',
+        )
     } else {
       const target = await client.query(
         `SELECT 1 FROM negotiation_submission_versions v
@@ -606,7 +685,11 @@ export async function createAmendment({ account, input, pool = getPool() }) {
         [data.targetProjectVersionId, account.id],
       )
       if (!target.rows[0])
-        throw new ContributionError(404, 'not_found', 'Target version not found.')
+        throw new ContributionError(
+          404,
+          'not_found',
+          'Target version not found.',
+        )
     }
     await assertCitations(client, data.citations)
     const amendment = await client.query(
@@ -768,8 +851,14 @@ export async function getAccessibleProject({
     workingGroupSlug: project.working_group_slug,
     intendedSubmittingEntity: project.intended_submitting_entity,
     externalDraftUrl: project.external_draft_url,
-    track: { id: project.track_id, slug: project.track_slug, topic: project.track_topic },
-    call: project.call_id ? { id: project.call_id, title: project.call_title } : null,
+    track: {
+      id: project.track_id,
+      slug: project.track_slug,
+      topic: project.track_topic,
+    },
+    call: project.call_id
+      ? { id: project.call_id, title: project.call_title }
+      : null,
     versions: versions.rows.map((row) => ({
       id: row.id,
       version: row.version,
@@ -823,7 +912,11 @@ export async function appendAmendmentVersion({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
+    const amendment = await assertAmendmentWrite(
+      client,
+      amendmentId,
+      account.id,
+    )
     assertExpectedVersion(amendment.current_version, data.expectedVersion)
     await assertCitations(client, data.citations)
     const nextVersion = data.expectedVersion + 1
@@ -872,7 +965,11 @@ export async function appendAmendmentVersion({
       action: 'negotiation.amendment.version_created',
       targetType: 'negotiation_amendment',
       targetId: amendmentId,
-      detail: { versionId: version.rows[0].id, version: nextVersion, contentHash: hash },
+      detail: {
+        versionId: version.rows[0].id,
+        version: nextVersion,
+        contentHash: hash,
+      },
     })
     await saveIdempotency(client, {
       operation,
@@ -913,7 +1010,11 @@ export async function suggestAmendmentReconciliation({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
+    const amendment = await assertAmendmentWrite(
+      client,
+      amendmentId,
+      account.id,
+    )
     if (amendment.target_type !== 'official_document')
       throw new ContributionError(
         422,
@@ -1017,7 +1118,11 @@ export async function confirmAmendmentReconciliation({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
+    const amendment = await assertAmendmentWrite(
+      client,
+      amendmentId,
+      account.id,
+    )
     assertExpectedVersion(
       amendment.current_version,
       data.expectedAmendmentVersion,
@@ -1028,7 +1133,11 @@ export async function confirmAmendmentReconciliation({
       [reconciliationId, amendmentId],
     )
     if (!reconciliation.rows[0])
-      throw new ContributionError(409, 'reconciliation_conflict', 'Mapping is no longer pending.')
+      throw new ContributionError(
+        409,
+        'reconciliation_conflict',
+        'Mapping is no longer pending.',
+      )
     if (
       !data.citations.some(
         (citation) =>

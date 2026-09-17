@@ -140,7 +140,9 @@ test('document instructions remain inert quarantined bytes', async () => {
 })
 
 test('reviewed extraction text quarantines contact or credential material', () => {
-  const safe = assessExtractionText('A synthetic paragraph with no personal data.')
+  const safe = assessExtractionText(
+    'A synthetic paragraph with no personal data.',
+  )
   assert.equal(safe.reviewStatus, 'safe')
   assert.equal(safe.textContent, 'A synthetic paragraph with no personal data.')
 
@@ -157,9 +159,8 @@ test('reviewed extraction text quarantines contact or credential material', () =
 })
 
 test('fixture mode fails closed for durable source ingestion', async () => {
-  const { ingestDocumentSource } = await import(
-    '../server/lib/negotiationSources.js'
-  )
+  const { ingestDocumentSource } =
+    await import('../server/lib/negotiationSources.js')
   await assert.rejects(
     ingestDocumentSource({
       sourceId: 'fixture-source',
@@ -168,6 +169,7 @@ test('fixture mode fails closed for durable source ingestion', async () => {
       pool: null,
     }),
     (error) =>
-      error instanceof SourceIngestionError && error.code === 'database_required',
+      error instanceof SourceIngestionError &&
+      error.code === 'database_required',
   )
 })

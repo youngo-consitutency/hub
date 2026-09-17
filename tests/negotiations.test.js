@@ -85,7 +85,10 @@ test('anonymous callers cannot create or delete private follows', async () => {
         {
           method,
           headers: { 'content-type': 'application/json' },
-          body: method === 'PUT' ? JSON.stringify({ accountId: 'other' }) : undefined,
+          body:
+            method === 'PUT'
+              ? JSON.stringify({ accountId: 'other' })
+              : undefined,
         },
       )
       assert.equal(response.status, 401)
@@ -144,7 +147,10 @@ test('migration 028 defines additive immutable tracking and private follow const
   assert.match(sql, /UNIQUE \(document_id, content_hash\)/)
   assert.match(sql, /quarantine_status/)
   assert.match(sql, /original_content bytea NOT NULL/)
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_document_extractions/)
+  assert.match(
+    sql,
+    /CREATE TABLE IF NOT EXISTS negotiation_document_extractions/,
+  )
   assert.match(sql, /PRIMARY KEY \(account_id, track_id\)/)
   assert.match(sql, /external_deadline_precision/)
   assert.doesNotMatch(sql, /ALTER TABLE submissions/)

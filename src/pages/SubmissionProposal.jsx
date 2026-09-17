@@ -111,7 +111,10 @@ export function SubmissionProposal() {
               : 'The first immutable draft is saved. This does not represent constituency endorsement or external transmission.'
           }
           cta={
-            <a className="btn btn-primary btn-sm" href={`/submissions/workspace/${created.id}`}>
+            <a
+              className="btn btn-primary btn-sm"
+              href={`/submissions/workspace/${created.id}`}
+            >
               Open private proposal
             </a>
           }
@@ -133,41 +136,87 @@ export function SubmissionProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Negotiation track</span>
-                  <select className="input" required value={form.trackId} onChange={set('trackId')}>
+                  <select
+                    className="input"
+                    required
+                    value={form.trackId}
+                    onChange={set('trackId')}
+                  >
                     <option value="">Select a track</option>
                     {data.items.map((track) => (
-                      <option value={track.id} key={track.id}>{track.topic}</option>
+                      <option value={track.id} key={track.id}>
+                        {track.topic}
+                      </option>
                     ))}
                   </select>
                 </label>
                 <label className="field">
                   <span>Verified call (optional)</span>
-                  <select className="input" value={form.callId} onChange={set('callId')} disabled={!trackDetail}>
+                  <select
+                    className="input"
+                    value={form.callId}
+                    onChange={set('callId')}
+                    disabled={!trackDetail}
+                  >
                     <option value="">No call — save as an initiative</option>
-                    {(trackDetail?.calls || []).filter((call) => call.status === 'open').map((call) => (
-                      <option value={call.id} key={call.id}>{call.title}</option>
-                    ))}
+                    {(trackDetail?.calls || [])
+                      .filter((call) => call.status === 'open')
+                      .map((call) => (
+                        <option value={call.id} key={call.id}>
+                          {call.title}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label className="field">
                   <span>Proposal title</span>
-                  <input className="input" required maxLength={180} value={form.title} onChange={set('title')} />
+                  <input
+                    className="input"
+                    required
+                    maxLength={180}
+                    value={form.title}
+                    onChange={set('title')}
+                  />
                 </label>
                 <label className="field">
                   <span>Working group slug (optional)</span>
-                  <input className="input" maxLength={120} value={form.workingGroupSlug} onChange={set('workingGroupSlug')} />
+                  <input
+                    className="input"
+                    maxLength={120}
+                    value={form.workingGroupSlug}
+                    onChange={set('workingGroupSlug')}
+                  />
                 </label>
                 <label className="field fieldSpan">
                   <span>Purpose</span>
-                  <textarea className="input" required rows={4} maxLength={4000} value={form.purpose} onChange={set('purpose')} />
+                  <textarea
+                    className="input"
+                    required
+                    rows={4}
+                    maxLength={4000}
+                    value={form.purpose}
+                    onChange={set('purpose')}
+                  />
                 </label>
                 <label className="field">
-                  <span>Intended submitting entity (unverified until reviewed)</span>
-                  <input className="input" maxLength={240} value={form.intendedSubmittingEntity} onChange={set('intendedSubmittingEntity')} />
+                  <span>
+                    Intended submitting entity (unverified until reviewed)
+                  </span>
+                  <input
+                    className="input"
+                    maxLength={240}
+                    value={form.intendedSubmittingEntity}
+                    onChange={set('intendedSubmittingEntity')}
+                  />
                 </label>
                 <label className="field">
                   <span>External drafting document (optional)</span>
-                  <input className="input" type="url" value={form.externalDraftUrl} onChange={set('externalDraftUrl')} />
+                  <input
+                    className="input"
+                    type="url"
+                    value={form.externalDraftUrl}
+                    onChange={set('externalDraftUrl')}
+                  />
                 </label>
               </div>
             </Section>
@@ -176,7 +225,14 @@ export function SubmissionProposal() {
               <div className="card detailPanel">
                 <label className="field">
                   <span>Draft snapshot</span>
-                  <textarea className="input" required rows={12} maxLength={500000} value={form.contentText} onChange={set('contentText')} />
+                  <textarea
+                    className="input"
+                    required
+                    rows={12}
+                    maxLength={500000}
+                    value={form.contentText}
+                    onChange={set('contentText')}
+                  />
                 </label>
               </div>
             </Section>
@@ -185,10 +241,19 @@ export function SubmissionProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field fieldSpan">
                   <span>Immutable source version</span>
-                  <select className="input" required value={form.sourceVersionId} onChange={set('sourceVersionId')} disabled={!trackDetail}>
+                  <select
+                    className="input"
+                    required
+                    value={form.sourceVersionId}
+                    onChange={set('sourceVersionId')}
+                    disabled={!trackDetail}
+                  >
                     <option value="">Select evidence</option>
                     {(trackDetail?.documents || []).map((document) => (
-                      <option value={document.latestVersion.id} key={document.latestVersion.id}>
+                      <option
+                        value={document.latestVersion.id}
+                        key={document.latestVersion.id}
+                      >
                         {document.title} · {document.latestVersion.id}
                       </option>
                     ))}
@@ -196,21 +261,43 @@ export function SubmissionProposal() {
                 </label>
                 <label className="field">
                   <span>Page</span>
-                  <input className="input" value={form.citationPage} onChange={set('citationPage')} />
+                  <input
+                    className="input"
+                    value={form.citationPage}
+                    onChange={set('citationPage')}
+                  />
                 </label>
                 <label className="field">
                   <span>Paragraph or anchor</span>
-                  <input className="input" value={form.citationParagraph} onChange={set('citationParagraph')} />
+                  <input
+                    className="input"
+                    value={form.citationParagraph}
+                    onChange={set('citationParagraph')}
+                  />
                 </label>
                 <label className="field fieldSpan">
                   <span>Supporting quote (optional)</span>
-                  <textarea className="input" rows={3} maxLength={2000} value={form.citationQuote} onChange={set('citationQuote')} />
+                  <textarea
+                    className="input"
+                    rows={3}
+                    maxLength={2000}
+                    value={form.citationQuote}
+                    onChange={set('citationQuote')}
+                  />
                 </label>
               </div>
             </Section>
-            {error && <p className="formError" role="alert">{error}</p>}
+            {error && (
+              <p className="formError" role="alert">
+                {error}
+              </p>
+            )}
             <div className="detailActions detailPageActions">
-              <button className="btn btn-primary" type="submit" disabled={saving}>
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={saving}
+              >
                 {saving ? 'Saving…' : 'Save proposal'}
               </button>
             </div>

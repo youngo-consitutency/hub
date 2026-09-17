@@ -145,13 +145,20 @@ test('reconciliation suggestions require bounded confidence and mapping evidence
     expectedAmendmentVersion: 2,
     suggestedDocumentVersionId: 'fixture-version-v3',
     suggestedAnchor: { page: 3, paragraph: 'fixture-3' },
-    mappingEvidence: { method: 'human-assisted', note: 'Same paragraph heading.' },
+    mappingEvidence: {
+      method: 'human-assisted',
+      note: 'Same paragraph heading.',
+    },
     confidence: 0.82,
   })
   assert.equal(suggestion.expectedAmendmentVersion, 2)
   assert.equal(suggestion.confidence, 0.82)
   assert.throws(
-    () => normalizeReconciliationSuggestionInput({ ...suggestion, confidence: 1.1 }),
+    () =>
+      normalizeReconciliationSuggestionInput({
+        ...suggestion,
+        confidence: 1.1,
+      }),
     (error) => error.code === 'validation',
   )
 })
@@ -221,12 +228,24 @@ test('migration 029 keeps projects, versions and amendments separate', async () 
     new URL('../migrations/029_negotiation_contributions.sql', import.meta.url),
     'utf8',
   )
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_submission_projects/)
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_mutation_idempotency/)
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_submission_versions/)
+  assert.match(
+    sql,
+    /CREATE TABLE IF NOT EXISTS negotiation_submission_projects/,
+  )
+  assert.match(
+    sql,
+    /CREATE TABLE IF NOT EXISTS negotiation_mutation_idempotency/,
+  )
+  assert.match(
+    sql,
+    /CREATE TABLE IF NOT EXISTS negotiation_submission_versions/,
+  )
   assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_amendments/)
   assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_amendment_versions/)
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS negotiation_amendment_reconciliations/)
+  assert.match(
+    sql,
+    /CREATE TABLE IF NOT EXISTS negotiation_amendment_reconciliations/,
+  )
   assert.match(sql, /confirmed_by uuid REFERENCES hub_accounts/)
   assert.match(sql, /target_type='official_document'/)
   assert.doesNotMatch(sql, /UPDATE\s+negotiation_document_versions/i)
@@ -234,17 +253,34 @@ test('migration 029 keeps projects, versions and amendments separate', async () 
 })
 
 test('member UI labels initiatives and official-text proposals honestly', async () => {
-  const [submissionPage, amendmentPage, workspacePage, app] = await Promise.all([
-    readFile(new URL('../src/pages/SubmissionProposal.jsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/pages/AmendmentProposal.jsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/pages/SubmissionWorkspace.jsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
-  ])
+  const [submissionPage, amendmentPage, workspacePage, app] = await Promise.all(
+    [
+      readFile(
+        new URL('../src/pages/SubmissionProposal.jsx', import.meta.url),
+        'utf8',
+      ),
+      readFile(
+        new URL('../src/pages/AmendmentProposal.jsx', import.meta.url),
+        'utf8',
+      ),
+      readFile(
+        new URL('../src/pages/SubmissionWorkspace.jsx', import.meta.url),
+        'utf8',
+      ),
+      readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
+    ],
+  )
   assert.match(submissionPage, /No call — save as an initiative/)
   assert.match(submissionPage, /does not claim YOUNGO endorsement/)
   assert.match(amendmentPage, /never modifies the cited official source/)
-  assert.match(amendmentPage, /Competing alternatives remain separate proposals/)
-  assert.match(workspacePage, /not an endorsed position and cannot be transmitted/)
+  assert.match(
+    amendmentPage,
+    /Competing alternatives remain separate proposals/,
+  )
+  assert.match(
+    workspacePage,
+    /not an endorsed position and cannot be transmitted/,
+  )
   assert.match(workspacePage, /expectedVersion: project\.currentVersion/)
   assert.match(workspacePage, /Someone saved a newer version/)
   assert.ok(

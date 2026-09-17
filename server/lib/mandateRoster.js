@@ -45,9 +45,7 @@ function accountRole(account) {
 }
 
 function membershipStatusOf(account) {
-  return (
-    account?.membership_status || account?.membershipStatus || 'registered'
-  )
+  return account?.membership_status || account?.membershipStatus || 'registered'
 }
 
 function emailVerifiedOf(account) {
@@ -76,11 +74,7 @@ export function plannedMandateActions(account) {
     wgName: item.wgName,
     title: item.title,
     name: item.name,
-    status: blocked
-      ? 'blocked'
-      : emailVerified
-        ? 'active'
-        : 'pending_email',
+    status: blocked ? 'blocked' : emailVerified ? 'active' : 'pending_email',
   }))
 
   if (!emailVerified || blocked) {
