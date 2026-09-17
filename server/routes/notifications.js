@@ -70,12 +70,32 @@ notificationRouter.get('/verify-email', async (req, res, next) => {
           ),
         )
     }
+    let mandate = null
+    try {
+      const { applyMandateFromRoster } = await import(
+        '../lib/applyMandate.js'
+      )
+      mandate = await applyMandateFromRoster(result.accountId, {
+        requestId: req.requestId,
+      })
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          event: 'mandate_self_verify_failed',
+          accountId: result.accountId,
+          message: error.message,
+        }),
+      )
+    }
     await recordAudit({
       actorId: result.accountId,
       action: 'account.email_verified',
       targetType: 'account',
       targetId: result.accountId,
-      after: { emailVerified: true },
+      after: {
+        emailVerified: true,
+        mandateApplied: Boolean(mandate?.applied),
+      },
       requestId: req.requestId,
     })
     res.redirect(303, '/profile?emailVerified=1')

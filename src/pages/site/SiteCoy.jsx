@@ -11,6 +11,7 @@ import {
 import { A, Async, Empty } from '../../components/ui.jsx'
 import { COY_CURRENT, COY_SITE_LINKS } from '../../content/connect.js'
 import { useApi } from '../../lib/api.js'
+import { resolveCoyStatus } from '../../../shared/coyStatus.js'
 
 const FORMATS = [
   {
@@ -39,14 +40,17 @@ const STATUS_LABEL = {
   announced: ['chip-neutral', 'Announced soon'],
   registration_open: ['chip-accent', 'Registration open'],
   applications_open: ['chip-warn', 'Applications open'],
+  applications_closed: ['chip-neutral', 'Applications closed'],
+  registration_closed: ['chip-neutral', 'Registration closed'],
   concluded: ['chip-neutral', 'Concluded'],
   cancelled: ['chip-danger', 'Cancelled'],
 }
 
 function CoyRow({ coy }) {
-  const [chipClass, chipLabel] = STATUS_LABEL[coy.status] || [
+  const status = resolveCoyStatus(coy)
+  const [chipClass, chipLabel] = STATUS_LABEL[status] || [
     'chip-neutral',
-    coy.status,
+    status,
   ]
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   return (

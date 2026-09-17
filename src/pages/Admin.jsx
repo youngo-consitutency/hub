@@ -29,6 +29,7 @@ import {
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { AdminEmailBroadcast } from '../components/AdminEmailBroadcast.jsx'
 import { PushBroadcast } from '../components/PushBroadcast.jsx'
+import { AdminCallSlots } from '../components/AdminCallSlots.jsx'
 
 const ENTITY_OPTIONS = [
   { value: '', label: 'All account types' },
@@ -345,6 +346,8 @@ export function Admin() {
       />
 
       {error && <ErrorCard message={error} />}
+
+      <AdminCallSlots />
 
       <div className="catalogTools adminTools">
         <label className="searchInputWrap">

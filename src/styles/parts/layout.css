@@ -939,6 +939,11 @@
   background: var(--success-tint);
 }
 
+.taskState-blocked {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
 .cycleBanner {
   display: flex;
   align-items: center;

@@ -1,0 +1,59 @@
+{
+  "slug": "just-transition",
+  "name": "Just Transition",
+  "monogram": "JT",
+  "focusLine": "UAE Just Transition Work Programme, decent work, and a Global Just Transition Mechanism",
+  "tags": ["Just transition", "Labour", "Policy"],
+  "resources": [
+    {
+      "label": "Just Transition WG join form",
+      "description": "Public join form for the Just Transition working group (Contact Points Imane Darkaoui and Masagus Fathan).",
+      "url": "https://forms.gle/dE3Qt67wyVU8UCJQ6"
+    },
+    {
+      "label": "UAE Just Transition Work Programme",
+      "description": "Official UNFCCC page for the JTWP (decision 3/CMA.5). Dialogues, ministerial round tables, and COP31 effectiveness review.",
+      "url": "https://unfccc.int/topics/just-transition/united-arab-emirates-just-transition-work-programme"
+    },
+    {
+      "label": "YOUNGO intervention — 4th JTWP dialogue",
+      "description": "UNFCCC document record of YOUNGO’s written intervention at the fourth dialogue under the UAE JTWP (19 Sep 2025).",
+      "url": "https://unfccc.int/documents/649894"
+    },
+    {
+      "label": "YOUNGO 4th JTWP dialogue statement (PDF)",
+      "description": "YOUNGO statement calling for a Global Just Transition Mechanism, equity, and 1.5°C-aligned pathways.",
+      "url": "https://unfccc.int/sites/default/files/resource/4th%20GD%20UAE%20JTWP_YOUNGO.pdf"
+    },
+    {
+      "label": "JTWP explainer (IISD)",
+      "description": "Independent explainer of JTWP history, dialogues, COP30 Just Transition Mechanism decision, and the road to COP31.",
+      "url": "https://www.jetknowledge.org/news/just-transition-work-programme-everything-you-need-to-know/"
+    },
+    {
+      "label": "COP30 Just Transition Mechanism outcomes (IISD)",
+      "description": "Unpacking the COP30 decision to develop a Just Transition Mechanism, to be operationalised toward COP31.",
+      "url": "https://www.jetknowledge.org/news/just-transition-work-programme-cop-30-mechanism-unpacking-key-outcomes/"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Just Transition WG follows the UAE Just Transition Work Programme and related labour, social-protection, and equity issues so the energy and economic shift does not leave workers and communities behind.",
+      "Contact Points Imane Darkaoui and Masagus Fathan coordinate YOUNGO inputs. YOUNGO has called for a Global Just Transition Mechanism; COP30 agreed to develop such a mechanism, with operationalisation due toward COP31.",
+      "Join via the public form. Use the UNFCCC JTWP page and YOUNGO’s dialogue interventions as the starting brief before drafting."
+    ],
+    "rules": [
+      "Keep just-transition asks rights-based: labour rights, social dialogue, social protection, and the needs of fossil-fuel-dependent and informal workers.",
+      "Distinguish the UNFCCC JTWP from regional instruments such as the EU Just Transition Mechanism.",
+      "Coordinate public statements with Contact Points before using the YOUNGO name.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Just Transition WG",
+    "description": "Contact Points Imane Darkaoui and Masagus Fathan. Public join form linked from the roster. Follow the UAE JTWP and YOUNGO dialogue interventions on unfccc.int."
+  }
+}

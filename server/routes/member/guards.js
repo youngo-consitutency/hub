@@ -7,6 +7,7 @@ import {
   resolveOrgContext,
   setAccountFields,
 } from '../../lib/lifecycle.js'
+import { sendMembershipActivatedEmail } from '../../lib/membershipMail.js'
 import { bearerToken } from '../../lib/security.js'
 
 export async function requireAccount(req, res) {
@@ -120,6 +121,14 @@ export const MEMBERSHIP_STATUSES = [
   'renewal_due',
   'expired',
   'terminated',
+  'rejected',
+]
+
+export const CLOSED_MEMBERSHIP_STATUSES = ['expired', 'terminated']
+
+export const ENDED_MEMBERSHIP_STATUSES = [
+  ...CLOSED_MEMBERSHIP_STATUSES,
+  'rejected',
 ]
 
 export function routeError(status, code, message) {
@@ -162,7 +171,7 @@ export async function updateMembershipLifecycle({ actor, targetId, body }) {
       'forbidden',
       'Only an admin can change platform staff membership.',
     )
-  if (actor.id === before.id && ['expired', 'terminated'].includes(status))
+  if (actor.id === before.id && ENDED_MEMBERSHIP_STATUSES.includes(status))
     throw routeError(
       400,
       'self_suspend',
@@ -185,20 +194,32 @@ export async function updateMembershipLifecycle({ actor, targetId, body }) {
       'validation',
       'A reason is required when terminating membership.',
     )
+  if (status === 'rejected' && !reason)
+    throw routeError(
+      400,
+      'validation',
+      'A reason is required when rejecting an application.',
+    )
   if (body?.renewalDueAt && Number.isNaN(Date.parse(body.renewalDueAt)))
     throw routeError(400, 'validation', 'Invalid renewal date.')
 
   const now = new Date().toISOString()
-  const accessStatus = ['expired', 'terminated'].includes(status)
+  const closed = CLOSED_MEMBERSHIP_STATUSES.includes(status)
+  const ended = ENDED_MEMBERSHIP_STATUSES.includes(status)
+  const accessStatus = closed
     ? 'suspended'
-    : [
-          'course_passed',
-          'awaiting_onboarding',
-          'active',
-          'renewal_due',
-        ].includes(status)
-      ? 'active'
-      : 'pending_course'
+    : status === 'rejected'
+      ? 'pending_course'
+      : [
+            'course_passed',
+            'awaiting_onboarding',
+            'active',
+            'renewal_due',
+          ].includes(status)
+        ? 'active'
+        : 'pending_course'
+  const becameActive =
+    status === 'active' && before.membershipStatus !== 'active'
   const updated = await setAccountFields(targetId, {
     membership_status: status,
     hub_access_status: accessStatus,
@@ -208,12 +229,8 @@ export async function updateMembershipLifecycle({ actor, targetId, body }) {
     onboarding_cohort:
       body?.onboardingCohort || before.onboardingCohort || null,
     renewal_due_at: body?.renewalDueAt || before.renewalDueAt || null,
-    membership_ended_at: ['expired', 'terminated'].includes(status)
-      ? now
-      : null,
-    membership_end_reason: ['expired', 'terminated'].includes(status)
-      ? reason.slice(0, 500) || null
-      : null,
+    membership_ended_at: ended ? now : null,
+    membership_end_reason: ended ? reason.slice(0, 500) || null : null,
     constituency_work_status:
       status === 'active'
         ? 'active'
@@ -221,6 +238,12 @@ export async function updateMembershipLifecycle({ actor, targetId, body }) {
           ? 'pending_onboarding'
           : before.constituencyWorkStatus,
   })
-  if (accessStatus === 'suspended') await destroyAllSessions(targetId)
-  return { before, updated, reason: reason || null }
+  if (accessStatus === 'suspended' || status === 'rejected')
+    await destroyAllSessions(targetId)
+  let emailSent = null
+  if (becameActive) {
+    const mail = await sendMembershipActivatedEmail(updated)
+    emailSent = mail.sent
+  }
+  return { before, updated, reason: reason || null, emailSent }
 }

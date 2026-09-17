@@ -5,7 +5,11 @@ import {
   TbCopy as Copy,
   TbExternalLink as ExternalLink,
 } from 'react-icons/tb'
-import { googleAddByUrlPage, webcalFeedUrl } from '../lib/calendarLinks.js'
+import {
+  googleAddByUrlPage,
+  googleSubscribeUrl,
+  webcalFeedUrl,
+} from '../lib/calendarLinks.js'
 
 // Copies the absolute ICS feed URL so a calendar app can subscribe (live feed),
 // rather than downloading a one-time snapshot.
@@ -106,10 +110,21 @@ export function CalendarSubscribe({ type }) {
             <div>
               <h3>Live calendar feed</h3>
               <p className="meta">
-                Subscribe once. New Hub events update automatically.
+                Subscribe once. New Hub events update automatically. Google
+                never signs in to the Hub — you add our public ICS URL to your
+                own calendar.
               </p>
             </div>
           </div>
+          <a
+            className="btn btn-primary btn-sm subscribeGoogle"
+            href={googleSubscribeUrl('/ics/all.ics')}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Add live feed to Google Calendar
+            <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
+          </a>
           <FeedRow label="All events" path="/ics/all.ics" />
           {filtered && (
             <FeedRow label="This filter only" path={`/ics/type/${type}.ics`} />
@@ -118,7 +133,7 @@ export function CalendarSubscribe({ type }) {
             <li>
               <strong>Google</strong>
               <span>
-                Copy the URL, open{' '}
+                Use the button above, or copy the URL and paste it in{' '}
                 <a
                   href={googleAddByUrlPage()}
                   target="_blank"
@@ -133,7 +148,7 @@ export function CalendarSubscribe({ type }) {
                     style={{ verticalAlign: -1 }}
                   />
                 </a>
-                , then paste.
+                .
               </span>
             </li>
             <li>

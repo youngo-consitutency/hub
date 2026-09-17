@@ -14,6 +14,15 @@ const PUBLIC_SOCIAL_HOSTS = [
   'tiktok.com',
 ]
 
+const PRIVATE_CHANNEL_HOSTS = [
+  'whatsapp.com',
+  't.me',
+  'telegram.me',
+  'telegram.org',
+  'discord.com',
+  'discord.gg',
+]
+
 function resourceUrl(resource) {
   try {
     return new URL(resource?.url || '')
@@ -86,6 +95,14 @@ export function isPublicGroupResource(resource) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''
   const category = resourceCategory(resource)
+
+  if (
+    PRIVATE_CHANNEL_HOSTS.some(
+      (privateHost) => host === privateHost || host.endsWith(`.${privateHost}`),
+    )
+  ) {
+    return false
+  }
 
   if (category === 'reference') return true
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { countdown } from '../lib/time.js'
+import { A } from './ui.jsx'
 
 /** Provisional COP31 Antalya opening — placeholder for the mission-control prototype. */
 export const COP31_OPENS_AT = '2026-11-09T09:00:00Z'
@@ -59,12 +60,13 @@ export function MissionCountdown({
   const compact = countdown(iso, now)
 
   return (
-    <div className="mcCountdown">
+    <div className="mcCountdown" aria-live="polite">
       <p className="mcEyebrow">{label}</p>
       <div className="mcCountdownRow">
         <span className="mcCountdownDays mono">{days}</span>
+        <span className="mcCountdownUnit">days</span>
         <span className="mcCountdownHms mono">
-          :{pad(hours)}:{pad(mins)}:{pad(secs)}
+          {pad(hours)}:{pad(mins)}:{pad(secs)}
         </span>
       </div>
       <p className="mcCountdownMeta mono">{compact.label} remaining</p>
@@ -72,13 +74,24 @@ export function MissionCountdown({
   )
 }
 
-export function MissionMetric({ value, label, tone }) {
-  return (
-    <div className={`mcMetric${tone ? ` mcMetric-${tone}` : ''}`}>
+export function MissionMetric({ value, label, tone, href }) {
+  const className = `mcMetric${tone ? ` mcMetric-${tone}` : ''}${
+    href ? ' mcMetricLink' : ''
+  }`
+  const inner = (
+    <>
       <strong className="mono">{value}</strong>
       <span>{label}</span>
-    </div>
+    </>
   )
+  if (href) {
+    return (
+      <A href={href} className={className}>
+        {inner}
+      </A>
+    )
+  }
+  return <div className={className}>{inner}</div>
 }
 
 export function MissionMonogram({ children }) {

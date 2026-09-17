@@ -100,6 +100,11 @@ test('member CRM keeps profiles private by default and joins governed relationsh
           wg_interests: ['finance'],
         }),
         account('private-member', { name: 'Private Member' }),
+        account('private-cp', {
+          name: 'Private CP',
+          country: 'Ghana',
+          region: 'Africa',
+        }),
       ],
       null,
       2,
@@ -128,6 +133,12 @@ test('member CRM keeps profiles private by default and joins governed relationsh
           directory_visibility: 'private',
           expertise_tags: [],
         },
+        {
+          account_id: 'private-cp',
+          display_name: 'Quiet Contact',
+          directory_visibility: 'private',
+          expertise_tags: [],
+        },
       ],
       null,
       2,
@@ -139,6 +150,13 @@ test('member CRM keeps profiles private by default and joins governed relationsh
     JSON.stringify([
       {
         account_id: 'visible-member',
+        wg_slug: 'loss-and-damage',
+        role_in_wg: 'contact',
+        status: 'active',
+        joined_at: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        account_id: 'private-cp',
         wg_slug: 'loss-and-damage',
         role_in_wg: 'contact',
         status: 'active',
@@ -195,8 +213,14 @@ test('member CRM keeps profiles private by default and joins governed relationsh
     `${origin}/api/member/people?workingGroup=loss-and-damage&workingGroupRole=manager`,
     { headers },
   ).then((response) => response.json())
-  assert.equal(contactPoints.total, 1)
-  assert.equal(contactPoints.items[0].displayName, 'Climate Connector')
+  assert.equal(contactPoints.total, 2)
+  const quiet = contactPoints.items.find(
+    (item) => item.displayName === 'Quiet Contact',
+  )
+  assert.equal(quiet.country, 'Ghana')
+  assert.equal(quiet.region, 'Africa')
+  assert.equal(quiet.contactRole, 'Contact Point')
+  assert.equal(quiet.bio, '')
 
   const participants = await fetch(
     `${origin}/api/member/people?workingGroup=loss-and-damage&workingGroupRole=participant`,

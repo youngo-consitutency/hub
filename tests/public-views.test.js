@@ -16,6 +16,7 @@ const event = {
 const group = {
   slug: 'finance',
   name: 'Finance',
+  publicSpace: true,
   whatsappUrl: 'https://chat.example/private',
   groupUrl: 'https://groups.example/private',
   driveUrl: 'https://drive.example/private',
@@ -27,6 +28,41 @@ const group = {
     channelValue: '@private',
   },
 }
+
+test('groups without a public-space opt-in hide comms from anonymous views', () => {
+  const result = groupView({
+    slug: 'ach',
+    name: 'Arts, Culture and Heritage',
+    publicSpace: false,
+    focusLine: 'Culture in climate action',
+    cadenceNote: 'Weekly',
+    events: [event],
+    resources: [
+      { label: 'Culture Global Stocktake', url: 'https://example.org/cgst' },
+    ],
+    taskForces: [{ slug: 'policy', name: 'Policy', purpose: 'Inputs' }],
+  })
+  assert.equal(result.publicSpace, false)
+  assert.equal(result.focusLine, undefined)
+  assert.equal(result.events, undefined)
+  assert.equal(result.resources, undefined)
+  assert.equal(result.taskForces, undefined)
+})
+
+test('signed-in members still see a members-only group page', () => {
+  const result = groupView(
+    {
+      slug: 'ach',
+      name: 'Arts, Culture and Heritage',
+      publicSpace: false,
+      focusLine: 'Culture in climate action',
+      events: [event],
+    },
+    { includePrivate: true },
+  )
+  assert.equal(result.focusLine, 'Culture in climate action')
+  assert.equal(result.events[0].title, event.title)
+})
 
 test('anonymous event and group views omit member-private links', () => {
   assert.equal(eventView(event).meetingUrl, undefined)
@@ -76,10 +112,36 @@ test('join links quoted in prose are redacted, registration links are kept', () 
   )
 })
 
+test('WhatsApp invites stay behind the workspace gate', () => {
+  const result = groupView({
+    slug: 'ach',
+    name: 'Arts, Culture and Heritage',
+    publicSpace: true,
+    whatsappUrl: 'https://chat.whatsapp.com/IS7oIpCYFUG4W07bvGRqh6',
+    resources: [
+      {
+        label: 'WhatsApp — Arts, Culture and Heritage WG',
+        url: 'https://chat.whatsapp.com/IS7oIpCYFUG4W07bvGRqh6',
+      },
+      {
+        label: 'Culture Global Stocktake',
+        url: 'https://www.cultureglobalstocktake.com/',
+      },
+    ],
+  })
+  assert.equal(result.whatsappUrl, undefined)
+  assert.deepEqual(
+    result.resources.map((resource) => resource.label),
+    ['Culture Global Stocktake'],
+  )
+  assert.equal(result.workspaceResourcesLocked, true)
+})
+
 test('locked group resources keep open media and hide member material', () => {
   const result = groupView({
     slug: 'ace',
     name: 'ACE',
+    publicSpace: true,
     resources: [
       { label: 'UNFCCC ACE hub', url: 'https://unfccc.int/topics/ace' },
       { label: 'Monthly Meet', url: 'https://meet.google.com/tjp-fcrx-vjt' },
@@ -120,7 +182,7 @@ test('feed and search sanitization covers nested event and group objects', () =>
   )
   const result = searchView({
     events: [event],
-    groups: [group],
+    groups: [{ ...group, publicSpace: true }],
     contacts: [group.contact],
   })
   assert.equal(result.events[0].meetingUrl, undefined)

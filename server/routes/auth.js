@@ -6,6 +6,7 @@ import {
   createSession,
   getSessionAccount,
   destroySession,
+  changePassword,
 } from '../lib/accounts.js'
 import { getPool } from '../lib/db.js'
 import {
@@ -209,6 +210,23 @@ authRouter.post('/login', loginLimit, loginAccountLimit, async (req, res) => {
       })
     }
 
+    if (row.email_verified_at || row.emailVerifiedAt) {
+      try {
+        const { applyMandateFromRoster } = await import(
+          '../lib/applyMandate.js'
+        )
+        await applyMandateFromRoster(row.id, { requestId: req.requestId })
+      } catch (error) {
+        console.warn(
+          JSON.stringify({
+            event: 'mandate_self_verify_failed',
+            accountId: row.id,
+            message: error.message,
+          }),
+        )
+      }
+    }
+
     const session = await createSession(row.id)
     const account = session && (await getSessionAccount(session.token))
     if (!account) {
@@ -240,6 +258,58 @@ authRouter.post('/login', loginLimit, loginAccountLimit, async (req, res) => {
       error: {
         code: 'server_error',
         message: 'We could not sign you in. Please try again.',
+      },
+    })
+  }
+})
+
+const changePasswordLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+})
+
+authRouter.post('/change-password', changePasswordLimit, async (req, res) => {
+  try {
+    const token = bearerToken(req)
+    const account = await getSessionAccount(token)
+    if (!account) {
+      return res.status(401).json({
+        error: { code: 'unauthorized', message: 'Sign in to continue.' },
+      })
+    }
+    const b = req.body || {}
+    await changePassword({
+      accountId: account.id,
+      currentPassword: String(b.currentPassword || ''),
+      password: String(b.password || ''),
+      passwordConfirm: String(b.passwordConfirm || ''),
+      keepSessionToken: token,
+    })
+    const next = await getSessionAccount(token)
+    res.json({
+      ok: true,
+      account: next,
+    })
+  } catch (err) {
+    if (err.code === 'validation') {
+      return res.status(400).json({
+        error: {
+          code: 'validation',
+          message: err.message,
+          fields: err.fields || {},
+        },
+      })
+    }
+    if (err.code === 'unauthorized') {
+      return res.status(401).json({
+        error: { code: 'unauthorized', message: err.message },
+      })
+    }
+    console.error('change-password failed:', err.message)
+    res.status(500).json({
+      error: {
+        code: 'server_error',
+        message: 'Could not update the password.',
       },
     })
   }

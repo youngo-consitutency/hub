@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url'
 import { assembleFeed } from './feed.js'
 import { getPool } from './db.js'
 import { localDemoEnabled } from './config.js'
+import { resolveCoyStatus } from '../../shared/coyStatus.js'
+import { normalizeTaskForces } from '../../shared/taskForces.js'
+import { listWgSettings } from './wgSettings.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const localDemo = localDemoEnabled()
@@ -32,7 +35,14 @@ function materialize(raw, now = new Date()) {
     new Date(now).toISOString().slice(0, 10) + 'T00:00:00Z',
   )
   const iso = (ms) => new Date(ms).toISOString()
-  const groups = raw.groups.map((g) => ({ isActive: true, ...g }))
+  const groups = raw.groups.map((g) => ({
+    isActive: true,
+    publicSpace: false,
+    taskForces: normalizeTaskForces(g.taskForces, g.slug),
+    ...g,
+    taskForces: normalizeTaskForces(g.taskForces, g.slug),
+    publicSpace: Boolean(g.publicSpace),
+  }))
   const bySlug = Object.fromEntries(groups.map((g) => [g.slug, g]))
   const wgRef = (slug) =>
     slug ? { slug, name: bySlug[slug]?.name || slug } : null
@@ -265,9 +275,19 @@ export function setUnpublishedContent(items = []) {
   unpublishedAnnouncementSlugs = nextAnnouncements
 }
 
+function coyView(coy, now = new Date()) {
+  if (!coy) return coy
+  return { ...coy, status: resolveCoyStatus(coy, now) }
+}
+
 export function getFeed(now = new Date()) {
   return assembleFeed(
-    { ...data, events: allEvents(), announcements: allAnnouncements() },
+    {
+      ...data,
+      events: allEvents(),
+      announcements: allAnnouncements(),
+      coys: data.coys.map((coy) => coyView(coy, now)),
+    },
     now,
   )
 }
@@ -278,8 +298,35 @@ export function listEvents({ type } = {}) {
     .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))
 }
 
+let settingsBySlug = new Map()
+
+export async function refreshWgSettings() {
+  settingsBySlug = await listWgSettings()
+  return settingsBySlug
+}
+
+export function rememberWgPublicSpace(wgSlug, publicSpace, updatedAt) {
+  settingsBySlug.set(wgSlug, {
+    publicSpace: Boolean(publicSpace),
+    updatedAt: updatedAt || null,
+  })
+}
+
+function withSettings(group) {
+  if (!group) return group
+  const overlay = settingsBySlug.get(group.slug)
+  return {
+    ...group,
+    publicSpace:
+      overlay?.publicSpace != null
+        ? overlay.publicSpace
+        : Boolean(group.publicSpace),
+    taskForces: normalizeTaskForces(group.taskForces, group.slug),
+  }
+}
+
 export function listGroups() {
-  return data.groups.filter((g) => g.isActive)
+  return data.groups.filter((g) => g.isActive).map(withSettings)
 }
 
 /** Fixture-backed shared opportunities for the member Opportunities board. */
@@ -325,7 +372,7 @@ export function getGroup(slug, now = new Date()) {
     .filter((s) => s.wg?.slug === slug && OPEN_SUB_STATES.includes(s.status))
     .sort((a, b) => new Date(a.deadlineAt) - new Date(b.deadlineAt))
   const contact = data.directory.find((c) => c.wg?.slug === slug) || null
-  return { ...group, events, submissions, contact }
+  return withSettings({ ...group, events, submissions, contact })
 }
 
 export function getEvent(slug) {
@@ -358,7 +405,7 @@ export function getDecision(slug) {
 
 export function getCoy(slug) {
   const coy = data.coys.find((c) => c.slug === slug)
-  return coy && coy.reviewStatus === 'approved' ? coy : null
+  return coy && coy.reviewStatus === 'approved' ? coyView(coy) : null
 }
 
 export function listSubmissions(state = 'open') {
@@ -394,9 +441,11 @@ export function listCouncil(state = 'active') {
 const COY_PRIORITY = {
   registration_open: 0,
   applications_open: 1,
-  announced: 2,
-  concluded: 3,
-  cancelled: 4,
+  applications_closed: 2,
+  registration_closed: 2,
+  announced: 3,
+  concluded: 4,
+  cancelled: 5,
 }
 
 export function listCoys({ type, region } = {}) {
@@ -404,6 +453,7 @@ export function listCoys({ type, region } = {}) {
     .filter((c) => c.reviewStatus === 'approved')
     .filter((c) => !type || type === 'all' || c.type === type)
     .filter((c) => !region || region === 'all' || c.region === region)
+    .map((coy) => coyView(coy))
     .sort(
       (a, b) =>
         (COY_PRIORITY[a.status] ?? 9) - (COY_PRIORITY[b.status] ?? 9) ||

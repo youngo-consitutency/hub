@@ -1,0 +1,72 @@
+{
+  "slug": "adaptation",
+  "name": "Adaptation",
+  "monogram": "AD",
+  "focusLine": "Global Goal on Adaptation, National Adaptation Plans, and child- and youth-responsive resilience",
+  "tags": ["Adaptation", "Resilience"],
+  "resources": [
+    {
+      "label": "Join the Adaptation WG",
+      "description": "Public membership form. Streams: GGA / UAE–Belém work programme and National Adaptation Plans. For YOUNGO members aged 35 and under.",
+      "url": "https://forms.gle/BfMNqxfDm3sUbqoq7"
+    },
+    {
+      "label": "How the Adaptation WG operates",
+      "description": "Internal operating note linked from the join form.",
+      "url": "https://docs.google.com/document/d/1TQ04rjETPD2K_G9BXLXqGUHHHpBLccQ7p2QKS78eweY/edit"
+    },
+    {
+      "label": "Child- and youth-responsive GGA brief (SB64)",
+      "description": "YOUNGO Adaptation with UNICEF, UNFPA, Save the Children, and Young Lives on operationalising the Global Goal on Adaptation after COP30 (published 29 May 2026).",
+      "url": "https://www.younglives.org.uk/publications/operationalizing-global-goal-adaptation-child-responsive-and-youth-inclusive-lens-sb64"
+    },
+    {
+      "label": "SB64 Adaptation central working document",
+      "description": "Positions, negotiation notes, and role coordination hub used at SB64.",
+      "url": "https://docs.google.com/document/d/1-pHu4hLJV1ohRWDfkDqYPAmJYDlq3luAA-ljy20x02w/edit"
+    },
+    {
+      "label": "SB64 Adaptation coordination WhatsApp",
+      "description": "Session-specific SB64 Adaptation WG coordination channel.",
+      "url": "https://chat.whatsapp.com/G5aGCg0eIvL4MwOlwGLC8U"
+    },
+    {
+      "label": "SB64 Adaptation prep slides (archive)",
+      "description": "Prep meeting slides dated 7 June 2026 for SB64 Adaptation WG.",
+      "url": "https://docs.google.com/presentation/d/11DJ1ZhxH3qcDza4UhmIfTNZpbssKshWf8yeMCIruzRM/edit"
+    },
+    {
+      "label": "UNFCCC — Global Goal on Adaptation",
+      "description": "UAE Framework for Global Climate Resilience, Belém Adaptation Indicators, Belém–Addis Vision, and Baku Adaptation Roadmap.",
+      "url": "https://unfccc.int/topics/adaptation-and-resilience/workstreams/gga"
+    },
+    {
+      "label": "Carbon Brief — tracking the GGA",
+      "description": "Explainer on GGA targets and UAE–Belém indicators, linked from the Adaptation join form.",
+      "url": "https://www.carbonbrief.org/guest-post-how-to-track-progress-towards-the-global-goal-on-adaptation/"
+    },
+    {
+      "label": "IISD — NAP assessment explainer",
+      "description": "COP29 NAP progress assessment context, linked from the Adaptation join form.",
+      "url": "https://www.iisd.org/articles/explainer/cop-29-nap-assessment-adaptation"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "The Adaptation Working Group builds youth negotiation and technical capacity on UNFCCC adaptation tracks, especially the Global Goal on Adaptation (including the UAE–Belém work programme and follow-up) and National Adaptation Plans.",
+      "2026 Contact Points are Gaël Bizet and Levina Oyugah. Membership is for YOUNGO members aged 35 and under; complete the public join form, then watch CP channels for calls.",
+      "At SB64 the WG worked with UNICEF, UNFPA, Save the Children, and Young Lives on a child- and youth-responsive GGA brief, and kept a central working document and session WhatsApp for coordination."
+    ],
+    "rules": [
+      "Treat GGA/UAE–Belém and NAPs as the WG’s core negotiation streams unless CPs assign another track.",
+      "Keep child- and youth-responsive framing in GGA and NAP inputs; do not drop age- and gender-disaggregated asks without group agreement.",
+      "The SB64 WhatsApp and working docs are coordination spaces, not public announcement channels — do not share invite links outside YOUNGO without CP approval.",
+      "Coordinate interventions and public statements with the Contact Points before using the YOUNGO Adaptation name."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Adaptation WG",
+    "description": "2026 Contact Points: Gaël Bizet and Levina Oyugah. Join via the public Adaptation WG form (YOUNGO members, 35 and under). Inbox: adaptation.youngo@gmail.com.",
+    "publicEmail": "adaptation.youngo@gmail.com"
+  }
+}

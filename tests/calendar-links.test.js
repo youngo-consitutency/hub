@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   googleCalendarUrl,
+  googleSubscribeUrl,
   icsDownloadPath,
   outlookWebUrl,
 } from '../src/lib/calendarLinks.js'
@@ -39,5 +40,13 @@ describe('calendar deep links', () => {
       icsDownloadPath(sample.slug),
       '/ics/event/ace-drafting-session.ics',
     )
+  })
+
+  it('builds a Google Calendar subscribe URL from a public ICS feed', () => {
+    const url = googleSubscribeUrl('/ics/all.ics', 'https://youngohub.org')
+    assert.match(url, /^https:\/\/calendar\.google\.com\/calendar\/r\?/)
+    assert.match(url, /cid=/)
+    assert.match(url, /youngohub\.org/)
+    assert.match(url, /all\.ics/)
   })
 })

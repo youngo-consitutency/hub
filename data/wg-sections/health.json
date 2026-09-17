@@ -1,0 +1,53 @@
+{
+  "slug": "health",
+  "name": "Health",
+  "monogram": "HE",
+  "focusLine": "Climate and health intersections, NDC health and SRHR asks, and WHO–UNFCCC engagement",
+  "tags": ["Health", "Policy"],
+  "resources": [
+    {
+      "label": "Health WG on LinkedIn",
+      "description": "Public posts on climate–health asks, including NDC and World Environmental Health Day framing. 2026 Contact Point Sıla Gürbüz is listed among company employees.",
+      "url": "https://www.linkedin.com/company/youngo-health-working-group/"
+    },
+    {
+      "label": "Instagram — @youngo.health",
+      "description": "Health WG public channel. June 2026 post named Contact Points Aishat Oduye and Sıla Gürbüz.",
+      "url": "https://www.instagram.com/youngo.health/"
+    },
+    {
+      "label": "WHO — climate change and health",
+      "description": "WHO fact sheet on climate-sensitive health risks, equity, and health-system resilience — the evidence base the WG tracks alongside UNFCCC health engagement.",
+      "url": "https://www.who.int/news-room/fact-sheets/detail/climate-change-and-health"
+    },
+    {
+      "label": "WHO ATACH (climate-resilient health systems)",
+      "description": "Alliance for Transformative Action on Climate and Health — COP26-origin network on climate-resilient and sustainable health systems, including Belém Health Action Plan follow-up.",
+      "url": "https://www.who.int/initiatives/alliance-for-transformative-action-on-climate-and-health"
+    },
+    {
+      "label": "YOUNGO membership form",
+      "description": "Constituency membership is the usual path into WG channels. Complete this, then use the Health WG join form / Contact Points.",
+      "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Health WG works at the climate–health nexus inside YOUNGO — NDC health and SRHR asks, climate-resilient health systems, and WHO–UNFCCC engagement.",
+      "2026 Contact Points are Aishat Oduye and Sıla Gürbüz (announced on Instagram @youngo.health, June 2026). CPs facilitate calls and channels; they do not speak for the whole constituency unless mandated.",
+      "Public updates live on LinkedIn (youngo-health-working-group) and Instagram (@youngo.health). Meeting and WhatsApp links are shared after membership, not as a public invite."
+    ],
+    "rules": [
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Ground health claims in cited sources (WHO, UNFCCC, peer-reviewed evidence) when drafting submissions.",
+      "Centre children, youth, and frontline communities in health–climate asks; coordinate public statements with CPs before using the YOUNGO name.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Health WG",
+    "description": "2026 Contact Points Aishat Oduye and Sıla Gürbüz (Instagram @youngo.health, June 2026). Public channels: LinkedIn youngo-health-working-group · Instagram @youngo.health."
+  }
+}

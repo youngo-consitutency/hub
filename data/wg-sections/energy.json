@@ -1,0 +1,81 @@
+{
+  "slug": "energy",
+  "name": "Energy",
+  "monogram": "EN",
+  "focusLine": "Just energy transition, renewables scale-up, and phasing out fossil fuels",
+  "tags": ["Energy", "Mitigation", "Policy"],
+  "groupUrl": "https://linktr.ee/youngoenergy",
+  "resources": [
+    {
+      "label": "Join the Energy WG (AI guide)",
+      "description": "Roster join path — Jotform AI guide for Energy WG membership, YOUNGO, and related questions.",
+      "url": "https://eu.jotform.com/agent/01955b8e0d8a7beba5cf4dba43c68f4e7675"
+    },
+    {
+      "label": "Become a YOUNGO Energy WG member",
+      "description": "Public membership form linked from the Energy WG Linktree.",
+      "url": "https://docs.google.com/forms/d/e/1FAIpQLSdgiBWc4TuYZ9uPbSAjBvv3b_MIbjjmTAHuaVKtNIbaHQYVOQ/viewform"
+    },
+    {
+      "label": "Energy WG Linktree",
+      "description": "Website, membership form, podcast, Instagram, LinkedIn, YouTube, and related entry points.",
+      "url": "https://linktr.ee/youngoenergy"
+    },
+    {
+      "label": "Energy WG website",
+      "description": "Official YOUNGO Energy Working Group site: mission, campaigns, and join paths.",
+      "url": "https://youngoenergy.wixsite.com/youngo-energy-workin"
+    },
+    {
+      "label": "Energy WG on LinkedIn",
+      "description": "GYS consultations, WG announcements, and updates. Contact Points include Dimple Asopa, Saikat Das, and Alex Lew.",
+      "url": "https://www.linkedin.com/company/youngo-energy-working-group/"
+    },
+    {
+      "label": "Instagram — @youngo.energy",
+      "description": "Energy WG public updates, including Contact Point announcements.",
+      "url": "https://www.instagram.com/youngo.energy/"
+    },
+    {
+      "label": "Podcast — Beyond Energy Negotiations",
+      "description": "YOUNGO Energy Working Group podcast on energy policy, just transition, and negotiations.",
+      "url": "https://open.spotify.com/show/4C5ZhvHut0wiksmH3CNTU4"
+    },
+    {
+      "label": "Energy WG bi-weekly calendar",
+      "description": "Google Calendar link for Energy WG bi-weekly calls.",
+      "url": "https://calendar.app.google/jgZPg5Qf8RTjdyiy8"
+    },
+    {
+      "label": "Climate Watch — NDC tracker",
+      "description": "Compare countries' Nationally Determined Contributions and climate targets.",
+      "url": "https://www.climatewatchdata.org/ndc-tracker"
+    },
+    {
+      "label": "Climate Action Tracker — net-zero evaluations",
+      "description": "Independent analysis of governments' net-zero pledges.",
+      "url": "https://climateactiontracker.org/global/cat-net-zero-target-evaluations/"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Energy WG works on a just energy transition — scaling renewables, phasing out fossil fuels, and energy access for young people and frontline communities.",
+      "Contact Points Dimple Asopa, Saikat Das, and Alex Lew facilitate advocacy, GYS inputs, and capacity-building. The group tracks mitigation and energy agenda items and uses open data such as Climate Watch and the Climate Action Tracker.",
+      "Join through the roster Jotform guide or the Linktree membership form. The WG website, LinkedIn, Instagram, and Beyond Energy Negotiations podcast carry public updates. Channel links follow after membership is confirmed."
+    ],
+    "rules": [
+      "Ground claims in cited, verifiable sources when drafting submissions.",
+      "Centre a just transition and the needs of fossil-fuel-dependent and energy-poor communities.",
+      "Coordinate public statements with Contact Points before using the YOUNGO name.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Energy WG",
+    "description": "Contact Points Dimple Asopa, Saikat Das, and Alex Lew. Join via the roster Jotform guide or Linktree membership form · LinkedIn youngo-energy-working-group · Instagram @youngo.energy.",
+    "publicEmail": "youngo.energy@gmail.com"
+  }
+}

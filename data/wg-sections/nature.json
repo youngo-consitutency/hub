@@ -1,0 +1,62 @@
+{
+  "slug": "nature",
+  "name": "Nature",
+  "monogram": "NA",
+  "focusLine": "Climate–nature nexus, biodiversity and forests, and youth inputs into UNFCCC, CBD, and UNCCD spaces (Nature's Echo).",
+  "tags": ["Nature", "Biodiversity"],
+  "groupUrl": "https://linktr.ee/youngonature",
+  "resources": [
+    {
+      "label": "Nature WG join form",
+      "description": "Public membership form for the Nature Working Group. Requires official YOUNGO membership. Form text still signed by 2025 Contact Points.",
+      "url": "https://forms.gle/7GxnEGetVKE3geSa7"
+    },
+    {
+      "label": "Nature WG on LinkedIn",
+      "description": "Company page for 2026/27 term updates, including the four-task-force structure.",
+      "url": "https://www.linkedin.com/company/youngo-nature-working-group"
+    },
+    {
+      "label": "Nature's Echo Linktree",
+      "description": "Instagram, X, Facebook, and LinkedIn entry points for Nature's Echo.",
+      "url": "https://linktr.ee/youngonature"
+    },
+    {
+      "label": "Instagram — @youngo.nature.echo",
+      "description": "Public Nature's Echo channel listed on the WG Linktree.",
+      "url": "https://www.instagram.com/youngo.nature.echo/"
+    },
+    {
+      "label": "UNFCCC — REDD+",
+      "description": "Land-use / REDD+ workstream relevant to forests, Article 5, and nature-based climate action.",
+      "url": "https://unfccc.int/topics/land-use/workstreams/reddplus"
+    },
+    {
+      "label": "Convention on Biological Diversity",
+      "description": "CBD treaty text and process — the biodiversity Rio Convention the Nature WG cites alongside UNFCCC and UNCCD.",
+      "url": "https://www.cbd.int/convention"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster. No 2026 Nature Contact Points named there.",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Register as a YOUNGO member if you are not already one.",
+      "Fill the Nature WG join form (forms.gle/7GxnEGetVKE3geSa7).",
+      "Follow LinkedIn, Instagram, and Linktree for task-force and meeting updates — no public 2026 call cadence is posted."
+    ],
+    "rules": [
+      "The join form requires official YOUNGO membership.",
+      "The official 2026 WG/OT roster lists no current Nature Contact Points — do not treat 2025 form signatures as 2026 CPs.",
+      "The July 2026 task-force interest sheet window closed 20 July; watch LinkedIn for the first meeting of the term."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Nature WG",
+    "description": "Official 2026 WG/OT roster lists no current Contact Points. Public join form is live (still signed by 2025 CPs Joanne Chu & Joana Gabriela). A July 2026 LinkedIn post for the 2026/27 term was signed Wening & Mustafa — not treated as official roster CPs. Join: forms.gle/7GxnEGetVKE3geSa7 · LinkedIn youngo-nature-working-group.",
+    "publicEmail": "youngonature@gmail.com"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "slug": "agriculture",
+  "name": "Food & Agriculture",
+  "monogram": "AG",
+  "focusLine": "Youth advocacy on climate-resilient food systems, agriculture negotiations, and the Food & Agriculture Academy on the road to COP31.",
+  "tags": ["Agriculture", "Food systems"],
+  "cadenceNote": "Food & Agriculture Academy: eight virtual sessions July–December 2026, paused in November while YOUNGO is at COP31.",
+  "groupUrl": "https://linktr.ee/youngofoodandagriculture",
+  "resources": [
+    {
+      "label": "Food & Agriculture WG site",
+      "description": "Academy, members handbook, publications, youth project map, and WG join paths.",
+      "url": "https://youngoagrifood.com/"
+    },
+    {
+      "label": "Food & Agriculture Academy 2026",
+      "description": "Eight sessions Jul–Dec 2026 toward COP31. Recordings dubbed in French, Spanish, Arabic, and Portuguese.",
+      "url": "https://youngoagrifood.com/academy.html"
+    },
+    {
+      "label": "WG onboarding form",
+      "description": "Public onboarding for Food & Agriculture (Contact Points Bruna, Imran, Laureen). Requires YOUNGO membership first.",
+      "url": "https://docs.google.com/forms/d/e/1FAIpQLScdQj8dPp6oiI7yxla0jAjS-J00F5ZO3qrttggLHvcr9aqSog/viewform"
+    },
+    {
+      "label": "Members handbook",
+      "description": "New-member handbook: structure, channels, and how to contribute.",
+      "url": "https://docs.google.com/document/d/1tLsxDL22wqlOoXxeuW24n7EAiIi-G3_3NJ1AwAqpbn8/edit?usp=sharing"
+    },
+    {
+      "label": "Food & Agriculture Linktree",
+      "description": "Onboarding form, website, publications, Instagram, and LinkedIn.",
+      "url": "https://linktr.ee/youngofoodandagriculture"
+    },
+    {
+      "label": "LinkedIn — YOUNGO Food & Agriculture",
+      "description": "Academy session notices, GYS consultations, and UNCCD COP17 engagement.",
+      "url": "https://www.linkedin.com/company/youngo-food-agriculture"
+    },
+    {
+      "label": "Instagram — @youngo.foodandagriculture",
+      "description": "Public WG and Academy updates, including 2026 Contact Point announcement.",
+      "url": "https://www.instagram.com/youngo.foodandagriculture/"
+    },
+    {
+      "label": "Publications archive",
+      "description": "GYS food & agriculture inputs, youth project compilation, and other WG papers.",
+      "url": "https://youngoagrifood.com/publications/"
+    },
+    {
+      "label": "Youth project compilation (Vol. 1, 2025)",
+      "description": "Youth-led food, agriculture, and climate projects from 20+ countries; submitted toward the Sharm el-Sheikh online portal.",
+      "url": "https://youngoagrifood.com/publications/youth-project-compilation.html"
+    },
+    {
+      "label": "UNFCCC — agriculture and food security",
+      "description": "Sharm el-Sheikh joint work on implementation of climate action on agriculture and food security (SJWA).",
+      "url": "https://unfccc.int/topics/land-use/workstreams/agriculture"
+    },
+    {
+      "label": "YOUNGO youth-led projects compilation (UNFCCC)",
+      "description": "Official UNFCCC posting of the YOUNGO Food & Agriculture compilation (SJWA, Dec 2025).",
+      "url": "https://unfccc.int/documents/655286"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Register as a YOUNGO member if you are not already one.",
+      "Complete the Food & Agriculture WG onboarding form (Contact Points Bruna, Imran, Laureen).",
+      "Read the members handbook for structure, channels, and how to contribute.",
+      "Use youngoagrifood.com for Academy sessions, publications, and the youth project map."
+    ],
+    "rules": [
+      "The onboarding form requires constituency membership before WG onboarding.",
+      "Academy sessions are free and open to anyone under 35; 75% attendance is required for a certificate.",
+      "Questions go to the WG inbox, not personal emails."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Food & Agriculture WG",
+    "description": "2026 Contact Points: Shaik Imran, Bruna Santos de Almeida, Laureen Ododoa. Join via the WG onboarding form · youngoagrifood.com · Linktree youngofoodandagriculture · Instagram @youngo.foodandagriculture.",
+    "publicEmail": "foodandagriculture.youngo@gmail.com"
+  }
+}

@@ -73,6 +73,13 @@
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
+  /* Campaign door at /landingV2. Do not flip in dark theme — the photo
+     page has to stay ink, paper, and the wordmark greens. */
+  --landing-v2-ink: #0b2e22;
+  --landing-v2-paper: #f3f6f1;
+  --landing-v2-teal: #62c4bb;
+  --landing-v2-lime: #8bc65e;
+  --landing-v2-forest: #1f6c38;
 }
 
 @media (max-width: 1599px) {

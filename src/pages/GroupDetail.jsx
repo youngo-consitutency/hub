@@ -183,6 +183,24 @@ export function GroupDetail({ slug }) {
               </div>
             </section>
 
+            {g.taskForces?.length > 0 && (
+              <Section label="Task forces">
+                <div className="cardGrid groupActivityGrid">
+                  {g.taskForces.map((force) => (
+                    <A
+                      key={force.slug}
+                      href={`/groups/${g.slug}/${force.slug}`}
+                      className="card cardTight entityCard"
+                      peek
+                    >
+                      <h3>{force.name}</h3>
+                      {force.purpose && <p className="meta">{force.purpose}</p>}
+                    </A>
+                  ))}
+                </div>
+              </Section>
+            )}
+
             <GroupCommunity slug={g.slug} />
 
             <Section

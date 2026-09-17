@@ -56,6 +56,14 @@ export function apiPutFile(path, file) {
   })
 }
 
+export function apiPostFile(path, file, headers = {}) {
+  return request(path, {
+    method: 'POST',
+    body: file,
+    headers: { 'Content-Type': file.type, ...headers },
+  })
+}
+
 export function apiDelete(path) {
   return request(path, { method: 'DELETE' })
 }

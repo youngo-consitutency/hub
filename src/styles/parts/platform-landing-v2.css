@@ -1,0 +1,745 @@
+/* Photographic constituency door. Colours stay in tokens.css. */
+
+.platformLandingV2 {
+  --v2-display: Syne, var(--font-ui);
+  min-height: 100dvh;
+  overflow-x: clip;
+  background: var(--landing-v2-paper);
+  color: var(--landing-v2-ink);
+  font-family: var(--font-ui);
+  color-scheme: light;
+}
+
+.platformLandingV2 a:focus-visible,
+.platformLandingV2 button:focus-visible {
+  outline: 2px solid var(--landing-teal);
+  outline-offset: 3px;
+}
+
+.v2Header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--brand-surface);
+  border-bottom: 1px solid var(--landing-line);
+  padding-top: env(safe-area-inset-top);
+}
+
+.v2HeaderInner {
+  width: min(100%, 1180px);
+  min-height: 72px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+  margin: 0 auto;
+  padding: 8px clamp(20px, 4vw, 40px);
+}
+
+.landingV2Banner {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: color-mix(in srgb, var(--landing-v2-ink) 58%, var(--landing-teal));
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.landingV2Banner a {
+  color: var(--landing-v2-forest);
+  font-weight: 700;
+}
+
+.v2Nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 22px);
+  margin-left: auto;
+}
+
+.v2Nav a,
+.v2SignInLink,
+.v2HeaderAbout {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--landing-v2-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.v2HeaderAbout {
+  display: none;
+  padding: 0 var(--space-3);
+}
+
+.v2HeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.v2Join {
+  flex: 0 0 auto;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.v2Hero {
+  background: var(--landing-v2-ink);
+  color: var(--brand-surface);
+}
+
+.v2HeroStage {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100dvh - 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: clip;
+}
+
+.v2HeroPhoto {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 12% 72%;
+  animation: v2Ken 32s var(--motion-ease-out) both;
+}
+
+.v2HeroShade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--landing-v2-ink) 42%, transparent) 0%,
+      color-mix(in srgb, var(--landing-v2-ink) 8%, transparent) 38%,
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 48%,
+      color-mix(in srgb, var(--landing-v2-ink) 58%, transparent) 100%
+    );
+}
+
+.v2HeroInner {
+  position: relative;
+  z-index: 2;
+  align-self: flex-start;
+  width: min(26rem, 38vw);
+  margin: 0;
+  padding: 0 0 clamp(36px, 6vh, 56px) clamp(24px, 4vw, 48px);
+  animation: v2Rise 900ms var(--motion-ease-out) both;
+}
+
+.v2Hero h1,
+.v2Intro .v2Kicker,
+.v2Bands strong,
+.v2Scenes h2,
+.v2Network h2,
+.v2Trust h2,
+.v2SignIn h2 {
+  font-family: var(--v2-display);
+  font-weight: 800;
+}
+
+.v2Hero h1 {
+  max-width: none;
+  margin: 0;
+  color: var(--brand-surface);
+  font-size: clamp(38px, 3.6vw, 52px);
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-wrap: pretty;
+  text-shadow: 0 18px 48px
+    color-mix(in srgb, var(--landing-v2-ink) 55%, transparent);
+}
+
+.v2HeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.v2HeroPrimary {
+  min-height: 52px;
+  padding-inline: 24px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.platformLandingV2 .v2Join.btn-primary,
+.platformLandingV2 .v2HeroPrimary.btn-primary,
+.platformLandingV2 .v2FooterActions .btn-primary,
+.platformLandingV2 .platformAuth .btn-primary {
+  background: var(--landing-lime);
+  color: var(--landing-v2-ink);
+}
+
+.platformLandingV2 .v2Join.btn-primary:hover,
+.platformLandingV2 .v2HeroPrimary.btn-primary:hover,
+.platformLandingV2 .v2FooterActions .btn-primary:hover,
+.platformLandingV2 .platformAuth .btn-primary:hover {
+  background: var(--landing-teal);
+}
+
+.v2Stripe {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 8px;
+}
+
+.v2Stripe span:nth-child(1) {
+  background: var(--landing-teal);
+}
+
+.v2Stripe span:nth-child(2) {
+  background: var(--landing-lime);
+}
+
+.v2Stripe span:nth-child(3) {
+  background: var(--landing-forest);
+}
+
+.v2Intro {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: clamp(36px, 5vw, 56px) clamp(20px, 4vw, 40px) clamp(8px, 2vw, 16px);
+}
+
+.v2Kicker,
+.v2Label {
+  margin: 0;
+  color: var(--landing-v2-forest);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.v2Close .v2Label {
+  color: var(--landing-lime);
+}
+
+.v2HeroLead {
+  max-width: 46ch;
+  margin: var(--space-4) 0 0;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.v2HeroMeta {
+  margin: var(--space-4) 0 0;
+  color: color-mix(in srgb, var(--landing-v2-ink) 62%, var(--landing-teal));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.v2Bands {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: clamp(28px, 4vw, 48px);
+}
+
+.v2Bands article {
+  min-width: 0;
+  padding: clamp(22px, 3vw, 32px) clamp(20px, 3vw, 36px) clamp(28px, 3.5vw, 40px);
+}
+
+.v2Bands article[data-tone='teal'] {
+  background: var(--landing-teal);
+  color: var(--landing-v2-ink);
+}
+
+.v2Bands article[data-tone='lime'] {
+  background: var(--landing-lime);
+  color: var(--landing-v2-ink);
+}
+
+.v2Bands article[data-tone='forest'] {
+  background: var(--landing-forest);
+  color: var(--brand-surface);
+}
+
+.v2Bands strong {
+  display: block;
+  font-size: clamp(28px, 4.2vw, 52px);
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.v2Bands p {
+  max-width: 26ch;
+  margin: var(--space-3) 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.v2Scenes,
+.v2Network {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: clamp(48px, 7vw, 80px) clamp(20px, 4vw, 40px);
+}
+
+.v2SectionHead {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: clamp(20px, 3vw, 32px);
+}
+
+.v2Scenes h2,
+.v2Network h2,
+.v2Trust h2,
+.v2SignIn h2 {
+  max-width: 14ch;
+  margin: var(--space-2) 0 0;
+  font-size: clamp(32px, 4.6vw, 52px);
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.v2SectionNote {
+  max-width: 42ch;
+  color: color-mix(in srgb, var(--landing-v2-ink) 70%, var(--landing-teal));
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.v2SceneGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.v2SceneGrid a {
+  position: relative;
+  display: grid;
+  min-height: 100%;
+  overflow: clip;
+  color: inherit;
+}
+
+.v2SceneGrid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.v2SceneGrid li div {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: linear-gradient(
+    color-mix(in srgb, var(--landing-v2-ink) 0%, transparent),
+    color-mix(in srgb, var(--landing-v2-ink) 88%, transparent)
+  );
+  color: var(--brand-surface);
+}
+
+.v2SceneGrid strong {
+  font-family: var(--v2-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.v2SceneGrid p {
+  margin: 0;
+  color: color-mix(in srgb, var(--brand-surface) 82%, var(--landing-teal));
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.v2SceneGrid span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--landing-lime);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.v2NetworkGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--landing-line);
+}
+
+.v2NetworkGrid li {
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.v2NetworkGrid li:first-child {
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--landing-line);
+}
+
+.v2NetworkGrid li:last-child {
+  padding-left: var(--space-6);
+}
+
+.v2NetworkGrid a {
+  display: grid;
+  gap: var(--space-2);
+  min-height: 100%;
+  padding: var(--space-5) 0;
+  color: inherit;
+}
+
+.v2NetworkGrid strong {
+  font-family: var(--v2-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.v2Current {
+  margin: 0;
+  color: var(--landing-v2-forest);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.v2NetworkGrid p {
+  margin: 0;
+  max-width: 42ch;
+  color: color-mix(in srgb, var(--landing-v2-ink) 68%, var(--landing-teal));
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.v2Host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  color: var(--landing-v2-forest);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.v2Close {
+  background: var(--landing-v2-ink);
+  color: var(--brand-surface);
+}
+
+.v2Trust,
+.v2SignIn {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: clamp(48px, 7vw, 72px) clamp(20px, 4vw, 40px);
+}
+
+.v2Trust {
+  padding-bottom: 0;
+}
+
+.v2Trust ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.v2Trust li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.v2Trust li svg {
+  color: var(--landing-lime);
+}
+
+.v2Trust strong {
+  font-size: 16px;
+}
+
+.v2Trust p {
+  margin: var(--space-2) 0 0;
+  color: color-mix(in srgb, var(--brand-surface) 70%, var(--landing-teal));
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.v2SignInInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  align-items: start;
+  gap: clamp(24px, 5vw, 64px);
+}
+
+.v2SignInInner > div > p:last-of-type {
+  max-width: 42ch;
+  margin-top: var(--space-4);
+  color: color-mix(in srgb, var(--brand-surface) 74%, var(--landing-teal));
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.v2TextLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-3);
+  color: var(--landing-lime);
+  font-size: 15px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.platformLandingV2 .platformAuth {
+  color: var(--brand-surface);
+  background: color-mix(in srgb, var(--brand-surface) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-surface) 16%, transparent);
+  box-shadow: none;
+}
+
+.platformLandingV2 .platformAuthTitle,
+.platformLandingV2 .platformAuthLead,
+.platformLandingV2 .platformAuthJoin,
+.platformLandingV2 .platformAuth label span {
+  color: var(--brand-surface);
+}
+
+.platformLandingV2 .platformAuthLead,
+.platformLandingV2 .platformAuthJoin {
+  color: color-mix(in srgb, var(--brand-surface) 72%, var(--landing-teal));
+}
+
+.platformLandingV2 .platformAuth .input {
+  color: var(--brand-surface);
+  background: color-mix(in srgb, var(--brand-surface) 16%, transparent);
+  border-color: color-mix(in srgb, var(--brand-surface) 28%, transparent);
+}
+
+.platformLandingV2 .platformAuth a {
+  color: var(--landing-lime);
+}
+
+.v2Footer {
+  padding: clamp(32px, 5vw, 48px) 0 env(safe-area-inset-bottom);
+  background: var(--brand-surface);
+  border-top: 1px solid var(--landing-line);
+}
+
+.v2FooterInner {
+  width: min(100%, 1180px);
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0 auto;
+  padding-inline: clamp(20px, 4vw, 40px);
+}
+
+.v2FooterLead p,
+.v2Footer nav a,
+.v2FooterLegal {
+  color: color-mix(in srgb, var(--landing-v2-ink) 68%, var(--landing-teal));
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.v2Footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+}
+
+.v2FooterLead a,
+.v2FooterLegal a,
+.v2FooterActions a:not(.btn) {
+  color: var(--landing-v2-forest);
+  font-weight: 650;
+}
+
+.v2FooterActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.v2FooterLegal {
+  width: min(100%, 1180px);
+  margin: var(--space-6) auto 0;
+  padding-inline: clamp(20px, 4vw, 40px);
+}
+
+.v2FooterLegal a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@keyframes v2Ken {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes v2Rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 1040px) {
+  .v2Nav {
+    display: none;
+  }
+
+  .v2HeaderAbout {
+    display: inline-flex;
+  }
+
+  .v2HeaderActions {
+    margin-left: auto;
+  }
+
+  .landingV2Banner {
+    display: none;
+  }
+
+  .v2Bands {
+    grid-template-columns: 1fr;
+  }
+
+  .v2SceneGrid,
+  .v2NetworkGrid,
+  .v2Trust ul {
+    grid-template-columns: 1fr;
+  }
+
+  .v2NetworkGrid li:first-child,
+  .v2NetworkGrid li:last-child {
+    padding-right: 0;
+    padding-left: 0;
+    border-right: 0;
+  }
+
+  .v2SceneGrid img {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (max-width: 800px) {
+  .v2HeroStage {
+    min-height: 0;
+  }
+
+  .v2HeroPhoto {
+    position: relative;
+    inset: auto;
+    height: 52vh;
+    object-position: 92% 26%;
+    animation: none;
+  }
+
+  .v2HeroShade {
+    display: none;
+  }
+
+  .v2HeroInner {
+    width: 100%;
+    padding: 28px var(--space-3) 32px;
+    animation: none;
+  }
+
+  .v2Hero h1 {
+    font-size: clamp(36px, 11vw, 48px);
+    text-shadow: none;
+  }
+
+  .v2Kicker {
+    letter-spacing: 0.03em;
+    font-size: 11px;
+  }
+
+  .v2SignInInner {
+    grid-template-columns: 1fr;
+  }
+
+  .v2FooterInner {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .v2HeaderInner,
+  .v2HeroInner,
+  .v2Intro,
+  .v2Scenes,
+  .v2Network,
+  .v2Trust,
+  .v2SignIn,
+  .v2FooterInner,
+  .v2FooterLegal {
+    padding-inline: var(--space-3);
+  }
+
+  .v2HeaderAbout {
+    display: none;
+  }
+
+  .v2HeroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .v2HeroPrimary,
+  .v2FooterActions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .v2Bands strong {
+    font-size: clamp(28px, 9vw, 40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2HeroPhoto,
+  .v2HeroInner {
+    animation: none;
+  }
+}

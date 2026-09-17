@@ -1,0 +1,64 @@
+{
+  "slug": "human-rights",
+  "name": "Human Rights",
+  "monogram": "HR",
+  "focusLine": "Human rights, civic space, and rights-based climate action in UNFCCC processes",
+  "tags": ["Human rights", "Justice"],
+  "groupUrl": "https://linktr.ee/YHRWG",
+  "resources": [
+    {
+      "label": "Human Rights WG membership form",
+      "description": "25/26 membership signup — onboarding slides and WhatsApp/meeting links are sent after you confirm. Subgroups: Administration, Policy, Communications.",
+      "url": "https://forms.gle/z3UFsD3bpvzKWysr9"
+    },
+    {
+      "label": "Human Rights WG Linktree",
+      "description": "Instagram, YouTube, X, and LinkedIn entry points for the Human Rights working group.",
+      "url": "https://linktr.ee/YHRWG"
+    },
+    {
+      "label": "Human Rights WG on LinkedIn",
+      "description": "Public updates on rights-based climate asks, including COP30 Indigenous rights and deforestation framing.",
+      "url": "https://www.linkedin.com/company/youngo-human-rights-working-group"
+    },
+    {
+      "label": "Instagram — @youngo_humanrights",
+      "description": "Human Rights WG public channel (listed on the WG Linktree).",
+      "url": "https://www.instagram.com/youngo_humanrights/"
+    },
+    {
+      "label": "SB64 AIM cross-constituency intervention",
+      "description": "YOUNGO joined ENGO/TUNGO/WGC on defender safety, observer space, visa equity, and accountability — civic-space asks the WG tracks.",
+      "url": "https://demandclimatejustice.org/2026/06/09/sb64-intervention-aim-cross-constituency-intervention/"
+    },
+    {
+      "label": "OHCHR — climate change and human rights",
+      "description": "UN Human Rights overview of rights-based climate action, UNFCCC engagement, and defender protection.",
+      "url": "https://www.ohchr.org/en/climate-change"
+    },
+    {
+      "label": "YOUNGO Code of Conduct",
+      "description": "Constituency Code of Conduct (linked from the membership form and YOUNGO Linktree).",
+      "url": "https://drive.google.com/file/d/17esIC7iiJsnLVwPer9ADP9aXGLENFMFS/view"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Human Rights WG works to keep human rights in climate negotiations and YOUNGO policy — SB/COP papers, the Global Youth Statement, and civic-space asks.",
+      "The group has three subgroups: Administration (events and coordination), Policy (papers and YOUNGO policy work), and Communications (social media and rights-related days).",
+      "2026 Contact Points are Doğukan and Abischag (official roster). Fill the membership form; WhatsApp and meeting links are sent after you review the onboarding slides — they are not posted as a public invite."
+    ],
+    "rules": [
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Do not put environmental human rights defenders or at-risk observers at further risk in public posts or chats.",
+      "Coordinate public statements with CPs before using the YOUNGO name.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Human Rights WG",
+    "description": "2026 Contact Points Doğukan and Abischag (official roster). Join via the 25/26 membership form — WhatsApp and meeting links are shared after onboarding confirmation. LinkedIn youngo-human-rights-working-group · linktr.ee/YHRWG."
+  }
+}

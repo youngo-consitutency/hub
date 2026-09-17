@@ -40,7 +40,7 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
     }
   }, [open])
 
-  if (!event?.startsAt || !event?.endsAt || !event?.slug) return null
+  if (!event?.startsAt || !event?.endsAt) return null
 
   return (
     <div className="addCalWrap" ref={wrapRef}>
@@ -64,7 +64,8 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
       {open && (
         <div className="addCalPanel card" id={panelId}>
           <p className="metaMuted" style={{ marginBottom: 4 }}>
-            Opens your calendar app with this event pre-filled.
+            Adds this call to your calendar. The Hub does not ask for Google
+            account access. For every Hub call, use Subscribe on Calendar.
           </p>
           <a
             className="addCalItem"
@@ -96,14 +97,16 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
             <DestinationIcon url={outlookOfficeUrl(event)} size={17} />
             Outlook 365
           </a>
-          <a
-            className="addCalItem"
-            href={icsDownloadPath(event.slug)}
-            onClick={() => setOpen(false)}
-          >
-            <Download size={16} strokeWidth={1.75} aria-hidden />
-            Apple / other (.ics file)
-          </a>
+          {event.slug && (
+            <a
+              className="addCalItem"
+              href={icsDownloadPath(event.slug)}
+              onClick={() => setOpen(false)}
+            >
+              <Download size={16} strokeWidth={1.75} aria-hidden />
+              Apple / other (.ics file)
+            </a>
+          )}
         </div>
       )}
     </div>

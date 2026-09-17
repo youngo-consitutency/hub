@@ -21,12 +21,14 @@ export async function getAccessProfile(account) {
     return {
       teamRoles: [],
       wgAssignments: [],
+      negotiationAssignments: [],
       capabilities: [],
       manageAllWgs: false,
     }
   const pool = getPool()
   const teamRoles = new Set(pool ? [] : account.teamRoles || [])
   const wgAssignments = []
+  const negotiationAssignments = [...(account.negotiationAssignments || [])]
   if (pool) {
     const { rows } = await pool.query(
       `SELECT scope_type, scope_id, role FROM account_assignments
@@ -37,6 +39,12 @@ export async function getAccessProfile(account) {
       if (row.scope_type === 'team') teamRoles.add(row.scope_id)
       if (row.scope_type === 'working_group')
         wgAssignments.push({ wgSlug: row.scope_id, role: row.role })
+      if (['negotiation_track', 'negotiation_project'].includes(row.scope_type))
+        negotiationAssignments.push({
+          scopeType: row.scope_type,
+          scopeId: row.scope_id,
+          role: row.role,
+        })
     }
   } else {
     for (const row of readJson('wg-progress.json')) {
@@ -102,9 +110,26 @@ export async function getAccessProfile(account) {
   )
     capabilities.add('intelligence.contacts.read')
   for (const item of wgAssignments) capabilities.add(`wg.manage:${item.wgSlug}`)
+  for (const item of negotiationAssignments) {
+    const scope = `${item.scopeType}:${item.scopeId}`
+    capabilities.add(`negotiations.read:${scope}`)
+    if (item.role === 'reviewer') {
+      capabilities.add(`negotiations.evidence.review:${scope}`)
+      capabilities.add(`negotiations.candidates.review:${scope}`)
+    }
+    if (item.role === 'applier')
+      capabilities.add(`negotiations.candidates.apply:${scope}`)
+    if (item.role === 'grant_manager')
+      capabilities.add(`negotiations.grants.manage:${scope}`)
+    if (item.role === 'process_facilitator')
+      capabilities.add(`negotiations.process.record:${scope}`)
+    if (item.role === 'transmitter')
+      capabilities.add(`negotiations.transmission.record:${scope}`)
+  }
   return {
     teamRoles: [...teamRoles],
     wgAssignments,
+    negotiationAssignments,
     capabilities: [...capabilities],
     manageAllWgs: account.role === 'admin',
     isFocalPoint: account.role === 'focal_point',

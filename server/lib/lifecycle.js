@@ -51,6 +51,9 @@ const WRITABLE_ACCOUNT_COLUMNS = new Set([
   'membership_end_reason',
   'last_login_at',
   'email_verified_at',
+  'must_change_password',
+  'country',
+  'region',
 ])
 
 export async function setAccountFields(id, fields) {
@@ -183,6 +186,7 @@ export async function queryAccountsForAdmin({
     'renewal_due',
     'expired',
     'terminated',
+    'rejected',
   ].includes(status)
     ? status
     : ''
@@ -427,8 +431,8 @@ export async function addWgActivity(activity) {
   const pool = getPool()
   if (pool) {
     const { rows } = await pool.query(
-      `INSERT INTO wg_activities (wg_slug, kind, title, body, starts_at, ends_at, url, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO wg_activities (wg_slug, kind, title, body, starts_at, ends_at, url, task_force_slug, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         activity.wgSlug,
         activity.kind,
@@ -437,6 +441,7 @@ export async function addWgActivity(activity) {
         activity.startsAt || null,
         activity.endsAt || null,
         activity.url || null,
+        activity.taskForceSlug || null,
         activity.createdBy,
       ],
     )
@@ -451,6 +456,7 @@ export async function addWgActivity(activity) {
     starts_at: activity.startsAt || null,
     ends_at: activity.endsAt || null,
     url: activity.url || null,
+    task_force_slug: activity.taskForceSlug || null,
     created_by: activity.createdBy,
     created_at: new Date().toISOString(),
   }

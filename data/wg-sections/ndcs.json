@@ -1,0 +1,61 @@
+{
+  "slug": "ndcs",
+  "name": "NDCs",
+  "monogram": "ND",
+  "focusLine": "NDC 3.0 implementation, Global Stocktake follow-up, and youth inputs into national climate contributions",
+  "tags": ["NDCs", "Mitigation", "Policy"],
+  "resources": [
+    {
+      "label": "Join the NDCs WG",
+      "description": "Public onboarding form. Subgroups: Capacity Building, Communications, Policy & Submissions, Global Stocktake. Instagram @youngondcwg.",
+      "url": "https://forms.gle/4GV5J8Dxwz6CQ5hK7"
+    },
+    {
+      "label": "NDCs WG on LinkedIn",
+      "description": "Company page for NDC Basics, GYS coordination, Climate Week opportunities, and Contact Point updates (Zipporah Njenga, Salsalina Larasati).",
+      "url": "https://www.linkedin.com/company/youngondcwg"
+    },
+    {
+      "label": "Instagram — @youngondcwg",
+      "description": "Public NDCs WG channel, including 2026 Contact Point announcement and call notices (meeting links go to registered members).",
+      "url": "https://www.instagram.com/youngondcwg/"
+    },
+    {
+      "label": "Climate Watch — NDC tracker",
+      "description": "WRI tracker of NDC 3.0 / 2025 NDC submissions and 2035 coverage (updated September 2026).",
+      "url": "https://www.climatewatchdata.org/ndc-tracker"
+    },
+    {
+      "label": "CAT — 2035 NDC target update tracker",
+      "description": "Independent 1.5°C alignment check of 2035 NDC targets for analysed countries.",
+      "url": "https://climateactiontracker.org/climate-target-update-tracker-2035/"
+    },
+    {
+      "label": "UNFCCC — Nationally Determined Contributions",
+      "description": "Official NDC explainer: five-year cycles, progression, and the public registry.",
+      "url": "https://unfccc.int/ndc-information/nationally-determined-contributions-ndcs"
+    },
+    {
+      "label": "UNFCCC NDC Registry",
+      "description": "Public registry of NDCs communicated by Parties under Article 4.12 of the Paris Agreement.",
+      "url": "https://unfccc.int/NDCREG"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "The NDCs Working Group works on Nationally Determined Contributions, climate-policy engagement, Global Stocktake follow-up, capacity building, and advocacy in the UNFCCC process.",
+      "2026 Contact Points are Zipporah Njenga (Kenya) and Salsalina Larasati (Indonesia), announced on Instagram in April 2026. Join via the public form; you should already be a YOUNGO member.",
+      "The form places members in at least one subgroup: Capacity Building, Communications, Policy & Submissions, or Global Stocktake. Call links are shared with registered members, not posted as standing public Meet URLs."
+    ],
+    "rules": [
+      "Join at least one of the four subgroups named on the join form.",
+      "When contributing to Global Youth Statement or NDC drafts, do not edit or delete others’ inputs and do not submit AI-generated text (as stated on the WG’s 2026 GYS call).",
+      "Do not circulate internal meeting links; Instagram notes that meeting details go to registered members.",
+      "Coordinate public statements and NDC Basics / Climate Week representation with the Contact Points."
+    ]
+  },
+  "directory": {
+    "roleTitle": "NDCs WG",
+    "description": "2026 Contact Points: Zipporah Njenga and Salsalina Larasati. Join via the public NDCs WG form, then follow LinkedIn (youngondcwg) and Instagram @youngondcwg."
+  }
+}

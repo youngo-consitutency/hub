@@ -37,6 +37,55 @@ test('team assignment produces its workflow capability', async () => {
   assert.equal(hasCapability(access, 'membership.review'), false)
 })
 
+test('negotiation authority is explicit, scoped, and not implied by admin', async () => {
+  const reviewer = await getAccessProfile({
+    id: 'test-reviewer',
+    role: 'member',
+    teamRoles: [],
+    wgInterests: [],
+    negotiationAssignments: [
+      {
+        scopeType: 'negotiation_track',
+        scopeId: 'fixture-track',
+        role: 'reviewer',
+      },
+    ],
+  })
+  assert.equal(
+    hasCapability(
+      reviewer,
+      'negotiations.evidence.review:negotiation_track:fixture-track',
+    ),
+    true,
+  )
+  assert.equal(
+    hasCapability(
+      reviewer,
+      'negotiations.evidence.review:negotiation_track:other-track',
+    ),
+    false,
+  )
+
+  const admin = await getAccessProfile({
+    id: 'test-admin-no-mandate',
+    role: 'admin',
+    teamRoles: [],
+    wgInterests: [],
+  })
+  assert.equal(
+    admin.capabilities.some((capability) =>
+      capability.startsWith('negotiations.process.record:'),
+    ),
+    false,
+  )
+  assert.equal(
+    admin.capabilities.some((capability) =>
+      capability.startsWith('negotiations.transmission.record:'),
+    ),
+    false,
+  )
+})
+
 test('organization registration alone does not grant owner permissions', async () => {
   const context = await resolveOrgContext({
     id: 'org-1',

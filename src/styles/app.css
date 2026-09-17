@@ -10,6 +10,7 @@
 @import './parts/gates.css';
 @import './parts/site.css';
 @import './parts/platform-landing.css';
+@import './parts/platform-landing-v2.css';
 @import './parts/search.css';
 @import './parts/surfaces.css';
 /* Motion comes last so every overlay follows one spatial grammar. */

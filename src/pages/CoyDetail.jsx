@@ -2,11 +2,16 @@ import { useApi } from '../lib/api.js'
 import {
   Async,
   BackLink,
+  LifecycleTiming,
   StatusChip,
   PageHeader,
   Section,
 } from '../components/ui.jsx'
 import { fmtDateRange } from '../lib/time.js'
+import {
+  coyApplicationsAreOpen,
+  resolveCoyStatus,
+} from '../../shared/coyStatus.js'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
 import {
   TbBuilding as Building2,
@@ -34,7 +39,9 @@ export function CoyDetail({ slug }) {
         {(coy) => {
           const place = [coy.city, coy.country].filter(Boolean).join(', ')
           const mapQuery = encodeURIComponent(place || coy.country || coy.title)
-          const cta = CTA[coy.status]
+          const status = resolveCoyStatus(coy)
+          const applicationsOpen = coyApplicationsAreOpen(coy)
+          const cta = CTA[status]
           const hasActions = Boolean((cta && coy.registerUrl) || place)
           return (
             <>
@@ -75,9 +82,17 @@ export function CoyDetail({ slug }) {
                     </div>
                     <div className="coyDetailFact coyDetailStatus">
                       <span className="detailMetaLabel">Status</span>
-                      <StatusChip status={coy.status} />
+                      <StatusChip status={status} />
                     </div>
                   </div>
+                  {coy.applicationsCloseAt && (
+                    <LifecycleTiming
+                      iso={coy.applicationsCloseAt}
+                      label="Applications close"
+                      relation={applicationsOpen ? 'until' : 'closed'}
+                      showCountdown={applicationsOpen}
+                    />
+                  )}
 
                   {hasActions && (
                     <div className="detailActions groupOverviewActions">

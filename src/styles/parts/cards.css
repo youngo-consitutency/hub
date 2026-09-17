@@ -955,6 +955,15 @@ a.resourceRow:hover {
   color: var(--text-1);
 }
 
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
+.btn-danger:hover {
+  background: var(--danger-tint);
+}
+
 .btn-sm {
   height: 32px;
   padding: 0 var(--space-3);

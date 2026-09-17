@@ -1,4 +1,5 @@
 import mjml2html from 'mjml'
+import { publishedLinks } from '../../../src/content/connect.js'
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -85,6 +86,35 @@ function templateContent(templateKey, data) {
       ),
       action,
       text: `You have been invited to join an organisation team in YOUNGO Hub with the ${String(data.seatRole || 'representative')} role. Sign in with this same email address, then open this link within seven days:\n\n${data.actionUrl}`,
+    }
+  }
+
+  if (templateKey === 'membership-activated') {
+    const firstName = singleLine(data.firstName || 'there', 40)
+    const social = publishedLinks()
+    const socialHtml = social
+      .map(
+        (link) =>
+          `<a href="${escapeHtml(link.url)}" style="color:#087f5b;font-weight:700;text-decoration:none">${escapeHtml(link.label)}</a>`,
+      )
+      .join(' &nbsp;·&nbsp; ')
+    const socialText = social
+      .map((link) => `${link.label}: ${link.url}`)
+      .join('\n')
+    return {
+      subject: 'Welcome — your YOUNGO membership is active',
+      eyebrow: 'YOUNGO membership',
+      title: `${firstName}, you are in`,
+      body: `${paragraphs(
+        `The Membership Team has activated your YOUNGO Hub membership.\n\nYOUNGO is the children and youth constituency to the UN climate process. The Hub is where members find working groups, calls, and the work happening now.\n\nA good next step is to open the Hub, join a working group, and add a photo on your profile.`,
+      )}
+            ${
+              socialHtml
+                ? `<mj-text font-size="13px" line-height="1.6" color="#65736d" padding-top="8px">Stay in touch<br />${socialHtml}</mj-text>`
+                : ''
+            }`,
+      action,
+      text: `${firstName}, you are in.\n\nThe Membership Team has activated your YOUNGO Hub membership. Open the Hub to join a working group and add a photo on your profile.${data.actionUrl ? `\n\n${data.actionUrl}` : ''}${socialText ? `\n\nStay in touch\n${socialText}` : ''}`,
     }
   }
 

@@ -273,6 +273,8 @@ const CHIP = {
   archived: ['chip-neutral', 'Archived'],
   registration_open: ['chip-accent', 'Registration open'],
   applications_open: ['chip-warn', 'Applications open'],
+  applications_closed: ['chip-neutral', 'Applications closed'],
+  registration_closed: ['chip-neutral', 'Registration closed'],
   announced: ['chip-neutral', 'Announced soon'],
   concluded: ['chip-neutral', 'Concluded'],
   cancelled: ['chip-neutral', 'Cancelled'],

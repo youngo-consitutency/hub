@@ -222,6 +222,7 @@ export const PRIVACY_SECTIONS = [
         label: 'YOUNGO Hub admins and the Membership Team',
         items: [
           'The full member record, in order to verify membership and administer the constituency',
+          'If an application is rejected, an identity document and statement you send with an appeal — used only to review that appeal',
           'Never your password — it is stored only as a cryptographic hash and cannot be read or recovered by anyone',
         ],
       },
