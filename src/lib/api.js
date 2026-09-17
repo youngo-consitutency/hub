@@ -48,6 +48,14 @@ export function apiPatch(path, body) {
   })
 }
 
+export function apiPut(path, body) {
+  return request(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  })
+}
+
 export function apiPutFile(path, file) {
   return request(path, {
     method: 'PUT',
