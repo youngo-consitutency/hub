@@ -225,7 +225,7 @@ export function SiteHome() {
             There is no single way to take part. Start with the work that feels
             most useful to you.
           </p>
-          <div className="siteMissionGrid">
+          <div className="cardGrid">
             {MISSION.map(({ icon: Icon, title, body }) => (
               <article key={title} className="card siteMissionCard">
                 <span className="iconTile" aria-hidden>
@@ -246,7 +246,7 @@ export function SiteHome() {
             little hierarchy as possible. Every member is invited to take the
             initiative: start a submission, an action, or a new working group.
           </p>
-          <div className="siteOrgGrid">
+          <div className="cardGrid">
             {ORGANISATION.map(({ value, label }) => (
               <article key={value} className="card siteOrgCard">
                 <strong>{value}</strong>
@@ -266,7 +266,7 @@ export function SiteHome() {
         <section className="siteSection" aria-labelledby="what-heading">
           <p className="pageEyebrow">Inside the constituency</p>
           <h2 id="what-heading">What you can take part in</h2>
-          <div className="siteDoGrid">
+          <div className="cardGrid">
             {WHAT_WE_DO.map(({ icon: Icon, title, body, href, link }) => (
               <article key={title} className="card siteDoCard">
                 <span className="iconTile" aria-hidden>
@@ -306,7 +306,7 @@ export function SiteHome() {
         <section className="siteSection" aria-labelledby="history-heading">
           <p className="pageEyebrow">Where this began</p>
           <h2 id="history-heading">Our history</h2>
-          <div className="siteTimeline">
+          <div className="cardGrid siteTimeline">
             {TIMELINE.map(({ year, title, body }) => (
               <article key={year} className="siteTimelineItem">
                 <span className="siteTimelineYear mono">{year}</span>

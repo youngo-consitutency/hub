@@ -293,9 +293,11 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
           </div>
           <div className="authHeading">
             <div className="authHeadingCopy">
-              <p className="metaMuted" style={{ marginBottom: 4 }}>
-                Step 2 of 2 · Membership policy accepted
-              </p>
+              {mode === 'register' && (
+                <p className="metaMuted" style={{ marginBottom: 4 }}>
+                  Step 2 of 2 · Membership policy accepted
+                </p>
+              )}
               <h1 id="auth-title">
                 {mode === 'register'
                   ? 'Join YOUNGO Hub'
@@ -318,38 +320,24 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
             </div>
           </div>
           {mode !== 'forgot' && (
-            <div className="authTabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mode === 'register'}
+            <nav className="authTabs" aria-label="Account access">
+              <A
+                href="/join"
+                aria-current={mode === 'register' ? 'page' : undefined}
                 className={`authTab ${mode === 'register' ? 'active' : ''}`}
-                onClick={() => {
-                  setMode('register')
-                  setError(null)
-                  setFields({})
-                  setForgotMsg(null)
-                }}
               >
                 <UserPlus size={18} strokeWidth={1.75} aria-hidden />
                 Join YOUNGO
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mode === 'signin'}
+              </A>
+              <A
+                href="/signin"
+                aria-current={mode === 'signin' ? 'page' : undefined}
                 className={`authTab ${mode === 'signin' ? 'active' : ''}`}
-                onClick={() => {
-                  setMode('signin')
-                  setError(null)
-                  setFields({})
-                  setForgotMsg(null)
-                }}
               >
                 <KeyRound size={18} strokeWidth={1.75} aria-hidden />
                 Sign in
-              </button>
-            </div>
+              </A>
+            </nav>
           )}
         </header>
 

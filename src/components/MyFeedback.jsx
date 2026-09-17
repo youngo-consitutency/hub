@@ -1,3 +1,4 @@
+import { formatDateTime } from '../lib/dateTime.js'
 import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api.js'
 import { Empty, ErrorCard, Section, Skeletons } from './ui.jsx'
@@ -58,9 +59,7 @@ export function MyFeedback() {
             <h3 style={{ marginTop: 6 }}>{ticket.title}</h3>
             <p className="metaMuted">
               {ticket.pagePath ? `${ticket.pagePath} · ` : ''}
-              {ticket.createdAt
-                ? new Date(ticket.createdAt).toLocaleString()
-                : ''}
+              {ticket.createdAt ? formatDateTime(ticket.createdAt) : ''}
             </p>
           </div>
         ))}

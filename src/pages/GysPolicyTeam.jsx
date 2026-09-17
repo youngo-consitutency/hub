@@ -1,3 +1,5 @@
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbFileText as StatementIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
 import {
@@ -51,6 +53,7 @@ function CountList({ title, items }) {
 }
 
 export function GysPolicyTeam() {
+  const [panel, setPanel] = useState(null)
   const query = useApi('/member/team/gys/overview')
   const [draft, setDraft] = useState({ title: '', body: '', theme: '' })
   const [csvText, setCsvText] = useState('')
@@ -66,6 +69,7 @@ export function GysPolicyTeam() {
       setActionError(null)
       await apiPost('/member/team/gys/contributions', draft)
       setDraft({ title: '', body: '', theme: '' })
+      setPanel(null)
       query.retry()
     } catch (error) {
       setActionError(error.message)
@@ -152,7 +156,33 @@ export function GysPolicyTeam() {
   return (
     <div>
       <PageHeader
+        icon={StatementIcon}
         title="Global Youth Statement"
+        action={
+          query.data && (
+            <div className="rowGap">
+              <Button
+                onClick={() => {
+                  setActionError(null)
+                  setPanel('contribution')
+                }}
+              >
+                <PenTool size={17} aria-hidden />
+                Add contribution
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setActionError(null)
+                  setPanel('import')
+                }}
+              >
+                <Upload size={17} aria-hidden />
+                Import responses
+              </Button>
+            </div>
+          )
+        }
         description="Turn youth inputs into a reviewed statement with a visible handover."
       />
       <Async query={query} skeletons={5}>
@@ -203,69 +233,75 @@ export function GysPolicyTeam() {
               </div>
             </div>
 
-            <Section label="Import Google Form responses">
-              {actionError && <ErrorCard message={actionError} />}
-              {importMessage && <p className="meta">{importMessage}</p>}
-              <div className="card cardTight stackSm">
-                <p className="meta">
-                  Export responses from the official GYS 2026 form as CSV, paste
-                  them below, preview the column mapping, then import into the
-                  contribution queue.
-                </p>
-                <label>
-                  CSV export
-                  <textarea
-                    rows="6"
-                    value={csvText}
-                    onChange={(event) => {
-                      setCsvText(event.target.value)
-                      setPreview(null)
-                    }}
-                    placeholder="Timestamp,Email Address,Country,Theme,Policy recommendation…"
-                  />
-                </label>
-                <div className="rowGap">
-                  <Button
-                    sm
-                    variant="secondary"
-                    disabled={busy || !csvText.trim()}
-                    onClick={runPreview}
-                  >
-                    <Upload size={16} aria-hidden />
-                    Preview mapping
-                  </Button>
-                  <Button
-                    sm
-                    variant="primary"
-                    disabled={busy || !preview?.rowCount}
-                    onClick={runImport}
-                  >
-                    Import {preview?.rowCount || 0} rows
-                  </Button>
-                </div>
-                {preview && (
-                  <div className="gysImportPreview">
-                    <p className="meta">
-                      Detected {preview.rowCount} rows. Body column:{' '}
-                      <strong>{preview.columnMap?.body || '—'}</strong>
-                    </p>
-                    <div className="stackSm">
-                      {preview.preview.map((row) => (
-                        <div key={row.externalId} className="card cardTight">
-                          <strong>{row.title}</strong>
-                          <p className="meta">
-                            {[row.theme, row.country, row.submitterType]
-                              .filter(Boolean)
-                              .join(' · ') || 'No metadata'}
-                          </p>
-                          <p className="meta">{row.bodyPreview}</p>
-                        </div>
-                      ))}
-                    </div>
+            {panel === 'import' && (
+              <SidePanel
+                title="Import Google Form responses"
+                onClose={() => setPanel(null)}
+              >
+                {actionError && <ErrorCard message={actionError} />}
+                {importMessage && <p className="meta">{importMessage}</p>}
+                <div className="stack">
+                  <p className="meta">
+                    Export responses from the official GYS 2026 form as CSV,
+                    paste them below, preview the column mapping, then import
+                    into the contribution queue.
+                  </p>
+                  <label className="field">
+                    CSV export
+                    <textarea
+                      className="input textarea"
+                      rows="6"
+                      value={csvText}
+                      onChange={(event) => {
+                        setCsvText(event.target.value)
+                        setPreview(null)
+                      }}
+                      placeholder="Timestamp,Email Address,Country,Theme,Policy recommendation…"
+                    />
+                  </label>
+                  <div className="rowGap">
+                    <Button
+                      sm
+                      variant="secondary"
+                      disabled={busy || !csvText.trim()}
+                      onClick={runPreview}
+                    >
+                      <Upload size={16} aria-hidden />
+                      Preview mapping
+                    </Button>
+                    <Button
+                      sm
+                      variant="primary"
+                      disabled={busy || !preview?.rowCount}
+                      onClick={runImport}
+                    >
+                      Import {preview?.rowCount || 0} rows
+                    </Button>
                   </div>
-                )}
-              </div>
-            </Section>
+                  {preview && (
+                    <div className="gysImportPreview">
+                      <p className="meta">
+                        Detected {preview.rowCount} rows. Body column:{' '}
+                        <strong>{preview.columnMap?.body || '—'}</strong>
+                      </p>
+                      <div className="stackSm">
+                        {preview.preview.map((row) => (
+                          <div key={row.externalId} className="card cardTight">
+                            <strong>{row.title}</strong>
+                            <p className="meta">
+                              {[row.theme, row.country, row.submitterType]
+                                .filter(Boolean)
+                                .join(' · ') || 'No metadata'}
+                            </p>
+                            <p className="meta">{row.bodyPreview}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SidePanel>
+            )}
 
             <Section label="Intelligent synthesis">
               {!data.synthesis ? (
@@ -340,46 +376,62 @@ export function GysPolicyTeam() {
               </ol>
             </Section>
             <Section label="Contribution workflow">
-              {actionError && <ErrorCard message={actionError} />}
-              <form className="card cardTight stackSm" onSubmit={create}>
-                <div className="formGrid">
-                  <label>
-                    Title
-                    <input
-                      required
-                      value={draft.title}
-                      onChange={(event) =>
-                        setDraft({ ...draft, title: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Theme
-                    <input
-                      value={draft.theme}
-                      onChange={(event) =>
-                        setDraft({ ...draft, theme: event.target.value })
-                      }
-                    />
-                  </label>
-                </div>
-                <label>
-                  Contribution
-                  <textarea
-                    required
-                    rows="3"
-                    value={draft.body}
-                    onChange={(event) =>
-                      setDraft({ ...draft, body: event.target.value })
-                    }
-                  />
-                </label>
-                <div>
-                  <Button sm variant="primary" disabled={busy}>
-                    Add contribution
-                  </Button>
-                </div>
-              </form>
+              {actionError && !panel && <ErrorCard message={actionError} />}
+              {panel === 'contribution' && (
+                <SidePanel
+                  title="Add contribution"
+                  onClose={() => setPanel(null)}
+                >
+                  {actionError && <ErrorCard message={actionError} />}
+                  <form className="stack" onSubmit={create}>
+                    <div className="formGrid">
+                      <label className="field">
+                        Title
+                        <input
+                          className="input"
+                          required
+                          value={draft.title}
+                          onChange={(event) =>
+                            setDraft({ ...draft, title: event.target.value })
+                          }
+                        />
+                      </label>
+                      <label className="field">
+                        Theme
+                        <input
+                          className="input"
+                          value={draft.theme}
+                          onChange={(event) =>
+                            setDraft({ ...draft, theme: event.target.value })
+                          }
+                        />
+                      </label>
+                    </div>
+                    <label className="field">
+                      Contribution
+                      <textarea
+                        className="input textarea"
+                        required
+                        rows="3"
+                        value={draft.body}
+                        onChange={(event) =>
+                          setDraft({ ...draft, body: event.target.value })
+                        }
+                      />
+                    </label>
+                    <div>
+                      <Button
+                        type="submit"
+                        sm
+                        variant="primary"
+                        disabled={busy}
+                      >
+                        Add contribution
+                      </Button>
+                    </div>
+                  </form>
+                </SidePanel>
+              )}
               {!data.contributions?.length ? (
                 <Empty icon={PenTool} title="No tracked contributions yet" />
               ) : (

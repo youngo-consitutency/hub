@@ -24,7 +24,7 @@ import {
   deliveryFailure,
   emailConfigured,
   sendTemplatedEmail,
-} from '../../lib/emailTransport.js'
+} from '../../lib/notifications/transport.js'
 
 export const router = Router()
 

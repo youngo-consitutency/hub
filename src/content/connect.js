@@ -40,16 +40,15 @@ export const COY_CURRENT = {
 }
 
 /**
- * Public YOUNGO sites that sit beside the Hub: the Science Working Group
- * directory and the official Conference of Youth site.
+ * Public climate resources and the official Conference of Youth site.
  */
 export const YOUNGO_NETWORK = [
   {
     key: 'science',
     title: 'Climate Resource Hub',
-    host: 'youngo-science.org',
-    url: 'https://youngo-science.org/',
-    body: 'A public directory of climate work, evidence, learning, and funding, curated with the YOUNGO Science Working Group.',
+    host: 'YOUNGO Hub',
+    url: '/about/resources',
+    body: 'Climate work, evidence, learning, and funding in a public, community-maintained catalogue.',
   },
   {
     key: 'coy',

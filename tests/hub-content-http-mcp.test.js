@@ -196,3 +196,34 @@ test('HTTP MCP anonymous mode skips OAuth and bearer', async () => {
     await close(server)
   }
 })
+
+test('malformed MCP paths return 400 for every method and leave the server healthy', async () => {
+  const server = createMcpHttpServer({ env: { MCP_TOKEN: TOKEN } })
+  const origin = await listen(server)
+  try {
+    for (const method of ['GET', 'POST', 'DELETE', 'OPTIONS']) {
+      for (const token of ['%', '%ZZ', '%E0%A4']) {
+        const result = await fetch(`${origin}/t/${token}/mcp`, { method })
+        assert.equal(result.status, 400)
+        await result.text()
+      }
+    }
+    const init = await fetch(
+      `${origin}/t/${encodeURIComponent(TOKEN)}/mcp/?unused=1`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {},
+        }),
+      },
+    )
+    assert.equal(init.status, 200)
+    assert.equal((await fetch(`${origin}/healthz`)).status, 200)
+  } finally {
+    await close(server)
+  }
+})

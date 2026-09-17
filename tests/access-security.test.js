@@ -147,3 +147,34 @@ test('signing out expires the session cookie', () => {
   assert.match(sent[0], /Max-Age=0/)
   assert.match(sent[0], /HttpOnly/)
 })
+
+test('malformed session cookies are invalid credentials, not exceptions', () => {
+  for (const value of ['%', '%GG', '%E0%A4']) {
+    assert.equal(
+      bearerToken({ headers: { cookie: `youngo_session=${value}` } }),
+      null,
+    )
+    assert.equal(
+      bearerToken({
+        headers: {
+          authorization: 'Bearer valid',
+          cookie: `youngo_session=${value}`,
+        },
+      }),
+      'valid',
+    )
+    assert.equal(
+      bearerToken({
+        headers: {
+          'x-session-token': 'header',
+          cookie: `youngo_session=${value}`,
+        },
+      }),
+      'header',
+    )
+  }
+  assert.equal(
+    bearerToken({ headers: { cookie: 'other=%GG; youngo_session=a%2Bb%3D' } }),
+    'a+b=',
+  )
+})

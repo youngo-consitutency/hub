@@ -73,8 +73,8 @@ test('consultation contribution input strips markup and caps length', () => {
   assert.equal(item.displayName, null)
 })
 
-test('consultation page and public floor work, including read-only preview', async (t) => {
-  const { origin, close } = await startApp({ READ_ONLY_PREVIEW: '1' })
+test('consultation page and public floor work with local fixture storage', async (t) => {
+  const { origin, close } = await startApp({})
   t.after(() => close())
 
   const page = await fetch(`${origin}/consultation`)
@@ -155,11 +155,18 @@ test('consultation page and public floor work, including read-only preview', asy
     board.items.some((item) => item.body.includes('This should be ignored')),
     false,
   )
+})
 
-  const blocked = await fetch(`${origin}/api/auth/sign-in`, {
+test('read-only previews reject contributions without durable database storage', async (t) => {
+  const { origin, close } = await startApp({ READ_ONLY_PREVIEW: '1' })
+  t.after(() => close())
+  const response = await fetch(`${origin}/api/consultation/contributions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email: 'member@example.org', password: 'secret' }),
+    body: JSON.stringify({
+      kind: 'comment',
+      body: 'This must not disappear on restart.',
+    }),
   })
-  assert.equal(blocked.status, 503)
+  assert.equal(response.status, 503)
 })

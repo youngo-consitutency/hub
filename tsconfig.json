@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "types": ["node", "react", "react-dom", "vite/client"]
+  },
+  "include": [
+    "shared/platform.ts",
+    "server/modules/platform/**/*.ts",
+    "src/features/platform/**/*.tsx",
+    "src/features/platform/**/*.ts"
+  ]
+}

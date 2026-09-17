@@ -1,11 +1,7 @@
+import { ASSIGNMENT_LABELS } from '../../shared/responsibilities.js'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, useApi } from '../lib/api.js'
-import { A, Async, Empty, StatusChip } from '../components/ui.jsx'
-import {
-  MissionCountdown,
-  MissionMetric,
-  MissionMonogram,
-} from '../components/MissionConsole.jsx'
+import { A, Async, Empty, StatusChip, PageHeader } from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
   TbArrowRight as ArrowRight,
@@ -69,26 +65,25 @@ export function CpOverview() {
 
   return (
     <div className="mcConsole">
-      <div className="mcHero">
-        <MissionCountdown />
-        <div className="mcHeroMetrics">
-          <MissionMetric
-            value={
-              access.manageAllWgs
-                ? 'ALL'
-                : String(access.wgAssignments?.length || 0)
-            }
-            label="Assigned groups"
-          />
-          <MissionMetric
-            value={String(pendingTotal)}
-            label="Awaiting review"
-            tone={pendingTotal > 0 ? 'warn' : undefined}
-          />
-          <MissionMetric value="CP" label="Your mandate" />
+      <PageHeader
+        icon={Briefcase}
+        title="Working Group workspaces"
+        description="Review membership requests and organise activities in your assigned groups."
+      />
+      <div className="metricGrid">
+        <div className="metricCard">
+          <Users size={20} aria-hidden />
+          <strong>
+            {access.manageAllWgs ? 'All' : access.wgAssignments?.length || 0}
+          </strong>
+          <span>Accessible groups</span>
+        </div>
+        <div className="metricCard">
+          <ListChecks size={20} aria-hidden />
+          <strong>{pendingTotal}</strong>
+          <span>Awaiting review</span>
         </div>
       </div>
-
       <section className="mcSection">
         <div className="mcSectionHead">
           <h2>Your WG workspaces</h2>
@@ -114,12 +109,12 @@ export function CpOverview() {
                 <Empty
                   icon={Briefcase}
                   title="No WG assignment yet"
-                  body="An admin or existing Contact Point must assign you to a specific working group."
+                  body="An administrator can record your selected Contact Point mandate, with its appointment evidence and term."
                 />
               )
             }
             return (
-              <div className="mcBento">
+              <div className="cardGrid">
                 {assigned.map((group) => {
                   const pending = pendingByWg[group.slug] || 0
                   const role = roleForGroup(access, group.slug)
@@ -127,18 +122,20 @@ export function CpOverview() {
                     <A
                       key={group.slug}
                       href={`/cp/${group.slug}`}
-                      className="mcWgTile"
+                      className="card entityCard"
                     >
                       <div className="mcWgTileTop">
-                        <MissionMonogram>
-                          {group.monogram || group.name.slice(0, 2)}
-                        </MissionMonogram>
+                        <Users size={22} aria-hidden />
                         <StatusChip status="active" />
                       </div>
                       <h3>{group.name}</h3>
                       <p className="mcWgFocus">{group.focusLine}</p>
                       <div className="mcWgMeta">
-                        <span className="mcPill mono">{role}</span>
+                        <span className="mcPill mono">
+                          {role === 'admin'
+                            ? 'Administrative access'
+                            : ASSIGNMENT_LABELS[role] || role}
+                        </span>
                         {pending > 0 ? (
                           <span className="mcPill mcPillWarn mono">
                             <ListChecks size={12} aria-hidden />
@@ -152,7 +149,7 @@ export function CpOverview() {
                         )}
                       </div>
                       <span className="mcWgCta">
-                        Open console <ArrowRight size={15} aria-hidden />
+                        Open workspace <ArrowRight size={15} aria-hidden />
                       </span>
                     </A>
                   )

@@ -41,18 +41,18 @@ describe('push subscription store', () => {
   it('saves a subscription and finds it by account', async () => {
     await saveSubscription({
       accountId: ACCOUNT_A,
-      subscription: sub('https://push.example/a1'),
+      subscription: sub('https://fcm.googleapis.com/a1'),
     })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 1)
-    assert.equal(rows[0].endpoint, 'https://push.example/a1')
-    assert.equal(rows[0].keys.auth, 'auth-https://push.example/a1')
+    assert.equal(rows[0].endpoint, 'https://fcm.googleapis.com/a1')
+    assert.equal(rows[0].keys.auth, 'auth-https://fcm.googleapis.com/a1')
   })
 
   it('is idempotent for the same account and endpoint', async () => {
     await saveSubscription({
       accountId: ACCOUNT_A,
-      subscription: sub('https://push.example/a1'),
+      subscription: sub('https://fcm.googleapis.com/a1'),
     })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(
@@ -65,7 +65,7 @@ describe('push subscription store', () => {
   it('keeps one row per device', async () => {
     await saveSubscription({
       accountId: ACCOUNT_A,
-      subscription: sub('https://push.example/a2'),
+      subscription: sub('https://fcm.googleapis.com/a2'),
     })
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 2)
@@ -74,17 +74,17 @@ describe('push subscription store', () => {
   it('does not leak subscriptions between accounts', async () => {
     await saveSubscription({
       accountId: ACCOUNT_B,
-      subscription: sub('https://push.example/b1'),
+      subscription: sub('https://fcm.googleapis.com/b1'),
     })
     const a = await listSubscriptionsForAccounts([ACCOUNT_A])
     const b = await listSubscriptionsForAccounts([ACCOUNT_B])
     assert.equal(a.length, 2)
     assert.equal(b.length, 1)
-    assert.ok(!a.some((r) => r.endpoint === 'https://push.example/b1'))
+    assert.ok(!a.some((r) => r.endpoint === 'https://fcm.googleapis.com/b1'))
   })
 
   it('moves a shared device endpoint to the account currently using it', async () => {
-    const endpoint = 'https://push.example/shared-device'
+    const endpoint = 'https://fcm.googleapis.com/shared-device'
     await saveSubscription({
       accountId: ACCOUNT_A,
       subscription: sub(endpoint),
@@ -109,12 +109,12 @@ describe('push subscription store', () => {
   it('deletes a single endpoint without touching the others', async () => {
     const removed = await deleteSubscription({
       accountId: ACCOUNT_A,
-      endpoint: 'https://push.example/a1',
+      endpoint: 'https://fcm.googleapis.com/a1',
     })
     assert.equal(removed, 1)
     const rows = await listSubscriptionsForAccounts([ACCOUNT_A])
     assert.equal(rows.length, 1)
-    assert.equal(rows[0].endpoint, 'https://push.example/a2')
+    assert.equal(rows[0].endpoint, 'https://fcm.googleapis.com/a2')
   })
 
   it('deletes every endpoint for an account when none is named', async () => {
@@ -130,9 +130,9 @@ describe('push subscription store', () => {
   it('prunes endpoints the push service reports as gone', async () => {
     await saveSubscription({
       accountId: ACCOUNT_A,
-      subscription: sub('https://push.example/dead'),
+      subscription: sub('https://fcm.googleapis.com/dead'),
     })
-    const pruned = await pruneEndpoints(['https://push.example/dead'])
+    const pruned = await pruneEndpoints(['https://fcm.googleapis.com/dead'])
     assert.equal(pruned, 1)
     assert.equal((await listSubscriptionsForAccounts([ACCOUNT_A])).length, 0)
   })
@@ -140,7 +140,7 @@ describe('push subscription store', () => {
   it('survives a restart — the store is on disk, not in memory', async () => {
     await saveSubscription({
       accountId: ACCOUNT_B,
-      subscription: sub('https://push.example/b2'),
+      subscription: sub('https://fcm.googleapis.com/b2'),
     })
     const fresh = await import(
       '../server/lib/pushStore.js?reload=' + Date.now()
@@ -163,7 +163,10 @@ describe('push subscription store', () => {
     assert.equal(items.length, 1)
     assert.equal(items[0].id, ACCOUNT_B)
     assert.equal(items[0].devices, 2)
-    assert.equal(JSON.stringify(items).includes('https://push.example'), false)
+    assert.equal(
+      JSON.stringify(items).includes('https://fcm.googleapis.com'),
+      false,
+    )
     assert.equal(JSON.stringify(items).includes('auth-'), false)
   })
 

@@ -1,23 +1,24 @@
 /* YOUNGO Hub design tokens — the only file where interface colors live. */
 :root {
-  --bg-page: #f7faf8;
+  --bg-page: #e7eee9;
   --bg-card: #ffffff;
-  --bg-raised: #eef3f0;
+  --bg-raised: #dfe9e2;
   --bg-popover: #ffffff;
   --brand-surface: #ffffff;
-  --text-1: #122019;
-  --text-2: #45584c;
-  --text-3: #5e7064;
-  --border: rgba(18, 32, 25, 0.1);
-  --border-strong: rgba(18, 32, 25, 0.18);
-  --accent: #047857;
-  --accent-hover: #065f46;
+  --text-1: #132b20;
+  --text-2: #354c3f;
+  --text-3: #4d6356;
+  --border: #d1ddd4;
+  --border-strong: #71887a;
+  --border-card: color-mix(in srgb, var(--border-strong) 55%, var(--border));
+  --accent: #006b4f;
+  --accent-hover: #004f39;
   --on-accent: #ffffff;
-  --accent-tint: #d1fae5;
-  --on-accent-tint: #065f46;
-  --success: #047857;
-  --success-tint: #d1fae5;
-  --on-success-tint: #065f46;
+  --accent-tint: #c8e8d5;
+  --on-accent-tint: #004f39;
+  --success: #006b4f;
+  --success-tint: #c8e8d5;
+  --on-success-tint: #004f39;
   --live: #65a30d;
   --live-tint: #ecfccb;
   --warn: #b45309;
@@ -26,8 +27,8 @@
   --danger-tint: #fee2e2;
   --info: #0369a1;
   --info-tint: #e0f2fe;
-  --shadow-card:
-    0 1px 2px rgba(18, 32, 25, 0.06), 0 4px 12px rgba(18, 32, 25, 0.05);
+  /* Content sits on flat surfaces; elevation is reserved for overlays. */
+  --shadow-card: none;
   --shadow-popover: 0 4px 24px rgba(18, 32, 25, 0.14);
   --shadow-sticky: 0 -8px 24px rgba(18, 32, 25, 0.08);
   --overlay: rgba(10, 18, 14, 0.56);
@@ -46,6 +47,7 @@
   --section-gap: var(--space-5);
   --motion-fast: 120ms;
   --motion-standard: 180ms;
+  --motion-panel: 240ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-shift: 6px;
@@ -63,14 +65,14 @@
   --font-mono: var(--font-ui);
   --calendar-gys: #6d28d9;
   --calendar-coordination: #4338ca;
-  --landing-canvas: #f1f8f4;
-  --landing-surface: #fbfefc;
-  --landing-ink: #0b2e22;
+  --landing-canvas: var(--bg-page);
+  --landing-surface: var(--bg-card);
+  --landing-ink: var(--text-1);
   --landing-teal: #62c4bb;
   --landing-lime: #8bc65e;
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
-  --landing-shadow: 0 24px 70px rgba(11, 46, 34, 0.13);
+  --landing-shadow: none;
 }
 
 @media (max-width: 1599px) {
@@ -99,24 +101,24 @@
 }
 
 [data-theme='dark'] {
-  --bg-page: #0a0f0c;
-  --bg-card: #111a14;
-  --bg-raised: #16221b;
-  --bg-popover: #1c2b22;
+  --bg-page: #0d1511;
+  --bg-card: #17271d;
+  --bg-raised: #22382b;
+  --bg-popover: #20392a;
   --brand-surface: #ffffff;
-  --text-1: #e8f2ec;
-  --text-2: #9db4a6;
-  --text-3: #6b8073;
-  --border: rgba(167, 243, 208, 0.08);
-  --border-strong: rgba(167, 243, 208, 0.16);
-  --accent: #34d399;
-  --accent-hover: #6ee7b7;
+  --text-1: #f0f7f2;
+  --text-2: #c1d4c7;
+  --text-3: #a6bdae;
+  --border: #35533f;
+  --border-strong: #759985;
+  --accent: #66ddb0;
+  --accent-hover: #a7f3cf;
   --on-accent: #062b1f;
-  --accent-tint: rgba(52, 211, 153, 0.12);
-  --on-accent-tint: #6ee7b7;
-  --success: #34d399;
-  --success-tint: rgba(52, 211, 153, 0.12);
-  --on-success-tint: #6ee7b7;
+  --accent-tint: #183f30;
+  --on-accent-tint: #a7f3cf;
+  --success: #66ddb0;
+  --success-tint: #183f30;
+  --on-success-tint: #a7f3cf;
   --live: #a3e635;
   --live-tint: rgba(163, 230, 53, 0.12);
   --warn: #fbbf24;
@@ -129,18 +131,17 @@
   --shadow-popover: 0 8px 32px rgba(0, 0, 0, 0.45);
   --shadow-sticky: 0 -8px 24px rgba(0, 0, 0, 0.35);
   --overlay: rgba(0, 0, 0, 0.68);
-  --glow-accent:
-    0 0 0 1px rgba(52, 211, 153, 0.35), 0 0 24px rgba(52, 211, 153, 0.15);
+  --glow-accent: none;
   --calendar-gys: #c4b5fd;
   --calendar-coordination: #a5b4fc;
-  --landing-canvas: #09150f;
-  --landing-surface: #0f2118;
-  --landing-ink: #e8f5ed;
+  --landing-canvas: var(--bg-page);
+  --landing-surface: var(--bg-card);
+  --landing-ink: var(--text-1);
   --landing-teal: #72d1c8;
   --landing-lime: #a5d978;
   --landing-forest: #57b875;
   --landing-line: rgba(165, 217, 120, 0.18);
-  --landing-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+  --landing-shadow: none;
 }
 
 /* Base */
@@ -181,6 +182,7 @@ body {
 }
 
 html {
+  scrollbar-gutter: stable;
   color-scheme: light;
 }
 
@@ -259,7 +261,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after,
+  *::backdrop {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

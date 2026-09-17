@@ -1,4 +1,5 @@
 import {
+  canonicalResourceUrl,
   RESOURCE_LANGUAGES,
   RESOURCE_PATHWAYS,
   RESOURCE_REGIONS,
@@ -257,13 +258,18 @@ export function validateEditableContent(
     const pathway = cleanText(payload.pathway)
     const type = cleanText(payload.type)
     const topic = cleanText(payload.topic)
+    const topics = payload.topics === undefined ? [topic] : payload.topics
     const region = cleanText(payload.region) || 'global'
     const language = cleanText(payload.language) || 'English'
     const pathwayValues = new Set(RESOURCE_PATHWAYS.map((item) => item.value))
     const typeValues = new Set(RESOURCE_TYPES.map((item) => item.value))
     const regionValues = new Set(RESOURCE_REGIONS.map((item) => item.value))
 
-    if (!isWebUrl(url)) errors.url = 'Enter a full http:// or https:// URL.'
+    try {
+      canonicalResourceUrl(url)
+    } catch {
+      errors.url = 'Enter a public http:// or https:// URL without credentials.'
+    }
     if (summary.length < 20 || summary.length > 600) {
       errors.summary = 'Enter a summary between 20 and 600 characters.'
     }
@@ -272,6 +278,14 @@ export function validateEditableContent(
     if (!pathwayValues.has(pathway)) errors.pathway = 'Choose a pathway.'
     if (!typeValues.has(type)) errors.type = 'Choose a resource type.'
     if (!RESOURCE_TOPICS.includes(topic)) errors.topic = 'Choose a topic.'
+    if (
+      !Array.isArray(topics) ||
+      topics.length < 1 ||
+      topics.length > 5 ||
+      new Set([topic, ...topics]).size > 5 ||
+      topics.some((t) => !RESOURCE_TOPICS.includes(t))
+    )
+      errors.topics = 'Choose one to five recognised topic tags.'
     if (!regionValues.has(region)) errors.region = 'Choose a region.'
     if (!RESOURCE_LANGUAGES.includes(language))
       errors.language = 'Choose a language.'
@@ -288,6 +302,9 @@ export function validateEditableContent(
         pathway,
         type,
         topic,
+        topics: Array.isArray(topics)
+          ? [...new Set([topic, ...topics])]
+          : [topic],
         region,
         language,
       },

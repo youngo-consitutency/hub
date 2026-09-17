@@ -4,31 +4,48 @@ dist/
 .env
 .env.*
 data/og/
-data/gys-signups.json
-data/gys-workflow.json
-data/hub-accounts.json
-data/hub-sessions.json
-data/password-reset-tokens.json
-data/ngo-seats.json
-data/wg-progress.json
-data/wg-activities.json
-data/ngo-requests.json
-data/content-revisions.json
-data/content-publications.json
-data/feedback-tickets.json
-data/consultation-contributions.json
-data/ngo-opportunities.json
-data/ngo-opportunity-trust.json
+youngo-documents/
+
+# Only reviewed public catalogues belong in version control. Runtime stores
+# include accounts, tokens, member profiles, notifications, queries and audits.
+
+data/*.json
+!data/fixtures.json
+!data/resource-hub.json
+!data/resource-import.json
 *.local
 .local/
+.local-demo/
 .wwebjs_cache/
 data/research/
 .claude/
 .codex-vault/
+.cursor/
+
+# Documentation, AI notes, and reference material stay outside the source tree.
+
+*.[mM][dD]
+*.[mM][dD][xX]
+*.[mM][aA][rR][kK][dD][oO][wW][nN]
+docs/
+openspec/
+scripts/docs/
+scripts/research/
+scripts/tmp/
+
+# Local review output and caches.
+coverage/
+test-results/
+playwright-report/
+*.log
+*.tsbuildinfo
 
 # managed
+
 **.data.json
 **.node-persist**
 **_IGNORE_**
+
 # end managed
+
 .vercel

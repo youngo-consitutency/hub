@@ -1,3 +1,4 @@
+import { regionLabel } from '../lib/regions.js'
 import { useEffect, useRef, useState } from 'react'
 import { apiDelete, apiPatch, apiPutFile } from '../lib/api.js'
 import { Async, Button, ErrorCard } from './ui.jsx'
@@ -236,7 +237,9 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                   <dl className="profileDetails">
                     <Detail term="Role">{roleLabel}</Detail>
                     <Detail term="Country">{account?.country}</Detail>
-                    <Detail term="Region">{account?.region}</Detail>
+                    <Detail term="Region">
+                      {regionLabel(account?.region)}
+                    </Detail>
                     <Detail term="Course score">
                       {account?.courseScore == null
                         ? null

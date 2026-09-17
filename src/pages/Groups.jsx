@@ -1,3 +1,5 @@
+import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
+import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import {
@@ -49,10 +51,9 @@ export function Groups() {
 
   return (
     <div>
-      <PageHeader
-        title="Working groups"
-        description="Search by topic, compare meeting schedules, and open a group workspace."
-      />
+      <PageHeader icon={GroupsIcon} title="Working groups">
+        <PageSectionNav section="groups" />
+      </PageHeader>
       <Async
         query={query}
         empty={(d) =>
@@ -85,6 +86,21 @@ export function Groups() {
                 : a.name.localeCompare(b.name),
             )
 
+          const renderGroup = (group) => (
+            <GroupCard
+              key={group.slug}
+              group={group}
+              topicFilterState={
+                topics[workingGroupTopic(group.slug)?.key] || 'neutral'
+              }
+              onTopicFilter={() => {
+                const topicKey = workingGroupTopic(group.slug)?.key
+                if (!topicKey) return
+                setTopics((current) => toggleFilter(current, topicKey))
+              }}
+            />
+          )
+
           return (
             <>
               <div className="catalogTools">
@@ -100,18 +116,23 @@ export function Groups() {
                       onChange={(event) => setSearch(event.target.value)}
                     />
                   </label>
-                  <div className="sortControl" aria-label="Sort groups">
-                    <SortButton
-                      active
-                      icon={descending ? ArrowUpAZ : ArrowDownAZ}
-                      onClick={() => setDescending((current) => !current)}
-                    >
-                      Name {descending ? 'Z–A' : 'A–Z'}
-                    </SortButton>
+                  <div className="catalogDisplayControls">
+                    <div className="sortControl" aria-label="Sort groups">
+                      <SortButton
+                        active
+                        icon={descending ? ArrowUpAZ : ArrowDownAZ}
+                        onClick={() => setDescending((current) => !current)}
+                      >
+                        Name {descending ? 'Z–A' : 'A–Z'}
+                      </SortButton>
+                    </div>
                   </div>
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu activeCount={activeFilterCount(topics)}>
+                  <FilterMenu
+                    activeCount={activeFilterCount(topics)}
+                    onClear={() => setTopics({})}
+                  >
                     <fieldset className="filterLevel">
                       <legend>Topics</legend>
                       <div className="pillRow">
@@ -142,25 +163,7 @@ export function Groups() {
                 </div>
               </div>
               {groups.length ? (
-                <div className="cardGrid">
-                  {groups.map((group) => (
-                    <GroupCard
-                      key={group.slug}
-                      group={group}
-                      topicFilterState={
-                        topics[workingGroupTopic(group.slug)?.key] || 'neutral'
-                      }
-                      topicIcon={
-                        TOPIC_ICONS[workingGroupTopic(group.slug)?.key]
-                      }
-                      onTopicFilter={() => {
-                        const topicKey = workingGroupTopic(group.slug)?.key
-                        if (!topicKey) return
-                        setTopics((current) => toggleFilter(current, topicKey))
-                      }}
-                    />
-                  ))}
-                </div>
+                <div className="cardGrid">{groups.map(renderGroup)}</div>
               ) : (
                 <Empty
                   icon={Search}

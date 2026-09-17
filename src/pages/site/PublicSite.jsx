@@ -9,6 +9,7 @@ import { Brand } from '../../components/Brand.jsx'
 import { DestinationIcon } from '../../components/DestinationLink.jsx'
 import { usePath } from '../../lib/router.js'
 import { publishedLinks, YOUNGO_NETWORK } from '../../content/connect.js'
+import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
 import { SiteHome } from './SiteHome.jsx'
 import { SiteWorkingGroups } from './SiteWorkingGroups.jsx'
 import { SiteCoy } from './SiteCoy.jsx'
@@ -24,6 +25,7 @@ const NAV = [
   { href: '/about/gys', label: 'GYS' },
   { href: '/about/coy', label: 'COY' },
   { href: '/about/faq', label: 'FAQs' },
+  { href: '/about/organisation', label: 'Organisation & partners' },
   { href: '/about/contact', label: 'Contact' },
 ]
 
@@ -57,9 +59,9 @@ function SiteHeader() {
         <A
           href="/about"
           className="wordmark siteWordmark"
-          aria-label="YOUNGO Hub home"
+          aria-label="YOUNGO home"
         >
-          <Brand />
+          <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
           {NAV.map(({ href, label }) => (
@@ -113,6 +115,10 @@ function SiteHeader() {
               <ArrowRight size={15} strokeWidth={1.75} aria-hidden />
             </A>
           ))}
+          <A className="siteMobileNavItem siteMobileSignIn" href="/signin">
+            Sign in to the Hub
+            <ArrowRight size={15} aria-hidden />
+          </A>
         </nav>
       )}
     </header>
@@ -157,7 +163,7 @@ function SiteFooter() {
             <a
               key={site.key}
               href={site.url}
-              target="_blank"
+              target={site.url.startsWith('/') ? undefined : '_blank'}
               rel="noreferrer noopener"
             >
               {site.title}
@@ -223,6 +229,7 @@ export function PublicSite() {
   else if (path.startsWith('/about/coy')) Page = SiteCoy
   else if (path.startsWith('/about/faq')) Page = SiteFaq
   else if (path.startsWith('/about/contact')) Page = SiteContact
+  else if (path.startsWith('/about/organisation')) Page = PublicPlatform
 
   return (
     <div className="siteShell">

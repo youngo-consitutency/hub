@@ -16,6 +16,21 @@ import {
 // Hub pages that are useful as palette shortcuts even when search returns nothing.
 const PAGE_SHORTCUTS = [
   {
+    to: '/work',
+    title: 'Work & follow-up',
+    line: 'Tasks, owners, deadlines and follow-up',
+    keywords: 'tasks work follow-up owners deadlines',
+    Icon: Gavel,
+  },
+  {
+    to: '/directory/people',
+    title: 'Members',
+    line: 'Find people by working group, skills and interests',
+    keywords: 'members community people directory skills',
+    Icon: Users,
+  },
+
+  {
     to: '/opportunities',
     title: 'Opportunities',
     line: 'Events, workshops and open calls from organisations',

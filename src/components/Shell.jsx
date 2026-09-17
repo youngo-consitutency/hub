@@ -1,10 +1,10 @@
+import { navigationActive as isActive } from '../lib/pageSections.js'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { A } from './ui.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
 import { Brand } from './Brand.jsx'
 import { usePath } from '../lib/router.js'
 import { useAccount } from '../lib/accountContext.jsx'
-import { MissionStatusBar } from './MissionConsole.jsx'
 import { AlertSetupNotice } from './AlertSetupNotice.jsx'
 import {
   TbHome as Home,
@@ -13,10 +13,8 @@ import {
   TbGavel as Gavel,
   TbMapPin as MapPin,
   TbUsers as Users,
-  TbAt as AtSign,
   TbSearch as Search,
   TbMenu2 as Menu,
-  TbScript as ScrollText,
   TbSchool as GraduationCap,
   TbLibrary as Library,
   TbBuilding as Building2,
@@ -35,45 +33,11 @@ import {
   TbHelpCircle as CircleHelp,
 } from 'react-icons/tb'
 
-function isActive(path, href) {
-  return href === '/' ? path === '/' : path.startsWith(href)
-}
-
-const STATIONS = [
-  ['/cp', 'WG contact point'],
-  ['/team/membership', 'Membership team'],
-  ['/team/gys', 'GYS policy'],
-  ['/staff/content', 'Content ops'],
-  ['/staff/points', 'NGO points'],
-  ['/admin', 'Admin'],
-  ['/focal', 'Global focal point'],
-  ['/ngo', 'NGO platform'],
-  ['/onboarding', 'Onboarding'],
-  ['/library', 'Library'],
-  ['/resources', 'Science resources'],
-  ['/calendar', 'Calendar'],
-  ['/submissions', 'Submissions'],
-  ['/council', 'Council'],
-  ['/coys', 'COY tracker'],
-  ['/gys', 'Youth statement'],
-  ['/groups', 'Working groups'],
-  ['/opportunities', 'Opportunities'],
-  ['/directory', 'Directory'],
-  ['/recognition', 'NGO recognition'],
-  ['/profile', 'Profile'],
-  ['/search', 'Search'],
-]
-
-function stationFor(path) {
-  const match = STATIONS.find(([prefix]) => path.startsWith(prefix))
-  return match ? match[1] : 'Member hub'
-}
-
-// Four headings, each answering one question. Role-gated tools all land in
-// `mine` instead of adding a heading per responsibility.
+// Home stands alone; browsing, people and shared work have distinct homes.
 const SECTION = {
-  now: "What's on",
-  act: 'Take part',
+  home: '',
+  now: 'Explore',
+  act: 'Work & decisions',
   people: 'People & groups',
   mine: 'Your responsibilities',
 }
@@ -137,27 +101,8 @@ export function Shell({ children }) {
     }
   }, [sheet])
 
-  const isOperational = [
-    '/cp',
-    '/team',
-    '/staff',
-    '/admin',
-    '/focal',
-    '/ngo',
-  ].some((prefix) => path.startsWith(prefix))
-
   const verified = Boolean(account?.isVerified)
 
-  /**
-   * Navigation is declared as one flat list and grouped afterwards. The
-   * previous version pushed a new section per role, so an account holding
-   * several responsibilities saw seven headings, and `/staff/points` appeared
-   * twice because the de-duplication only looked inside one section.
-   *
-   * Sections answer one question each: What's on? · What I act on · Who's
-   * there · What I'm responsible for. Every role-gated destination lands in
-   * that last section rather than earning a heading of its own.
-   */
   const nav = useMemo(() => {
     const isAdmin = account?.role === 'admin'
     const teamRoles = access.teamRoles || []
@@ -175,17 +120,23 @@ export function Shell({ children }) {
       {
         section: SECTION.now,
         href: '/resources',
-        label: 'Science resources',
+        label: 'Resources',
         icon: Library,
         when: !verified,
       },
 
-      { section: SECTION.now, href: '/', label: 'Home', icon: Home },
+      { section: SECTION.home, href: '/', label: 'Home', icon: Home },
       {
         section: SECTION.now,
         href: '/calendar',
         label: 'Calendar',
         icon: CalendarDays,
+      },
+      {
+        section: SECTION.now,
+        href: '/coys',
+        label: 'COY tracker',
+        icon: MapPin,
       },
       {
         section: SECTION.now,
@@ -196,47 +147,46 @@ export function Shell({ children }) {
       {
         section: SECTION.now,
         href: '/resources',
-        label: 'Science resources',
+        label: 'Resources',
         icon: Library,
       },
 
       {
         section: SECTION.act,
+        href: '/work',
+        label: 'Tasks',
+        icon: ClipboardCheck,
+      },
+      {
+        section: SECTION.act,
+        href: '/council',
+        label: 'Decisions',
+        icon: Gavel,
+      },
+      {
+        section: SECTION.act,
         href: '/submissions',
-        label: 'Submissions',
+        label: 'Policy & statements',
         icon: FileText,
       },
       {
-        section: SECTION.act,
-        href: '/gys',
-        label: 'Youth Statement',
-        icon: ScrollText,
-      },
-      { section: SECTION.act, href: '/council', label: 'Council', icon: Gavel },
-      {
-        section: SECTION.act,
-        href: '/coys',
-        label: 'COY tracker',
-        icon: MapPin,
-      },
-
-      {
         section: SECTION.people,
         href: '/groups',
-        label: 'Working groups',
+        label: 'Groups',
         icon: Users,
       },
       {
         section: SECTION.people,
-        href: '/directory',
+        href: '/directory/people',
         label: 'Directory',
-        icon: AtSign,
+        icon: UserCircle,
       },
       {
-        section: SECTION.people,
-        href: '/recognition',
-        label: 'NGO recognition',
-        icon: Trophy,
+        section: SECTION.mine,
+        href: '/platform/partnerships',
+        label: 'Partnerships',
+        icon: Building2,
+        when: teamRoles.includes('partnerships'),
       },
 
       {
@@ -274,16 +224,6 @@ export function Shell({ children }) {
       },
       {
         section: SECTION.mine,
-        href: '/staff/points',
-        label: 'NGO points',
-        icon: Award,
-        when:
-          isAdmin ||
-          account?.role === 'focal_point' ||
-          teamRoles.includes('membership_team'),
-      },
-      {
-        section: SECTION.mine,
         href: '/focal',
         label: 'Global Focal Point',
         icon: Network,
@@ -294,7 +234,14 @@ export function Shell({ children }) {
         href: '/ngo',
         label: 'NGO platform',
         icon: Building2,
-        when: access.ngo || isAdmin || account?.role === 'ngo_admin',
+        when: access.ngo || account?.role === 'ngo_admin',
+      },
+      {
+        section: SECTION.mine,
+        href: '/staff/review',
+        label: 'Review queue',
+        icon: ClipboardCheck,
+        when: isAdmin || teamRoles.includes('membership_team'),
       },
       {
         section: SECTION.mine,
@@ -322,7 +269,16 @@ export function Shell({ children }) {
       if (group) group.items.push(item)
       else sections.push({ section: entry.section, items: [item] })
     }
-    return sections
+    const order = [
+      SECTION.home,
+      SECTION.now,
+      SECTION.people,
+      SECTION.act,
+      SECTION.mine,
+    ]
+    return sections.sort(
+      (a, b) => order.indexOf(a.section) - order.indexOf(b.section),
+    )
   }, [
     account,
     verified,
@@ -378,8 +334,8 @@ export function Shell({ children }) {
           </A>
         )}
         {nav.map((group) => (
-          <div key={group.section}>
-            <p className="navSection">{group.section}</p>
+          <div className="navGroup" key={group.section || 'home'}>
+            {group.section && <p className="navSection">{group.section}</p>}
             {group.items.map(({ href, label, icon: Icon }) => (
               <A
                 key={href}
@@ -400,7 +356,7 @@ export function Shell({ children }) {
             aria-current={isActive(path, '/help') ? 'page' : undefined}
           >
             <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
-            <span>Help &amp; support</span>
+            <span>Help</span>
           </A>
           {account && verified && (
             <A
@@ -474,9 +430,6 @@ export function Shell({ children }) {
           inert={sheet ? true : undefined}
           aria-hidden={sheet ? 'true' : undefined}
         >
-          {/* Operational consoles only — the COP31 clock is ops chrome, not
-              something a member checking a deadline needs on every page. */}
-          {isOperational && <MissionStatusBar station={stationFor(path)} />}
           {!verified && (
             <div className="noticeBanner noticeBannerWarn">
               <span className="noticeDot" />
@@ -536,7 +489,9 @@ export function Shell({ children }) {
             <div className="sheetSections">
               {nav.map((group) => (
                 <section className="sheetSection" key={group.section}>
-                  <p className="navSection">{group.section}</p>
+                  {group.section && (
+                    <p className="navSection">{group.section}</p>
+                  )}
                   <div className="sheetNavGrid">
                     {group.items.map(({ href, label, icon: Icon }) => (
                       <A
@@ -563,7 +518,7 @@ export function Shell({ children }) {
                   onClick={() => setSheet(false)}
                 >
                   <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
-                  <span>Help &amp; support</span>
+                  <span>Help</span>
                 </A>
               </div>
             )}

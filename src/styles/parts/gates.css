@@ -24,9 +24,9 @@
   flex-direction: column;
   min-height: calc(100dvh - 32px);
   background: var(--bg-page);
-  border: 1px solid var(--border-strong);
+  border: 0;
   border-radius: var(--radius-modal);
-  box-shadow: var(--shadow-popover);
+  box-shadow: none;
   overflow: clip;
 }
 
@@ -446,7 +446,7 @@ ul.mandateBulletGroup {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid transparent;
   background: var(--bg-raised);
   color: var(--text-2);
   border-radius: var(--radius-control);
@@ -532,7 +532,7 @@ ul.mandateBulletGroup {
   gap: var(--space-1);
   padding: var(--space-3);
   border-radius: var(--radius-control);
-  border: 1px solid var(--border-strong);
+  border: 1px solid transparent;
   background: var(--bg-page);
   cursor: pointer;
   min-height: 44px;

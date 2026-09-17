@@ -1,19 +1,13 @@
 import { useApi } from '../lib/api.js'
-import {
-  A,
-  Async,
-  Empty,
-  PageHeader,
-  Section,
-  StatusChip,
-} from '../components/ui.jsx'
+import { A, Async, Empty, PageHeader, Section } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
+import { formatDate } from '../features/platform/api.ts'
 import {
-  TbCalendar as CalendarDays,
+  TbWorld as FocalIcon,
+  TbCalendar as Calendar,
   TbFileText as FileText,
   TbGavel as Gavel,
-  TbSitemap as Network,
-  TbRadio as Radio,
+  TbArrowUpRight as Arrow,
   TbUsers as Users,
 } from 'react-icons/tb'
 
@@ -22,160 +16,173 @@ export function FocalPoint() {
   return (
     <div>
       <PageHeader
+        icon={FocalIcon}
         title="Global Focal Point"
-        description="Track constituency signals, coordinate with mandate holders, and keep UNFCCC-facing work connected to what members are doing."
+        description="Follow constituency work, connect with mandate holders and coordinate UNFCCC communications."
       />
-
       <Async query={query} skeletons={5}>
         {(data) => (
           <>
             <div className="metricGrid">
-              <div className="metricCard">
-                <Radio size={18} aria-hidden />
-                <strong>{data.events.length}</strong>
-                <span>upcoming calls</span>
-              </div>
-              <div className="metricCard">
-                <FileText size={18} aria-hidden />
-                <strong>{data.submissions.length}</strong>
-                <span>open submissions</span>
-              </div>
-              <div className="metricCard">
-                <Gavel size={18} aria-hidden />
-                <strong>{data.decisions.length}</strong>
-                <span>active decisions</span>
-              </div>
+              {[
+                [Calendar, data.events.length, 'upcoming calls', '/calendar'],
+                [
+                  FileText,
+                  data.submissions.length,
+                  'open submissions',
+                  '/submissions',
+                ],
+                [
+                  Gavel,
+                  data.decisions.length,
+                  'active decisions in your bodies',
+                  '/council',
+                ],
+              ].map(([Icon, count, label, href]) => (
+                <A key={href} href={href} className="metricCard">
+                  <Icon size={20} aria-hidden />
+                  <strong>{count}</strong>
+                  <span>{label}</span>
+                </A>
+              ))}
             </div>
-
-            <div className="focalGrid">
+            <div className="workspaceColumns">
               <Section
-                label="Mandate-holder directory"
+                label="Upcoming calls"
                 action={
-                  <A href="/directory" className="metaMuted">
-                    Full directory →
-                  </A>
-                }
-              >
-                {!data.mandateContacts.length ? (
-                  <Empty icon={Users} title="No mandate contacts yet" />
-                ) : (
-                  <div className="grid2">
-                    {data.mandateContacts.slice(0, 6).map((contact) => (
-                      <ContactCard
-                        key={`${contact.group}-${contact.roleTitle}`}
-                        contact={contact}
-                      />
-                    ))}
-                  </div>
-                )}
-              </Section>
-
-              <Section
-                label="Near-term calls"
-                action={
-                  <A href="/calendar" className="metaMuted">
-                    Calendar →
+                  <A href="/calendar" className="inlineLink">
+                    Calendar <Arrow size={16} aria-hidden />
                   </A>
                 }
               >
                 <div className="stackSm">
-                  {data.events.slice(0, 5).map((event) => (
+                  {data.events.slice(0, 4).map((event) => (
                     <A
                       key={event.slug}
                       href={`/calendar/${event.slug}`}
-                      className="card cardTight queueRow"
+                      className="card recordRow"
                     >
+                      <Calendar size={20} aria-hidden />
                       <div>
                         <strong>{event.title}</strong>
+                        <p className="meta">{formatDate(event.startsAt)}</p>
                         <p className="meta">
-                          {new Date(event.startsAt).toLocaleString()} ·{' '}
                           {event.wg?.name || 'Constituency'}
                         </p>
                       </div>
-                      <CalendarDays size={18} aria-hidden />
+                      <Arrow size={17} aria-hidden />
                     </A>
                   ))}
                   {!data.events.length && (
-                    <Empty icon={CalendarDays} title="No upcoming calls" />
+                    <Empty icon={Calendar} title="No upcoming calls" />
+                  )}
+                </div>
+              </Section>
+              <Section
+                label="Active decisions"
+                action={
+                  <A href="/council" className="inlineLink">
+                    All decisions <Arrow size={16} aria-hidden />
+                  </A>
+                }
+              >
+                <div className="stackSm">
+                  {data.decisions.slice(0, 4).map((item) => (
+                    <A
+                      key={item.id}
+                      href={`/council/${item.id}`}
+                      className="card recordRow"
+                    >
+                      <Gavel size={20} aria-hidden />
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p className="meta">{item.bodyName}</p>
+                        <span className="chip chip-neutral">
+                          {item.stage
+                            .replaceAll('_', ' ')
+                            .replace(/^./, (c) => c.toUpperCase())}
+                        </span>
+                      </div>
+                      <Arrow size={17} aria-hidden />
+                    </A>
+                  ))}
+                  {!data.decisions.length && (
+                    <Empty
+                      icon={Gavel}
+                      title="No active decisions in your bodies"
+                    />
                   )}
                 </div>
               </Section>
             </div>
-
-            <Section label="Constituency progress signals">
-              <div className="grid2">
-                <div>
-                  <h3 className="subsectionHeading">Open submissions</h3>
-                  <div className="stackSm">
-                    {data.submissions.slice(0, 4).map((item) => (
-                      <A
-                        key={item.slug}
-                        href={`/submissions/${item.slug}`}
-                        className="card cardTight queueRow"
-                      >
-                        <div>
-                          <strong>{item.title}</strong>
-                          <p className="meta">
-                            {item.wg?.name || 'Cross-constituency'}
-                          </p>
-                        </div>
-                        <StatusChip status={item.status} />
-                      </A>
-                    ))}
-                    {!data.submissions.length && (
-                      <Empty icon={FileText} title="No open submissions" />
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="subsectionHeading">
-                    Active council decisions
-                  </h3>
-                  <div className="stackSm">
-                    {data.decisions.slice(0, 4).map((item) => (
-                      <A
-                        key={item.slug}
-                        href={`/council/${item.slug}`}
-                        className="card cardTight queueRow"
-                      >
-                        <div>
-                          <strong>{item.title}</strong>
-                          <p className="meta">
-                            {item.summary || 'Decision process active'}
-                          </p>
-                        </div>
-                        <StatusChip status={item.status} />
-                      </A>
-                    ))}
-                    {!data.decisions.length && (
-                      <Empty icon={Gavel} title="No active decisions" />
-                    )}
-                  </div>
-                </div>
+            <Section
+              label="Open submissions"
+              action={
+                <A href="/submissions" className="inlineLink">
+                  All submissions <Arrow size={16} aria-hidden />
+                </A>
+              }
+            >
+              <div className="cardGrid">
+                {data.submissions.slice(0, 3).map((item) => (
+                  <A
+                    key={item.slug}
+                    href={`/submissions/${item.slug}`}
+                    className="card entityCard"
+                  >
+                    <FileText size={22} aria-hidden />
+                    <h3>{item.title}</h3>
+                    <p className="meta">
+                      {item.wg?.name || 'Cross-constituency'}
+                    </p>
+                    <span className="chip chip-neutral">Open</span>
+                  </A>
+                ))}
               </div>
+              {!data.submissions.length && (
+                <Empty icon={FileText} title="No open submissions" />
+              )}
             </Section>
-
-            <Section label="Working group coverage">
-              <div className="grid2">
+            <Section
+              label="Mandate-holder contacts"
+              action={
+                <A href="/directory" className="inlineLink">
+                  Full directory <Arrow size={16} aria-hidden />
+                </A>
+              }
+            >
+              <div className="cardGrid">
+                {data.mandateContacts.slice(0, 3).map((contact, i) => (
+                  <ContactCard key={i} contact={contact} />
+                ))}
+              </div>
+              {!data.mandateContacts.length && (
+                <Empty icon={Users} title="No mandate contacts yet" />
+              )}
+            </Section>
+            <Section
+              label="Working groups"
+              action={
+                <A href="/groups" className="inlineLink">
+                  All groups <Arrow size={16} aria-hidden />
+                </A>
+              }
+            >
+              <div className="cardGrid">
                 {data.groups.map((group) => (
                   <A
                     key={group.slug}
                     href={`/groups/${group.slug}`}
-                    className="card cardTight queueRow"
+                    className="card entityCard"
                   >
-                    <div className="rowGap">
-                      <span className="monogram">{group.monogram}</span>
-                      <div>
-                        <strong>{group.name}</strong>
-                        <p className="meta">{group.focusLine}</p>
-                      </div>
-                    </div>
-                    <Users size={18} aria-hidden />
+                    <Users size={22} aria-hidden />
+                    <h3>{group.name}</h3>
+                    <p className="meta">{group.focusLine}</p>
+                    <span className="inlineLink">
+                      View group <Arrow size={16} aria-hidden />
+                    </span>
                   </A>
                 ))}
-                {!data.groups.length && (
-                  <Empty icon={Network} title="No working groups yet" />
-                )}
               </div>
             </Section>
           </>

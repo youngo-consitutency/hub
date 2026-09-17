@@ -1,3 +1,4 @@
+import { overview } from '../../modules/platform/service.ts'
 // Member essentials: access profile, membership course, WG workspaces.
 import { Router } from 'express'
 import { requireAccount, requireFocalPoint, requireVerified } from './guards.js'
@@ -7,8 +8,7 @@ import {
   PASS_SCORE,
   QUIZ,
   scoreQuiz,
-} from '../../../src/content/membershipCourse.js'
-import { getAccessProfile } from '../../lib/access.js'
+} from '../../lib/membershipCourse.js'
 import {
   completeCourse,
   getWgProgress,
@@ -18,7 +18,6 @@ import {
 } from '../../lib/lifecycle.js'
 import {
   getFeed,
-  listCouncil,
   listDirectory,
   listEvents,
   listGroups,
@@ -30,7 +29,7 @@ export const router = Router()
 router.get('/access', async (req, res) => {
   const account = await requireAccount(req, res)
   if (!account) return
-  res.json(await getAccessProfile(account))
+  res.json(account.access)
 })
 
 router.get('/focal/overview', async (req, res) => {
@@ -39,9 +38,14 @@ router.get('/focal/overview', async (req, res) => {
   if (!requireFocalPoint(req, res)) return
   res.json({
     feed: getFeed(),
-    events: listEvents().slice(0, 8),
+    events: listEvents()
+      .filter((event) => Date.parse(event.startsAt) >= Date.now())
+      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)),
     submissions: listSubmissions('open').slice(0, 8),
-    decisions: listCouncil('active').slice(0, 8),
+    decisions: (await overview(account)).decisions.filter(
+      (decision) =>
+        !['adopted', 'not_adopted', 'withdrawn'].includes(decision.stage),
+    ),
     groups: listGroups(),
     mandateContacts: listDirectory({ member: true }).slice(0, 12),
   })
@@ -77,6 +81,13 @@ router.post('/course/submit', async (req, res) => {
       })
     }
     const updated = await completeCourse(account.id, { score, total })
+    if (!updated)
+      return res.status(403).json({
+        error: {
+          code: 'account_inactive',
+          message: 'This account is no longer eligible for course completion.',
+        },
+      })
     res.json({ ok: true, score, total, passed: true, account: updated })
   } catch (err) {
     console.error('course submit failed:', err.message)

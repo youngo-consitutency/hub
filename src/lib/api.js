@@ -1,98 +1,55 @@
 import { useEffect, useState } from 'react'
 import { clearSession } from './session.js'
 
-// Requests carry no Authorization header: the session travels in the HttpOnly
-// `youngo_session` cookie, which `credentials: 'same-origin'` attaches. Keeping
-// the credential out of JavaScript is what makes an XSS bug non-fatal.
-function authHeaders(extra = {}) {
-  return { ...extra }
-}
-
-export async function apiGet(path) {
+// The browser sends the HttpOnly session cookie; no token is stored in JS.
+async function request(path, { method = 'GET', ...options } = {}) {
   const res = await fetch(`/api${path}`, {
-    headers: authHeaders(),
-    credentials: 'same-origin',
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    // Clear local state only when the session endpoint rejects the token.
-    if (res.status === 401 && path === '/auth/me') clearSession()
-    const err = new Error(
-      body?.error?.message || `Request failed (${res.status})`,
-    )
-    err.status = res.status
-    err.code = body?.error?.code
-    err.fields = body?.error?.fields
-    throw err
-  }
-  return res.json()
-}
-
-export async function apiPost(path, body, extraHeaders = {}) {
-  const res = await fetch(`/api${path}`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: authHeaders({
-      'Content-Type': 'application/json',
-      ...extraHeaders,
-    }),
-    body: JSON.stringify(body ?? {}),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const err = new Error(
-      data?.error?.message || `Request failed (${res.status})`,
-    )
-    err.status = res.status
-    err.code = data?.error?.code
-    err.fields = data?.error?.fields
-    throw err
-  }
-  return data
-}
-
-export async function apiPatch(path, body) {
-  const res = await fetch(`/api${path}`, {
-    method: 'PATCH',
-    credentials: 'same-origin',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(body ?? {}),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const err = new Error(
-      data?.error?.message || `Request failed (${res.status})`,
-    )
-    err.status = res.status
-    err.code = data?.error?.code
-    err.fields = data?.error?.fields
-    throw err
-  }
-  return data
-}
-
-async function apiMutation(path, { method, body, headers = {} }) {
-  const res = await fetch(`/api${path}`, {
+    ...options,
     method,
     credentials: 'same-origin',
-    headers: authHeaders(headers),
-    body,
   })
-  const data = await res.json().catch(() => ({}))
+  const data = await res.json().catch((error) => {
+    // Reads require JSON. Mutations may return an empty success response.
+    if (res.ok && method === 'GET') throw error
+    return {}
+  })
   if (!res.ok) {
-    const err = new Error(
+    if (res.status === 401 && method === 'GET' && path === '/auth/me') {
+      clearSession()
+    }
+    const error = new Error(
       data?.error?.message || `Request failed (${res.status})`,
     )
-    err.status = res.status
-    err.code = data?.error?.code
-    err.fields = data?.error?.fields
-    throw err
+    error.status = res.status
+    error.code = data?.error?.code
+    error.fields = data?.error?.fields
+    throw error
   }
   return data
+}
+
+export function apiGet(path) {
+  return request(path)
+}
+
+export function apiPost(path, body, extraHeaders = {}) {
+  return request(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
+    body: JSON.stringify(body ?? {}),
+  })
+}
+
+export function apiPatch(path, body) {
+  return request(path, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  })
 }
 
 export function apiPutFile(path, file) {
-  return apiMutation(path, {
+  return request(path, {
     method: 'PUT',
     body: file,
     headers: { 'Content-Type': file.type },
@@ -100,7 +57,7 @@ export function apiPutFile(path, file) {
 }
 
 export function apiDelete(path) {
-  return apiMutation(path, { method: 'DELETE' })
+  return request(path, { method: 'DELETE' })
 }
 
 // Fetch state for independently rendered sections, including retry support.

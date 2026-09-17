@@ -103,9 +103,9 @@ test('development cleanup unregisters workers and removes only Hub caches', asyn
 
 test('an existing push subscription is registered for the current account again', async (t) => {
   const existing = {
-    endpoint: 'https://push.example/shared',
+    endpoint: 'https://fcm.googleapis.com/shared',
     toJSON: () => ({
-      endpoint: 'https://push.example/shared',
+      endpoint: 'https://fcm.googleapis.com/shared',
       keys: { p256dh: 'key', auth: 'auth' },
     }),
   }

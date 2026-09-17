@@ -102,8 +102,8 @@ test('the Hub and constituency use the correct brand lockups', async () => {
   assert.match(brand, /youngo-logo\.png/)
   assert.match(brand, /data-brand=/)
   assert.doesNotMatch(brand, /className="brandHub"/)
-  assert.match(publicSite, /aria-label="YOUNGO Hub home"/)
-  assert.match(publicSite, /<Brand \/>/)
+  assert.match(publicSite, /aria-label="YOUNGO home"/)
+  assert.doesNotMatch(publicSite, /<Brand \/>/)
   assert.match(publicSite, /<Brand constituencyOnly \/>/)
 })
 
@@ -113,17 +113,17 @@ test('catalog controls keep expanded filters below search and sort', async () =>
   const searchRow = css.match(/\.catalogSearchRow\s*{([^}]+)}/)?.[1] || ''
 
   assert.match(popover, /position:\s*static/)
-  assert.match(popover, /width:\s*fit-content/)
+  assert.match(popover, /width:\s*100%/)
   assert.match(popover, /padding:\s*0/)
   assert.match(searchRow, /grid-template-columns:\s*minmax\(0, 1fr\) auto/)
   assert.doesNotMatch(css, /\.sortControlLabel/)
   assert.match(
     css,
-    /\.catalogFilterRow \.filterMenuPanel\s*{[\s\S]*?width:\s*fit-content/,
+    /\.catalogFilterRow \.filterMenuPanel\s*{[\s\S]*?width:\s*100%/,
   )
   assert.match(
     css,
-    /\.catalogTools\s*{[\s\S]*?margin-bottom:\s*var\(--space-2\)/,
+    /\.catalogTools\s*{[\s\S]*?margin-bottom:\s*var\(--space-4\)/,
   )
   assert.doesNotMatch(css, /\.resultsSummary/)
 })
@@ -141,7 +141,10 @@ test('region filters use abbreviations instead of repeated pin icons', async () 
     coys,
     /prefix={[\s\S]*?regionFilterPrefix\(item\.key, item\.label\)/,
   )
-  assert.match(opportunities, /prefix={regionFilterPrefix\(region\)}/)
+  assert.match(
+    opportunities,
+    /prefix={\s*regionFilterPrefix\(\s*region,\s*regionLabel\(region\),?\s*\)\s*}/,
+  )
   assert.doesNotMatch(coys, /item\.key === 'all' \? Map : MapPin/)
   assert.doesNotMatch(
     opportunities,
@@ -180,9 +183,18 @@ test('catalogue card tags control the same filters shown above the grid', async 
   assert.match(submissions, /onGroupFilter=/)
   assert.match(cards, /icon={workingGroupIcon\(sub\.wg\.slug\)}/)
   assert.match(cards, /prefix={regionFilterPrefix\(coy\.region/)
-  assert.match(opportunities, /icon={KIND_ICON\[item\.kind\]}/)
-  assert.match(opportunities, /icon={FORMAT_ICON\[item\.format\]}/)
-  assert.match(opportunities, /prefix={regionFilterPrefix\(item\.region\)}/)
+  assert.match(
+    opportunities,
+    /<FilterChip[\s\S]*?state={kindFilterState}[\s\S]*?onClick={onKindFilter}/,
+  )
+  assert.match(
+    opportunities,
+    /<FilterChip[\s\S]*?state={formatFilterState}[\s\S]*?onClick={onFormatFilter}/,
+  )
+  assert.match(
+    opportunities,
+    /<FilterChip[\s\S]*?state={regionFilterState}[\s\S]*?onClick={onRegionFilter}/,
+  )
 })
 
 test('catalogues omit global totals and grouped totals sit beside their headings', async () => {
@@ -269,7 +281,7 @@ test('science resources share the Hub catalogue and public-site language', async
   assert.match(publicSite, /\/about\/gys/)
   assert.match(siteResources, /Public catalogue/)
   assert.match(siteGys, /From local input to global advocacy/)
-  assert.match(shell, /Science resources/)
+  assert.match(shell, /label: 'Resources'/)
 })
 
 test('mobile catalogue filters stay in compact horizontally scrollable rows', async () => {
@@ -291,7 +303,7 @@ test('admins compose device alerts from the Admin page', async () => {
     read('src/components/PushBroadcast.jsx'),
   ])
   assert.match(admin, /<PushBroadcast \/>/)
-  assert.match(composer, /label="Device alerts"/)
+  assert.match(admin, /<SidePanel[\s\S]*?'Device alert'/)
   assert.match(composer, /apiPost\('\/push\/send'/)
   assert.match(composer, /Everyone with alerts on/)
   assert.match(composer, /ALL_CONFIRM = 'SEND'/)
@@ -347,7 +359,7 @@ test('Help and support is the only global support launcher', async () => {
     /name: 'Jaloliddin Ismailov',[\s\S]*?focus: 'Product, engineering, policy & governance'/,
   )
   assert.match(connect, /name: 'Genaro Matías Godoy González'/)
-  assert.match(connect, /url: 'https:\/\/youngo-science\.org\/'/)
+  assert.match(connect, /url: '\/about\/resources'/)
   assert.match(connect, /url: 'https:\/\/climatecoy\.com\/'/)
   assert.match(connect, /COY21: Climate on Every Coast/)
   assert.match(connect, /url: 'https:\/\/www\.youtube\.com\/@youngo\.unfccc'/)
@@ -559,7 +571,7 @@ test('page headers use one title and detail actions stay compact on the right', 
 
   assert.match(
     ui,
-    /export function PageHeader\(\{ title, description, action, children \}\)/,
+    /export function PageHeader\(\{[\s\S]*?<h1 className="pageTitle">[\s\S]*?<span>{title}<\/span>[\s\S]*?<\/h1>/,
   )
   assert.doesNotMatch(ui, /eyebrow &&|PageHeader\(\{ eyebrow/)
 
@@ -615,11 +627,14 @@ test('back navigation is explicit and visually prominent', async () => {
   assert.match(ui, /<ArrowLeft size=\{18\} strokeWidth=\{2\}/)
   assert.match(
     pagesCss,
-    /\.backLink\s*{[^}]*min-height:\s*40px;[^}]*border:\s*1px solid var\(--border-strong\);[^}]*background:\s*var\(--bg-card\);[^}]*font-weight:\s*600;/,
+    /\.backLink\s*{[^}]*min-height:\s*40px;[^}]*border:\s*1px solid transparent;[^}]*background:\s*var\(--bg-raised\);[^}]*font-weight:\s*600;/,
   )
   assert.match(forgotPassword, /variant="secondary"[\s\S]*?Back to sign in/)
   assert.match(course, /variant="secondary"[\s\S]*?Back to modules/)
-  assert.match(cpManage, /<BackLink href="\/cp">all WG consoles<\/BackLink>/)
+  assert.match(
+    cpManage,
+    /<BackLink href="\/cp">Working Group workspaces<\/BackLink>/,
+  )
 })
 
 test('Council decisions use one combined chronological timeline', async () => {
@@ -643,7 +658,7 @@ test('Council decisions use one combined chronological timeline', async () => {
   assert.doesNotMatch(css, /\.detailProcessActivity|\.statusLog|\.logRow/)
 })
 
-test('binary catalogue views use one joined segmented control', async () => {
+test('binary catalogue views use one quiet segmented control', async () => {
   const [council, submissions, css] = await Promise.all([
     read('src/pages/Council.jsx'),
     read('src/pages/Submissions.jsx'),
@@ -660,8 +675,14 @@ test('binary catalogue views use one joined segmented control', async () => {
     submissions,
     /className="viewSwitch" role="group" aria-label="Submission view"/,
   )
-  assert.match(css, /\.viewSwitch\s*{[^}]*gap:\s*0;[^}]*padding:\s*0;/)
-  assert.match(css, /\.viewSwitch \.pill \+ \.pill\s*{[^}]*border-left:/)
+  assert.match(
+    css,
+    /\.viewSwitch\s*{[^}]*gap:\s*var\(--space-1\);[^}]*padding:\s*0;[^}]*border:\s*0;/,
+  )
+  assert.match(
+    css,
+    /\.viewSwitch \.pill\s*{[^}]*border:\s*1px solid var\(--border-strong\)/,
+  )
   assert.match(
     css,
     /\.viewSwitch \.pill\.active\s*{[^}]*background:\s*var\(--accent-tint\);[^}]*box-shadow:\s*none;/,
@@ -682,7 +703,7 @@ test('the Hub uses one Tabler icon family', async () => {
   assert.doesNotMatch(packageJson, /"lucide-react"/)
 })
 
-test('navigable entity cards use semantic corner icons', async () => {
+test('entity cards keep semantic icons in metadata without duplicate corner icons', async () => {
   const [cards, cardsCss, submissions, search, workingGroupIcons] =
     await Promise.all([
       read('src/components/cards.jsx'),
@@ -692,9 +713,11 @@ test('navigable entity cards use semantic corner icons', async () => {
       read('src/lib/workingGroupIcons.js'),
     ])
 
-  assert.match(cards, /className="cardCornerIcon entityCardCornerIcon"/)
-  assert.match(cards, /icon={EventIcon}/)
-  assert.match(cards, /icon={SubmissionIcon}/)
+  assert.doesNotMatch(
+    cards,
+    /entityCardCornerIcon|icon={EventIcon}|icon={SubmissionIcon}/,
+  )
+  assert.match(cards, /icon={GroupIcon}/)
   assert.match(cards, /icon={Gavel}/)
   assert.match(cards, /icon={CoyIcon}/)
   assert.match(cardsCss, /\.cardCornerIcon\s*{[^}]*color:\s*var\(--accent\)/)
@@ -785,7 +808,10 @@ test('resource and social surfaces share destination-aware icons', async () => {
   assert.match(calendar, /DestinationIcon url={outlookWebUrl\(event\)}/)
   assert.match(submission, /DestinationIcon url={sub\.draftUrl}/)
   assert.match(decision, /DestinationIcon url={d\.proposalUrl}/)
-  assert.match(opportunities, /DestinationIcon url={item\.linkUrl}/)
+  assert.match(
+    opportunities,
+    /href={item\.linkUrl}[\s\S]*?target="_blank"[\s\S]*?rel="noreferrer noopener"/,
+  )
 })
 
 test('registration cards keep their headings and choices text-only', async () => {
@@ -850,7 +876,7 @@ test('opportunity cards keep content in a compact natural flow', async () => {
   assert.match(opportunityCard, /align-content:\s*start/)
   assert.doesNotMatch(opportunityCard, /minmax\(/)
   assert.match(opportunityCopy, /grid-template-rows:\s*auto/)
-  assert.match(cards, /\.opportunityMeta:empty\s*{[\s\S]*?display:\s*none/)
+  assert.match(cards, /\.entityCardFooter[\s\S]*?margin-top:\s*auto/)
 })
 
 test('opportunity results render separate open and closed card grids', async () => {
@@ -976,15 +1002,11 @@ test('motion follows surface geometry and continuous animation stays disabled', 
   assert.match(app, /@import '\.\/parts\/motion\.css'/)
   assert.match(
     motion,
-    /\.sheet\s*{[^}]*transform-origin:\s*top right;[^}]*animation:\s*hubMenuIn/,
-  )
-  assert.match(
-    motion,
     /\.routePeek\[open\]\s*{[^}]*animation:\s*hubRightPanelIn/,
   )
   assert.match(
     motion,
-    /\.comboMenu,[\s\S]*?\.siteMobileNav\s*{[^}]*animation:\s*hubPopoverIn/,
+    /\.comboMenu,[\s\S]*?\.sheet\s*{[^}]*animation:\s*hubPopoverIn/,
   )
   assert.doesNotMatch(motion, /\.card[^,{]*[,{][^}]*animation:/)
 
@@ -994,7 +1016,7 @@ test('motion follows surface geometry and continuous animation stays disabled', 
   }
 })
 
-test('route peeks fill and centre the phone viewport', async () => {
+test('route peeks fill the phone viewport and retain their side direction', async () => {
   const [css, motion] = await Promise.all([
     read('src/styles/parts/overlays.css'),
     read('src/styles/parts/motion.css'),
@@ -1014,7 +1036,7 @@ test('route peeks fill and centre the phone viewport', async () => {
   )
   assert.match(
     motion,
-    /@media \(max-width: 900px\)\s*{[\s\S]*?\.routePeek\[open\]\s*{[\s\S]*?hubDialogIn/,
+    /@keyframes hubRightPanelIn\s*{[\s\S]*?translateX\(100%\)/,
   )
 })
 

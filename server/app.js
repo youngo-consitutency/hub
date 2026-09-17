@@ -1,4 +1,5 @@
 import express from 'express'
+import { platformRouter } from './modules/platform/routes.ts'
 import cors from 'cors'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -82,7 +83,14 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
         req.method === 'POST' &&
         req.path === '/api/consultation/contributions'
       ) {
-        return next()
+        if (env.DATABASE_URL) return next()
+        return res.status(503).json({
+          error: {
+            code: 'consultation_storage_unavailable',
+            message:
+              'Contributions are unavailable until this preview has durable database storage.',
+          },
+        })
       }
       return res.status(503).json({
         error: {
@@ -108,6 +116,7 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
     }
     next()
   })
+  app.use('/api/platform', platformRouter)
   app.use('/api/auth', authRouter)
   app.use('/api/member', memberRouter)
   app.use('/api/intelligence', intelligenceRouter)

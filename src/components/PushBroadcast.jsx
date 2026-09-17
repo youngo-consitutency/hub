@@ -6,7 +6,7 @@ import {
 } from 'react-icons/tb'
 import { apiGet, apiPost } from '../lib/api.js'
 import { SearchableSelect } from './FormControls.jsx'
-import { Button, ErrorCard, Section } from './ui.jsx'
+import { Button, ErrorCard } from './ui.jsx'
 
 const TITLE_MAX = 80
 const BODY_MAX = 180
@@ -85,16 +85,20 @@ export function PushBroadcast() {
     }
   }
 
+  if (summary && !summary.configured)
+    return (
+      <p className="meta">
+        Device alerts are not enabled on this Hub. No alerts can be sent.
+      </p>
+    )
   return (
-    <Section
-      label="Device alerts"
-      meta={
-        summary
-          ? `${summary.accounts} member${summary.accounts === 1 ? '' : 's'} · ${summary.devices} device${summary.devices === 1 ? '' : 's'}`
-          : null
-      }
-    >
-      <div className="card pushBroadcast">
+    <div className="stack">
+      {summary && (
+        <p className="meta">
+          {summary.accounts} members · {summary.devices} devices
+        </p>
+      )}
+      <div className="pushBroadcast">
         <p className="meta">
           Send a banner to members who turned alerts on for a phone or laptop.
           This does not email anyone.
@@ -226,6 +230,6 @@ export function PushBroadcast() {
           </Button>
         </div>
       </div>
-    </Section>
+    </div>
   )
 }

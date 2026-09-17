@@ -1,5 +1,23 @@
 const LOCAL_APP_ORIGIN = 'http://localhost:5173'
 
+export function localDemoEnabled(env = process.env) {
+  if (env.LOCAL_DEMO !== '1') return false
+  const localHosts = ['localhost', '127.0.0.1', '[::1]']
+  const database = new URL(env.DATABASE_URL || 'http://invalid')
+  const origin = new URL(env.APP_ORIGIN || 'http://invalid')
+  if (
+    env.NODE_ENV !== 'development' ||
+    !localHosts.includes(database.hostname) ||
+    database.pathname !== '/youngo_local_demo' ||
+    !localHosts.includes(origin.hostname)
+  ) {
+    throw new Error(
+      'Local demo requires development mode, a loopback origin, and the local youngo_local_demo database.',
+    )
+  }
+  return true
+}
+
 export function appOrigin(env = process.env) {
   return String(env.APP_ORIGIN || LOCAL_APP_ORIGIN).replace(/\/$/, '')
 }

@@ -5,16 +5,16 @@ import { appOrigin } from '../../lib/config.js'
 import {
   emailConfigured,
   sendTemplatedEmail,
-} from '../../lib/emailTransport.js'
-import { renderEmailTemplate } from '../../lib/emailTemplates.js'
-import { createEmailVerificationToken } from '../../lib/emailVerification.js'
+} from '../../lib/notifications/transport.js'
+import { renderEmailTemplate } from '../../lib/notifications/templates.js'
+import { createEmailVerificationToken } from '../../lib/notifications/verification.js'
 import {
   enqueueNotification,
   getNotificationPreferences,
   listEligibleNotificationAccountIds,
   listQueuedNotifications,
   updateNotificationPreferences,
-} from '../../lib/notificationStore.js'
+} from '../../lib/notifications/store.js'
 import { createRateLimiter } from '../../lib/rateLimit.js'
 import { requireAccount, requireCapability } from './guards.js'
 
@@ -196,13 +196,21 @@ router.post('/admin/notifications/preview', async (req, res, next) => {
 
 router.post(
   '/admin/notifications/send',
-  broadcastLimit,
   async (req, res, next) => {
     try {
       const account = await requireAccount(req, res)
       if (!account) return
       req.account = account
       if (!(await requireCapability(req, res, 'notifications.send'))) return
+      next()
+    } catch (error) {
+      next(error)
+    }
+  },
+  broadcastLimit,
+  async (req, res, next) => {
+    try {
+      const account = req.account
       if (!emailConfigured()) {
         return res.status(503).json({
           error: {

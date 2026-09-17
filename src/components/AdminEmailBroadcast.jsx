@@ -1,15 +1,16 @@
+import { TEAM_LABELS } from '../../shared/responsibilities.js'
 import { useState } from 'react'
 import { TbMail as Mail, TbSend as Send } from 'react-icons/tb'
 import { WORKING_GROUPS } from '../../shared/workingGroups.js'
 import { apiPost } from '../lib/api.js'
-import { Button, ErrorCard, Section } from './ui.jsx'
+import { Button, ErrorCard } from './ui.jsx'
 
 const TEAM_OPTIONS = [
-  ['membership_team', 'Membership Team'],
-  ['gys_policy_team', 'GYS Policy Team'],
-  ['content_editor', 'Content editors'],
-  ['content_publisher', 'Content publishers'],
-]
+  'membership_team',
+  'gys_policy_team',
+  'content_editor',
+  'content_publisher',
+].map((role) => [role, TEAM_LABELS[role]])
 
 export function AdminEmailBroadcast() {
   const [form, setForm] = useState({
@@ -81,19 +82,18 @@ export function AdminEmailBroadcast() {
     scopeReady
 
   return (
-    <Section label="Email announcements">
-      <div className="card stackSm">
+    <>
+      <div className="stack">
         <div className="rowGap">
           <span className="iconTile" aria-hidden>
             <Mail size={20} />
           </span>
           <p className="meta">
-            Only verified, active members who enabled Hub announcements are
-            eligible. Delivery caps and suppressions are rechecked by the
-            worker.
+            Only active, verified members who opted in to Hub announcements will
+            receive this email.
           </p>
         </div>
-        <div className="formGrid">
+        <div className="stack">
           <label className="field">
             <span>Recipient scope</span>
             <select
@@ -107,7 +107,7 @@ export function AdminEmailBroadcast() {
             >
               <option value="all_active">All opted-in active members</option>
               <option value="working_group">One working group</option>
-              <option value="team">One Hub team</option>
+              <option value="team">One responsibility or permission</option>
             </select>
           </label>
           {form.scopeType === 'working_group' && (
@@ -130,7 +130,7 @@ export function AdminEmailBroadcast() {
           )}
           {form.scopeType === 'team' && (
             <label className="field">
-              <span>Hub team</span>
+              <span>Responsibility or permission</span>
               <select
                 className="input"
                 name="scopeValue"
@@ -223,6 +223,6 @@ export function AdminEmailBroadcast() {
           </Button>
         </div>
       </div>
-    </Section>
+    </>
   )
 }

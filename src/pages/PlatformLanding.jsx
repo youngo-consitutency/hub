@@ -132,7 +132,7 @@ function PlatformFooter() {
             <a
               key={site.key}
               href={site.url}
-              target="_blank"
+              target={site.url.startsWith('/') ? undefined : '_blank'}
               rel="noreferrer noopener"
             >
               {site.title}
@@ -296,7 +296,7 @@ export function PlatformLanding({ onAuthenticated }) {
                     <a
                       className="platformNetworkCard"
                       href={site.url}
-                      target="_blank"
+                      target={site.url.startsWith('/') ? undefined : '_blank'}
                       rel="noreferrer noopener"
                     >
                       <span className="platformModuleIcon" aria-hidden="true">

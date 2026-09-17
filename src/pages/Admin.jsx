@@ -1,12 +1,20 @@
+import { formatDateTime } from '../lib/dateTime.js'
+import {
+  TEAM_LABELS,
+  WEBSITE_PERMISSIONS,
+} from '../../shared/responsibilities.js'
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbSettings as AdminIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import {
+  TbMail as Mail,
+  TbBellRinging as Bell,
   TbChevronLeft as ChevronLeft,
   TbChevronRight as ChevronRight,
   TbKey as KeyRound,
   TbSearch as Search,
   TbSettings as Settings2,
   TbShieldCheck as ShieldCheck,
-  TbX as X,
 } from 'react-icons/tb'
 import { apiGet, apiPatch, apiPost } from '../lib/api.js'
 import {
@@ -19,8 +27,6 @@ import {
   Skeletons,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
-import { FeedbackQueue } from '../components/FeedbackQueue.jsx'
-import { OpportunityReview } from '../components/OpportunityReview.jsx'
 import { AdminEmailBroadcast } from '../components/AdminEmailBroadcast.jsx'
 import { PushBroadcast } from '../components/PushBroadcast.jsx'
 
@@ -54,41 +60,20 @@ const SORT_OPTIONS = [
   { value: 'recent_login', label: 'Recently signed in' },
 ]
 const TEAM_ROLES = [
-  ['membership_team', 'Membership Team'],
-  ['gys_policy_team', 'GYS Policy Team'],
-  ['content_editor', 'Content editor'],
-  ['content_publisher', 'Content publisher'],
-]
+  'membership_team',
+  'gys_policy_team',
+  ...WEBSITE_PERMISSIONS,
+].map((role) => [role, TEAM_LABELS[role]])
 
 function labelFor(options, value) {
   return options.find((option) => option.value === value)?.label || value
 }
 
 function AdminDialog({ title, children, onClose }) {
-  useEffect(() => {
-    const close = (event) => event.key === 'Escape' && onClose()
-    window.addEventListener('keydown', close)
-    return () => window.removeEventListener('keydown', close)
-  }, [onClose])
-
   return (
-    <div className="adminDialogBackdrop" onMouseDown={onClose}>
-      <section
-        className="adminDialog card"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="adminDialogHeader">
-          <h2>{title}</h2>
-          <Button sm variant="ghost" aria-label="Close" onClick={onClose}>
-            <X size={18} aria-hidden />
-          </Button>
-        </div>
-        {children}
-      </section>
-    </div>
+    <SidePanel title={title} onClose={onClose}>
+      {children}
+    </SidePanel>
   )
 }
 
@@ -209,7 +194,7 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
       </div>
 
       <div className="adminActionBlock">
-        <p className="fieldLabel">Team responsibilities</p>
+        <p className="fieldLabel">Responsibilities & website permissions</p>
         <div className="rowGap">
           {TEAM_ROLES.map(([teamRole, label]) => {
             const assigned = account.teamRoles?.includes(teamRole)
@@ -229,7 +214,10 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
           })}
         </div>
         <p className="metaMuted">
-          WG Contact Points are assigned inside the relevant WG workspace.
+          Record appointments from the agreed YOUNGO process. Drafting and
+          publishing are website permissions; they do not confer a mandate.
+          Contact Point appointments are recorded with evidence in Bodies &
+          mandates.
         </p>
       </div>
 
@@ -243,8 +231,8 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
           {busy === 'reset' ? 'Issuing…' : 'Issue password reset'}
         </Button>
         {account.entityType === 'organization' && (
-          <A href="/staff/points" className="btn btn-ghost">
-            Award points
+          <A href="/platform" className="btn btn-ghost">
+            People and mandates
           </A>
         )}
       </div>
@@ -257,8 +245,7 @@ function ResetHandoff({ reset, onClose }) {
     <AdminDialog title="Password reset sent" onClose={onClose}>
       <p className="meta">
         The Hub sent password-reset instructions to the account address. The
-        link expires {new Date(reset.expiresAt).toLocaleString()} and can be
-        used once.
+        link expires {formatDateTime(reset.expiresAt)} and can be used once.
       </p>
       <div className="adminDialogFooter">
         <Button variant="primary" onClick={onClose}>
@@ -274,6 +261,7 @@ function ResetHandoff({ reset, onClose }) {
 }
 
 export function Admin() {
+  const [composer, setComposer] = useState(null)
   const [data, setData] = useState(null)
   const [audit, setAudit] = useState([])
   const [error, setError] = useState('')
@@ -341,13 +329,22 @@ export function Admin() {
   return (
     <div>
       <PageHeader
+        icon={AdminIcon}
         title="Admin"
-        description="Find accounts, send device alerts, manage lifecycle and responsibilities, and review audited changes."
+        description="Manage accounts, membership and access, and review recorded changes."
+        action={
+          <div className="rowGap">
+            <Button variant="secondary" onClick={() => setComposer('email')}>
+              <Mail size={17} aria-hidden /> Email announcement
+            </Button>
+            <Button variant="secondary" onClick={() => setComposer('push')}>
+              <Bell size={17} aria-hidden /> Device alert
+            </Button>
+          </div>
+        }
       />
 
       {error && <ErrorCard message={error} />}
-
-      <PushBroadcast />
 
       <div className="catalogTools adminTools">
         <label className="searchInputWrap">
@@ -437,8 +434,10 @@ export function Admin() {
                   </Button>
                   {account.teamRoles?.length > 0 && (
                     <span className="metaMuted">
-                      {account.teamRoles.length} team role
-                      {account.teamRoles.length === 1 ? '' : 's'}
+                      {account.teamRoles.length} assigned{' '}
+                      {account.teamRoles.length === 1
+                        ? 'responsibility / permission'
+                        : 'responsibilities / permissions'}
                     </span>
                   )}
                 </div>
@@ -478,11 +477,14 @@ export function Admin() {
         </nav>
       </Section>
 
-      <AdminEmailBroadcast />
-
-      <FeedbackQueue />
-
-      <OpportunityReview />
+      {composer && (
+        <SidePanel
+          title={composer === 'email' ? 'Email announcement' : 'Device alert'}
+          onClose={() => setComposer(null)}
+        >
+          {composer === 'email' ? <AdminEmailBroadcast /> : <PushBroadcast />}
+        </SidePanel>
+      )}
 
       <Section label="Governance audit" action={<span>Latest 30</span>}>
         <div className="stackSm">
@@ -500,7 +502,7 @@ export function Admin() {
                 </p>
               </div>
               <time className="metaMuted">
-                {new Date(entry.created_at || entry.createdAt).toLocaleString()}
+                {formatDateTime(entry.created_at || entry.createdAt)}
               </time>
             </div>
           ))}

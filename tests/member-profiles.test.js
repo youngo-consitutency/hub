@@ -94,6 +94,7 @@ test('member CRM keeps profiles private by default and joins governed relationsh
         account('viewer'),
         account('visible-member', {
           name: 'Visible Member',
+          team_roles: ['content_editor', 'content_publisher'],
           email: 'visible@example.org',
           phone: '+254 700 000 000',
           wg_interests: ['finance'],
@@ -171,6 +172,11 @@ test('member CRM keeps profiles private by default and joins governed relationsh
   assert.equal(body.items[0].country, 'Kenya')
   assert.equal(body.items[0].email, undefined)
   assert.equal(body.items[0].phone, undefined)
+  assert.deepEqual(
+    body.items[0].teams,
+    [],
+    'Website permissions are not organisational teams',
+  )
   assert.deepEqual(
     body.items[0].workingGroups.map((group) => [group.slug, group.role]),
     [

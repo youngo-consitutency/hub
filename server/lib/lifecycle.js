@@ -5,6 +5,7 @@ import { getPool } from './db.js'
 import { readJson, writeJson } from './jsonFile.js'
 import {
   publicAccount,
+  accountCanSignIn,
   findAccountByEmail,
   findAccountById,
 } from './accounts.js'
@@ -85,20 +86,49 @@ export async function setAccountFields(id, fields) {
 
 export async function completeCourse(accountId, { score }) {
   const now = new Date().toISOString()
-  const account = await findAccountById(accountId)
-  const membershipStatus =
-    account?.membershipTrack === 'constituency_work'
-      ? 'awaiting_onboarding'
-      : 'course_passed'
-  return setAccountFields(accountId, {
+  const pool = getPool()
+  if (pool) {
+    // Test eligibility in the same UPDATE as the transition: a concurrent
+    // suspension must never be overwritten by a course submission.
+    const { rows } = await pool.query(
+      `UPDATE hub_accounts SET member_status='verified', hub_access_status='active',
+         membership_status=CASE
+           WHEN membership_status IN ('active','renewal_due','awaiting_onboarding') THEN membership_status
+           WHEN membership_track='constituency_work' THEN 'awaiting_onboarding'
+           ELSE 'course_passed' END,
+         course_passed_at=COALESCE(course_passed_at,$2), course_score=$3,
+         verified_at=COALESCE(verified_at,$2), verified_by=COALESCE(verified_by,'course')
+       WHERE id=$1 AND hub_access_status IS DISTINCT FROM 'suspended'
+         AND COALESCE(membership_status,'') NOT IN ('expired','terminated')
+       RETURNING *`,
+      [accountId, now, score],
+    )
+    return publicAccount(rows[0])
+  }
+  const list = readJson(accountsPath, [])
+  const account = list.find((row) => row.id === accountId)
+  if (!accountCanSignIn(account)) return null
+  const status = account.membership_status ?? account.membershipStatus
+  Object.assign(account, {
     member_status: 'verified',
     hub_access_status: 'active',
-    membership_status: membershipStatus,
-    course_passed_at: now,
+    membership_status: [
+      'active',
+      'renewal_due',
+      'awaiting_onboarding',
+    ].includes(status)
+      ? status
+      : (account.membership_track ?? account.membershipTrack) ===
+          'constituency_work'
+        ? 'awaiting_onboarding'
+        : 'course_passed',
+    course_passed_at: account.course_passed_at ?? account.coursePassedAt ?? now,
     course_score: score,
-    verified_at: now,
-    verified_by: 'course',
+    verified_at: account.verified_at ?? account.verifiedAt ?? now,
+    verified_by: account.verified_by ?? account.verifiedBy ?? 'course',
   })
+  writeJson(accountsPath, list)
+  return publicAccount(account)
 }
 
 export async function listAccountsForAdmin() {

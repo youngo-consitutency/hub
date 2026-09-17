@@ -13,7 +13,7 @@ import {
   POLICY_VERSION,
 } from '../content/membershipPolicy.js'
 import { acknowledgeMembershipPolicy } from '../lib/membershipGate.js'
-import { Button } from './ui.jsx'
+import { A, Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
 
 /**
@@ -105,6 +105,17 @@ export function MembershipMandateGate({ onComplete }) {
                 Step 1 of 2 · Required
               </p>
               <h1 id="mandate-title">Before you join</h1>
+              <p className="meta">
+                Already a member?{' '}
+                <A className="policyInlineLink" href="/signin">
+                  Sign in
+                </A>
+                .{' '}
+                <A className="policyInlineLink" href="/about">
+                  Back to YOUNGO
+                </A>
+                .
+              </p>
               <p
                 id="mandate-desc"
                 className="meta"
@@ -289,7 +300,7 @@ export function MembershipMandateGate({ onComplete }) {
 
           <div className="rowBetween" style={{ gap: 12, flexWrap: 'wrap' }}>
             <p className="metaMuted" style={{ flex: 1, minWidth: 160 }}>
-              Next: create an account or sign in.
+              Next: create your account.
             </p>
             <Button
               variant="primary"

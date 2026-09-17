@@ -17,9 +17,9 @@ export function SiteWorkingGroups() {
         <h1>Working groups</h1>
         <p className="sitePageLead">
           YOUNGO’s working groups focus on different aspects of the UNFCCC
-          negotiations and beyond. Membership is based on individual expression
-          of interest — not on any formal selection procedure — and if a topic
-          is missing, any member can establish a new working group.
+          negotiations and beyond. Active Constituency Work members can join
+          through an expression of interest. Proposals for new working groups
+          follow YOUNGO’s governance and decision-making process.
         </p>
       </header>
 
@@ -52,7 +52,7 @@ export function SiteWorkingGroups() {
                     aria-labelledby={`topic-${topic.key}`}
                   >
                     <h2 id={`topic-${topic.key}`}>{topic.label}</h2>
-                    <div className="siteWgGrid">
+                    <div className="cardGrid">
                       {groups.map((group) => {
                         const GroupIcon = workingGroupIcon(group.slug)
                         return (

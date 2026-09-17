@@ -71,13 +71,30 @@ export const RESOURCE_LANGUAGES = Object.freeze([
   'Other',
 ])
 
-export const RESOURCE_SOURCE = Object.freeze({
-  title: 'YOUNGO Science Resource Hub',
-  url: 'https://youngo-science.org/',
-  description:
-    'The public directory curated with the YOUNGO Science Working Group — climate work, research, learning, and funding.',
-})
-
 export function resourceLabel(items, value) {
   return items.find((item) => item.value === value)?.label || value
 }
+
+// Keep meaningful queries/fragments, remove only known tracking parameters.
+export function canonicalResourceUrl(value) {
+  const url = new URL(value)
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    url.username ||
+    url.password
+  )
+    throw new Error('Use a public HTTP or HTTPS link without credentials.')
+  for (const key of [...url.searchParams.keys()])
+    if (/^utm_/i.test(key) || ['fbclid', 'gclid'].includes(key))
+      url.searchParams.delete(key)
+  url.searchParams.sort()
+  return url.href
+}
+
+export const RESOURCE_ISSUE_KINDS = Object.freeze([
+  { value: 'broken', label: 'Broken or inaccessible link' },
+  { value: 'outdated', label: 'Outdated information' },
+  { value: 'tags', label: 'Incorrect description or tags' },
+  { value: 'duplicate', label: 'Duplicate resource' },
+  { value: 'other', label: 'Other concern' },
+])

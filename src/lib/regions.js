@@ -1,5 +1,8 @@
 const REGION_ABBREVIATIONS = {
+  global: 'GLO',
   africa: 'AFR',
+  asia_pacific: 'AP',
+  north_america: 'NA',
   apac: 'AP',
   'asia-pacific': 'AP',
   'asia pacific': 'AP',
@@ -17,9 +20,7 @@ const REGION_ABBREVIATIONS = {
 }
 
 export function regionAbbreviation(value) {
-  const normalized = String(value || '')
-    .trim()
-    .toLocaleLowerCase()
+  const normalized = regionKey(value)
   if (!normalized) return ''
   if (REGION_ABBREVIATIONS[normalized]) {
     return REGION_ABBREVIATIONS[normalized]
@@ -44,4 +45,53 @@ export function regionFilterPrefix(value, label = value) {
       .toLocaleUpperCase()
     ? ''
     : abbreviation
+}
+
+const REGION_NAMES = {
+  global: 'Global',
+  africa: 'Africa',
+  asia_pacific: 'Asia-Pacific',
+  eca: 'Europe & Central Asia',
+  europe: 'Europe',
+  lac: 'Latin America & the Caribbean',
+  mena: 'Middle East & North Africa',
+  north_america: 'North America',
+  oceania: 'Oceania',
+  pacific: 'Pacific',
+  weog: 'Western Europe & Others',
+}
+const REGION_ALIASES = {
+  apac: 'asia_pacific',
+  'asia pacific': 'asia_pacific',
+  'europe & central asia': 'eca',
+  'europe and central asia': 'eca',
+  'latin america': 'lac',
+  'latin america & the caribbean': 'lac',
+  'latin america & caribbean': 'lac',
+  'latin america and the caribbean': 'lac',
+  'middle east & north africa': 'mena',
+  'middle east and north africa': 'mena',
+  noram: 'north_america',
+  'north america': 'north_america',
+  'western europe & others': 'weog',
+}
+
+export function regionKey(value) {
+  const key = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_–—-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+  return REGION_ALIASES[key] || key
+}
+
+export function regionLabel(value) {
+  const key = regionKey(value)
+  return (
+    REGION_NAMES[key] ||
+    String(value || '')
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\p{L}/gu, (letter) => letter.toUpperCase())
+  )
 }

@@ -1,3 +1,4 @@
+import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useApi } from '../lib/api.js'
 import {
   Async,
@@ -68,7 +69,9 @@ export function Statement() {
                     Read the statement
                   </a>
                 }
-              />
+              >
+                <PageSectionNav section="policy" />
+              </PageHeader>
 
               <section
                 className="card gysOverview"

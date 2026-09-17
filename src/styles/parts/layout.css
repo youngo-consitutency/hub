@@ -28,8 +28,17 @@
 }
 
 .pageTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
   max-width: var(--text-measure);
   overflow-wrap: anywhere;
+}
+
+.pageTitleIcon {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--accent);
 }
 
 .pageLead {
@@ -113,7 +122,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .catalogTools .searchInputWrap {
@@ -123,7 +132,7 @@
 .catalogSearchRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: end;
   gap: var(--space-3);
 }
 
@@ -139,7 +148,7 @@
 }
 
 .catalogFilterRow .filterMenuPanel {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -148,7 +157,7 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-control);
   background: var(--bg-raised);
 }
@@ -156,26 +165,22 @@
 .viewSwitch {
   display: inline-flex;
   align-items: stretch;
-  gap: 0;
+  gap: var(--space-1);
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--border-strong);
+  border: 0;
   border-radius: var(--radius-control);
-  background: var(--bg-card);
+  background: var(--bg-raised);
 }
 
 .viewSwitch .pill {
   min-height: 38px;
   height: auto;
   padding: 0 var(--space-3);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
   color: var(--text-2);
-}
-
-.viewSwitch .pill + .pill {
-  border-left: 1px solid var(--border);
 }
 
 .viewSwitch .pill.active {
@@ -191,10 +196,10 @@
   gap: var(--space-2);
   min-height: 30px;
   padding: 0 var(--space-3);
-  border: 0;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   color: var(--text-2);
-  background: transparent;
+  background: var(--bg-card);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -208,6 +213,7 @@
 }
 
 .sortOption.active {
+  border-color: var(--accent);
   color: var(--on-accent);
   background: var(--accent);
   box-shadow: var(--shadow-card);
@@ -219,11 +225,10 @@
 
 .filterMenuPanel {
   position: static;
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  width: fit-content;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  width: 100%;
   max-width: 100%;
   padding: 0;
   max-height: none;
@@ -233,14 +238,14 @@
 
 .filterMenuPanel .filterLevel {
   flex: 0 1 auto;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   min-inline-size: 0;
   margin: 0;
-  padding: var(--space-1) var(--space-2) var(--space-2);
-  border: 1px solid var(--border);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-control);
-  background: var(--bg-card);
+  background: transparent;
 }
 
 .filterMenuPanel .pillRow {
@@ -248,7 +253,8 @@
   padding: 0;
 }
 
-.filterMenuPanel .filterLevel > legend {
+.filterMenuPanel .filterLevel > legend,
+.resourceHubControls .filterLevel > legend {
   position: static;
   width: auto;
   height: auto;
@@ -490,7 +496,7 @@
   grid-template-columns: auto 1fr;
   gap: 2px 9px;
   padding: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
@@ -789,11 +795,7 @@
 
 .resourceHubControls {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--bg-card);
+  gap: var(--space-3);
 }
 
 .resourceHubSearch {
@@ -802,9 +804,9 @@
 
 .resourceHubFilterRows {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .resourceHubFilterRows .pillRow {
@@ -813,6 +815,7 @@
 
 .resourceHubSelects {
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
   gap: var(--space-2);
 }
@@ -994,13 +997,6 @@
   font-size: 12px;
 }
 
-.focalGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 16px;
-  margin-top: 18px;
-}
-
 .srOnly {
   position: absolute;
   width: 1px;
@@ -1072,11 +1068,16 @@
   font-size: 13px;
   font-weight: 500;
   border: 1px solid var(--border-strong);
-  background: none;
+  background: var(--bg-card);
   color: var(--text-2);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.pill:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
 }
 
 .pill > svg {
@@ -1097,7 +1098,7 @@
 .pill.active {
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  border-color: transparent;
+  border-color: var(--accent);
 }
 
 .pill[data-filter-state='exclude'] {
@@ -1107,7 +1108,14 @@
 }
 
 .pillStateIcon {
+  display: inline-flex;
+  flex: 0 0 13px;
+  width: 13px;
   margin-left: var(--space-1);
+}
+
+.pill[data-filter-state='neutral'] .pillStateIcon {
+  visibility: hidden;
 }
 
 /* Home "Connect" panel: outward links and the beta credit. */
@@ -1138,7 +1146,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border: 1px solid var(--border-strong);
+  border: 0;
+  background: var(--bg-raised);
   border-radius: 999px;
   font-size: 13px;
   color: var(--text-2);
@@ -1156,4 +1165,293 @@
   color: var(--on-accent-tint);
   font-size: 13px;
   font-weight: 500;
+}
+
+/* Section links wrap in reading order instead of widening the page. */
+.pageSectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.pageSectionLink {
+  gap: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 4px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pageSectionLink:hover {
+  color: var(--accent);
+}
+.pageSectionLink.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 650;
+}
+
+.pageSectionNav + * {
+  margin-top: var(--space-3);
+}
+
+/* Resources use the shared card widths and open, labelled controls. */
+.resourceAttribution {
+  margin: 0 0 var(--space-4);
+}
+.resourceCardFooter {
+  margin-top: auto;
+  display: grid;
+  gap: var(--space-2);
+}
+.resourceCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.resourceCardActions .btn {
+  white-space: normal;
+}
+.resourceCheck {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-block: 12px;
+  font-size: 14px;
+}
+.resourceCheck input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+.resourceTopicPicker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.resourceTopicOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 0 var(--space-3);
+}
+.resourceLoadMore {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+.resourceReview {
+  margin-block: var(--space-4);
+  scroll-margin-top: 90px;
+}
+.resourceDestination {
+  overflow-wrap: anywhere;
+}
+.resourceQueueFilters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  max-width: 800px;
+}
+.resourceQueueFilters label {
+  display: grid;
+  gap: var(--space-1);
+}
+.resourceIssue {
+  padding-block: var(--space-2);
+}
+
+.resourceHubTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: start;
+}
+.resourceSubmissionForm > label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* One quiet control surface; content groups stay open on the page. */
+.catalogTools,
+.resourceHubControls {
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+.catalogDisplayControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+.catalogSelect {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.catalogSelect .input {
+  font-size: 14px;
+  font-weight: 400;
+}
+.catalogDisplayControls .sortControl {
+  min-height: 44px;
+  align-self: end;
+}
+.filterSummary,
+.resourceFilterFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.filterSummary {
+  min-height: 36px;
+  flex-wrap: nowrap;
+  color: var(--text-2);
+  font-size: 12px;
+  margin-bottom: var(--space-2);
+}
+.filterMenuPanel .filterLevel > legend {
+  margin-bottom: var(--space-1);
+}
+.pageHeaderControls > .filterMenu {
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+.resourceHubControls .filterLevel {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.resourceHubSelects label {
+  flex: 1 1 180px;
+}
+.resourceFilterFooter .resourceCheck {
+  margin-block: 0;
+}
+.catalogGroups {
+  display: grid;
+  gap: var(--space-5);
+}
+.catalogGroups > .section:not(:first-child) {
+  margin-top: 0;
+}
+.catalogGroups .sectionHeading {
+  font-size: 16px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-1);
+}
+.catalogGroupDescription {
+  color: var(--text-2);
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+}
+.catalogGroups .cardGrid + .btn {
+  margin-top: var(--space-3);
+}
+@media (max-width: 620px) {
+  .catalogDisplayControls {
+    justify-content: space-between;
+  }
+  .catalogSelect {
+    min-width: 0;
+    width: 100%;
+  }
+  .resourceHubControls .pillRow {
+    flex-wrap: wrap;
+  }
+  .catalogDisplayControls .catalogSelect {
+    flex: 1;
+    width: auto;
+    min-width: 130px;
+  }
+  .catalogGroups {
+    gap: var(--space-4);
+  }
+}
+
+.siteFavicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  color: var(--text-3);
+  background: var(--bg-raised);
+}
+.siteFavicon img {
+  display: block;
+  object-fit: contain;
+}
+
+/* Shared workspace layouts: list rows, balanced sections and form fields. */
+.workspaceColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.workspaceColumns > .section {
+  margin-block: var(--space-5);
+  min-width: 0;
+}
+.recordRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 108px;
+}
+.recordRow > div {
+  flex: 1;
+  min-width: 0;
+}
+.recordRow > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--accent);
+}
+.recordRow .chip {
+  margin-top: var(--space-2);
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.formGrid > * {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .workspaceColumns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 620px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }

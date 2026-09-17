@@ -1,7 +1,10 @@
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbEdit as ContentIcon } from 'react-icons/tb'
 import { useMemo, useState } from 'react'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
+  A,
   Async,
   Button,
   Empty,
@@ -81,6 +84,7 @@ function announcementForm(payload = {}) {
 }
 
 export function ContentWorkspace() {
+  const [editorOpen, setEditorOpen] = useState(false)
   const query = useApi('/member/content')
   const { account } = useAccount()
   const [contentType, setContentType] = useState('event')
@@ -108,7 +112,7 @@ export function ContentWorkspace() {
     setEditingId(id)
     setFields({})
     setActionError(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setEditorOpen(true)
   }
 
   const set = (key, value) =>
@@ -146,6 +150,7 @@ export function ContentWorkspace() {
         })
       else await apiPost('/member/content/drafts', body)
       resetForm(contentType)
+      setEditorOpen(false)
       query.retry()
     } catch (error) {
       setActionError(error.message)
@@ -205,17 +210,39 @@ export function ContentWorkspace() {
   return (
     <div>
       <PageHeader
+        icon={ContentIcon}
         title="Content studio"
+        action={
+          <div className="rowGap">
+            {query.data?.permissions.canDraft && (
+              <Button
+                onClick={() => {
+                  resetForm()
+                  setActionError(null)
+                  setEditorOpen(true)
+                }}
+              >
+                New draft
+              </Button>
+            )}
+            {account?.access?.capabilities?.includes('content.review') && (
+              <A className="btn btn-secondary" href="/resources/issues">
+                Resource issues & verification
+              </A>
+            )}
+          </div>
+        }
         description="Prepare public Hub updates, send them for independent review, and publish an approved version."
       />
 
       <Async query={query} skeletons={5}>
         {(data) => (
           <>
-            {actionError && <ErrorCard message={actionError} />}
+            {actionError && !editorOpen && <ErrorCard message={actionError} />}
 
-            {data.permissions.canDraft && (
-              <Section label={title}>
+            {data.permissions.canDraft && editorOpen && (
+              <SidePanel title={title} onClose={() => setEditorOpen(false)}>
+                {actionError && <ErrorCard message={actionError} />}
                 <div className="pillRow" aria-label="Content type">
                   <FilterPill
                     active={contentType === 'event'}
@@ -233,11 +260,12 @@ export function ContentWorkspace() {
                   </FilterPill>
                 </div>
 
-                <form className="card contentForm stackSm" onSubmit={save}>
+                <form className="contentForm stack" onSubmit={save}>
                   <div className="formGrid">
-                    <label>
+                    <label className="field">
                       Slug
                       <input
+                        className="input"
                         required
                         value={payload.slug}
                         onChange={(event) => set('slug', event.target.value)}
@@ -245,9 +273,10 @@ export function ContentWorkspace() {
                       />
                       <FieldError msg={fields.slug} />
                     </label>
-                    <label>
+                    <label className="field">
                       Title
                       <input
+                        className="input"
                         required
                         value={payload.title}
                         onChange={(event) => set('title', event.target.value)}
@@ -286,9 +315,10 @@ export function ContentWorkspace() {
                         />
                       </div>
                       <div className="formGrid">
-                        <label>
+                        <label className="field">
                           Starts
                           <input
+                            className="input"
                             required
                             type="datetime-local"
                             value={payload.startsAt}
@@ -298,9 +328,10 @@ export function ContentWorkspace() {
                           />
                           <FieldError msg={fields.startsAt} />
                         </label>
-                        <label>
+                        <label className="field">
                           Ends
                           <input
+                            className="input"
                             required
                             type="datetime-local"
                             value={payload.endsAt}
@@ -311,9 +342,10 @@ export function ContentWorkspace() {
                           <FieldError msg={fields.endsAt} />
                         </label>
                       </div>
-                      <label>
+                      <label className="field">
                         Description
                         <textarea
+                          className="input textarea"
                           rows="4"
                           value={payload.description}
                           onChange={(event) =>
@@ -323,9 +355,10 @@ export function ContentWorkspace() {
                         <FieldError msg={fields.description} />
                       </label>
                       <div className="formGrid">
-                        <label>
+                        <label className="field">
                           Meeting link
                           <input
+                            className="input"
                             type="url"
                             value={payload.meetingUrl}
                             onChange={(event) =>
@@ -335,9 +368,10 @@ export function ContentWorkspace() {
                           />
                           <FieldError msg={fields.meetingUrl} />
                         </label>
-                        <label>
+                        <label className="field">
                           Recording link
                           <input
+                            className="input"
                             type="url"
                             value={payload.recordingUrl}
                             onChange={(event) =>
@@ -351,9 +385,10 @@ export function ContentWorkspace() {
                     </>
                   ) : (
                     <>
-                      <label>
+                      <label className="field">
                         Announcement
                         <textarea
+                          className="input textarea"
                           required
                           rows="5"
                           value={payload.body}
@@ -372,9 +407,10 @@ export function ContentWorkspace() {
                         Pin this announcement on the home feed
                       </label>
                       <div className="formGrid">
-                        <label>
+                        <label className="field">
                           CTA link
                           <input
+                            className="input"
                             type="url"
                             value={payload.ctaUrl}
                             onChange={(event) =>
@@ -384,9 +420,10 @@ export function ContentWorkspace() {
                           />
                           <FieldError msg={fields.ctaUrl} />
                         </label>
-                        <label>
+                        <label className="field">
                           CTA label
                           <input
+                            className="input"
                             value={payload.ctaLabel}
                             onChange={(event) =>
                               set('ctaLabel', event.target.value)
@@ -396,9 +433,10 @@ export function ContentWorkspace() {
                           <FieldError msg={fields.ctaLabel} />
                         </label>
                       </div>
-                      <label>
+                      <label className="field">
                         CTA deadline
                         <input
+                          className="input"
                           type="datetime-local"
                           value={payload.ctaDeadlineAt}
                           onChange={(event) =>
@@ -428,7 +466,7 @@ export function ContentWorkspace() {
                     )}
                   </div>
                 </form>
-              </Section>
+              </SidePanel>
             )}
 
             <Section label="Draft and review queue">
@@ -436,7 +474,7 @@ export function ContentWorkspace() {
                 <Empty
                   icon={FilePenLine}
                   title="No content drafts yet"
-                  body="Start with an event or announcement above."
+                  body="Choose New draft to create an event or announcement."
                 />
               ) : (
                 <div className="stackSm">

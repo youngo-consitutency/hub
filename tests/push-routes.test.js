@@ -52,6 +52,10 @@ function account(id, overrides = {}) {
 }
 
 async function withServer(t, run) {
+  const send = t.mock.method(webPush, 'sendNotification', async () => ({
+    statusCode: 201,
+  }))
+  t.after(() => send.mock.restore())
   const files = [accountsPath, sessionsPath, subscriptionsPath]
   const backups = new Map(
     files.map((file) => [
@@ -120,7 +124,7 @@ test('the notification settings a member needs are reachable without staff right
       method: 'POST',
       body: {
         subscription: {
-          endpoint: 'https://push.example/member-device',
+          endpoint: 'https://fcm.googleapis.com/member-device',
           keys: { p256dh: 'p', auth: 'a' },
         },
       },
@@ -138,8 +142,7 @@ test('the notification settings a member needs are reachable without staff right
       200,
       'a member must be able to test their own device',
     )
-    // The stored endpoint is a stub host, so the send itself cannot land; what
-    // matters here is that the route accepted it and targeted one device.
+    // The sender is mocked: this verifies targeting without external delivery.
     assert.equal((await test.json()).total, 1)
   })
 })
@@ -162,7 +165,7 @@ test('admins can see who has device alerts without reading endpoints', async (t)
       method: 'POST',
       body: {
         subscription: {
-          endpoint: 'https://push.example/member-device',
+          endpoint: 'https://fcm.googleapis.com/member-device',
           keys: { p256dh: 'p', auth: 'a' },
         },
       },
@@ -182,7 +185,7 @@ test('admins can see who has device alerts without reading endpoints', async (t)
     assert.equal(payload.items[0].email, 'push-member@example.org')
     assert.equal(payload.items[0].devices, 1)
     assert.equal(
-      JSON.stringify(payload).includes('https://push.example'),
+      JSON.stringify(payload).includes('https://fcm.googleapis.com'),
       false,
     )
     assert.equal(JSON.stringify(payload).includes('"p"'), false)
@@ -212,5 +215,62 @@ test('broadcasting to other members stays admin-only', async (t) => {
     })
     assert.equal(asAdmin.status, 404)
     assert.equal((await asAdmin.json()).error.code, 'no_subscriptions')
+  })
+})
+
+test('private push responses and errors cannot be shared-cache entries', async (t) => {
+  await withServer(t, async ({ call, member, admin }) => {
+    for (const endpoint of [
+      '/status',
+      '/admin/summary',
+      '/admin/subscribers',
+    ]) {
+      for (const token of [undefined, member, admin]) {
+        const response = await call(`/api/push${endpoint}`, { token })
+        assert.equal(response.headers.get('cache-control'), 'no-store')
+        await response.text()
+      }
+    }
+  })
+})
+
+test('push rejects arbitrary destinations and revalidates legacy stored rows before sending', async (t) => {
+  await withServer(t, async ({ call, member }) => {
+    const rejected = await call('/api/push/subscribe', {
+      method: 'POST',
+      token: member,
+      body: { endpoint: 'https://127.0.0.1/private', keys: {} },
+    })
+    assert.equal(rejected.status, 400)
+    writeFileSync(
+      subscriptionsPath,
+      JSON.stringify([
+        {
+          id: 'bad',
+          accountId: 'push-member',
+          endpoint: 'https://127.0.0.1/private',
+          keys: {},
+        },
+        {
+          id: 'good',
+          accountId: 'push-member',
+          endpoint: 'https://fcm.googleapis.com/test',
+          keys: {},
+        },
+      ]),
+    )
+    const response = await call('/api/push/test', {
+      method: 'POST',
+      token: member,
+    })
+    assert.equal(response.status, 200)
+    const result = await response.json()
+    assert.equal(result.sent, 1)
+    assert.equal(result.failed, 1)
+    assert.equal(webPush.sendNotification.mock.callCount(), 1)
+    assert.equal(
+      webPush.sendNotification.mock.calls[0].arguments[0].endpoint,
+      'https://fcm.googleapis.com/test',
+    )
   })
 })

@@ -1,7 +1,34 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validateRuntimeConfig, appOrigin } from '../server/lib/config.js'
+import {
+  validateRuntimeConfig,
+  appOrigin,
+  localDemoEnabled,
+} from '../server/lib/config.js'
 import { databaseSsl } from '../server/lib/db.js'
+
+test('toy data is opt-in and restricted to the dedicated local development database', () => {
+  const env = {
+    LOCAL_DEMO: '1',
+    NODE_ENV: 'development',
+    DATABASE_URL: 'postgres://postgres@127.0.0.1:55439/youngo_local_demo',
+    APP_ORIGIN: 'http://127.0.0.1:8898',
+  }
+  assert.equal(localDemoEnabled({}), false)
+  assert.equal(localDemoEnabled(env), true)
+  for (const override of [
+    { NODE_ENV: 'production' },
+    {
+      DATABASE_URL: 'postgres://postgres@db.railway.internal/youngo_local_demo',
+    },
+    { DATABASE_URL: 'postgres://postgres@127.0.0.1/youngo' },
+    { APP_ORIGIN: 'https://youngohub.org' },
+  ])
+    assert.throws(
+      () => localDemoEnabled({ ...env, ...override }),
+      /Local demo requires/,
+    )
+})
 
 test('production requires PostgreSQL and an explicit application origin', () => {
   assert.throws(

@@ -1,3 +1,5 @@
+import { TbFileText as PolicyIcon } from 'react-icons/tb'
+import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import {
@@ -60,9 +62,11 @@ export function Submissions() {
   return (
     <div>
       <PageHeader
+        icon={PolicyIcon}
         title="Submissions"
         description="Open drafting processes and YOUNGO’s submitted positions."
       >
+        <PageSectionNav section="policy" />
         <div className="viewSwitch" role="group" aria-label="Submission view">
           <FilterPill
             active={state === 'open'}
@@ -179,6 +183,10 @@ export function Submissions() {
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
                   <FilterMenu
+                    onClear={() => {
+                      setStatusFilters({})
+                      setGroupFilters({})
+                    }}
                     activeCount={
                       activeFilterCount(statusFilters) +
                       activeFilterCount(groupFilters)

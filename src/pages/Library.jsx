@@ -1,3 +1,4 @@
+import { TbBooks as LibraryIcon } from 'react-icons/tb'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 
 const OPEN_GUIDES = [
@@ -27,7 +28,8 @@ export function Library() {
   return (
     <div>
       <PageHeader
-        title="Library"
+        icon={LibraryIcon}
+        title="Member guides"
         description="Practical guides for learning how YOUNGO works and taking part."
       />
       <Section label="Open guides">

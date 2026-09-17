@@ -1,4 +1,4 @@
-// NGO organisation portal: service requests, points, seats and invitations.
+// NGO organisation portal: service requests, seats and invitations.
 import { Router } from 'express'
 import { requireAccount, requireOrgScope, requireVerified } from './guards.js'
 import { getSessionAccount } from '../../lib/accounts.js'
@@ -12,7 +12,7 @@ import {
   deliveryFailure,
   emailConfigured,
   sendTemplatedEmail,
-} from '../../lib/emailTransport.js'
+} from '../../lib/notifications/transport.js'
 import {
   AFFILIATION_ROLES,
   acceptNgoInvite,
@@ -28,14 +28,6 @@ import {
   revokeNgoSeat,
   updateNgoRequestStatus,
 } from '../../lib/lifecycle.js'
-import {
-  POINT_REASONS,
-  RECOGNITION_TIERS,
-  getOrgPointsBalance,
-  listOrgPointsLedger,
-  reasonFromNgoRequestKind,
-  tiersForBalance,
-} from '../../lib/points.js'
 import { bearerToken } from '../../lib/security.js'
 import { createRateLimiter } from '../../lib/rateLimit.js'
 
@@ -51,10 +43,6 @@ router.get('/ngo/requests', async (req, res) => {
   if (!account) return
   const items = await listNgoRequests(req.orgAccountId)
   const seats = await listNgoSeats(req.orgAccountId)
-  const balance = await getOrgPointsBalance(req.orgAccountId)
-  const pointsLedger = await listOrgPointsLedger(req.orgAccountId, {
-    limit: 25,
-  })
   res.json({
     items,
     seats,
@@ -64,51 +52,18 @@ router.get('/ngo/requests', async (req, res) => {
       canWriteRequests: canWriteNgoRequests(req.orgContext),
       canManageSeats: canManageNgoSeats(req.orgContext),
     },
-    points: {
-      balance,
-      recognition: tiersForBalance(balance),
-      ledger: pointsLedger,
-      tiers: RECOGNITION_TIERS,
-      reasons: Object.values(POINT_REASONS).filter(
-        (r) => r.code !== 'adjustment',
-      ),
-    },
-    deadlines: [
-      {
-        title: 'Side event applications (placeholder)',
-        kind: 'deadline',
-        note: 'Connect live UNFCCC calendars later.',
-      },
-      {
-        title: 'COP/SB nomination windows (placeholder)',
-        kind: 'deadline',
-        note: 'Membership Team will publish real dates.',
-      },
-      {
-        title: 'Submission deadlines tracked in hub Submissions',
-        kind: 'deadline',
-        href: '/submissions',
-      },
-    ],
+    deadlines: [],
   })
 })
 
-router.get('/ngo/points', async (req, res) => {
-  const account = await requireOrgScope(req, res)
-  if (!account) return
-  const balance = await getOrgPointsBalance(req.orgAccountId)
-  const ledger = await listOrgPointsLedger(req.orgAccountId, {
-    limit: Number(req.query.limit) || 50,
-  })
-  res.json({
-    orgAccountId: req.orgAccountId,
-    balance,
-    recognition: tiersForBalance(balance),
-    ledger,
-    tiers: RECOGNITION_TIERS,
-    reasons: Object.values(POINT_REASONS),
-  })
-})
+router.get('/ngo/points', (_req, res) =>
+  res.status(410).json({
+    error: {
+      code: 'retired',
+      message: 'Contribution points have been retired.',
+    },
+  }),
+)
 
 router.post('/ngo/requests', async (req, res) => {
   const account = await requireOrgScope(req, res, 'requests')
@@ -165,24 +120,7 @@ router.patch('/ngo/requests/:id', async (req, res) => {
     reason: req.body?.reason,
     requestId: req.requestId,
   })
-  // When marked done, surface a staff award suggestion (points stay human-verified).
-  let awardSuggestion = null
-  if (nextStatus === 'done') {
-    const reasonCode = reasonFromNgoRequestKind(item.kind)
-    const reason = POINT_REASONS[reasonCode] || POINT_REASONS.other
-    awardSuggestion = {
-      requestId: item.id,
-      orgAccountId: req.orgAccountId,
-      kind: item.kind,
-      title: item.title,
-      suggestedReasonCode: reasonCode,
-      suggestedReasonLabel: reason.label,
-      suggestedPoints: reason.defaultPoints,
-      message:
-        'Request marked done. Staff can award contribution points from /staff/points.',
-    }
-  }
-  res.json({ item, awardSuggestion })
+  res.json({ item })
 })
 
 router.get('/ngo/seats', async (req, res) => {

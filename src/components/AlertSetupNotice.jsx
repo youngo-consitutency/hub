@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   TbBell as Bell,
   TbDeviceMobile as Smartphone,
@@ -21,14 +21,6 @@ export function AlertSetupNotice() {
   const { account } = useAccount()
   const setup = useAlertSetup()
   const [helpOpen, setHelpOpen] = useState(false)
-  const helpDialogRef = useRef(null)
-
-  useEffect(() => {
-    if (helpOpen && helpDialogRef.current && !helpDialogRef.current.open) {
-      helpDialogRef.current.showModal()
-    }
-  }, [helpOpen])
-
   if (!account?.isVerified) return null
   if (path.startsWith('/profile')) return null
   if (setup.state.loading || setup.dismissed || !setup.needsAction) return null
@@ -92,9 +84,7 @@ export function AlertSetupNotice() {
       {helpOpen && (
         <NotificationGuide
           device={currentDevice()}
-          dialogRef={helpDialogRef}
-          onClose={() => helpDialogRef.current?.close()}
-          onClosed={() => setHelpOpen(false)}
+          onClose={() => setHelpOpen(false)}
         />
       )}
     </>

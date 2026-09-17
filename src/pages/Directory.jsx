@@ -1,6 +1,9 @@
+import { SidePanel } from '../components/SidePanel.tsx'
+import { TbUsers as UsersIcon } from 'react-icons/tb'
+import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import { Async, Empty, PageHeader, Section } from '../components/ui.jsx'
+import { Async, Empty, PageHeader } from '../components/ui.jsx'
 import {
   ContactCard,
   PersonCard,
@@ -15,6 +18,7 @@ import {
 } from 'react-icons/tb'
 
 function PeopleDirectory() {
+  const [selectedPerson, setSelectedPerson] = useState(null)
   const [draftSearch, setDraftSearch] = useState('')
   const [search, setSearch] = useState('')
   const [workingGroup, setWorkingGroup] = useState('')
@@ -30,12 +34,10 @@ function PeopleDirectory() {
   ])
 
   return (
-    <Section label="People">
+    <section aria-label="Member profiles">
       <div className="peopleDirectoryIntro">
         <p className="meta">
-          Real member profiles appear here only after the member chooses to be
-          visible. Working groups, teams and organisations come from the Hub’s
-          governed records and stay in sync automatically.
+          Only members who choose to share their profile appear here.
         </p>
       </div>
       <form
@@ -114,12 +116,21 @@ function PeopleDirectory() {
                 key={person.id}
                 person={person}
                 onTagClick={(value) => setTag(value)}
+                onOpen={() => setSelectedPerson(person)}
               />
             ))}
           </div>
         )}
       </Async>
-    </Section>
+      {selectedPerson && (
+        <SidePanel
+          title="Member profile"
+          onClose={() => setSelectedPerson(null)}
+        >
+          <PersonCard person={selectedPerson} expanded />
+        </SidePanel>
+      )}
+    </section>
   )
 }
 
@@ -128,9 +139,12 @@ export function Directory() {
   return (
     <div>
       <PageHeader
+        icon={UsersIcon}
         title="Directory"
         description="Find the right contact by starting at the top for constituency-wide questions, or lower down for a specific team."
-      />
+      >
+        <PageSectionNav section="people" />
+      </PageHeader>
       <Async
         query={query}
         empty={(d) =>
@@ -190,11 +204,25 @@ export function Directory() {
                   </li>
                 ))}
               </ol>
-              <PeopleDirectory />
             </>
           )
         }}
       </Async>
+    </div>
+  )
+}
+
+export function Members() {
+  return (
+    <div>
+      <PageHeader
+        icon={UsersIcon}
+        title="Members"
+        description="Find people by their working groups, skills and interests."
+      >
+        <PageSectionNav section="people" />
+      </PageHeader>
+      <PeopleDirectory />
     </div>
   )
 }

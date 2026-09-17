@@ -1,6 +1,5 @@
-/* YOUNGO Hub motion language.
-   Motion explains where a temporary surface came from; it never rearranges
-   page content, delays navigation, or animates a repeated card grid. */
+/* Motion follows placement: side views slide horizontally, anchored menus
+   drop from their trigger, and centered dialogs fade in place. */
 
 @keyframes hubFadeIn {
   from {
@@ -8,96 +7,67 @@
   }
 }
 
-@keyframes hubDialogIn {
-  from {
+@keyframes hubFadeOut {
+  to {
     opacity: 0;
-    transform: translateY(var(--motion-shift)) scale(0.985);
   }
 }
 
 @keyframes hubPopoverIn {
   from {
     opacity: 0;
-    transform: translateY(calc(var(--motion-shift) * -1)) scale(0.99);
-  }
-}
-
-@keyframes hubMenuIn {
-  from {
-    opacity: 0;
-    transform: translate(var(--motion-shift), calc(var(--motion-shift) * -1))
-      scale(0.985);
+    transform: translateY(calc(var(--motion-shift) * -1));
   }
 }
 
 @keyframes hubRightPanelIn {
   from {
-    opacity: 0;
-    transform: translateX(calc(var(--motion-shift) * 3));
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
-/* Backdrops occupy the viewport, so they only fade. Their child surface owns
-   the directional movement. */
+@keyframes hubRightPanelOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Full-viewport backdrops never move with their surface. */
 .sheetBackdrop,
 .paletteBackdrop,
-.feedbackBackdrop,
-.adminDialogBackdrop,
-.routePeek::backdrop,
-.notificationHelpDialog::backdrop {
+.routePeek::backdrop {
   animation: hubFadeIn var(--motion-fast) var(--motion-ease) both;
 }
 
-/* Centered dialogs appear in place. */
-.palette,
-.feedbackDialog,
-.adminDialog,
-.notificationHelpDialog {
-  transform-origin: center;
-  animation: hubDialogIn var(--motion-standard) var(--motion-ease-out) both;
+.palette {
+  animation: hubFadeIn var(--motion-standard) var(--motion-ease) both;
 }
 
-/* Menus and listboxes come from the control directly above them. */
+/* These surfaces all sit below their controls; no diagonal drift or zoom. */
 .comboMenu,
 .addCalPanel,
 .subscribePanel,
-.siteMobileNav {
+.siteMobileNav,
+.sheet {
   animation: hubPopoverIn var(--motion-standard) var(--motion-ease-out) both;
 }
 
-.comboMenu,
-.addCalPanel {
-  transform-origin: top left;
-}
-
-.subscribePanel,
-.siteMobileNav {
-  transform-origin: top right;
-}
-
-/* The authenticated menu is anchored to the top-right menu button. */
-.sheet {
-  transform-origin: top right;
-  animation: hubMenuIn var(--motion-standard) var(--motion-ease-out) both;
-}
-
-/* Quick views are right-side panels, so this is the only large directional
-   movement in the Hub. */
+/* The phone view fills the screen but keeps the same forward/back direction. */
 .routePeek[open] {
-  animation: hubRightPanelIn var(--motion-standard) var(--motion-ease-out) both;
+  animation: hubRightPanelIn var(--motion-panel) var(--motion-ease-out) both;
 }
 
-@media (max-width: 560px) {
-  .addCalPanel {
-    transform-origin: top right;
-  }
+.routePeek[open][data-closing] {
+  animation: hubRightPanelOut var(--motion-standard) var(--motion-ease) both;
+  pointer-events: none;
 }
 
-/* On phones the peek is a centred full-screen window, so it appears in place
-   rather than sliding in from the right. */
-@media (max-width: 900px) {
-  .routePeek[open] {
-    transform-origin: center;
-    animation: hubDialogIn var(--motion-standard) var(--motion-ease-out) both;
-  }
+.routePeek[data-closing]::backdrop {
+  animation: hubFadeOut var(--motion-standard) var(--motion-ease) both;
 }

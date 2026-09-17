@@ -1,3 +1,4 @@
+import { regionLabel } from '../../lib/regions.js'
 import {
   TbCalendar as CalendarDays,
   TbChevronRight as ChevronRight,
@@ -42,16 +43,6 @@ const STATUS_LABEL = {
   cancelled: ['chip-danger', 'Cancelled'],
 }
 
-const REGION_LABEL = {
-  africa: 'Africa',
-  apac: 'Asia-Pacific',
-  eca: 'Europe & Central Asia',
-  lac: 'Latin America & the Caribbean',
-  mena: 'Middle East & North Africa',
-  noram: 'North America',
-  weog: 'Western Europe & Others',
-}
-
 function CoyRow({ coy }) {
   const [chipClass, chipLabel] = STATUS_LABEL[coy.status] || [
     'chip-neutral',
@@ -72,9 +63,9 @@ function CoyRow({ coy }) {
                 : 'Conference of Youth'}
           {place ? ` · ${place}` : ''}
           {coy.region && !place
-            ? ` · ${REGION_LABEL[coy.region] || coy.region}`
+            ? ` · ${regionLabel(coy.region)}`
             : coy.region && place
-              ? ` (${REGION_LABEL[coy.region] || coy.region})`
+              ? ` (${regionLabel(coy.region)})`
               : ''}
         </p>
       </div>
@@ -114,7 +105,7 @@ export function SiteCoy() {
             <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
           </a>
         </div>
-        <div className="siteFormatGrid">
+        <div className="cardGrid">
           {FORMATS.map(({ icon: Icon, title, body }) => (
             <article key={title} className="card siteFormatCard">
               <span className="iconTile" aria-hidden>

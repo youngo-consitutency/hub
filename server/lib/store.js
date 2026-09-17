@@ -5,10 +5,20 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { assembleFeed } from './feed.js'
 import { getPool } from './db.js'
+import { localDemoEnabled } from './config.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
+const localDemo = localDemoEnabled()
 const raw = JSON.parse(
-  readFileSync(path.join(here, '../../data/fixtures.json'), 'utf8'),
+  readFileSync(
+    path.join(
+      here,
+      localDemo
+        ? '../../.local-demo/data/fixtures.json'
+        : '../../data/fixtures.json',
+    ),
+    'utf8',
+  ),
 )
 const signupsPath = path.join(here, '../../data/gys-signups.json')
 
@@ -157,7 +167,25 @@ function materialize(raw, now = new Date()) {
   }
 }
 
-const data = materialize(raw)
+// Demo governance and rolling dates are only available in local fixture mode.
+// PostgreSQL and production always use deliberately published operational content.
+export const demoContentEnabled =
+  localDemo ||
+  (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'production')
+const content = demoContentEnabled
+  ? raw
+  : {
+      ...raw,
+      events: [],
+      submissions: [],
+      council: [],
+      announcements: [],
+      opportunities: [],
+      directory: raw.directory.map(
+        ({ personName: _name, channelValue: _channel, ...entry }) => entry,
+      ),
+    }
+const data = materialize(content)
 let publishedEvents = new Map()
 let publishedAnnouncements = new Map()
 let unpublishedEventSlugs = new Set()

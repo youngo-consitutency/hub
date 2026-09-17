@@ -1,3 +1,5 @@
+import { formatDateTime } from '../lib/dateTime.js'
+import { SidePanel } from './SidePanel.tsx'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { Button, Empty, ErrorCard, Section, Skeletons } from './ui.jsx'
@@ -41,6 +43,7 @@ const EMPTY = {
 }
 
 export function NgoOpportunities() {
+  const [editorOpen, setEditorOpen] = useState(false)
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -76,6 +79,7 @@ export function NgoOpportunities() {
       })
       setNotice(res.note)
       setForm(EMPTY)
+      setEditorOpen(false)
       load()
     } catch (err) {
       setError(err.message)
@@ -99,14 +103,26 @@ export function NgoOpportunities() {
       <Section
         label="What your organisation has posted"
         action={
-          data?.trusted ? (
-            <span className="chip chip-accent">Posts publish directly</span>
-          ) : (
-            <span className="chip chip-warn">First posting is reviewed</span>
-          )
+          <div className="rowGap">
+            {data?.canPost && (
+              <Button
+                onClick={() => {
+                  setError(null)
+                  setEditorOpen(true)
+                }}
+              >
+                Post an opportunity
+              </Button>
+            )}
+            {data?.trusted ? (
+              <span className="chip chip-accent">Posts publish directly</span>
+            ) : (
+              <span className="chip chip-warn">First posting is reviewed</span>
+            )}
+          </div>
         }
       >
-        {error && <ErrorCard message={error} onRetry={load} />}
+        {error && !editorOpen && <ErrorCard message={error} onRetry={load} />}
         {notice && (
           <p className="meta" style={{ color: 'var(--accent)' }}>
             {notice}
@@ -135,7 +151,7 @@ export function NgoOpportunities() {
                     <h3 style={{ marginTop: 6 }}>{item.title}</h3>
                     <p className="meta">
                       {item.startsAt
-                        ? new Date(item.startsAt).toLocaleString()
+                        ? formatDateTime(item.startsAt)
                         : 'No date set'}
                       {item.location ? ` · ${item.location}` : ''}
                     </p>
@@ -160,9 +176,13 @@ export function NgoOpportunities() {
         )}
       </Section>
 
-      {data?.canPost && (
-        <Section label="Post to the constituency">
-          <form className="card stack" onSubmit={submit}>
+      {data?.canPost && editorOpen && (
+        <SidePanel
+          title="Post an opportunity"
+          onClose={() => setEditorOpen(false)}
+        >
+          {error && <ErrorCard message={error} />}
+          <form className="stack" onSubmit={submit}>
             <SearchableSelect
               label="Type"
               options={KIND_OPTIONS}
@@ -274,7 +294,7 @@ export function NgoOpportunities() {
               {saving ? 'Posting…' : 'Post'}
             </Button>
           </form>
-        </Section>
+        </SidePanel>
       )}
     </>
   )
