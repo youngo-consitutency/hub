@@ -114,7 +114,10 @@ test('signed-in members can replace their password and keep this session', async
       }),
     })
     assert.equal(wrong.status, 400)
-    assert.equal((await wrong.json()).error.fields.currentPassword.length > 0, true)
+    assert.equal(
+      (await wrong.json()).error.fields.currentPassword.length > 0,
+      true,
+    )
 
     const same = await fetch(`${origin}/api/auth/change-password`, {
       method: 'POST',

@@ -143,20 +143,23 @@ negotiationRouter.post('/amendments/:id/versions', async (req, res, next) => {
   }
 })
 
-negotiationRouter.post('/amendments/:id/reconciliations', async (req, res, next) => {
-  try {
-    const account = await requireVerifiedHuman(req, res)
-    if (!account || res.headersSent) return
-    const reconciliation = await suggestAmendmentReconciliation({
-      account,
-      amendmentId: req.params.id,
-      input: req.body,
-    })
-    res.status(201).json({ reconciliation })
-  } catch (error) {
-    if (!sendContributionError(res, error)) next(error)
-  }
-})
+negotiationRouter.post(
+  '/amendments/:id/reconciliations',
+  async (req, res, next) => {
+    try {
+      const account = await requireVerifiedHuman(req, res)
+      if (!account || res.headersSent) return
+      const reconciliation = await suggestAmendmentReconciliation({
+        account,
+        amendmentId: req.params.id,
+        input: req.body,
+      })
+      res.status(201).json({ reconciliation })
+    } catch (error) {
+      if (!sendContributionError(res, error)) next(error)
+    }
+  },
+)
 
 negotiationRouter.post(
   '/amendments/:id/reconciliations/:reconciliationId/confirm',
@@ -177,47 +180,57 @@ negotiationRouter.post(
   },
 )
 
-negotiationRouter.get('/documents/:id/versions/:versionId', async (req, res, next) => {
-  try {
-    const item = await getPublicDocumentVersion(req.params.id, req.params.versionId)
-    return item ? res.json(item) : notFound(res)
-  } catch (error) {
-    next(error)
-  }
-})
-
-negotiationRouter.post('/documents/:id/versions/:versionId/extraction-reviews', async (req, res, next) => {
-  try {
-    const account = await requireVerifiedHuman(req, res)
-    if (!account || res.headersSent) return
-    const result = await reviewDocumentExtraction({
-      account,
-      documentId: req.params.id,
-      versionId: req.params.versionId,
-      expectedRevision: req.body?.expectedRevision,
-      text: req.body?.text,
-      method: req.body?.method,
-      confidence: req.body?.confidence,
-      note: req.body?.note,
-      requestId: req.get('x-request-id'),
-    })
-    res.status(201).json({ extraction: result })
-  } catch (error) {
-    if (error instanceof SourceIngestionError) {
-      const status = {
-        database_required: 503,
-        human_required: 403,
-        review_scope_denied: 403,
-        version_not_found: 404,
-        revision_conflict: 409,
-      }[error.code] || 422
-      return res.status(status).json({
-        error: { code: error.code, message: error.message },
-      })
+negotiationRouter.get(
+  '/documents/:id/versions/:versionId',
+  async (req, res, next) => {
+    try {
+      const item = await getPublicDocumentVersion(
+        req.params.id,
+        req.params.versionId,
+      )
+      return item ? res.json(item) : notFound(res)
+    } catch (error) {
+      next(error)
     }
-    next(error)
-  }
-})
+  },
+)
+
+negotiationRouter.post(
+  '/documents/:id/versions/:versionId/extraction-reviews',
+  async (req, res, next) => {
+    try {
+      const account = await requireVerifiedHuman(req, res)
+      if (!account || res.headersSent) return
+      const result = await reviewDocumentExtraction({
+        account,
+        documentId: req.params.id,
+        versionId: req.params.versionId,
+        expectedRevision: req.body?.expectedRevision,
+        text: req.body?.text,
+        method: req.body?.method,
+        confidence: req.body?.confidence,
+        note: req.body?.note,
+        requestId: req.get('x-request-id'),
+      })
+      res.status(201).json({ extraction: result })
+    } catch (error) {
+      if (error instanceof SourceIngestionError) {
+        const status =
+          {
+            database_required: 503,
+            human_required: 403,
+            review_scope_denied: 403,
+            version_not_found: 404,
+            revision_conflict: 409,
+          }[error.code] || 422
+        return res.status(status).json({
+          error: { code: error.code, message: error.message },
+        })
+      }
+      next(error)
+    }
+  },
+)
 
 negotiationRouter.get('/', async (req, res, next) => {
   try {
@@ -254,7 +267,10 @@ negotiationRouter.delete('/:slug/follow', async (req, res, next) => {
   try {
     const account = await requireVerifiedHuman(req, res)
     if (!account || res.headersSent) return
-    const result = await deleteFollow({ accountId: account.id, slug: req.params.slug })
+    const result = await deleteFollow({
+      accountId: account.id,
+      slug: req.params.slug,
+    })
     if (result.unavailable)
       return res.status(503).json({
         error: {

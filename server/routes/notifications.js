@@ -72,9 +72,7 @@ notificationRouter.get('/verify-email', async (req, res, next) => {
     }
     let mandate = null
     try {
-      const { applyMandateFromRoster } = await import(
-        '../lib/applyMandate.js'
-      )
+      const { applyMandateFromRoster } = await import('../lib/applyMandate.js')
       mandate = await applyMandateFromRoster(result.accountId, {
         requestId: req.requestId,
       })

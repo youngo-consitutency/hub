@@ -18,9 +18,9 @@ export const router = Router()
 function canBook(account) {
   return Boolean(
     account.isVerified ||
-      account.isWgContact ||
-      account.isAdmin ||
-      account.role === 'wg_contact',
+    account.isWgContact ||
+    account.isAdmin ||
+    account.role === 'wg_contact',
   )
 }
 

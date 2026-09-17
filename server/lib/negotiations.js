@@ -100,14 +100,18 @@ function matchesFixtureTrack(track, filters) {
     !track.workingGroupSlugs.includes(filters.workingGroup)
   )
     return false
-  if (filters.body && !detail.agendaItems.some((x) => includes(x.body, filters.body)))
+  if (
+    filters.body &&
+    !detail.agendaItems.some((x) => includes(x.body, filters.body))
+  )
     return false
   if (
     filters.session &&
     !detail.agendaItems.some((x) => includes(x.session, filters.session))
   )
     return false
-  if (filters.activity && detail.activityStatus !== filters.activity) return false
+  if (filters.activity && detail.activityStatus !== filters.activity)
+    return false
   if (filters.openCalls === 'true' && detail.openCalls === 0) return false
   return true
 }
@@ -162,7 +166,9 @@ export async function listPublicTracks(filters = {}) {
       `%${filters.session}%`,
     )
   if (filters.openCalls === 'true')
-    where.push("EXISTS (SELECT 1 FROM negotiation_track_calls tc JOIN negotiation_calls c ON c.id=tc.call_id WHERE tc.track_id=t.id AND c.publication_status='published' AND c.status='open')")
+    where.push(
+      "EXISTS (SELECT 1 FROM negotiation_track_calls tc JOIN negotiation_calls c ON c.id=tc.call_id WHERE tc.track_id=t.id AND c.publication_status='published' AND c.status='open')",
+    )
 
   const count = await pool.query(
     `SELECT count(*)::int AS total FROM negotiation_tracks t WHERE ${where.join(' AND ')}`,
@@ -306,7 +312,10 @@ export async function getPublicTrack(slug) {
         date: row.external_deadline_date,
         precision: row.external_deadline_precision,
         ...(row.external_deadline_precision === 'time'
-          ? { time: row.external_deadline_time, timezone: row.external_deadline_timezone }
+          ? {
+              time: row.external_deadline_time,
+              timezone: row.external_deadline_timezone,
+            }
           : {}),
       },
     })),
@@ -315,9 +324,13 @@ export async function getPublicTrack(slug) {
 
 export async function listPublicCalls(filters = {}) {
   const tracks = await listPublicTracks({ ...filters, pageSize: MAX_PAGE_SIZE })
-  const details = await Promise.all(tracks.items.map((item) => getPublicTrack(item.slug)))
+  const details = await Promise.all(
+    tracks.items.map((item) => getPublicTrack(item.slug)),
+  )
   const byId = new Map()
-  details.flatMap((item) => item.calls).forEach((call) => byId.set(call.id, call))
+  details
+    .flatMap((item) => item.calls)
+    .forEach((call) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 

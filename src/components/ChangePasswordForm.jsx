@@ -84,12 +84,7 @@ export function ChangePasswordForm({
         />
         <FieldError msg={fields.passwordConfirm} />
       </label>
-      <Button
-        type="submit"
-        variant="primary"
-        glow
-        disabled={submitting}
-      >
+      <Button type="submit" variant="primary" glow disabled={submitting}>
         {submitting ? 'Saving…' : submitLabel}
       </Button>
     </form>

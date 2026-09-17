@@ -177,12 +177,11 @@ export function PlatformLandingV2({ onAuthenticated }) {
           </p>
           <p className="v2HeroLead">
             YOUNGO brings together young people, youth-led organisations,
-            groups, and delegations. Learn the UN climate process, contribute
-            to policy, and find the people already doing the work.
+            groups, and delegations. Learn the UN climate process, contribute to
+            policy, and find the people already doing the work.
           </p>
           <p className="v2HeroMeta">
-            Since 2009 · Open to children and youth up to 35 · No membership
-            fee
+            Since 2009 · Open to children and youth up to 35 · No membership fee
           </p>
         </section>
 

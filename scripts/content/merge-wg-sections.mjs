@@ -63,7 +63,10 @@ function renderOnboarding(map) {
         /\n/g,
         '\n    ',
       )
-      const rules = JSON.stringify(value.rules, null, 6).replace(/\n/g, '\n    ')
+      const rules = JSON.stringify(value.rules, null, 6).replace(
+        /\n/g,
+        '\n    ',
+      )
       return `  ${JSON.stringify(slug)}: {
     presentation: ${presentation},
     rules: ${rules},
@@ -88,7 +91,9 @@ export function getWgOnboarding(slug) {
 `
 }
 
-const files = (await readdir(draftsDir)).filter((name) => name.endsWith('.json'))
+const files = (await readdir(draftsDir)).filter((name) =>
+  name.endsWith('.json'),
+)
 const drafts = []
 for (const name of files) {
   const raw = JSON.parse(await readFile(path.join(draftsDir, name), 'utf8'))

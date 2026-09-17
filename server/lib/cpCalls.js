@@ -41,8 +41,7 @@ export async function listOpenSlots() {
   }
   return readJson(slotsPath, [])
     .filter(
-      (row) =>
-        row.status === 'open' && new Date(row.starts_at) > new Date(),
+      (row) => row.status === 'open' && new Date(row.starts_at) > new Date(),
     )
     .sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)))
     .map(publicSlot)
@@ -133,7 +132,10 @@ export async function createSlot({
     err.code = 'validation'
     throw err
   }
-  const label = String(hostLabel || '').trim().slice(0, 40) || 'Host'
+  const label =
+    String(hostLabel || '')
+      .trim()
+      .slice(0, 40) || 'Host'
   const pool = getPool()
   if (pool) {
     try {
@@ -255,11 +257,7 @@ export async function bookSlot({ slotId, accountId, wgSlug, notes }) {
   }
   const list = readJson(slotsPath, [])
   const row = list.find((item) => item.id === slotId)
-  if (
-    !row ||
-    row.status !== 'open' ||
-    new Date(row.starts_at) <= new Date()
-  ) {
+  if (!row || row.status !== 'open' || new Date(row.starts_at) <= new Date()) {
     const err = new Error('That slot is no longer available.')
     err.code = 'conflict'
     throw err

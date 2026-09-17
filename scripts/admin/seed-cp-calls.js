@@ -49,13 +49,16 @@ function gennSlots() {
   const out = []
   for (const day of DAYS) {
     for (const hour of HOURS) {
-      const start = new Date(`${day}T${String(hour).padStart(2, '0')}:00:00+02:00`)
+      const start = new Date(
+        `${day}T${String(hour).padStart(2, '0')}:00:00+02:00`,
+      )
       const end = new Date(start.getTime() + 45 * 60 * 1000)
       if (start <= new Date()) continue
       const clash = BUSY.some(([busyStart, busyEnd]) =>
         overlaps(start, end, busyStart, busyEnd),
       )
-      if (!clash) out.push({ startsAt: start.toISOString(), endsAt: end.toISOString() })
+      if (!clash)
+        out.push({ startsAt: start.toISOString(), endsAt: end.toISOString() })
     }
   }
   return out

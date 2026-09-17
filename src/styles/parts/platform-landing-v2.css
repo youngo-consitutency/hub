@@ -258,7 +258,8 @@
 
 .v2Bands article {
   min-width: 0;
-  padding: clamp(22px, 3vw, 32px) clamp(20px, 3vw, 36px) clamp(28px, 3.5vw, 40px);
+  padding: clamp(22px, 3vw, 32px) clamp(20px, 3vw, 36px)
+    clamp(28px, 3.5vw, 40px);
 }
 
 .v2Bands article[data-tone='teal'] {

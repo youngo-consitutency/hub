@@ -44,7 +44,9 @@ function privateIpv4(address) {
 }
 
 export function isPrivateNetworkAddress(address) {
-  const normalized = String(address || '').toLocaleLowerCase().split('%')[0]
+  const normalized = String(address || '')
+    .toLocaleLowerCase()
+    .split('%')[0]
   const family = isIP(normalized)
   if (family === 4) return privateIpv4(normalized)
   if (family !== 6) return true
@@ -59,9 +61,7 @@ export function isPrivateNetworkAddress(address) {
   if (mappedHex) {
     const high = Number.parseInt(mappedHex[1], 16)
     const low = Number.parseInt(mappedHex[2], 16)
-    return privateIpv4(
-      `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`,
-    )
+    return privateIpv4(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`)
   }
   return false
 }
@@ -108,7 +108,10 @@ function mediaType(response) {
 async function readBoundedBody(response, maxBytes) {
   const declared = Number(response.headers.get('content-length'))
   if (Number.isFinite(declared) && declared > maxBytes)
-    throw new SourceIngestionError('source_too_large', 'Source exceeds size limit.')
+    throw new SourceIngestionError(
+      'source_too_large',
+      'Source exceeds size limit.',
+    )
   if (!response.body)
     throw new SourceIngestionError('empty_response', 'Source returned no body.')
   const reader = response.body.getReader()
@@ -127,7 +130,10 @@ async function readBoundedBody(response, maxBytes) {
     }
     chunks.push(value)
   }
-  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), size)
+  return Buffer.concat(
+    chunks.map((chunk) => Buffer.from(chunk)),
+    size,
+  )
 }
 
 export async function fetchPermittedSource({
@@ -202,7 +208,10 @@ const safeDiagnostic = (error) =>
 
 const EXTRACTION_MAX_CHARS = 1_000_000
 const EXTRACTION_RISKS = [
-  ['credential_marker', /\b(?:password|passwd|api[_ -]?key|access[_ -]?token|session[_ -]?token|private[_ -]?key)\b/i],
+  [
+    'credential_marker',
+    /\b(?:password|passwd|api[_ -]?key|access[_ -]?token|session[_ -]?token|private[_ -]?key)\b/i,
+  ],
   ['contact_email', /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i],
   ['contact_phone', /(?:\+?\d[\d ()-]{7,}\d)/],
 ]
@@ -259,13 +268,21 @@ export async function reviewDocumentExtraction({
       'Review note must contain 8 to 1000 characters.',
     )
   const extractionMethod = String(method || 'manual_correction').trim()
-  if (!['manual_review', 'manual_correction', 'verified_ocr'].includes(extractionMethod))
+  if (
+    !['manual_review', 'manual_correction', 'verified_ocr'].includes(
+      extractionMethod,
+    )
+  )
     throw new SourceIngestionError(
       'invalid_extraction_method',
       'Extraction method is not permitted.',
     )
   const numericConfidence = Number(confidence)
-  if (!Number.isFinite(numericConfidence) || numericConfidence < 0 || numericConfidence > 1)
+  if (
+    !Number.isFinite(numericConfidence) ||
+    numericConfidence < 0 ||
+    numericConfidence > 1
+  )
     throw new SourceIngestionError(
       'invalid_confidence',
       'Extraction confidence must be between 0 and 1.',
@@ -283,7 +300,10 @@ export async function reviewDocumentExtraction({
       [documentId, versionId],
     )
     if (!target.rows[0])
-      throw new SourceIngestionError('version_not_found', 'Document version not found.')
+      throw new SourceIngestionError(
+        'version_not_found',
+        'Document version not found.',
+      )
     const trackResult = await client.query(
       `SELECT DISTINCT track_id::text FROM negotiation_track_documents
        WHERE document_id=$1`,
@@ -390,7 +410,10 @@ export async function ingestDocumentSource({
     )
     const source = sourceResult.rows[0]
     if (!source)
-      throw new SourceIngestionError('source_not_found', 'Source is not registered.')
+      throw new SourceIngestionError(
+        'source_not_found',
+        'Source is not registered.',
+      )
     const permission = await client.query(
       `SELECT 1 FROM negotiation_sources s JOIN negotiation_documents d ON d.source_id=s.id
        WHERE s.id=$1 AND d.id=$2 AND s.permitted=true`,

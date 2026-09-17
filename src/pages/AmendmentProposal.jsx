@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
-import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui.jsx'
+import {
+  Async,
+  BackLink,
+  Empty,
+  PageHeader,
+  Section,
+} from '../components/ui.jsx'
 import { TbCircleCheck as CheckCircle } from 'react-icons/tb'
 
 const initialForm = {
@@ -39,8 +45,7 @@ export function AmendmentProposal() {
         setTrackDetail(detail)
         setForm((current) => ({
           ...current,
-          targetDocumentVersionId:
-            detail.documents[0]?.latestVersion.id || '',
+          targetDocumentVersionId: detail.documents[0]?.latestVersion.id || '',
         }))
       })
       .catch((requestError) => active && setError(requestError.message))
@@ -115,19 +120,35 @@ export function AmendmentProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Negotiation track</span>
-                  <select className="input" required value={form.trackId} onChange={set('trackId')}>
+                  <select
+                    className="input"
+                    required
+                    value={form.trackId}
+                    onChange={set('trackId')}
+                  >
                     <option value="">Select a track</option>
                     {data.items.map((track) => (
-                      <option value={track.id} key={track.id}>{track.topic}</option>
+                      <option value={track.id} key={track.id}>
+                        {track.topic}
+                      </option>
                     ))}
                   </select>
                 </label>
                 <label className="field">
                   <span>Immutable document version</span>
-                  <select className="input" required disabled={!trackDetail} value={form.targetDocumentVersionId} onChange={set('targetDocumentVersionId')}>
+                  <select
+                    className="input"
+                    required
+                    disabled={!trackDetail}
+                    value={form.targetDocumentVersionId}
+                    onChange={set('targetDocumentVersionId')}
+                  >
                     <option value="">Select a source version</option>
                     {(trackDetail?.documents || []).map((document) => (
-                      <option value={document.latestVersion.id} key={document.latestVersion.id}>
+                      <option
+                        value={document.latestVersion.id}
+                        key={document.latestVersion.id}
+                      >
                         {document.title} · {document.latestVersion.id}
                       </option>
                     ))}
@@ -135,15 +156,31 @@ export function AmendmentProposal() {
                 </label>
                 <label className="field">
                   <span>Page</span>
-                  <input className="input" required value={form.page} onChange={set('page')} />
+                  <input
+                    className="input"
+                    required
+                    value={form.page}
+                    onChange={set('page')}
+                  />
                 </label>
                 <label className="field">
                   <span>Paragraph or anchor label</span>
-                  <input className="input" required value={form.paragraph} onChange={set('paragraph')} />
+                  <input
+                    className="input"
+                    required
+                    value={form.paragraph}
+                    onChange={set('paragraph')}
+                  />
                 </label>
                 <label className="field fieldSpan">
                   <span>Exact anchor quote</span>
-                  <textarea className="input" required rows={3} value={form.anchorQuote} onChange={set('anchorQuote')} />
+                  <textarea
+                    className="input"
+                    required
+                    rows={3}
+                    value={form.anchorQuote}
+                    onChange={set('anchorQuote')}
+                  />
                 </label>
               </div>
             </Section>
@@ -152,7 +189,11 @@ export function AmendmentProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Operation</span>
-                  <select className="input" value={form.operation} onChange={set('operation')}>
+                  <select
+                    className="input"
+                    value={form.operation}
+                    onChange={set('operation')}
+                  >
                     <option value="insert">Insert</option>
                     <option value="replace">Replace</option>
                     <option value="delete">Delete</option>
@@ -161,30 +202,62 @@ export function AmendmentProposal() {
                 <div />
                 <label className="field fieldSpan">
                   <span>Original wording</span>
-                  <textarea className="input" required rows={5} value={form.originalText} onChange={set('originalText')} />
+                  <textarea
+                    className="input"
+                    required
+                    rows={5}
+                    value={form.originalText}
+                    onChange={set('originalText')}
+                  />
                 </label>
                 {form.operation !== 'delete' && (
                   <label className="field fieldSpan">
                     <span>Proposed wording</span>
-                    <textarea className="input" required rows={5} value={form.proposedText} onChange={set('proposedText')} />
+                    <textarea
+                      className="input"
+                      required
+                      rows={5}
+                      value={form.proposedText}
+                      onChange={set('proposedText')}
+                    />
                   </label>
                 )}
                 <label className="field fieldSpan">
                   <span>Rationale</span>
-                  <textarea className="input" required rows={4} value={form.rationale} onChange={set('rationale')} />
+                  <textarea
+                    className="input"
+                    required
+                    rows={4}
+                    value={form.rationale}
+                    onChange={set('rationale')}
+                  />
                 </label>
                 <label className="field fieldSpan">
                   <span>Supporting source quote</span>
-                  <textarea className="input" rows={3} value={form.citationQuote} onChange={set('citationQuote')} />
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={form.citationQuote}
+                    onChange={set('citationQuote')}
+                  />
                 </label>
               </div>
             </Section>
             <p className="meta">
-              This is a member proposal. It never modifies the cited official source and does not represent YOUNGO endorsement.
+              This is a member proposal. It never modifies the cited official
+              source and does not represent YOUNGO endorsement.
             </p>
-            {error && <p className="formError" role="alert">{error}</p>}
+            {error && (
+              <p className="formError" role="alert">
+                {error}
+              </p>
+            )}
             <div className="detailActions detailPageActions">
-              <button className="btn btn-primary" type="submit" disabled={saving}>
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={saving}
+              >
                 {saving ? 'Saving…' : 'Save text proposal'}
               </button>
             </div>

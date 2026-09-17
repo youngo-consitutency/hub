@@ -1,16 +1,8 @@
 import { useState } from 'react'
 import { useAccount } from '../lib/accountContext.jsx'
 import { apiDelete, apiPut, useApi } from '../lib/api.js'
-import {
-  Async,
-  BackLink,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
-import {
-  TbBell as Bell,
-  TbExternalLink as ExternalLink,
-} from 'react-icons/tb'
+import { Async, BackLink, PageHeader, Section } from '../components/ui.jsx'
+import { TbBell as Bell, TbExternalLink as ExternalLink } from 'react-icons/tb'
 
 function deadlineText(deadline) {
   if (!deadline?.date) return 'Deadline not specified'
@@ -20,7 +12,8 @@ function deadlineText(deadline) {
     day: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(`${deadline.date}T00:00:00Z`))
-  if (deadline.precision !== 'time') return `${date} · closing time not specified`
+  if (deadline.precision !== 'time')
+    return `${date} · closing time not specified`
   return `${date}, ${deadline.time} ${deadline.timezone}`
 }
 
@@ -66,22 +59,38 @@ export function NegotiationDetail({ slug }) {
                   onClick={toggleFollow}
                 >
                   <Bell size={18} aria-hidden />
-                  {saving ? 'Saving…' : following ? 'Following' : 'Follow track'}
+                  {saving
+                    ? 'Saving…'
+                    : following
+                      ? 'Following'
+                      : 'Follow track'}
                 </button>
               )}
             </PageHeader>
-            {followError && <p className="formError" role="alert">{followError}</p>}
+            {followError && (
+              <p className="formError" role="alert">
+                {followError}
+              </p>
+            )}
 
             <Section label="Agenda lineage">
               <div className="cardGrid">
                 {track.agendaItems.map((item) => (
                   <article className="card" key={item.id}>
                     <div className="cardBody">
-                      <div className="eyebrow">{item.body} · {item.session}</div>
-                      <h3>Item {item.item}{item.subItem ? `.${item.subItem}` : ''}</h3>
+                      <div className="eyebrow">
+                        {item.body} · {item.session}
+                      </div>
+                      <h3>
+                        Item {item.item}
+                        {item.subItem ? `.${item.subItem}` : ''}
+                      </h3>
                       <p>{item.title}</p>
                       {item.lineageFrom?.length > 0 && (
-                        <p className="meta">Continues an earlier agenda item; the earlier record remains preserved.</p>
+                        <p className="meta">
+                          Continues an earlier agenda item; the earlier record
+                          remains preserved.
+                        </p>
                       )}
                     </div>
                   </article>
@@ -98,46 +107,83 @@ export function NegotiationDetail({ slug }) {
                         <div className="eyebrow">{call.status}</div>
                         <h3>{call.title}</h3>
                         <p>{call.eligibility}</p>
-                        <p className="meta">{deadlineText(call.externalDeadline)}</p>
+                        <p className="meta">
+                          {deadlineText(call.externalDeadline)}
+                        </p>
                         {!call.submittingChannel && (
-                          <p className="meta">No verified submitting channel recorded.</p>
+                          <p className="meta">
+                            No verified submitting channel recorded.
+                          </p>
                         )}
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
-                <p className="meta">No published contribution call is linked to this track.</p>
+                <p className="meta">
+                  No published contribution call is linked to this track.
+                </p>
               )}
             </Section>
 
             <Section label="Documents and source health">
               <div className="cardGrid">
                 {track.documents.map((document) => {
-                  const uncertain = Number(document.latestVersion.extraction.confidence) < 0.9
+                  const uncertain =
+                    Number(document.latestVersion.extraction.confidence) < 0.9
                   return (
                     <article className="card" key={document.id}>
                       <div className="cardBody">
                         <div className="eyebrow">
-                          {document.documentStatus} · {document.latestVersion.language}
+                          {document.documentStatus} ·{' '}
+                          {document.latestVersion.language}
                         </div>
                         <h3>{document.title}</h3>
                         <p className="meta">
-                          {document.versionCount} immutable {document.versionCount === 1 ? 'version' : 'versions'} · retrieved {new Date(document.latestVersion.retrievedAt).toLocaleString()}
+                          {document.versionCount} immutable{' '}
+                          {document.versionCount === 1 ? 'version' : 'versions'}{' '}
+                          · retrieved{' '}
+                          {new Date(
+                            document.latestVersion.retrievedAt,
+                          ).toLocaleString()}
                         </p>
                         {document.health.coverageState !== 'current' && (
                           <p className="formError" role="status">
-                            Coverage {document.health.coverageState}. Last successful check: {document.health.lastSuccessfulCheckAt ? new Date(document.health.lastSuccessfulCheckAt).toLocaleString() : 'none recorded'}.
+                            Coverage {document.health.coverageState}. Last
+                            successful check:{' '}
+                            {document.health.lastSuccessfulCheckAt
+                              ? new Date(
+                                  document.health.lastSuccessfulCheckAt,
+                                ).toLocaleString()
+                              : 'none recorded'}
+                            .
                           </p>
                         )}
                         {uncertain && (
-                          <p className="meta">Extraction is uncertain ({Math.round(document.latestVersion.extraction.confidence * 100)}% confidence). Verify against the original.</p>
+                          <p className="meta">
+                            Extraction is uncertain (
+                            {Math.round(
+                              document.latestVersion.extraction.confidence *
+                                100,
+                            )}
+                            % confidence). Verify against the original.
+                          </p>
                         )}
-                        <a className="btn btn-secondary btn-sm" href={document.sourceUrl} target="_blank" rel="noreferrer">
+                        <a
+                          className="btn btn-secondary btn-sm"
+                          href={document.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
                           <ExternalLink size={17} aria-hidden />
                           Original evidence
                         </a>
-                        <a className="btn btn-ghost btn-sm" href={`/api/negotiations/documents/${document.id}/versions/${document.latestVersion.id}`} target="_blank" rel="noreferrer">
+                        <a
+                          className="btn btn-ghost btn-sm"
+                          href={`/api/negotiations/documents/${document.id}/versions/${document.latestVersion.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
                           Version metadata
                         </a>
                       </div>

@@ -30,10 +30,10 @@ test('roster lookup is case-insensitive and supports dual mandates', () => {
   assert.equal(adaptation[0].wgSlug, 'adaptation')
 
   const dual = mandatesForEmail('dogukanejderr@gmail.com')
-  assert.deepEqual(
-    dual.map((item) => item.wgSlug).sort(),
-    ['human-rights', 'peace-and-security'],
-  )
+  assert.deepEqual(dual.map((item) => item.wgSlug).sort(), [
+    'human-rights',
+    'peace-and-security',
+  ])
 
   const anirudh = mandatesForEmail('anirudhjanagam.official@gmail.com')
   assert.deepEqual(anirudh.map((item) => item.wgSlug).sort(), ['ach', 'coy'])

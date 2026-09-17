@@ -40,9 +40,9 @@ export function RegisterIndividualForm({
           <li>Ages 35 and under · no membership fees.</li>
           <li>Membership Team usually contacts you within ~2 weeks.</li>
           <li>
-            2026 Contact Points and Focal Points: register with the email on
-            the official WG/OT roster, then confirm that inbox. The Hub assigns
-            the mandate from that match.
+            2026 Contact Points and Focal Points: register with the email on the
+            official WG/OT roster, then confirm that inbox. The Hub assigns the
+            mandate from that match.
           </li>
         </ul>
         <p className="metaMuted">

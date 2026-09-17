@@ -212,9 +212,8 @@ authRouter.post('/login', loginLimit, loginAccountLimit, async (req, res) => {
 
     if (row.email_verified_at || row.emailVerifiedAt) {
       try {
-        const { applyMandateFromRoster } = await import(
-          '../lib/applyMandate.js'
-        )
+        const { applyMandateFromRoster } =
+          await import('../lib/applyMandate.js')
         await applyMandateFromRoster(row.id, { requestId: req.requestId })
       } catch (error) {
         console.warn(
