@@ -11,6 +11,7 @@ import { router as content } from './content.js'
 import { router as feedback } from './feedback.js'
 import { router as opportunities } from './opportunities.js'
 import { router as admin } from './admin.js'
+import { router as cpCalls } from './cpCalls.js'
 import { router as resources } from './resources.js'
 import { router as notifications } from './notifications.js'
 
@@ -41,4 +42,5 @@ memberRouter.use(resources)
 memberRouter.use(notifications)
 memberRouter.use(feedback)
 memberRouter.use(opportunities)
+memberRouter.use(cpCalls)
 memberRouter.use(admin)

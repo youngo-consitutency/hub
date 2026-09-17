@@ -1,0 +1,74 @@
+{
+  "slug": "gender",
+  "name": "Women & Gender",
+  "monogram": "GE",
+  "focusLine": "Gender-responsive climate policy, the UNFCCC Gender Action Plan, and intergenerational equity",
+  "tags": ["Gender", "Justice"],
+  "whatsappUrl": "https://chat.whatsapp.com/C5hiNIm7A3gJdy7Mll6UNn",
+  "resources": [
+    {
+      "label": "WhatsApp — Women & Gender WG",
+      "description": "Public WhatsApp invite for the Women and Gender working group.",
+      "url": "https://chat.whatsapp.com/C5hiNIm7A3gJdy7Mll6UNn"
+    },
+    {
+      "label": "Women & Gender WG on LinkedIn",
+      "description": "Company page for gender-climate advocacy, CSW inputs, and GAP-related work.",
+      "url": "https://www.linkedin.com/company/women-and-gender-working-group"
+    },
+    {
+      "label": "2026 policy & submissions roadmap",
+      "description": "Shared Google Doc titled “2026 - Gender” — CP-maintained plan for 2026 submissions and processes.",
+      "url": "https://docs.google.com/document/d/14x8deg6vEu1oKLfWP_EzBtMqPFVGPNNePP9T4-EzE3E/edit"
+    },
+    {
+      "label": "Gender WG onboarding deck",
+      "description": "Google Slides titled “YOUNGO Intro Slides + Gender Intro” for Women and Gender WG members.",
+      "url": "https://docs.google.com/presentation/d/1mqEYj6iIxXiQbXBReaEk5M78SdRdL_BRW3Ps_Bb6hYk/edit"
+    },
+    {
+      "label": "Gender WG resource bank",
+      "description": "Shared databank document (YOUNGO Capacity Building Databank) for Gender WG members.",
+      "url": "https://docs.google.com/document/d/1NGyhHF2ppqrxG7y7aFLRtDxSHbD5a4th5_0YnxUA3Lc/edit"
+    },
+    {
+      "label": "UNFCCC — Enhanced Lima work programme on gender",
+      "description": "Official LWPG pages. COP 29 extended the programme for 10 years; COP 30 adopted the 9-year Belém Gender Action Plan.",
+      "url": "https://unfccc.int/topics/gender/workstreams/the-enhanced-lima-work-programme-on-gender"
+    },
+    {
+      "label": "OHCHR — gender-responsive climate action",
+      "description": "OHCHR overview of gender-differentiated climate impacts and rights-based, gender-responsive climate action.",
+      "url": "https://www.ohchr.org/en/climate-change/gender-responsive-climate-action"
+    },
+    {
+      "label": "CSW71 — young feminist community consultations",
+      "description": "UN Women youth-feminist prep: people under 35 connected to orgs/movements can apply to organize community consultations for CSW71.",
+      "url": "https://forms.gle/8DBtc3Yi8VKfuozA9"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster — use this to check whether Contact Points are named after you join.",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Women & Gender WG champions gender-responsive climate policy inside YOUNGO — GAP follow-up, CSW inputs, and intergenerational equity across UNFCCC tracks.",
+      "The official 2026 Contact Point roster lists no named CPs for this group. Use the public WhatsApp invite and the onboarding deck; confirm current facilitators on the WG/OT Notion roster.",
+      "Public entry points: WhatsApp, LinkedIn (women-and-gender-working-group), the 2026 policy roadmap, and the resource bank."
+    ],
+    "rules": [
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces, including gender-inclusive language on calls and chats.",
+      "Do not share private channel links outside YOUNGO membership without facilitator approval.",
+      "Centre women, girls, and gender-diverse people in all their diversity; do not treat gender as an add-on to other agenda items.",
+      "Coordinate public statements with WG facilitators before using the YOUNGO name.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Women and Gender WG",
+    "description": "The official 2026 Contact Point roster lists no named CPs for Women & Gender. Public WhatsApp invite on the WG page. 2026 policy roadmap and onboarding deck linked from resources — confirm current facilitators on the WG/OT Notion roster."
+  }
+}

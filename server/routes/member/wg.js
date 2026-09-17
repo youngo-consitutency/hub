@@ -8,9 +8,24 @@ import { recordAudit } from '../../lib/audit.js'
 import {
   addWgActivity,
   getWgProgress,
+  listWgActivities,
   listWgJoiners,
   upsertWgProgress,
 } from '../../lib/lifecycle.js'
+import { setWgPublicSpace } from '../../lib/wgSettings.js'
+import { rememberWgPublicSpace, getGroup } from '../../lib/store.js'
+import { TASK_FORCE_SLUGS } from '../../../shared/taskForces.js'
+
+function httpUrl(value) {
+  if (!value) return null
+  try {
+    const url = new URL(String(value))
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
 
 export const router = Router()
 
@@ -93,6 +108,13 @@ router.post('/cp/:wg/members/:accountId/role', async (req, res) => {
   res.json({ progress })
 })
 
+router.get('/cp/:wg/activities', async (req, res) => {
+  const account = await requireWgManager(req, res)
+  if (!account) return
+  const items = await listWgActivities(req.params.wg)
+  res.json({ items })
+})
+
 router.post('/cp/:wg/activities', async (req, res) => {
   const account = await requireWgManager(req, res)
   if (!account) return
@@ -112,6 +134,20 @@ router.post('/cp/:wg/activities', async (req, res) => {
       .status(400)
       .json({ error: { code: 'validation', message: 'Invalid start date.' } })
   }
+  const taskForceSlug = b.taskForceSlug ? String(b.taskForceSlug) : null
+  if (taskForceSlug && !TASK_FORCE_SLUGS.has(taskForceSlug)) {
+    return res.status(400).json({
+      error: { code: 'validation', message: 'Unknown task force.' },
+    })
+  }
+  if (b.url && !httpUrl(b.url)) {
+    return res.status(400).json({
+      error: {
+        code: 'validation',
+        message: 'Link must be a full http:// or https:// URL.',
+      },
+    })
+  }
   const activity = await addWgActivity({
     wgSlug: req.params.wg,
     kind: b.kind,
@@ -119,7 +155,8 @@ router.post('/cp/:wg/activities', async (req, res) => {
     body: b.body ? String(b.body).slice(0, 2000) : null,
     startsAt: b.startsAt || null,
     endsAt: b.endsAt || null,
-    url: b.url || null,
+    url: httpUrl(b.url),
+    taskForceSlug,
     createdBy: account.id,
   })
   await recordAudit({
@@ -131,4 +168,34 @@ router.post('/cp/:wg/activities', async (req, res) => {
     requestId: req.requestId,
   })
   res.status(201).json({ activity })
+})
+
+router.post('/cp/:wg/public-space', async (req, res) => {
+  const account = await requireWgManager(req, res)
+  if (!account) return
+  const group = getGroup(req.params.wg)
+  if (!group) {
+    return res.status(404).json({
+      error: { code: 'not_found', message: 'Unknown working group.' },
+    })
+  }
+  const publicSpace = Boolean(req.body?.publicSpace)
+  const settings = await setWgPublicSpace(
+    req.params.wg,
+    publicSpace,
+    account.id,
+  )
+  rememberWgPublicSpace(req.params.wg, settings.publicSpace, settings.updatedAt)
+  await recordAudit({
+    actorId: account.id,
+    action: 'wg.public_space_updated',
+    targetType: 'working_group',
+    targetId: req.params.wg,
+    after: { publicSpace: settings.publicSpace },
+    requestId: req.requestId,
+  })
+  res.json({
+    publicSpace: settings.publicSpace,
+    group: getGroup(req.params.wg),
+  })
 })

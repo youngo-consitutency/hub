@@ -1,7 +1,14 @@
 import { overview } from '../../modules/platform/service.ts'
 // Member essentials: access profile, membership course, WG workspaces.
 import { Router } from 'express'
+import express from 'express'
 import { requireAccount, requireFocalPoint, requireVerified } from './guards.js'
+import {
+  APPEAL_PROOF_MAX_BYTES,
+  getOwnAppeal,
+  submitAppeal,
+} from '../../lib/membershipAppeals.js'
+import { recordAudit } from '../../lib/audit.js'
 import {
   COURSE_MODULES,
   COURSE_VERSION,
@@ -31,6 +38,63 @@ router.get('/access', async (req, res) => {
   if (!account) return
   res.json(account.access)
 })
+
+router.get('/membership/appeal', async (req, res) => {
+  const account = await requireAccount(req, res)
+  if (!account) return
+  res.json({
+    membershipStatus: account.membershipStatus,
+    membershipEndReason: account.membershipEndReason || null,
+    appeal: await getOwnAppeal(account.id),
+  })
+})
+
+router.post(
+  '/membership/appeal',
+  express.raw({
+    type: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    limit: APPEAL_PROOF_MAX_BYTES,
+  }),
+  async (req, res) => {
+    const account = await requireAccount(req, res)
+    if (!account) return
+    try {
+      let statement = String(req.get('x-appeal-statement') || '')
+      try {
+        statement = decodeURIComponent(statement)
+      } catch {
+        /* keep the raw header if it is not URI-encoded */
+      }
+      const appeal = await submitAppeal({
+        account,
+        statement,
+        identityKind: req.get('x-identity-kind'),
+        bytes: Buffer.isBuffer(req.body) ? req.body : Buffer.from([]),
+        contentType: req.get('content-type'),
+      })
+      await recordAudit({
+        actorId: account.id,
+        action: 'membership.appeal_submitted',
+        targetType: 'membership_appeal',
+        targetId: appeal.id,
+        after: {
+          identityKind: appeal.identityKind,
+          proofContentType: appeal.proofContentType,
+          proofByteSize: appeal.proofByteSize,
+        },
+        requestId: req.requestId,
+      })
+      res.status(201).json({ appeal })
+    } catch (error) {
+      if (error.status) {
+        return res.status(error.status).json({
+          error: { code: error.code, message: error.message },
+        })
+      }
+      throw error
+    }
+  },
+)
 
 router.get('/focal/overview', async (req, res) => {
   const account = await requireAccount(req, res)

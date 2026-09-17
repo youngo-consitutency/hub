@@ -1,0 +1,66 @@
+{
+  "slug": "cities",
+  "name": "Cities",
+  "monogram": "CT",
+  "focusLine": "Youth voices in urban climate action, multilevel governance, and city-level implementation",
+  "tags": ["Cities", "Urban", "Policy"],
+  "groupUrl": "https://linktr.ee/youngo.cities",
+  "resources": [
+    {
+      "label": "Cities WG Linktree",
+      "description": "Instagram, LinkedIn, Notion, CityTalk pieces, and related entry points for the Cities Working Group.",
+      "url": "https://linktr.ee/youngo.cities"
+    },
+    {
+      "label": "Instagram — @youngocities",
+      "description": "Public updates from the Cities Working Group, including COP30 on-ground team posts.",
+      "url": "https://www.instagram.com/youngocities/"
+    },
+    {
+      "label": "YOUNGO Cities Notion site",
+      "description": "WG Notion workspace linked from the Cities Linktree.",
+      "url": "https://youngo-cities.notion.site"
+    },
+    {
+      "label": "CityTalk — ten ways cities can act with youth",
+      "description": "ICLEI CityTalk guest piece with YOUNGO Cities on youth-led local stocktakes, LCOYs, and Town Hall COPs.",
+      "url": "https://talkofthecities.iclei.org/youth-are-taking-climate-stock-here-are-ten-ways-cities-can-act-with-them"
+    },
+    {
+      "label": "CityTalk — youth presence vs power in urban governance",
+      "description": "ICLEI CityTalk guest op-ed by Sonia Ugwunna (Cities WG) on moving youth engagement beyond symbolic participation.",
+      "url": "https://talkofthecities.iclei.org/mind-the-gap-how-youth-fall-between-presence-and-power-in-urban-governance"
+    },
+    {
+      "label": "LGMA — Local Governments and Municipal Authorities",
+      "description": "Voice of cities and regions in the UNFCCC process (ICLEI focal point). Useful counterpart constituency for urban agenda items.",
+      "url": "https://www.cities-and-regions.org/"
+    },
+    {
+      "label": "ICLEI Town Hall COPs",
+      "description": "Local climate summits that connect municipal action with NDCs; YOUNGO Cities has partnered with this model.",
+      "url": "https://iclei.org/town-hall-cop/"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Cities WG amplifies youth voices on urban climate action: adaptation and resilience, city-led mitigation, health in cities, and meaningful participation in local governance.",
+      "Contact Points Dylan Flayyih, Armaan Choudhary, and Sonia Ugwunna coordinate the group. Public writing with ICLEI CityTalk and COP30 on-ground work are recent examples of WG output.",
+      "There is no public join form on the current roster. Use the Linktree and Notion site, then email the WG inbox. Register as a YOUNGO member first."
+    ],
+    "rules": [
+      "Treat youth urban engagement as power-sharing, not one-off consultations.",
+      "Coordinate with other constituencies (especially LGMA) without speaking for them.",
+      "Coordinate public statements with Contact Points before using the YOUNGO name.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Cities WG",
+    "description": "Contact Points Dylan Flayyih, Armaan Choudhary, and Sonia Ugwunna. No public join form on the current roster — use Linktree/Notion, then the WG inbox. Instagram @youngocities.",
+    "publicEmail": "youngo.cities@gmail.com"
+  }
+}

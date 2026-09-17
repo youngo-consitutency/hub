@@ -5,7 +5,6 @@ import {
   TbBook2 as BookOpen,
   TbCalendarTime as Calendar,
   TbChecks as Checks,
-  TbChevronDown as ChevronDown,
   TbFileDescription as FileText,
   TbFingerprint as Fingerprint,
   TbGavel as Gavel,
@@ -18,6 +17,10 @@ import { LandingSignIn } from '../components/auth/LandingSignIn.jsx'
 import { Brand } from '../components/Brand.jsx'
 import { YOUNGO_NETWORK } from '../content/connect.js'
 import { A } from '../components/ui.jsx'
+import {
+  publicLandingProofItems,
+  usePublicLandingProof,
+} from '../lib/publicLandingProof.js'
 
 const NETWORK_ICONS = {
   science: Microscope,
@@ -100,6 +103,9 @@ function PlatformHeader() {
           <A href="/about">About YOUNGO</A>
         </nav>
         <div className="platformHeaderActions">
+          <A href="/about" className="platformHeaderAbout">
+            About YOUNGO
+          </A>
           <a className="platformSignIn" href="#signin">
             Sign in
           </a>
@@ -157,6 +163,9 @@ function PlatformFooter() {
 
 /** Signed-out front door: an information tool for how to engage with YOUNGO. */
 export function PlatformLanding({ onAuthenticated }) {
+  const proof = usePublicLandingProof()
+  const proofItems = publicLandingProofItems(proof)
+
   useEffect(() => {
     const previousTitle = document.title
     document.title = 'YOUNGO Hub · How to take part'
@@ -186,18 +195,23 @@ export function PlatformLanding({ onAuthenticated }) {
                 find where to engage.
               </p>
               <ul className="platformBenefitList">
-                <li>What is coming up this week</li>
-                <li>Which working groups you can join</li>
-                <li>Open submissions and recent decisions</li>
+                {proofItems.map((item) => (
+                  <li key={item.key}>
+                    {item.href ? (
+                      <A href={item.href}>{item.text}</A>
+                    ) : (
+                      item.text
+                    )}
+                  </li>
+                ))}
               </ul>
               <div className="platformHeroActions">
                 <A className="btn btn-primary platformHeroPrimary" href="/join">
                   Create a Hub account
                   <ArrowRight size={17} strokeWidth={1.8} aria-hidden="true" />
                 </A>
-                <a className="platformTextLink" href="#what-it-does">
-                  What you can look up
-                  <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" />
+                <a className="platformTextLink" href="#signin">
+                  I already have an account
                 </a>
               </div>
               <p className="platformReassurance">

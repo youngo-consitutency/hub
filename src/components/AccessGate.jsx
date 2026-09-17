@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { MembershipMandateGate } from './MembershipMandateGate.jsx'
 import { AuthGate } from './AuthGate.jsx'
 import { ResetPassword } from '../pages/ResetPassword.jsx'
+import { ChangePasswordGate } from './ChangePasswordGate.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { PublicSite } from '../pages/site/PublicSite.jsx'
 import { PlatformLanding } from '../pages/PlatformLanding.jsx'
+import { PlatformLandingV2 } from '../pages/PlatformLandingV2.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { apiGet } from '../lib/api.js'
 import {
@@ -30,7 +32,14 @@ export function AccessGate({ children }) {
   const handleAuthenticated = useCallback(
     (acc) => {
       setAccount(acc)
-      if (path === '/join' || path === '/signin') navigate('/')
+      if (
+        path === '/join' ||
+        path === '/signin' ||
+        path === '/landingV2' ||
+        path.startsWith('/landingV2/')
+      ) {
+        navigate('/')
+      }
     },
     [path],
   )
@@ -85,6 +94,12 @@ export function AccessGate({ children }) {
     return <PublicSite />
   }
 
+  // Constituency-facing landing preview. Public like /about so a signed-in
+  // teammate can review it; the live member desk stays at /.
+  if (path === '/landingV2' || path.startsWith('/landingV2/')) {
+    return <PlatformLandingV2 onAuthenticated={handleAuthenticated} />
+  }
+
   if (!ready) {
     return (
       <main className="mandateGate" aria-busy="true">
@@ -102,9 +117,30 @@ export function AccessGate({ children }) {
     )
   }
 
+  // Published negotiation evidence is a public projection. It must remain
+  // reachable without accepting membership terms or creating an account.
+  if (!account && path.startsWith('/negotiations')) {
+    return <>{typeof children === 'function' ? children(null) : children}</>
+  }
+
   // Signed-in members always enter the Hub. The membership policy is only a
   // gate for people who do not yet have an account.
   if (account) {
+    if (account.mustChangePassword) {
+      return (
+        <ChangePasswordGate
+          account={account}
+          onChanged={(next) => {
+            if (next) {
+              setAccount(next)
+              setSession({ account: next })
+            } else {
+              refreshSession()
+            }
+          }}
+        />
+      )
+    }
     return <>{typeof children === 'function' ? children(account) : children}</>
   }
 

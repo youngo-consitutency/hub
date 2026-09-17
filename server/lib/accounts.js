@@ -2,6 +2,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { getPool } from './db.js'
+import { mandateSummaryForAccount } from './mandateRoster.js'
 import { readJson, writeJson } from './jsonFile.js'
 import {
   hashPassword,
@@ -111,6 +112,9 @@ function publicAccount(row) {
     isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: row.created_at ?? row.createdAt,
     lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
+    mustChangePassword: Boolean(
+      row.must_change_password ?? row.mustChangePassword,
+    ),
   }
 }
 
@@ -141,6 +145,7 @@ async function enrichAccountAccess(account) {
 
   return {
     ...account,
+    mandate: mandateSummaryForAccount(account),
     access: {
       ...accessProfile,
       isAdmin: account.role === 'admin',
@@ -798,6 +803,7 @@ export async function createAccount(data, client = null) {
     verified_at: null,
     created_at: new Date().toISOString(),
     last_login_at: null,
+    must_change_password: Boolean(data.mustChangePassword),
   }
   const list = readJson(accountsPath, [])
   list.push(row)
@@ -932,6 +938,99 @@ export async function destroyAllSessions(accountId) {
     sessionsPath,
     readJson(sessionsPath, []).filter((s) => s.account_id !== accountId),
   )
+}
+
+export async function destroyOtherSessions(accountId, keepToken) {
+  if (!keepToken) return destroyAllSessions(accountId)
+  const storedToken = createHash('sha256').update(keepToken).digest('hex')
+  const pool = getPool()
+  if (pool) {
+    await pool.query(
+      `DELETE FROM hub_sessions
+        WHERE account_id = $1 AND token <> $2 AND token <> $3`,
+      [accountId, storedToken, keepToken],
+    )
+    return
+  }
+  writeJson(
+    sessionsPath,
+    readJson(sessionsPath, []).filter(
+      (s) =>
+        s.account_id !== accountId ||
+        s.token === storedToken ||
+        s.token === keepToken,
+    ),
+  )
+}
+
+export async function changePassword({
+  accountId,
+  currentPassword,
+  password,
+  passwordConfirm,
+  keepSessionToken,
+}) {
+  const row = await findAccountById(accountId)
+  if (!row) {
+    const err = new Error('Sign in to continue.')
+    err.code = 'unauthorized'
+    throw err
+  }
+
+  const currentOk = await verifyPassword(
+    currentPassword,
+    row.password_salt,
+    row.password_hash,
+  )
+  if (!currentOk) {
+    const err = new Error('Current password is incorrect.')
+    err.code = 'validation'
+    err.fields = { currentPassword: 'Current password is incorrect.' }
+    throw err
+  }
+
+  const fields = {}
+  requirePassword(String(password || ''), String(passwordConfirm || ''), fields)
+  if (!fields.password && password === currentPassword) {
+    fields.password =
+      'Choose a different password from the one you signed in with.'
+  }
+  if (Object.keys(fields).length) {
+    const err = new Error('Please check the form.')
+    err.code = 'validation'
+    err.fields = fields
+    throw err
+  }
+
+  const { salt, hash } = await hashPassword(password)
+  const pool = getPool()
+  if (pool) {
+    await pool.query(
+      `UPDATE hub_accounts
+          SET password_hash = $1,
+              password_salt = $2,
+              must_change_password = false
+        WHERE id = $3`,
+      [hash, salt, accountId],
+    )
+  } else {
+    const list = readJson(accountsPath, [])
+    const idx = list.findIndex((item) => item.id === accountId)
+    if (idx < 0) {
+      const err = new Error('Sign in to continue.')
+      err.code = 'unauthorized'
+      throw err
+    }
+    list[idx] = {
+      ...list[idx],
+      password_hash: hash,
+      password_salt: salt,
+      must_change_password: false,
+    }
+    writeJson(accountsPath, list)
+  }
+  await destroyOtherSessions(accountId, keepSessionToken)
+  return findAccountById(accountId)
 }
 
 export { publicAccount }

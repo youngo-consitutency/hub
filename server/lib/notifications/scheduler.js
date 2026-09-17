@@ -34,7 +34,7 @@ async function digestRecipients(client, now) {
      LEFT JOIN email_suppressions x ON x.account_id=a.id
      WHERE a.email_verified_at IS NOT NULL
        AND a.hub_access_status='active'
-       AND a.membership_status NOT IN ('expired','terminated')
+       AND a.membership_status NOT IN ('expired','terminated','rejected')
        AND x.account_id IS NULL
        AND s.digest_day=extract(dow FROM $1::timestamptz)::integer
        AND s.digest_hour_utc=extract(hour FROM $1::timestamptz)::integer`,
@@ -164,7 +164,7 @@ async function deadlineRecipients(client, wgSlugs, hasGlobal) {
      LEFT JOIN email_suppressions x ON x.account_id=a.id
      WHERE a.email_verified_at IS NOT NULL
        AND a.hub_access_status='active'
-       AND a.membership_status NOT IN ('expired','terminated')
+       AND a.membership_status NOT IN ('expired','terminated','rejected')
        AND x.account_id IS NULL
        AND ($2::boolean OR $1::text[] = '{}'::text[] OR a.wg_interests && $1::text[])`,
     [wgSlugs, hasGlobal],

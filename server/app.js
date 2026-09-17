@@ -10,9 +10,11 @@ import { memberRouter } from './routes/member/index.js'
 import { intelligenceRouter } from './routes/intelligence.js'
 import { pushRouter } from './routes/push.js'
 import { notificationRouter } from './routes/notifications.js'
+import { negotiationRouter } from './routes/negotiations.js'
 import { consultationRouter } from './routes/consultation.js'
 import { appOrigin } from './lib/config.js'
 import { requestSecurity } from './lib/security.js'
+import { refreshWgSettings } from './lib/store.js'
 
 const CONSULTATION_CSP = [
   "default-src 'self'",
@@ -59,6 +61,7 @@ function errorHandler(err, req, res, next) {
 }
 
 export function createApp({ env = process.env, dist = defaultDist } = {}) {
+  refreshWgSettings().catch(() => {})
   const app = express()
 
   app.disable('x-powered-by')
@@ -122,6 +125,7 @@ export function createApp({ env = process.env, dist = defaultDist } = {}) {
   app.use('/api/intelligence', intelligenceRouter)
   app.use('/api/push', pushRouter)
   app.use('/api/notifications', notificationRouter)
+  app.use('/api/negotiations', negotiationRouter)
   app.use('/api/consultation', consultationRouter)
   app.use('/api', publicRouter)
   app.use('/ics', icsRouter)

@@ -47,6 +47,26 @@ const SubmissionDetail = lazyPage(
   () => import('./pages/SubmissionDetail.jsx'),
   'SubmissionDetail',
 )
+const SubmissionProposal = lazyPage(
+  () => import('./pages/SubmissionProposal.jsx'),
+  'SubmissionProposal',
+)
+const AmendmentProposal = lazyPage(
+  () => import('./pages/AmendmentProposal.jsx'),
+  'AmendmentProposal',
+)
+const SubmissionWorkspace = lazyPage(
+  () => import('./pages/SubmissionWorkspace.jsx'),
+  'SubmissionWorkspace',
+)
+const Negotiations = lazyPage(
+  () => import('./pages/Negotiations.jsx'),
+  'Negotiations',
+)
+const NegotiationDetail = lazyPage(
+  () => import('./pages/NegotiationDetail.jsx'),
+  'NegotiationDetail',
+)
 const DecisionDetail = lazyPage(
   () => import('./features/platform/DecisionPage.tsx'),
   'DecisionPage',
@@ -56,6 +76,7 @@ const GroupDetail = lazyPage(
   () => import('./pages/GroupDetail.jsx'),
   'GroupDetail',
 )
+const TaskForce = lazyPage(() => import('./pages/TaskForce.jsx'), 'TaskForce')
 const Onboarding = lazyPage(
   () => import('./pages/Onboarding.jsx'),
   'Onboarding',
@@ -83,6 +104,10 @@ const MembershipTeam = lazyPage(
   () => import('./pages/MembershipTeam.jsx'),
   'MembershipTeam',
 )
+const MembershipAppeal = lazyPage(
+  () => import('./pages/MembershipAppeal.jsx'),
+  'MembershipAppeal',
+)
 const GysPolicyTeam = lazyPage(
   () => import('./pages/GysPolicyTeam.jsx'),
   'GysPolicyTeam',
@@ -96,6 +121,10 @@ const ReviewQueue = lazyPage(
   () => import('./pages/ReviewQueue.jsx'),
   'ReviewQueue',
 )
+const CpCallBook = lazyPage(
+  () => import('./pages/CpCallBook.jsx'),
+  'CpCallBook',
+)
 const Help = lazyPage(() => import('./pages/Help.jsx'), 'Help')
 
 // These pages remain available while the membership course is incomplete.
@@ -107,6 +136,7 @@ const PRE_VERIFY = [
   /^\/privacy/,
   /^\/help/,
   /^\/about/,
+  /^\/membership\/appeal/,
 ]
 
 const ROUTES = [
@@ -136,15 +166,24 @@ const ROUTES = [
   [/^\/ngo\/accept$/, NgoPortal],
   [/^\/ngo$/, NgoPortal],
   [/^\/admin$/, Admin],
+  [/^\/book$/, CpCallBook],
+  [/^\/membership\/appeal$/, MembershipAppeal],
   [/^\/$/, Home],
   [/^\/calendar\/(.+)$/, EventDetail],
   [/^\/calendar/, Calendar],
+  [/^\/negotiations\/(.+)$/, NegotiationDetail],
+  [/^\/negotiations$/, Negotiations],
+  [/^\/submissions\/new$/, SubmissionProposal],
+  [/^\/submissions\/amendments\/new$/, AmendmentProposal],
+  [/^\/submissions\/workspace\/(.+)$/, SubmissionWorkspace],
+  [/^\/submissions\/workspace$/, SubmissionWorkspace],
   [/^\/submissions\/(.+)$/, SubmissionDetail],
   [/^\/submissions/, Submissions],
   [/^\/council\/(.+)$/, DecisionDetail],
   [/^\/council/, Council],
   [/^\/coys\/(.+)$/, CoyDetail],
   [/^\/coys/, Coys],
+  [/^\/groups\/([^/]+)\/([^/]+)$/, TaskForce],
   [/^\/groups\/(.+)$/, GroupDetail],
   [/^\/groups/, Groups],
   [/^\/opportunities/, Opportunities],
@@ -159,15 +198,18 @@ const PEEK_ROUTES = [
   /^\/submissions\/(.+)$/,
   /^\/council\/(.+)$/,
   /^\/coys\/(.+)$/,
+  /^\/groups\/([^/]+)\/([^/]+)$/,
   /^\/groups\/(.+)$/,
 ]
 
 function routeFor(path) {
   const match = ROUTES.find(([pattern]) => pattern.test(path))
-  if (!match) return { Page: NotFound, slug: null }
+  if (!match) return { Page: NotFound, slug: null, extra: null }
+  const captured = path.match(match[0])
   return {
     Page: match[1],
-    slug: path.match(match[0])?.[1] ?? null,
+    slug: captured?.[1] ?? null,
+    extra: captured?.[2] ?? null,
   }
 }
 
@@ -249,7 +291,7 @@ function isPreVerify(path) {
 function AppRoutes() {
   const path = usePath()
   const { account } = useAccount()
-  const { Page, slug } = routeFor(path)
+  const { Page, slug, extra } = routeFor(path)
 
   const verified = Boolean(account?.isVerified)
 
@@ -414,15 +456,20 @@ function AppRoutes() {
 
   const BackgroundPage = peekRoute?.Page || Page
   const backgroundSlug = peekRoute ? peekRoute.slug : slug
+  const backgroundExtra = peekRoute ? peekRoute.extra : extra
   return (
     <Shell>
       <Suspense fallback={<Skeletons n={4} />}>
         <BackgroundPage
           slug={backgroundSlug && decodeURIComponent(backgroundSlug)}
+          extra={backgroundExtra && decodeURIComponent(backgroundExtra)}
         />
         {peekRoute && (
           <RoutePeek key={path}>
-            <Page slug={slug && decodeURIComponent(slug)} />
+            <Page
+              slug={slug && decodeURIComponent(slug)}
+              extra={extra && decodeURIComponent(extra)}
+            />
           </RoutePeek>
         )}
       </Suspense>

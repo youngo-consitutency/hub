@@ -13,6 +13,7 @@ import {
 } from '../components/ui.jsx'
 import { ContactCard } from '../components/cards.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
+import { WgActivityCard } from '../components/WgActivityCard.jsx'
 import { getWgOnboarding } from '../content/wgOnboarding.js'
 import {
   TbArrowUpRight as ArrowUpRight,
@@ -222,18 +223,10 @@ export function Workspace({ slug }) {
                     {state.activities?.length ? (
                       <div className="cardGrid">
                         {state.activities.map((activity) => (
-                          <article
+                          <WgActivityCard
                             key={activity.id}
-                            className="card cardTight workspaceActivityCard"
-                          >
-                            <span className="chip chip-neutral">
-                              {activity.kind}
-                            </span>
-                            <h3>{activity.title}</h3>
-                            {activity.body && (
-                              <p className="meta">{activity.body}</p>
-                            )}
-                          </article>
+                            activity={activity}
+                          />
                         ))}
                       </div>
                     ) : (

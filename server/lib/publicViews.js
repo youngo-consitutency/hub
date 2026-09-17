@@ -95,8 +95,10 @@ export function groupView(
   { includePrivate = false, includeWorkspace = false } = {},
 ) {
   if (!group) return group
+  const publicSpace = Boolean(group.publicSpace)
   const result = {
     ...group,
+    publicSpace,
     ...(Array.isArray(group.events)
       ? {
           events: group.events.map((event) =>
@@ -116,6 +118,16 @@ export function groupView(
   }
   if (!includePrivate) {
     publicGroup.description = redactMeetingLinks(publicGroup.description)
+    if (!publicSpace) {
+      delete publicGroup.focusLine
+      delete publicGroup.cadenceNote
+      delete publicGroup.events
+      delete publicGroup.submissions
+      delete publicGroup.contact
+      delete publicGroup.resources
+      delete publicGroup.taskForces
+      publicGroup.workspaceResourcesLocked = true
+    }
   }
   if (Array.isArray(publicGroup.resources)) {
     publicGroup.workspaceResourcesLocked =

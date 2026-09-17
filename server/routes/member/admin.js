@@ -25,6 +25,7 @@ import {
   emailConfigured,
   sendTemplatedEmail,
 } from '../../lib/notifications/transport.js'
+import { sendMembershipActivatedEmail } from '../../lib/membershipMail.js'
 
 export const router = Router()
 
@@ -97,7 +98,8 @@ router.post('/admin/accounts/:id/verify', async (req, res) => {
     reason,
     requestId: req.requestId,
   })
-  res.json({ account: updated })
+  const mail = await sendMembershipActivatedEmail(updated)
+  res.json({ account: updated, emailSent: mail.sent })
 })
 
 router.patch('/admin/accounts/:id/status', async (req, res) => {

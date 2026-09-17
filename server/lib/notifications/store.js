@@ -483,7 +483,7 @@ export async function deliveryDecision(item, now = new Date()) {
     return { allowed: false, reason: 'email_unverified' }
   if (
     rawAccessStatus(account) !== 'active' ||
-    ['expired', 'terminated'].includes(rawMembershipStatus(account))
+    ['expired', 'terminated', 'rejected'].includes(rawMembershipStatus(account))
   )
     return { allowed: false, reason: 'account_inactive' }
   if (await isSuppressed(item.accountId))
@@ -709,7 +709,7 @@ export async function listEligibleNotificationAccountIds({ category, scope }) {
        LEFT JOIN email_suppressions x ON x.account_id=a.id
        WHERE a.email_verified_at IS NOT NULL
          AND a.hub_access_status='active'
-         AND a.membership_status NOT IN ('expired','terminated')
+         AND a.membership_status NOT IN ('expired','terminated','rejected')
          AND x.account_id IS NULL
          AND ${filters[scope.type]}`,
       scope.type === 'all_active' ? [category] : [category, ids],
@@ -736,7 +736,9 @@ export async function listEligibleNotificationAccountIds({ category, scope }) {
       (account) =>
         rawEmailVerified(account) &&
         rawAccessStatus(account) === 'active' &&
-        !['expired', 'terminated'].includes(rawMembershipStatus(account)) &&
+        !['expired', 'terminated', 'rejected'].includes(
+          rawMembershipStatus(account),
+        ) &&
         enabled.has(String(account.id)) &&
         !suppressed.has(String(account.id)) &&
         accountInScope(account, { ...scope, ids }),

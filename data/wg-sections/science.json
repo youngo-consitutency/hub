@@ -1,0 +1,57 @@
+{
+  "slug": "science",
+  "name": "Science",
+  "monogram": "SC",
+  "focusLine": "Climate science, the science–policy interface, science diplomacy, and IPCC engagement",
+  "tags": ["Science", "Policy"],
+  "groupUrl": "https://youngo-science.org/",
+  "resources": [
+    {
+      "label": "Join the Science WG",
+      "description": "Public membership form (bit.ly/YOUNGO_SWG_2025). Teams include summaries/translations, capacity building, science–policy interface, communications, and institutional linkages.",
+      "url": "https://bit.ly/YOUNGO_SWG_2025"
+    },
+    {
+      "label": "Climate Resource Hub",
+      "description": "Open directory of climate-science, policy, learning, and funding links curated with the Science Working Group.",
+      "url": "https://youngo-science.org/"
+    },
+    {
+      "label": "Instagram — @youngo.science",
+      "description": "Public Science WG channel, including the Climate Resource Hub launch.",
+      "url": "https://www.instagram.com/youngo.science/"
+    },
+    {
+      "label": "IPCC",
+      "description": "Intergovernmental Panel on Climate Change assessments: policy-relevant, not policy-prescriptive.",
+      "url": "https://www.ipcc.ch/"
+    },
+    {
+      "label": "IPCC AR6 WG II — Impacts, Adaptation and Vulnerability",
+      "description": "Working Group II assessment of impacts, vulnerability, and adaptation limits.",
+      "url": "https://www.ipcc.ch/report/sixth-assessment-report-working-group-ii/"
+    },
+    {
+      "label": "IPCC AR6 WG III — Mitigation of Climate Change",
+      "description": "Working Group III assessment of mitigation progress and pathways.",
+      "url": "https://www.ipcc.ch/report/ar6/wg3/"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "The Science Working Group is a YOUNGO space for children and youth to learn climate science, the science–policy interface, and science diplomacy, including engagement with the IPCC.",
+      "2026 Contact Points are Jude Earls and Debosmita Ghosh. Join via the public form (bit.ly/YOUNGO_SWG_2025); the form still carries a 2025 title but is the roster join URL.",
+      "The WG’s Climate Resource Hub (youngo-science.org) is an open directory of climate work, research, learning, and funding. IPCC assessments are policy-relevant but not policy-prescriptive."
+    ],
+    "rules": [
+      "When citing IPCC or other assessments, keep the distinction: they inform policy; they do not prescribe it.",
+      "Do not present personal research or unpublished results as WG or YOUNGO science without CP agreement.",
+      "Credit collective Hub and translation work; do not speak for the whole WG unless mandated.",
+      "The join form may still list a previous-term personal contact — use the 2026 Contact Points (Jude Earls, Debosmita Ghosh) via constituency channels, not personal Gmail from the form."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Science WG",
+    "description": "2026 Contact Points: Jude Earls and Debosmita Ghosh. Join via https://bit.ly/YOUNGO_SWG_2025, then Instagram @youngo.science and the Climate Resource Hub at youngo-science.org."
+  }
+}

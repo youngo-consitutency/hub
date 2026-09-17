@@ -1,0 +1,49 @@
+{
+  "slug": "water",
+  "name": "Water",
+  "monogram": "WA",
+  "focusLine": "Water–climate intersections in UNFCCC adaptation and Marrakech Partnership work — no public 2026 Working Group Contact Points or join URL on the official roster.",
+  "tags": ["Water", "Adaptation"],
+  "resources": [
+    {
+      "label": "YOUNGO membership form",
+      "description": "Constituency membership is the path into working-group channels. The official roster lists no Water join URL for 2026.",
+      "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster. No 2026 Water Contact Points named.",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    },
+    {
+      "label": "Constituency Linktree",
+      "description": "Central YOUNGO entry points including membership and the WG/OT roster.",
+      "url": "https://linktr.ee/YOUNGO.UNFCCC"
+    },
+    {
+      "label": "UNFCCC — Water Climate Action Pathway",
+      "description": "Marrakech Partnership water pathway (climate action on freshwater, ecosystems, and resilient water systems).",
+      "url": "https://unfccc.int/climate-action/marrakech-partnership/reporting-tracking/pathways/water-climate-action-pathway"
+    },
+    {
+      "label": "UN SDG partnership (historical)",
+      "description": "Archived YOUNGO commitment describing a Water and Climate Working Group; listed completion 31 January 2025. Not a 2026 join path.",
+      "url": "https://sdgs.un.org/partnerships/mobilizing-progress-towards-water-and-climate-action-through-youth-empowerment"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Register as a YOUNGO member via the constituency membership form.",
+      "Open the official WG/OT roster for Contact Points — none are named for Water in 2026.",
+      "Until a Water CP or join form is published, follow constituency channels rather than a dedicated Water page."
+    ],
+    "rules": [
+      "The official 2026 roster lists no Water Contact Points and no Water join URL — do not invent either.",
+      "Do not treat the 2023–2025 UN SDG partnership page as a current WG join path."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Water WG",
+    "description": "Official 2026 WG/OT roster lists no current Contact Points and no join URL for Water. Register as a YOUNGO member and watch the Notion roster / constituency Linktree if a Water CP is named. Do not invent a Contact Point."
+  }
+}

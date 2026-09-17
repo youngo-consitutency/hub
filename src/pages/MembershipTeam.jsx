@@ -2,7 +2,7 @@ import { Children, useState } from 'react'
 import { TEAM_LABELS } from '../../shared/responsibilities.js'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
-import { apiPatch, useApi } from '../lib/api.js'
+import { apiPatch, apiPost, useApi } from '../lib/api.js'
 import {
   Async,
   Button,
@@ -24,6 +24,8 @@ import {
   TbSearch as Search,
   TbShieldCheck as ShieldCheck,
   TbUserCheck as UserCheck,
+  TbUserX as UserX,
+  TbScale as Scale,
 } from 'react-icons/tb'
 
 const STATUS_LABELS = {
@@ -34,6 +36,14 @@ const STATUS_LABELS = {
   renewal_due: 'Renewal due',
   expired: 'Expired',
   terminated: 'Terminated',
+  rejected: 'Rejected',
+}
+
+const IDENTITY_LABELS = {
+  passport: 'Passport',
+  national_id: 'National ID / residence card',
+  organisational_letter: 'Organisation letterhead',
+  other: 'Other identity proof',
 }
 
 const AGE_LABELS = {
@@ -335,6 +345,68 @@ function ApplicationResponses({ item }) {
   )
 }
 
+function AppealPanel({ item, busy, onReview }) {
+  const appeal = item.appeal
+  if (!appeal) return null
+  const open = appeal.status === 'submitted'
+  const proofHref = `/api/member/team/membership/appeals/${appeal.id}/proof`
+  const image = String(appeal.proofContentType || '').startsWith('image/')
+  return (
+    <div className="membershipAppealPanel">
+      <div className="rowGap" style={{ flexWrap: 'wrap' }}>
+        <span
+          className={`chip ${open ? 'chip-warn' : appeal.status === 'granted' ? 'chip-info' : 'chip-danger'}`}
+        >
+          Appeal {appeal.status}
+        </span>
+        <span className="chip chip-neutral">
+          {IDENTITY_LABELS[appeal.identityKind] || appeal.identityKind}
+        </span>
+      </div>
+      {appeal.statement && <p className="meta">{appeal.statement}</p>}
+      {image ? (
+        <img
+          className="membershipProofImage"
+          src={proofHref}
+          alt="Identity proof submitted with this appeal"
+        />
+      ) : (
+        <a
+          className="membershipSocialLink"
+          href={proofHref}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open identity document ({appeal.proofContentType})
+        </a>
+      )}
+      {open && (
+        <div className="rowGap" style={{ flexWrap: 'wrap' }}>
+          <Button
+            sm
+            variant="primary"
+            disabled={busy}
+            onClick={() => onReview(item, 'grant')}
+          >
+            Grant appeal
+          </Button>
+          <Button
+            sm
+            variant="danger"
+            disabled={busy}
+            onClick={() => onReview(item, 'uphold')}
+          >
+            Uphold rejection
+          </Button>
+        </div>
+      )}
+      {appeal.reviewerNote && (
+        <p className="metaMuted">Review note: {appeal.reviewerNote}</p>
+      )}
+    </div>
+  )
+}
+
 export function MembershipTeam() {
   const [ending, setEnding] = useState(null)
   const [reason, setReason] = useState('')
@@ -367,6 +439,22 @@ export function MembershipTeam() {
     }
   }
 
+  const reviewAppeal = async (item, decision) => {
+    setBusy(item.id)
+    try {
+      setActionError(null)
+      await apiPost(
+        `/member/team/membership/appeals/${item.appeal.id}/review`,
+        { decision },
+      )
+      query.retry()
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -384,12 +472,22 @@ export function MembershipTeam() {
           const pending = data.items.filter(
             (item) => item.membershipStatus !== 'active',
           )
+          const appeals = data.items.filter(
+            (item) => item.appeal?.status === 'submitted',
+          )
+          const rejected = data.items.filter(
+            (item) => item.membershipStatus === 'rejected',
+          )
           const shown = data.items.filter((item) => {
             const stateMatch =
               filter === 'all' ||
               (filter === 'pending'
                 ? item.membershipStatus !== 'active'
-                : item.membershipStatus === 'active')
+                : filter === 'appeals'
+                  ? item.appeal?.status === 'submitted'
+                  : filter === 'rejected'
+                    ? item.membershipStatus === 'rejected'
+                    : item.membershipStatus === 'active')
             return (
               stateMatch &&
               applicationSearchText(item).includes(search.toLowerCase())
@@ -426,6 +524,16 @@ export function MembershipTeam() {
                   <div className="pillRow" aria-label="Filter applications">
                     {[
                       { key: 'pending', label: 'Pending', icon: Clock3 },
+                      {
+                        key: 'appeals',
+                        label: `Appeals (${appeals.length})`,
+                        icon: Scale,
+                      },
+                      {
+                        key: 'rejected',
+                        label: `Rejected (${rejected.length})`,
+                        icon: UserX,
+                      },
                       { key: 'verified', label: 'Active', icon: UserCheck },
                       { key: 'all', label: 'All', icon: Layers3 },
                     ].map((item) => (
@@ -543,6 +651,11 @@ export function MembershipTeam() {
                           </div>
                         </div>
                         <ApplicationResponses item={item} />
+                        <AppealPanel
+                          item={item}
+                          busy={busy === item.id}
+                          onReview={reviewAppeal}
+                        />
                       </div>
                     ))}
                   </div>

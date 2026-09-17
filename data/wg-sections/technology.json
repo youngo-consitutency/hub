@@ -1,0 +1,49 @@
+{
+  "slug": "technology",
+  "name": "Technology",
+  "monogram": "TE",
+  "focusLine": "Technology Mechanism, TEC/CTCN, and equitable technology access",
+  "tags": ["Technology", "Policy"],
+  "resources": [
+    {
+      "label": "TT:CLEAR — UNFCCC technology hub",
+      "description": "Official UNFCCC home for climate technology: TEC, CTCN, Technology Needs Assessments, and AI for Climate Action.",
+      "url": "https://unfccc.int/ttclear/"
+    },
+    {
+      "label": "UNFCCC Technology Mechanism",
+      "description": "The Mechanism (COP 16) comprises the Technology Executive Committee (policy) and the Climate Technology Centre and Network (implementation), serving the Paris Agreement technology framework.",
+      "url": "https://unfccc.int/ttclear/technology-mechanism.html"
+    },
+    {
+      "label": "Technology Executive Committee (TEC)",
+      "description": "Policy arm of the Technology Mechanism. Analyses issues and issues COP recommendations on low-emission and climate-resilient technology.",
+      "url": "https://unfccc.int/ttclear/tec"
+    },
+    {
+      "label": "TEC meetings (observers welcome)",
+      "description": "TEC meets at least twice a year. Observer organisations may attend; agendas, papers, and reports are posted here (TEC 33: 15–18 September 2026).",
+      "url": "https://unfccc.int/ttclear/tec/meetings.html"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "The Technology Mechanism Working Group follows UNFCCC technology development and transfer: the Technology Executive Committee (policy) and the Climate Technology Centre and Network (implementation), including equitable access for developing countries, LDCs, and SIDS.",
+      "Contact Points Asja Begić and Benita Clement facilitate YOUNGO observer engagement with TEC and CTCN processes. There is no public join URL on the current roster — ask the Contact Points after you register as a YOUNGO member.",
+      "Start with TT:CLEAR for official documents, TEC meeting papers, and Technology Mechanism mandates such as the Belém Technology Implementation Programme."
+    ],
+    "rules": [
+      "Ground technology asks in TEC/CTCN mandates and cited official documents.",
+      "Centre equitable access, including for LDCs and SIDS, and avoid speaking as if all climate tech is equally available.",
+      "Coordinate public statements with Contact Points before using the YOUNGO name.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Credit collective work; do not speak for the whole WG unless mandated.",
+      "Flag conflicts of interest to the CP when relevant."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Technology WG",
+    "description": "Contact Points Asja Begić and Benita Clement. No public join URL on the current roster — register as a YOUNGO member, then contact the CPs. Follow TEC/CTCN work on TT:CLEAR."
+  }
+}

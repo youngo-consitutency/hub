@@ -16,6 +16,8 @@
     "migrate": "node scripts/database/migrate.js",
     "bootstrap-admin": "node scripts/admin/bootstrap-admin.js",
     "seed-demo-accounts": "node scripts/admin/seed-demo-accounts.js",
+    "seed-mandate-accounts": "node scripts/admin/seed-mandate-accounts.js",
+    "seed-cp-calls": "node scripts/admin/seed-cp-calls.js",
     "content:check": "node scripts/content/check-content.js",
     "format": "prettier --write \"{.github,api,src,server,shared,scripts,tests,public,mcp-content}/**/*.{js,jsx,mjs,ts,tsx,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",
     "format:check": "prettier --check \"{.github,api,src,server,shared,scripts,tests,public,mcp-content}/**/*.{js,jsx,mjs,ts,tsx,css,json,yml,yaml}\" \"*.{js,json,yml,yaml}\"",

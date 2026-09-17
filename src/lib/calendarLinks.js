@@ -76,5 +76,18 @@ export function googleAddByUrlPage() {
   return 'https://calendar.google.com/calendar/u/0/r/settings/addbyurl'
 }
 
+/**
+ * One-click Google Calendar subscribe. Google adds the ICS URL to the
+ * signed-in Google account — the Hub never receives Google credentials.
+ */
+export function googleSubscribeUrl(path, origin) {
+  const base =
+    origin ||
+    (typeof window !== 'undefined' && window.location?.origin) ||
+    'https://youngohub.org'
+  const abs = new URL(path, base).toString()
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(abs)}`
+}
+
 // silence unused in some bundlers
 void encode

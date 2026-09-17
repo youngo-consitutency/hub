@@ -1,0 +1,79 @@
+{
+  "slug": "ace",
+  "name": "ACE",
+  "monogram": "AC",
+  "focusLine": "Action for Climate Empowerment — education, training, public participation, and access to information",
+  "tags": ["Education", "Participation", "ACE"],
+  "whatsappUrl": "https://chat.whatsapp.com/GlBYgIGHcYFGWmt3btBKgR",
+  "groupUrl": "https://forms.gle/ac2fUZ8jHFzWduaV9",
+  "resources": [
+    {
+      "label": "ACE WG join form",
+      "description": "2026 membership form. Requires YOUNGO membership first. Signed by Contact Points Alvin Adigao and Felipe Gómez Gallo.",
+      "url": "https://forms.gle/ac2fUZ8jHFzWduaV9"
+    },
+    {
+      "label": "WhatsApp — YOUNGO ACE WG (2026)",
+      "description": "WG communications channel linked from the ACE join form.",
+      "url": "https://chat.whatsapp.com/GlBYgIGHcYFGWmt3btBKgR"
+    },
+    {
+      "label": "YOUNGO membership form",
+      "description": "Constituency registration required before ACE WG membership.",
+      "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
+    },
+    {
+      "label": "UNFCCC ACE hub",
+      "description": "Official ACE pages, dialogues, and Party/non-Party submission information.",
+      "url": "https://unfccc.int/topics/education-youth/ace"
+    },
+    {
+      "label": "ACE Dialogue 2026 (SB64)",
+      "description": "In-session ACE Dialogue and midterm-review context from SB64.",
+      "url": "https://unfccc.int/event/in-session-action-for-climate-empowerment-ace-dialogue-2026"
+    },
+    {
+      "label": "COP31 ACE Day concept note",
+      "description": "Shared Google Doc for Presidency-requested ACE Day concept note inputs.",
+      "url": "https://docs.google.com/document/d/16DdBPgsdpmPPFW1-Nb0JfY6QhXe50pFVCYBrjeuCr7E/edit?usp=sharing"
+    },
+    {
+      "label": "Joint ACE Policy Paper (Mar 2026)",
+      "description": "Consolidated advocacy paper on GWP midterm review and ACE Action Plan (ACE Advocacy Network / YES Europe).",
+      "url": "https://yeseurope.org/wp-content/uploads/2026/03/Joint-ACE-Policy-Paper-2nd-March-2026.pdf"
+    },
+    {
+      "label": "SB64 ACE information session",
+      "description": "UNFCCC information-session materials on ACE annual-summary inputs.",
+      "url": "https://www.unfccc.int/sites/default/files/resource/Info_session_ACE_SB64.pdf"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster.",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    },
+    {
+      "label": "Constituency Linktree",
+      "description": "Central YOUNGO entry points including membership and WG/OT roster.",
+      "url": "https://linktr.ee/YOUNGO.UNFCCC"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "ACE WG works on Action for Climate Empowerment — education, training, public awareness, public participation, public access to information, and international cooperation on those elements.",
+      "The group tracks the Glasgow work programme on ACE, the ACE Dialogue, and related COP/SB inputs, including ACE Day and side-event coordination toward COP31.",
+      "2026 Contact Points Adigao Alvin Wenia (Alvin Adigao) and Felipe Gómez Gallo facilitate the join form and WhatsApp channel. Register with YOUNGO first, then complete the ACE form."
+    ],
+    "rules": [
+      "Prioritise child- and youth-friendly communication.",
+      "Coordinate ACE Dialogue, ACE Day, and education-related inputs with the group before speaking for YOUNGO.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval.",
+      "Credit collective work; do not speak for the whole WG unless mandated."
+    ]
+  },
+  "directory": {
+    "roleTitle": "ACE WG",
+    "description": "2026 Contact Points Adigao Alvin Wenia (Alvin Adigao) and Felipe Gómez Gallo. Join via the public ACE form (YOUNGO membership required first); WhatsApp is the 2026 WG channel."
+  }
+}

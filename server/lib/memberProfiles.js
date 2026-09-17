@@ -8,6 +8,9 @@ import { getPool } from './db.js'
 import { findAccountById, publicAccount } from './accounts.js'
 import { readJson, writeJson } from './jsonFile.js'
 import { workingGroupLabel } from '../../shared/workingGroups.js'
+import { REGIONS } from '../../shared/registration.js'
+import { wgDutyRoleLabel } from '../../shared/taskForces.js'
+import { setAccountFields } from './lifecycle.js'
 
 const dataDir = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -41,6 +44,7 @@ function profileShape(row, account) {
     showWorkingGroups:
       row?.show_working_groups ?? row?.showWorkingGroups ?? true,
     showRoles: row?.show_roles ?? row?.showRoles ?? true,
+    roleTitle: row?.role_title ?? row?.roleTitle ?? '',
     revision: row?.revision || 1,
     updatedAt,
     hasPhoto: Boolean(row?.has_photo ?? row?.hasPhoto ?? photoUpdatedAt),
@@ -64,6 +68,12 @@ export function validateMemberProfile(input = {}) {
   const headline = cleanText(input.headline, 140, 'headline', fields)
   const bio = cleanText(input.bio, 1200, 'bio', fields)
   const pronouns = cleanText(input.pronouns, 40, 'pronouns', fields)
+  const roleTitle = cleanText(input.roleTitle, 80, 'roleTitle', fields)
+  const country = cleanText(input.country, 80, 'country', fields)
+  const region = cleanText(input.region, 80, 'region', fields)
+  if (region && !REGIONS.includes(region)) {
+    fields.region = 'Choose a UN region from the list.'
+  }
   const rawTags = Array.isArray(input.expertiseTags)
     ? input.expertiseTags
     : String(input.expertiseTags || '').split(',')
@@ -98,6 +108,9 @@ export function validateMemberProfile(input = {}) {
     headline: headline || null,
     bio: bio || null,
     pronouns: pronouns || null,
+    roleTitle: roleTitle || null,
+    country: country || null,
+    region: region || null,
     expertiseTags,
     directoryVisibility,
     showCountry: Boolean(input.showCountry),
@@ -220,19 +233,35 @@ function relationshipsFor(account, maps) {
   }
 }
 
-function safePerson(profile, account, relationships) {
+function safePerson(
+  profile,
+  account,
+  relationships,
+  { duty = false, workingGroup = '' } = {},
+) {
+  const group = workingGroup
+    ? relationships.workingGroups.find((item) => item.slug === workingGroup)
+    : null
+  const contactRole = wgDutyRoleLabel(group?.role)
+  const showLocation = duty || profile.showCountry
+  const directoryOpen = profile.directoryVisibility === 'members'
   return {
     id: account.id,
     displayName: profile.displayName,
-    headline: profile.headline,
-    bio: profile.bio,
-    pronouns: profile.pronouns,
-    expertiseTags: profile.expertiseTags,
-    country: profile.showCountry ? account.country || null : null,
-    organization: profile.showOrganization ? relationships.organization : null,
-    workingGroups: profile.showWorkingGroups ? relationships.workingGroups : [],
-    teams: profile.showRoles ? relationships.teams : [],
-    platformRole: profile.showRoles ? relationships.platformRole : null,
+    headline: directoryOpen ? profile.headline : '',
+    bio: directoryOpen ? profile.bio : '',
+    pronouns: directoryOpen ? profile.pronouns : '',
+    expertiseTags: directoryOpen ? profile.expertiseTags : [],
+    country: showLocation ? account.country || null : null,
+    region: showLocation ? account.region || null : null,
+    roleTitle: profile.roleTitle || contactRole,
+    contactRole,
+    organization:
+      duty || profile.showOrganization ? relationships.organization : null,
+    workingGroups:
+      duty || profile.showWorkingGroups ? relationships.workingGroups : [],
+    teams: duty || profile.showRoles ? relationships.teams : [],
+    platformRole: duty || profile.showRoles ? relationships.platformRole : null,
     photoUrl: profile.photoUrl,
     updatedAt: profile.updatedAt,
   }
@@ -248,6 +277,7 @@ export async function getOwnMemberProfile(account) {
       name: account.name,
       email: account.email,
       country: account.country || null,
+      region: account.region || null,
     },
     relationships: relationshipsFor(account, maps),
   }
@@ -304,15 +334,16 @@ export async function updateOwnMemberProfile(account, input, updatedBy) {
   if (pool) {
     await pool.query(
       `INSERT INTO member_profiles (
-         account_id, display_name, headline, bio, pronouns, expertise_tags,
+         account_id, display_name, headline, bio, pronouns, role_title, expertise_tags,
          directory_visibility, show_country, show_organization,
          show_working_groups, show_roles, updated_by
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT(account_id) DO UPDATE SET
          display_name=EXCLUDED.display_name,
          headline=EXCLUDED.headline,
          bio=EXCLUDED.bio,
          pronouns=EXCLUDED.pronouns,
+         role_title=EXCLUDED.role_title,
          expertise_tags=EXCLUDED.expertise_tags,
          directory_visibility=EXCLUDED.directory_visibility,
          show_country=EXCLUDED.show_country,
@@ -328,6 +359,7 @@ export async function updateOwnMemberProfile(account, input, updatedBy) {
         value.headline,
         value.bio,
         value.pronouns,
+        value.roleTitle,
         value.expertiseTags,
         value.directoryVisibility,
         value.showCountry,
@@ -347,6 +379,7 @@ export async function updateOwnMemberProfile(account, input, updatedBy) {
       headline: value.headline,
       bio: value.bio,
       pronouns: value.pronouns,
+      role_title: value.roleTitle,
       expertise_tags: value.expertiseTags,
       directory_visibility: value.directoryVisibility,
       show_country: value.showCountry,
@@ -361,6 +394,12 @@ export async function updateOwnMemberProfile(account, input, updatedBy) {
     if (index >= 0) rows[index] = row
     else rows.push(row)
     writeJson(profilesPath, rows)
+  }
+  if (input.country !== undefined || input.region !== undefined) {
+    const location = {}
+    if (input.country !== undefined) location.country = value.country
+    if (input.region !== undefined) location.region = value.region
+    await setAccountFields(account.id, location)
   }
   return getOwnMemberProfile(account)
 }
@@ -386,6 +425,7 @@ export async function listMemberPeople({
     : ''
   const cleanPage = Number.parseInt(page, 10) || 1
   const cleanPageSize = cleanPageNumber(pageSize)
+  const dutyManagers = cleanWgRole === 'manager' && Boolean(cleanWg)
   const pool = getPool()
   let accounts
   let profileRows
@@ -393,7 +433,7 @@ export async function listMemberPeople({
   if (pool) {
     const values = []
     const where = [
-      `p.directory_visibility='members'`,
+      ...(dutyManagers ? [] : [`p.directory_visibility='members'`]),
       `a.entity_type='individual'`,
       `a.member_status='verified'`,
       `a.hub_access_status='active'`,
@@ -443,10 +483,14 @@ export async function listMemberPeople({
           )`,
         )
     }
+    const fromSql = dutyManagers
+      ? `hub_accounts a
+         LEFT JOIN member_profiles p ON p.account_id=a.id`
+      : `member_profiles p JOIN hub_accounts a ON a.id=p.account_id`
     const clause = `WHERE ${where.join(' AND ')}`
     const count = await pool.query(
       `SELECT count(*)::int AS total
-       FROM member_profiles p JOIN hub_accounts a ON a.id=p.account_id
+       FROM ${fromSql}
        ${clause}`,
       values,
     )
@@ -459,8 +503,7 @@ export async function listMemberPeople({
       `SELECT a.*, p.*,
               ph.updated_at AS photo_updated_at,
               (ph.account_id IS NOT NULL) AS has_photo
-       FROM member_profiles p
-       JOIN hub_accounts a ON a.id=p.account_id
+       FROM ${fromSql}
        LEFT JOIN member_profile_photos ph ON ph.account_id=a.id
        ${clause}
        ORDER BY COALESCE(NULLIF(p.display_name,''), a.name) ASC
@@ -471,12 +514,36 @@ export async function listMemberPeople({
     profileRows = rows
     page = currentPage
   } else {
-    const profileList = readJson(profilesPath, []).filter(
-      (item) => item.directory_visibility === 'members',
-    )
+    const profileList = readJson(profilesPath, [])
     const accountRows = readJson(path.join(dataDir, 'hub-accounts.json'), [])
     const photoRows = readJson(photosPath, [])
-    const candidates = profileList
+    const progressRows = readJson(path.join(dataDir, 'wg-progress.json'), [])
+    const published = profileList.filter(
+      (item) => item.directory_visibility === 'members',
+    )
+    const managerIds = dutyManagers
+      ? new Set(
+          progressRows
+            .filter(
+              (row) =>
+                row.wg_slug === cleanWg &&
+                row.status === 'active' &&
+                ['contact', 'lead'].includes(row.role_in_wg),
+            )
+            .map((row) => row.account_id),
+        )
+      : null
+    const sourceProfiles = dutyManagers
+      ? accountRows
+          .filter((row) => managerIds.has(row.id))
+          .map(
+            (row) =>
+              profileList.find((item) => item.account_id === row.id) || {
+                account_id: row.id,
+              },
+          )
+      : published
+    const candidates = sourceProfiles
       .map((profile) => {
         const row = accountRows.find((item) => item.id === profile.account_id)
         return row
@@ -535,7 +602,10 @@ export async function listMemberPeople({
   return {
     items: accounts.map((account, index) => {
       const profile = profileShape(profileRows[index], account)
-      return safePerson(profile, account, relationshipsFor(account, maps))
+      return safePerson(profile, account, relationshipsFor(account, maps), {
+        duty: dutyManagers,
+        workingGroup: cleanWg,
+      })
     }),
     total,
     page,

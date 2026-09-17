@@ -31,6 +31,7 @@ import {
   TbRosetteDiscountCheck as BadgeCheck,
   TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
+  TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
 
 // Home stands alone; browsing, people and shared work have distinct homes.
@@ -162,6 +163,13 @@ export function Shell({ children }) {
         href: '/council',
         label: 'Decisions',
         icon: Gavel,
+      },
+      {
+        section: SECTION.act,
+        href: '/negotiations',
+        label: 'Negotiations',
+        icon: WorldSearch,
+        when: verified || path.startsWith('/negotiations'),
       },
       {
         section: SECTION.act,

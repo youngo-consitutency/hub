@@ -1,0 +1,53 @@
+{
+  "slug": "migration",
+  "name": "Migration",
+  "monogram": "MG",
+  "focusLine": "Climate mobility, displacement, and youth advocacy on human mobility in climate policy",
+  "tags": ["Migration", "Human mobility", "Justice"],
+  "whatsappUrl": "https://chat.whatsapp.com/FzvAw4S2qgO1wR1xBMSW8o",
+  "resources": [
+    {
+      "label": "WhatsApp — Migration & Climate Change WG",
+      "description": "Public invite titled Migration & Climate Change WG.",
+      "url": "https://chat.whatsapp.com/FzvAw4S2qgO1wR1xBMSW8o"
+    },
+    {
+      "label": "X — @YOUNGOMIGRATION",
+      "description": "Climate and Migration WG of YOUNGO. April 2026 post names 2026 Contact Persons Rahma Kiriwe, Joseph Pasfield, and Ayomipo Ademilusi.",
+      "url": "https://x.com/YOUNGOMIGRATION"
+    },
+    {
+      "label": "IOM–YOUNGO climate mobility forum (MENA)",
+      "description": "IOM Environmental Migration Portal notice of an IOM and YOUNGO Migration WG Youth Climate Mobility Innovation Forum and Hackathon in MENA (2025 call).",
+      "url": "https://environmentalmigration.iom.int/iom-and-youngo-join-forces-launch-regional-youth-forum-and-hackathon-climate-mobility-mena"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster.",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    },
+    {
+      "label": "Constituency Linktree",
+      "description": "Central YOUNGO entry points including membership and WG/OT roster.",
+      "url": "https://linktr.ee/YOUNGO.UNFCCC"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "Migration WG works on climate-related human mobility — migration, displacement, and the rights of young people on the move — inside YOUNGO.",
+      "Public updates run through X (@YOUNGOMIGRATION). Day-to-day coordination is on WhatsApp. No separate public join form or WG inbox is on file.",
+      "2026 Contact Points Ayomipo Ademilusi, Joseph Pasfield, and Rahma Kiriwe (announced on the WG X account, 4 April 2026)."
+    ],
+    "rules": [
+      "Centre the dignity, safety, and consent of migrants, displaced people, and host communities in all drafts and posts.",
+      "Do not share personal stories or identifiable case material without explicit consent.",
+      "Coordinate public statements and UNFCCC/IOM inputs with CPs before using the YOUNGO name.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without CP approval."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Migration WG",
+    "description": "2026 Contact Points Ayomipo Ademilusi, Joseph Pasfield, and Rahma Kiriwe. Public WhatsApp invite and X @YOUNGOMIGRATION. No public WG inbox confirmed."
+  }
+}

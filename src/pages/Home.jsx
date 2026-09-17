@@ -82,20 +82,40 @@ export function Home() {
                 <MissionMetric
                   value={String(data.closing.length)}
                   label="Closing soon"
+                  href="/submissions"
                   tone={data.closing.length > 0 ? 'warn' : undefined}
                 />
                 <MissionMetric
                   value={String(data.week.length)}
                   label="Meetings this week"
+                  href="/calendar"
                 />
                 <MissionMetric
                   value={String(data.coys.length)}
                   label="COYs listed"
+                  href="/coys"
                 />
               </div>
             </div>
 
             <WorkspaceSection groups={groups} workspaces={workspaces} />
+            {(account?.isWgContact ||
+              account?.access?.wgAssignments?.length > 0) && (
+              <Section label="WG section call">
+                <A href="/book" className="card cardTight roleHubCard">
+                  <span className="iconTile" aria-hidden>
+                    <ClipboardCheck size={20} strokeWidth={1.75} />
+                  </span>
+                  <span className="roleHubCopy">
+                    <strong>Book 45 minutes with Genn or Jalo</strong>
+                    <small>
+                      Set your working-group page and onboarding. Pick a time on
+                      the Hub — don’t negotiate it in the group chat.
+                    </small>
+                  </span>
+                </A>
+              </Section>
+            )}
             <ResponsibilitySection account={account} />
 
             {data.closing.length > 0 && (

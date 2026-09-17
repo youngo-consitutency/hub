@@ -97,6 +97,16 @@
   gap: var(--space-2);
 }
 
+.platformHeaderAbout {
+  display: none;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 var(--space-3);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .platformSignIn {
   min-height: 44px;
   display: inline-flex;
@@ -105,7 +115,7 @@
 }
 
 .platformJoinButton {
-  min-height: 40px;
+  min-height: 44px;
 }
 
 .platformHero {
@@ -227,6 +237,15 @@
   border-radius: 50%;
   background: var(--landing-forest);
   content: '';
+}
+
+.platformBenefitList a {
+  color: inherit;
+  font-weight: 650;
+}
+
+.platformBenefitList a:hover {
+  color: var(--landing-forest);
 }
 
 .platformHeroActions,
@@ -384,7 +403,7 @@
 
 .platformModuleGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-3);
   margin: 0;
   padding: 0;
@@ -393,6 +412,7 @@
 
 .platformModuleGrid li {
   min-width: 0;
+  grid-column: span 2;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -400,6 +420,11 @@
   border: 1px solid var(--landing-line);
   border-radius: var(--radius-card);
   background: var(--landing-surface);
+}
+
+.platformModuleGrid li:nth-child(4),
+.platformModuleGrid li:nth-child(5) {
+  grid-column: span 3;
 }
 
 .platformModuleIcon {
@@ -705,6 +730,10 @@
     display: none;
   }
 
+  .platformHeaderAbout {
+    display: inline-flex;
+  }
+
   .platformHeaderActions {
     margin-left: auto;
   }
@@ -721,8 +750,11 @@
     grid-template-columns: 1fr;
   }
 
+  .platformModuleGrid li,
+  .platformModuleGrid li:nth-child(4),
+  .platformModuleGrid li:nth-child(5),
   .platformModuleGrid li:last-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .platformFooterInner {
@@ -750,15 +782,6 @@
   .platformHero h1 {
     max-width: 18ch;
     font-size: clamp(30px, 8vw, 40px);
-  }
-
-  .platformBenefitList {
-    display: none;
-  }
-
-  .platformHeroActions,
-  .platformReassurance {
-    display: none;
   }
 
   .platformAuth {
@@ -829,6 +852,9 @@
     grid-template-columns: 1fr;
   }
 
+  .platformModuleGrid li,
+  .platformModuleGrid li:nth-child(4),
+  .platformModuleGrid li:nth-child(5),
   .platformModuleGrid li:last-child {
     grid-column: auto;
   }

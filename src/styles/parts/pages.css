@@ -357,6 +357,34 @@
   display: grid;
   align-content: start;
   gap: var(--space-2);
+  position: relative;
+}
+
+.workspaceActivityCard h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.personRoleTitle {
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workspaceActivityActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.cpActivityList {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 @media (max-width: 760px) {

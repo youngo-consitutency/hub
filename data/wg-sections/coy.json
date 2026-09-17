@@ -1,0 +1,104 @@
+{
+  "slug": "coy",
+  "name": "Conference of Youth",
+  "monogram": "CY",
+  "focusLine": "LCOY, RCOY, and COY coordination — conferences that feed the Global Youth Statement",
+  "tags": ["COY", "LCOY", "RCOY"],
+  "groupUrl": "https://climatecoy.com/",
+  "resources": [
+    {
+      "label": "Conference of Youth site",
+      "description": "COY 2026, LCOY, RCOY, and Global Youth Statement hub (climatecoy.com).",
+      "url": "https://climatecoy.com/"
+    },
+    {
+      "label": "UNFCCC — Conference of Youth",
+      "description": "Official COY background and updates (COY21 Antalya ahead of COP31). LCOY/RCOY/COY are YOUNGO-endorsed, not UNFCCC-affiliated conferences.",
+      "url": "https://unfccc.int/topics/education-and-youth/youngo/coy"
+    },
+    {
+      "label": "LCOY Linktree",
+      "description": "LCOY programme links, organizers sheet, and socials. 2026 LCOY liaisons Dr. Anirudh Janagam and Jeremy Nathanael.",
+      "url": "https://linktr.ee/youngolcoys"
+    },
+    {
+      "label": "Instagram — @youngolcoys",
+      "description": "LCOY working-group updates.",
+      "url": "https://www.instagram.com/youngolcoys/"
+    },
+    {
+      "label": "LinkedIn — Local Conferences of Youth",
+      "description": "LCOY company page (youngolcoys).",
+      "url": "https://www.linkedin.com/company/youngolcoys/"
+    },
+    {
+      "label": "LinkedIn — YOUNGO COY",
+      "description": "COY21 Antalya (5–7 November 2026) updates. Page slug coy19baku.",
+      "url": "https://www.linkedin.com/company/coy19baku"
+    },
+    {
+      "label": "LCOY website",
+      "description": "Local Conferences of Youth overview, how-to, and WG pages.",
+      "url": "https://lcoywg.wixsite.com/home"
+    },
+    {
+      "label": "LCOY Working Group",
+      "description": "How the LCOY WG supports organizers (applications, conference support, comms, outputs).",
+      "url": "https://lcoywg.wixsite.com/home/working-group"
+    },
+    {
+      "label": "Approved LCOY organizers sheet",
+      "description": "Organizers list linked from LCOY Linktree and Hub fixtures. Do not copy personal emails from the sheet.",
+      "url": "https://docs.google.com/spreadsheets/d/1vwmkHG2isO5_7AwSPcml34UaZ_R3GdcowMpcw7IwG94/edit?gid=0#gid=0"
+    },
+    {
+      "label": "Approved 2026 RCOY organizers sheet",
+      "description": "2026 regional hosts: Africa, North America & Caribbean, APAC, Europe, LATAM, MENA, Oceania.",
+      "url": "https://docs.google.com/spreadsheets/d/11FKC7oeO91qN2THiQDY9QKALrwhQbO7_Pm0EVnRscmc/edit?gid=1780124112#gid=1780124112"
+    },
+    {
+      "label": "Local Youth Statements 2024",
+      "description": "Drive folder of 2024 local youth statements, linked from LCOY Linktree.",
+      "url": "https://drive.google.com/drive/folders/1GMDha6pziFeauIcpjbNdWVYHJnM0i8y0?usp=sharing"
+    },
+    {
+      "label": "Regional Youth Statements 2024",
+      "description": "Drive folder of 2024 regional youth statements, linked from LCOY Linktree.",
+      "url": "https://drive.google.com/drive/folders/1ZJS8XZQgDgBDTZ1dbCHRtmLzMw7UJC6r?usp=sharing"
+    },
+    {
+      "label": "YOUNGO WG & OT contacts (Notion)",
+      "description": "Canonical Working Groups and Operational Teams roster (replaces the old Google Sheet).",
+      "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
+    },
+    {
+      "label": "Constituency Linktree",
+      "description": "Central YOUNGO entry points including membership and WG/OT roster.",
+      "url": "https://linktr.ee/YOUNGO.UNFCCC"
+    },
+    {
+      "label": "Capacity Building series signup",
+      "description": "Public signup for YOUNGO Capacity Building sessions (from constituency Linktree).",
+      "url": "https://forms.gle/5aU7EcHGj7te4Q2p8"
+    }
+  ],
+  "onboarding": {
+    "presentation": [
+      "This Hub group covers Local, Regional, and Global Conferences of Youth (LCOY / RCOY / COY) as one coordination space. Those conferences feed National and Regional Youth Statements into the Global Youth Statement.",
+      "COY21 is 5–7 November 2026 in Antalya, Türkiye, ahead of COP31. climatecoy.com is the current COY / LCOY / RCOY / GYS site; history remains on the UNFCCC COY page.",
+      "2026 LCOY liaisons are Dr. Anirudh Janagam (India) and Jeremy Nathanael (Indonesia). RCOY 2026 liaison seats are blank on the WG/OT roster. Use the LCOY WG inbox listed in the directory for coordination."
+    ],
+    "rules": [
+      "LCOYs and RCOYs are YOUNGO-endorsed, youth-led conferences — not UNFCCC events. Use YOUNGO endorsement language only when a conference is actually approved.",
+      "Do not promise badges, travel, or COY/COP attendance. Volunteer and delegate calls do not guarantee a seat.",
+      "Follow the YOUNGO Code of Conduct and Safeguarding policies in all conference and WG spaces.",
+      "Do not share private channel links outside YOUNGO membership without liaison approval.",
+      "Credit collective work; do not speak for the whole LCOY/RCOY/COY process unless mandated."
+    ]
+  },
+  "directory": {
+    "roleTitle": "Conference of Youth / LCOY WG",
+    "description": "2026 LCOY liaisons Dr. Anirudh Janagam (India) and Jeremy Nathanael (Indonesia). Instagram @youngolcoys · linktr.ee/youngolcoys · climatecoy.com. RCOY 2026 liaison names are blank on the WG/OT roster.",
+    "publicEmail": "lcoywg@gmail.com"
+  }
+}
