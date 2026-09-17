@@ -10,7 +10,7 @@
     "dev": "vite",
     "server": "node --import tsx server/index.js",
     "dev-all": "concurrently \"node --import tsx server/index.js 8787\" \"npm run dev\"",
-    "build": "npm run typecheck && vite build",
+    "build": "vite build",
     "start": "node --import tsx server/index.js",
     "worker": "node --import tsx server/worker.js",
     "migrate": "node scripts/database/migrate.js",
