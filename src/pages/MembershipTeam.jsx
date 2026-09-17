@@ -1,8 +1,7 @@
+import { Children, useState } from 'react'
 import { TEAM_LABELS } from '../../shared/responsibilities.js'
 import { SidePanel } from '../components/SidePanel.tsx'
-import { TbUserCheck as MembershipIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
-import { useState } from 'react'
 import { apiPatch, useApi } from '../lib/api.js'
 import {
   Async,
@@ -15,6 +14,8 @@ import {
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { MemberAvatar } from '../components/MemberAvatar.jsx'
+import { DestinationIcon } from '../components/DestinationLink.jsx'
+import { workingGroupLabel } from '../../shared/workingGroups.js'
 import {
   TbClipboardCheck as ClipboardCheck,
   TbClock as Clock3,
@@ -33,6 +34,305 @@ const STATUS_LABELS = {
   renewal_due: 'Renewal due',
   expired: 'Expired',
   terminated: 'Terminated',
+}
+
+const AGE_LABELS = {
+  under_18: 'Under 18',
+  '18_35': '18–35',
+  '35_plus': '35+',
+}
+
+const ENTITY_LABELS = {
+  individual: 'Individual',
+  organization: 'Organisation',
+}
+
+const TRACK_LABELS = {
+  network: 'Network',
+  constituency_work: 'Constituency work',
+}
+
+const YOUTH_AFFILIATION_LABELS = {
+  primary: 'Yes — Primary',
+  secondary: 'Yes — Secondary',
+  no: 'No',
+}
+
+function yesNo(value) {
+  if (value === true || value === 'yes') return 'Yes'
+  if (value === false || value === 'no') return 'No'
+  return null
+}
+
+function formatDateOnly(value) {
+  if (!value) return null
+  const text = String(value)
+  const match = text.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (!match) return text
+  const date = new Date(`${match[1]}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return match[1]
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function ResponseField({ label, children }) {
+  if (children == null || children === '') return null
+  if (Array.isArray(children) && !children.length) return null
+  return (
+    <div className="membershipResponse">
+      <dt>{label}</dt>
+      <dd>{Array.isArray(children) ? children.join(', ') : children}</dd>
+    </div>
+  )
+}
+
+function ResponseGroup({ title, children }) {
+  const items = Children.toArray(children)
+  if (!items.length) return null
+  return (
+    <div className="membershipResponseGroup">
+      <h3 className="membershipResponseGroupTitle">{title}</h3>
+      {items}
+    </div>
+  )
+}
+
+function applicationSearchText(item) {
+  const app = item.application || {}
+  return [
+    item.name,
+    item.email,
+    item.country,
+    item.organizationName,
+    item.firstName,
+    item.lastName,
+    app.motivation,
+    app.gender,
+    app.genderOther,
+    app.nationality,
+    app.region,
+    app.phone,
+    app.dateOfBirth,
+    app.countryOfResidence,
+    app.minorityOther,
+    ...(app.minorityGroups || []),
+    app.orgMission,
+    app.orgOperateIn,
+    app.orgWebsite,
+    app.orgSocial,
+    app.dcpName,
+    app.dcpEmail,
+    app.dcpPhone,
+    app.ycpName,
+    app.ycpEmail,
+    app.ycpPhone,
+    app.guardianName,
+    app.guardianEmail,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function SocialLinks({ links }) {
+  if (!links?.length) return null
+  return (
+    <div className="membershipSocialLinks">
+      {links.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          className="membershipSocialLink"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <DestinationIcon url={link.href} size={15} />
+          {link.host}
+        </a>
+      ))}
+    </div>
+  )
+}
+
+function ApplicationResponses({ item }) {
+  const app = item.application || {}
+  const groups = (item.wgInterests || []).map(workingGroupLabel)
+  const isOrg = (app.entityType || item.entityType) === 'organization'
+  const gender =
+    app.gender === 'Other' && app.genderOther
+      ? `Other — ${app.genderOther}`
+      : app.gender
+  const minorityGroups = [
+    ...(app.minorityGroups || []),
+    app.minorityOther ? `Other — ${app.minorityOther}` : null,
+  ].filter(Boolean)
+  return (
+    <details className="membershipResponses" open>
+      <summary>Registration answers</summary>
+      <dl className="membershipResponseList">
+        <ResponseGroup title="Account">
+          <ResponseField label="Account type">
+            {ENTITY_LABELS[app.entityType || item.entityType] ||
+              app.entityType ||
+              item.entityType}
+          </ResponseField>
+          <ResponseField label="Membership track">
+            {TRACK_LABELS[app.membershipTrack || item.membershipTrack] ||
+              app.membershipTrack ||
+              item.membershipTrack}
+          </ResponseField>
+          <ResponseField label="First name">
+            {app.firstName || item.firstName}
+          </ResponseField>
+          <ResponseField label="Last name">
+            {app.lastName || item.lastName}
+          </ResponseField>
+          <ResponseField label="Email">{app.email || item.email}</ResponseField>
+        </ResponseGroup>
+        {!isOrg && (
+          <ResponseGroup title="Your details">
+            <ResponseField label="Phone">{app.phone}</ResponseField>
+            <ResponseField label="Gender">{gender}</ResponseField>
+            <ResponseField label="Date of birth">
+              {formatDateOnly(app.dateOfBirth)}
+            </ResponseField>
+            <ResponseField label="Age band">
+              {AGE_LABELS[app.ageBand] || app.ageBand}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        {!isOrg && (
+          <ResponseGroup title="Background">
+            <ResponseField label="Identifies as part of a minority group">
+              {yesNo(app.minorityIdentity)}
+            </ResponseField>
+            <ResponseField label="Minority groups">
+              {minorityGroups}
+            </ResponseField>
+            <ResponseField label="Region (UN classifications)">
+              {app.region}
+            </ResponseField>
+            <ResponseField label="Nationality">{app.nationality}</ResponseField>
+            <ResponseField label="Country of residence">
+              {app.countryOfResidence || item.country}
+            </ResponseField>
+            <ResponseField label="Why they want to join YOUNGO">
+              {app.motivation}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        {app.under18 && (
+          <ResponseGroup title="Guardian permission (under 18)">
+            <ResponseField label="Guardian name">
+              {app.guardianName}
+            </ResponseField>
+            <ResponseField label="Guardian email">
+              {app.guardianEmail}
+            </ResponseField>
+            <ResponseField label="Guardian permission confirmed">
+              {yesNo(app.guardianConsent)}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        {isOrg && (
+          <ResponseGroup title="Organisation">
+            <ResponseField label="Legal name">
+              {app.organizationName || item.organizationName}
+            </ResponseField>
+            <ResponseField label="Organisation type">
+              {app.organizationType}
+            </ResponseField>
+            <ResponseField label="UNFCCC admitted observer NGO">
+              {yesNo(app.isUnfcccAdmitted)}
+            </ResponseField>
+            <ResponseField label="Youth affiliation within the UNFCCC">
+              {YOUTH_AFFILIATION_LABELS[app.youthAffiliation] ||
+                app.youthAffiliation}
+            </ResponseField>
+            <ResponseField label="Region where legally established">
+              {app.region}
+            </ResponseField>
+            <ResponseField label="Country where legally established">
+              {app.countryOfResidence || item.country}
+            </ResponseField>
+            <ResponseField label="Regions and/or countries of operation">
+              {app.orgOperateIn}
+            </ResponseField>
+            <ResponseField label="Website">{app.orgWebsite}</ResponseField>
+            <ResponseField label="Social media">{app.orgSocial}</ResponseField>
+            <ResponseField label="Mission and activities">
+              {app.orgMission}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        {(app.dcpName || app.dcpEmail || app.dcpPhone) && (
+          <ResponseGroup title="UNFCCC Designated Contact Point">
+            <ResponseField label="DCP full name">{app.dcpName}</ResponseField>
+            <ResponseField label="DCP email">{app.dcpEmail}</ResponseField>
+            <ResponseField label="DCP phone">{app.dcpPhone}</ResponseField>
+          </ResponseGroup>
+        )}
+        {(app.ycpName || app.ycpEmail || app.ycpPhone) && (
+          <ResponseGroup title="YOUNGO Contact Point">
+            <ResponseField label="Contact Point full name">
+              {app.ycpName}
+            </ResponseField>
+            <ResponseField label="Contact Point email">
+              {app.ycpEmail}
+            </ResponseField>
+            <ResponseField label="Contact Point phone">
+              {app.ycpPhone}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        <ResponseGroup title="Working groups">
+          <ResponseField label="Working group interests">
+            {groups}
+          </ResponseField>
+        </ResponseGroup>
+        {!isOrg && (
+          <ResponseGroup title="Accredited NGO membership">
+            <ResponseField label="Member of an accredited NGO that is a member of YOUNGO">
+              {yesNo(app.memberOfAccreditedNgo)}
+            </ResponseField>
+          </ResponseGroup>
+        )}
+        <ResponseGroup title="Agreements">
+          <ResponseField label="Code of Conduct">
+            {yesNo(app.acceptCodeOfConduct)}
+          </ResponseField>
+          <ResponseField label="Data Protection Policy">
+            {yesNo(app.acceptDataProtection)}
+          </ResponseField>
+          <ResponseField label="YOUNGO Principles">
+            {yesNo(app.acceptPrinciples)}
+          </ResponseField>
+          <ResponseField label="Conflict of Interest Policy">
+            {yesNo(app.acceptCoiPolicy)}
+          </ResponseField>
+          <ResponseField label="Membership Policy version">
+            {app.membershipPolicyVersion}
+          </ResponseField>
+          <ResponseField label="Privacy notice accepted">
+            {yesNo(app.privacyConsent)}
+          </ResponseField>
+          <ResponseField label="Privacy notice version">
+            {app.privacyNoticeVersion}
+          </ResponseField>
+          <ResponseField label="Conflict of interest declared">
+            {yesNo(app.coiDeclared)}
+          </ResponseField>
+          <ResponseField label="Conflict of interest details">
+            {app.coiDetails}
+          </ResponseField>
+        </ResponseGroup>
+      </dl>
+    </details>
+  )
 }
 
 export function MembershipTeam() {
@@ -70,9 +370,9 @@ export function MembershipTeam() {
   return (
     <div>
       <PageHeader
-        icon={MembershipIcon}
+        icon={UserCheck}
         title="GCT · Membership"
-        description="Move applications from registration through onboarding, activation, renewal, and offboarding."
+        description="Read the full registration form, then activate, renew, or end membership."
       >
         <PageSectionNav section="membership" />
       </PageHeader>
@@ -90,9 +390,10 @@ export function MembershipTeam() {
               (filter === 'pending'
                 ? item.membershipStatus !== 'active'
                 : item.membershipStatus === 'active')
-            const text =
-              `${item.name} ${item.email} ${item.country || ''} ${item.organizationName || ''}`.toLowerCase()
-            return stateMatch && text.includes(search.toLowerCase())
+            return (
+              stateMatch &&
+              applicationSearchText(item).includes(search.toLowerCase())
+            )
           })
           return (
             <>
@@ -156,69 +457,92 @@ export function MembershipTeam() {
                 ) : (
                   <div className="stackSm">
                     {shown.map((item) => (
-                      <div key={item.id} className="card cardTight queueRow">
-                        <div className="queueIdentity membershipQueueIdentity">
-                          <MemberAvatar
-                            person={{
-                              name: item.name,
-                              displayName: item.profile?.displayName,
-                              photoUrl: item.profile?.photoUrl,
-                            }}
-                            size="sm"
-                          />
-                          <div>
-                            <strong>{item.name}</strong>
-                            <p className="meta">
-                              {item.email} · {item.country || 'Country not set'}
-                            </p>
-                            <div className="rowGap" style={{ marginTop: 6 }}>
-                              <span
-                                className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
-                              >
-                                {STATUS_LABELS[item.membershipStatus] ||
-                                  item.membershipStatus}
-                              </span>
-                              <span className="chip chip-neutral">
-                                Hub: {item.hubAccessStatus}
-                              </span>
-                              {item.teamRoles?.map((role) => (
-                                <span key={role} className="chip chip-neutral">
-                                  {TEAM_LABELS[role] ||
-                                    role.replaceAll('_', ' ')}
+                      <div
+                        key={item.id}
+                        className="card cardTight membershipQueueCard"
+                      >
+                        <div className="queueRow">
+                          <div className="queueIdentity membershipQueueIdentity">
+                            <MemberAvatar
+                              person={{
+                                name: item.name,
+                                displayName: item.profile?.displayName,
+                                photoUrl: item.profile?.photoUrl,
+                              }}
+                              size="sm"
+                            />
+                            <div>
+                              <strong>{item.name}</strong>
+                              <p className="meta">
+                                {item.email} ·{' '}
+                                {item.country || 'Country not set'}
+                                {item.organizationName
+                                  ? ` · ${item.organizationName}`
+                                  : ''}
+                              </p>
+                              <SocialLinks links={item.application?.links} />
+                              <div className="rowGap" style={{ marginTop: 6 }}>
+                                <span
+                                  className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
+                                >
+                                  {STATUS_LABELS[item.membershipStatus] ||
+                                    item.membershipStatus}
                                 </span>
-                              ))}
-                              <span className="chip chip-neutral">
-                                Directory:{' '}
-                                {item.profile?.directoryVisibility || 'private'}
-                              </span>
-                              {item.profile?.hasPhoto && (
-                                <span className="chip chip-neutral">Photo</span>
-                              )}
+                                <span className="chip chip-neutral">
+                                  {ENTITY_LABELS[item.entityType] ||
+                                    item.entityType}
+                                </span>
+                                <span className="chip chip-neutral">
+                                  Hub: {item.hubAccessStatus}
+                                </span>
+                                {item.teamRoles?.map((role) => (
+                                  <span
+                                    key={role}
+                                    className="chip chip-neutral"
+                                  >
+                                    {TEAM_LABELS[role] ||
+                                      role.replaceAll('_', ' ')}
+                                  </span>
+                                ))}
+                                <span className="chip chip-neutral">
+                                  Directory:{' '}
+                                  {item.profile?.directoryVisibility ||
+                                    'private'}
+                                </span>
+                                {item.profile?.hasPhoto && (
+                                  <span className="chip chip-neutral">
+                                    Photo
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <div className="membershipQueueActions">
+                            <SearchableSelect
+                              label="Membership status"
+                              options={Object.entries(STATUS_LABELS).map(
+                                ([value, label]) => ({ value, label }),
+                              )}
+                              value={item.membershipStatus}
+                              onChange={(status) => setStatus(item.id, status)}
+                              disabled={busy === item.id}
+                              className="queueSelect"
+                              searchPlaceholder="Search statuses…"
+                            />
+                            {item.membershipStatus !== 'active' && (
+                              <Button
+                                sm
+                                variant="primary"
+                                disabled={busy === item.id}
+                                onClick={() => setStatus(item.id, 'active')}
+                              >
+                                <ShieldCheck size={16} aria-hidden />
+                                {busy === item.id ? 'Saving…' : 'Activate'}
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <SearchableSelect
-                          label="Membership status"
-                          options={Object.entries(STATUS_LABELS).map(
-                            ([value, label]) => ({ value, label }),
-                          )}
-                          value={item.membershipStatus}
-                          onChange={(status) => setStatus(item.id, status)}
-                          disabled={busy === item.id}
-                          className="queueSelect"
-                          searchPlaceholder="Search statuses…"
-                        />
-                        {item.membershipStatus !== 'active' && (
-                          <Button
-                            sm
-                            variant="primary"
-                            disabled={busy === item.id}
-                            onClick={() => setStatus(item.id, 'active')}
-                          >
-                            <ShieldCheck size={16} aria-hidden />
-                            {busy === item.id ? 'Saving…' : 'Activate'}
-                          </Button>
-                        )}
+                        <ApplicationResponses item={item} />
                       </div>
                     ))}
                   </div>
