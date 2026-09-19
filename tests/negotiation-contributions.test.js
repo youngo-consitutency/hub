@@ -272,7 +272,7 @@ test('member UI labels initiatives and official-text proposals honestly', async 
   )
   assert.match(submissionPage, /No call — save as an initiative/)
   assert.match(submissionPage, /does not claim YOUNGO endorsement/)
-  assert.match(amendmentPage, /never modifies the cited official source/)
+  assert.match(amendmentPage, /never modifies the cited official\s+source/)
   assert.match(
     amendmentPage,
     /Competing alternatives remain separate proposals/,
