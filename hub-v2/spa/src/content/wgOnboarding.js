@@ -362,6 +362,6 @@ export function getWgOnboarding(slug) {
   const specific = slug === 'default' ? {} : WG_ONBOARDING[slug] || {}
   return {
     presentation: specific.presentation || base.presentation,
-    rules: [...(specific.rules || []), ...base.rules],
+    rules: [...new Set([...(specific.rules || []), ...base.rules])],
   }
 }

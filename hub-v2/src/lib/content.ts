@@ -97,10 +97,9 @@ function coyView(coy: AnyRecord, now = new Date()): AnyRecord {
   return { ...coy, status: resolveCoyStatus(coy, now) }
 }
 
-function opportunityShape(o: AnyRecord): AnyRecord {
+export function opportunityShape(o: AnyRecord): AnyRecord {
   return {
     id: o.id,
-    slug: o.slug || null,
     orgAccountId:
       typeof o.orgAccount === 'object' ? o.orgAccount?.id : o.orgAccount || null,
     organizationName: o.organizationName || 'Shared opportunity',
@@ -119,7 +118,6 @@ function opportunityShape(o: AnyRecord): AnyRecord {
     reviewNote: o.reviewNote || null,
     reviewedAt: o.reviewedAt || null,
     createdAt: o.createdAt,
-    source: o.source || null,
   }
 }
 

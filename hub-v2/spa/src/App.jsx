@@ -3,7 +3,8 @@ import { AccessGate } from './components/AccessGate.jsx'
 import { AccountProvider, useAccount } from './lib/accountContext.jsx'
 import { usePath, navigate, replace } from './lib/router.js'
 import { lazy, Suspense, useEffect } from 'react'
-import { A, Empty, Skeletons, PageHeader } from './components/ui.jsx'
+import { A, Button, Empty, Skeletons, PageHeader } from './components/ui.jsx'
+import { signOut } from './lib/logout.js'
 import { TbCompass as Compass, TbLock as Lock } from 'react-icons/tb'
 import { Privacy } from './pages/Privacy.jsx'
 import { RoutePeek } from './components/RoutePeek.jsx'
@@ -280,6 +281,11 @@ function Locked({
           ) : undefined
         }
       />
+      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <Button variant="ghost" onClick={() => signOut()}>
+          Sign out
+        </Button>
+      </div>
     </div>
   )
 }

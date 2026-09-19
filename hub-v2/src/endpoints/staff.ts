@@ -4,6 +4,9 @@ import { accountView, requireAccount } from '../lib/accounts'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
+import { wgActivityView } from './member'
+import { WG_ACTIVITY_KIND_VALUES } from '../../spa/shared/workflows.js'
+import { TASK_FORCE_SLUGS } from '../../spa/shared/taskForces.js'
 import {
   listMembershipReviewItems,
   listMemberProfileSummaries,
@@ -783,12 +786,12 @@ export const staffEndpoints: Endpoint[] = [
       if (!canManageWg(access, wg)) throw fail.forbidden()
       const { docs } = await req.payload.find({
         collection: 'wg-activities',
-        where: { wg: { equals: wg } },
+        where: { wgSlug: { equals: wg } },
         sort: '-createdAt',
-        limit: 200,
+        limit: 50,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: (docs as any[]).map(wgActivityView) })
     }),
   },
   {
@@ -801,26 +804,43 @@ export const staffEndpoints: Endpoint[] = [
       if (!canManageWg(access, wg)) throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const title = String(b.title || '').trim().slice(0, 200)
-      if (!title) throw fail.validation({ title: 'Title is required.' })
+      if (!title || !b.kind)
+        throw fail.validation({ title: 'title and kind are required.' })
+      if (!WG_ACTIVITY_KIND_VALUES.includes(String(b.kind)))
+        throw new ApiError(400, 'validation', 'Invalid activity kind.')
+      if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))
+        throw new ApiError(400, 'validation', 'Invalid start date.')
+      const taskForceSlug = b.taskForceSlug ? String(b.taskForceSlug) : null
+      if (taskForceSlug && !TASK_FORCE_SLUGS.has(taskForceSlug))
+        throw new ApiError(400, 'validation', 'Unknown task force.')
+      if (b.url && !/^https?:\/\//.test(String(b.url)))
+        throw fail.validation({
+          url: 'Link must be a full http:// or https:// URL.',
+        })
       const created = await req.payload.create({
         collection: 'wg-activities',
         data: {
-          wg,
+          wgSlug: wg,
+          kind: String(b.kind),
           title,
-          summary: String(b.summary || '').slice(0, 4000),
-          happenedAt: b.happenedAt || null,
+          body: b.body ? String(b.body).slice(0, 2000) : null,
+          startsAt: b.startsAt || null,
+          endsAt: b.endsAt || null,
+          url: b.url ? String(b.url) : null,
+          taskForceSlug,
           createdBy: account.id,
         } as any,
         overrideAccess: true,
         req,
       })
+      const activity = wgActivityView(created)
       await audit(req, account, {
-        action: 'wg.activity_add',
+        action: 'wg.activity_created',
         targetType: 'wg_activity',
         targetId: String(created.id),
-        after: { wg, title },
+        after: activity,
       })
-      return json({ item: created }, { status: 201 })
+      return json({ activity }, { status: 201 })
     }),
   },
   {

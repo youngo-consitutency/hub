@@ -27,7 +27,9 @@ export async function getAccessProfile(
       manageAllWgs: false,
     }
   }
-  const teamRoles = new Set<string>(account.teamRoles || [])
+  // Legacy derives team roles from active account_assignments in DB mode
+  // (account.teamRoles is fixture-mode only).
+  const teamRoles = new Set<string>()
   const wgAssignments: { wgSlug: string; role: string }[] = []
   const negotiationAssignments: {
     scopeType: string
@@ -42,7 +44,7 @@ export async function getAccessProfile(
       account: { equals: account.id },
       status: { equals: 'active' },
       and: [
-        { or: [{ startsAt: { exists: false } }, { startsAt: { less_than_equal: now.toISOString() } }] },
+        { startsAt: { less_than_equal: now.toISOString() } },
         { or: [{ endsAt: { exists: false } }, { endsAt: { greater_than: now.toISOString() } }] },
       ],
     },

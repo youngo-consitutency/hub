@@ -31,19 +31,29 @@ const draftView = (d: any) => ({
   id: d.id,
   contentType: d.contentType,
   contentKey: d.contentKey,
-  status: d.status,
   payload: d.payload,
-  authorId:
+  status: d.status,
+  createdBy:
     typeof d.author === 'object' ? d.author?.id : d.author,
-  authorEmail:
+  creatorName:
+    typeof d.author === 'object'
+      ? d.author?.name || d.author?.displayName || null
+      : null,
+  creatorEmail:
     typeof d.author === 'object' ? d.author?.email : null,
-  reviewerId:
+  reviewedBy:
     typeof d.reviewer === 'object' ? d.reviewer?.id : d.reviewer,
+  reviewerName:
+    typeof d.reviewer === 'object'
+      ? d.reviewer?.name || d.reviewer?.displayName || null
+      : null,
   reviewNote: d.reviewNote || null,
-  publishedAt: d.publishedAt || null,
-  revision: d.revision || 1,
   createdAt: d.createdAt,
   updatedAt: d.updatedAt,
+  submittedAt: d.submittedAt || null,
+  reviewedAt: d.reviewedAt || null,
+  publishedAt: d.publishedAt || null,
+  revision: d.revision || 1,
 })
 
 async function getDraft(req: PayloadRequest, id: string) {
@@ -291,7 +301,10 @@ export const contentEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
-        data: { status: 'in_review' } as any,
+        data: {
+          status: 'in_review',
+          submittedAt: new Date().toISOString(),
+        } as any,
         overrideAccess: true,
         req,
       })
@@ -330,6 +343,7 @@ export const contentEndpoints: Endpoint[] = [
           status,
           reviewer: account.id,
           reviewNote: String(b.reviewNote || '').slice(0, 2000),
+          reviewedAt: new Date().toISOString(),
         } as any,
         overrideAccess: true,
         req,

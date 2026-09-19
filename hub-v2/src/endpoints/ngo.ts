@@ -6,6 +6,7 @@ import { emailConfigured, sendEmail } from '../lib/email'
 import { createHash, randomBytes } from 'node:crypto'
 import { requirePgPool } from '../lib/pg'
 import { getAccessProfile } from '../lib/access'
+import { opportunityShape } from '../lib/content'
 
 const isVerified = (account: any) =>
   account?.hubAccessStatus === 'active' &&
@@ -108,15 +109,21 @@ const seatView = (row: any) => ({
 const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-invite' })
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
 
-const OPPORTUNITY_KINDS = new Set([
-  'event',
-  'workshop',
-  'hackathon',
-  'opportunity',
-  'call',
-  'training',
-])
-const OPPORTUNITY_FORMATS = new Set(['online', 'in_person', 'hybrid'])
+const OPPORTUNITY_KINDS = [
+  { value: 'event', label: 'Event' },
+  { value: 'workshop', label: 'Online workshop' },
+  { value: 'hackathon', label: 'Hackathon' },
+  { value: 'opportunity', label: 'Opportunity' },
+  { value: 'call', label: 'Open call' },
+  { value: 'training', label: 'Training' },
+]
+const OPPORTUNITY_FORMATS = [
+  { value: 'online', label: 'Online' },
+  { value: 'in_person', label: 'In person' },
+  { value: 'hybrid', label: 'Hybrid' },
+]
+const KIND_VALUES = new Set(OPPORTUNITY_KINDS.map((k) => k.value))
+const FORMAT_VALUES = new Set(OPPORTUNITY_FORMATS.map((f) => f.value))
 
 const trimmed = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max)
 
@@ -321,7 +328,7 @@ export const ngoEndpoints: Endpoint[] = [
       const seat = await req.payload.create({
         collection: 'ngo-seats',
         data: {
-          orgAccount: ctx.orgAccountId,
+          orgAccount: Number(ctx.orgAccountId),
           email,
           name: trimmed(b.name, 160) || null,
           seatRole,
@@ -652,12 +659,18 @@ export const ngoEndpoints: Endpoint[] = [
       const { ctx } = await requireOrgScope(req)
       const { docs } = await req.payload.find({
         collection: 'opportunities',
-        where: { orgAccount: { equals: ctx.orgAccountId } },
+        where: { orgAccount: { equals: Number(ctx.orgAccountId) } },
         sort: '-createdAt',
         limit: 100,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({
+        items: (docs as any[]).map(opportunityShape),
+        trusted: await orgPostingTrust(req, ctx.orgAccountId),
+        kinds: OPPORTUNITY_KINDS,
+        formats: OPPORTUNITY_FORMATS,
+        canPost: ctx.canManageRequests,
+      })
     }),
   },
   {
@@ -669,9 +682,9 @@ export const ngoEndpoints: Endpoint[] = [
       const title = trimmed(b.title, 200)
       if (title.length < 6)
         throw fail.validation({ title: 'Give the posting a title of at least 6 characters.' })
-      if (!OPPORTUNITY_KINDS.has(b.kind))
+      if (!KIND_VALUES.has(b.kind))
         throw fail.validation({ kind: 'Choose a posting type.' })
-      const format = OPPORTUNITY_FORMATS.has(b.format) ? b.format : null
+      const format = FORMAT_VALUES.has(b.format) ? b.format : null
       if (!format) throw fail.validation({ format: 'Choose a format.' })
       const startsAt = b.startsAt ? Date.parse(b.startsAt) : null
       const endsAt = b.endsAt ? Date.parse(b.endsAt) : null
@@ -720,7 +733,16 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      return json({ item: created, status }, { status: 201 })
+      return json(
+        {
+          item: opportunityShape(created),
+          note:
+            status === 'published'
+              ? 'Published to the constituency.'
+              : 'Sent for review. Your organisation posts directly once this first one is approved.',
+        },
+        { status: 201 },
+      )
     }),
   },
   {
@@ -734,15 +756,16 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })) as any
-      if (!item) throw fail.notFound('Posting not found.')
       if (
+        !item ||
+        !['published', 'pending_review'].includes(item.status) ||
         String(
           typeof item.orgAccount === 'object'
             ? item.orgAccount.id
             : item.orgAccount,
         ) !== ctx.orgAccountId
       )
-        throw fail.notFound('Posting not found.')
+        throw new ApiError(404, 'not_found', 'That posting is not live.')
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
@@ -761,7 +784,7 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      return json({ item: updated })
+      return json({ item: opportunityShape(updated) })
     }),
   },
   {
@@ -774,6 +797,11 @@ export const ngoEndpoints: Endpoint[] = [
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
       const b = ((await req.json?.()) || {}) as any
       const approve = b.decision === 'approve'
+      const reviewNote = trimmed(b.note, 1000) || null
+      if (!approve && !reviewNote)
+        throw fail.validation({
+          note: 'Give the organisation a reason for the rejection.',
+        })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
         id: String(req.routeParams?.id),
@@ -781,19 +809,38 @@ export const ngoEndpoints: Endpoint[] = [
         req,
       })) as any
       if (!item || item.status !== 'pending_review')
-        throw new ApiError(409, 'conflict', 'This posting is not awaiting review.')
+        throw new ApiError(
+          404,
+          'not_found',
+          'That posting is no longer awaiting review.',
+        )
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
         data: {
           status: approve ? 'published' : 'rejected',
-          reviewNote: trimmed(b.reviewNote, 2000) || null,
+          reviewNote,
           reviewedAt: new Date().toISOString(),
         } as any,
         overrideAccess: true,
         req,
       })
-      return json({ item: updated })
+      await req.payload.create({
+        collection: 'audit-log',
+        data: {
+          actor: account.id,
+          action: approve
+            ? 'ngo.opportunity_approved'
+            : 'ngo.opportunity_rejected',
+          targetType: 'ngo_opportunity',
+          targetId: String(item.id),
+          after: { status: updated.status },
+          reason: reviewNote,
+        } as any,
+        overrideAccess: true,
+        req,
+      })
+      return json({ item: opportunityShape(updated) })
     }),
   },
   {
@@ -821,7 +868,10 @@ export const ngoEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'accounts',
         id: org.id,
-        data: { postingTrust: state } as any,
+        data: {
+          postingTrust: state,
+          postingTrustNote: trimmed(b.note, 500) || null,
+        } as any,
         overrideAccess: true,
         req,
       })
@@ -850,14 +900,43 @@ export const ngoEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden()
-      const updated = await req.payload.update({
+      const b = ((await req.json?.()) || {}) as any
+      const reviewNote = trimmed(b.note, 1000) || null
+      if (!reviewNote)
+        throw fail.validation({ note: 'Give a reason for unpublishing.' })
+      const item = (await req.payload.findByID({
         collection: 'opportunities',
         id: String(req.routeParams?.id),
-        data: { status: 'withdrawn' } as any,
+        overrideAccess: true,
+        req,
+      })) as any
+      if (!item || item.status !== 'published')
+        throw new ApiError(404, 'not_found', 'That posting is not published.')
+      const updated = await req.payload.update({
+        collection: 'opportunities',
+        id: item.id,
+        data: {
+          status: 'rejected',
+          reviewNote,
+          reviewedAt: new Date().toISOString(),
+        } as any,
         overrideAccess: true,
         req,
       })
-      return json({ item: updated })
+      await req.payload.create({
+        collection: 'audit-log',
+        data: {
+          actor: account.id,
+          action: 'ngo.opportunity_unpublished',
+          targetType: 'ngo_opportunity',
+          targetId: String(item.id),
+          after: { status: 'rejected' },
+          reason: reviewNote,
+        } as any,
+        overrideAccess: true,
+        req,
+      })
+      return json({ item: opportunityShape(updated) })
     }),
   },
 ]

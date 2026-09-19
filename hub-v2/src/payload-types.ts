@@ -282,6 +282,10 @@ export interface Account {
    * Organisation posting trust override; empty derives trust from a published posting.
    */
   postingTrust?: ('trusted' | 'review_required') | null;
+  /**
+   * Staff note recorded with the posting-trust override.
+   */
+  postingTrustNote?: string | null;
   membershipTrack: 'network' | 'constituency_work';
   organizationName?: string | null;
   organizationType?: string | null;
@@ -845,13 +849,15 @@ export interface GysTrackedContribution {
  */
 export interface WgActivity {
   id: number;
-  wg: number | WorkingGroup;
+  wgSlug: string;
+  kind: string;
   title: string;
-  note?: string | null;
-  kind?: string | null;
-  linkUrl?: string | null;
-  postedBy?: (number | null) | Account;
-  postedAt?: string | null;
+  body?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  url?: string | null;
+  taskForceSlug?: string | null;
+  createdBy?: (number | null) | Account;
   updatedAt: string;
   createdAt: string;
 }
@@ -893,6 +899,8 @@ export interface ContentDraft {
   author?: (number | null) | Account;
   reviewer?: (number | null) | Account;
   reviewNote?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
   publishedAt?: string | null;
   revision?: number | null;
   updatedAt: string;
@@ -1461,6 +1469,7 @@ export interface AccountsSelect<T extends boolean = true> {
   motivation?: T;
   entityType?: T;
   postingTrust?: T;
+  postingTrustNote?: T;
   membershipTrack?: T;
   organizationName?: T;
   organizationType?: T;
@@ -1888,13 +1897,15 @@ export interface GysTrackedContributionsSelect<T extends boolean = true> {
  * via the `definition` "wg-activities_select".
  */
 export interface WgActivitiesSelect<T extends boolean = true> {
-  wg?: T;
-  title?: T;
-  note?: T;
+  wgSlug?: T;
   kind?: T;
-  linkUrl?: T;
-  postedBy?: T;
-  postedAt?: T;
+  title?: T;
+  body?: T;
+  startsAt?: T;
+  endsAt?: T;
+  url?: T;
+  taskForceSlug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1926,6 +1937,8 @@ export interface ContentDraftsSelect<T extends boolean = true> {
   author?: T;
   reviewer?: T;
   reviewNote?: T;
+  submittedAt?: T;
+  reviewedAt?: T;
   publishedAt?: T;
   revision?: T;
   updatedAt?: T;

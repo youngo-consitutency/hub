@@ -2,6 +2,8 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { accountView, requireAccount } from '../lib/accounts'
 import { getAccessProfile, canManageWg } from '../lib/access'
+import { opportunityShape } from '../lib/content'
+import { requirePgPool } from '../lib/pg'
 import * as store from '../lib/content'
 import {
   COURSE_MODULES,
@@ -102,6 +104,36 @@ async function upsertWgProgress(
     overrideAccess: true,
     req,
   })
+}
+
+function wgProgressView(d: any, accountId?: string | number) {
+  if (!d) return null
+  return {
+    account_id: accountId ?? (typeof d.account === 'object' ? d.account?.id : d.account),
+    wg_slug: d.wgSlug,
+    presentation_ok: d.presentationOk,
+    rules_ok: d.rulesOk,
+    unlocked_at: d.unlockedAt,
+    joined_at: d.joinedAt,
+    status: d.status,
+    role_in_wg: d.roleInWg,
+  }
+}
+
+export function wgActivityView(d: any) {
+  return {
+    id: d.id,
+    wg_slug: d.wgSlug,
+    kind: d.kind,
+    title: d.title,
+    body: d.body,
+    starts_at: d.startsAt,
+    ends_at: d.endsAt,
+    url: d.url,
+    task_force_slug: d.taskForceSlug,
+    created_by: typeof d.createdBy === 'object' ? d.createdBy?.id : d.createdBy,
+    created_at: d.createdAt,
+  }
 }
 
 const FEEDBACK_KINDS = [
@@ -237,16 +269,7 @@ export const memberEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((d) => ({
-          account_id: account.id,
-          wg_slug: d.wgSlug,
-          presentation_ok: d.presentationOk,
-          rules_ok: d.rulesOk,
-          unlocked_at: d.unlockedAt,
-          joined_at: d.joinedAt,
-          status: d.status,
-          role_in_wg: d.roleInWg,
-        })),
+        items: (docs as any[]).map((d) => wgProgressView(d, account.id)),
       })
     }),
   },
@@ -262,26 +285,15 @@ export const memberEndpoints: Endpoint[] = [
       if (unlocked) {
         const { docs } = await req.payload.find({
           collection: 'wg-activities',
-          where: { wg: { equals: wg } },
+          where: { wgSlug: { equals: wg } },
           sort: '-createdAt',
           limit: 50,
           overrideAccess: true,
         })
-        activities = docs
+        activities = docs.map(wgActivityView)
       }
       return json({
-        progress: progress
-          ? {
-              account_id: account.id,
-              wg_slug: progress.wgSlug,
-              presentation_ok: progress.presentationOk,
-              rules_ok: progress.rulesOk,
-              unlocked_at: progress.unlockedAt,
-              joined_at: progress.joinedAt,
-              status: progress.status,
-              role_in_wg: progress.roleInWg,
-            }
-          : null,
+        progress: wgProgressView(progress, account.id),
         activities,
       })
     }),
@@ -302,7 +314,7 @@ export const memberEndpoints: Endpoint[] = [
           status: 'active',
         },
       )
-      return json({ progress })
+      return json({ progress: wgProgressView(progress, account.id) })
     }),
   },
   {
@@ -314,9 +326,9 @@ export const memberEndpoints: Endpoint[] = [
         req,
         account.id,
         String(req.routeParams?.wg),
-        { status: 'interested' },
+        { status: 'pending_approval' },
       )
-      return json({ progress })
+      return json({ progress: wgProgressView(progress, account.id) })
     }),
   },
 
@@ -608,13 +620,57 @@ export const memberEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
-      const { docs } = await req.payload.find({
-        collection: 'opportunities',
-        where: { status: { equals: 'pending_review' } },
-        sort: '-createdAt',
-        overrideAccess: true,
+      const [pending, published] = await Promise.all([
+        req.payload.find({
+          collection: 'opportunities',
+          where: { status: { equals: 'pending_review' } },
+          sort: 'createdAt',
+          limit: 100,
+          overrideAccess: true,
+        }),
+        req.payload.find({
+          collection: 'opportunities',
+          where: { status: { equals: 'published' } },
+          sort: '-createdAt',
+          limit: 50,
+          overrideAccess: true,
+        }),
+      ])
+      const pool = requirePgPool()
+      const { rows: orgRows } = await pool.query(
+        `SELECT a.id AS org_account_id,
+                a.organization_name,
+                a.posting_trust AS override_state,
+                a.posting_trust_note AS override_note,
+                EXISTS (
+                  SELECT 1 FROM opportunities o
+                   WHERE o.org_account_id = a.id AND o.status = 'published'
+                ) AS has_published
+           FROM accounts a
+           JOIN (
+             SELECT DISTINCT org_account_id FROM opportunities
+           ) posted ON posted.org_account_id = a.id
+          ORDER BY a.organization_name NULLS LAST, a.id
+          LIMIT 200`,
+      )
+      const organisations = orgRows.map((row: any) => {
+        const override = row.override_state || null
+        const trusted =
+          override === 'trusted' ||
+          (override !== 'review_required' && Boolean(row.has_published))
+        return {
+          orgAccountId: row.org_account_id,
+          organizationName: row.organization_name || null,
+          trusted,
+          override,
+          overrideNote: row.override_note || null,
+        }
       })
-      return json({ items: docs })
+      return json({
+        items: (pending.docs as any[]).map(opportunityShape),
+        published: (published.docs as any[]).map(opportunityShape),
+        organisations,
+      })
     }),
   },
 

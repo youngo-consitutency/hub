@@ -120,7 +120,7 @@ async function ensureAccount(payload: any, def: any) {
         scopeType: { equals: 'team' },
         scopeId: { equals: teamRole },
       },
-      { account: accountId, scopeType: 'team', scopeId: teamRole, role: 'member', status: 'active', assignedBy: accountId },
+      { account: accountId, scopeType: 'team', scopeId: teamRole, role: 'member', status: 'active', startsAt: NOW.toISOString(), assignedBy: accountId },
     )
   }
   if (def.wg) {
@@ -132,7 +132,7 @@ async function ensureAccount(payload: any, def: any) {
         scopeType: { equals: 'working_group' },
         scopeId: { equals: def.wg.slug },
       },
-      { account: accountId, scopeType: 'working_group', scopeId: def.wg.slug, role: def.wg.role, status: 'active', assignedBy: accountId },
+      { account: accountId, scopeType: 'working_group', scopeId: def.wg.slug, role: def.wg.role, status: 'active', startsAt: NOW.toISOString(), assignedBy: accountId },
     )
     await upsert(
       payload,

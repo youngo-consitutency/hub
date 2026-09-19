@@ -46,6 +46,8 @@ export const ContentDrafts: CollectionConfig = {
       relationTo: 'accounts',
     },
     { name: 'reviewNote', type: 'textarea' },
+    { name: 'submittedAt', type: 'date' },
+    { name: 'reviewedAt', type: 'date' },
     { name: 'publishedAt', type: 'date' },
     { name: 'revision', type: 'number', defaultValue: 1 },
   ],
