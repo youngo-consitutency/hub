@@ -1,0 +1,383 @@
+import { createHmac } from 'node:crypto'
+import { getPgPool } from './pg'
+import { emailConfigured, sendEmail } from './email'
+
+// Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
+// — the announcement broadcast surface (preview/send/outbox). The queue rows
+// live in `notification_outbox`; eligibility reads the v2 notification_prefs
+// model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
+
+export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+
+const appOrigin = () =>
+  String(process.env.APP_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
+
+// ── Templates ────────────────────────────────────────────────────
+
+const escapeHtml = (value: any) =>
+  String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+
+const singleLine = (value: any, max = 160) =>
+  String(value ?? '')
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, max)
+
+const safeUrl = (value: any) => {
+  const text = String(value || '').trim()
+  if (!text) return null
+  try {
+    const url = new URL(text)
+    if (!['https:', 'http:'].includes(url.protocol)) return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
+const paragraphs = (value: any) =>
+  String(value || '')
+    .split(/\n{2,}/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map(
+      (item) =>
+        `<p style="font-size:16px;line-height:1.6;color:#24342d;margin:0 0 14px">${escapeHtml(item).replaceAll('\n', '<br />')}</p>`,
+    )
+    .join('\n')
+
+const SOCIAL_LINKS = [
+  { label: 'Instagram', url: 'https://www.instagram.com/youngo.unfccc' },
+  { label: 'Facebook', url: 'https://www.facebook.com/youngo.unfccc' },
+  { label: 'X (IYCM)', url: 'https://twitter.com/IYCM' },
+  { label: 'LinkedIn', url: 'https://www.linkedin.com/company/youngo-unfccc' },
+  { label: 'YouTube', url: 'https://www.youtube.com/@youngo.unfccc' },
+]
+
+function templateContent(templateKey: string, data: any = {}) {
+  const actionUrl = safeUrl(data.actionUrl)
+  const actionLabel = escapeHtml(
+    singleLine(data.actionLabel || 'Open YOUNGO Hub', 80),
+  )
+  const action = actionUrl
+    ? `<p style="margin:18px 0 0"><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#087f5b;color:#ffffff;border-radius:8px;font-weight:700;padding:12px 22px;text-decoration:none">${actionLabel}</a></p>`
+    : ''
+
+  if (templateKey === 'password-reset') {
+    return {
+      subject: 'Reset your YOUNGO Hub password',
+      eyebrow: 'Account security',
+      title: 'Reset your password',
+      body: paragraphs(
+        'A password reset was requested for your YOUNGO Hub account. Use the button below within one hour.\n\nIf you did not request this, you can ignore this email.',
+      ),
+      action,
+      text: `A password reset was requested for your YOUNGO Hub account. Use this link within one hour:\n\n${data.actionUrl}\n\nIf you did not request this, you can ignore this email.`,
+    }
+  }
+
+  if (templateKey === 'verify-email') {
+    return {
+      subject: 'Verify your email for YOUNGO Hub updates',
+      eyebrow: 'Email preferences',
+      title: 'Verify your email address',
+      body: paragraphs(
+        'Confirm that this address belongs to you before enabling optional YOUNGO Hub email. The link expires after 24 hours.\n\nNo digest, deadline alert, or announcement will be sent until you enable it in your Profile.',
+      ),
+      action,
+      text: `Verify your email address for YOUNGO Hub updates:\n\n${data.actionUrl}\n\nThe link expires after 24 hours. Optional email remains off until you enable it in your Profile.`,
+    }
+  }
+
+  if (templateKey === 'invitation') {
+    return {
+      subject: 'You have been invited to YOUNGO Hub',
+      eyebrow: 'Organisation invitation',
+      title: 'Join an organisation team in YOUNGO Hub',
+      body: paragraphs(
+        `You have been invited to join an organisation team with the ${String(data.seatRole || 'representative')} role. Sign in with this same email address before accepting.\n\nThe invitation link expires after seven days and can be used once.`,
+      ),
+      action,
+      text: `You have been invited to join an organisation team in YOUNGO Hub with the ${String(data.seatRole || 'representative')} role. Sign in with this same email address, then open this link within seven days:\n\n${data.actionUrl}`,
+    }
+  }
+
+  if (templateKey === 'membership-activated') {
+    const firstName = singleLine(data.firstName || 'there', 40)
+    const social = SOCIAL_LINKS.filter((link) => link.url)
+    const socialHtml = social
+      .map(
+        (link) =>
+          `<a href="${escapeHtml(link.url)}" style="color:#087f5b;font-weight:700;text-decoration:none">${escapeHtml(link.label)}</a>`,
+      )
+      .join(' &nbsp;·&nbsp; ')
+    const socialText = social
+      .map((link) => `${link.label}: ${link.url}`)
+      .join('\n')
+    return {
+      subject: 'Welcome — your YOUNGO membership is active',
+      eyebrow: 'YOUNGO membership',
+      title: `${firstName}, you are in`,
+      body: `${paragraphs(
+        `The Membership Team has activated your YOUNGO Hub membership.\n\nYOUNGO is the children and youth constituency to the UN climate process. The Hub is where members find working groups, calls, and the work happening now.\n\nA good next step is to open the Hub, join a working group, and add a photo on your profile.`,
+      )}${socialHtml ? `<p style="font-size:13px;line-height:1.6;color:#65736d;margin:8px 0 0">Stay in touch<br />${socialHtml}</p>` : ''}`,
+      action,
+      text: `${firstName}, you are in.\n\nThe Membership Team has activated your YOUNGO Hub membership. Open the Hub to join a working group and add a photo on your profile.${data.actionUrl ? `\n\n${data.actionUrl}` : ''}${socialText ? `\n\nStay in touch\n${socialText}` : ''}`,
+    }
+  }
+
+  const title = singleLine(data.title || 'YOUNGO Hub update')
+  const message = String(data.message || '').slice(0, 4000)
+  const labels: Record<string, string> = {
+    announcement: 'Announcement',
+    digest: 'Your weekly digest',
+    deadline: 'Deadline reminder',
+  }
+  return {
+    subject: title,
+    eyebrow: labels[templateKey] || 'YOUNGO Hub',
+    title,
+    body: paragraphs(message),
+    action,
+    text: `${title}\n\n${message}${data.actionUrl ? `\n\n${data.actionUrl}` : ''}`,
+  }
+}
+
+// Same content as the legacy mjml renderer, emitted as a fixed, responsive
+// table layout so no html-minifier dependency is needed.
+export function renderEmailTemplate(
+  templateKey: string,
+  data: any = {},
+  { unsubscribeUrl = null }: { unsubscribeUrl?: string | null } = {},
+) {
+  const content = templateContent(templateKey, data)
+  const unsubscribe = unsubscribeUrl ? safeUrl(unsubscribeUrl) : null
+  const footer = unsubscribe
+    ? `You received this because you enabled this category in YOUNGO Hub. <a href="${escapeHtml(unsubscribe)}" style="color:#087f5b">Unsubscribe from this category</a>.`
+    : 'This account message was sent by YOUNGO Hub.'
+
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f2f6f3;font-family:Arial,Helvetica,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f6f3"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+<tr><td style="background:#087f5b;height:8px;font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td style="background:#ffffff;padding:32px 28px 20px">
+<p style="color:#087f5b;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px">${escapeHtml(content.eyebrow)}</p>
+<p style="color:#14251d;font-size:28px;line-height:1.2;font-weight:700;margin:0 0 14px">${escapeHtml(content.title)}</p>
+${content.body}
+${content.action}
+</td></tr>
+<tr><td style="padding:18px 28px"><p style="text-align:center;font-size:12px;line-height:1.5;color:#65736d;margin:0">${footer}</p></td></tr>
+</table></td></tr></table>
+</body></html>`
+
+  return {
+    subject: content.subject,
+    html,
+    text: `${content.text}${unsubscribe ? `\n\nUnsubscribe from this category: ${unsubscribeUrl}` : ''}`,
+  }
+}
+
+// ── Unsubscribe links ────────────────────────────────────────────
+
+const unsubscribeSecret = () =>
+  String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() ||
+  process.env.PAYLOAD_SECRET ||
+  'youngo-development-unsubscribe-secret'
+
+export function createUnsubscribeToken(accountId: any, category: string) {
+  if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
+    throw new Error('Invalid unsubscribe category.')
+  const payload = Buffer.from(
+    JSON.stringify({ v: 1, accountId: String(accountId), category }),
+  ).toString('base64url')
+  const signature = createHmac('sha256', unsubscribeSecret())
+    .update(payload)
+    .digest('base64url')
+  return `${payload}.${signature}`
+}
+
+export function unsubscribeUrl(accountId: any, category: string) {
+  return `${appOrigin()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
+}
+
+// ── Transport ────────────────────────────────────────────────────
+
+export async function sendTemplatedEmail({
+  to,
+  templateKey,
+  data,
+  unsubscribe: unsubUrl = null,
+}: {
+  to: string
+  templateKey: string
+  data?: any
+  unsubscribe?: string | null
+}) {
+  const allowlist = String(process.env.EMAIL_RECIPIENT_ALLOWLIST || '')
+    .split(',')
+    .map((v) => v.trim().toLowerCase())
+    .filter(Boolean)
+  if (allowlist.length && !allowlist.includes(String(to).trim().toLowerCase())) {
+    throw Object.assign(
+      new Error('Recipient is not in the email delivery allowlist.'),
+      { code: 'recipient_not_allowlisted' },
+    )
+  }
+  const rendered = renderEmailTemplate(templateKey, data, {
+    unsubscribeUrl: unsubUrl,
+  })
+  const result = await sendEmail({
+    to,
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
+  })
+  if (!result.delivered)
+    throw Object.assign(new Error('Email delivery is not configured.'), {
+      code: 'email_not_configured',
+    })
+  return result
+}
+
+// ── Outbox ───────────────────────────────────────────────────────
+
+function publicOutbox(row: any) {
+  if (!row) return null
+  return {
+    id: row.id,
+    accountId: row.account_id ?? row.accountId,
+    category: row.category,
+    templateKey: row.template_key ?? row.templateKey,
+    sourceType: row.source_type ?? row.sourceType ?? null,
+    sourceId: row.source_id ?? row.sourceId ?? null,
+    deduplicationKey: row.deduplication_key ?? row.deduplicationKey ?? null,
+    payload: row.payload || {},
+    status: row.status,
+    attempts: Number(row.attempts || 0),
+    availableAt: row.available_at ?? row.availableAt,
+    leaseUntil: row.lease_until ?? row.leaseUntil ?? null,
+    providerMessageId: row.provider_message_id ?? row.providerMessageId ?? null,
+    lastErrorCode: row.last_error_code ?? row.lastErrorCode ?? null,
+    createdAt: row.created_at ?? row.createdAt,
+    sentAt: row.sent_at ?? row.sentAt ?? null,
+  }
+}
+
+export async function enqueueNotification({
+  accountId,
+  category,
+  templateKey,
+  sourceType = null,
+  sourceId = null,
+  deduplicationKey,
+  payload = {},
+  availableAt = new Date(),
+}: {
+  accountId: any
+  category: string
+  templateKey: string
+  sourceType?: string | null
+  sourceId?: string | null
+  deduplicationKey: string
+  payload?: any
+  availableAt?: Date
+}) {
+  if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
+    throw new Error('Invalid notification category.')
+  if (!accountId || !templateKey || !deduplicationKey)
+    throw new Error(
+      'Notification account, template, and deduplication key are required.',
+    )
+  const pool = getPgPool()!
+  const { rows } = await pool.query(
+    `INSERT INTO notification_outbox(
+       account_id,category,template_key,source_type,source_id,
+       deduplication_key,payload,available_at
+     ) VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+     ON CONFLICT(deduplication_key) DO NOTHING
+     RETURNING *`,
+    [
+      accountId,
+      category,
+      templateKey,
+      sourceType,
+      sourceId ? String(sourceId) : null,
+      deduplicationKey,
+      payload,
+      availableAt.toISOString(),
+    ],
+  )
+  return { created: Boolean(rows[0]), item: publicOutbox(rows[0]) }
+}
+
+export async function markNotificationSent(id: any) {
+  const pool = getPgPool()!
+  await pool.query(
+    `UPDATE notification_outbox
+     SET status='sent', sent_at=now(), attempts=attempts+1, updated_at=now()
+     WHERE id=$1`,
+    [id],
+  )
+}
+
+export async function markNotificationFailed(id: any, code: string) {
+  const pool = getPgPool()!
+  await pool.query(
+    `UPDATE notification_outbox
+     SET status='failed', last_error_code=$2, attempts=attempts+1, updated_at=now()
+     WHERE id=$1`,
+    [id, String(code || 'send_failed').slice(0, 80)],
+  )
+}
+
+export async function listQueuedNotifications() {
+  const pool = getPgPool()!
+  const { rows } = await pool.query(
+    'SELECT * FROM notification_outbox ORDER BY created_at DESC LIMIT 200',
+  )
+  return rows.map(publicOutbox)
+}
+
+export async function listEligibleNotificationAccountIds({
+  category,
+  scope,
+}: {
+  category: string
+  scope: { type: string; ids: string[] }
+}) {
+  if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
+    throw new Error('Invalid notification category.')
+  if (
+    !scope ||
+    !['all_active', 'working_group', 'team', 'account_ids'].includes(scope.type)
+  )
+    throw new Error('Invalid notification scope.')
+  const ids = Array.isArray(scope.ids) ? scope.ids.map(String) : []
+  const filters: Record<string, string> = {
+    all_active: 'true',
+    working_group: 'a.wg_interests ?| $2::text[]',
+    team: 'a.team_roles ?| $2::text[]',
+    account_ids: 'a.id::text = ANY($2::text[])',
+  }
+  const pool = getPgPool()!
+  const { rows } = await pool.query(
+    `SELECT a.id
+     FROM accounts a
+     JOIN notification_prefs p ON p.account_id=a.id
+       AND (p.email->>$1)::boolean = true
+     WHERE a.email_verified_at IS NOT NULL
+       AND a.hub_access_status='active'
+       AND a.membership_status NOT IN ('expired','terminated','rejected')
+       AND ${filters[scope.type]}`,
+    scope.type === 'all_active' ? [category] : [category, ids],
+  )
+  return rows.map((row: any) => String(row.id))
+}
+
+export { emailConfigured }

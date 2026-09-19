@@ -1,0 +1,479 @@
+/* Mission-console components. Shared pages keep the same visual language. */
+.mcConsole,
+.homeHero {
+  --mc-ring: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+  --mc-wash: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent 46%
+  );
+  --mc-halo: 0 0 22px color-mix(in srgb, var(--accent) 14%, transparent);
+  --mc-numerals: clamp(56px, 9vw, 88px);
+}
+
+.mcConsole {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mcStatusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 0;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+main > .mcStatusBar {
+  margin-bottom: 14px;
+}
+
+.mcStatusLeft,
+.mcStatusRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mcStatusTag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* Neutral "where you are" indicator — no pulse, distinct from a live pill. */
+.mcStatusStation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+
+.mcStatusStation::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.mcLivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.mcLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--live);
+  color: var(--live);
+}
+
+.mcClock {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.mcHero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: none;
+}
+
+/* Outside .mcConsole the hero has no flex gap to lean on. */
+.homeHero {
+  margin-bottom: var(--section-gap);
+}
+
+.mcHeroIdentity {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.mcTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 2px 0 0;
+}
+
+.mcLead {
+  margin-top: 6px;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+
+.mcEyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.mcCountdown {
+  min-width: 0;
+  overflow: visible;
+}
+
+.mcCountdownRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  margin-top: 6px;
+}
+
+.mcCountdownUnit {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.mcCountdownDays {
+  font-size: var(--mc-numerals, clamp(48px, 8vw, 72px));
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  color: var(--text-1);
+}
+
+/* The accent glow reads as a muddy halo on light — reserve it for dark. */
+[data-theme='dark'] .mcCountdownDays {
+  text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.mcCountdownHms {
+  font-size: clamp(18px, 3vw, 26px);
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.mcCountdownMeta {
+  margin-top: 8px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.mcHeroMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-content: end;
+}
+
+.mcMetric {
+  padding: 10px 11px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mcMetric strong {
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--accent);
+}
+
+.mcMetric span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+a.mcMetricLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.mcMetricLink:hover,
+a.mcMetricLink:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--accent-tint);
+}
+
+.mcMetric-warn strong {
+  color: var(--warn);
+}
+
+.mcSection,
+.mcPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mcPanel {
+  padding: 14px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+
+.mcSectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mcSectionHead h2 {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mcSectionHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.mcBento {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.mcWgTile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease);
+}
+
+.mcWgTile:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--bg-raised);
+}
+
+.mcWgTileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mcMonogram {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--on-accent-tint);
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: var(--mc-halo);
+}
+
+.mcWgTile h3 {
+  font-family: var(--font-ui);
+  font-size: 16px;
+}
+
+.mcWgFocus {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+  min-height: 2.8em;
+}
+
+.mcWgMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mcPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mcPillWarn {
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.mcWgCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mcFlash {
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mcSplit {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.mcQueue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcQueueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.mcQueueRowWarn {
+  border-color: color-mix(in srgb, var(--warn) 42%, var(--border));
+  box-shadow: inset 3px 0 0 var(--warn);
+}
+
+.mcQueueCopy {
+  min-width: 0;
+}
+
+.mcQueueCopy strong {
+  display: block;
+  font-size: 14px;
+}
+
+.mcQueueMeta {
+  margin-top: 3px;
+  color: var(--text-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcQueueActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.mcForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .homeHero,
+  .mcConsole .mcHero {
+    --mc-numerals: clamp(32px, 12vw, 48px);
+  }
+
+  .mcHero {
+    grid-template-columns: 1fr;
+  }
+
+  .mcCountdownRow {
+    align-items: flex-end;
+  }
+
+  .mcCountdownHms {
+    font-size: 16px;
+  }
+
+  .mcHeroMetrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mcSplit {
+    grid-template-columns: 1fr;
+  }
+
+  .mcQueueRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mcQueueActions {
+    justify-content: stretch;
+  }
+
+  .mcQueueActions .btn {
+    flex: 1;
+  }
+}
