@@ -71,6 +71,14 @@ export const Accounts: CollectionConfig = {
       },
     },
     {
+      name: 'postingTrustNote',
+      type: 'textarea',
+      admin: {
+        description: 'Staff note recorded with the posting-trust override.',
+        condition: (data: any) => data?.entityType === 'organization',
+      },
+    },
+    {
       name: 'membershipTrack',
       type: 'select',
       required: true,
