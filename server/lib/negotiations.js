@@ -1,15 +1,34 @@
 import { readFileSync } from 'node:fs'
 import { getPool } from './db.js'
 
-const fixture = JSON.parse(
-  readFileSync(
-    new URL(
-      '../../openspec/changes/add-negotiation-workspace/fixtures/s0-negotiation-sources.json',
-      import.meta.url,
-    ),
-    'utf8',
-  ),
-)
+const EMPTY_FIXTURE = {
+  notice:
+    'Negotiation fixtures are not bundled in this checkout; start the Hub with PostgreSQL for live data.',
+  tracks: [],
+  agendaItems: [],
+  calls: [],
+  documents: [],
+}
+
+// The openspec fixture is demo-only data and is gitignored; tolerate a
+// missing file so a clean clone still boots the server.
+function loadFixture() {
+  try {
+    return JSON.parse(
+      readFileSync(
+        new URL(
+          '../../openspec/changes/add-negotiation-workspace/fixtures/s0-negotiation-sources.json',
+          import.meta.url,
+        ),
+        'utf8',
+      ),
+    )
+  } catch {
+    return EMPTY_FIXTURE
+  }
+}
+
+const fixture = loadFixture()
 
 const MAX_PAGE_SIZE = 50
 

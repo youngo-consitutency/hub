@@ -1,0 +1,979 @@
+/* Cards, chips, buttons and filter pills.
+   Colours come from tokens.css variables only. */
+
+/* Shared content surface: distinct body, quiet outline, clear state cues. */
+.card {
+  min-width: 0;
+  max-width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-card);
+}
+
+:where(a).card {
+  display: block;
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease);
+}
+
+a.card:hover {
+  background: var(--bg-raised);
+}
+
+a.card.rowBetween,
+a.card.rowGap {
+  display: flex;
+}
+
+.cardTight {
+  padding: var(--space-3);
+}
+
+.entityCard,
+a.entityCard {
+  min-height: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.linkedEntityCard,
+.opportunityCard {
+  position: relative;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease);
+}
+
+.linkedEntityCard:hover,
+.opportunityCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: var(--bg-raised);
+}
+
+.linkedEntityCard:has(.entityCardLinkOverlay:focus-visible),
+.opportunityCard:has(.entityCardLinkOverlay:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.entityCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.cardCornerIcon {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.entityCardIcon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--text-2);
+}
+
+.entityCardHeading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.entityCard h3 {
+  color: var(--text-1);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.entityCardHeading h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
+}
+
+.entityCardHeaderTags {
+  min-height: 24px;
+  margin-top: var(--space-2);
+}
+
+.entityCardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entityCardSchedule,
+.entityCardMetaRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.entityCardSchedule > svg,
+.entityCardMetaRow > svg {
+  margin-top: 2px;
+  color: var(--text-3);
+}
+
+.entityCardSchedule span {
+  display: block;
+}
+
+.entityCardMetaLabel {
+  margin-bottom: 1px;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.entityCardSecondary {
+  margin-top: 1px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.entityCardFooter,
+.entityCardTags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.entityCardFooter,
+.entityCard > .lifecycleTiming {
+  align-self: stretch;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.entityCardFooter {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.entityCardSummary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.entityCardOwner {
+  margin-left: auto;
+}
+
+.lifecycleTiming {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  align-self: start;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.lifecycleTimingDate,
+.lifecycleTimingRemaining {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.lifecycleTimingDate svg,
+.lifecycleTimingRemaining svg {
+  flex: 0 0 auto;
+}
+
+.lifecycleTimingDate {
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.lifecycleTimingDate > svg {
+  margin-top: 2px;
+}
+
+.lifecycleTimingDate time {
+  min-width: 0;
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+.lifecycleTimingRelation {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lifecycleTimingRemaining {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.lifecycleTimingRemaining-neutral {
+  color: var(--text-2);
+}
+
+.lifecycleTimingRemaining-warn {
+  color: var(--warn);
+}
+
+.lifecycleTimingRemaining-danger {
+  color: var(--danger);
+}
+
+.chipPrefix {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.entityCard.coyCard {
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+.coyCard .entityCardBody {
+  flex: 0;
+}
+
+.actionCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actionCardIcon {
+  align-self: start;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.actionCardIconWarning {
+  color: var(--warn);
+}
+
+.actionCardCopy {
+  min-width: 0;
+}
+
+.actionCardCopy .meta {
+  margin-top: var(--space-1);
+}
+
+.resourceList {
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+
+.resourceRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+}
+
+.resourceRow.destinationResourceRow {
+  grid-template-columns: 20px minmax(0, 1fr) auto 16px;
+  grid-template-areas: 'icon label meta action';
+}
+
+.destinationResourceIcon {
+  grid-area: icon;
+  color: var(--accent);
+}
+
+.destinationResourceRow > strong {
+  grid-area: label;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.destinationResourceMeta {
+  grid-area: meta;
+  white-space: nowrap;
+}
+
+.destinationResourceAction {
+  grid-area: action;
+  color: var(--text-3);
+}
+
+.resourceRow:last-child {
+  border-bottom: 0;
+}
+
+a.resourceRow:hover {
+  background: var(--bg-raised);
+}
+
+.resourceCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.resourceMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.libraryCategory + .libraryCategory {
+  margin-top: var(--space-4);
+}
+
+.libraryCategoryTitle {
+  margin-bottom: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--font-size-sm);
+}
+
+/* Public science catalogue. These use the same card, chip, filter, and icon
+   primitives as the rest of the Hub rather than introducing a second visual
+   system for the imported collection. */
+.resourceSourceCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-top: 3px solid var(--accent);
+}
+
+.resourceSourceCard h2 {
+  font-size: 18px;
+}
+
+.resourceSourceCard .meta {
+  max-width: 68ch;
+  margin-top: var(--space-1);
+}
+
+.resourceHubGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  align-items: start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.resourceHubCard {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.resourceHubCardTop {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.resourceHubOpen {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-control);
+  color: var(--accent);
+}
+
+.resourceHubOpen:hover {
+  background: var(--accent-tint);
+}
+
+.resourceHubCardCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.resourceHubCardCopy h3 {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.resourceHubTags {
+  margin-top: auto;
+}
+
+@media (max-width: 680px) {
+  .resourceSourceCard {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .resourceSourceCard > .btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .actionCard {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .actionCard > .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .resourceRow {
+    grid-template-columns: 1fr;
+  }
+
+  .resourceMeta {
+    justify-content: flex-start;
+  }
+
+  .resourceRow.destinationResourceRow {
+    grid-template-columns: 20px minmax(0, 1fr) 16px;
+    grid-template-areas:
+      'icon label action'
+      '. meta meta';
+    row-gap: var(--space-1);
+  }
+
+  .destinationResourceMeta {
+    white-space: normal;
+  }
+}
+
+.groupCard,
+.contactCard {
+  height: auto;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+}
+
+.contactRole {
+  font-size: 14px;
+}
+
+.contactDescription {
+  margin-top: var(--space-1);
+}
+
+.contactDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.contactPerson {
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.contactUnavailable {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.workingGroupContactCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+  height: auto;
+  align-self: start;
+  color: var(--text-1);
+}
+
+.workingGroupContactIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.workingGroupContactCopy {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  align-content: start;
+}
+
+.workingGroupContactTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: 22px;
+}
+
+.workingGroupContactCopy h3 {
+  font-size: 15px;
+}
+
+.workingGroupContactCopy .meta {
+  margin-top: var(--space-1);
+}
+
+.workingGroupContactMeta {
+  display: inline-block;
+  margin-top: var(--space-1);
+  color: var(--accent);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workingGroupContactAction {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  color: var(--accent);
+}
+
+.errorCard {
+  width: min(100%, 560px);
+}
+
+.groupCard {
+  position: relative;
+  height: auto;
+  display: grid;
+  grid-auto-rows: auto;
+  align-content: start;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease);
+}
+
+.groupCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: var(--bg-raised);
+}
+
+.groupCard:has(.groupCardLinkOverlay:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.groupCardLinkOverlay,
+.entityCardLinkOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.groupCardLinkOverlay:focus-visible,
+.entityCardLinkOverlay:focus-visible {
+  outline: none;
+}
+
+.groupCardFocus {
+  margin-top: var(--space-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.groupCardTags {
+  padding-top: var(--space-2);
+}
+
+.groupCardTitle > svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.entityCard.opportunityCard {
+  min-height: 0;
+  grid-template-rows: auto auto auto auto;
+  align-content: start;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+.opportunityCardCopy {
+  display: grid;
+  grid-template-rows: auto;
+  align-content: start;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.groupCardBody {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.groupCardCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupCardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent);
+}
+
+.groupCardTitle h3 {
+  color: var(--text-1);
+}
+
+.groupCardActions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.announcementCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.announcementActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.pinnedStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pinnedBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(
+    105deg,
+    var(--accent-tint) 0%,
+    color-mix(in srgb, var(--accent-tint) 55%, var(--bg-card)) 55%,
+    var(--bg-card) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.pinnedBannerIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.pinnedBannerCopy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pinnedBannerEyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-accent-tint);
+}
+
+.pinnedBannerTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-1);
+}
+
+.pinnedBannerBody {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.pinnedBannerActions {
+  margin-top: 0;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .pinnedBanner {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .pinnedBannerActions {
+    width: 100%;
+    padding-left: calc(36px + var(--space-3));
+  }
+}
+
+.recognitionPromo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.archiveRow {
+  min-height: 52px;
+}
+
+/* ── Chips ─────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cardFilterChip {
+  position: relative;
+  z-index: 2;
+  min-height: 24px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.cardFilterChip:hover {
+  border-color: var(--border-strong);
+}
+
+.cardFilterChip[data-filter-state='include'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--bg-card);
+}
+
+.cardFilterChip[data-filter-state='exclude'] {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+  background: var(--danger-tint);
+}
+
+.chip .cdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.chip-accent {
+  color: var(--on-accent-tint);
+  background: var(--accent-tint);
+}
+
+.chip-live {
+  color: var(--live);
+  background: var(--live-tint);
+}
+
+.chip-info {
+  color: var(--info);
+  background: var(--info-tint);
+}
+
+.chip-warn {
+  color: var(--warn);
+  background: var(--warn-tint);
+}
+
+.chip-danger {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.chip-neutral {
+  color: var(--text-2);
+  background: var(--bg-raised);
+}
+
+.chipMono {
+  font-family: var(--font-mono);
+}
+
+.pulse {
+  opacity: 1;
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+.btn {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-1);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+@media (max-width: 560px) {
+  .btn {
+    height: auto;
+    min-height: 40px;
+    padding-block: var(--space-2);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .btn-sm {
+    min-height: 36px;
+  }
+}
+
+.btn:active {
+  filter: brightness(0.96);
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-glow {
+  box-shadow: var(--glow-accent);
+}
+
+.btn-secondary {
+  background: var(--bg-raised);
+}
+
+.btn-secondary:hover {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.btn-ghost {
+  color: var(--text-2);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
+.btn-danger:hover {
+  background: var(--danger-tint);
+}
+
+.btn-sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: 13px;
+}
+
+.entityCard > .chip {
+  align-self: flex-start;
+}
+.entityCard > .inlineLink:last-child,
+.entityCard > .btn:last-child {
+  margin-top: auto;
+}

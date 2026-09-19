@@ -1,0 +1,449 @@
+/* Subscribe, add-to-calendar and the command palette.
+   Colours come from tokens.css variables only. */
+
+/* ── Route quick view ─────────────────────────────── */
+/* Native dialog:modal UA styles cap max-width/height at
+   calc(100% - 2em - 6px) and centre with margin: auto. Combined with the
+   right-docked margin that leaves a left gutter on phones, so the sidebar
+   shows through. Reset those constraints here. */
+.routePeek {
+  inset: 0;
+  width: min(760px, calc(100% - 48px));
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal) 0 0 var(--radius-modal);
+  background: var(--bg-page);
+  color: var(--text-1);
+  box-shadow: var(--shadow-popover);
+}
+
+.routePeek::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.routePeekToolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.sidePanelTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.routePeekToolbar > .iconButton {
+  flex-shrink: 0;
+}
+.routePeek[open] {
+  display: flex;
+  flex-direction: column;
+}
+.routePeekToolbar {
+  flex-shrink: 0;
+}
+.routePeekBody {
+  flex: 1;
+  min-height: 0;
+}
+.routePeekBody > form.card {
+  background: transparent;
+  padding: 0;
+}
+.routePeekBody .platformForm {
+  margin-top: 0;
+  max-width: none;
+}
+
+.routePeekToolbar .pageEyebrow {
+  margin: 0;
+}
+
+.routePeekActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.routePeekBody {
+  height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5);
+}
+
+.routePeekBody > .detailPage > .backLink {
+  display: none;
+}
+
+/* On phones the same side view uses the full viewport. */
+@media (max-width: 900px) {
+  .routePeek {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0 auto;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .routePeekToolbar {
+    min-height: calc(48px + env(safe-area-inset-top));
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+    padding-right: max(var(--space-4), env(safe-area-inset-right));
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+  }
+
+  .routePeekBody {
+    height: calc(100dvh - 48px - env(safe-area-inset-top));
+    padding: var(--space-4);
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Subscribe (ICS) ───────────────────────────────── */
+.subscribeWrap {
+  position: relative;
+}
+
+.subscribePanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  width: 380px;
+  max-width: min(92vw, 380px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-popover);
+}
+
+.subscribeHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.subscribeHeader > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.subscribeHeader .meta {
+  margin-top: 2px;
+}
+
+.subscribeGoogle {
+  justify-content: center;
+}
+
+.subscribeFeedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.subscribeFeedActions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.subscribeSteps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.subscribeSteps li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.subscribeSteps strong {
+  color: var(--text-1);
+}
+
+/* ── Add to calendar menu ──────────────────────────── */
+.addCalWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.addCalPanel {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 240px;
+  width: max-content;
+  max-width: min(92vw, 300px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow-popover);
+  padding: 10px;
+}
+
+.addCalItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.addCalItem:hover {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+@media (max-width: 560px) {
+  .addCalPanel {
+    left: auto;
+    right: 0;
+  }
+
+  .subscribePanel {
+    right: auto;
+    left: 0;
+  }
+
+  .subscribeSteps li {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Command palette ───────────────────────────────── */
+.paletteBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--overlay);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 16px 16px;
+}
+
+.palette {
+  width: 100%;
+  max-width: 560px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+}
+
+.paletteInputRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.paletteInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+}
+
+.paletteInput::placeholder {
+  color: var(--text-3);
+}
+
+.paletteResults {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.paletteItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.paletteItem.active {
+  background: var(--accent-tint);
+}
+
+.paletteText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.paletteTitle {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-chip);
+  padding: 1px 5px;
+  background: var(--bg-raised);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Feedback ──────────────────────────────────────── */
+.feedbackTrigger {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-popover);
+}
+
+.feedbackTrigger:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.feedbackTrigger--menu {
+  position: static;
+  width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
+/* Clears the mobile tab bar so the trigger never covers navigation. */
+@media (max-width: 900px) {
+  .feedbackTrigger--floating {
+    display: none;
+  }
+
+  .feedbackTrigger--menu .feedbackTriggerLabel {
+    display: inline;
+  }
+}
+
+.feedbackForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.feedbackSent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: var(--space-3) 0;
+}
+
+.feedbackTicket {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.feedbackTicketMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.feedbackTriageNote {
+  margin-top: var(--space-2);
+}
+
+.feedbackTicketActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.routePeekBody > * + * {
+  margin-top: var(--space-4);
+}
+.routePeekBody .adminDialogIdentity {
+  margin-top: 0;
+}

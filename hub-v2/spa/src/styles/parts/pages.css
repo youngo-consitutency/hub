@@ -1,0 +1,1888 @@
+/* Misc utilities, admin operations, detail pages and GYS.
+   Colours come from tokens.css variables only. */
+
+/* ── Misc ──────────────────────────────────────────── */
+.monogram {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-control);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.skeleton {
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+  position: relative;
+  overflow: hidden;
+  height: 76px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--bg-card) 70%, transparent) 50%,
+    transparent 80%
+  );
+  transform: translateX(-100%);
+  animation: skeletonSweep 1.6s var(--motion-ease) infinite;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  padding: 40px 16px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+
+.emptyBody {
+  max-width: 320px;
+}
+
+.emptyCta {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.iconTile {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.input {
+  min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 0 12px;
+  color: var(--text-1);
+  font: inherit;
+}
+
+.input::placeholder {
+  color: var(--text-3);
+}
+
+.input:hover {
+  border-color: color-mix(in srgb, var(--text-2) 45%, transparent);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.searchInputWrap {
+  position: relative;
+}
+
+.searchInputWrap > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.searchInputWrap .input {
+  padding-left: 42px;
+}
+
+.searchResults,
+.searchEmpty {
+  margin-top: 16px;
+}
+
+.searchResult {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.searchResultCopy {
+  min-width: 0;
+  flex: 1;
+}
+
+.searchResultTitle {
+  font-size: 14px;
+}
+
+/* Admin account operations */
+.adminTools {
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+
+.adminTools .searchInputWrap {
+  width: 100%;
+}
+
+.adminFilters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.adminAccount {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.adminAccountFooter,
+.adminDialogFooter,
+.auditRow,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.adminAccountFooter {
+  margin-top: auto;
+}
+
+.pagination {
+  margin-top: var(--space-4);
+}
+
+.adminDialogIdentity {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.adminActionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.adminActionBlock > .btn {
+  align-self: flex-start;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.adminResetUrl {
+  display: block;
+  padding: var(--space-3);
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  font-size: 12px;
+}
+
+.pushBroadcast {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pushBroadcastPreview {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.pushBroadcastPreview strong {
+  display: block;
+}
+
+.pushBroadcastPreview .metaMuted {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+@media (max-width: 860px) {
+  .adminFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .adminFilters {
+    grid-template-columns: 1fr;
+  }
+
+  .adminDialogFooter,
+  .auditRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .adminDialogFooter > *,
+  .adminActionBlock > .btn {
+    width: 100%;
+  }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* ── Working-group workspace ──────────────────────── */
+.workspaceOnboarding,
+.workspaceUnlocked {
+  margin-top: var(--space-4);
+}
+
+.workspaceOnboardingHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.workspaceOnboardingHeader .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.workspaceOnboardingHeader .meta {
+  max-width: 62ch;
+  margin-top: var(--space-1);
+}
+
+.workspaceOnboardingSteps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.workspaceOnboardingStep {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.workspaceOnboardingStep legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.workspaceOnboardingStep legend > span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 12px;
+}
+
+.workspaceIntroduction {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.workspaceAgreement {
+  margin-top: var(--space-4);
+}
+
+.workspaceOnboardingFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.workspaceStatusCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workspaceStatusCard > svg,
+.workspaceStatusIcon {
+  color: var(--accent);
+}
+
+.workspaceContactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.workspaceChannelCard {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+.workspaceActivityCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  position: relative;
+}
+
+.workspaceActivityCard h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.personRoleTitle {
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workspaceActivityActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.cpActivityList {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .workspaceOnboardingSteps,
+  .workspaceContactGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspaceOnboardingFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspaceOnboardingFooter .btn {
+    width: 100%;
+  }
+}
+
+.timelineStrip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 8px 0;
+}
+
+.timelineStep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.timelineStep .tdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.timelineStep.done .tdot,
+.timelineStep.done {
+  color: var(--text-2);
+}
+
+.timelineStep.done .tdot {
+  background: var(--accent);
+}
+
+.timelineStep.current {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.timelineStep.current .tdot {
+  background: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.timelineLine {
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+  margin: 0 6px;
+  min-width: 12px;
+}
+
+/* ── Detail pages ──────────────────────────────────── */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: var(--space-2);
+}
+
+.backLink:hover {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.inlineLink {
+  color: var(--accent);
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+a.monogram:hover {
+  filter: brightness(1.08);
+}
+
+.detailHero {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+.detailHeroRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.detailHeroRow .detailHero {
+  margin-top: 0;
+}
+
+.detailActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.detailHeaderMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.detailPage .pageHeader {
+  margin-bottom: var(--space-3);
+}
+
+/* Detail panels respond to the space left after navigation and overlays, not
+   only to the browser viewport. */
+.detailPage {
+  container: detail-page / inline-size;
+}
+
+.detailPage .pageHeader + .detailActions {
+  margin-top: 0;
+}
+
+.detailLiveTime {
+  color: var(--live);
+}
+
+.detailHelp {
+  max-width: var(--text-measure);
+  margin-top: var(--space-2);
+}
+
+.detailContact {
+  margin-top: var(--space-3);
+}
+
+.detailInlineAction {
+  align-self: flex-start;
+}
+
+.detailStandaloneActions {
+  margin-top: 0;
+}
+
+.detailPageActions {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+/* Multi-action sets behave like compact toolbars. Labels determine each
+   control's width; the bounded row wraps without turning short actions into
+   oversized tiles. */
+.detailPage .detailActions:has(> :nth-child(2)) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: fit-content;
+  max-width: min(100%, 390px);
+  margin-left: auto;
+}
+
+.detailPage .detailActions:has(> :nth-child(2)) > * {
+  min-width: 0;
+  width: auto;
+}
+
+.detailPage .detailActions:has(> :nth-child(2)) > .btn,
+.detailPage .detailActions:has(> :nth-child(2)) > .addCalWrap > .btn {
+  width: auto;
+}
+
+.eventDetailPage {
+  width: 100%;
+  max-width: var(--detail-max);
+}
+
+/* Detail summaries keep facts and actions together without forcing sparse
+   metadata across the full content column. */
+.detailSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.detailSummary:not(:has(> .detailActions)) {
+  grid-template-columns: auto;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* The four event actions form a compact two-row toolbar. Bound its grid track
+   so its intrinsic button widths cannot squeeze the event facts beside it. */
+.detailOverviewCard {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 390px);
+}
+
+.detailOverviewFacts {
+  display: grid;
+  align-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.detailOverviewFact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.detailOverviewCard .detailActions {
+  justify-content: flex-end;
+  justify-self: end;
+  margin-top: 0;
+}
+
+.detailProcess,
+.detailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.detailProcess .timelineStrip {
+  margin: 0;
+}
+
+.detailLifecycleTiming {
+  width: fit-content;
+  max-width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.detailPanel .detailActions {
+  margin-top: 0;
+}
+
+.detailActionPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.detailActionPanel .detailActions {
+  justify-content: flex-end;
+  justify-self: end;
+}
+
+.groupOverview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.groupOverviewCopy {
+  min-width: 0;
+}
+
+.groupOverviewCopy h2 {
+  font-size: 18px;
+}
+
+/* Buttons keep their natural size; the overview column hugs the actions. */
+.groupOverviewActions {
+  justify-content: flex-end;
+  justify-self: end;
+  margin-top: 0;
+}
+
+.groupResourceGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-3);
+  max-width: 1080px;
+}
+
+.groupResourceGroups.isSingle {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 760px;
+}
+
+.groupResourceGroup {
+  min-width: 0;
+}
+
+.groupResourceColumn {
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.groupResourceGroup + .groupResourceGroup {
+  border-top: 1px solid var(--border);
+}
+
+.groupResourceGroupTitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.groupResourceGroupTitle svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.groupResourceList {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.groupResourceList .resourceRow {
+  min-height: 44px;
+  padding: 10px var(--space-3);
+}
+
+.groupResourceList .destinationResourceRow > strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .groupResourceGroups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.roleHubGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  grid-auto-rows: 1fr;
+  justify-content: start;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.dashboardCardGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  grid-auto-rows: 1fr;
+  justify-content: start;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.roleHubGrid > .card,
+.dashboardCardGrid > .card {
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+}
+
+.roleHubGrid > *,
+.dashboardCardGrid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.roleHubCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-1);
+}
+
+.roleHubCopy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.coyDetailHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.coyDetailHeader .pageHeader {
+  margin-bottom: 0;
+}
+
+.coyDetailOverview {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: end;
+}
+
+.coyDetailFacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  row-gap: var(--space-3);
+}
+
+.coyDetailFact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 150px;
+  padding: 0 var(--space-4);
+}
+
+.coyDetailFact:first-child {
+  padding-left: 0;
+}
+
+.coyDetailFact:last-child {
+  padding-right: 0;
+}
+
+.coyDetailFact + .coyDetailFact {
+  border-left: 1px solid var(--border);
+}
+
+.coyDetailFactIcon {
+  color: var(--accent);
+}
+
+.coyDetailFact .detailMetaLabel,
+.coyDetailFact strong {
+  display: block;
+}
+
+.coyDetailStatus {
+  grid-template-columns: 1fr;
+  align-content: center;
+}
+
+.coyDetailStatus .chip {
+  width: max-content;
+}
+
+.coyOrganiserCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.coyOrganiserCopy h3 {
+  font-size: 16px;
+}
+
+.detailPage .section > .empty {
+  padding-block: var(--space-5);
+}
+
+.decisionTimeline {
+  list-style: none;
+  display: grid;
+  gap: 0;
+  max-width: 760px;
+  margin: 0;
+  padding: 0;
+}
+
+.decisionTimelineStep {
+  position: relative;
+  min-width: 0;
+  margin-left: 5px;
+  padding: 0 0 var(--space-4) 20px;
+  border-left: 1px solid var(--border-strong);
+}
+
+.decisionTimelineStep:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.decisionTimelineMarker {
+  position: absolute;
+  top: 3px;
+  left: -6px;
+  color: var(--border-strong);
+  background: var(--bg-card);
+}
+
+.decisionTimelineStep.done .decisionTimelineMarker {
+  color: var(--accent);
+}
+
+.decisionTimelineStep.current .decisionTimelineMarker,
+.decisionTimelineStep.current .decisionTimelineHead > span:first-child {
+  color: var(--accent);
+}
+
+.decisionTimelineCopy {
+  min-width: 0;
+}
+
+.decisionTimelineHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.decisionTimelineStep.future .decisionTimelineHead {
+  color: var(--text-3);
+}
+
+.decisionTimelineNote {
+  margin-top: 2px;
+}
+
+@media (max-width: 620px) {
+  .timelineStrip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .timelineLine {
+    width: 1px;
+    min-width: 0;
+    height: var(--space-3);
+    margin: -4px 0 -4px 3px;
+    flex: none;
+  }
+}
+
+/* ── Global Youth Statement ────────────────────────── */
+.eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.gysOverview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gysFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 260px));
+  justify-content: start;
+  gap: var(--space-3);
+}
+
+.gysFacts > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.gysResources,
+.gysArchiveLinks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gysParticipation {
+  padding: var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.gysPriorityGroups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gysPriorityGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.gysPriorityList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gysPriority {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.gysSteps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.gysStep {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+}
+
+.gysStepHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gysStepHeading h3 {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.gysStep > .meta {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gysStepArrow {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--bg-page);
+}
+
+.gysStepArrowRight {
+  top: 50%;
+  right: calc((var(--space-3) / -2) - 11px);
+  transform: translateY(-50%);
+}
+
+.stepNum {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.gysArchiveItem {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.gysArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gysArchiveItem .gysArchiveLinks {
+  width: 100%;
+  display: grid;
+  gap: var(--space-1);
+  margin-top: auto;
+}
+
+.gysArchiveItem .gysArchiveLinks .btn {
+  width: 100%;
+  height: 32px;
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr) 16px;
+  text-align: left;
+  padding-inline: var(--space-2);
+  background: var(--bg-raised);
+}
+
+.gysArchiveLinkIcon {
+  color: var(--accent);
+}
+
+.gysSignupCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.gysSignupCard.isOpen {
+  grid-template-columns: 1fr;
+}
+
+.gysSignupIntro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gysSignupLead {
+  max-width: var(--text-measure);
+}
+
+.gysForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.gysImportPreview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.gysSynthesisPanel {
+  gap: var(--space-3);
+}
+
+.gysCountGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gysCountBlock ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gysCountBlock li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.gysSynthesisBullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gysSynthesisBullets li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.formError {
+  color: var(--danger);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 560px) {
+  .gysFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .gysArchiveItem {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gysSignupCard {
+    grid-template-columns: 1fr;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .gysCountGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .gysSynthesisBullets li {
+    flex-direction: column;
+  }
+
+  .policyInlineLink {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@container detail-page (max-width: 900px) {
+  .coyDetailHeader {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .coyDetailOverview {
+    grid-template-columns: 1fr;
+    justify-self: start;
+  }
+
+  .detailOverviewCard .detailActions,
+  .detailActionPanel .detailActions,
+  .groupOverviewActions,
+  .detailPageActions {
+    justify-content: flex-end;
+    justify-self: end;
+  }
+
+  .detailPage .detailActions:has(> :nth-child(2)) {
+    width: fit-content;
+    max-width: min(100%, 390px);
+  }
+}
+
+@container detail-page (max-width: 560px) {
+  .detailSummary,
+  .detailActionPanel,
+  .groupOverview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detailSummary.coyDetailOverview,
+  .detailSummary.coyDetailOverview:not(:has(> .detailActions)) {
+    width: 100%;
+  }
+
+  .coyDetailFacts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .coyDetailFact {
+    width: 100%;
+    padding: var(--space-2) 0;
+  }
+
+  .coyDetailFact + .coyDetailFact {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .gysPriorityGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .gysSteps,
+  .gysArchiveGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gysStep:nth-child(2) .gysStepArrowRight {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .gysSteps,
+  .gysArchiveGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .gysStepArrowRight {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .queueToolbar,
+  .cycleBanner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .queueSearch {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .queueRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .queueRow .btn {
+    width: 100%;
+  }
+
+  .contentQueueItem {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contentQueueActions {
+    width: 100%;
+  }
+
+  .contentQueueActions .btn {
+    flex: 1 1 auto;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field > span {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.fieldError {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--danger-tint);
+  border-radius: var(--radius-chip);
+  padding: 6px 8px;
+  margin-top: 2px;
+}
+
+.field.hasError .input,
+.input[aria-invalid='true'] {
+  border-color: var(--danger) !important;
+  background: color-mix(in srgb, var(--danger-tint) 55%, var(--bg-card));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.authCheck.hasError {
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: var(--danger-tint);
+  border-radius: var(--radius-control);
+  padding: 10px;
+}
+
+.formAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.policyInlineLink {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.policyInlineLink:hover {
+  color: var(--accent-hover);
+}
+
+.policyInlineIcon {
+  display: inline;
+  vertical-align: -1px;
+  margin-left: 3px;
+  opacity: 0.85;
+}
+
+.hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+/* Affiliation requests awaiting an organisation's decision. */
+.affiliationRequest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.affiliationDecide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 260px;
+}
+
+.affiliationActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .affiliationDecide {
+    min-width: 100%;
+  }
+
+  .affiliationActions .btn {
+    flex: 1;
+  }
+}
+
+/* ── Notification settings ─────────────────────────
+   Lives on Profile. The instruction blocks carry real setup steps, so they are
+   typeset as readable prose rather than dense console rows. */
+.notificationCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  scroll-margin-top: 88px;
+}
+
+.notificationHeadingRow {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.notificationHeadingCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.notificationHeadingCopy .meta {
+  margin-top: 3px;
+  max-width: 54ch;
+}
+
+.notificationStatusActions {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.notificationHelpTrigger {
+  width: 32px;
+  height: 32px;
+}
+
+.notificationActions {
+  grid-column: 1 / -1;
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.notificationHint {
+  grid-column: 1 / -1;
+  margin-top: 0;
+  max-width: 64ch;
+}
+
+.notificationInstall {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.notificationInstall .notificationHint,
+.notificationInstall .notificationActions {
+  margin-top: 0;
+}
+
+.notificationInstallSteps {
+  margin: 0;
+}
+
+.notificationInstallSteps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.notificationInstallSteps li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.notificationNotice {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+}
+
+.notificationNotice > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.notificationNoticeOk {
+  background: var(--success-tint);
+  color: var(--on-success-tint);
+}
+
+.notificationNoticeWarn {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.notificationGuideHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.notificationGuideHeader .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.notificationGuideSteps {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+  padding-left: var(--space-5);
+  color: var(--text-2);
+}
+
+.notificationDeviceNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--info-tint);
+}
+
+.notificationDeviceNote > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--info);
+}
+
+@media (max-width: 560px) {
+  .notificationCard {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .notificationHeadingRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .notificationHelpDialog {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 380px) {
+  .notificationCard {
+    grid-template-columns: 1fr;
+  }
+
+  .notificationHeadingRow,
+  .notificationStatusActions {
+    grid-column: 1;
+  }
+
+  .notificationHeadingRow {
+    grid-row: 1;
+  }
+
+  .notificationStatusActions {
+    grid-row: 2;
+    justify-content: flex-start;
+    padding-left: calc(44px + var(--space-3));
+  }
+
+  .notificationGuideHeader {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .notificationGuideHeader > :last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+/* ── Help & support ────────────────────────────────── */
+.helpPage {
+  max-width: var(--detail-max);
+}
+
+.helpActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.helpActionGrid > .card,
+.helpPeopleGrid > .card {
+  height: 100%;
+  align-self: stretch;
+}
+
+.helpActionCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.helpActionCard h3,
+.helpPersonCard h3 {
+  font-size: 15px;
+}
+
+.helpActionCopy {
+  min-width: 0;
+}
+
+.helpActionCopy .meta {
+  margin-top: var(--space-1);
+}
+
+.helpActionControl {
+  justify-self: end;
+  width: auto;
+  white-space: nowrap;
+}
+
+.helpReportAction .feedbackTrigger--menu {
+  width: auto;
+  min-height: 40px;
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+.helpDestinationGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  padding: 0;
+}
+
+.helpDestinationRow {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  min-height: 72px;
+  padding: var(--space-3);
+  color: var(--text-1);
+}
+
+.helpDestinationRow:nth-child(even) {
+  border-left: 1px solid var(--border);
+}
+
+.helpDestinationRow:nth-child(n + 3) {
+  border-top: 1px solid var(--border);
+}
+
+.helpDestinationRow:hover {
+  background: var(--bg-raised);
+}
+
+.helpDestinationRow > svg:first-child,
+.helpDestinationArrow {
+  color: var(--accent);
+}
+
+.helpDestinationCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.helpDestinationCopy strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.helpDestinationArrow {
+  justify-self: end;
+}
+
+.helpPeopleIntro {
+  margin-bottom: var(--space-3);
+}
+
+.helpPeopleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.helpPersonCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  border-top: 3px solid var(--accent);
+}
+
+.helpPersonAvatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.helpAboutStrip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--section-gap);
+}
+
+.helpAboutStrip h2 {
+  font-size: 15px;
+}
+
+.helpAboutStrip .meta {
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 900px) {
+  .helpActionGrid,
+  .helpPeopleGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .helpActionCard {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .helpActionControl {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .helpDestinationGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .helpDestinationRow:nth-child(even) {
+    border-left: 0;
+  }
+
+  .helpDestinationRow:nth-child(n + 2) {
+    border-top: 1px solid var(--border);
+  }
+
+  .helpAboutStrip {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .helpAboutStrip .helpActionControl {
+    grid-column: 2;
+  }
+}

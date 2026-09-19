@@ -1,0 +1,4 @@
+# Railway npm ci runs with NODE_ENV=production, which skips Vite.
+# The build still needs it; prune happens after.
+[phases.install]
+cmds = ["npm ci --include=dev"]

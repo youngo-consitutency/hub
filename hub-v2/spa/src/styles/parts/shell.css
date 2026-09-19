@@ -1,0 +1,1281 @@
+/* App shell, sidebar, profile and directory structure.
+   Colours come from tokens.css variables only. */
+
+/* ── Shell ─────────────────────────────────────────── */
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 12px 16px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow-y: auto;
+}
+
+.sidebarBrandRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding: 2px 4px 14px 10px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.brandLockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brandLogoPlate {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: var(--radius-chip);
+  background: var(--brand-surface);
+  /* Define the plate edge so it doesn't vanish white-on-near-white in light. */
+  border: 1px solid var(--border);
+}
+
+.brandLogoPlate img {
+  display: block;
+  height: 30px;
+  object-fit: contain;
+}
+
+.brandLockup[data-brand='hub'] .brandLogoPlate img {
+  width: 142px;
+}
+
+.brandLockup[data-brand='youngo'] .brandLogoPlate img {
+  width: 103px;
+}
+
+.skipLink {
+  position: fixed;
+  left: 12px;
+  top: calc(8px + env(safe-area-inset-top));
+  z-index: 500;
+  /* Park fully above the status bar. A fixed -160% offset is not enough once
+     top includes the iPhone safe-area inset — the control then peeks under
+     the clock. */
+  transform: translateY(calc(-100% - 8px - env(safe-area-inset-top)));
+  padding: 9px 12px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+}
+
+.navSection {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 10px 5px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 42px;
+  border: 0;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  text-align: left;
+}
+
+.navItem > svg {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.navItem:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.navItem.active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-left-color: var(--accent);
+  border-radius: var(--radius-control);
+}
+
+.sidebarSearch {
+  min-height: 42px;
+  margin: 2px 0 4px;
+  border: 1px solid var(--border-strong);
+  border-left-width: 1px;
+  background: var(--bg-raised);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.sidebarSearch:hover,
+.sidebarSearch:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.accountChip:hover,
+.accountChip.active {
+  background: var(--accent-tint);
+}
+
+.accountNameRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.accountChipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.accountChipArrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+.accountChip:hover .accountChipArrow,
+.accountChip:focus-visible .accountChipArrow {
+  transform: translateX(2px);
+  color: var(--accent);
+}
+
+.accountVerified {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 32px clamp(24px, 3vw, 56px) 48px;
+  width: 100%;
+}
+
+.pageIntro {
+  margin-top: 6px;
+  max-width: 640px;
+}
+
+.topbar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+
+  .content {
+    padding: 0 16px calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 41;
+    margin: 0 -16px 20px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background: color-mix(in srgb, var(--bg-page) 92%, transparent);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+  }
+
+  .topbar .wordmark {
+    padding: 0;
+  }
+}
+
+/* Mobile navigation stays anchored to the menu trigger. It overlays the page
+   rather than changing layout, and scrolls independently when a role has many
+   destinations. */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--bg-page) 55%, transparent);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.sheet {
+  position: fixed;
+  top: calc(68px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 60;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 84px - env(safe-area-inset-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sheetHeader {
+  display: grid;
+  gap: var(--space-2);
+  position: sticky;
+  top: calc(var(--space-3) * -1);
+  z-index: 1;
+  padding: var(--space-3) 0 var(--space-2);
+  background: var(--bg-popover);
+  border-bottom: 1px solid var(--border);
+}
+
+.sheetSearch,
+.sheetAccount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-2);
+}
+
+.sheetSearch span,
+.sheetAccount span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetAccount.active {
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.sheetAccount > :last-child {
+  margin-left: auto;
+}
+
+.sheetSections {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sheetSection {
+  min-width: 0;
+}
+
+.sheet .navSection {
+  padding: var(--space-2) var(--space-1) var(--space-1);
+}
+
+.sheetNavGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.sheetNavGrid .navItem {
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-left-width: 2px;
+}
+
+.sheetNavGrid .navItem span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetUtilities {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.mobileBottomNav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobileBottomNav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 42;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: calc(64px + env(safe-area-inset-bottom));
+    padding: 4px 8px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border-strong);
+    background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+    box-shadow: var(--shadow-sticky);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobileBottomNavCompact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobileBottomItem {
+    min-width: 0;
+    min-height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text-2);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .mobileBottomItem.active {
+    background: var(--accent-tint);
+    color: var(--on-accent-tint);
+  }
+
+  .mobileBottomItem span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .content {
+    padding-inline: 12px;
+  }
+
+  .topbar {
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
+  .sheet {
+    top: calc(64px + env(safe-area-inset-top));
+    right: 8px;
+    width: calc(100vw - 16px);
+    max-height: calc(
+      100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
+  }
+}
+
+/* ── Profile ───────────────────────────────────────── */
+.profileGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.profileSummary {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.profileHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.profileIdentity {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profileSignOut {
+  flex: 0 0 auto;
+}
+
+.profileIdentity > div {
+  min-width: 0;
+}
+
+.profileIdentity h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.profileVerified {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.profileAvatar,
+.memberAvatar {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font: 700 18px/1 var(--font-display);
+  overflow: hidden;
+}
+
+.memberAvatar-sm {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  font-size: 14px;
+}
+
+.memberAvatar-lg {
+  width: 72px;
+  height: 72px;
+  flex-basis: 72px;
+  font-size: 24px;
+}
+
+.memberAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memberProfileEditor {
+  min-width: 0;
+}
+
+.memberProfileEditor form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.memberProfileEditorHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.memberProfileEditorHeader > div:first-child {
+  flex: 1 1 auto;
+  min-width: min(100%, 300px);
+  max-width: 66ch;
+}
+
+.memberProfileHeaderActions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+}
+
+.profilePhotoActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-width: 380px;
+}
+
+.profilePhotoActions small {
+  width: 100%;
+  color: var(--text-3);
+  text-align: left;
+}
+
+.memberProfileOverview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.9fr);
+  gap: var(--space-5);
+  align-items: start;
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--border);
+}
+
+.memberProfileOverview h3 {
+  margin-bottom: var(--space-2);
+}
+
+.memberProfileOverview .profileMembershipBlock {
+  padding: 0 0 0 var(--space-4);
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.memberProfileOverview .profileHelp {
+  margin-top: var(--space-3);
+}
+
+.memberProfileFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.memberProfileWide {
+  grid-column: 1 / -1;
+}
+
+.profileVisibility {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.profileVisibility legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--text-1);
+  font-weight: 650;
+}
+
+.profileVisibilityChecks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  align-content: end;
+}
+
+.memberProfileEditorFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.memberProfileEditorFooter p {
+  max-width: 68ch;
+}
+
+.memberProfileEditorFooterCopy {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.profileSaveMessage {
+  margin: 0;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profileEmail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.profileEmail:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.profileStatus {
+  margin-top: 12px;
+}
+
+.profileDetails {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+}
+
+.profileMembershipBlock {
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.profileDetail {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.3fr);
+  gap: 12px;
+  padding: var(--space-1) 0;
+}
+
+.profileDetail dt {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.profileDetail dd {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.profileHelp {
+  min-width: 0;
+}
+
+.profileSummaryFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+@media (max-width: 560px) {
+  .profileHeader {
+    align-items: flex-start;
+  }
+
+  .profileSignOut {
+    padding-inline: var(--space-2);
+  }
+
+  .profileSummaryFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.profileSideStack {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.organisationCard {
+  min-width: 0;
+}
+
+.organisationTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.organisationTitleRow .pageEyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.organisationBody {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.organisationSeat + .organisationSeat {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.organisationEmpty {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.organisationRequest {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.profileList {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.profileInterestCard {
+  grid-column: 1 / -1;
+}
+
+.profileInterestGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-3);
+}
+
+.profileInterestGroup h4 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profileInterestGroup ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profileLinks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+a.profileLink {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.profileLink > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.profileLink > span {
+  display: grid;
+  gap: 3px;
+}
+
+.profileLink strong {
+  font-size: 14px;
+}
+
+.profileLink small {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 680px) {
+  .profileGrid,
+  .profileLinks {
+    grid-template-columns: 1fr;
+  }
+
+  .profileInterestGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .memberProfileEditorHeader,
+  .memberProfileEditorFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .memberProfileHeaderActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .profilePhotoActions small {
+    text-align: left;
+  }
+
+  .memberProfileFields,
+  .memberProfileOverview,
+  .profileVisibility,
+  .profileVisibilityChecks {
+    grid-template-columns: 1fr;
+  }
+
+  .memberProfileOverview .profileMembershipBlock {
+    padding: var(--space-4) 0 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .memberProfileWide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .memberProfileHeaderActions {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .profilePhotoActions {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* ── Directory contact structure ───────────────────── */
+.directoryNote {
+  max-width: 62ch;
+  margin: -4px auto 16px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--info);
+  border-radius: var(--radius-control);
+  background: var(--info-tint);
+}
+
+.directoryPyramid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.directoryLayer {
+  position: relative;
+  width: 100%;
+  padding: 18px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.directoryLayer + .directoryLayer::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -15px;
+  width: 1px;
+  height: 14px;
+  background: var(--border-strong);
+}
+
+.directoryLayer-top {
+  max-width: 720px;
+}
+
+.directoryLayer-middle {
+  max-width: 1440px;
+}
+
+.directoryLayer-base {
+  max-width: 1440px;
+}
+
+.directoryLayerDescription {
+  max-width: 62ch;
+  margin-top: 5px;
+}
+
+.directoryContacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.directoryContacts > .card {
+  height: 100%;
+  align-self: stretch;
+}
+
+.directoryLayer-base .directoryContacts {
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  align-items: stretch;
+}
+
+.directoryLayer-middle .directoryContacts {
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  justify-content: start;
+  align-items: stretch;
+}
+
+@media (max-width: 620px) {
+  .directoryLayer {
+    padding: 14px;
+  }
+
+  .directoryLayer-top,
+  .directoryLayer-middle,
+  .directoryLayer-base {
+    max-width: none;
+  }
+
+  .directoryContacts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Member CRM directory ─────────────────────────── */
+.peopleDirectoryIntro {
+  max-width: 72ch;
+  margin-bottom: var(--space-3);
+}
+
+.peopleDirectoryTools {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.peopleDirectoryTools .searchInputWrap {
+  flex: 1 1 280px;
+}
+
+.peopleGroupFilter {
+  flex: 0 1 260px;
+}
+
+.peopleGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  justify-content: start;
+  gap: var(--space-3);
+}
+
+.peopleGrid > .card {
+  height: 100%;
+  align-self: stretch;
+}
+
+.personCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+.personCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.personCardHeader > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.personCardHeader h3 {
+  margin: 3px 0 0;
+}
+
+.personHeadline {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.personBio {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.personConnections {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.personRoles {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.personRoles svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--text-3);
+}
+
+.personLinkChip {
+  position: relative;
+  z-index: 1;
+}
+
+.personTagButton {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.personTagButton:hover {
+  filter: brightness(0.97);
+}
+
+.membershipQueueIdentity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.membershipQueueIdentity > div {
+  min-width: 0;
+}
+
+.membershipQueueCard {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.membershipQueueActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.membershipSocialLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.membershipSocialLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: var(--radius-chip);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.membershipSocialLink:hover {
+  filter: brightness(0.97);
+}
+
+.membershipResponses {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  padding: 0;
+}
+
+.membershipResponses summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.membershipResponses summary::-webkit-details-marker {
+  display: none;
+}
+
+.membershipResponseList {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0 12px 12px;
+  margin: 0;
+}
+
+.membershipResponseGroup {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.membershipResponseGroupTitle {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.membershipResponse dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.membershipResponse dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  max-width: var(--text-measure);
+}
+
+.membershipAppealPanel {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+.membershipProofImage {
+  max-width: min(100%, 360px);
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.membershipAppealGate .lede {
+  max-width: 58ch;
+}
+
+.membershipAppealReason {
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.groupPeopleNote {
+  max-width: 70ch;
+  margin-bottom: var(--space-3);
+}
+
+@media (max-width: 620px) {
+  .peopleDirectoryTools {
+    align-items: stretch;
+  }
+
+  .peopleDirectoryTools .searchInputWrap,
+  .peopleGroupFilter {
+    flex-basis: 100%;
+  }
+
+  .peopleGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.navGroup + .navGroup {
+  margin-top: var(--space-2);
+}
+
+.personNameButton {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.personNameButton:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.personDetail .personBio {
+  display: block;
+  -webkit-line-clamp: unset;
+}

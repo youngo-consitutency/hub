@@ -1,0 +1,184 @@
+/* Operational pages use the same spacing, controls and surfaces as the Hub. */
+.platform {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  gap: var(--space-5);
+}
+.platform > .pageHeader {
+  margin-bottom: 0;
+}
+.platformForm {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  max-width: 48rem;
+}
+.platformForm > .btn {
+  justify-self: start;
+}
+.platformField {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+  font-weight: 500;
+}
+.platformField .input {
+  font-weight: 400;
+}
+.platformField textarea.input {
+  height: auto;
+  min-height: 7rem;
+  padding-block: var(--space-3);
+  resize: vertical;
+}
+.platformRequired {
+  color: var(--text-2);
+}
+.platformTable {
+  overflow-x: auto;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+.platformTable table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+.platformTable td,
+.platformTable th {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.platformTable th {
+  background: var(--bg-raised);
+  font-size: 12px;
+}
+.platformTable tr:last-child td {
+  border-bottom: 0;
+}
+.platformProse {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: var(--text-measure);
+}
+.platform summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: var(--space-2);
+}
+.platform details[open] > summary {
+  margin-bottom: var(--space-3);
+}
+.platformDisclosure {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-3);
+  color: var(--text-2);
+}
+.platformEditor {
+  scroll-margin-top: var(--space-5);
+}
+.platformFeedback {
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+.platformFeedback:empty {
+  display: none;
+}
+.platform .rowGap {
+  flex-wrap: wrap;
+}
+.platform .siteSection > .card + .card {
+  margin-top: var(--space-3);
+}
+.platformConsent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.platformConsent input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.platform .formAlert {
+  margin: 0;
+  scroll-margin-block: 90px;
+}
+@media (max-width: 620px) {
+  .platformTaskFilters .pill {
+    flex: 1 1 auto;
+  }
+  .platformForm > .btn {
+    width: 100%;
+  }
+  .platformEditor {
+    scroll-margin-top: 80px;
+  }
+}
+
+.platform .siteSection > h2 {
+  margin-bottom: var(--space-4);
+}
+
+.platformTaskFilters {
+  justify-content: flex-start;
+}
+.platformCardMeta {
+  display: grid;
+  gap: var(--space-2);
+}
+.platformCardMeta > span {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.platformCardMeta svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.attentionSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.attentionSummary h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 16px;
+  margin: 0 0 var(--space-2);
+}
+.attentionGroup {
+  margin-top: var(--space-5);
+}
+.attentionGroup h3 {
+  margin-bottom: var(--space-2);
+}
+.attentionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.attentionList li {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.attentionOverdue {
+  color: var(--text-1);
+  font-size: 12px;
+  font-weight: 600;
+}

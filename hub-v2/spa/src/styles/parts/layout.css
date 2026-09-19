@@ -1,0 +1,1473 @@
+/* Layout helpers, page headers, grids and recognition.
+   Colours come from tokens.css variables only. */
+
+/* ── Layout helpers ────────────────────────────────── */
+.pageHeader {
+  margin-bottom: var(--section-gap);
+}
+
+.pageEyebrow {
+  margin-bottom: var(--space-1);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.pageHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.pageHeaderCopy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: var(--text-measure);
+  overflow-wrap: anywhere;
+}
+
+.pageTitleIcon {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--accent);
+}
+
+.pageLead {
+  max-width: none;
+  margin-top: var(--space-1);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.pageHeaderAction {
+  flex-shrink: 0;
+}
+
+.pageHeaderControls {
+  margin-top: var(--space-3);
+}
+
+.pageHeaderControls .pillRow {
+  padding-bottom: 0;
+}
+
+.pageHeaderControls .pillRow + .pillRow {
+  margin-top: var(--space-1);
+}
+
+.filterHierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.filterLevel {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.filterLevel > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.filterContext {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--catalog-columns),
+    minmax(0, var(--catalog-card-max))
+  );
+  grid-auto-rows: 1fr;
+  justify-content: start;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.cardGrid > * {
+  min-width: 0;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+.cardGrid > .card {
+  height: 100%;
+}
+
+.catalogTools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.catalogTools .searchInputWrap {
+  width: 100%;
+}
+
+.catalogSearchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.catalogControlRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.catalogFilterRow .filterMenu {
+  width: 100%;
+}
+
+.catalogFilterRow .filterMenuPanel {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sortControl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.viewSwitch {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.viewSwitch .pill {
+  min-height: 38px;
+  height: auto;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-2);
+}
+
+.viewSwitch .pill.active {
+  color: var(--on-accent-tint);
+  background: var(--accent-tint);
+  box-shadow: none;
+}
+
+.sortOption {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text-2);
+  background: var(--bg-card);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sortOption:hover {
+  color: var(--text-1);
+  background: var(--bg-card);
+}
+
+.sortOption.active {
+  border-color: var(--accent);
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow: var(--shadow-card);
+}
+
+.filterMenu {
+  width: 100%;
+}
+
+.filterMenuPanel {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+  box-shadow: none;
+}
+
+.filterMenuPanel .filterLevel {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+}
+
+.filterMenuPanel .pillRow {
+  gap: var(--space-2);
+  padding: 0;
+}
+
+.filterMenuPanel .filterLevel > legend,
+.resourceHubControls .filterLevel > legend {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 620px) {
+  .catalogSearchRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .catalogControlRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sortControl {
+    align-self: flex-start;
+    justify-self: start;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .catalogFilterRow .filterMenuPanel {
+    width: 100%;
+  }
+
+  .filterMenuPanel .filterLevel {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .filterMenuPanel .pillRow {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    padding-bottom: 2px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Trailing-edge fade reads as "there is more" when the row overflows. */
+    mask-image: linear-gradient(
+      to right,
+      black calc(100% - 32px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black calc(100% - 32px),
+      transparent 100%
+    );
+  }
+
+  .filterMenuPanel .pillRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filterMenuPanel .pill {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+}
+
+/* Every labelled section clears the block before it, whether that block is
+   another Section component or a page-specific card. PageHeader already owns
+   its trailing space, so it is the one explicit exception. */
+.section:not(:first-child) {
+  margin-top: var(--section-gap);
+}
+
+.pageHeader + .section {
+  margin-top: 0;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin: var(--section-gap) 0 var(--space-2);
+}
+
+.section > .sectionLabel {
+  margin: 0 0 var(--space-2);
+}
+
+.sectionHeading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.sectionHeadingMeta {
+  color: var(--text-3);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.subsectionHeading {
+  margin-bottom: var(--space-2);
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sectionAction {
+  color: var(--text-3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sectionAction:hover {
+  color: var(--text-1);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stackSm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rowBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.rowGap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.metaMuted {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+
+.onboardingPathGrid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto minmax(0, 1fr) auto
+    minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.onboardingPathCard {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.onboardingPathTitle {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  margin-bottom: var(--space-2);
+}
+
+.onboardingPathTitle h3 {
+  min-width: 0;
+}
+
+.onboardingPathTitle svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.onboardingPathAction {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.onboardingPathAction .btn {
+  width: fit-content;
+}
+
+.onboardingPathConnector {
+  align-self: center;
+  color: var(--text-3);
+}
+
+@media (max-width: 900px) {
+  .onboardingPathGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboardingPathConnector {
+    justify-self: center;
+    transform: rotate(90deg);
+  }
+
+  .onboardingPathAction .btn {
+    width: 100%;
+  }
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.metricCard {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 9px;
+  padding: 14px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.metricCard svg {
+  grid-row: 1 / 3;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+/* Recognition */
+.recognitionRank,
+.recognitionRankIdentity {
+  display: flex;
+  align-items: center;
+}
+
+.recognitionRank {
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.recognitionRankIdentity {
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.recognitionRankNumber {
+  min-width: 32px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.recognitionRankTier {
+  margin-top: var(--space-1);
+}
+
+.recognitionPoints {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.recognitionPointsValue {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.recognitionLadder {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 280px));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 32px;
+  padding: 0;
+  list-style: none;
+}
+
+.recognitionRankGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 280px));
+  gap: var(--space-3);
+}
+
+.recognitionEmpty {
+  width: min(100%, 720px);
+}
+
+.recognitionTier {
+  position: relative;
+  min-width: 0;
+  min-height: 146px;
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.recognitionTierTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.recognitionTierMarker {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font: 600 12px/1 var(--font-mono);
+}
+
+.recognitionTierCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.recognitionTierCopy h3,
+.recognitionTierCopy p {
+  margin: 0;
+}
+
+.recognitionTierArrow {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: calc(100% + 7px);
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.recognitionNote {
+  margin-top: var(--section-gap);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+@media (max-width: 560px) {
+  .recognitionLadder,
+  .recognitionRankGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .recognitionTierArrow {
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+  }
+}
+
+@media (min-width: 561px) and (max-width: 1100px) {
+  .recognitionLadder {
+    grid-template-columns: minmax(0, 560px);
+  }
+
+  .recognitionRankGrid {
+    grid-template-columns: repeat(2, minmax(0, 280px));
+  }
+
+  .recognitionTierArrow {
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+  }
+}
+
+.metricCard strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 22px;
+}
+
+.metricCard span {
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.roleCard {
+  border-top: 3px solid var(--accent);
+}
+
+.roleCardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.queueToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.queueSearch {
+  min-width: 220px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+.queueSearch svg {
+  color: var(--text-2);
+}
+
+.queueSearch input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+}
+
+.queueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.contentForm {
+  max-width: 860px;
+}
+
+.contentCheck {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.contentCheck input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.contentQueueItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contentQueueCopy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.contentQueueActions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.contentReviewNote {
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--warn-tint);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.contentLiveList {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.contentLiveItem {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.contentLiveItem:hover {
+  border-color: var(--border-strong);
+}
+
+.contentLiveItem small {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.resourceHubControls {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.resourceHubSearch {
+  width: 100%;
+}
+
+.resourceHubFilterRows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.resourceHubFilterRows .pillRow {
+  margin: 0;
+}
+
+.resourceHubSelects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.resourceHubSelects label,
+.resourceFormTaxonomy label {
+  display: grid;
+  gap: 4px;
+}
+
+.resourceHubSelects label > span {
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.resourceHubSelects select {
+  min-width: 150px;
+}
+
+.sectionIntro {
+  max-width: 76ch;
+  margin: calc(var(--space-2) * -1) 0 var(--space-3);
+  color: var(--text-2);
+}
+
+.resourceSubmissionForm {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 1080px;
+  padding: var(--space-4);
+}
+
+.resourceFormTaxonomy {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resourceSubmissionActions,
+.resourceSubmissionStatus {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.resourceSubmissionList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.resourceSubmissionItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+@media (max-width: 900px) {
+  .resourceHubFilterRows {
+    grid-template-columns: 1fr;
+  }
+
+  .resourceHubSelects {
+    justify-content: start;
+  }
+
+  .resourceFormTaxonomy {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .resourceHubSelects,
+  .resourceSubmissionItem {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .resourceHubSelects select,
+  .resourceSubmissionStatus .btn {
+    width: 100%;
+  }
+
+  .resourceFormTaxonomy,
+  .resourceSubmissionList {
+    grid-template-columns: 1fr;
+  }
+
+  .resourceSubmissionStatus {
+    justify-content: flex-start;
+  }
+}
+
+.queueIdentity {
+  min-width: 0;
+}
+
+.taskState {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.taskState-review {
+  color: var(--info);
+  background: var(--info-tint);
+}
+
+.taskState-complete {
+  color: var(--on-success-tint);
+  background: var(--success-tint);
+}
+
+.taskState-blocked {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.cycleBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 18px;
+  background: linear-gradient(145deg, var(--accent-tint), var(--bg-card) 72%);
+}
+
+.workflowSteps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.workflowSteps li {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+.workflowSteps li > span {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  color: var(--text-2);
+  font: 600 12px var(--font-mono);
+}
+
+.workflowSteps li.active {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  background: var(--accent-tint);
+}
+
+.workflowSteps li.active > span {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.workflowSteps strong {
+  font-size: 13px;
+}
+
+.workflowSteps .meta {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hscroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 260px;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+@media (max-width: 560px) {
+  .pageHeader {
+    margin-bottom: 16px;
+  }
+
+  .pageHeaderRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pageHeaderAction {
+    width: 100%;
+  }
+
+  .pageHeaderAction > .btn,
+  .pageHeaderAction > .subscribeWrap {
+    width: 100%;
+  }
+
+  .rowBetween {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .archiveRow > :last-child {
+    margin-left: auto;
+  }
+
+  .sectionLabel {
+    align-items: flex-start;
+  }
+}
+
+/* ── Pills ─────────────────────────────────────────── */
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pill {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 14px;
+  border-radius: var(--radius-control);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pill:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.pill > svg {
+  flex: 0 0 auto;
+}
+
+.pillPrefix {
+  min-width: 2.2em;
+  color: currentColor;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pill.active {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  border-color: var(--accent);
+}
+
+.pill[data-filter-state='exclude'] {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: var(--danger-tint);
+}
+
+.pillStateIcon {
+  display: inline-flex;
+  flex: 0 0 13px;
+  width: 13px;
+  margin-left: var(--space-1);
+}
+
+.pill[data-filter-state='neutral'] .pillStateIcon {
+  visibility: hidden;
+}
+
+/* Home "Connect" panel: outward links and the beta credit. */
+.connectCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.betaCount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.connectLinks,
+.contributorList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.connectLinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 0;
+  background: var(--bg-raised);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.connectLinks a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.contributorList li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Section links wrap in reading order instead of widening the page. */
+.pageSectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.pageSectionLink {
+  gap: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 4px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pageSectionLink:hover {
+  color: var(--accent);
+}
+.pageSectionLink.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 650;
+}
+
+.pageSectionNav + * {
+  margin-top: var(--space-3);
+}
+
+/* Resources use the shared card widths and open, labelled controls. */
+.resourceAttribution {
+  margin: 0 0 var(--space-4);
+}
+.resourceCardFooter {
+  margin-top: auto;
+  display: grid;
+  gap: var(--space-2);
+}
+.resourceCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.resourceCardActions .btn {
+  white-space: normal;
+}
+.resourceCheck {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-block: 12px;
+  font-size: 14px;
+}
+.resourceCheck input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+.resourceTopicPicker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.resourceTopicOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 0 var(--space-3);
+}
+.resourceLoadMore {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+.resourceReview {
+  margin-block: var(--space-4);
+  scroll-margin-top: 90px;
+}
+.resourceDestination {
+  overflow-wrap: anywhere;
+}
+.resourceQueueFilters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  max-width: 800px;
+}
+.resourceQueueFilters label {
+  display: grid;
+  gap: var(--space-1);
+}
+.resourceIssue {
+  padding-block: var(--space-2);
+}
+
+.resourceHubTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: start;
+}
+.resourceSubmissionForm > label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* One quiet control surface; content groups stay open on the page. */
+.catalogTools,
+.resourceHubControls {
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+.catalogDisplayControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+.catalogSelect {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.catalogSelect .input {
+  font-size: 14px;
+  font-weight: 400;
+}
+.catalogDisplayControls .sortControl {
+  min-height: 44px;
+  align-self: end;
+}
+.filterSummary,
+.resourceFilterFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.filterSummary {
+  min-height: 36px;
+  flex-wrap: nowrap;
+  color: var(--text-2);
+  font-size: 12px;
+  margin-bottom: var(--space-2);
+}
+.filterMenuPanel .filterLevel > legend {
+  margin-bottom: var(--space-1);
+}
+.pageHeaderControls > .filterMenu {
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+}
+.resourceHubControls .filterLevel {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.resourceHubSelects label {
+  flex: 1 1 180px;
+}
+.resourceFilterFooter .resourceCheck {
+  margin-block: 0;
+}
+.catalogGroups {
+  display: grid;
+  gap: var(--space-5);
+}
+.catalogGroups > .section:not(:first-child) {
+  margin-top: 0;
+}
+.catalogGroups .sectionHeading {
+  font-size: 16px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-1);
+}
+.catalogGroupDescription {
+  color: var(--text-2);
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+}
+.catalogGroups .cardGrid + .btn {
+  margin-top: var(--space-3);
+}
+@media (max-width: 620px) {
+  .catalogDisplayControls {
+    justify-content: space-between;
+  }
+  .catalogSelect {
+    min-width: 0;
+    width: 100%;
+  }
+  .resourceHubControls .pillRow {
+    flex-wrap: wrap;
+  }
+  .catalogDisplayControls .catalogSelect {
+    flex: 1;
+    width: auto;
+    min-width: 130px;
+  }
+  .catalogGroups {
+    gap: var(--space-4);
+  }
+}
+
+.siteFavicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  color: var(--text-3);
+  background: var(--bg-raised);
+}
+.siteFavicon img {
+  display: block;
+  object-fit: contain;
+}
+
+/* Shared workspace layouts: list rows, balanced sections and form fields. */
+.workspaceColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.workspaceColumns > .section {
+  margin-block: var(--space-5);
+  min-width: 0;
+}
+.recordRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 108px;
+}
+.recordRow > div {
+  flex: 1;
+  min-width: 0;
+}
+.recordRow > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--accent);
+}
+.recordRow .chip {
+  margin-top: var(--space-2);
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.formGrid > * {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .workspaceColumns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 620px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
