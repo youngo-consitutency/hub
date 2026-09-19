@@ -1,38 +1,10 @@
-import { readFileSync } from 'node:fs'
-import { getPool } from './db.js'
-
-const EMPTY_FIXTURE = {
-  notice:
-    'Negotiation fixtures are not bundled in this checkout; start the Hub with PostgreSQL for live data.',
-  tracks: [],
-  agendaItems: [],
-  calls: [],
-  documents: [],
-}
-
-// The openspec fixture is demo-only data and is gitignored; tolerate a
-// missing file so a clean clone still boots the server.
-function loadFixture() {
-  try {
-    return JSON.parse(
-      readFileSync(
-        new URL(
-          '../../openspec/changes/add-negotiation-workspace/fixtures/s0-negotiation-sources.json',
-          import.meta.url,
-        ),
-        'utf8',
-      ),
-    )
-  } catch {
-    return EMPTY_FIXTURE
-  }
-}
-
-const fixture = loadFixture()
+// Public negotiation tracking reads — ported from server/lib/negotiations.js.
+// Relational model only; the JSON-fixture fallback path is not carried over.
+import { getPgPool } from '../../lib/pg'
 
 const MAX_PAGE_SIZE = 50
 
-export function pagination(query = {}) {
+export function pagination(query: Record<string, any> = {}) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1)
   const pageSize = Math.min(
     MAX_PAGE_SIZE,
@@ -41,7 +13,7 @@ export function pagination(query = {}) {
   return { page, pageSize, offset: (page - 1) * pageSize }
 }
 
-export function normalizeFollowPreferences(input = {}) {
+export function normalizeFollowPreferences(input: any = {}) {
   const digestFrequency = ['none', 'daily', 'weekly'].includes(
     input.digestFrequency,
   )
@@ -54,116 +26,16 @@ export function normalizeFollowPreferences(input = {}) {
   }
 }
 
-function fixtureDeadline(call) {
-  return {
-    date: call.externalDeadline.date,
-    precision: call.externalDeadline.precision,
-    ...(call.externalDeadline.precision === 'time'
-      ? {
-          time: call.externalDeadline.time,
-          timezone: call.externalDeadline.timezone,
-        }
-      : {}),
-  }
-}
-
-function fixtureTrack(track) {
-  const agendaItems = fixture.agendaItems.filter((item) =>
-    item.trackIds.includes(track.id),
-  )
-  const calls = fixture.calls.filter((call) => call.trackIds.includes(track.id))
-  const documents = fixture.documents.map((document) => ({
-    id: document.id,
-    title: document.sourceIdentifier,
-    sourceIdentifier: document.sourceIdentifier,
-    sourceUrl: document.sourceUrl,
-    language: document.language,
-    documentStatus: document.documentStatus,
-    statusVerified: document.statusVerified,
-    latestVersion: document.versions.at(-1),
-    versionCount: document.versions.length,
-    health: document.health,
-  }))
-  return {
-    id: track.id,
-    slug: track.slug,
-    topic: track.topic,
-    summary: fixture.notice,
-    activityStatus: 'active',
-    workingGroupSlugs: track.workingGroupSlugs,
-    agendaItems,
-    openCalls: calls.filter((call) => call.status === 'open').length,
-    calls: calls.map((call) => ({
-      id: call.id,
-      title: call.mandate,
-      mandate: call.mandate,
-      eligibility: call.eligibility,
-      submittingChannel: call.submittingChannel,
-      status: call.status,
-      sourceVersionId: call.sourceVersionId,
-      externalDeadline: fixtureDeadline(call),
-    })),
-    documents,
-  }
-}
-
-function matchesFixtureTrack(track, filters) {
-  const detail = fixtureTrack(track)
-  const includes = (value, needle) =>
-    String(value || '')
-      .toLocaleLowerCase()
-      .includes(String(needle || '').toLocaleLowerCase())
-  if (filters.topic && !includes(track.topic, filters.topic)) return false
-  if (
-    filters.workingGroup &&
-    !track.workingGroupSlugs.includes(filters.workingGroup)
-  )
-    return false
-  if (
-    filters.body &&
-    !detail.agendaItems.some((x) => includes(x.body, filters.body))
-  )
-    return false
-  if (
-    filters.session &&
-    !detail.agendaItems.some((x) => includes(x.session, filters.session))
-  )
-    return false
-  if (filters.activity && detail.activityStatus !== filters.activity)
-    return false
-  if (filters.openCalls === 'true' && detail.openCalls === 0) return false
-  return true
-}
-
-export async function listPublicTracks(filters = {}) {
+export async function listPublicTracks(filters: Record<string, any> = {}) {
+  const pool = getPgPool()
   const paging = pagination(filters)
-  const pool = getPool()
   if (!pool) {
-    const all = fixture.tracks
-      .filter((track) => track.published)
-      .filter((track) => matchesFixtureTrack(track, filters))
-      .map((track) => fixtureTrack(track))
-      .map((track) => ({
-        id: track.id,
-        slug: track.slug,
-        topic: track.topic,
-        summary: track.summary,
-        activityStatus: track.activityStatus,
-        workingGroupSlugs: track.workingGroupSlugs,
-        openCalls: track.openCalls,
-      }))
-    return {
-      items: all.slice(paging.offset, paging.offset + paging.pageSize),
-      page: paging.page,
-      pageSize: paging.pageSize,
-      total: all.length,
-      fixture: true,
-    }
+    return { items: [], page: paging.page, pageSize: paging.pageSize, total: 0 }
   }
 
-  const values = []
+  const values: any[] = []
   const where = ["t.publication_status = 'published'"]
-  const add = (sql, value) => {
+  const add = (sql: string, value: any) => {
     values.push(value)
     where.push(sql.replace('?', `$${values.length}`))
   }
@@ -208,7 +80,7 @@ export async function listPublicTracks(filters = {}) {
     [...values, paging.pageSize, paging.offset],
   )
   return {
-    items: rows.rows.map((row) => ({
+    items: rows.rows.map((row: any) => ({
       id: row.id,
       slug: row.slug,
       topic: row.topic,
@@ -223,14 +95,9 @@ export async function listPublicTracks(filters = {}) {
   }
 }
 
-export async function getPublicTrack(slug) {
-  const pool = getPool()
-  if (!pool) {
-    const track = fixture.tracks.find(
-      (item) => item.published && item.slug === slug,
-    )
-    return track ? { ...fixtureTrack(track), fixture: true } : null
-  }
+export async function getPublicTrack(slug: string) {
+  const pool = getPgPool()
+  if (!pool) return null
   const { rows } = await pool.query(
     `SELECT id, slug, topic, summary, activity_status
      FROM negotiation_tracks
@@ -281,7 +148,7 @@ export async function getPublicTrack(slug) {
     topic: track.topic,
     summary: track.summary,
     activityStatus: track.activity_status,
-    agendaItems: agenda.rows.map((row) => ({
+    agendaItems: agenda.rows.map((row: any) => ({
       id: row.id,
       body: row.body,
       session: row.session,
@@ -290,7 +157,7 @@ export async function getPublicTrack(slug) {
       title: row.official_title,
       lineageFrom: row.lineage_from,
     })),
-    documents: documents.rows.map((row) => ({
+    documents: documents.rows.map((row: any) => ({
       id: row.id,
       title: row.title,
       sourceIdentifier: row.source_identifier,
@@ -319,7 +186,7 @@ export async function getPublicTrack(slug) {
         safeDiagnostic: row.safe_diagnostic,
       },
     })),
-    calls: calls.rows.map((row) => ({
+    calls: calls.rows.map((row: any) => ({
       id: row.id,
       title: row.title,
       mandate: row.mandate,
@@ -341,34 +208,24 @@ export async function getPublicTrack(slug) {
   }
 }
 
-export async function listPublicCalls(filters = {}) {
+export async function listPublicCalls(filters: Record<string, any> = {}) {
   const tracks = await listPublicTracks({ ...filters, pageSize: MAX_PAGE_SIZE })
   const details = await Promise.all(
-    tracks.items.map((item) => getPublicTrack(item.slug)),
+    tracks.items.map((item: any) => getPublicTrack(item.slug)),
   )
   const byId = new Map()
   details
-    .flatMap((item) => item.calls)
-    .forEach((call) => byId.set(call.id, call))
+    .flatMap((item: any) => item.calls)
+    .forEach((call: any) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 
-export async function getPublicDocumentVersion(documentId, versionId) {
-  const pool = getPool()
-  if (!pool) {
-    const document = fixture.documents.find((item) => item.id === documentId)
-    const version = document?.versions.find((item) => item.id === versionId)
-    if (!document || !version) return null
-    return {
-      documentId: document.id,
-      sourceIdentifier: document.sourceIdentifier,
-      sourceUrl: document.sourceUrl,
-      documentStatus: document.documentStatus,
-      statusVerified: document.statusVerified,
-      version,
-      extractionUncertain: Number(version.extraction.confidence) < 0.9,
-    }
-  }
+export async function getPublicDocumentVersion(
+  documentId: string,
+  versionId: string,
+) {
+  const pool = getPgPool()
+  if (!pool) return null
   const { rows } = await pool.query(
     `SELECT d.id AS document_id,d.source_identifier,d.document_status,d.status_verified,
       s.source_url,v.id AS version_id,v.content_hash,v.language,v.original_reference,
@@ -404,8 +261,16 @@ export async function getPublicDocumentVersion(documentId, versionId) {
   }
 }
 
-export async function putFollow({ accountId, slug, preferences }) {
-  const pool = getPool()
+export async function putFollow({
+  accountId,
+  slug,
+  preferences,
+}: {
+  accountId: number
+  slug: string
+  preferences: any
+}) {
+  const pool = getPgPool()
   if (!pool) return { unavailable: true }
   const track = await pool.query(
     "SELECT id FROM negotiation_tracks WHERE slug=$1 AND publication_status='published'",
@@ -437,8 +302,33 @@ export async function putFollow({ accountId, slug, preferences }) {
   }
 }
 
-export async function deleteFollow({ accountId, slug }) {
-  const pool = getPool()
+export async function getFollow(accountId: number, slug: string) {
+  const pool = getPgPool()
+  if (!pool) return null
+  const { rows } = await pool.query(
+    `SELECT f.deadline_alerts,f.substantive_change_alerts,f.digest_frequency
+     FROM negotiation_follows f JOIN negotiation_tracks t ON t.id=f.track_id
+     WHERE f.account_id=$1 AND t.slug=$2`,
+    [accountId, slug],
+  )
+  const row = rows[0]
+  return row
+    ? {
+        deadlineAlerts: row.deadline_alerts,
+        substantiveChangeAlerts: row.substantive_change_alerts,
+        digestFrequency: row.digest_frequency,
+      }
+    : null
+}
+
+export async function deleteFollow({
+  accountId,
+  slug,
+}: {
+  accountId: number
+  slug: string
+}) {
+  const pool = getPgPool()
   if (!pool) return { unavailable: true }
   await pool.query(
     `DELETE FROM negotiation_follows f USING negotiation_tracks t

@@ -1,0 +1,27 @@
+import type { CollectionConfig } from 'payload'
+
+// WG contact-point activity log shown in WG workspaces (wg_activities table).
+// Fields mirror the legacy snake_case contract; responses shape them back.
+export const WgActivities: CollectionConfig = {
+  slug: 'wg-activities',
+  admin: {
+    useAsTitle: 'title',
+    group: 'Membership',
+  },
+  access: {
+    read: ({ req }) => Boolean(req.user),
+    create: ({ req }) => Boolean(req.user),
+    update: ({ req }) => Boolean(req.user),
+  },
+  fields: [
+    { name: 'wgSlug', type: 'text', required: true, index: true },
+    { name: 'kind', type: 'text', required: true },
+    { name: 'title', type: 'text', required: true },
+    { name: 'body', type: 'textarea' },
+    { name: 'startsAt', type: 'date' },
+    { name: 'endsAt', type: 'date' },
+    { name: 'url', type: 'text' },
+    { name: 'taskForceSlug', type: 'text' },
+    { name: 'createdBy', type: 'relationship', relationTo: 'accounts' },
+  ],
+}
