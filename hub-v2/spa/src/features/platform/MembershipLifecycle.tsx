@@ -1,7 +1,7 @@
 import { SidePanel } from '../../components/SidePanel.tsx'
-import { TbUserCheck as MembershipIcon } from 'react-icons/tb'
+import { TbLock as LockIcon, TbUserCheck as MembershipIcon } from 'react-icons/tb'
 import { useState, type FormEvent } from 'react'
-import { PageHeader } from '../../components/ui.jsx'
+import { Empty, ErrorCard, PageHeader, Skeletons } from '../../components/ui.jsx'
 import { PageSectionNav } from '../../components/PageSectionNav.jsx'
 import { type Overview } from '../../../shared/platform.ts'
 import { post, usePlatform, values } from './api.ts'
@@ -55,15 +55,8 @@ export function MembershipLifecycle() {
       >
         <PageSectionNav section="membership" />
       </PageHeader>
-      {loading && !data && <p role="status">Loading membership records…</p>}
-      {error && (
-        <div role="alert">
-          <p>{error}</p>
-          <button className="btn" onClick={reload}>
-            Try again
-          </button>
-        </div>
-      )}
+      {loading && !data && <Skeletons n={3} />}
+      {error && <ErrorCard message={error} onRetry={reload} />}
       <Feedback error={editorOpen ? '' : failure} message={message} />
       {data &&
         (data.canReviewMembership ? (
@@ -148,7 +141,10 @@ export function MembershipLifecycle() {
             )}
           </section>
         ) : (
-          <p role="alert">Membership Team access is required.</p>
+          <Empty
+            icon={LockIcon}
+            title="Membership Team only"
+            body="Membership Team access is required." />
         ))}
     </div>
   )

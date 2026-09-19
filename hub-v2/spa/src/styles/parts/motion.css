@@ -13,6 +13,12 @@
   }
 }
 
+@keyframes skeletonSweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @keyframes hubPopoverIn {
   from {
     opacity: 0;

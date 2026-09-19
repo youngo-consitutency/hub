@@ -307,6 +307,17 @@
     scroll-snap-type: inline proximity;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    /* Trailing-edge fade reads as "there is more" when the row overflows. */
+    mask-image: linear-gradient(
+      to right,
+      black calc(100% - 32px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black calc(100% - 32px),
+      transparent 100%
+    );
   }
 
   .filterMenuPanel .pillRow::-webkit-scrollbar {

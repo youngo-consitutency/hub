@@ -224,6 +224,11 @@ function NotFound() {
       icon={Compass}
       title="Page not found"
       body="That link doesn’t lead anywhere yet."
+      cta={
+        <A className="btn btn-secondary" href="/">
+          Back home
+        </A>
+      }
     />
   )
 }
@@ -272,20 +277,21 @@ function Locked({
     <div>
       <PageHeader icon={Lock} title={title} />
       <Empty
+        icon={Lock}
         body={body}
         cta={
           course ? (
-            <A className="btn btn-primary" href="/onboarding/course">
-              Start course
-            </A>
+            <>
+              <A className="btn btn-primary" href="/onboarding/course">
+                Start course
+              </A>
+              <Button variant="ghost" onClick={() => signOut()}>
+                Sign out
+              </Button>
+            </>
           ) : undefined
         }
       />
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <Button variant="ghost" onClick={() => signOut()}>
-          Sign out
-        </Button>
-      </div>
     </div>
   )
 }

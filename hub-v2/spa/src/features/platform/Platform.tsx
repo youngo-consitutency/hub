@@ -20,7 +20,15 @@ import {
 import { PageSectionNav } from '../../components/PageSectionNav.jsx'
 import { Feedback } from './Feedback.tsx'
 import { useState, type FormEvent } from 'react'
-import { A, PageHeader, FilterPill, FilterChip } from '../../components/ui.jsx'
+import {
+  A,
+  PageHeader,
+  FilterPill,
+  FilterChip,
+  Empty,
+  ErrorCard,
+  Skeletons,
+} from '../../components/ui.jsx'
 import {
   BODY_KINDS,
   type Overview,
@@ -182,15 +190,8 @@ function Workspace({ tab }: { tab: Tab }) {
       >
         {tab === 'bodies' && <PageSectionNav section="groups" />}
       </PageHeader>
-      {loading && !data && <p role="status">Loading workspace…</p>}
-      {error && (
-        <div role="alert" className="card">
-          <p>{error}</p>
-          <button className="btn" onClick={reload}>
-            Try again
-          </button>
-        </div>
-      )}
+      {loading && !data && <Skeletons n={4} />}
+      {error && <ErrorCard message={error} onRetry={reload} />}
       <Feedback
         error={editorOpen || assignmentOpen ? '' : failure}
         message={message}
@@ -274,11 +275,11 @@ function Workspace({ tab }: { tab: Tab }) {
               <section className="stack">
                 <h2>Recorded bodies</h2>
                 {!data.bodies.length && (
-                  <p className="card">
-                    No bodies have been recorded yet. A platform administrator
-                    can add a verified working group, team or Council and record
-                    its current assignments below.
-                  </p>
+                  <Empty
+                    icon={BodiesIcon}
+                    title="No bodies recorded yet"
+                    body="A platform administrator can add a verified working group, team or Council and record its current assignments below."
+                  />
                 )}
                 <div className="cardGrid">
                   {data.bodies.map((b) => (
@@ -667,13 +668,16 @@ function Workspace({ tab }: { tab: Tab }) {
                   ))}
                 </div>
                 {!visibleTasks.length && (
-                  <p className="card">
-                    {workFilter === 'completed'
-                      ? 'No completed tasks yet.'
-                      : workFilter === 'active'
-                        ? 'No active tasks in your assigned bodies.'
-                        : 'No tasks in your assigned bodies yet.'}
-                  </p>
+                  <Empty
+                    icon={WorkIcon}
+                    body={
+                      workFilter === 'completed'
+                        ? 'No completed tasks yet.'
+                        : workFilter === 'active'
+                          ? 'No active tasks in your assigned bodies.'
+                          : 'No tasks in your assigned bodies yet.'
+                    }
+                  />
                 )}
                 <div className="cardGrid">
                   {visibleTasks.map((t) => (
@@ -822,10 +826,11 @@ function Workspace({ tab }: { tab: Tab }) {
                   shown. Adopted decisions can be reviewed for publication.
                 </p>
                 {!data.decisions.length && (
-                  <p className="card">
-                    No proposals in your bodies yet. Use “Draft a proposal” to
-                    get started.
-                  </p>
+                  <Empty
+                    icon={DecisionIcon}
+                    title="No proposals yet"
+                    body="Nothing is in front of your bodies right now. Use “Draft a proposal” to get started."
+                  />
                 )}
                 <div className="cardGrid">
                   {data.decisions.map((d) => (
@@ -954,9 +959,11 @@ function Workspace({ tab }: { tab: Tab }) {
             </>
           )}
           {tab === 'partnerships' && !data.canManagePartnerships && (
-            <p className="card">
-              Partner enquiries are available to the partnerships team.
-            </p>
+            <Empty
+              icon={PartnershipIcon}
+              title="Partnerships team only"
+              body="Partner enquiries are available to the partnerships team."
+            />
           )}
           {tab === 'partnerships' && data.canManagePartnerships && (
             <>
@@ -968,10 +975,10 @@ function Workspace({ tab }: { tab: Tab }) {
                   a reviewed summary.
                 </p>
                 {!data.enquiries.length && (
-                  <p className="card">
-                    No enquiries yet. The public contact page accepts new
-                    enquiries.
-                  </p>
+                  <Empty
+                    icon={PartnershipIcon}
+                    body="No enquiries yet. The public contact page accepts new enquiries."
+                  />
                 )}
                 <div className="cardGrid">
                   {data.enquiries.map((e) => (

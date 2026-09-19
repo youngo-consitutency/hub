@@ -111,7 +111,9 @@ export function AccessGate({ children }) {
             padding: 24,
           }}
         >
-          <p className="meta">Loading YOUNGO Hub...</p>
+          <p className="meta" role="status">
+            Loading YOUNGO Hub…
+          </p>
         </div>
       </main>
     )
