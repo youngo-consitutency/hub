@@ -2,7 +2,13 @@ import { SidePanel } from '../../components/SidePanel.tsx'
 import { TbGavel as DecisionIcon } from 'react-icons/tb'
 import { Feedback } from './Feedback.tsx'
 import { useState, type FormEvent } from 'react'
-import { BackLink, PageHeader } from '../../components/ui.jsx'
+import {
+  BackLink,
+  Empty,
+  ErrorCard,
+  PageHeader,
+  Skeletons,
+} from '../../components/ui.jsx'
 import type { DecisionDetail, DecisionState } from '../../../shared/platform.ts'
 import { usePlatform, post, patch, values, formatDate } from './api.ts'
 import { Field, Text, Select } from './fields.tsx'
@@ -49,15 +55,8 @@ export function DecisionPage({ slug }: { slug: string }) {
   return (
     <div className="platform stack">
       <BackLink href="/council">decisions</BackLink>
-      {loading && !data && <p role="status">Loading decision…</p>}
-      {error && (
-        <div className="card" role="alert">
-          <p>{error}</p>
-          <button className="btn btn-secondary" onClick={reload}>
-            Try again
-          </button>
-        </div>
-      )}
+      {loading && !data && <Skeletons n={3} />}
+      {error && <ErrorCard message={error} onRetry={reload} />}
       <Feedback error={panel ? '' : failure} message={message} />
       {data && d && (
         <>
@@ -149,7 +148,7 @@ export function DecisionPage({ slug }: { slug: string }) {
           <section className="stack">
             <h2>Comments and formal flags</h2>
             {data.contributions.length === 0 && (
-              <p className="card">No contributions yet.</p>
+              <Empty body="No contributions yet." />
             )}
             {data.contributions.map((c) => (
               <article className="card stackSm" key={c.id}>

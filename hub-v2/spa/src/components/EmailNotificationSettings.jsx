@@ -121,7 +121,9 @@ export function EmailNotificationSettings() {
       )}
 
       {state.loading ? (
-        <p className="meta">Loading email preferences…</p>
+        <p className="meta" role="status">
+          Loading email preferences…
+        </p>
       ) : !state.deliveryConfigured ? (
         <p className="metaMuted">
           Email delivery is not configured for this Hub deployment yet.

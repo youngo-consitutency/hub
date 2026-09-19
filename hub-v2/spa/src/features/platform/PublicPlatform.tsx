@@ -1,4 +1,5 @@
 import { Feedback } from './Feedback.tsx'
+import { Skeletons } from '../../components/ui.jsx'
 import { useState, type FormEvent } from 'react'
 import { usePlatform, post, values } from './api.ts'
 import { Field, Text } from './fields.tsx'
@@ -32,7 +33,7 @@ export function PublicPlatform() {
           reviewed for public sharing.
         </p>
       </header>
-      {loading && <p role="status">Loading current information…</p>}
+      {loading && <Skeletons n={3} />}
       {error && (
         <p role="status">
           The maintained register is temporarily unavailable. You can still{' '}

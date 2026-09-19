@@ -400,6 +400,14 @@ export function Skeletons({ n = 3 }) {
   )
 }
 
+/**
+ * @param {{
+ *   icon?: import('react-icons').IconType,
+ *   title?: import('react').ReactNode,
+ *   body?: import('react').ReactNode,
+ *   cta?: import('react').ReactNode,
+ * }} props
+ */
 export function Empty({ icon: Icon, title, body, cta }) {
   return (
     <div className="empty">
