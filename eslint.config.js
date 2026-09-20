@@ -3,7 +3,9 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['dist', 'node_modules', '.local-demo'] },
+  // hub-v2 is a self-contained app with its own eslint config + versions;
+  // linting it from the root loads its nested plugins and crashes.
+  { ignores: ['dist', 'node_modules', '.local-demo', 'hub-v2'] },
   js.configs.recommended,
   ...tseslint.configs.recommended.map((config) => ({
     ...config,

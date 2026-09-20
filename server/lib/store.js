@@ -37,8 +37,6 @@ function materialize(raw, now = new Date()) {
   const iso = (ms) => new Date(ms).toISOString()
   const groups = raw.groups.map((g) => ({
     isActive: true,
-    publicSpace: false,
-    taskForces: normalizeTaskForces(g.taskForces, g.slug),
     ...g,
     taskForces: normalizeTaskForces(g.taskForces, g.slug),
     publicSpace: Boolean(g.publicSpace),

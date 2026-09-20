@@ -74,12 +74,20 @@ export function MissionCountdown({
   )
 }
 
-export function MissionMetric({ value, label, tone, href }) {
+export function MissionMetric({ value, label, tone, href, icon: Icon }) {
   const className = `mcMetric${tone ? ` mcMetric-${tone}` : ''}${
     href ? ' mcMetricLink' : ''
   }`
   const inner = (
     <>
+      {Icon ? (
+        <Icon
+          className="mcMetricIcon"
+          size={16}
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      ) : null}
       <strong className="mono">{value}</strong>
       <span>{label}</span>
     </>

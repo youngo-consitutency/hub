@@ -8,6 +8,7 @@ import {
   TbArrowLeft as ArrowLeft,
   TbCheck as Check,
   TbMinus as Minus,
+  TbX,
 } from 'react-icons/tb'
 
 /** @param {import("react").AnchorHTMLAttributes<HTMLAnchorElement> & { peek?: boolean }} props */
@@ -221,6 +222,7 @@ export function FilterMenu({
               firstFilter?.focus({ preventScroll: true })
             }}
           >
+            <TbX size={15} strokeWidth={1.75} aria-hidden />
             Clear filters
           </button>
         )}

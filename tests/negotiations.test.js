@@ -1,11 +1,23 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createApp } from '../server/app.js'
 import {
   normalizeFollowPreferences,
   pagination,
 } from '../server/lib/negotiations.js'
+
+// The synthetic fixture lives under gitignored openspec/ demo data, so it is
+// absent on clean checkouts (CI); those tests skip there and run locally.
+const SKIP_FIXTURE = existsSync(
+  new URL(
+    '../openspec/changes/add-negotiation-workspace/fixtures/s0-negotiation-sources.json',
+    import.meta.url,
+  ),
+)
+  ? false
+  : 'synthetic negotiation fixture is not bundled in this checkout'
 
 async function withApp(run) {
   const server = createApp({ env: {} }).listen(0, '127.0.0.1')
@@ -20,62 +32,78 @@ async function withApp(run) {
   }
 }
 
-test('negotiation public list and detail expose only published fixture projections', async () => {
-  await withApp(async (origin) => {
-    const listResponse = await fetch(`${origin}/api/negotiations`)
-    const list = await listResponse.json()
-    assert.equal(listResponse.status, 200)
-    assert.equal(list.total, 1)
-    assert.equal(list.items[0].slug, 'fixture-community-resilience')
-    assert.equal(Object.hasOwn(list.items[0], 'calls'), false)
-    assert.equal(Object.hasOwn(list.items[0], 'followers'), false)
-    assert.equal(Object.hasOwn(list.items[0], 'candidates'), false)
+test(
+  'negotiation public list and detail expose only published fixture projections',
+  { skip: SKIP_FIXTURE },
+  async () => {
+    await withApp(async (origin) => {
+      const listResponse = await fetch(`${origin}/api/negotiations`)
+      const list = await listResponse.json()
+      assert.equal(listResponse.status, 200)
+      assert.equal(list.total, 1)
+      assert.equal(list.items[0].slug, 'fixture-community-resilience')
+      assert.equal(Object.hasOwn(list.items[0], 'calls'), false)
+      assert.equal(Object.hasOwn(list.items[0], 'followers'), false)
+      assert.equal(Object.hasOwn(list.items[0], 'candidates'), false)
 
-    const detail = await fetch(
-      `${origin}/api/negotiations/fixture-community-resilience`,
-    ).then((response) => response.json())
-    assert.equal(detail.fixture, true)
-    assert.equal(detail.agendaItems.length, 2)
-    assert.equal(detail.documents[0].versionCount, 2)
-    assert.equal(detail.documents[0].health.coverageState, 'stale')
-    assert.equal(Object.hasOwn(detail, 'followerCount'), false)
-  })
-})
-
-test('fixed negotiation collection routes take precedence over the slug route', async () => {
-  await withApp(async (origin) => {
-    const response = await fetch(`${origin}/api/negotiations/calls`)
-    const body = await response.json()
-    assert.equal(response.status, 200)
-    assert.equal(body.items.length, 1)
-    assert.equal(body.items[0].id, 'fixture-call-date-only')
-  })
-})
-
-test('date-only call API retains precision without an invented time or timezone', async () => {
-  await withApp(async (origin) => {
-    const body = await fetch(`${origin}/api/negotiations/calls`).then(
-      (response) => response.json(),
-    )
-    assert.deepEqual(body.items[0].externalDeadline, {
-      date: '2026-10-15',
-      precision: 'date',
+      const detail = await fetch(
+        `${origin}/api/negotiations/fixture-community-resilience`,
+      ).then((response) => response.json())
+      assert.equal(detail.fixture, true)
+      assert.equal(detail.agendaItems.length, 2)
+      assert.equal(detail.documents[0].versionCount, 2)
+      assert.equal(detail.documents[0].health.coverageState, 'stale')
+      assert.equal(Object.hasOwn(detail, 'followerCount'), false)
     })
-  })
-})
+  },
+)
 
-test('immutable version endpoint exposes uncertainty and the exact hash', async () => {
-  await withApp(async (origin) => {
-    const response = await fetch(
-      `${origin}/api/negotiations/documents/fixture-document-brief/versions/fixture-version-v2`,
-    )
-    const body = await response.json()
-    assert.equal(response.status, 200)
-    assert.equal(body.version.contentHash, 'sha256:fixture-version-two')
-    assert.equal(body.extractionUncertain, true)
-    assert.equal(body.version.supersedesVersionId, 'fixture-version-v1')
-  })
-})
+test(
+  'fixed negotiation collection routes take precedence over the slug route',
+  { skip: SKIP_FIXTURE },
+  async () => {
+    await withApp(async (origin) => {
+      const response = await fetch(`${origin}/api/negotiations/calls`)
+      const body = await response.json()
+      assert.equal(response.status, 200)
+      assert.equal(body.items.length, 1)
+      assert.equal(body.items[0].id, 'fixture-call-date-only')
+    })
+  },
+)
+
+test(
+  'date-only call API retains precision without an invented time or timezone',
+  { skip: SKIP_FIXTURE },
+  async () => {
+    await withApp(async (origin) => {
+      const body = await fetch(`${origin}/api/negotiations/calls`).then(
+        (response) => response.json(),
+      )
+      assert.deepEqual(body.items[0].externalDeadline, {
+        date: '2026-10-15',
+        precision: 'date',
+      })
+    })
+  },
+)
+
+test(
+  'immutable version endpoint exposes uncertainty and the exact hash',
+  { skip: SKIP_FIXTURE },
+  async () => {
+    await withApp(async (origin) => {
+      const response = await fetch(
+        `${origin}/api/negotiations/documents/fixture-document-brief/versions/fixture-version-v2`,
+      )
+      const body = await response.json()
+      assert.equal(response.status, 200)
+      assert.equal(body.version.contentHash, 'sha256:fixture-version-two')
+      assert.equal(body.extractionUncertain, true)
+      assert.equal(body.version.supersedesVersionId, 'fixture-version-v1')
+    })
+  },
+)
 
 test('anonymous callers cannot create or delete private follows', async () => {
   await withApp(async (origin) => {
