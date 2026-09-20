@@ -207,6 +207,10 @@ main > .mcStatusBar {
   gap: 3px;
 }
 
+.mcMetricIcon {
+  color: var(--text-3);
+}
+
 .mcMetric strong {
   font-size: 26px;
   line-height: 1;

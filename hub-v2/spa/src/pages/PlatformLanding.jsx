@@ -5,6 +5,7 @@ import {
   TbBook2 as BookOpen,
   TbCalendarTime as Calendar,
   TbChecks as Checks,
+  TbChevronDown as ChevronDown,
   TbFileDescription as FileText,
   TbFingerprint as Fingerprint,
   TbGavel as Gavel,
@@ -103,9 +104,6 @@ function PlatformHeader() {
           <A href="/about">About YOUNGO</A>
         </nav>
         <div className="platformHeaderActions">
-          <A href="/about" className="platformHeaderAbout">
-            About YOUNGO
-          </A>
           <a className="platformSignIn" href="#signin">
             Sign in
           </a>
@@ -210,8 +208,9 @@ export function PlatformLanding({ onAuthenticated }) {
                   Create a Hub account
                   <ArrowRight size={17} strokeWidth={1.8} aria-hidden="true" />
                 </A>
-                <a className="platformTextLink" href="#signin">
-                  I already have an account
+                <a className="platformTextLink" href="#what-it-does">
+                  What you can look up
+                  <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" />
                 </a>
               </div>
               <p className="platformReassurance">
