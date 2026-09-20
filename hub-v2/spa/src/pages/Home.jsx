@@ -35,6 +35,9 @@ import {
   TbShield as Shield,
   TbCircleCheck as CircleCheck,
   TbProgress as Progress,
+  TbAlarm as Alarm,
+  TbCalendarStats as CalendarStats,
+  TbSpeakerphone as Megaphone,
 } from 'react-icons/tb'
 
 function LiveBanner({ event }) {
@@ -84,16 +87,19 @@ export function Home() {
                   label="Closing soon"
                   href="/submissions"
                   tone={data.closing.length > 0 ? 'warn' : undefined}
+                  icon={Alarm}
                 />
                 <MissionMetric
                   value={String(data.week.length)}
                   label="Meetings this week"
                   href="/calendar"
+                  icon={CalendarStats}
                 />
                 <MissionMetric
                   value={String(data.coys.length)}
                   label="COYs listed"
                   href="/coys"
+                  icon={Megaphone}
                 />
               </div>
             </div>
