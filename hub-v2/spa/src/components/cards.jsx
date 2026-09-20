@@ -4,6 +4,7 @@ import { fmtMoment, fmtDateRange } from '../lib/time.js'
 import { workingGroupTopic } from '../../shared/workingGroups.js'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 import { regionLabel, regionFilterPrefix } from '../lib/regions.js'
+import { DestinationIcon } from './DestinationLink.jsx'
 import {
   TbCalendar as CalendarDays,
   TbMapPin as MapPin,
@@ -18,6 +19,9 @@ import {
   TbPresentation as Presentation,
   TbSitemap as Network,
   TbTag as Tag,
+  TbMail as Mail,
+  TbPhone as Phone,
+  TbUser as User,
 } from 'react-icons/tb'
 
 const EVENT_ICONS = {
@@ -434,17 +438,24 @@ export function ContactCard({ contact }) {
       {hasDirectContact ? (
         <div className="contactDetails">
           {contact.personName && (
-            <p className="meta contactPerson">{contact.personName}</p>
+            <p className="meta contactPerson">
+              <User size={15} strokeWidth={1.75} aria-hidden />
+              {contact.personName}
+            </p>
           )}
           {contact.publicEmail && (
-            <a className="inlineLink" href={`mailto:${contact.publicEmail}`}>
+            <a
+              className="inlineLink contactChannel"
+              href={`mailto:${contact.publicEmail}`}
+            >
+              <Mail size={15} strokeWidth={1.75} aria-hidden />
               {contact.publicEmail}
             </a>
           )}
           {channel &&
             (channelHref ? (
               <a
-                className="inlineLink"
+                className="inlineLink contactChannel"
                 href={channelHref}
                 target={channelHref.startsWith('http') ? '_blank' : undefined}
                 rel={
@@ -453,6 +464,11 @@ export function ContactCard({ contact }) {
                     : undefined
                 }
               >
+                {channelHref.startsWith('tel:') ? (
+                  <Phone size={15} strokeWidth={1.75} aria-hidden />
+                ) : (
+                  <DestinationIcon url={channelHref} size={15} />
+                )}
                 {channel}
               </a>
             ) : (
