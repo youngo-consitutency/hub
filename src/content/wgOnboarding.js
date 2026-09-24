@@ -208,18 +208,16 @@ export const WG_ONBOARDING = {
   },
   'just-transition': {
     presentation: [
-      'Just Transition WG follows the UAE Just Transition Work Programme and related labour, social-protection, and equity issues so the energy and economic shift does not leave workers and communities behind.',
-      'Contact Points Imane Darkaoui and Masagus Fathan coordinate YOUNGO inputs. YOUNGO has called for a Global Just Transition Mechanism; COP30 agreed to develop such a mechanism, with operationalisation due toward COP31.',
-      'Join via the public form. Use the UNFCCC JTWP page and YOUNGO’s dialogue interventions as the starting brief before drafting.',
+      'The Just Transition WG is YOUNGO’s group on just transition and green jobs. Members work through the Policy Team, the Capacity Building Team, the Fossil Fuel Phase-out Taskforce, and cross-constituency partnerships.',
+      '2026 Contact Points are Amany Darkaoui (Imane Darkaoui on the constituency roster) and Masagus Fathan. Policy facilitators are Luna, Rajia, and Doğukan. Capacity-building facilitators are Priyanka and Abhinav.',
+      'The self-paced introduction walks through the 2026 map: the UAE Just Transition Work Programme, the Just Transition Mechanism, response measures and the KCI, and how to join a sub-team.',
     ],
     rules: [
       'Keep just-transition asks rights-based: labour rights, social dialogue, social protection, and the needs of fossil-fuel-dependent and informal workers.',
       'Distinguish the UNFCCC JTWP from regional instruments such as the EU Just Transition Mechanism.',
       'Coordinate public statements with Contact Points before using the YOUNGO name.',
-      'Follow the YOUNGO Code of Conduct and Safeguarding policies in all WG spaces.',
-      'Do not share private channel links outside YOUNGO membership without CP approval.',
-      'Credit collective work; do not speak for the whole WG unless mandated.',
-      'Flag conflicts of interest to the CP when relevant.',
+      'Join at least one sub-team or taskforce. General Meetings are where the whole group hears sub-team updates and political moments.',
+      'Check the mailing list and WhatsApp often enough to reply or react, and leave threads you cannot follow.',
     ],
   },
   'loss-and-damage': {
