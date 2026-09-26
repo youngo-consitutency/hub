@@ -767,7 +767,7 @@
   content: '';
   position: absolute;
   border-radius: 50%;
-  background: #1f8f3d;
+  background: var(--jt-blob, #1f8f3d);
 }
 
 .jtFace--cover::before {
@@ -808,7 +808,7 @@
   width: 18cqw;
   height: 3px;
   margin: 1.4cqw 0;
-  background: #b7dfb4;
+  background: var(--jt-rule, #b7dfb4);
 }
 
 .jtCoverBox {
@@ -829,8 +829,17 @@
   flex-direction: column;
   justify-content: space-between;
   background:
-    radial-gradient(120% 80% at 100% 100%, #8fd36a 0%, transparent 55%),
-    linear-gradient(160deg, #4caf3a 0%, #2f9a34 55%, #1f8a3b 100%);
+    radial-gradient(
+      120% 80% at 100% 100%,
+      var(--jt-section-a, #8fd36a) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      160deg,
+      var(--jt-section-b, #4caf3a) 0%,
+      var(--jt-section-c, #2f9a34) 55%,
+      var(--jt-section-d, #1f8a3b) 100%
+    );
 }
 
 .jtFace--section .jtMark {
