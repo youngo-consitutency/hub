@@ -8,7 +8,8 @@ const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
   // Dockerfile and other self-hosted targets consume the standalone output.
-  output: 'standalone',
+  // Vercel and `next start` need the default output, so standalone is opt-in.
+  output: process.env.STANDALONE_BUILD ? 'standalone' : undefined,
   async rewrites() {
     return [
       // Static consultation microsite lives in public/consultation/ — legacy

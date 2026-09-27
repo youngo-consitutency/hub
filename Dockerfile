@@ -1,4 +1,5 @@
-# To use this Dockerfile, you have to set `output: 'standalone'` in your next.config.mjs file.
+# This Dockerfile builds with STANDALONE_BUILD=1, which enables
+# `output: 'standalone'` in next.config.ts for the standalone server.
 # From https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
 
 FROM node:22.17.0-alpine AS base
@@ -31,9 +32,9 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  if [ -f yarn.lock ]; then STANDALONE_BUILD=1 yarn run build; \
+  elif [ -f package-lock.json ]; then STANDALONE_BUILD=1 npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && STANDALONE_BUILD=1 pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
