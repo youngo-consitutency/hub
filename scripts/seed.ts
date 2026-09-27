@@ -205,8 +205,9 @@ async function main() {
     { local: 'demo-member', name: 'Demo Member', firstName: 'Demo', lastName: 'Member', verified: true },
     { local: 'demo-pending', name: 'Demo Pending', firstName: 'Demo', lastName: 'Pending', verified: false },
     { local: 'demo-focal', name: 'Demo Focal', firstName: 'Demo', lastName: 'Focal', role: 'focal_point', verified: true, membershipTrack: 'constituency_work' },
-    { local: 'demo-wg-contact', name: 'Demo WgContact', firstName: 'Demo', lastName: 'WgContact', verified: true, wgInterests: ['finance'], wg: { slug: 'finance', role: 'contact' } },
-    { local: 'demo-wg-lead', name: 'Demo Education Contact Point', firstName: 'Demo', lastName: 'WgLead', verified: true, wgInterests: ['ace'], wg: { slug: 'ace', role: 'contact' } },
+    { local: 'demo-wg-contact', name: 'Demo WgContact', firstName: 'Demo', lastName: 'WgContact', verified: true, membershipTrack: 'constituency_work', wgInterests: ['finance'], wg: { slug: 'finance', role: 'contact' } },
+    { local: 'demo-wg-lead', name: 'Demo Education Contact Point', firstName: 'Demo', lastName: 'WgLead', verified: true, membershipTrack: 'constituency_work', wgInterests: ['ace'], wg: { slug: 'ace', role: 'contact' } },
+    { local: 'demo-cw-member', name: 'Demo CwMember', firstName: 'Demo', lastName: 'CwMember', verified: true, membershipTrack: 'constituency_work', wgInterests: ['finance'], wg: { slug: 'finance', role: 'member' } },
     { local: 'demo-membership', name: 'Demo Membership', firstName: 'Demo', lastName: 'Membership', verified: true, teamRoles: ['membership_team'] },
     { local: 'demo-gys', name: 'Demo Gys', firstName: 'Demo', lastName: 'Gys', verified: true, teamRoles: ['gys_policy_team'] },
     { local: 'demo-editor', name: 'Demo Editor', firstName: 'Demo', lastName: 'Editor', verified: true, teamRoles: ['content_editor'] },
@@ -225,7 +226,8 @@ async function main() {
       ngoSeat: { orgEmail, seatRole: 'representative' },
     },
   ]
-  for (const p of personas) await ensureAccount(payload, p)
+  const acc: Record<string, any> = {}
+  for (const p of personas) acc[p.local] = await ensureAccount(payload, p)
   // Owner seat for the demo org account itself.
   const org = (
     await payload.find({
@@ -453,6 +455,169 @@ async function main() {
     resourceCount += 1
   }
   console.log(`resources: ${resourceCount}`)
+
+  // ── Decision engine fixtures (S09) ───────────────────────────────
+  // Three fictional proposals covering the demo flows: one completed
+  // council vote (adopted after a standing red flag forced a ballot),
+  // one live consultation, and one open WG vote.
+  const H = 3_600_000
+  const focal = acc['demo-focal'].id
+  const admin = acc['demo-admin'].id
+  const wgContact = acc['demo-wg-contact'].id
+  const wgLead = acc['demo-wg-lead'].id
+  const cwMember = acc['demo-cw-member'].id
+
+  // P1 — completed council decision adopted by vote.
+  const p1 = await upsert(payload, 'decision-proposals', { title: { equals: 'Adopt the fictional 2026 Youth Mobility Statement' } }, {
+    title: 'Adopt the fictional 2026 Youth Mobility Statement',
+    context: 'Demonstration proposal: the mobility workstream drafted a position statement ahead of a fictional submissions deadline.',
+    proposalText: 'YOUNGO adopts the attached Youth Mobility Statement and transmits it to the fictional secretariat contact within one week.',
+    decisionType: 'standard',
+    body: 'council',
+    bodyRef: null,
+    status: 'adopted',
+    adoptedVia: 'vote',
+    proposedBy: focal,
+    contactPersons: [focal],
+    presentedAt: daysAgo(8),
+    consultationEndsAt: daysAgo(3),
+    revisionEndsAt: daysAgo(2),
+    decisionEndsAt: daysAgo(1),
+    votingEndsAt: daysAgo(0),
+    eligibleVoterCount: 12,
+    ballotOptions: [{ option: 'for' }, { option: 'against' }],
+    decidedAt: daysAgo(0),
+    resultSummary: 'Adopted by vote: 4 for, 1 against (80% ≥ ⅔; quorum 1 of 12 met). A red flag on inadequate stakeholder consultation was addressed but not withdrawn.',
+  })
+  await upsert(payload, 'decision-flags', { proposal: { equals: p1.id }, kind: { equals: 'red' } }, {
+    proposal: p1.id,
+    kind: 'red',
+    rationaleCategory: 'inadequate_consultation',
+    reason: 'The mobility statement was drafted without consulting the affected regional youth networks it names (fictional).',
+    alternative: 'Delay adoption by one week and run a targeted consultation round with the named networks.',
+    raisedBy: wgLead,
+    status: 'addressed',
+    responseNote: 'Contact person held an open call; two networks confirmed in writing but the flag was not withdrawn, so the proposal went to a vote.',
+    respondedBy: focal,
+    respondedAt: daysAgo(2),
+    raisedAt: daysAgo(3),
+  })
+  const p1Ballots: [number, string][] = [
+    [focal, 'for'], [wgContact, 'for'], [admin, 'for'], [wgLead, 'against'], [cwMember, 'for'],
+  ]
+  for (const [who, choice] of p1Ballots) {
+    await upsert(payload, 'decision-ballots', {
+      proposal: { equals: p1.id }, account: { equals: who },
+    }, {
+      proposal: p1.id, account: who, choice, castAt: daysAgo(0),
+    })
+  }
+  for (const [type, actor, at, detail] of [
+    ['created', focal, daysAgo(9), null],
+    ['presented', focal, daysAgo(8), null],
+    ['flag_red_raised', wgLead, daysAgo(3), { rationaleCategory: 'inadequate_consultation' }],
+    ['flag_responded', focal, daysAgo(2), null],
+    ['vote_opened', null, daysAgo(1), { eligibleVoterCount: 12, quorumNeeded: 1 }],
+    ['adopted', null, daysAgo(0), { via: 'vote', votesFor: 4, cast: 5 }],
+  ] as const) {
+    await upsert(payload, 'decision-events', {
+      proposal: { equals: p1.id }, type: { equals: type },
+    }, { proposal: p1.id, type, actor, detail, createdAt: at })
+  }
+
+  // P2 — live council consultation (windows in the future).
+  const p2 = await upsert(payload, 'decision-proposals', { title: { equals: 'Create a fictional Loss & Damage ad-hoc task force' } }, {
+    title: 'Create a fictional Loss & Damage ad-hoc task force',
+    context: 'Demonstration proposal: council is asked to create a time-bound task force to coordinate fictional L&D work ahead of the next session.',
+    proposalText: 'A task force of up to 9 members is created for three months, reporting to Council monthly, with a mandate attached as the proposal document.',
+    decisionType: 'standard',
+    body: 'council',
+    bodyRef: null,
+    status: 'consultation',
+    proposedBy: admin,
+    contactPersons: [admin],
+    presentedAt: daysAgo(1),
+    consultationEndsAt: daysAhead(4),
+    revisionEndsAt: daysAhead(5),
+    decisionEndsAt: daysAhead(6),
+  })
+  await upsert(payload, 'decision-flags', { proposal: { equals: p2.id }, kind: { equals: 'grey' } }, {
+    proposal: p2.id,
+    kind: 'grey',
+    rationaleCategory: null,
+    reason: 'How will the task force report minutes back to the wider constituency? (fictional)',
+    alternative: 'Add a monthly public note to the Hub decisions tracker.',
+    raisedBy: cwMember,
+    status: 'open',
+    raisedAt: new Date(NOW.getTime() - 20 * H).toISOString(),
+  })
+  await upsert(payload, 'decision-comments', { proposal: { equals: p2.id } }, {
+    proposal: p2.id,
+    account: wgContact,
+    body: 'Finance WG can host the task force secretariat if needed (fictional).',
+    createdAt: new Date(NOW.getTime() - 22 * H).toISOString(),
+  })
+  for (const [type, actor, at] of [
+    ['created', admin, daysAgo(1)],
+    ['presented', admin, daysAgo(1)],
+  ] as const) {
+    await upsert(payload, 'decision-events', {
+      proposal: { equals: p2.id }, type: { equals: type },
+    }, { proposal: p2.id, type, actor, detail: null, createdAt: at })
+  }
+
+  // P3 — open vote on a finance-WG snap decision with a standing red flag.
+  const p3 = await upsert(payload, 'decision-proposals', { title: { equals: 'Approve the fictional COP31 travel-grant allocation split' } }, {
+    title: 'Approve the fictional COP31 travel-grant allocation split',
+    context: 'Demonstration snap decision: an external fictional deadline requires the allocation split to be confirmed within days.',
+    proposalText: 'The finance WG allocates 60% of the fictional travel-grant pool to Global South members and 40% to Global North members.',
+    decisionType: 'snap',
+    snapJustification: 'Fictional funder deadline requires confirmation within 3 days.',
+    snapDeadline: daysAhead(2),
+    body: 'working_group',
+    bodyRef: 'finance',
+    status: 'voting',
+    proposedBy: wgContact,
+    contactPersons: [wgContact],
+    presentedAt: daysAgo(1),
+    consultationEndsAt: new Date(NOW.getTime() - 12 * H).toISOString(),
+    revisionEndsAt: new Date(NOW.getTime() - 6 * H).toISOString(),
+    decisionEndsAt: new Date(NOW.getTime() - 2 * H).toISOString(),
+    votingEndsAt: new Date(NOW.getTime() + 22 * H).toISOString(),
+    eligibleVoterCount: 8,
+    ballotOptions: [{ option: 'for' }, { option: 'against' }],
+  })
+  await upsert(payload, 'decision-flags', { proposal: { equals: p3.id }, kind: { equals: 'red' } }, {
+    proposal: p3.id,
+    kind: 'red',
+    rationaleCategory: 'mission_misalignment',
+    reason: 'A fixed 60/40 split conflicts with the need-based principle in the fictional funding guidelines.',
+    alternative: 'Allocate by assessed need per applicant instead of a fixed regional split.',
+    raisedBy: cwMember,
+    status: 'addressed',
+    responseNote: 'Need-based allocation was considered but cannot be assessed inside the external deadline; split kept as an interim measure.',
+    respondedBy: wgContact,
+    respondedAt: new Date(NOW.getTime() - 8 * H).toISOString(),
+    raisedAt: new Date(NOW.getTime() - 16 * H).toISOString(),
+  })
+  await upsert(payload, 'decision-ballots', {
+    proposal: { equals: p3.id }, account: { equals: wgContact },
+  }, {
+    proposal: p3.id, account: wgContact, choice: 'for',
+    castAt: new Date(NOW.getTime() - 1 * H).toISOString(),
+  })
+  for (const [type, actor, at, detail] of [
+    ['created', wgContact, daysAgo(1), null],
+    ['presented', wgContact, daysAgo(1), null],
+    ['flag_red_raised', cwMember, new Date(NOW.getTime() - 16 * H).toISOString(), { rationaleCategory: 'mission_misalignment' }],
+    ['flag_responded', wgContact, new Date(NOW.getTime() - 8 * H).toISOString(), null],
+    ['vote_opened', null, new Date(NOW.getTime() - 2 * H).toISOString(), { eligibleVoterCount: 8, quorumNeeded: 1 }],
+  ] as const) {
+    await upsert(payload, 'decision-events', {
+      proposal: { equals: p3.id }, type: { equals: type },
+    }, { proposal: p3.id, type, actor, detail, createdAt: at })
+  }
+  console.log('decision proposals: 3 (1 adopted, 1 consulting, 1 voting)')
 
   console.log('Seed complete.')
   process.exit(0)

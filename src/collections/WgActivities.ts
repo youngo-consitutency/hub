@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { staffWrites } from '../lib/collectionAccess'
 
 // WG contact-point activity log shown in WG workspaces (wg_activities table).
 // Fields mirror the legacy snake_case contract; responses shape them back.
@@ -10,8 +11,7 @@ export const WgActivities: CollectionConfig = {
   },
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
+    ...staffWrites,
   },
   fields: [
     { name: 'wgSlug', type: 'text', required: true, index: true },

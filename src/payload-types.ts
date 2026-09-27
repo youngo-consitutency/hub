@@ -104,6 +104,12 @@ export interface Config {
     'resource-reviews': ResourceReview;
     'research-notes': ResearchNote;
     'email-verification-tokens': EmailVerificationToken;
+    'decision-proposals': DecisionProposal;
+    'decision-flags': DecisionFlag;
+    'decision-comments': DecisionComment;
+    'decision-ballots': DecisionBallot;
+    'decision-vetoes': DecisionVetoe;
+    'decision-events': DecisionEvent;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -147,6 +153,12 @@ export interface Config {
     'resource-reviews': ResourceReviewsSelect<false> | ResourceReviewsSelect<true>;
     'research-notes': ResearchNotesSelect<false> | ResearchNotesSelect<true>;
     'email-verification-tokens': EmailVerificationTokensSelect<false> | EmailVerificationTokensSelect<true>;
+    'decision-proposals': DecisionProposalsSelect<false> | DecisionProposalsSelect<true>;
+    'decision-flags': DecisionFlagsSelect<false> | DecisionFlagsSelect<true>;
+    'decision-comments': DecisionCommentsSelect<false> | DecisionCommentsSelect<true>;
+    'decision-ballots': DecisionBallotsSelect<false> | DecisionBallotsSelect<true>;
+    'decision-vetoes': DecisionVetoesSelect<false> | DecisionVetoesSelect<true>;
+    'decision-events': DecisionEventsSelect<false> | DecisionEventsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -1189,6 +1201,144 @@ export interface EmailVerificationToken {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-proposals".
+ */
+export interface DecisionProposal {
+  id: number;
+  title: string;
+  context: string;
+  proposalText: string;
+  decisionType: 'standard' | 'snap' | 'og_standard' | 'og_snap' | 'press_release';
+  body: 'council' | 'working_group' | 'operational_team' | 'gct' | 'constituency';
+  bodyRef?: string | null;
+  snapJustification?: string | null;
+  snapDeadline?: string | null;
+  status:
+    | 'draft'
+    | 'consultation'
+    | 'revision'
+    | 'decision'
+    | 'voting'
+    | 'adopted'
+    | 'vetoed'
+    | 'withdrawn'
+    | 'failed_quorum'
+    | 'rejected';
+  proposedBy: number | Account;
+  contactPersons: (number | Account)[];
+  presentedAt?: string | null;
+  consultationEndsAt?: string | null;
+  revisionEndsAt?: string | null;
+  decisionEndsAt?: string | null;
+  votingEndsAt?: string | null;
+  eligibleVoterCount?: number | null;
+  ballotOptions?:
+    | {
+        option: string;
+        id?: string | null;
+      }[]
+    | null;
+  adoptedVia?: ('consensus' | 'consensus_with_reservations' | 'vote' | 'meeting') | null;
+  decidedAt?: string | null;
+  resultSummary?: string | null;
+  trackerUrl?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-flags".
+ */
+export interface DecisionFlag {
+  id: number;
+  proposal: number | DecisionProposal;
+  kind: 'red' | 'grey';
+  rationaleCategory?:
+    | (
+        | 'principles_violation'
+        | 'coc_violation'
+        | 'science_contradiction'
+        | 'past_decision_contradiction'
+        | 'process_noncompliance'
+        | 'mission_misalignment'
+        | 'inadequate_consultation'
+        | 'grey_flag_unsatisfactory'
+      )
+    | null;
+  reason: string;
+  alternative?: string | null;
+  raisedBy: number | Account;
+  status: 'open' | 'addressed' | 'withdrawn' | 'nullified';
+  responseNote?: string | null;
+  respondedBy?: (number | null) | Account;
+  respondedAt?: string | null;
+  raisedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-comments".
+ */
+export interface DecisionComment {
+  id: number;
+  proposal: number | DecisionProposal;
+  account: number | Account;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-ballots".
+ */
+export interface DecisionBallot {
+  id: number;
+  proposal: number | DecisionProposal;
+  account: number | Account;
+  choice: string;
+  castAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-vetoes".
+ */
+export interface DecisionVetoe {
+  id: number;
+  proposal: number | DecisionProposal;
+  requesterKind: 'org' | 'org_global_south' | 'wg_or_ot';
+  groupKey: string;
+  reasoning: string;
+  requestedBy: number | Account;
+  status: 'pending' | 'confirmed' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-events".
+ */
+export interface DecisionEvent {
+  id: number;
+  proposal: number | DecisionProposal;
+  type: string;
+  actor?: (number | null) | Account;
+  detail?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1354,6 +1504,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'email-verification-tokens';
         value: number | EmailVerificationToken;
+      } | null)
+    | ({
+        relationTo: 'decision-proposals';
+        value: number | DecisionProposal;
+      } | null)
+    | ({
+        relationTo: 'decision-flags';
+        value: number | DecisionFlag;
+      } | null)
+    | ({
+        relationTo: 'decision-comments';
+        value: number | DecisionComment;
+      } | null)
+    | ({
+        relationTo: 'decision-ballots';
+        value: number | DecisionBallot;
+      } | null)
+    | ({
+        relationTo: 'decision-vetoes';
+        value: number | DecisionVetoe;
+      } | null)
+    | ({
+        relationTo: 'decision-events';
+        value: number | DecisionEvent;
       } | null);
   globalSlug?: string | null;
   user:
@@ -2147,6 +2321,109 @@ export interface EmailVerificationTokensSelect<T extends boolean = true> {
   usedAt?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-proposals_select".
+ */
+export interface DecisionProposalsSelect<T extends boolean = true> {
+  title?: T;
+  context?: T;
+  proposalText?: T;
+  decisionType?: T;
+  body?: T;
+  bodyRef?: T;
+  snapJustification?: T;
+  snapDeadline?: T;
+  status?: T;
+  proposedBy?: T;
+  contactPersons?: T;
+  presentedAt?: T;
+  consultationEndsAt?: T;
+  revisionEndsAt?: T;
+  decisionEndsAt?: T;
+  votingEndsAt?: T;
+  eligibleVoterCount?: T;
+  ballotOptions?:
+    | T
+    | {
+        option?: T;
+        id?: T;
+      };
+  adoptedVia?: T;
+  decidedAt?: T;
+  resultSummary?: T;
+  trackerUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-flags_select".
+ */
+export interface DecisionFlagsSelect<T extends boolean = true> {
+  proposal?: T;
+  kind?: T;
+  rationaleCategory?: T;
+  reason?: T;
+  alternative?: T;
+  raisedBy?: T;
+  status?: T;
+  responseNote?: T;
+  respondedBy?: T;
+  respondedAt?: T;
+  raisedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-comments_select".
+ */
+export interface DecisionCommentsSelect<T extends boolean = true> {
+  proposal?: T;
+  account?: T;
+  body?: T;
+  createdAt?: T;
+  updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-ballots_select".
+ */
+export interface DecisionBallotsSelect<T extends boolean = true> {
+  proposal?: T;
+  account?: T;
+  choice?: T;
+  castAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-vetoes_select".
+ */
+export interface DecisionVetoesSelect<T extends boolean = true> {
+  proposal?: T;
+  requesterKind?: T;
+  groupKey?: T;
+  reasoning?: T;
+  requestedBy?: T;
+  status?: T;
+  createdAt?: T;
+  updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-events_select".
+ */
+export interface DecisionEventsSelect<T extends boolean = true> {
+  proposal?: T;
+  type?: T;
+  actor?: T;
+  detail?: T;
+  createdAt?: T;
+  updatedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

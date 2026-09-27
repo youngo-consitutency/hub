@@ -45,6 +45,14 @@ import {
   ResearchNotes,
   EmailVerificationTokens,
 } from './collections/misc'
+import {
+  DecisionProposals,
+  DecisionFlags,
+  DecisionComments,
+  DecisionBallots,
+  DecisionVetoes,
+  DecisionEvents,
+} from './collections/Decisions'
 import { domainEndpoints } from './endpoints'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
@@ -100,7 +108,12 @@ export default buildConfig({
     ResourceReviews,
     ResearchNotes,
     EmailVerificationTokens,
-
+    DecisionProposals,
+    DecisionFlags,
+    DecisionComments,
+    DecisionBallots,
+    DecisionVetoes,
+    DecisionEvents,
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
