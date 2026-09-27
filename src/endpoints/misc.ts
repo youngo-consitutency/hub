@@ -37,6 +37,8 @@ import {
   verifyUnsubscribeToken,
 } from '../lib/notifications'
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
+import { audit } from '../lib/audit'
+import { appBaseUrl } from '../lib/env'
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
 const trimmed = (v: unknown, max: number) =>
@@ -213,11 +215,11 @@ function trustedActionUrl(value: any) {
   if (!text) return null
   const url = new URL(
     text,
-    String(process.env.APP_BASE_URL || 'http://localhost:3000'),
+    appBaseUrl(),
   )
   if (
     url.origin !==
-    new URL(process.env.APP_BASE_URL || 'http://localhost:3000').origin
+    new URL(appBaseUrl()).origin
   )
     throw Object.assign(
       new Error('The action link must point to YOUNGO Hub.'),
@@ -493,17 +495,11 @@ export const miscEndpoints: Endpoint[] = [
         requireInteraction: Boolean(requireInteraction),
       })
       const result = await deliverPush(rows, payload)
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'push.broadcast',
-          targetType: 'push',
-          targetId: targetAll ? 'all' : userIds.join(','),
-          after: { title, recipients: result.total, sent: result.sent },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'push.broadcast',
+        targetType: 'push',
+        targetId: targetAll ? 'all' : userIds.join(','),
+        after: { title, recipients: result.total, sent: result.sent },
       })
       return json({ ok: true, ...result })
     }),
@@ -603,23 +599,17 @@ export const miscEndpoints: Endpoint[] = [
         })
         if (result.created) queued += 1
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'email.broadcast_queued',
-          targetType: 'email_campaign',
-          targetId: campaignId,
-          after: {
-            category: 'announcement',
-            scope: input.scope,
-            eligibleRecipients: eligible.length,
-            queuedRecipients: queued,
-          },
-          reason: input.reason,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'email.broadcast_queued',
+        targetType: 'email_campaign',
+        targetId: campaignId,
+        after: {
+          category: 'announcement',
+          scope: input.scope,
+          eligibleRecipients: eligible.length,
+          queuedRecipients: queued,
+        },
+        reason: input.reason,
       })
       // v2 has no background scheduler: drain the campaign inline so queued
       // rows actually deliver (dedup guards re-sends).
@@ -755,19 +745,13 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: accountId,
-          action: 'account.email_verified',
-          targetType: 'account',
-          targetId: String(accountId),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, { id: accountId }, {
+        action: 'account.email_verified',
+        targetType: 'account',
+        targetId: String(accountId),
       })
       return Response.redirect(
-        `${process.env.APP_BASE_URL || 'http://localhost:3000'}/profile?emailVerified=1`,
+        `${appBaseUrl()}/profile?emailVerified=1`,
         303,
       )
     },
@@ -796,7 +780,7 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      const base = process.env.APP_BASE_URL || 'http://localhost:3000'
+      const base = appBaseUrl()
       const actionUrl = `${base}/api/notifications/verify-email?token=${encodeURIComponent(token)}`
       const { delivered } = await sendEmail({
         to: account.email,
@@ -826,17 +810,12 @@ export const miscEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       // Provider events are recorded for audit; suppression handled when email
       // delivery is wired to a real provider.
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          action: 'notification.provider_event',
-          after: {
-            type: trimmed(b.type, 80),
-            received: true,
-          },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, null, {
+        action: 'notification.provider_event',
+        after: {
+          type: trimmed(b.type, 80),
+          received: true,
+        },
       })
       return json({ ok: true })
     }),
@@ -863,16 +842,9 @@ export const miscEndpoints: Endpoint[] = [
       const answer = evidence.length
         ? `Found ${evidence.length} relevant record${evidence.length === 1 ? '' : 's'} across the Hub.`
         : 'No directly matching records were found. Try a more specific title, working group, deadline, or location.'
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          actorEmail: account.email,
-          action: 'intelligence.query',
-          after: { queryLength: query.length, results: evidence.length },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.query',
+        after: { queryLength: query.length, results: evidence.length },
       })
       return json({
         query,
@@ -955,17 +927,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          actorEmail: account.email,
-          action: 'intelligence.writeback_proposed',
-          targetType: 'research_note',
-          targetId: String(item.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_proposed',
+        targetType: 'research_note',
+        targetId: String(item.id),
       })
       return json({ item: writebackView(item) }, { status: 201 })
     }),
@@ -1004,16 +969,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'intelligence.writeback_approved',
-          targetType: 'research_note',
-          targetId: id,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_approved',
+        targetType: 'research_note',
+        targetId: id,
       })
       return json({ item: writebackView(updated) })
     }),
@@ -1054,16 +1013,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'intelligence.writeback_applied',
-          targetType: 'research_note',
-          targetId: id,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_applied',
+        targetType: 'research_note',
+        targetId: id,
       })
       return json({ item: writebackView(updated) })
     }),
@@ -1146,18 +1099,12 @@ export const miscEndpoints: Endpoint[] = [
         })
         if (!result?.entry)
           throw new ApiError(500, 'award_failed', 'Award could not be recorded.')
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'ngo.points_awarded',
-            targetType: 'ngo_points',
-            targetId: String(result.entry.id),
-            after: result,
-            reason: b.note || null,
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'ngo.points_awarded',
+          targetType: 'ngo_points',
+          targetId: String(result.entry.id),
+          after: result,
+          reason: b.note || null,
         })
         return json(result, { status: 201 })
       } catch (err: any) {
@@ -1195,17 +1142,11 @@ export const miscEndpoints: Endpoint[] = [
           relatedId: String(b.requestId),
           awardedBy: account.id,
         })
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'ngo.points_awarded_from_request',
-            targetType: 'ngo_request',
-            targetId: String(b.requestId),
-            after: result,
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'ngo.points_awarded_from_request',
+          targetType: 'ngo_request',
+          targetId: String(b.requestId),
+          after: result,
         })
         return json(result, { status: 201 })
       } catch (err: any) {

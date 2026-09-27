@@ -28,6 +28,7 @@ import { createHash } from 'node:crypto'
 import { randomBytes } from 'node:crypto'
 import { contributionsFromCsv, previewCsvImport } from '../lib/gysImport.js'
 import { synthesizeGysContributions } from '../lib/gysSynthesis.js'
+import { appBaseUrl } from '../lib/env'
 
 export async function requireTeam(req: PayloadRequest, teamRole: string) {
   const account = requireVerifiedMember(req)
@@ -271,7 +272,7 @@ export const staffEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      const url = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/reset-password?token=${encodeURIComponent(rawToken)}`
+      const url = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`
       try {
         await sendEmail({
           to: target.email,

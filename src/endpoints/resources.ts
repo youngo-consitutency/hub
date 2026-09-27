@@ -5,6 +5,7 @@ import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { RESOURCE_ISSUE_KINDS } from '../../spa/shared/resourceHub.js'
+import { audit } from '../lib/audit'
 
 const canReview = async (req: PayloadRequest, account: any) => {
   const access = await getAccessProfile(req, account)
@@ -102,16 +103,10 @@ export const resourceEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'resource.submitted',
-          targetType: 'content_revision',
-          targetId: String(draft.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'resource.submitted',
+        targetType: 'content_revision',
+        targetId: String(draft.id),
       })
       return json({ item: draftView(draft) }, { status: 201 })
     }),
@@ -354,17 +349,11 @@ export const resourceEndpoints: Endpoint[] = [
           })
         }
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'resource.verified_review',
-          targetType: 'resource_review',
-          targetId: String(review.id),
-          after: { resourceSlug: slug, status: b.status },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'resource.verified_review',
+        targetType: 'resource_review',
+        targetId: String(review.id),
+        after: { resourceSlug: slug, status: b.status },
       })
       return json({ item: review })
     }),

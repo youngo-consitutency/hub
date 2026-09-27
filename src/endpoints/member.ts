@@ -28,6 +28,7 @@ import {
   deleteMemberPhoto,
   submitAppeal,
 } from '../lib/membership'
+import { audit } from '../lib/audit'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -822,16 +823,10 @@ export const memberEndpoints: Endpoint[] = [
         bytes,
         contentType: String(req.headers.get('content-type') || ''),
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'membership.appeal_submitted',
-          targetType: 'membership_appeal',
-          targetId: String(appeal.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'membership.appeal_submitted',
+        targetType: 'membership_appeal',
+        targetId: String(appeal.id),
       })
       return Response.json({ appeal }, { status: 201 })
     }),
@@ -850,21 +845,15 @@ export const memberEndpoints: Endpoint[] = [
         String(req.headers.get('content-type') || ''),
         account.id,
       )
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'member.profile_photo_updated',
-          targetType: 'member_profile',
-          targetId: String(account.id),
-          after: {
-            contentType: photo.content_type,
-            byteSize: photo.byte_size,
-            revision: photo.revision,
-          },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'member.profile_photo_updated',
+        targetType: 'member_profile',
+        targetId: String(account.id),
+        after: {
+          contentType: photo.content_type,
+          byteSize: photo.byte_size,
+          revision: photo.revision,
+        },
       })
       return json({ profile: await getOwnMemberProfile(accountView(account)) })
     }),
@@ -876,16 +865,10 @@ export const memberEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const removed = await deleteMemberPhoto(account.id)
       if (removed)
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'member.profile_photo_removed',
-            targetType: 'member_profile',
-            targetId: String(account.id),
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'member.profile_photo_removed',
+          targetType: 'member_profile',
+          targetId: String(account.id),
         })
       return json({
         ok: true,

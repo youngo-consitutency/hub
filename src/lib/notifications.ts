@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { emailConfigured, sendEmail } from './email'
+import { appBaseUrl } from './env'
 
 // Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
 // — the announcement broadcast surface (preview/send/outbox). The queue rows
@@ -9,8 +10,6 @@ import { emailConfigured, sendEmail } from './email'
 
 export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
-const appOrigin = () =>
-  String(process.env.APP_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -229,7 +228,7 @@ export function verifyUnsubscribeToken(token: string) {
 }
 
 export function unsubscribeUrl(accountId: any, category: string) {
-  return `${appOrigin()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
+  return `${appBaseUrl()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
 }
 
 // ── Transport ────────────────────────────────────────────────────

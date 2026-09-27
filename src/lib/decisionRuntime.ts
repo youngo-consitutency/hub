@@ -13,6 +13,7 @@ import {
   voteAdopted,
   VOTING_WINDOW_MS,
 } from './decisions'
+import { audit } from './audit'
 
 // Shared runtime for the S09 decision workflow. Both the member endpoints
 // (src/endpoints/decisions.ts) and the platform bridge
@@ -72,16 +73,10 @@ export async function recordEvent(
     } as any,
     overrideAccess: true,
   })
-  await req.payload.create({
-    collection: 'audit-log',
-    data: {
-      actor: actor?.id ?? null,
-      actorEmail: actor?.email ?? null,
-      action: `decision.${type}`,
-      targetType: 'decision_proposal',
-      targetId: String(proposalId),
-    } as any,
-    overrideAccess: true,
+  await audit(req, actor, {
+    action: `decision.${type}`,
+    targetType: 'decision_proposal',
+    targetId: String(proposalId),
   })
 }
 
