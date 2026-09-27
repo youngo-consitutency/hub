@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /**
- * Provision throwaway accounts for local development and manual testing.
+ * Provision throwaway accounts + demo workflow content for local
+ * development and manual testing.
  *
  *   DEMO_EMAIL_DOMAIN=example.invalid DEMO_PASSWORD=... \
  *     DATABASE_URL=... npx tsx scripts/demo-accounts.ts
@@ -9,42 +10,54 @@
  * script itself. Emails are derived as <key>@<domain> and printed once.
  * Use only against a disposable database.
  */
-import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 import { applyAccountSpec, type AccountSpec } from './lib/accountSpec'
+import { provisionDemoContent } from './lib/demoContent'
 
 // The roles exercised during local development — a permission matrix, not
-// a cast of characters.
-const MATRIX: Omit<AccountSpec, 'email' | 'password' | 'name'>[] = [
-  { role: 'admin' },
-  {},
-  { verified: false },
-  {
+// a cast of characters. Each key doubles as the email local part.
+const MATRIX: Record<string, Omit<AccountSpec, 'email' | 'password' | 'name'>> = {
+  'console-admin': { role: 'admin' },
+  member: {},
+  'member-pending': { verified: false },
+  'cw-finance-member': {
     membershipTrack: 'constituency_work',
     wg: { slug: 'finance', role: 'member' },
   },
-  {
+  'cw-finance-contact': {
     membershipTrack: 'constituency_work',
     wg: { slug: 'finance', role: 'contact' },
   },
-  {
+  'cw-ace-contact': {
     membershipTrack: 'constituency_work',
     wg: { slug: 'ace', role: 'contact' },
   },
-  {
+  facilitator: {
     membershipTrack: 'constituency_work',
     teams: ['election_facilitation'],
   },
-  { role: 'focal_point', membershipTrack: 'constituency_work' },
-  { teams: ['membership_team'] },
-  { teams: ['content_editor'] },
-  { teams: ['content_publisher'] },
-  { teams: ['gys_policy_team'] },
-]
+  'focal-point': { role: 'focal_point', membershipTrack: 'constituency_work' },
+  'membership-team': { teams: ['membership_team'] },
+  'content-editor': { teams: ['content_editor'] },
+  'content-publisher': { teams: ['content_publisher'] },
+  'gys-team': { teams: ['gys_policy_team'] },
+}
 
-const KEY_FOR: Record<string, string> = {
-  'admin': 'console-admin',
+export async function provisionAccounts(
+  payload: any,
+  domain: string,
+  password: string,
+): Promise<Map<string, any>> {
+  const accounts = new Map<string, any>()
+  for (const [key, spec] of Object.entries(MATRIX)) {
+    const email = `${key}@${domain}`
+    accounts.set(
+      key,
+      await applyAccountSpec(payload, { ...spec, email, password, name: key }),
+    )
+  }
+  return accounts
 }
 
 async function main() {
@@ -58,32 +71,15 @@ async function main() {
   }
 
   const payload = await getPayload({ config })
-  const created: string[] = []
-  for (const [i, spec] of MATRIX.entries()) {
-    const role = spec.role ?? 'member'
-    const key =
-      KEY_FOR[role] ??
-      [
-        role,
-        spec.teams?.[0],
-        spec.wg && `${spec.wg.slug}-${spec.wg.role}`,
-        spec.membershipTrack === 'constituency_work' ? 'cw' : null,
-        spec.verified === false ? 'pending' : null,
-        i,
-      ]
-        .filter(Boolean)
-        .join('-')
-    const email = `${key}@${domain}`
-    await applyAccountSpec(payload, {
-      ...spec,
-      email,
-      password,
-      name: `Test ${key} ${randomUUID().slice(0, 4)}`,
-    })
-    created.push(email)
-  }
-  console.log(`provisioned ${created.length} accounts:`)
-  for (const email of created) console.log(`  ${email}`)
+  const accounts = await provisionAccounts(payload, domain, password)
+  console.log(`provisioned ${accounts.size} accounts:`)
+  for (const key of accounts.keys()) console.log(`  ${key}@${domain}`)
+
+  const summary = await provisionDemoContent(payload, accounts)
+  console.log(
+    `demo content: ${summary.decisions.length} proposals, ` +
+      `1 election, 1 selection, 1 handover, 6 ops filings`,
+  )
   process.exit(0)
 }
 
