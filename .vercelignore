@@ -1,6 +1,9 @@
-.codex-vault/
-.local-demo/
-docs/design-qa/
-docs/mobile-audit/
+.next/
 node_modules/
+coverage/
 test-results/
+playwright-report/
+.local-demo/
+.codex-vault/
+docs/
+mcp-content/

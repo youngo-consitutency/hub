@@ -1,12 +1,12 @@
 # YOUNGO Hub agent guidance
 
-YOUNGO Hub is the current YOUNGO member and mission-control product. `YMC-v2` is superseded historical context; do not add new features there.
+YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `spa/`, the staff content console is at `/console`, and PostgreSQL holds the data. `YMC-v2` is superseded historical context; do not add new features there.
 
 ## Hub Intelligence invariants
 
 - Public adapter: `POST /api/intelligence/public/query`.
 - Authenticated adapter/UI: `POST /api/intelligence/query` and `/intelligence`.
-- Authorization is source-side and derived in `server/lib/access.js`.
+- Authorization is source-side and derived in `src/lib/access.ts`.
 - Never index or return credentials, sessions, private messages, raw account records, guardian data, minority data, or personal account email/phone fields.
 - Ordinary members receive public evidence plus only their own role/assignment context.
 - Contact-channel evidence requires `intelligence.contacts.read`.
@@ -39,13 +39,13 @@ The former OpenSpec handoff and contracts are not included in this public checko
 - Proposal writes require citations, verification caveats, immutable source/target versions, idempotency, agent and task provenance, and an audit trail. Agents may revise only their own unreviewed candidates; never overwrite human edits.
 - An authorized human independently reviews the exact candidate version before a separate application step changes canonical records. Stale targets or revised candidates invalidate approval. Only the reviewed patch may be applied; application cannot regenerate content.
 - Editorial approval, constituency endorsement, and external transmission are distinct. Agents cannot grant any of them. Research-note approval remains the existing independent-admin process.
-- Derive scope in `server/lib/access.js`; do not reuse broad content apply-now capabilities or give agents database credentials. Restricted project material requires an explicit project-scoped grant and remains outside ordinary Intelligence retrieval.
+- Derive scope in `src/lib/access.ts`; do not reuse broad content apply-now capabilities or give agents database credentials. Restricted project material requires an explicit project-scoped grant and remains outside ordinary Intelligence retrieval.
 
 ## Verification
 
-Run `npm test`, `npm run lint`, and `npm run build`. Deployment targets the Railway `youngo-hub` service explicitly and should go to staging before production.
+Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a seeded PostgreSQL database; `test:e2e` also needs pnpm 9–11. Deployment targets the Railway `youngo-hub` service explicitly and should go to staging before production.
 
-Run `npm run check` for the full root check. `hub-v2/` has separate checks; see its README. The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
+The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 
 ## Documentation and contributions
 

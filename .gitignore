@@ -1,10 +1,43 @@
+# dependencies
 node_modules/
-dist/
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# next.js
+/.next/
+/out/
+/build
+
+# misc
 .DS_Store
+*.pem
+*.log
+*.tsbuildinfo
+next-env.d.ts
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
 .env
 .env.*
-data/og/
-youngo-documents/
+.env*.local
+
+# vercel
+.vercel
+
+# Payload media uploads are runtime state, not source.
+/media
 
 # Only reviewed public catalogues belong in version control. Runtime stores
 # include accounts, tokens, member profiles, notifications, queries and audits.
@@ -21,6 +54,9 @@ data/research/
 .claude/
 .codex-vault/
 .cursor/
+.codex/
+.idea/*
+!/.idea/runConfigurations
 
 # Long guides live in the GitHub wiki. Keep contributor entry points here.
 
@@ -32,21 +68,16 @@ data/research/
 !CONTRIBUTING.md
 !CODE_OF_CONDUCT.md
 !SECURITY.md
-!hub-v2/README.md
 !mcp-content/README.md
 !.github/PULL_REQUEST_TEMPLATE.md
-docs/
+!.github/ISSUE_TEMPLATE/*.md
+!.github/ISSUE_TEMPLATE/*.yml
+docs/*
+!docs/agent-context.md
 openspec/
 scripts/docs/
 scripts/research/
 scripts/tmp/
-
-# Local review output and caches.
-coverage/
-test-results/
-playwright-report/
-*.log
-*.tsbuildinfo
 
 # managed
 
@@ -55,5 +86,7 @@ playwright-report/
 **_IGNORE_**
 
 # end managed
-
-.vercel
+dist/
+coverage/
+test-results/
+playwright-report/

@@ -8,30 +8,31 @@ A shared home for YOUNGO members to find meetings, join working groups, complete
 
 The Hub brings together membership, working groups, events, opportunities, resources, submissions, and staff tools. What you can see or change depends on your account and responsibilities.
 
-There are two applications in this repository:
-
 | Location                                | What it contains                                                                                |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Repository root                         | React website, Express server, PostgreSQL database changes, and the root Railway setup          |
-| [`hub-v2/`](hub-v2/README.md)           | A separate Next.js and Payload application, with its own setup and tests                        |
+| Repository root                         | One Next.js and Payload application: member interface in `spa/`, staff console at `/console`, PostgreSQL via Payload migrations |
 | [`mcp-content/`](mcp-content/README.md) | A small service that lets authorised assistants work with Hub content through the website’s API |
 
-The root commands below run the first application. The presence of a feature in this repository does not mean it is enabled on the live website. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status).
+The presence of a feature in this repository does not mean it is enabled on the live website. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status).
 
 ## Run it locally
 
-Use Node.js 22.13 or later in the Node 22 series, as selected by `.nvmrc`.
+Use Node.js 22.13 or later in the Node 22 series, as selected by `.nvmrc`, and a local PostgreSQL database.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
 cd hub
 npm ci
-npm run dev-all
+createdb youngo_dev
+export DATABASE_URL='postgres://localhost:5432/youngo_dev'
+export PAYLOAD_SECRET="$(openssl rand -hex 32)"
+npm run migrate
+npm run dev
 ```
 
-Open <http://localhost:5173>. The server runs on port `8787`.
+Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between local sessions so existing sessions stay valid, and never commit it. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for troubleshooting.
 
-You can explore the local site without PostgreSQL. It uses the public sample content and local JSON files. Database features need a local database; use [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for the setup.
+`npm run seed` reads files from `data/` and creates demo accounts with known passwords. Some input files are not included in a public clone — use it only with a disposable local database.
 
 ## Help improve it
 

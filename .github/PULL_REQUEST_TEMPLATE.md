@@ -8,7 +8,7 @@ List the checks you ran and any skips or failures. For a visual change, add desk
 
 ## Anything reviewers should know?
 
-Mention database changes, setup steps, remaining work, and whether the change affects the root app, `hub-v2`, or both.
+Mention database changes (Payload migrations), setup steps, and remaining work.
 
 - [ ] I reviewed the diff and removed secrets and private data.
 - [ ] I updated the relevant docs, or no doc change is needed.
