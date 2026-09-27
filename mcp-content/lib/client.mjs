@@ -1,6 +1,6 @@
 /**
  * HTTP client for the Hub content MCP. Signs in with a YOUNGO Hub account and
- * calls the same member APIs the website uses, so authorization and audit stay
+ * calls the same member APIs the website uses, so authorisation and audit stay
  * on the server. Never opens a database.
  */
 import {

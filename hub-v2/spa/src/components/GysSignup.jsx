@@ -108,7 +108,7 @@ export function GysSignup({ embedded = false }) {
             </label>
             <label className="field">
               <span>
-                Organization <span className="metaMuted">(optional)</span>
+                Organisation <span className="metaMuted">(optional)</span>
               </span>
               <input
                 className="input"

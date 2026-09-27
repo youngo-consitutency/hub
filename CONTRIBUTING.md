@@ -24,6 +24,8 @@ Root checks do not cover `hub-v2/`. Use [its setup and checks](hub-v2/README.md)
 
 ## Make the change
 
+Use British English for documentation, interface copy, and comments. Keep API names, identifiers, official titles, and quotations unchanged.
+
 Keep each pull request focused on one problem. Follow the existing components and styles, and avoid adding a dependency for a small task. Keep access checks on the server. Use made-up accounts and public sample data when testing.
 
 For a bug fix, add a test when it helps show the bug stays fixed. For a visual change, check a narrow phone screen, a desktop screen, keyboard use, and readable labels. Attach screenshots without member information.
@@ -47,11 +49,11 @@ If formatting fails, run `npm run format`, inspect the diff, and commit only cha
 
 Open a pull request against `main` with the problem, change, and test results. Link the issue when relevant; small fixes do not need one.
 
-Changes to `main` require one approving review, passing checks, and resolved review comments. New commits dismiss previous approvals.
+Changes to `main` require passing checks and resolved review comments. The separate review rule requires one approval; new commits dismiss previous approvals. `unnobatroo` has a review-only exception when merging a pull request. Checks and branch protections still apply.
 
 ## Docs and public content
 
-Keep short setup and contribution guides with the code. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
+Keep short setup and contribution guides with the code. The [organisation and permissions guide](https://github.com/youngo-consitutency/hub/wiki/Organisation-and-permissions) describes the proposed access model. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
 
 Public content changes need a reliable source link. Never commit account exports, private meeting links, identity documents, access tokens, or local agent notes.
 
