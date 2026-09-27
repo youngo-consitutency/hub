@@ -49,7 +49,7 @@ If formatting fails, run `npm run format`, inspect the diff, and commit only cha
 
 Open a pull request against `main` with the problem, change, and test results. Link the issue when relevant; small fixes do not need one.
 
-Changes to `main` require passing checks and resolved review comments. The separate review rule requires one approval; new commits dismiss previous approvals. `unnobatroo` has a review-only exception when merging a pull request. Checks and branch protections still apply.
+Changes to `main` require a pull request, passing checks, and resolved review comments. Approvals are optional. Enable auto-merge on a ready pull request to merge it when the checks pass. Updating the branch after every change to `main` is not required.
 
 ## Docs and public content
 
