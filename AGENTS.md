@@ -43,7 +43,7 @@ The former OpenSpec handoff and contracts are not included in this public checko
 
 ## Verification
 
-Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a seeded PostgreSQL database. Deployment targets the Railway `youngo-hub` service explicitly and should go to staging before production.
+Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a seeded PostgreSQL database. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying. Railway remains a separate deployment target.
 
 The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 
@@ -52,3 +52,5 @@ The historical Intelligence proposal is not included in this public checkout; pr
 Keep the README and contributor guides concise. Longer guides live in the [GitHub wiki](https://github.com/youngo-consitutency/hub/wiki). Do not add local agent notes, private records, or review output to the repository. Follow CONTRIBUTING.md and submit future changes through pull requests.
 
 Use British English for documentation, interface copy, comments, and review text. Preserve API names, identifiers, official titles, and quotations.
+
+Do not use AI-generated imagery. Use verified existing artwork or a layout without images.

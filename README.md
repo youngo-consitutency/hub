@@ -45,7 +45,7 @@ npm test
 
 ## Demo data
 
-Demo accounts and content belong in a separate database. The interface always loads records through the normal API; there are no bundled fictional listings or sign-in shortcuts. See [demo environments](https://github.com/youngo-consitutency/hub/wiki/Demo-environments) for setup, delivery controls and account handling.
+The [hosted demo](https://youngo-hub.vercel.app) uses the existing `youngo-hub` Vercel project and a separate database of fictional accounts and content. The interface always loads records through the normal API; there are no bundled fictional listings or sign-in shortcuts. See [demo environments](https://github.com/youngo-consitutency/hub/wiki/Demo-environments) for setup, delivery controls and account handling.
 
 ## Licence
 

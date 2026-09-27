@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  TbArrowRight as ArrowRight,
-  TbMenu2 as Menu,
-  TbX as X,
-} from 'react-icons/tb'
+import { TbArrowRight as ArrowRight, TbMenu2 as Menu, TbX as X } from 'react-icons/tb'
 import { A } from '../../components/ui.jsx'
 import { Brand } from '../../components/Brand.jsx'
 import { DestinationIcon } from '../../components/DestinationLink.jsx'
@@ -19,7 +15,7 @@ import { SiteFaq } from './SiteFaq.jsx'
 import { SiteContact } from './SiteContact.jsx'
 
 const NAV = [
-  { href: '/about', label: 'Home' },
+  { href: '/', label: 'Home' },
   { href: '/about/working-groups', label: 'Working groups' },
   { href: '/about/resources', label: 'Resources' },
   { href: '/about/gys', label: 'GYS' },
@@ -30,7 +26,9 @@ const NAV = [
 ]
 
 function isActive(path, href) {
-  return href === '/about' ? path === '/about' : path.startsWith(href)
+  return href === '/'
+    ? ['/', '/about', '/about/', '/landingV2', '/landingV2/'].includes(path)
+    : path.startsWith(href)
 }
 
 function SiteHeader() {
@@ -56,11 +54,7 @@ function SiteHeader() {
   return (
     <header className="siteHeader">
       <div className="siteHeaderInner">
-        <A
-          href="/about"
-          className="wordmark siteWordmark"
-          aria-label="YOUNGO home"
-        >
+        <A href="/" className="wordmark siteWordmark" aria-label="YOUNGO home">
           <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
@@ -99,11 +93,7 @@ function SiteHeader() {
         </button>
       </div>
       {open && (
-        <nav
-          id="site-mobile-navigation"
-          className="siteMobileNav"
-          aria-label="About YOUNGO"
-        >
+        <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="About YOUNGO">
           {NAV.map(({ href, label }) => (
             <A
               key={href}
@@ -133,8 +123,8 @@ function SiteFooter() {
         <div className="siteFooterBrand">
           <Brand constituencyOnly />
           <p className="meta">
-            The official children and youth constituency of the UNFCCC. By
-            youth, with youth, for youth.
+            The official children and youth constituency of the UNFCCC. By youth, with youth, for
+            youth.
           </p>
         </div>
         <nav className="siteFooterCol" aria-label="Site pages">
@@ -175,12 +165,7 @@ function SiteFooter() {
           <div className="siteFooterCol">
             <h2>Follow</h2>
             {socials.map((link) => (
-              <a
-                key={link.key}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
+              <a key={link.key} href={link.url} target="_blank" rel="noreferrer noopener">
                 <DestinationIcon url={link.url} size={15} />
                 {link.label}
                 <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
@@ -190,8 +175,8 @@ function SiteFooter() {
         )}
       </div>
       <p className="siteFooterLegal metaMuted">
-        YOUNGO · the children and youth constituency of the UNFCCC · membership
-        is free and runs on volunteers · <a href="/privacy">privacy</a>
+        YOUNGO · the children and youth constituency of the UNFCCC · membership is free and runs on
+        volunteers · <a href="/privacy">privacy</a>
       </p>
     </footer>
   )
@@ -204,7 +189,7 @@ function SiteNotFound() {
         <h1>Page not found</h1>
         <p className="meta">
           That page does not exist on the public site. Head back to the{' '}
-          <A href="/about" className="inlineLink">
+          <A href="/" className="inlineLink">
             home page
           </A>{' '}
           to keep exploring.
@@ -222,7 +207,8 @@ function SiteNotFound() {
 export function PublicSite() {
   const path = usePath()
   let Page = SiteNotFound
-  if (path === '/about' || path === '/about/') Page = SiteHome
+  if (path === '/' || path === '/about' || path === '/about/' || /^\/landingV2(?:\/|$)/.test(path))
+    Page = SiteHome
   else if (path.startsWith('/about/working-groups')) Page = SiteWorkingGroups
   else if (path.startsWith('/about/resources')) Page = SiteResources
   else if (path.startsWith('/about/gys')) Page = SiteGys
@@ -238,8 +224,8 @@ export function PublicSite() {
       </a>
       <p className="siteConsultBanner">
         <span>
-          <strong>Hub consultation 1 · 7 Sep 2026.</strong> The first session
-          locked complete YOUNGO ownership and control.
+          <strong>Hub consultation 1 · 7 Sep 2026.</strong> The first session locked complete YOUNGO
+          ownership and control.
         </span>
         <span className="siteConsultBannerActions">
           <a href="/consultation/recap">Read the recap</a>
