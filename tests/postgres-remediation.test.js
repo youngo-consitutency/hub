@@ -118,7 +118,17 @@ test(
     const [old] = await notifications.claimDueNotifications({ leaseMs: 1 })
     await new Promise((resolve) => setTimeout(resolve, 10))
     await notifications.requeueExpiredLeases()
-    const [current] = await notifications.claimDueNotifications()
+    // PostgreSQL keeps fractions of a millisecond. Reclaim at the first whole
+    // millisecond after available_at, rather than racing the JavaScript clock.
+    const { rows: available } = await pool.query(
+      `SELECT ceil(extract(epoch FROM available_at) * 1000)::bigint AS available_ms
+       FROM notification_outbox WHERE id=$1`,
+      [old.id],
+    )
+    const [current] = await notifications.claimDueNotifications({
+      now: new Date(Number(available[0].available_ms)),
+    })
+    assert.equal(current?.id, old.id)
     assert.equal(await notifications.notificationClaimIsCurrent(old), false)
     await notifications.markNotificationSent(old, 'stale')
     assert.equal(
