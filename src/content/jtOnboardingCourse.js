@@ -365,8 +365,11 @@ export const JT_ONBOARDING_COURSE = {
   ],
 }
 
+import { NDC_ONBOARDING_COURSE } from './ndcOnboardingCourse.js'
+
 export const WG_SELF_PACED = {
   'just-transition': JT_ONBOARDING_COURSE,
+  ndcs: NDC_ONBOARDING_COURSE,
 }
 
 export function getWgSelfPaced(slug) {

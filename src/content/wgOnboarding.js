@@ -274,9 +274,9 @@ export const WG_ONBOARDING = {
   },
   ndcs: {
     presentation: [
-      'The NDCs Working Group works on Nationally Determined Contributions, climate-policy engagement, Global Stocktake follow-up, capacity building, and advocacy in the UNFCCC process.',
-      '2026 Contact Points are Zipporah Njenga (Kenya) and Salsalina Larasati (Indonesia), announced on Instagram in April 2026. Join via the public form; you should already be a YOUNGO member.',
-      'The form places members in at least one subgroup: Capacity Building, Communications, Policy & Submissions, or Global Stocktake. Call links are shared with registered members, not posted as standing public Meet URLs.',
+      'The NDCs Working Group supports young people to understand and follow NDCs, build youth capacity, improve engagement in revision and implementation, and represent youth voices in UNFCCC processes.',
+      '2026 Contact Points are Zipporah Njenga (Kenya) and Salsalina Larasati (Indonesia). The self-paced introduction is the group’s 2025/2026 onboarding deck: YOUNGO’s history and mission, what an NDC is, the four support teams, and the Global Stocktake.',
+      'Join at least one support team — Global Stocktake, Communications, Policy & Submissions, or Capacity Building — via the public form. You should already be a YOUNGO member. Meeting links stay with registered members.',
     ],
     rules: [
       'Join at least one of the four subgroups named on the join form.',
