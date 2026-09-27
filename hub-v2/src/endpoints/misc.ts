@@ -137,7 +137,7 @@ function verifyUnsubscribeToken(token: string) {
 }
 
 const resultPage = (title: string, message: string) =>
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;max-width:42rem;margin:4rem auto;padding:0 1rem;color:#14251d"><h1>${title}</h1><p>${message}</p><p><a href="/profile">Return to YOUNGO Hub</a></p></body></html>`
+  `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;max-width:42rem;margin:4rem auto;padding:0 1rem;color:#14251d"><h1>${title}</h1><p>${message}</p><p><a href="/profile">Return to YOUNGO Hub</a></p></body></html>`
 
 const html = (body: string, status = 200) =>
   new Response(body, {

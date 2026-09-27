@@ -563,7 +563,7 @@ export function publicSeat(row) {
   }
 }
 
-/** Resolve organization scope and seat-level permissions. */
+/** Resolve organisation scope and seat-level permissions. */
 export async function resolveOrgContext(account, requestedOrgId = null) {
   if (!account) return null
   if (account.role === 'admin') {

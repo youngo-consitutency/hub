@@ -31,7 +31,7 @@ export const MemberProfiles: CollectionConfig = {
       options: ['private', 'members', 'public'],
     },
     { name: 'showCountry', type: 'checkbox', defaultValue: false },
-    { name: 'showOrganization', type: 'checkbox', defaultValue: false },
+    { name: 'showOrganization', type: 'checkbox', label: 'Show organisation', defaultValue: false },
     { name: 'showWorkingGroups', type: 'checkbox', defaultValue: true },
     { name: 'showRoles', type: 'checkbox', defaultValue: true },
     { name: 'roleTitle', type: 'text' },
