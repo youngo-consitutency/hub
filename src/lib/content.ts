@@ -11,7 +11,24 @@ const p = (req: Req): Payload => ('payload' in req ? req.payload : req)
 
 const DAY = 86400000
 const OPEN_SUB_STATES = ['open', 'drafting', 'internal_review']
-const COUNCIL_ACTIVE = ['proposed', 'open_for_input', 'objection_window']
+
+// The public register reads the S09 decision engine — decision-proposals is
+// the single decision store. Terminal statuses normalize to the vocabulary
+// the SPA pills and platform stage map share.
+const DECISION_STAGE: Record<string, string> = {
+  adopted: 'adopted',
+  rejected: 'not_adopted',
+  failed_quorum: 'not_adopted',
+  vetoed: 'withdrawn',
+  withdrawn: 'withdrawn',
+}
+const DECISION_OPEN = ['consultation', 'revision', 'decision', 'voting']
+const DECISION_PHASE_DEADLINE: Record<string, string> = {
+  consultation: 'consultationEndsAt',
+  revision: 'revisionEndsAt',
+  decision: 'decisionEndsAt',
+  voting: 'votingEndsAt',
+}
 
 const findAll = async (
   req: Req,
@@ -62,21 +79,20 @@ function submissionShape(s: AnyRecord): AnyRecord {
   }
 }
 
-function councilShape(d: AnyRecord): AnyRecord {
+function decisionShape(d: AnyRecord): AnyRecord {
   return {
-    slug: d.slug,
+    slug: String(d.legacyRef || d.id),
     title: d.title,
-    status: d.status,
-    summary: d.summary || null,
-    proposer: d.proposer || 'Focal points',
-    proposalUrl: d.proposalUrl || null,
-    finalUrl: d.finalUrl || null,
-    respondNote: d.respondNote || null,
-    outcomeNote: d.outcomeNote || null,
-    inputDeadline: d.inputDeadline || null,
-    objectionDeadline: d.objectionDeadline || null,
+    status: DECISION_STAGE[d.status] || d.status,
+    summary: d.context || null,
+    proposer:
+      (d.proposedBy && typeof d.proposedBy === 'object'
+        ? d.proposedBy.name || d.proposedBy.email
+        : null) || null,
+    outcomeNote: d.resultSummary || null,
+    windowDeadline: d[DECISION_PHASE_DEADLINE[d.status] || ''] || null,
     decidedAt: d.decidedAt || null,
-    statusLog: Array.isArray(d.statusLog) ? d.statusLog : [],
+    isPublic: Boolean(d.isPublic),
   }
 }
 
@@ -219,30 +235,37 @@ export async function getSubmission(req: Req, slug: string) {
   return subs.find((s) => s.slug === slug) || null
 }
 
-export async function listCouncil(req: Req, state = 'active') {
-  const all = (await findAll(req, 'council-decisions')).map(councilShape)
-  const active = all.filter((d) => COUNCIL_ACTIVE.includes(d.status))
-  const decided = all.filter((d) => !COUNCIL_ACTIVE.includes(d.status))
-  if (state === 'decided') {
-    return decided.sort(
+// Anonymous callers see only published proposals; verified members see every
+// non-draft proposal (same visibility rule as /decisions).
+export async function listDecisions(req: Req, state = 'active', verified = false) {
+  const where: AnyRecord = verified
+    ? { status: { not_equals: 'draft' } }
+    : { isPublic: { equals: true }, status: { not_equals: 'draft' } }
+  const all = (await findAll(req, 'decision-proposals', where)).map(decisionShape)
+  const active = all.filter((d) => DECISION_OPEN.includes(d.status))
+  const decided = all.filter((d) => !DECISION_OPEN.includes(d.status))
+  if (state === 'decided' || state === 'all') {
+    const sorted = decided.sort(
       (a, b) =>
         new Date(b.decidedAt || 0).getTime() - new Date(a.decidedAt || 0).getTime(),
     )
+    return state === 'all' ? [...active, ...sorted] : sorted
   }
-  const windowDeadline = (d: AnyRecord) =>
-    d.status === 'objection_window' ? d.objectionDeadline : d.inputDeadline
   return active.sort((a, b) =>
-    String(windowDeadline(a) || '9999').localeCompare(
-      String(windowDeadline(b) || '9999'),
+    String(a.windowDeadline || '9999').localeCompare(
+      String(b.windowDeadline || '9999'),
     ),
   )
 }
 
-export async function getDecision(req: Req, slug: string) {
-  const all = (await findAll(req, 'council-decisions', { slug: { equals: slug } })).map(
-    councilShape,
-  )
-  return all[0] || null
+export async function getDecision(req: Req, ref: string, verified = false) {
+  const where: AnyRecord = /^\d+$/.test(ref)
+    ? { id: { equals: Number(ref) } }
+    : { legacyRef: { equals: ref } }
+  const docs = (await findAll(req, 'decision-proposals', where)).map(decisionShape)
+  const doc = docs[0]
+  if (!doc || (!verified && !doc.isPublic)) return null
+  return doc
 }
 
 const COY_PRIORITY: Record<string, number> = {
@@ -326,12 +349,12 @@ export async function addGysSignup(
   })
 }
 
-export async function getFeed(req: Req, now = new Date()) {
+export async function getFeed(req: Req, now = new Date(), verified = false) {
   const [events, submissions, council, announcements, coys] =
     await Promise.all([
       listEvents(req),
       listSubmissionsRaw(req),
-      listCouncil(req, 'all'),
+      listDecisions(req, 'all', verified),
       listAnnouncements(req),
       listCoys(req),
     ])
@@ -411,7 +434,7 @@ export async function listResources(req: Req, { includeRetired = false } = {}) {
     .filter((item: any) => includeRetired || item.verification.status !== 'retired')
 }
 
-export async function search(req: Req, q: string) {
+export async function search(req: Req, q: string, verified = false) {
   const needle = q.trim().toLowerCase()
   if (!needle) {
     return {
@@ -429,7 +452,7 @@ export async function search(req: Req, q: string) {
     await Promise.all([
       listEvents(req),
       listSubmissionsRaw(req),
-      listCouncil(req, 'all'),
+      listDecisions(req, 'all', verified),
       listCoys(req),
       allGroups(req),
       listDirectory(req),

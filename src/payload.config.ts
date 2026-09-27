@@ -13,7 +13,6 @@ import { WorkingGroups } from './collections/WorkingGroups'
 import { Events } from './collections/Events'
 import { Announcements } from './collections/Announcements'
 import { Submissions } from './collections/Submissions'
-import { CouncilDecisions } from './collections/CouncilDecisions'
 import { Coys } from './collections/Coys'
 import { DirectoryContacts } from './collections/DirectoryContacts'
 import { Resources } from './collections/Resources'
@@ -45,6 +44,33 @@ import {
   ResearchNotes,
   EmailVerificationTokens,
 } from './collections/misc'
+import {
+  DecisionProposals,
+  DecisionFlags,
+  DecisionComments,
+  DecisionBallots,
+  DecisionVetoes,
+  DecisionEvents,
+} from './collections/Decisions'
+import {
+  Elections,
+  ElectionCandidates,
+  ElectionVoters,
+  ElectionBallots,
+  Selections,
+  SelectionCommittee,
+  SelectionApplications,
+  SelectionEvaluations,
+} from './collections/Governance'
+import { Handovers } from './collections/Handovers'
+import {
+  FundingRequests,
+  SafeguardingCases,
+  CoiDeclarations,
+  RecognitionRequests,
+  PartnershipRequests,
+  PrivacyRequests,
+} from './collections/Operations'
 import { domainEndpoints } from './endpoints'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
@@ -74,7 +100,6 @@ export default buildConfig({
     Events,
     Announcements,
     Submissions,
-    CouncilDecisions,
     Coys,
     DirectoryContacts,
     Resources,
@@ -100,10 +125,33 @@ export default buildConfig({
     ResourceReviews,
     ResearchNotes,
     EmailVerificationTokens,
-
+    DecisionProposals,
+    DecisionFlags,
+    DecisionComments,
+    DecisionBallots,
+    DecisionVetoes,
+    DecisionEvents,
+    Elections,
+    ElectionCandidates,
+    ElectionVoters,
+    ElectionBallots,
+    Selections,
+    SelectionCommittee,
+    SelectionApplications,
+    SelectionEvaluations,
+    Handovers,
+    FundingRequests,
+    SafeguardingCases,
+    CoiDeclarations,
+    RecognitionRequests,
+    PartnershipRequests,
+    PrivacyRequests,
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
+  // Canonical origin for generated links (emails, admin). Cross-site cookie
+  // requests are already blocked by SameSite=Lax on the session cookie.
+  serverURL: process.env.APP_BASE_URL || undefined,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

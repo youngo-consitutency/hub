@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
 
 // Shared opportunity board + NGO-posted opportunities.
 export const Opportunities: CollectionConfig = {
@@ -10,6 +11,7 @@ export const Opportunities: CollectionConfig = {
   },
   access: {
     read: ({ req }) => Boolean(req.user) || { status: { equals: 'published' } },
+    ...staffWrites,
   },
   fields: [
     { name: 'slug', type: 'text', unique: true, index: true },
@@ -51,7 +53,7 @@ export const Opportunities: CollectionConfig = {
       options: ['draft', 'pending_review', 'published', 'withdrawn', 'rejected'],
       index: true,
     },
-    { name: 'reviewNote', type: 'textarea' },
+    { name: 'reviewNote', type: 'textarea', access: { read: isStaffOrMemberField } },
     { name: 'reviewedAt', type: 'date' },
     { name: 'source', type: 'text', admin: { readOnly: true } },
   ],

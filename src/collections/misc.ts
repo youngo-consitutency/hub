@@ -1,4 +1,5 @@
 import type { CollectionConfig, Where } from 'payload'
+import { isStaff, staffWrites } from '../lib/collectionAccess'
 
 export const NgoSeats: CollectionConfig = {
   slug: 'ngo-seats',
@@ -15,8 +16,8 @@ export const NgoSeats: CollectionConfig = {
       }
       return where
     },
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
+    // Seat grants flow through the organisation endpoints.
+    ...staffWrites,
   },
   fields: [
     { name: 'orgAccount', type: 'relationship', relationTo: 'accounts', required: true, index: true },
@@ -41,8 +42,8 @@ export const NgoRequests: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { orgAccount: { equals: req.user.id } }
     },
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
+    // Requests are filed and reviewed through the organisation endpoints.
+    ...staffWrites,
   },
   fields: [
     { name: 'orgAccount', type: 'relationship', relationTo: 'accounts', required: true, index: true },
@@ -75,8 +76,12 @@ export const MembershipAppeals: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    create: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      return req.user?.collection === 'accounts' && data?.account === req.user.id
+    },
     update: ({ req }) => req.user?.collection === 'users',
+    delete: ({ req }) => req.user?.collection === 'users',
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
@@ -108,12 +113,16 @@ export const NotificationPrefs: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    create: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      return req.user?.collection === 'accounts' && data?.account === req.user.id
+    },
     update: ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
+    delete: ({ req }) => req.user?.collection === 'users',
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, unique: true, index: true },
@@ -137,7 +146,7 @@ export const AuditLog: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return (req.user as any).role === 'admin'
     },
-    create: ({ req }) => Boolean(req.user),
+    create: () => false,
     update: () => false,
     delete: () => false,
   },
@@ -159,8 +168,12 @@ export const ResourceIssues: CollectionConfig = {
   admin: { group: 'Content', defaultColumns: ['resourceSlug', 'kind', 'createdAt'] },
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      return req.user?.collection === 'accounts' && data?.reportedBy === req.user.id
+    },
+    update: isStaff,
+    delete: isStaff,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
@@ -178,7 +191,12 @@ export const ResourceReviews: CollectionConfig = {
   admin: { group: 'Content' },
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      return req.user?.collection === 'accounts' && data?.reviewedBy === req.user.id
+    },
+    update: isStaff,
+    delete: isStaff,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
@@ -195,8 +213,7 @@ export const ResearchNotes: CollectionConfig = {
   admin: { group: 'Intelligence' },
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => req.user?.collection === 'users' || (req.user as any)?.role === 'admin',
+    ...staffWrites,
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
@@ -239,9 +256,20 @@ export const PushSubscriptions: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
-    delete: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      return req.user?.collection === 'accounts' && data?.account === req.user.id
+    },
+    update: ({ req }) => {
+      if (!req.user) return false
+      if (req.user.collection === 'users') return true
+      return { account: { equals: req.user.id } }
+    },
+    delete: ({ req }) => {
+      if (!req.user) return false
+      if (req.user.collection === 'users') return true
+      return { account: { equals: req.user.id } }
+    },
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
@@ -256,7 +284,11 @@ export const NotificationOutbox: CollectionConfig = {
   slug: 'notification-outbox',
   admin: { hidden: true },
   access: {
-    read: ({ req }) => Boolean(req.user),
+    read: ({ req }) => {
+      if (!req.user) return false
+      if (req.user.collection === 'users') return true
+      return { account: { equals: req.user.id } }
+    },
     create: () => false,
     update: () => false,
     delete: () => false,

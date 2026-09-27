@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaff, isStaffField } from '../lib/collectionAccess'
 
 // Member accounts — replaces hub_accounts + hub_sessions + password/verify
 // token tables. Payload auth provides login/logout/me/forgot/reset and
@@ -31,6 +32,11 @@ export const Accounts: CollectionConfig = {
     },
     admin: () => false, // members never enter the console
     unlock: ({ req }) => req.user?.collection === 'users',
+    // Member writes go through domain endpoints (registration, profile,
+    // lifecycle review) which authorise the actor and use overrideAccess.
+    create: isStaff,
+    update: isStaff,
+    delete: isStaff,
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -59,6 +65,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'postingTrust',
+      access: { update: isStaffField },
       type: 'select',
       options: [
         { label: 'Trusted — postings go live immediately', value: 'trusted' },
@@ -72,6 +79,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'postingTrustNote',
+      access: { update: isStaffField },
       type: 'textarea',
       admin: {
         description: 'Staff note recorded with the posting-trust override.',
@@ -80,6 +88,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'membershipTrack',
+      access: { update: isStaffField },
       type: 'select',
       required: true,
       options: [
@@ -104,7 +113,7 @@ export const Accounts: CollectionConfig = {
     { name: 'under18', type: 'checkbox', defaultValue: false },
     { name: 'guardianName', type: 'text' },
     { name: 'guardianEmail', type: 'text' },
-    { name: 'guardianConsent', type: 'checkbox', defaultValue: false },
+    { name: 'guardianConsent', access: { update: isStaffField }, type: 'checkbox', defaultValue: false },
     { name: 'memberOfAccreditedNgo', type: 'checkbox', defaultValue: false },
     { name: 'coiDeclared', type: 'checkbox', defaultValue: false },
     { name: 'coiDetails', type: 'textarea' },
@@ -113,26 +122,29 @@ export const Accounts: CollectionConfig = {
     { name: 'acceptDataProtection', type: 'checkbox', defaultValue: false },
     { name: 'acceptPrinciples', type: 'checkbox', defaultValue: false },
     { name: 'acceptCoiPolicy', type: 'checkbox', defaultValue: false },
-    { name: 'policiesAccepted', type: 'checkbox', defaultValue: false },
-    { name: 'membershipPolicyVersion', type: 'text' },
-    { name: 'privacyConsent', type: 'checkbox', defaultValue: false },
-    { name: 'privacyConsentAt', type: 'date' },
-    { name: 'privacyNoticeVersion', type: 'text' },
-    { name: 'privacyConsentWithdrawnAt', type: 'date' },
+    { name: 'policiesAccepted', access: { update: isStaffField }, type: 'checkbox', defaultValue: false },
+    { name: 'membershipPolicyVersion', access: { update: isStaffField }, type: 'text' },
+    { name: 'privacyConsent', access: { update: isStaffField }, type: 'checkbox', defaultValue: false },
+    { name: 'privacyConsentAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'privacyNoticeVersion', access: { update: isStaffField }, type: 'text' },
+    { name: 'privacyConsentWithdrawnAt', access: { update: isStaffField }, type: 'date' },
     {
       name: 'memberStatus',
+      access: { update: isStaffField },
       type: 'select',
       defaultValue: 'pending_course',
       options: ['pending_course', 'verified', 'suspended'],
     },
     {
       name: 'hubAccessStatus',
+      access: { update: isStaffField },
       type: 'select',
       defaultValue: 'pending_course',
       options: ['pending_course', 'active', 'suspended'],
     },
     {
       name: 'membershipStatus',
+      access: { update: isStaffField },
       type: 'select',
       defaultValue: 'registered',
       options: [
@@ -149,6 +161,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'constituencyWorkStatus',
+      access: { update: isStaffField },
       type: 'select',
       options: [
         { label: '—', value: '' },
@@ -156,12 +169,13 @@ export const Accounts: CollectionConfig = {
         { label: 'Active', value: 'active' },
       ],
     },
-    { name: 'onboardingCohort', type: 'text' },
-    { name: 'renewalDueAt', type: 'date' },
-    { name: 'membershipEndedAt', type: 'date' },
-    { name: 'membershipEndReason', type: 'text' },
+    { name: 'onboardingCohort', access: { update: isStaffField }, type: 'text' },
+    { name: 'renewalDueAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'membershipEndedAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'membershipEndReason', access: { update: isStaffField }, type: 'text' },
     {
       name: 'role',
+      access: { update: isStaffField },
       type: 'select',
       required: true,
       defaultValue: 'member',
@@ -174,27 +188,28 @@ export const Accounts: CollectionConfig = {
       ],
       admin: { position: 'sidebar' },
     },
-    { name: 'teamRoles', type: 'json' },
+    { name: 'teamRoles', access: { update: isStaffField }, type: 'json' },
     { name: 'wgInterests', type: 'json' },
-    { name: 'appointmentEvidence', type: 'json' },
-    { name: 'coursePassedAt', type: 'date' },
-    { name: 'courseScore', type: 'number' },
-    { name: 'verifiedAt', type: 'date' },
+    { name: 'appointmentEvidence', access: { update: isStaffField }, type: 'json' },
+    { name: 'coursePassedAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'courseScore', access: { update: isStaffField }, type: 'number' },
+    { name: 'verifiedAt', access: { update: isStaffField }, type: 'date' },
     // Legacy stores the reviewer email, not a FK.
-    { name: 'verifiedBy', type: 'text' },
-    { name: 'emailVerifiedAt', type: 'date' },
+    { name: 'verifiedBy', access: { update: isStaffField }, type: 'text' },
+    { name: 'emailVerifiedAt', access: { update: isStaffField }, type: 'date' },
     {
       name: 'principalType',
+      access: { update: isStaffField },
       type: 'select',
       defaultValue: 'human',
       options: ['human', 'service'],
     },
-    { name: 'mustChangePassword', type: 'checkbox', defaultValue: false },
+    { name: 'mustChangePassword', access: { update: isStaffField }, type: 'checkbox', defaultValue: false },
     // Legacy credential support: on first login the legacy scrypt hash is
     // verified, the Payload password is set, and these are cleared.
-    { name: 'legacyPasswordHash', type: 'text', admin: { readOnly: true } },
-    { name: 'legacyPasswordSalt', type: 'text', admin: { readOnly: true } },
-    { name: 'lastLoginAt', type: 'date', admin: { readOnly: true } },
-    { name: 'legacyId', type: 'text', index: true, admin: { readOnly: true } },
+    { name: 'legacyPasswordHash', access: { update: isStaffField }, type: 'text', admin: { readOnly: true } },
+    { name: 'legacyPasswordSalt', access: { update: isStaffField }, type: 'text', admin: { readOnly: true } },
+    { name: 'lastLoginAt', access: { update: isStaffField }, type: 'date', admin: { readOnly: true } },
+    { name: 'legacyId', access: { update: isStaffField }, type: 'text', index: true, admin: { readOnly: true } },
   ],
 }

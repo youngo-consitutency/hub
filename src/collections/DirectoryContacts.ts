@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaffOrMember, isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
 
 // Public contact directory. personName/channelValue are members-only fields —
 // the /api/directory view strips them for anonymous callers.
@@ -10,7 +11,8 @@ export const DirectoryContacts: CollectionConfig = {
     defaultColumns: ['group', 'roleTitle', 'publicEmail'],
   },
   access: {
-    read: () => true,
+    read: isStaffOrMember,
+    ...staffWrites,
   },
   fields: [
     { name: 'group', type: 'text', required: true, index: true },

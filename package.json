@@ -14,6 +14,7 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed.ts",
+    "seed:demo": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/demo-accounts.ts",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "check": "npm run lint && npm run build",
     "test": "npm run test:int && npm run test:e2e",

@@ -1,6 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import {
   getPublicTrack,
   getPublicDocumentVersion,
@@ -42,13 +42,11 @@ function ingestionError(error: unknown) {
   )
 }
 
+// Negotiation endpoints exclude service principals — agent actions go
+// through the scoped proposal APIs instead.
 function requireVerifiedHuman(req: PayloadRequest) {
   const account = requireAccount(req)
-  const isVerified =
-    account.hubAccessStatus === 'active' &&
-    (account.memberStatus === 'verified' ||
-      ['admin', 'focal_point'].includes(account.role))
-  if (!isVerified || account.principalType === 'service')
+  if (!isVerifiedAccount(account) || account.principalType === 'service')
     throw fail.forbidden('Verified member access required.')
   return account
 }

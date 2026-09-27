@@ -1,6 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
+import { accountView, requireVerifiedMember } from '../lib/accounts'
+import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
@@ -27,25 +28,10 @@ import { createHash } from 'node:crypto'
 import { randomBytes } from 'node:crypto'
 import { contributionsFromCsv, previewCsvImport } from '../lib/gysImport.js'
 import { synthesizeGysContributions } from '../lib/gysSynthesis.js'
+import { appBaseUrl } from '../lib/env'
 
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
-
-async function requireTeam(req: PayloadRequest, teamRole: string) {
-  const account = verifiedAccount(req)
+export async function requireTeam(req: PayloadRequest, teamRole: string) {
+  const account = requireVerifiedMember(req)
   const access = await getAccessProfile(req, account)
   if (account.role !== 'admin' && !access.teamRoles.includes(teamRole))
     throw fail.forbidden('This team workspace is not assigned to your account.')
@@ -53,24 +39,10 @@ async function requireTeam(req: PayloadRequest, teamRole: string) {
 }
 
 async function requireAdmin(req: PayloadRequest) {
-  const account = verifiedAccount(req)
+  const account = requireVerifiedMember(req)
   if (account.role !== 'admin')
     throw fail.forbidden('This console is for administrators.')
   return account
-}
-
-async function audit(req: PayloadRequest, actor: any, entry: Record<string, any>) {
-  await req.payload.create({
-    collection: 'audit-log',
-    data: {
-      actor: actor?.id,
-      actorEmail: actor?.email,
-      requestId: (req.headers.get('x-request-id') as string) || null,
-      ...entry,
-    } as any,
-    overrideAccess: true,
-    req,
-  })
 }
 
 function adminReason(body: any): string {
@@ -95,24 +67,6 @@ const ROLE_OPTIONS = [
   'wg_contact',
   'ngo_admin',
 ]
-const TEAM_ROLE_OPTIONS = [
-  'membership_team',
-  'gys_policy_team',
-  'cp_team',
-  'partnerships_team',
-  'comms_team',
-]
-const MEMBERSHIP_STATUS_OPTIONS = [
-  'registered',
-  'course_passed',
-  'awaiting_onboarding',
-  'active',
-  'renewal_due',
-  'expired',
-  'terminated',
-  'rejected',
-]
-
 export const staffEndpoints: Endpoint[] = [
   // ── Admin: accounts ───────────────────────────────────────────────
   {
@@ -318,7 +272,7 @@ export const staffEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      const url = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/reset-password?token=${encodeURIComponent(rawToken)}`
+      const url = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`
       try {
         await sendEmail({
           to: target.email,
@@ -501,7 +455,7 @@ export const staffEndpoints: Endpoint[] = [
         formUrl:
           gys?.current?.inputsUrl || 'https://forms.gle/7Hw2ZQoxPvWzaotL9',
         submissions: await store.listSubmissions(req, 'open'),
-        decisions: await store.listCouncil(req, 'active'),
+        decisions: await store.listDecisions(req, 'active', true),
       })
     }),
   },
@@ -708,7 +662,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp/:wg/members',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg))
@@ -744,7 +698,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp/:wg/members/:accountId/role',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
@@ -780,7 +734,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp/:wg/activities',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
@@ -798,7 +752,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp/:wg/activities',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
@@ -847,7 +801,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp/:wg/public-space',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
@@ -882,7 +836,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp-calls/slots',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'cp-call-slots',
         where: { startsAt: { greater_than: new Date(Date.now() - 24 * 3600 * 1000).toISOString() } },
@@ -911,7 +865,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp-calls/slots/:id/book',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const id = String(req.routeParams?.id)
       const slot = (await req.payload.findByID({
         collection: 'cp-call-slots',
@@ -938,7 +892,7 @@ export const staffEndpoints: Endpoint[] = [
     path: '/member/cp-calls/mine/cancel',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const id = String(b.slotId || '')
       const slot = (await req.payload.findByID({

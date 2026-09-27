@@ -31,7 +31,7 @@ Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and 
 npm run check
 ```
 
-This runs lint and the production build, including type checks. Integration and browser tests need a running server and a separate seeded database. `npm run seed` creates demo accounts with known passwords; use it only with a disposable local database. Some seed inputs are not included in a public clone.
+This runs lint and the production build, including type checks. Integration and browser tests need a running server and a seeded database; the test suites provision their own accounts. For throwaway local logins and demo workflow content (proposals, elections, filings), `npm run seed:demo` requires `DEMO_EMAIL_DOMAIN` and `DEMO_PASSWORD` in the environment — use it only with a disposable database. Some seed inputs are not included in a public clone.
 
 The Payload schema is separate from the former Express schema. Do not point its migrations at an existing member database without a verified migration and rollback plan. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status) for remaining deployment requirements.
 

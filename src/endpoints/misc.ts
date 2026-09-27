@@ -1,6 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
+import { requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import { getPgPool } from '../lib/pg'
 import * as store from '../lib/content'
@@ -34,24 +34,11 @@ import {
   renderEmailTemplate,
   sendTemplatedEmail,
   unsubscribeUrl,
+  verifyUnsubscribeToken,
 } from '../lib/notifications'
-import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
+import { audit } from '../lib/audit'
+import { appBaseUrl } from '../lib/env'
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
 const trimmed = (v: unknown, max: number) =>
@@ -96,45 +83,6 @@ const intelligenceLimit = rateLimit({
   max: 30,
   scope: 'intelligence',
 })
-
-const EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
-
-function unsubscribeSecret() {
-  return (
-    String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() ||
-    process.env.PAYLOAD_SECRET ||
-    'youngo-development-unsubscribe-secret'
-  )
-}
-
-function unsubSignature(payload: string) {
-  return createHmac('sha256', unsubscribeSecret())
-    .update(payload)
-    .digest('base64url')
-}
-
-function verifyUnsubscribeToken(token: string) {
-  const [payload, supplied] = String(token || '').split('.')
-  if (!payload || !supplied) return null
-  const expected = unsubSignature(payload)
-  const left = Buffer.from(supplied)
-  const right = Buffer.from(expected)
-  if (left.length !== right.length || !timingSafeEqual(left, right)) return null
-  try {
-    const parsed = JSON.parse(
-      Buffer.from(payload, 'base64url').toString('utf8'),
-    )
-    if (
-      parsed.v !== 1 ||
-      !parsed.accountId ||
-      !EMAIL_CATEGORIES.includes(parsed.category)
-    )
-      return null
-    return { accountId: String(parsed.accountId), category: parsed.category }
-  } catch {
-    return null
-  }
-}
 
 const resultPage = (title: string, message: string) =>
   `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;max-width:42rem;margin:4rem auto;padding:0 1rem;color:#14251d"><h1>${title}</h1><p>${message}</p><p><a href="/profile">Return to YOUNGO Hub</a></p></body></html>`
@@ -195,7 +143,7 @@ async function evidenceForQuery(
       store.listAnnouncements(req),
       store.listGroups(req),
       store.listSubmissions(req, 'all'),
-      store.listCouncil(req, 'all'),
+      store.listDecisions(req, 'all', true),
     ])
   for (const e of events)
     push('event', e.title, e.description || '', `/events/${e.slug}`)
@@ -267,11 +215,11 @@ function trustedActionUrl(value: any) {
   if (!text) return null
   const url = new URL(
     text,
-    String(process.env.APP_BASE_URL || 'http://localhost:3000'),
+    appBaseUrl(),
   )
   if (
     url.origin !==
-    new URL(process.env.APP_BASE_URL || 'http://localhost:3000').origin
+    new URL(appBaseUrl()).origin
   )
     throw Object.assign(
       new Error('The action link must point to YOUNGO Hub.'),
@@ -547,17 +495,11 @@ export const miscEndpoints: Endpoint[] = [
         requireInteraction: Boolean(requireInteraction),
       })
       const result = await deliverPush(rows, payload)
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'push.broadcast',
-          targetType: 'push',
-          targetId: targetAll ? 'all' : userIds.join(','),
-          after: { title, recipients: result.total, sent: result.sent },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'push.broadcast',
+        targetType: 'push',
+        targetId: targetAll ? 'all' : userIds.join(','),
+        after: { title, recipients: result.total, sent: result.sent },
       })
       return json({ ok: true, ...result })
     }),
@@ -657,23 +599,17 @@ export const miscEndpoints: Endpoint[] = [
         })
         if (result.created) queued += 1
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'email.broadcast_queued',
-          targetType: 'email_campaign',
-          targetId: campaignId,
-          after: {
-            category: 'announcement',
-            scope: input.scope,
-            eligibleRecipients: eligible.length,
-            queuedRecipients: queued,
-          },
-          reason: input.reason,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'email.broadcast_queued',
+        targetType: 'email_campaign',
+        targetId: campaignId,
+        after: {
+          category: 'announcement',
+          scope: input.scope,
+          eligibleRecipients: eligible.length,
+          queuedRecipients: queued,
+        },
+        reason: input.reason,
       })
       // v2 has no background scheduler: drain the campaign inline so queued
       // rows actually deliver (dedup guards re-sends).
@@ -809,19 +745,13 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: accountId,
-          action: 'account.email_verified',
-          targetType: 'account',
-          targetId: String(accountId),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, { id: accountId }, {
+        action: 'account.email_verified',
+        targetType: 'account',
+        targetId: String(accountId),
       })
       return Response.redirect(
-        `${process.env.APP_BASE_URL || 'http://localhost:3000'}/profile?emailVerified=1`,
+        `${appBaseUrl()}/profile?emailVerified=1`,
         303,
       )
     },
@@ -850,7 +780,7 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      const base = process.env.APP_BASE_URL || 'http://localhost:3000'
+      const base = appBaseUrl()
       const actionUrl = `${base}/api/notifications/verify-email?token=${encodeURIComponent(token)}`
       const { delivered } = await sendEmail({
         to: account.email,
@@ -880,17 +810,12 @@ export const miscEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       // Provider events are recorded for audit; suppression handled when email
       // delivery is wired to a real provider.
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          action: 'notification.provider_event',
-          after: {
-            type: trimmed(b.type, 80),
-            received: true,
-          },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, null, {
+        action: 'notification.provider_event',
+        after: {
+          type: trimmed(b.type, 80),
+          received: true,
+        },
       })
       return json({ ok: true })
     }),
@@ -902,7 +827,7 @@ export const miscEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       intelligenceLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       const b = ((await req.json?.()) || {}) as any
       const query = String(b.query || '').trim()
@@ -917,16 +842,9 @@ export const miscEndpoints: Endpoint[] = [
       const answer = evidence.length
         ? `Found ${evidence.length} relevant record${evidence.length === 1 ? '' : 's'} across the Hub.`
         : 'No directly matching records were found. Try a more specific title, working group, deadline, or location.'
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          actorEmail: account.email,
-          action: 'intelligence.query',
-          after: { queryLength: query.length, results: evidence.length },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.query',
+        after: { queryLength: query.length, results: evidence.length },
       })
       return json({
         query,
@@ -950,7 +868,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const isAdmin = account.role === 'admin'
       const where: any = isAdmin ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
@@ -969,7 +887,7 @@ export const miscEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       intelligenceLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       if (b.action !== 'save_research_note')
         throw fail.validation({ action: 'Unsupported writeback action.' })
@@ -1009,17 +927,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          actorEmail: account.email,
-          action: 'intelligence.writeback_proposed',
-          targetType: 'research_note',
-          targetId: String(item.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_proposed',
+        targetType: 'research_note',
+        targetId: String(item.id),
       })
       return json({ item: writebackView(item) }, { status: 201 })
     }),
@@ -1028,7 +939,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/approve',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (account.role !== 'admin')
         throw fail.forbidden('Research notes are approved by administrators.')
       const id = String(req.routeParams?.id)
@@ -1058,16 +969,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'intelligence.writeback_approved',
-          targetType: 'research_note',
-          targetId: id,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_approved',
+        targetType: 'research_note',
+        targetId: id,
       })
       return json({ item: writebackView(updated) })
     }),
@@ -1076,7 +981,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/apply',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (account.role !== 'admin')
         throw fail.forbidden('Research notes are applied by administrators.')
       const id = String(req.routeParams?.id)
@@ -1108,16 +1013,10 @@ export const miscEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'intelligence.writeback_applied',
-          targetType: 'research_note',
-          targetId: id,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'intelligence.writeback_applied',
+        targetType: 'research_note',
+        targetId: id,
       })
       return json({ item: writebackView(updated) })
     }),
@@ -1126,7 +1025,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/metrics',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const isAdmin = account.role === 'admin'
       const where: any = isAdmin ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
@@ -1155,7 +1054,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1181,7 +1080,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/award',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1200,18 +1099,12 @@ export const miscEndpoints: Endpoint[] = [
         })
         if (!result?.entry)
           throw new ApiError(500, 'award_failed', 'Award could not be recorded.')
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'ngo.points_awarded',
-            targetType: 'ngo_points',
-            targetId: String(result.entry.id),
-            after: result,
-            reason: b.note || null,
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'ngo.points_awarded',
+          targetType: 'ngo_points',
+          targetId: String(result.entry.id),
+          after: result,
+          reason: b.note || null,
         })
         return json(result, { status: 201 })
       } catch (err: any) {
@@ -1227,7 +1120,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/award-suggestion',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1249,17 +1142,11 @@ export const miscEndpoints: Endpoint[] = [
           relatedId: String(b.requestId),
           awardedBy: account.id,
         })
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'ngo.points_awarded_from_request',
-            targetType: 'ngo_request',
-            targetId: String(b.requestId),
-            after: result,
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'ngo.points_awarded_from_request',
+          targetType: 'ngo_request',
+          targetId: String(b.requestId),
+          after: result,
         })
         return json(result, { status: 201 })
       } catch (err: any) {
@@ -1275,7 +1162,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/reasons',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',

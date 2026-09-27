@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaff, isStaffField, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
 export const WorkingGroups: CollectionConfig = {
   slug: 'working-groups',
@@ -8,7 +9,8 @@ export const WorkingGroups: CollectionConfig = {
     defaultColumns: ['name', 'slug', 'publicSpace', 'isActive'],
   },
   access: {
-    read: () => true,
+    read: isStaffOrMember,
+    ...staffWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
@@ -24,8 +26,11 @@ export const WorkingGroups: CollectionConfig = {
       fields: [{ name: 'tag', type: 'text' }],
     },
     {
+      // Gated per-member by workspace progress in the group endpoints — the
+      // generated API must not bypass that gate, so REST reads are staff-only.
       name: 'resources',
       type: 'array',
+      access: { read: isStaffField },
       fields: [
         { name: 'label', type: 'text', required: true },
         { name: 'description', type: 'textarea' },
@@ -33,10 +38,10 @@ export const WorkingGroups: CollectionConfig = {
         { name: 'visibility', type: 'text' },
       ],
     },
-    { name: 'taskForces', type: 'json' },
-    { name: 'whatsappUrl', type: 'text' },
-    { name: 'groupUrl', type: 'text' },
-    { name: 'driveUrl', type: 'text' },
+    { name: 'taskForces', type: 'json', access: { read: isStaffField } },
+    { name: 'whatsappUrl', type: 'text', access: { read: isStaffField } },
+    { name: 'groupUrl', type: 'text', access: { read: isStaffField } },
+    { name: 'driveUrl', type: 'text', access: { read: isStaffField } },
     {
       name: 'publicSpace',
       type: 'checkbox',

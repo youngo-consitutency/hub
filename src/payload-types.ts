@@ -78,7 +78,6 @@ export interface Config {
     'content-events': ContentEvent;
     'content-announcements': ContentAnnouncement;
     'content-submissions': ContentSubmission;
-    'council-decisions': CouncilDecision;
     'content-coys': ContentCoy;
     'directory-contacts': DirectoryContact;
     'catalogue-resources': CatalogueResource;
@@ -104,6 +103,27 @@ export interface Config {
     'resource-reviews': ResourceReview;
     'research-notes': ResearchNote;
     'email-verification-tokens': EmailVerificationToken;
+    'decision-proposals': DecisionProposal;
+    'decision-flags': DecisionFlag;
+    'decision-comments': DecisionComment;
+    'decision-ballots': DecisionBallot;
+    'decision-vetoes': DecisionVetoe;
+    'decision-events': DecisionEvent;
+    elections: Election;
+    'election-candidates': ElectionCandidate;
+    'election-voters': ElectionVoter;
+    'election-ballots': ElectionBallot;
+    selections: Selection;
+    'selection-committee': SelectionCommittee;
+    'selection-applications': SelectionApplication;
+    'selection-evaluations': SelectionEvaluation;
+    handovers: Handover;
+    'funding-requests': FundingRequest;
+    'safeguarding-cases': SafeguardingCase;
+    'coi-declarations': CoiDeclaration;
+    'recognition-requests': RecognitionRequest;
+    'partnership-requests': PartnershipRequest;
+    'privacy-requests': PrivacyRequest;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -121,7 +141,6 @@ export interface Config {
     'content-events': ContentEventsSelect<false> | ContentEventsSelect<true>;
     'content-announcements': ContentAnnouncementsSelect<false> | ContentAnnouncementsSelect<true>;
     'content-submissions': ContentSubmissionsSelect<false> | ContentSubmissionsSelect<true>;
-    'council-decisions': CouncilDecisionsSelect<false> | CouncilDecisionsSelect<true>;
     'content-coys': ContentCoysSelect<false> | ContentCoysSelect<true>;
     'directory-contacts': DirectoryContactsSelect<false> | DirectoryContactsSelect<true>;
     'catalogue-resources': CatalogueResourcesSelect<false> | CatalogueResourcesSelect<true>;
@@ -147,6 +166,27 @@ export interface Config {
     'resource-reviews': ResourceReviewsSelect<false> | ResourceReviewsSelect<true>;
     'research-notes': ResearchNotesSelect<false> | ResearchNotesSelect<true>;
     'email-verification-tokens': EmailVerificationTokensSelect<false> | EmailVerificationTokensSelect<true>;
+    'decision-proposals': DecisionProposalsSelect<false> | DecisionProposalsSelect<true>;
+    'decision-flags': DecisionFlagsSelect<false> | DecisionFlagsSelect<true>;
+    'decision-comments': DecisionCommentsSelect<false> | DecisionCommentsSelect<true>;
+    'decision-ballots': DecisionBallotsSelect<false> | DecisionBallotsSelect<true>;
+    'decision-vetoes': DecisionVetoesSelect<false> | DecisionVetoesSelect<true>;
+    'decision-events': DecisionEventsSelect<false> | DecisionEventsSelect<true>;
+    elections: ElectionsSelect<false> | ElectionsSelect<true>;
+    'election-candidates': ElectionCandidatesSelect<false> | ElectionCandidatesSelect<true>;
+    'election-voters': ElectionVotersSelect<false> | ElectionVotersSelect<true>;
+    'election-ballots': ElectionBallotsSelect<false> | ElectionBallotsSelect<true>;
+    selections: SelectionsSelect<false> | SelectionsSelect<true>;
+    'selection-committee': SelectionCommitteeSelect<false> | SelectionCommitteeSelect<true>;
+    'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
+    'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
+    handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
+    'safeguarding-cases': SafeguardingCasesSelect<false> | SafeguardingCasesSelect<true>;
+    'coi-declarations': CoiDeclarationsSelect<false> | CoiDeclarationsSelect<true>;
+    'recognition-requests': RecognitionRequestsSelect<false> | RecognitionRequestsSelect<true>;
+    'partnership-requests': PartnershipRequestsSelect<false> | PartnershipRequestsSelect<true>;
+    'privacy-requests': PrivacyRequestsSelect<false> | PrivacyRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -574,36 +614,6 @@ export interface ContentSubmission {
   finalUrl?: string | null;
   unfcccUrl?: string | null;
   contributeNote?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "council-decisions".
- */
-export interface CouncilDecision {
-  id: number;
-  slug: string;
-  title: string;
-  status: 'proposed' | 'open_for_input' | 'objection_window' | 'adopted' | 'rejected' | 'withdrawn';
-  summary?: string | null;
-  proposer?: string | null;
-  proposalUrl?: string | null;
-  finalUrl?: string | null;
-  respondNote?: string | null;
-  outcomeNote?: string | null;
-  inputDeadline?: string | null;
-  objectionDeadline?: string | null;
-  decidedAt?: string | null;
-  statusLog?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1189,6 +1199,515 @@ export interface EmailVerificationToken {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-proposals".
+ */
+export interface DecisionProposal {
+  id: number;
+  title: string;
+  context: string;
+  proposalText: string;
+  decisionType: 'standard' | 'snap' | 'og_standard' | 'og_snap' | 'press_release';
+  body: 'council' | 'working_group' | 'operational_team' | 'gct' | 'constituency';
+  bodyRef?: string | null;
+  snapJustification?: string | null;
+  snapDeadline?: string | null;
+  policyVersion?: string | null;
+  snapHours?: number | null;
+  version?: number | null;
+  legacyRef?: string | null;
+  status:
+    | 'draft'
+    | 'consultation'
+    | 'revision'
+    | 'decision'
+    | 'voting'
+    | 'adopted'
+    | 'vetoed'
+    | 'withdrawn'
+    | 'failed_quorum'
+    | 'rejected';
+  proposedBy: number | Account;
+  contactPersons: (number | Account)[];
+  presentedAt?: string | null;
+  consultationEndsAt?: string | null;
+  revisionEndsAt?: string | null;
+  decisionEndsAt?: string | null;
+  votingEndsAt?: string | null;
+  eligibleVoterCount?: number | null;
+  ballotOptions?:
+    | {
+        option: string;
+        id?: string | null;
+      }[]
+    | null;
+  adoptedVia?: ('consensus' | 'consensus_with_reservations' | 'vote' | 'meeting') | null;
+  decidedAt?: string | null;
+  resultSummary?: string | null;
+  trackerUrl?: string | null;
+  outcomeEvidence?: string | null;
+  votesFor?: number | null;
+  votesAgainst?: number | null;
+  isPublic?: boolean | null;
+  revisions?:
+    | {
+        version: number;
+        title: string;
+        proposal: string;
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-flags".
+ */
+export interface DecisionFlag {
+  id: number;
+  proposal: number | DecisionProposal;
+  kind: 'red' | 'grey';
+  rationaleCategory?:
+    | (
+        | 'principles_violation'
+        | 'coc_violation'
+        | 'science_contradiction'
+        | 'past_decision_contradiction'
+        | 'process_noncompliance'
+        | 'mission_misalignment'
+        | 'inadequate_consultation'
+        | 'grey_flag_unsatisfactory'
+      )
+    | null;
+  reason: string;
+  alternative?: string | null;
+  raisedBy: number | Account;
+  status: 'open' | 'addressed' | 'withdrawn' | 'nullified';
+  responseNote?: string | null;
+  respondedBy?: (number | null) | Account;
+  respondedAt?: string | null;
+  raisedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-comments".
+ */
+export interface DecisionComment {
+  id: number;
+  proposal: number | DecisionProposal;
+  account: number | Account;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-ballots".
+ */
+export interface DecisionBallot {
+  id: number;
+  proposal: number | DecisionProposal;
+  account: number | Account;
+  choice: string;
+  castAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-vetoes".
+ */
+export interface DecisionVetoe {
+  id: number;
+  proposal: number | DecisionProposal;
+  requesterKind: 'org' | 'org_global_south' | 'wg_or_ot';
+  groupKey: string;
+  reasoning: string;
+  requestedBy: number | Account;
+  status: 'pending' | 'confirmed' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-events".
+ */
+export interface DecisionEvent {
+  id: number;
+  proposal: number | DecisionProposal;
+  type: string;
+  actor?: (number | null) | Account;
+  detail?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "elections".
+ */
+export interface Election {
+  id: number;
+  title: string;
+  kind: 'focal_point' | 'other';
+  status: 'announced' | 'nominations' | 'voting' | 'tallying' | 'completed' | 'restart_required' | 'cancelled';
+  description?: string | null;
+  races: {
+    slug: string;
+    label: string;
+    id?: string | null;
+  }[];
+  nominationsOpenAt?: string | null;
+  nominationsCloseAt?: string | null;
+  votingOpensAt?: string | null;
+  votingCloseAt?: string | null;
+  quorumIndividuals?: number | null;
+  quorumOrganisations?: number | null;
+  eligibleIndividualCount?: number | null;
+  eligibleOrgCount?: number | null;
+  result?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  externalRef?: string | null;
+  facilitationNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-candidates".
+ */
+export interface ElectionCandidate {
+  id: number;
+  election: number | Election;
+  race: string;
+  account: number | Account;
+  statement: string;
+  videoUrl?: string | null;
+  status: 'pending' | 'screened_in' | 'screened_out' | 'withdrawn';
+  screeningNote?: string | null;
+  nominatedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-voters".
+ */
+export interface ElectionVoter {
+  id: number;
+  election: number | Election;
+  account: number | Account;
+  kind: 'individual' | 'organisation';
+  tokenHash: string;
+  issuedAt: string;
+  votedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-ballots".
+ */
+export interface ElectionBallot {
+  id: number;
+  election: number | Election;
+  race: string;
+  voterTokenHash: string;
+  kind: 'individual' | 'organisation';
+  ranks:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  castAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selections".
+ */
+export interface Selection {
+  id: number;
+  title: string;
+  opportunityNote: string;
+  kind: 'standard' | 'wg_nomination';
+  bodyRef?: string | null;
+  status: 'committee_forming' | 'open' | 'closed' | 'evaluating' | 'decided' | 'announced' | 'cancelled';
+  method: 'colour' | 'numerical';
+  criteria?:
+    | {
+        name: string;
+        weightPct: number;
+        id?: string | null;
+      }[]
+    | null;
+  deadlineAt?: string | null;
+  spotsAvailable?: number | null;
+  balanceNote?: string | null;
+  selectionSummary?: string | null;
+  createdBy: number | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-committee".
+ */
+export interface SelectionCommittee {
+  id: number;
+  selection: number | Selection;
+  account: number | Account;
+  joinedAt: string;
+  recusedApplicantIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  coiNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-applications".
+ */
+export interface SelectionApplication {
+  id: number;
+  selection: number | Selection;
+  account: number | Account;
+  answers:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  selfFinance?: boolean | null;
+  gender?: string | null;
+  region?: string | null;
+  status: 'submitted' | 'selected' | 'not_selected' | 'withdrawn';
+  submittedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-evaluations".
+ */
+export interface SelectionEvaluation {
+  id: number;
+  selection: number | Selection;
+  application: number | SelectionApplication;
+  evaluator: number | Account;
+  grade?: ('black' | 'red' | 'orange' | 'yellow' | 'green') | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  comment?: string | null;
+  evaluatedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handovers".
+ */
+export interface Handover {
+  id: number;
+  account: number | Account;
+  reason: 'resignation' | 'termination' | 'cw_expiry' | 'mandate_end' | 'other';
+  scopeLabel: string;
+  items?:
+    | {
+        label: string;
+        done?: boolean | null;
+        doneAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  dueAt: string;
+  status: 'open' | 'completed' | 'overdue' | 'waived';
+  notes?: string | null;
+  openedBy: number | Account;
+  openedAt: string;
+  closedAt?: string | null;
+  closedBy?: (number | null) | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "funding-requests".
+ */
+export interface FundingRequest {
+  id: number;
+  account: number | Account;
+  title: string;
+  purpose: string;
+  amountNumeric: number;
+  currency: string;
+  category: 'event_travel' | 'project' | 'operations' | 'other';
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'disbursed' | 'reported' | 'cancelled';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  reviewedAt?: string | null;
+  disbursedAt?: string | null;
+  reportNote?: string | null;
+  reportedAt?: string | null;
+  submittedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safeguarding-cases".
+ */
+export interface SafeguardingCase {
+  id: number;
+  reporter?: (number | null) | Account;
+  anonymous?: boolean | null;
+  kind: 'safeguarding' | 'child_safeguarding' | 'concern' | 'coc';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  involvedParties?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'received' | 'triaged' | 'investigating' | 'resolved' | 'closed';
+  assignedTo?: (number | null) | Account;
+  updates?:
+    | {
+        note: string;
+        status?: string | null;
+        by?: (number | null) | Account;
+        at?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  outcomeNote?: string | null;
+  receivedAt: string;
+  closedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coi-declarations".
+ */
+export interface CoiDeclaration {
+  id: number;
+  account: number | Account;
+  interest: string;
+  details: string;
+  relatedScope?: string | null;
+  status: 'declared' | 'under_review' | 'resolved' | 'dismissed';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  reviewedAt?: string | null;
+  declaredAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recognition-requests".
+ */
+export interface RecognitionRequest {
+  id: number;
+  account: number | Account;
+  kind: 'certificate' | 'letter' | 'other';
+  purpose: string;
+  eventRef?: string | null;
+  status: 'requested' | 'approved' | 'issued' | 'declined';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  issuedAt?: string | null;
+  requestedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partnership-requests".
+ */
+export interface PartnershipRequest {
+  id: number;
+  account: number | Account;
+  organisationName: string;
+  kind: 'partnership' | 'sponsorship' | 'mou' | 'other';
+  summary: string;
+  valueNote?: string | null;
+  requiresCouncilDecision?: boolean | null;
+  councilDecision?: (number | null) | DecisionProposal;
+  status: 'proposed' | 'under_review' | 'approved' | 'active' | 'declined' | 'ended';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  proposedAt: string;
+  endedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privacy-requests".
+ */
+export interface PrivacyRequest {
+  id: number;
+  account: number | Account;
+  kind: 'access' | 'erasure' | 'rectification' | 'portability' | 'objection';
+  details: string;
+  status: 'received' | 'in_progress' | 'fulfilled' | 'declined';
+  responseNote?: string | null;
+  dueAt: string;
+  handledBy?: (number | null) | Account;
+  fulfilledAt?: string | null;
+  requestedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1250,10 +1769,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'content-submissions';
         value: number | ContentSubmission;
-      } | null)
-    | ({
-        relationTo: 'council-decisions';
-        value: number | CouncilDecision;
       } | null)
     | ({
         relationTo: 'content-coys';
@@ -1354,6 +1869,90 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'email-verification-tokens';
         value: number | EmailVerificationToken;
+      } | null)
+    | ({
+        relationTo: 'decision-proposals';
+        value: number | DecisionProposal;
+      } | null)
+    | ({
+        relationTo: 'decision-flags';
+        value: number | DecisionFlag;
+      } | null)
+    | ({
+        relationTo: 'decision-comments';
+        value: number | DecisionComment;
+      } | null)
+    | ({
+        relationTo: 'decision-ballots';
+        value: number | DecisionBallot;
+      } | null)
+    | ({
+        relationTo: 'decision-vetoes';
+        value: number | DecisionVetoe;
+      } | null)
+    | ({
+        relationTo: 'decision-events';
+        value: number | DecisionEvent;
+      } | null)
+    | ({
+        relationTo: 'elections';
+        value: number | Election;
+      } | null)
+    | ({
+        relationTo: 'election-candidates';
+        value: number | ElectionCandidate;
+      } | null)
+    | ({
+        relationTo: 'election-voters';
+        value: number | ElectionVoter;
+      } | null)
+    | ({
+        relationTo: 'election-ballots';
+        value: number | ElectionBallot;
+      } | null)
+    | ({
+        relationTo: 'selections';
+        value: number | Selection;
+      } | null)
+    | ({
+        relationTo: 'selection-committee';
+        value: number | SelectionCommittee;
+      } | null)
+    | ({
+        relationTo: 'selection-applications';
+        value: number | SelectionApplication;
+      } | null)
+    | ({
+        relationTo: 'selection-evaluations';
+        value: number | SelectionEvaluation;
+      } | null)
+    | ({
+        relationTo: 'handovers';
+        value: number | Handover;
+      } | null)
+    | ({
+        relationTo: 'funding-requests';
+        value: number | FundingRequest;
+      } | null)
+    | ({
+        relationTo: 'safeguarding-cases';
+        value: number | SafeguardingCase;
+      } | null)
+    | ({
+        relationTo: 'coi-declarations';
+        value: number | CoiDeclaration;
+      } | null)
+    | ({
+        relationTo: 'recognition-requests';
+        value: number | RecognitionRequest;
+      } | null)
+    | ({
+        relationTo: 'partnership-requests';
+        value: number | PartnershipRequest;
+      } | null)
+    | ({
+        relationTo: 'privacy-requests';
+        value: number | PrivacyRequest;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1687,27 +2286,6 @@ export interface ContentSubmissionsSelect<T extends boolean = true> {
   finalUrl?: T;
   unfcccUrl?: T;
   contributeNote?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "council-decisions_select".
- */
-export interface CouncilDecisionsSelect<T extends boolean = true> {
-  slug?: T;
-  title?: T;
-  status?: T;
-  summary?: T;
-  proposer?: T;
-  proposalUrl?: T;
-  finalUrl?: T;
-  respondNote?: T;
-  outcomeNote?: T;
-  inputDeadline?: T;
-  objectionDeadline?: T;
-  decidedAt?: T;
-  statusLog?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2145,6 +2723,419 @@ export interface EmailVerificationTokensSelect<T extends boolean = true> {
   tokenHash?: T;
   expiresAt?: T;
   usedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-proposals_select".
+ */
+export interface DecisionProposalsSelect<T extends boolean = true> {
+  title?: T;
+  context?: T;
+  proposalText?: T;
+  decisionType?: T;
+  body?: T;
+  bodyRef?: T;
+  snapJustification?: T;
+  snapDeadline?: T;
+  policyVersion?: T;
+  snapHours?: T;
+  version?: T;
+  legacyRef?: T;
+  status?: T;
+  proposedBy?: T;
+  contactPersons?: T;
+  presentedAt?: T;
+  consultationEndsAt?: T;
+  revisionEndsAt?: T;
+  decisionEndsAt?: T;
+  votingEndsAt?: T;
+  eligibleVoterCount?: T;
+  ballotOptions?:
+    | T
+    | {
+        option?: T;
+        id?: T;
+      };
+  adoptedVia?: T;
+  decidedAt?: T;
+  resultSummary?: T;
+  trackerUrl?: T;
+  outcomeEvidence?: T;
+  votesFor?: T;
+  votesAgainst?: T;
+  isPublic?: T;
+  revisions?:
+    | T
+    | {
+        version?: T;
+        title?: T;
+        proposal?: T;
+        createdAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-flags_select".
+ */
+export interface DecisionFlagsSelect<T extends boolean = true> {
+  proposal?: T;
+  kind?: T;
+  rationaleCategory?: T;
+  reason?: T;
+  alternative?: T;
+  raisedBy?: T;
+  status?: T;
+  responseNote?: T;
+  respondedBy?: T;
+  respondedAt?: T;
+  raisedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-comments_select".
+ */
+export interface DecisionCommentsSelect<T extends boolean = true> {
+  proposal?: T;
+  account?: T;
+  body?: T;
+  createdAt?: T;
+  updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-ballots_select".
+ */
+export interface DecisionBallotsSelect<T extends boolean = true> {
+  proposal?: T;
+  account?: T;
+  choice?: T;
+  castAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-vetoes_select".
+ */
+export interface DecisionVetoesSelect<T extends boolean = true> {
+  proposal?: T;
+  requesterKind?: T;
+  groupKey?: T;
+  reasoning?: T;
+  requestedBy?: T;
+  status?: T;
+  createdAt?: T;
+  updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "decision-events_select".
+ */
+export interface DecisionEventsSelect<T extends boolean = true> {
+  proposal?: T;
+  type?: T;
+  actor?: T;
+  detail?: T;
+  createdAt?: T;
+  updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "elections_select".
+ */
+export interface ElectionsSelect<T extends boolean = true> {
+  title?: T;
+  kind?: T;
+  status?: T;
+  description?: T;
+  races?:
+    | T
+    | {
+        slug?: T;
+        label?: T;
+        id?: T;
+      };
+  nominationsOpenAt?: T;
+  nominationsCloseAt?: T;
+  votingOpensAt?: T;
+  votingCloseAt?: T;
+  quorumIndividuals?: T;
+  quorumOrganisations?: T;
+  eligibleIndividualCount?: T;
+  eligibleOrgCount?: T;
+  result?: T;
+  externalRef?: T;
+  facilitationNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-candidates_select".
+ */
+export interface ElectionCandidatesSelect<T extends boolean = true> {
+  election?: T;
+  race?: T;
+  account?: T;
+  statement?: T;
+  videoUrl?: T;
+  status?: T;
+  screeningNote?: T;
+  nominatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-voters_select".
+ */
+export interface ElectionVotersSelect<T extends boolean = true> {
+  election?: T;
+  account?: T;
+  kind?: T;
+  tokenHash?: T;
+  issuedAt?: T;
+  votedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-ballots_select".
+ */
+export interface ElectionBallotsSelect<T extends boolean = true> {
+  election?: T;
+  race?: T;
+  voterTokenHash?: T;
+  kind?: T;
+  ranks?: T;
+  castAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selections_select".
+ */
+export interface SelectionsSelect<T extends boolean = true> {
+  title?: T;
+  opportunityNote?: T;
+  kind?: T;
+  bodyRef?: T;
+  status?: T;
+  method?: T;
+  criteria?:
+    | T
+    | {
+        name?: T;
+        weightPct?: T;
+        id?: T;
+      };
+  deadlineAt?: T;
+  spotsAvailable?: T;
+  balanceNote?: T;
+  selectionSummary?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-committee_select".
+ */
+export interface SelectionCommitteeSelect<T extends boolean = true> {
+  selection?: T;
+  account?: T;
+  joinedAt?: T;
+  recusedApplicantIds?: T;
+  coiNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-applications_select".
+ */
+export interface SelectionApplicationsSelect<T extends boolean = true> {
+  selection?: T;
+  account?: T;
+  answers?: T;
+  selfFinance?: T;
+  gender?: T;
+  region?: T;
+  status?: T;
+  submittedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-evaluations_select".
+ */
+export interface SelectionEvaluationsSelect<T extends boolean = true> {
+  selection?: T;
+  application?: T;
+  evaluator?: T;
+  grade?: T;
+  scores?: T;
+  comment?: T;
+  evaluatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handovers_select".
+ */
+export interface HandoversSelect<T extends boolean = true> {
+  account?: T;
+  reason?: T;
+  scopeLabel?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        done?: T;
+        doneAt?: T;
+        id?: T;
+      };
+  dueAt?: T;
+  status?: T;
+  notes?: T;
+  openedBy?: T;
+  openedAt?: T;
+  closedAt?: T;
+  closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "funding-requests_select".
+ */
+export interface FundingRequestsSelect<T extends boolean = true> {
+  account?: T;
+  title?: T;
+  purpose?: T;
+  amountNumeric?: T;
+  currency?: T;
+  category?: T;
+  periodStart?: T;
+  periodEnd?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  disbursedAt?: T;
+  reportNote?: T;
+  reportedAt?: T;
+  submittedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safeguarding-cases_select".
+ */
+export interface SafeguardingCasesSelect<T extends boolean = true> {
+  reporter?: T;
+  anonymous?: T;
+  kind?: T;
+  severity?: T;
+  description?: T;
+  involvedParties?: T;
+  status?: T;
+  assignedTo?: T;
+  updates?:
+    | T
+    | {
+        note?: T;
+        status?: T;
+        by?: T;
+        at?: T;
+        id?: T;
+      };
+  outcomeNote?: T;
+  receivedAt?: T;
+  closedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coi-declarations_select".
+ */
+export interface CoiDeclarationsSelect<T extends boolean = true> {
+  account?: T;
+  interest?: T;
+  details?: T;
+  relatedScope?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  declaredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recognition-requests_select".
+ */
+export interface RecognitionRequestsSelect<T extends boolean = true> {
+  account?: T;
+  kind?: T;
+  purpose?: T;
+  eventRef?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  issuedAt?: T;
+  requestedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partnership-requests_select".
+ */
+export interface PartnershipRequestsSelect<T extends boolean = true> {
+  account?: T;
+  organisationName?: T;
+  kind?: T;
+  summary?: T;
+  valueNote?: T;
+  requiresCouncilDecision?: T;
+  councilDecision?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  proposedAt?: T;
+  endedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privacy-requests_select".
+ */
+export interface PrivacyRequestsSelect<T extends boolean = true> {
+  account?: T;
+  kind?: T;
+  details?: T;
+  status?: T;
+  responseNote?: T;
+  dueAt?: T;
+  handledBy?: T;
+  fulfilledAt?: T;
+  requestedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

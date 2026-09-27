@@ -1,8 +1,9 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, json } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import * as platform from '../modules/platform/service'
+import * as bridge from '../modules/platform/decisionsBridge'
 import type { Actor } from '../modules/platform/service'
 
 const enquiryLimit = rateLimit({
@@ -134,7 +135,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions',
     method: 'post',
     handler: endpoint(async (req) =>
-      json(await platform.saveDecision(await actor(req), await body(req)), {
+      json(await bridge.saveDecision(req, await actor(req), await body(req)), {
         status: 201,
       }),
     ),
@@ -143,7 +144,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id',
     method: 'get',
     handler: endpoint(async (req) =>
-      json(await platform.decisionDetail(await actor(req), p(req, 'id'))),
+      json(await bridge.decisionDetail(req, await actor(req), p(req, 'id'))),
     ),
   },
   {
@@ -151,7 +152,7 @@ export const platformEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) =>
       json(
-        await platform.saveDecision(await actor(req), await body(req), p(req, 'id')),
+        await bridge.saveDecision(req, await actor(req), await body(req), p(req, 'id')),
       ),
     ),
   },
@@ -159,7 +160,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/transition',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.transition(await actor(req), p(req, 'id'), await body(req))
+      await bridge.transition(req, await actor(req), p(req, 'id'), await body(req))
       return json({ ok: true })
     }),
   },
@@ -167,7 +168,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/contributions',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.contribute(await actor(req), p(req, 'id'), await body(req))
+      await bridge.contribute(req, await actor(req), p(req, 'id'), await body(req))
       return json({ ok: true }, { status: 201 })
     }),
   },
@@ -175,7 +176,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/contributions/:id/resolve',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.resolveContribution(await actor(req), p(req, 'id'), await body(req))
+      await bridge.resolveContribution(req, await actor(req), p(req, 'id'), await body(req))
       return json({ ok: true })
     }),
   },
@@ -184,7 +185,7 @@ export const platformEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const b = await body(req)
-      await platform.publishDecision(await actor(req), p(req, 'id'), b.version)
+      await bridge.publishDecision(req, await actor(req), p(req, 'id'), b.version)
       return json({ ok: true })
     }),
   },
@@ -192,9 +193,9 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/withdraw-publication',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.withdrawPublication(
+      await bridge.withdrawDecisionPublication(
+        req,
         await actor(req),
-        'decision',
         p(req, 'id'),
         await body(req),
       )

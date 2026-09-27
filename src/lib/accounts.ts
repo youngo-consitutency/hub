@@ -1,10 +1,46 @@
 import type { PayloadRequest } from 'payload'
-import { fail } from './respond'
+import { ApiError, fail } from './respond'
 import { getAccessProfile } from './access'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
-const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
+export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
+
+// Single source for "may use member features". Every endpoint must go through
+// requireVerifiedMember/requireCwMember below — do not re-implement the check.
+export function isVerifiedAccount(account: any): boolean {
+  return (
+    account?.hubAccessStatus === 'active' &&
+    (account?.memberStatus === 'verified' ||
+      VERIFIED_PLATFORM_ROLES.has(account?.role))
+  )
+}
+
+export function requireVerifiedMember(req: PayloadRequest) {
+  const account = requireAccount(req)
+  if (!isVerifiedAccount(account))
+    throw new ApiError(
+      403,
+      'not_verified',
+      'Complete onboarding and verification first.',
+    )
+  return account
+}
+
+// Constituency Work membership is required for decision rights (S17 §1.1).
+export function requireCwMember(req: PayloadRequest) {
+  const account = requireVerifiedMember(req)
+  if (
+    account.membershipTrack !== 'constituency_work' &&
+    !VERIFIED_PLATFORM_ROLES.has(account.role)
+  )
+    throw new ApiError(
+      403,
+      'not_constituency_work',
+      'Decision rights require Constituency Work membership (S17 §1.1).',
+    )
+  return account
+}
 
 // Accepts both Payload docs (camelCase) and raw SQL rows (snake_case).
 export function accountView(row: any) {
@@ -65,9 +101,11 @@ export function accountView(row: any) {
     coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
     courseScore: row.course_score ?? row.courseScore ?? null,
     verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
-    isVerified:
-      hubAccessStatus === 'active' &&
-      (memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(role)),
+    isVerified: isVerifiedAccount({
+      hubAccessStatus,
+      memberStatus,
+      role,
+    }),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
     isMandateHolder: [

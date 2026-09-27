@@ -11,6 +11,7 @@ import { verifyLegacyPassword } from '../lib/password'
 import { rateLimit } from '../lib/rateLimit'
 import { sendEmail, emailConfigured } from '../lib/email'
 import { createHash, randomBytes } from 'node:crypto'
+import { appBaseUrl } from '../lib/env'
 
 const registerLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -397,7 +398,7 @@ export const authEndpoints: Endpoint[] = [
           overrideAccess: true,
         })
         if (emailConfigured()) {
-          const origin = process.env.APP_ORIGIN || 'http://localhost:3000'
+          const origin = appBaseUrl()
           try {
             await sendEmail({
               to: email,
