@@ -8,6 +8,6 @@ Only test systems and accounts you have permission to use. Stop if you can acces
 
 ## What we maintain
 
-Report problems against the latest `main`, including `hub-v2/` and the content service. There is no published long-term support schedule for older snapshots. Maintainers will assess the report, agree on a fix and disclosure plan, and keep sensitive details private while it is being handled. Response times are not guaranteed.
+Report problems against the latest `main`, including the Hub application and the content service (`mcp-content/`). There is no published long-term support schedule for older snapshots. Maintainers will assess the report, agree on a fix and disclosure plan, and keep sensitive details private while it is being handled. Response times are not guaranteed.
 
 For an ordinary bug with no security impact, use the [issue forms](https://github.com/youngo-consitutency/hub/issues/new/choose).

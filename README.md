@@ -4,31 +4,37 @@ YOUNGO’s membership and coordination platform: working groups, events, resourc
 
 [Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contributing](CONTRIBUTING.md)
 
-## Applications
+## Application
 
-- **Root:** React, Express, and PostgreSQL. The root Railway configuration deploys this app.
-- **[hub-v2](hub-v2/README.md):** a separate Next.js and Payload application with its own database and tests.
-- **[mcp-content](mcp-content/README.md):** assistant tools that use the Hub’s API and account permissions.
+One Next.js and Payload application, backed by PostgreSQL. The member interface is in `spa/`, the staff console is at `/console`, and server code is in `src/`.
+
+[`mcp-content/`](mcp-content/README.md) is a separate service for assistant tools that use the Hub’s API and account permissions.
 
 ## Development
 
-Use Node.js 22.13 or later in the Node 22 series.
+Use Node.js 22.13 or later in the Node 22 series, or Node 24, and a local PostgreSQL database.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
 cd hub
 npm ci
-npm run dev-all
+createdb youngo_dev
+export DATABASE_URL='postgres://localhost:5432/youngo_dev'
+export PAYLOAD_SECRET="$(openssl rand -hex 32)"
+npm run migrate
+npm run dev
 ```
 
-Open <http://localhost:5173>. Express runs on port `8787`. Without PostgreSQL, the root app uses public fixtures and local JSON files. See [database setup](https://github.com/youngo-consitutency/hub/wiki/Local-development#database) for database-backed features.
+Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and never commit it. The app requires PostgreSQL; it has no database-free fixture mode.
 
 ```sh
 npm run check
 ```
 
-This runs the root content, formatting, lint, type, test, and build checks. Hub v2 has separate checks.
+This runs lint and the production build, including type checks. Integration and browser tests need a running server and a separate seeded database. `npm run seed` creates demo accounts with known passwords; use it only with a disposable local database. Some seed inputs are not included in a public clone.
+
+The Payload schema is separate from the former Express schema. Do not point its migrations at an existing member database without a verified migration and rollback plan. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status) for remaining deployment requirements.
 
 ## Licence
 
-[GPL-3.0](LICENSE). Third-party notices still apply. The `hub-v2` package’s MIT label remains unresolved.
+[GPL-3.0](LICENSE). Third-party notices still apply. The package’s inherited MIT label remains unresolved.

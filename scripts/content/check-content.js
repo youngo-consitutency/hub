@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import { validateContent } from '../../shared/contentValidation.js'
-import { WORKING_GROUPS } from '../../shared/workingGroups.js'
+import { validateContent } from '../../spa/shared/contentValidation.js'
+import { WORKING_GROUPS } from '../../spa/shared/workingGroups.js'
 
 const file = new URL('../../data/fixtures.json', import.meta.url)
 

@@ -5,8 +5,8 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
-import { canonicalResourceUrl } from '../../shared/resourceHub.js'
-import { validateEditableContent } from '../../shared/contentValidation.js'
+import { canonicalResourceUrl } from '../../spa/shared/resourceHub.js'
+import { validateEditableContent } from '../../spa/shared/contentValidation.js'
 
 const source = process.argv[2]
 if (!source) throw new Error('Pass the source checkout directory.')
