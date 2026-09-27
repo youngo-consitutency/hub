@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and early ideas
+    url: https://github.com/youngo-consitutency/hub/discussions
+    about: Ask about the project or discuss an idea before turning it into a task.
+  - name: Private security report
+    url: https://github.com/youngo-consitutency/hub/security/advisories/new
+    about: Report vulnerabilities privately, without exposing member information.
+  - name: Hub guides
+    url: https://github.com/youngo-consitutency/hub/wiki
+    about: Find member, contributor, and operator guidance.

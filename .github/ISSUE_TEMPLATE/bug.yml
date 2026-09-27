@@ -1,0 +1,43 @@
+name: Report a bug
+description: Tell us what broke and how to reproduce it.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please use made-up data. Report security problems privately through the Security tab.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen?
+      options:
+        - Root app
+        - Hub v2
+        - Content service
+        - Live website (version unknown)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Explain what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we reproduce it?
+      description: Give the page and steps. Remove private links, account details, and tokens.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, device, and version
+      description: Include the commit if you are running a local copy.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or error details
+      description: Optional. Check for private information before attaching anything.

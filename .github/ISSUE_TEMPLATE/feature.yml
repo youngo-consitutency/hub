@@ -1,0 +1,23 @@
+name: Suggest an improvement
+description: Describe a problem and a useful change.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Who is affected, and what are they trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would help?
+      description: Describe the outcome. A technical solution is optional.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried?
+      description: Mention alternatives or a current workaround, if any.
