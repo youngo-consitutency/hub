@@ -35,7 +35,7 @@
     "express": "^5.2.1",
     "libphonenumber-js": "^1.13.14",
     "mjml": "^5.4.1",
-    "nodemailer": "^9.1.1",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
