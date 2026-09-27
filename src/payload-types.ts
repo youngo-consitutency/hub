@@ -110,6 +110,14 @@ export interface Config {
     'decision-ballots': DecisionBallot;
     'decision-vetoes': DecisionVetoe;
     'decision-events': DecisionEvent;
+    elections: Election;
+    'election-candidates': ElectionCandidate;
+    'election-voters': ElectionVoter;
+    'election-ballots': ElectionBallot;
+    selections: Selection;
+    'selection-committee': SelectionCommittee;
+    'selection-applications': SelectionApplication;
+    'selection-evaluations': SelectionEvaluation;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -159,6 +167,14 @@ export interface Config {
     'decision-ballots': DecisionBallotsSelect<false> | DecisionBallotsSelect<true>;
     'decision-vetoes': DecisionVetoesSelect<false> | DecisionVetoesSelect<true>;
     'decision-events': DecisionEventsSelect<false> | DecisionEventsSelect<true>;
+    elections: ElectionsSelect<false> | ElectionsSelect<true>;
+    'election-candidates': ElectionCandidatesSelect<false> | ElectionCandidatesSelect<true>;
+    'election-voters': ElectionVotersSelect<false> | ElectionVotersSelect<true>;
+    'election-ballots': ElectionBallotsSelect<false> | ElectionBallotsSelect<true>;
+    selections: SelectionsSelect<false> | SelectionsSelect<true>;
+    'selection-committee': SelectionCommitteeSelect<false> | SelectionCommitteeSelect<true>;
+    'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
+    'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -1339,6 +1355,196 @@ export interface DecisionEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "elections".
+ */
+export interface Election {
+  id: number;
+  title: string;
+  kind: 'focal_point' | 'other';
+  status: 'announced' | 'nominations' | 'voting' | 'tallying' | 'completed' | 'restart_required' | 'cancelled';
+  description?: string | null;
+  races: {
+    slug: string;
+    label: string;
+    id?: string | null;
+  }[];
+  nominationsOpenAt?: string | null;
+  nominationsCloseAt?: string | null;
+  votingOpensAt?: string | null;
+  votingCloseAt?: string | null;
+  quorumIndividuals?: number | null;
+  quorumOrganisations?: number | null;
+  eligibleIndividualCount?: number | null;
+  eligibleOrgCount?: number | null;
+  result?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  externalRef?: string | null;
+  facilitationNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-candidates".
+ */
+export interface ElectionCandidate {
+  id: number;
+  election: number | Election;
+  race: string;
+  account: number | Account;
+  statement: string;
+  videoUrl?: string | null;
+  status: 'pending' | 'screened_in' | 'screened_out' | 'withdrawn';
+  screeningNote?: string | null;
+  nominatedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-voters".
+ */
+export interface ElectionVoter {
+  id: number;
+  election: number | Election;
+  account: number | Account;
+  kind: 'individual' | 'organisation';
+  tokenHash: string;
+  issuedAt: string;
+  votedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-ballots".
+ */
+export interface ElectionBallot {
+  id: number;
+  election: number | Election;
+  race: string;
+  voterTokenHash: string;
+  kind: 'individual' | 'organisation';
+  ranks:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  castAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selections".
+ */
+export interface Selection {
+  id: number;
+  title: string;
+  opportunityNote: string;
+  kind: 'standard' | 'wg_nomination';
+  bodyRef?: string | null;
+  status: 'committee_forming' | 'open' | 'closed' | 'evaluating' | 'decided' | 'announced' | 'cancelled';
+  method: 'colour' | 'numerical';
+  criteria?:
+    | {
+        name: string;
+        weightPct: number;
+        id?: string | null;
+      }[]
+    | null;
+  deadlineAt?: string | null;
+  spotsAvailable?: number | null;
+  balanceNote?: string | null;
+  selectionSummary?: string | null;
+  createdBy: number | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-committee".
+ */
+export interface SelectionCommittee {
+  id: number;
+  selection: number | Selection;
+  account: number | Account;
+  joinedAt: string;
+  recusedApplicantIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  coiNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-applications".
+ */
+export interface SelectionApplication {
+  id: number;
+  selection: number | Selection;
+  account: number | Account;
+  answers:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  selfFinance?: boolean | null;
+  gender?: string | null;
+  region?: string | null;
+  status: 'submitted' | 'selected' | 'not_selected' | 'withdrawn';
+  submittedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-evaluations".
+ */
+export interface SelectionEvaluation {
+  id: number;
+  selection: number | Selection;
+  application: number | SelectionApplication;
+  evaluator: number | Account;
+  grade?: ('black' | 'red' | 'orange' | 'yellow' | 'green') | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  comment?: string | null;
+  evaluatedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1528,6 +1734,38 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'decision-events';
         value: number | DecisionEvent;
+      } | null)
+    | ({
+        relationTo: 'elections';
+        value: number | Election;
+      } | null)
+    | ({
+        relationTo: 'election-candidates';
+        value: number | ElectionCandidate;
+      } | null)
+    | ({
+        relationTo: 'election-voters';
+        value: number | ElectionVoter;
+      } | null)
+    | ({
+        relationTo: 'election-ballots';
+        value: number | ElectionBallot;
+      } | null)
+    | ({
+        relationTo: 'selections';
+        value: number | Selection;
+      } | null)
+    | ({
+        relationTo: 'selection-committee';
+        value: number | SelectionCommittee;
+      } | null)
+    | ({
+        relationTo: 'selection-applications';
+        value: number | SelectionApplication;
+      } | null)
+    | ({
+        relationTo: 'selection-evaluations';
+        value: number | SelectionEvaluation;
       } | null);
   globalSlug?: string | null;
   user:
@@ -2424,6 +2662,150 @@ export interface DecisionEventsSelect<T extends boolean = true> {
   detail?: T;
   createdAt?: T;
   updatedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "elections_select".
+ */
+export interface ElectionsSelect<T extends boolean = true> {
+  title?: T;
+  kind?: T;
+  status?: T;
+  description?: T;
+  races?:
+    | T
+    | {
+        slug?: T;
+        label?: T;
+        id?: T;
+      };
+  nominationsOpenAt?: T;
+  nominationsCloseAt?: T;
+  votingOpensAt?: T;
+  votingCloseAt?: T;
+  quorumIndividuals?: T;
+  quorumOrganisations?: T;
+  eligibleIndividualCount?: T;
+  eligibleOrgCount?: T;
+  result?: T;
+  externalRef?: T;
+  facilitationNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-candidates_select".
+ */
+export interface ElectionCandidatesSelect<T extends boolean = true> {
+  election?: T;
+  race?: T;
+  account?: T;
+  statement?: T;
+  videoUrl?: T;
+  status?: T;
+  screeningNote?: T;
+  nominatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-voters_select".
+ */
+export interface ElectionVotersSelect<T extends boolean = true> {
+  election?: T;
+  account?: T;
+  kind?: T;
+  tokenHash?: T;
+  issuedAt?: T;
+  votedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "election-ballots_select".
+ */
+export interface ElectionBallotsSelect<T extends boolean = true> {
+  election?: T;
+  race?: T;
+  voterTokenHash?: T;
+  kind?: T;
+  ranks?: T;
+  castAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selections_select".
+ */
+export interface SelectionsSelect<T extends boolean = true> {
+  title?: T;
+  opportunityNote?: T;
+  kind?: T;
+  bodyRef?: T;
+  status?: T;
+  method?: T;
+  criteria?:
+    | T
+    | {
+        name?: T;
+        weightPct?: T;
+        id?: T;
+      };
+  deadlineAt?: T;
+  spotsAvailable?: T;
+  balanceNote?: T;
+  selectionSummary?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-committee_select".
+ */
+export interface SelectionCommitteeSelect<T extends boolean = true> {
+  selection?: T;
+  account?: T;
+  joinedAt?: T;
+  recusedApplicantIds?: T;
+  coiNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-applications_select".
+ */
+export interface SelectionApplicationsSelect<T extends boolean = true> {
+  selection?: T;
+  account?: T;
+  answers?: T;
+  selfFinance?: T;
+  gender?: T;
+  region?: T;
+  status?: T;
+  submittedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "selection-evaluations_select".
+ */
+export interface SelectionEvaluationsSelect<T extends boolean = true> {
+  selection?: T;
+  application?: T;
+  evaluator?: T;
+  grade?: T;
+  scores?: T;
+  comment?: T;
+  evaluatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

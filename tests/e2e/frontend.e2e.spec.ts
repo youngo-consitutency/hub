@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { test, expect } from '@playwright/test'
 
 const BASE = 'http://localhost:3000'
+// Provisioned by tests/e2e/global-setup.ts — generated per run.
+const { email: memberEmail, password: memberPassword } = JSON.parse(
+  readFileSync(path.resolve(__dirname, '.credentials.json'), 'utf8'),
+)
 
 test.describe('Public site', () => {
   test('homepage renders the Hub shell', async ({ page }) => {
@@ -27,11 +33,11 @@ test.describe('Member app', () => {
     await page.goto(`${BASE}/member`)
     // The SPA shows a sign-in gate when unauthenticated.
     const email = page.locator('input[type="email"], input[name="email"]').first()
-    await email.fill('demo-member@youngo.demo')
+    await email.fill(memberEmail)
     const password = page
       .locator('input[type="password"], input[name="password"]')
       .first()
-    await password.fill('DemoPass123!')
+    await password.fill(memberPassword)
     await page
       .locator('button[type="submit"], button:has-text("Sign in")')
       .first()

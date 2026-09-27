@@ -9,6 +9,7 @@ import { negotiationEndpoints } from './negotiations'
 import { miscEndpoints } from './misc'
 import { platformEndpoints } from './platform'
 import { decisionEndpoints } from './decisions'
+import { electionEndpoints, selectionEndpoints } from './governance'
 
 export const domainEndpoints = [
   ...authEndpoints,
@@ -22,4 +23,6 @@ export const domainEndpoints = [
   ...miscEndpoints,
   ...platformEndpoints,
   ...decisionEndpoints,
+  ...electionEndpoints,
+  ...selectionEndpoints,
 ]

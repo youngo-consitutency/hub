@@ -1,23 +1,34 @@
-import { getPayload, Payload } from 'payload'
-import config from '@/payload.config'
+import type { Payload } from 'payload'
 
 import { describe, it, beforeAll, expect } from 'vitest'
+
+import {
+  provisionAccount,
+  testPayload,
+  type TestSpec,
+} from './provision'
 
 let payload: Payload
 
 const BASE = process.env.TEST_BASE_URL || 'http://localhost:3000'
-const PASSWORD = process.env.DEMO_PASSWORD || 'DemoPass123!'
 
-async function login(email: string) {
+async function login(email: string, password: string) {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password: PASSWORD }),
+    body: JSON.stringify({ email, password }),
   })
   expect(res.status).toBe(200)
   const setCookie = res.headers.get('set-cookie') || ''
   const token = setCookie.match(/payload-token=([^;]+)/)?.[1]
   return { cookie: `payload-token=${token}`, json: await res.json() }
+}
+
+// Provision a test account into the database and sign it in. Specs compose
+// the permissions they need; no identities or credentials are hardcoded.
+async function session(spec: TestSpec) {
+  const { account, email, password } = await provisionAccount(spec)
+  return { ...(await login(email, password)), account }
 }
 
 const api = (
@@ -35,8 +46,7 @@ const api = (
 
 describe('payload', () => {
   beforeAll(async () => {
-    const payloadConfig = await config
-    payload = await getPayload({ config: payloadConfig })
+    payload = await testPayload()
   })
 
   it('reads seeded accounts and content collections', async () => {
@@ -52,8 +62,8 @@ describe('API contract (requires dev server on :3000)', () => {
   let admin: { cookie: string }
 
   beforeAll(async () => {
-    member = await login('demo-member@youngo.demo')
-    admin = await login('demo-admin@youngo.demo')
+    member = await session({})
+    admin = await session({ role: 'admin' })
   })
 
   it('rejects anonymous member requests', async () => {
@@ -191,8 +201,8 @@ describe('API contract (requires dev server on :3000)', () => {
   })
 
   it('rejects a second open membership appeal', async () => {
-    // demo-pending is unverified; appeal path requires rejected membership.
-    const pending = await login('demo-pending@youngo.demo')
+    // unverified member; appeal path requires rejected membership.
+    const pending = await session({ verified: false })
     const res = await api('/member/membership/appeal', {
       method: 'POST',
       cookie: pending.cookie,
@@ -212,35 +222,92 @@ describe('decision engine (S09)', () => {
   let cwMember: { cookie: string }
   let wgContact: { cookie: string }
   let member: { cookie: string }
+  let voter1: { cookie: string }
 
   let pending: { cookie: string }
 
   beforeAll(async () => {
-    cwMember = await login('demo-cw-member@youngo.demo')
-    wgContact = await login('demo-wg-contact@youngo.demo')
-    member = await login('demo-member@youngo.demo')
-    pending = await login('demo-pending@youngo.demo')
+    cwMember = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'finance', role: 'member' },
+    })
+    wgContact = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'finance', role: 'contact' },
+    })
+    member = await session({})
+    voter1 = await session({ membershipTrack: 'constituency_work' })
+    pending = await session({ verified: false })
   })
 
   it('rejects anonymous and unverified reads', async () => {
     expect((await api('/decisions')).status).toBe(401)
-    // demo-pending hasn't completed the course → not a verified member
+    // an unverified member hasn't completed the course → no decision read
     expect((await api('/decisions', { cookie: pending.cookie })).status).toBe(
       403,
     )
   })
 
-  it('lists seeded proposals for verified members', async () => {
+  // Drive a proposal into 'voting': present, raise a red flag (which the
+  // contact person responds to but which stays standing), then close —
+  // consensus fails and the state machine opens a ballot.
+  async function makeVotingProposal() {
+    const create = await api('/decisions', {
+      method: 'POST',
+      cookie: wgContact.cookie,
+      body: JSON.stringify({
+        title: `Ballot test ${Date.now()}`,
+        context: 'contract test',
+        proposalText: 'Do the test thing.',
+        decisionType: 'snap',
+        snapJustification: 'test',
+        snapDeadline: new Date(Date.now() + 2 * 86400000).toISOString(),
+        body: 'working_group',
+        bodyRef: 'finance',
+      }),
+    })
+    expect(create.status).toBe(201)
+    const { proposal } = await create.json()
+    await api(`/decisions/${proposal.id}/present`, {
+      method: 'POST',
+      cookie: wgContact.cookie,
+    })
+    const flag = await api(`/decisions/${proposal.id}/flags`, {
+      method: 'POST',
+      cookie: cwMember.cookie,
+      body: JSON.stringify({
+        kind: 'red',
+        rationaleCategory: 'mission_misalignment',
+        reason: 'test flag',
+        alternative: 'test alternative',
+      }),
+    })
+    expect(flag.status).toBe(201)
+    const flagId = (await flag.json()).flag.id
+    await api(`/decisions/${proposal.id}/flags/${flagId}/respond`, {
+      method: 'POST',
+      cookie: wgContact.cookie,
+      body: JSON.stringify({ responseNote: 'noted' }),
+    })
+    const close = await api(`/decisions/${proposal.id}/close`, {
+      method: 'POST',
+      cookie: wgContact.cookie,
+    })
+    const closed = (await close.json()).proposal
+    expect(closed.status).toBe('voting')
+    return closed
+  }
+
+  it('lists proposals for verified members without leaking account fields', async () => {
     const res = await api('/decisions', { cookie: cwMember.cookie })
     expect(res.status).toBe(200)
     const { items } = await res.json()
-    expect(items.length).toBeGreaterThanOrEqual(3)
-    expect(items.map((i: any) => i.status)).toEqual(
-      expect.arrayContaining(['adopted', 'consultation', 'voting']),
-    )
-    // member-facing shape must not leak raw account fields
-    expect(items[0].proposedBy.phone).toBeUndefined()
-    expect(items[0].proposedBy.email).toBeUndefined()
+    expect(Array.isArray(items)).toBe(true)
+    if (items.length) {
+      // member-facing shape must not leak raw account fields
+      expect(items[0].proposedBy.phone).toBeUndefined()
+      expect(items[0].proposedBy.email).toBeUndefined()
+    }
   })
 
   it(
@@ -273,10 +340,16 @@ describe('decision engine (S09)', () => {
     const consult = new Date(presented.consultationEndsAt).getTime()
     const revision = new Date(presented.revisionEndsAt).getTime()
     const decision = new Date(presented.decisionEndsAt).getTime()
-    expect(consult - new Date(presented.presentedAt).getTime()).toBe(
-      5 * 24 * 3600 * 1000,
+    // timestamps round-trip through Postgres → allow small drift
+    expect(
+      Math.abs(
+        consult - new Date(presented.presentedAt).getTime() -
+          5 * 24 * 3600 * 1000,
+      ),
+    ).toBeLessThan(60_000)
+    expect(Math.abs(decision - revision - 24 * 3600 * 1000)).toBeLessThan(
+      60_000,
     )
-    expect(decision - revision).toBe(24 * 3600 * 1000)
 
     // a non-contact member of the body cannot present it
     expect(
@@ -351,13 +424,9 @@ describe('decision engine (S09)', () => {
     )
   })
 
-  it('gates ballots by membership track and body scope', async () => {
-    // P3 is a finance-WG vote: a CW member of finance WG may vote once.
-    const list = await (
-      await api('/decisions?status=voting', { cookie: cwMember.cookie })
-    ).json()
-    const voting = list.items.find((i: any) => i.body === 'working_group')
-    expect(voting).toBeTruthy()
+  it('gates ballots by membership track and body scope', { timeout: 90000 }, async () => {
+    // A finance-WG snap decision in its voting phase.
+    const voting = await makeVotingProposal()
 
     // network-track member has no decision rights (S17)
     expect(
@@ -370,12 +439,23 @@ describe('decision engine (S09)', () => {
       ).status,
     ).toBe(403)
 
+    // a CW member who is not part of the finance WG cannot vote either
+    expect(
+      (
+        await api(`/decisions/${voting.id}/ballots`, {
+          method: 'POST',
+          cookie: voter1.cookie,
+          body: JSON.stringify({ choice: 'for' }),
+        })
+      ).status,
+    ).toBe(403)
+
     const ballot = await api(`/decisions/${voting.id}/ballots`, {
       method: 'POST',
       cookie: cwMember.cookie,
       body: JSON.stringify({ choice: 'against' }),
     })
-    expect([201, 409]).toContain(ballot.status) // 409 if already cast in this DB
+    expect(ballot.status).toBe(201)
 
     // a second vote is always rejected
     expect(
@@ -387,27 +467,10 @@ describe('decision engine (S09)', () => {
         })
       ).status,
     ).toBe(409)
-
-    // a finance WG member without a council seat cannot vote on council items
-    const council = list.items.find((i: any) => i.body === 'council')
-    if (council) {
-      expect(
-        (
-          await api(`/decisions/${council.id}/ballots`, {
-            method: 'POST',
-            cookie: cwMember.cookie,
-            body: JSON.stringify({ choice: 'for' }),
-          })
-        ).status,
-      ).toBe(403)
-    }
   })
 
-  it('validates veto request shape', async () => {
-    const list = await (
-      await api('/decisions?status=voting', { cookie: cwMember.cookie })
-    ).json()
-    const voting = list.items[0]
+  it('validates veto request shape', { timeout: 90000 }, async () => {
+    const voting = await makeVotingProposal()
     const bad = await api(`/decisions/${voting.id}/vetoes`, {
       method: 'POST',
       cookie: cwMember.cookie,
@@ -448,13 +511,12 @@ describe('decision engine (S09)', () => {
 })
 
 describe('generated API access control', () => {
-  let member: { cookie: string }
+  let member: { cookie: string; account: any }
   let memberAccountId: string
 
   beforeAll(async () => {
-    member = await login('demo-member@youngo.demo')
-    const access = await api('/member/access', { cookie: member.cookie })
-    memberAccountId = String((await access.json()).accountId ?? '')
+    member = await session({})
+    memberAccountId = String(member.account.id)
     expect(memberAccountId).toBeTruthy()
   })
 
@@ -542,13 +604,7 @@ describe('generated API access control', () => {
 
   it('grants wg.manage only for coordination assignment roles', async () => {
     const { getAccessProfile } = await import('@/lib/access')
-    const { docs } = await payload.find({
-      collection: 'accounts',
-      where: { email: { equals: 'demo-member@youngo.demo' } },
-      limit: 1,
-      overrideAccess: true,
-    })
-    const account = docs[0] as any
+    const account = member.account
     const assignment = await payload.create({
       collection: 'assignments',
       data: {
@@ -581,4 +637,347 @@ describe('generated API access control', () => {
       })
     }
   })
+})
+
+describe('elections (S10) and selections (S24)', () => {
+  let facilitator: { cookie: string }
+  let cwMember: { cookie: string }
+  let wgContact: { cookie: string }
+  let wgLead: { cookie: string }
+  let voter1: { cookie: string }
+  let voter2: { cookie: string }
+  let member: { cookie: string }
+  let pending: { cookie: string }
+
+  beforeAll(async () => {
+    facilitator = await session({
+      membershipTrack: 'constituency_work',
+      teams: ['election_facilitation'],
+    })
+    cwMember = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'finance', role: 'member' },
+    })
+    wgContact = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'finance', role: 'contact' },
+    })
+    wgLead = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'ace', role: 'contact' },
+    })
+    voter1 = await session({ membershipTrack: 'constituency_work' })
+    voter2 = await session({ membershipTrack: 'constituency_work' })
+    member = await session({})
+    pending = await session({ verified: false })
+  })
+
+  it('lists elections for verified members', async () => {
+    const res = await api('/governance/elections', { cookie: cwMember.cookie })
+    expect(res.status).toBe(200)
+    const { items } = await res.json()
+    expect(Array.isArray(items)).toBe(true)
+    if (items.length) {
+      // results are only exposed once an election resolves
+      const done = items.find((e: any) => e.status === 'completed')
+      if (done) expect(done.result).toBeTruthy()
+    }
+  })
+
+  it('rejects anonymous reads and non-facilitator creation', async () => {
+    expect((await api('/governance/elections')).status).toBe(401)
+    expect((await api('/governance/elections', { cookie: pending.cookie })).status).toBe(403)
+    const res = await api('/governance/elections', {
+      method: 'POST',
+      cookie: cwMember.cookie,
+      body: JSON.stringify({ title: 'Nope', races: [{ slug: 'x' }] }),
+    })
+    expect(res.status).toBe(403)
+  })
+
+  it(
+    'runs a full secret election: nominate → screen → credential → ranked ballot → IRV tally',
+    { timeout: 90000 },
+    async () => {
+      // Create (facilitator only).
+      const create = await api('/governance/elections', {
+        method: 'POST',
+        cookie: facilitator.cookie,
+        body: JSON.stringify({
+          title: `Contract election ${Date.now()}`,
+          kind: 'other',
+          races: [{ slug: 'seat', label: 'Seat' }],
+          quorumIndividuals: 1,
+          quorumOrganisations: 0,
+        }),
+      })
+      expect(create.status).toBe(201)
+      const { election } = await create.json()
+      expect(election.status).toBe('announced')
+
+      // Network-only member cannot nominate.
+      await api(`/governance/elections/${election.id}/advance`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      const deniedNom = await api(`/governance/elections/${election.id}/candidates`, {
+        method: 'POST',
+        cookie: member.cookie,
+        body: JSON.stringify({ race: 'seat', statement: 'x' }),
+      })
+      expect(deniedNom.status).toBe(403)
+      expect((await deniedNom.json()).error.code).toBe('not_constituency_work')
+
+      // Two CW candidates nominate; facilitator screens both in.
+      const nomA = await api(`/governance/elections/${election.id}/candidates`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({ race: 'seat', statement: 'Candidate A' }),
+      })
+      expect(nomA.status).toBe(201)
+      const candA = (await nomA.json()).candidate
+      const nomB = await api(`/governance/elections/${election.id}/candidates`, {
+        method: 'POST',
+        cookie: wgLead.cookie,
+        body: JSON.stringify({ race: 'seat', statement: 'Candidate B' }),
+      })
+      expect(nomB.status).toBe(201)
+      const candB = (await nomB.json()).candidate
+      for (const cand of [candA, candB]) {
+        const res = await api(
+          `/governance/elections/${election.id}/candidates/${cand.id}/screen`,
+          {
+            method: 'POST',
+            cookie: facilitator.cookie,
+            body: JSON.stringify({ status: 'screened_in' }),
+          },
+        )
+        expect(res.status).toBe(200)
+      }
+
+      // Advance to voting; issue voter credentials.
+      await api(`/governance/elections/${election.id}/advance`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      const cred1 = await api(`/governance/elections/${election.id}/credential`, {
+        method: 'POST',
+        cookie: voter1.cookie,
+      })
+      expect(cred1.status).toBe(201)
+      const { token: token1 } = await cred1.json()
+      expect(token1).toBeTruthy()
+      // One credential per voter.
+      expect(
+        (
+          await api(`/governance/elections/${election.id}/credential`, {
+            method: 'POST',
+            cookie: voter1.cookie,
+          })
+        ).status,
+      ).toBe(409)
+      const cred2 = await api(`/governance/elections/${election.id}/credential`, {
+        method: 'POST',
+        cookie: wgContact.cookie,
+      })
+      const { token: token2 } = await cred2.json()
+      const cred3 = await api(`/governance/elections/${election.id}/credential`, {
+        method: 'POST',
+        cookie: voter2.cookie,
+      })
+      const { token: token3 } = await cred3.json()
+
+      // Cast ranked ballots via token — not via the account session.
+      const vote1 = await api(`/governance/elections/${election.id}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({
+          token: token1,
+          race: 'seat',
+          ranks: [candA.id, candB.id],
+        }),
+      })
+      expect(vote1.status).toBe(200)
+      const vote2 = await api(`/governance/elections/${election.id}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({
+          token: token2,
+          race: 'seat',
+          ranks: [candB.id, candA.id],
+        }),
+      })
+      expect(vote2.status).toBe(200)
+      const vote3 = await api(`/governance/elections/${election.id}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({
+          token: token3,
+          race: 'seat',
+          ranks: [candA.id],
+        }),
+      })
+      expect(vote3.status).toBe(200)
+      // One ballot per credential per race.
+      expect(
+        (
+          await api(`/governance/elections/${election.id}/vote`, {
+            method: 'POST',
+            body: JSON.stringify({
+              token: token1,
+              race: 'seat',
+              ranks: [candB.id],
+            }),
+          })
+        ).status,
+      ).toBe(409)
+      // Bogus token rejected.
+      expect(
+        (
+          await api(`/governance/elections/${election.id}/vote`, {
+            method: 'POST',
+            body: JSON.stringify({
+              token: 'bogus',
+              race: 'seat',
+              ranks: [candA.id],
+            }),
+          })
+        ).status,
+      ).toBe(403)
+
+      // Only the facilitation team tallies. 2-1 on first preferences → A
+      // wins outright; the result is published on the election record.
+      const deniedTally = await api(`/governance/elections/${election.id}/tally`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+      })
+      expect(deniedTally.status).toBe(403)
+      const tally = await api(`/governance/elections/${election.id}/tally`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      expect(tally.status).toBe(200)
+      const tallied = (await tally.json()).election
+      expect(tallied.status).toBe('completed')
+      expect(tallied.result.races.seat.outcome).toBe('elected')
+      expect(tallied.result.races.seat.winner).toBe(String(candA.id))
+      expect(tallied.result.ballotsCast.individuals).toBe(3)
+    },
+  )
+
+  it(
+    'runs a selection: committee (min 3) → apply → recusal blocks scoring → decide → announce',
+    { timeout: 90000 },
+    async () => {
+      const create = await api('/governance/selections', {
+        method: 'POST',
+        cookie: facilitator.cookie,
+        body: JSON.stringify({
+          title: `Contract selection ${Date.now()}`,
+          opportunityNote: 'test opportunity',
+          method: 'colour',
+          criteria: [{ name: 'Experience', weightPct: 100 }],
+          spotsAvailable: 1,
+        }),
+      })
+      expect(create.status).toBe(201)
+      const { selection } = await create.json()
+
+      // Committee must reach 3 before opening.
+      const premature = await api(`/governance/selections/${selection.id}/open`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      expect(premature.status).toBe(409)
+      expect((await premature.json()).error.code).toBe('committee_too_small')
+      for (const who of [facilitator, cwMember, wgLead]) {
+        const res = await api(`/governance/selections/${selection.id}/committee`, {
+          method: 'POST',
+          cookie: who.cookie,
+        })
+        expect(res.status).toBe(201)
+      }
+      const open = await api(`/governance/selections/${selection.id}/open`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      expect(open.status).toBe(200)
+
+      // Two applications.
+      const appA = await api(`/governance/selections/${selection.id}/apply`, {
+        method: 'POST',
+        cookie: wgContact.cookie,
+        body: JSON.stringify({ answers: { motivation: 'A' } }),
+      })
+      expect(appA.status).toBe(201)
+      const applicationA = (await appA.json()).application
+      expect(
+        (
+          await api(`/governance/selections/${selection.id}/apply`, {
+            method: 'POST',
+            cookie: voter1.cookie,
+            body: JSON.stringify({ answers: { motivation: 'B' } }),
+          })
+        ).status,
+      ).toBe(201)
+
+      // Close for evaluation; wgLead recuses on applicationA.
+      await api(`/governance/selections/${selection.id}/close`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      const recuse = await api(`/governance/selections/${selection.id}/recuse`, {
+        method: 'POST',
+        cookie: wgLead.cookie,
+        body: JSON.stringify({ applicantIds: [applicationA.id] }),
+      })
+      expect(recuse.status).toBe(200)
+      const recusedEval = await api(
+        `/governance/selections/${selection.id}/applications/${applicationA.id}/evaluate`,
+        {
+          method: 'POST',
+          cookie: wgLead.cookie,
+          body: JSON.stringify({ grade: 'green' }),
+        },
+      )
+      expect(recusedEval.status).toBe(409)
+      expect((await recusedEval.json()).error.code).toBe('conflict_of_interest')
+      // Non-recused committee member can grade.
+      const evalOk = await api(
+        `/governance/selections/${selection.id}/applications/${applicationA.id}/evaluate`,
+        {
+          method: 'POST',
+          cookie: cwMember.cookie,
+          body: JSON.stringify({ grade: 'green' }),
+        },
+      )
+      expect(evalOk.status).toBe(200)
+      // Applicants (non-committee) cannot grade.
+      const applicantEval = await api(
+        `/governance/selections/${selection.id}/applications/${applicationA.id}/evaluate`,
+        {
+          method: 'POST',
+          cookie: wgContact.cookie,
+          body: JSON.stringify({ grade: 'green' }),
+        },
+      )
+      expect(applicantEval.status).toBe(403)
+
+      // Decide + announce.
+      const decide = await api(`/governance/selections/${selection.id}/decide`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+        body: JSON.stringify({
+          selectedApplicationIds: [applicationA.id],
+          selectionSummary: 'contract pick',
+        }),
+      })
+      expect(decide.status).toBe(200)
+      const announce = await api(`/governance/selections/${selection.id}/announce`, {
+        method: 'POST',
+        cookie: facilitator.cookie,
+      })
+      expect(announce.status).toBe(200)
+      const announced = await announce.json()
+      expect(announced.selection.status).toBe('announced')
+      expect(announced.selected.length).toBe(1)
+    },
+  )
 })

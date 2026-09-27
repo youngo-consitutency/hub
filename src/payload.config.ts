@@ -53,6 +53,16 @@ import {
   DecisionVetoes,
   DecisionEvents,
 } from './collections/Decisions'
+import {
+  Elections,
+  ElectionCandidates,
+  ElectionVoters,
+  ElectionBallots,
+  Selections,
+  SelectionCommittee,
+  SelectionApplications,
+  SelectionEvaluations,
+} from './collections/Governance'
 import { domainEndpoints } from './endpoints'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
@@ -114,6 +124,14 @@ export default buildConfig({
     DecisionBallots,
     DecisionVetoes,
     DecisionEvents,
+    Elections,
+    ElectionCandidates,
+    ElectionVoters,
+    ElectionBallots,
+    Selections,
+    SelectionCommittee,
+    SelectionApplications,
+    SelectionEvaluations,
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
