@@ -43,9 +43,6 @@
     "tsx": "^4.23.13",
     "web-push": "^3.6.7"
   },
-  "optionalDependencies": {
-    "@rolldown/binding-linux-x64-gnu": "1.2.5"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
