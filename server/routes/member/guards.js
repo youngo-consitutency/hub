@@ -93,7 +93,7 @@ export async function requireOrgScope(req, res, permission = 'read') {
     res.status(403).json({
       error: {
         code: 'forbidden',
-        message: 'Only the organization owner may manage seats.',
+        message: 'Only the organisation owner may manage seats.',
       },
     })
     return null
