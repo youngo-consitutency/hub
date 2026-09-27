@@ -8,7 +8,8 @@ import * as migration_20260927_120000_decision_engine from './20260927_120000_de
 import * as migration_20260927_123000_decision_locked_rels from './20260927_123000_decision_locked_rels';
 import * as migration_20260927_130000_governance_elections_selections from './20260927_130000_governance_elections_selections';
 import * as migration_20260927_140000_handovers from './20260927_140000_handovers'
-import * as migration_20260927_150000_operations from './20260927_150000_operations';
+import * as migration_20260927_150000_operations from './20260927_150000_operations'
+import * as migration_20260927_160000_decision_bridge from './20260927_160000_decision_bridge';
 
 export const migrations = [
   {

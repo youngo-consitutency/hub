@@ -3,10 +3,9 @@ import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
 
 import {
-  transitionDeadline,
+  BODY_ID_SQL,
   BODY_KINDS,
-  type Decision,
-  type DecisionState,
+  DECISION_VIEW_SELECT,
   type Body,
   type Task,
 } from './platformShared.ts'
@@ -19,7 +18,7 @@ export interface Actor {
   membershipStatus?: string
   hubAccessStatus?: string
 }
-type Input = Record<string, unknown>
+export type Input = Record<string, unknown>
 export function fail(status: number, message: string): never {
   throw Object.assign(new Error(message), {
     status,
@@ -157,7 +156,6 @@ export async function permissions(
 }
 const bodySelect = `SELECT id,name,kind,description,public_summary AS "publicSummary",review_due_at AS "reviewDueAt",version,published_version AS "publishedVersion" FROM platform_bodies`
 const taskSelect = `SELECT t.id,t.body_id AS "bodyId",t.title,t.description,t.owner_id AS "ownerId",a.name AS "ownerName",t.due_at AS "dueAt",t.status,t.decision_id AS "decisionId",t.version,t.created_by AS "createdBy" FROM platform_tasks t LEFT JOIN accounts a ON a.id=t.owner_id`
-const decisionSelect = `SELECT id,body_id AS "bodyId",(SELECT name FROM platform_bodies b WHERE b.id=platform_decisions.body_id) AS "bodyName",title,proposal,stage,process,policy_version AS "policyVersion",urgency_reason AS "urgencyReason",snap_hours::float AS "snapHours",deadline_at AS "deadlineAt",version,author_id AS "authorId",is_public AS "isPublic",outcome,outcome_evidence AS "outcomeEvidence",electorate_size AS "electorateSize",votes_for AS "votesFor",votes_against AS "votesAgainst" FROM platform_decisions`
 const enquirySelect = `SELECT id,organisation,contact_name AS "contactName",email,message,status,owner_id AS "ownerId",follow_up_at AS "followUpAt",decision_id AS "decisionId",public_summary AS "publicSummary",website,version FROM platform_enquiries`
 
 export async function overview(actor: Actor) {
@@ -184,8 +182,8 @@ export async function overview(actor: Actor) {
         [p.cw ? bodyIds : []],
       ),
       db().query(
-        decisionSelect +
-          ' WHERE body_id=ANY($1::text[]) ORDER BY updated_at DESC LIMIT 500',
+        DECISION_VIEW_SELECT +
+          ' WHERE ' + BODY_ID_SQL + ' = ANY($1::text[]) ORDER BY dp.updated_at DESC LIMIT 500',
         [p.cw ? bodyIds : []],
       ),
       p.partnerships
@@ -534,354 +532,6 @@ export async function saveTask(actor: Actor, input: Input, id?: string) {
   })
 }
 
-export async function saveDecision(actor: Actor, input: Input, id?: string) {
-  return transaction(async (client) => {
-    const p = await permissions(actor, client),
-      bodyId = text(input, 'bodyId')
-    if (!p.participates(bodyId))
-      fail(403, 'Only members of this body can propose a decision.')
-    const title = text(input, 'title'),
-      proposal = text(input, 'proposal', 20000),
-      process = text(input, 'process'),
-      policy = text(input, 'policyVersion', 200),
-      urgency = text(input, 'urgencyReason', 2000, false)
-    if (!['standard', 'snap'].includes(process))
-      fail(
-        400,
-        'Choose a standard or snap process. Conference decisions require a separate attendance model.',
-      )
-    const snapHours = Number(input.snapHours ?? 24)
-    if (!Number.isFinite(snapHours) || snapHours <= 0 || snapHours >= 168)
-      fail(400, 'Snap decisions need fewer than 168 hours.')
-    if (process !== 'standard' && urgency.length < 8)
-      fail(400, 'Explain the urgency or conference context.')
-    const values = [
-      bodyId,
-      title,
-      proposal,
-      process,
-      policy,
-      urgency,
-      snapHours,
-      actor.id,
-    ]
-    const result = id
-      ? await client.query(
-          `UPDATE platform_decisions SET title=$2,proposal=$3,version=version+1,updated_at=now() WHERE id=$9 AND body_id=$1 AND version=$10 AND stage IN ('draft','revision') AND process=$4 AND policy_version=$5 AND urgency_reason=$6 AND snap_hours=$7 AND (author_id=$8 OR $11::boolean) RETURNING *`,
-          [...values, uuid(id), input.version, p.manages(bodyId)],
-        )
-      : await client.query(
-          `INSERT INTO platform_decisions(body_id,title,proposal,process,policy_version,urgency_reason,snap_hours,author_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-          values,
-        )
-    if (!result.rowCount)
-      fail(409, 'The proposal changed or cannot be edited in this phase.')
-    const row = result.rows[0]
-    await client.query(
-      'INSERT INTO platform_decision_revisions(decision_id,version,title,proposal,author_id) VALUES($1,$2,$3,$4,$5)',
-      [row.id, row.version, title, proposal, actor.id],
-    )
-    await audit(
-      client,
-      actor,
-      'decision.revised',
-      row.id,
-      `Proposal version ${row.version}`,
-    )
-    return { id: row.id }
-  })
-}
-export async function decisionDetail(actor: Actor, id: string) {
-  const { rows } = await db().query(decisionSelect + ' WHERE id=$1', [uuid(id)])
-  const d = rows[0]
-  if (!d) fail(404, 'Decision not found.')
-  const p = await permissions(actor)
-  if (!p.participates(d.bodyId))
-    fail(403, 'Only members of this body can read the process.')
-  const [contributions, revisions, history] = await Promise.all([
-    db().query(
-      `SELECT c.id,c.author_id AS "authorId",a.name AS "authorName",c.kind,c.text,c.grounds,c.alternative,c.resolution,c.created_at AS "createdAt" FROM platform_contributions c JOIN accounts a ON a.id=c.author_id WHERE c.decision_id=$1 ORDER BY c.created_at`,
-      [id],
-    ),
-    db().query(
-      `SELECT version,title,proposal,created_at AS "createdAt" FROM platform_decision_revisions WHERE decision_id=$1 ORDER BY version DESC`,
-      [id],
-    ),
-    db().query(
-      `SELECT action,reason,created_at AS "createdAt" FROM audit_log WHERE target_type='platform' AND target_id=$1 ORDER BY created_at`,
-      [id],
-    ),
-  ])
-  return {
-    viewerId: actor.id,
-    decision: d,
-    contributions: contributions.rows,
-    revisions: revisions.rows,
-    history: history.rows,
-    canManage: p.manages(d.bodyId),
-    canParticipate: true,
-  }
-}
-export async function contribute(actor: Actor, id: string, input: Input) {
-  return transaction(async (client) => {
-    const { rows } = await client.query(
-        'SELECT * FROM platform_decisions WHERE id=$1 FOR UPDATE',
-        [uuid(id)],
-      ),
-      d = rows[0]
-    if (!d) fail(404, 'Decision not found.')
-    if (!(await permissions(actor, client)).participates(d.body_id))
-      fail(403, 'Only members of this body may participate.')
-    if (
-      !['consultation', 'decision'].includes(d.stage) ||
-      new Date(d.deadline_at).getTime() <= Date.now()
-    )
-      fail(409, 'The response period is closed.')
-    const kind = text(input, 'kind'),
-      message = text(input, 'text', 5000),
-      grounds = text(input, 'grounds', 3000, false),
-      alternative = text(input, 'alternative', 5000, false)
-    if (!['comment', 'red', 'grey'].includes(kind))
-      fail(400, 'Choose comment, red or grey flag.')
-    if (kind === 'red' && (!grounds || !alternative))
-      fail(400, 'A red flag needs grounds and an alternative proposal.')
-    if (kind === 'grey' && !grounds)
-      fail(400, 'Explain the concern behind a grey flag.')
-    const { rows: added } = await client.query(
-      'INSERT INTO platform_contributions(decision_id,author_id,kind,text,grounds,alternative) VALUES($1,$2,$3,$4,$5,$6) RETURNING id',
-      [id, actor.id, kind, message, grounds, alternative],
-    )
-    await audit(
-      client,
-      actor,
-      'decision.contribution',
-      id,
-      `${kind} recorded`,
-      { contributionId: added[0].id },
-    )
-  })
-}
-export async function resolveContribution(
-  actor: Actor,
-  id: string,
-  input: Input,
-) {
-  return transaction(async (client) => {
-    const { rows } = await client.query(
-        `SELECT c.*,d.body_id,d.stage FROM platform_contributions c JOIN platform_decisions d ON d.id=c.decision_id WHERE c.id=$1 FOR UPDATE OF d,c`,
-        [uuid(id)],
-      ),
-      c = rows[0]
-    if (!c) fail(404, 'Contribution not found.')
-    const p = await permissions(actor, client)
-    // A coordinator may answer a flag, but its author must confirm withdrawal.
-    if (!p.participates(c.body_id) || c.author_id !== actor.id)
-      fail(
-        403,
-        'Only the flag author can confirm that their concern is resolved.',
-      )
-    if (c.kind === 'comment') fail(400, 'Comments are not flags.')
-    if (['adopted', 'not_adopted', 'withdrawn'].includes(c.stage))
-      fail(409, 'The decision is already closed.')
-    const reason = text(input, 'resolution', 3000)
-    await client.query(
-      'UPDATE platform_contributions SET resolution=$2,resolved_by=$3,resolved_at=now() WHERE id=$1',
-      [id, reason, actor.id],
-    )
-    await audit(client, actor, 'decision.flag_resolved', c.decision_id, reason)
-  })
-}
-export async function transition(actor: Actor, id: string, input: Input) {
-  return transaction(async (client) => {
-    const { rows } = await client.query(
-        'SELECT * FROM platform_decisions WHERE id=$1 FOR UPDATE',
-        [uuid(id)],
-      ),
-      d = rows[0]
-    if (!d) fail(404, 'Decision not found.')
-    if (!(await permissions(actor, client)).manages(d.body_id))
-      fail(
-        403,
-        'The assigned body facilitator must confirm process transitions.',
-      )
-    if (d.version !== input.version)
-      fail(409, 'The proposal changed. Review its current version.')
-    const next = text(input, 'stage') as DecisionState
-    let reason = text(input, 'reason', 3000)
-    const allowed: Record<string, string[]> = {
-      draft: ['consultation', 'withdrawn'],
-      consultation: ['revision', 'withdrawn'],
-      revision: ['decision', 'withdrawn'],
-      decision: ['adopted', 'voting', 'withdrawn'],
-      voting: ['adopted', 'not_adopted', 'withdrawn'],
-    }
-    if (!allowed[d.stage]?.includes(next))
-      fail(409, 'This transition is not allowed.')
-    if (
-      next !== 'withdrawn' &&
-      d.deadline_at &&
-      new Date(d.deadline_at).getTime() > Date.now()
-    )
-      fail(409, 'Wait for the current response period to end.')
-    let evidence = '',
-      electorate: number | null = null,
-      forVotes: number | null = null,
-      against: number | null = null
-    if (next === 'adopted' || next === 'not_adopted') {
-      evidence = text(input, 'evidence', 3000)
-      if (d.stage === 'decision') {
-        const flags = await client.query(
-          "SELECT 1 FROM platform_contributions WHERE decision_id=$1 AND kind='red' AND resolution IS NULL LIMIT 1",
-          [id],
-        )
-        if (flags.rowCount)
-          fail(
-            409,
-            'Resolve the outstanding red flags or use the voting process.',
-          )
-      }
-      if (d.stage === 'decision') {
-        const grey = await client.query(
-          "SELECT 1 FROM platform_contributions WHERE decision_id=$1 AND kind='grey' AND resolution IS NULL LIMIT 1",
-          [id],
-        )
-        if (grey.rowCount)
-          reason += `\nReservations considered: ${text(input, 'reservations', 3000)}`
-      }
-      if (d.stage === 'voting') {
-        if (
-          ![input.electorateSize, input.votesFor, input.votesAgainst].every(
-            (v) => typeof v === 'number' && Number.isSafeInteger(v),
-          )
-        )
-          fail(400, 'Enter all three vote counts explicitly.')
-        electorate = Number(input.electorateSize)
-        forVotes = Number(input.votesFor)
-        against = Number(input.votesAgainst)
-        if (
-          ![electorate, forVotes, against].every(Number.isInteger) ||
-          electorate < 1 ||
-          forVotes < 0 ||
-          against < 0 ||
-          forVotes + against > electorate
-        )
-          fail(400, 'Enter valid eligible-seat and vote counts.')
-        if (forVotes + against < Math.ceil(electorate * 0.05))
-          fail(
-            409,
-            'The vote did not meet quorum. Withdraw the proposal and record the ballot evidence.',
-          )
-        const passed = forVotes * 3 >= (forVotes + against) * 2
-        if ((next === 'adopted') !== passed)
-          fail(
-            409,
-            'The recorded vote does not support this outcome (5% quorum, two-thirds approval).',
-          )
-      }
-    }
-    const outcomeBasis = text(input, 'outcomeBasis', 40, false)
-    let veto: Input | undefined
-    if (outcomeBasis && !['process', 'formal_veto'].includes(outcomeBasis))
-      fail(400, 'Choose a recognised outcome basis.')
-    if (outcomeBasis === 'formal_veto') {
-      if (d.stage !== 'voting' || next !== 'withdrawn')
-        fail(409, 'A formal veto stops the vote and withdraws the proposal.')
-      const organisations = Number(input.vetoOrganisations),
-        south = Number(input.vetoGlobalSouth),
-        bodies = Number(input.vetoBodies)
-      if (
-        ![organisations, south, bodies].every(Number.isSafeInteger) ||
-        Math.min(organisations, south, bodies) < 0 ||
-        south > organisations
-      )
-        fail(400, 'Enter valid represented organisation and body counts.')
-      if (organisations < 20 && south < 6 && bodies < 5)
-        fail(409, 'The formal veto threshold has not been met.')
-      evidence = text(input, 'evidence', 3000)
-      veto = { organisations, globalSouthOrganisations: south, bodies }
-      reason = `Formal veto: ${reason}`
-    }
-    if (next === 'withdrawn' && !evidence)
-      evidence = text(input, 'evidence', 3000, false)
-    const deadline = transitionDeadline(
-      d.process as Decision['process'],
-      next,
-      new Date(),
-      Number(d.snap_hours),
-    )
-    await client.query(
-      `UPDATE platform_decisions SET stage=$2,deadline_at=$3,outcome=$4,outcome_evidence=$5,electorate_size=$6,votes_for=$7,votes_against=$8,version=version+1,updated_at=now() WHERE id=$1`,
-      [
-        id,
-        next,
-        deadline,
-        ['adopted', 'not_adopted', 'withdrawn'].includes(next) ? reason : null,
-        evidence || null,
-        electorate,
-        forVotes,
-        against,
-      ],
-    )
-    await audit(client, actor, `decision.${next}`, id, reason, {
-      version: d.version,
-      deadline,
-      electorate,
-      votesFor: forVotes,
-      votesAgainst: against,
-      ...(veto ? { veto } : {}),
-    })
-    if (next === 'adopted') {
-      await client.query(
-        `INSERT INTO platform_tasks(body_id,title,description,owner_id,due_at,status,decision_id,created_by) VALUES($1,$2,$3,$4,now()+interval '7 days','open',$5,$4)`,
-        [
-          d.body_id,
-          `Communicate decision: ${d.title}`.slice(0, 200),
-          'Update the constituency decision tracker and communicate through the main channel. Record the communication link here when complete.',
-          actor.id,
-          id,
-        ],
-      )
-    }
-  })
-}
-export async function publishDecision(
-  actor: Actor,
-  id: string,
-  version: unknown,
-) {
-  return transaction(async (client) => {
-    const p = await permissions(actor, client)
-    if (!p.publisher)
-      fail(403, 'A content publisher must approve public disclosure.')
-    const record = (
-      await client.query('SELECT body_id FROM platform_decisions WHERE id=$1', [
-        uuid(id),
-      ])
-    ).rows[0]
-    if (!record || !p.participates(record.body_id))
-      fail(
-        403,
-        'The publisher must belong to this body to review its decision.',
-      )
-    const result = await client.query(
-      `UPDATE platform_decisions SET is_public=true WHERE id=$1 AND version=$2 AND stage='adopted' AND author_id<>$3 AND (SELECT r.author_id FROM platform_decision_revisions r WHERE r.decision_id=platform_decisions.id ORDER BY r.version DESC LIMIT 1)<>$3 RETURNING id`,
-      [uuid(id), version, actor.id],
-    )
-    if (!result.rowCount)
-      fail(
-        409,
-        'Only an adopted, current proposal can be published by a different person.',
-      )
-    await audit(
-      client,
-      actor,
-      'decision.published',
-      id,
-      'Approved for the public decision register',
-    )
-  })
-}
-
 export async function createEnquiry(input: Input) {
   if (input.consent !== true)
     fail(400, 'Consent to using these details to respond is required.')
@@ -969,7 +619,7 @@ export async function publicPlatform() {
       'SELECT public_snapshot FROM platform_bodies WHERE public_snapshot IS NOT NULL ORDER BY name',
     ),
     db().query(
-      `SELECT id,title,proposal,outcome,policy_version AS "policyVersion",updated_at AS "decidedAt" FROM platform_decisions WHERE is_public=true AND stage='adopted' ORDER BY updated_at DESC LIMIT 200`,
+      `SELECT COALESCE(pd.id::text, dp.id::text) AS id, dp.title, dp.proposal_text AS proposal, dp.result_summary AS outcome, dp.policy_version AS "policyVersion", dp.decided_at AS "decidedAt" FROM decision_proposals dp LEFT JOIN platform_decisions pd ON pd.s09_proposal_id = dp.id WHERE dp.is_public = true AND dp.status = 'adopted' ORDER BY dp.decided_at DESC LIMIT 200`,
     ),
     db().query(
       "SELECT e.id,e.organisation,e.public_summary AS summary,e.website FROM platform_enquiries e JOIN platform_decisions d ON d.id=e.decision_id WHERE e.status='approved' AND d.is_public=true AND d.stage='adopted' ORDER BY e.organisation",
@@ -1064,26 +714,12 @@ export async function withdrawPublication(
     const p = await permissions(actor, client)
     if (!p.publisher) fail(403, 'A content publisher assignment is required.')
     const reason = text(input, 'reason', 2000)
-    let result
-    if (kind === 'body')
-      result = await client.query(
-        'UPDATE platform_bodies SET public_snapshot=NULL,published_version=NULL,published_by=NULL WHERE id=$1 AND version=$2 RETURNING id',
-        [id, input.version],
-      )
-    else {
-      const record = (
-        await client.query(
-          'SELECT body_id FROM platform_decisions WHERE id=$1',
-          [uuid(id)],
-        )
-      ).rows[0]
-      if (!record || !p.participates(record.body_id))
-        fail(403, 'The publisher must belong to this body.')
-      result = await client.query(
-        'UPDATE platform_decisions SET is_public=false WHERE id=$1 AND version=$2 RETURNING id',
-        [id, input.version],
-      )
-    }
+    if (kind !== 'body')
+      fail(400, 'Decision publication is handled by the decision engine bridge.')
+    const result = await client.query(
+      'UPDATE platform_bodies SET public_snapshot=NULL,published_version=NULL,published_by=NULL WHERE id=$1 AND version=$2 RETURNING id',
+      [id, input.version],
+    )
     if (!result.rowCount) fail(409, 'The record changed. Reload first.')
     await audit(client, actor, `${kind}.publication_withdrawn`, id, reason)
   })

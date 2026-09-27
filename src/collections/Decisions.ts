@@ -51,6 +51,14 @@ export const DecisionProposals: CollectionConfig = {
     },
     { name: 'snapJustification', type: 'textarea' },
     { name: 'snapDeadline', type: 'date' },
+    // Policy version the proposal was drafted under, and the snap window in
+    // hours — both carried for audit/publication displays.
+    { name: 'policyVersion', type: 'text' },
+    { name: 'snapHours', type: 'number' },
+    // Optimistic-lock counter, incremented on every edit/transition.
+    { name: 'version', type: 'number', defaultValue: 1 },
+    // Legacy platform_decisions uuid, kept so old links keep resolving.
+    { name: 'legacyRef', type: 'text', index: true },
     {
       name: 'status',
       type: 'select',
@@ -105,6 +113,23 @@ export const DecisionProposals: CollectionConfig = {
     { name: 'decidedAt', type: 'date' },
     { name: 'resultSummary', type: 'textarea' },
     { name: 'trackerUrl', type: 'text' },
+    // Outcome record: evidence link/note plus the recorded tally when a vote
+    // closed the proposal.
+    { name: 'outcomeEvidence', type: 'textarea' },
+    { name: 'votesFor', type: 'number' },
+    { name: 'votesAgainst', type: 'number' },
+    // Approved for the public decision register by a content publisher.
+    { name: 'isPublic', type: 'checkbox', defaultValue: false },
+    {
+      name: 'revisions',
+      type: 'array',
+      fields: [
+        { name: 'version', type: 'number', required: true },
+        { name: 'title', type: 'text', required: true },
+        { name: 'proposal', type: 'textarea', required: true },
+        { name: 'createdAt', type: 'date' },
+      ],
+    },
   ],
 }
 

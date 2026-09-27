@@ -1243,6 +1243,10 @@ export interface DecisionProposal {
   bodyRef?: string | null;
   snapJustification?: string | null;
   snapDeadline?: string | null;
+  policyVersion?: string | null;
+  snapHours?: number | null;
+  version?: number | null;
+  legacyRef?: string | null;
   status:
     | 'draft'
     | 'consultation'
@@ -1272,6 +1276,19 @@ export interface DecisionProposal {
   decidedAt?: string | null;
   resultSummary?: string | null;
   trackerUrl?: string | null;
+  outcomeEvidence?: string | null;
+  votesFor?: number | null;
+  votesAgainst?: number | null;
+  isPublic?: boolean | null;
+  revisions?:
+    | {
+        version: number;
+        title: string;
+        proposal: string;
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2779,6 +2796,10 @@ export interface DecisionProposalsSelect<T extends boolean = true> {
   bodyRef?: T;
   snapJustification?: T;
   snapDeadline?: T;
+  policyVersion?: T;
+  snapHours?: T;
+  version?: T;
+  legacyRef?: T;
   status?: T;
   proposedBy?: T;
   contactPersons?: T;
@@ -2798,6 +2819,19 @@ export interface DecisionProposalsSelect<T extends boolean = true> {
   decidedAt?: T;
   resultSummary?: T;
   trackerUrl?: T;
+  outcomeEvidence?: T;
+  votesFor?: T;
+  votesAgainst?: T;
+  isPublic?: T;
+  revisions?:
+    | T
+    | {
+        version?: T;
+        title?: T;
+        proposal?: T;
+        createdAt?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

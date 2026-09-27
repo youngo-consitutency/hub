@@ -17,6 +17,8 @@ export interface AccountSpec {
   teams?: string[]
   /** Working-group assignment. */
   wg?: { slug: string; role: string }
+  /** Operational body assignment (platform bodies). */
+  body?: { slug: string; role: string }
   /** Required by the accounts collection; callers may override. */
   country?: string
 }
@@ -113,6 +115,9 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
 
   for (const team of spec.teams ?? []) {
     await upsertAssignment('team', team, 'member')
+  }
+  if (spec.body) {
+    await upsertAssignment('body', spec.body.slug, spec.body.role)
   }
   if (spec.wg) {
     await upsertAssignment('working_group', spec.wg.slug, spec.wg.role)
