@@ -1,16 +1,14 @@
 # Contributing to YOUNGO Hub
 
-Thanks for helping. Small fixes, clearer docs, translations, accessibility work, and thoughtful reports are useful contributions.
-
 ## Choose a task
 
-Check [open issues](https://github.com/youngo-consitutency/hub/issues) first. `good first issue` means a maintainer has checked that a task is suitable for a newcomer; `help wanted` means outside help is welcome. These labels may not always have open tasks.
+Look for `good first issue` or `help wanted` in [open issues](https://github.com/youngo-consitutency/hub/issues).
 
-Use [Discussions](https://github.com/youngo-consitutency/hub/discussions) for questions and early ideas. Open an issue for a specific bug or agreed change. For a large change, agree on the scope before writing code.
+Use [issues](https://github.com/youngo-consitutency/hub/issues/new/choose) for bugs, proposals, and documentation corrections. Agree on the scope of larger changes before starting.
 
 ## Set up
 
-Fork the repository, clone your fork, and create a branch:
+Work on a branch in your fork:
 
 ```sh
 git clone https://github.com/YOUR-USERNAME/hub.git
@@ -22,7 +20,7 @@ npm run dev-all
 
 Use Node.js 22.13 or later in the Node 22 series. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
 
-The root app and `hub-v2/` have separate dependencies, commands, and database changes. Say which one your change affects. Root checks do not test `hub-v2/`; read [its README](hub-v2/README.md) before working there.
+Root checks do not cover `hub-v2/`. Use [its setup and checks](hub-v2/README.md) for changes there.
 
 ## Make the change
 
@@ -47,9 +45,9 @@ If formatting fails, run `npm run format`, inspect the diff, and commit only cha
 
 ## Open a pull request
 
-Push your branch to your fork and open a pull request against `main`. Explain the problem, the change, and what you tested. Link the issue if there is one. A small fix does not need a separate issue first.
+Open a pull request against `main` with the problem, change, and test results. Link the issue when relevant; small fixes do not need one.
 
-Changes to `main` need one approving review, passing checks, and resolved review conversations. New commits can require a fresh review. Maintainers may ask for a smaller change or more evidence. A merged change is not automatically proof of a live deployment.
+Changes to `main` require one approving review, passing checks, and resolved review comments. New commits dismiss previous approvals.
 
 ## Docs and public content
 

@@ -1,6 +1,6 @@
 # Code of conduct
 
-Everyone should be able to contribute without harassment or discrimination. This applies to issues, pull requests, discussions, reviews, and other project spaces.
+Everyone should be able to contribute without harassment or discrimination. This applies to issues, pull requests, reviews, and other project spaces.
 
 - Be respectful, especially when you disagree. Discuss the work, not the person.
 - Welcome different backgrounds, experience levels, and English fluency.

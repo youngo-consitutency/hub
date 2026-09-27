@@ -29,12 +29,16 @@ npm run test:int
 npm run test:e2e
 ```
 
-The integration tests expect a running server and seeded demo accounts. The browser test setup launches `pnpm dev`, so it also needs pnpm 9, 10, or 11. The top-level `npm test` script in this directory calls pnpm too.
+The integration tests run in Node and expect a running server with seeded demo accounts. Browser tests start the app with `npm run dev`. Both use npm; pnpm is not required.
 
 `npm run seed` reads files from the root `data/` directory and creates demo accounts with known passwords. Some input files are not included in a public clone. Use it only with a disposable local database; it is not a production setup command.
 
-## Before changing deployment
+## Deployment limits
 
 The checked-in Dockerfile expects Next.js standalone output, but `next.config.ts` does not enable it. The Compose file still contains a MongoDB starter setup, while this app uses PostgreSQL. Neither is a verified deployment recipe.
 
 Read the [code map](https://github.com/youngo-consitutency/hub/wiki/Code-map), [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status), and [contribution guide](../CONTRIBUTING.md). Changes to the copied interface in `spa/` may also need changes in root `src/`; explain this in your pull request.
+
+## Dependencies
+
+A scoped override updates the old esbuild copy used by `@esbuild-kit/core-utils` through Drizzle Kit. Remove the override once that dependency chain includes a patched version.
