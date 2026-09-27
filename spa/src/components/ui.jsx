@@ -246,13 +246,9 @@ export function PageHeader({
         <div className="pageHeaderCopy">
           <h1 className="pageTitle">
             {Icon && (
-              <Icon
-                className="pageTitleIcon"
-                size={26}
-                strokeWidth={1.75}
-                aria-hidden="true"
-                focusable="false"
-              />
+              <span className="pageTitleIcon" aria-hidden="true">
+                <Icon size={26} strokeWidth={1.75} focusable="false" />
+              </span>
             )}
             <span>{title}</span>
           </h1>

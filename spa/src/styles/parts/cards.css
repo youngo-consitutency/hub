@@ -20,7 +20,8 @@
 }
 
 a.card:hover {
-  background: var(--bg-raised);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-tint) 22%, var(--bg-card));
 }
 
 a.card.rowBetween,
@@ -953,7 +954,8 @@ a.resourceRow:hover {
 }
 
 .btn-secondary {
-  background: var(--bg-raised);
+  border-color: var(--border);
+  background: var(--bg-card);
 }
 
 .btn-secondary:hover {
@@ -991,4 +993,47 @@ a.resourceRow:hover {
 .entityCard > .inlineLink:last-child,
 .entityCard > .btn:last-child {
   margin-top: auto;
+}
+
+/* A calendar date stays readable at every card width. */
+.dateStamp {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  min-height: 62px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-page);
+  color: var(--text-1);
+  line-height: 1;
+  gap: 5px;
+  text-decoration: none;
+}
+.dateStamp span {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dateStamp strong {
+  font-size: 25px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.eventCardIdentity {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.eventCardIdentity .entityCardHeader {
+  min-width: 0;
+}
+.eventCard .entityCardHeading h3 {
+  font-size: 17px;
 }

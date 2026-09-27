@@ -286,7 +286,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
 
   return (
     <main className="mandateGate" aria-labelledby="auth-title">
-      <div className="mandateShell authShell">
+      <div className="mandateShell authShell" data-auth-mode={mode}>
         <header className="mandateHeader">
           <div className="gateBrand">
             <Brand />
@@ -314,7 +314,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
               </p>
               <p className="authAboutRow">
                 <A href="/about" className="authAboutLink">
-                  New to YOUNGO? Read what the constituency is and how to join
+                  About YOUNGO and membership
                 </A>
               </p>
             </div>

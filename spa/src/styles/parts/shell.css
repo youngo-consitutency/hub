@@ -18,7 +18,7 @@
   gap: 2px;
   padding: 20px 12px 16px;
   border-right: 1px solid var(--border);
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-card) 70%, var(--bg-page));
   overflow-y: auto;
 }
 
@@ -134,9 +134,9 @@
 .sidebarSearch {
   min-height: 42px;
   margin: 2px 0 4px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-left-width: 1px;
-  background: var(--bg-raised);
+  background: var(--bg-card);
   color: var(--text-1);
   font-weight: 600;
 }
@@ -426,9 +426,7 @@
     top: calc(64px + env(safe-area-inset-top));
     right: 8px;
     width: calc(100vw - 16px);
-    max-height: calc(
-      100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
+    max-height: calc(100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
 }
 
@@ -964,19 +962,13 @@ a.profileLink {
 }
 
 .directoryLayer-base .directoryContacts {
-  grid-template-columns: repeat(
-    var(--catalog-columns),
-    minmax(0, var(--catalog-card-max))
-  );
+  grid-template-columns: repeat(var(--catalog-columns), minmax(0, var(--catalog-card-max)));
   justify-content: start;
   align-items: stretch;
 }
 
 .directoryLayer-middle .directoryContacts {
-  grid-template-columns: repeat(
-    var(--catalog-columns),
-    minmax(0, var(--catalog-card-max))
-  );
+  grid-template-columns: repeat(var(--catalog-columns), minmax(0, var(--catalog-card-max)));
   justify-content: start;
   align-items: stretch;
 }
@@ -1021,10 +1013,7 @@ a.profileLink {
 
 .peopleGrid {
   display: grid;
-  grid-template-columns: repeat(
-    var(--catalog-columns),
-    minmax(0, var(--catalog-card-max))
-  );
+  grid-template-columns: repeat(var(--catalog-columns), minmax(0, var(--catalog-card-max)));
   grid-auto-rows: 1fr;
   align-items: stretch;
   justify-content: start;

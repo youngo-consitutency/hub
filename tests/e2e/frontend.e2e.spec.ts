@@ -26,6 +26,29 @@ test.describe('Public site', () => {
     )
   })
 
+  test('public event preview can retry and shows an honest empty state', async ({ page }) => {
+    let attempts = 0
+    await page.route('**/api/landing', (route) => {
+      attempts += 1
+      return route.fulfill({
+        status: attempts === 1 ? 503 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          attempts === 1 ? { error: { message: 'Unavailable' } } : { events: [] },
+        ),
+      })
+    })
+    await page.goto(BASE)
+    const preview = page.getByRole('complementary', { name: 'Coming up' })
+    await expect(preview.getByText('Events could not be loaded.')).toBeVisible()
+    await preview.getByRole('button', { name: 'Try again' }).click()
+    await expect(preview.getByText('No upcoming events have been published.')).toBeVisible()
+    await expect(preview.getByRole('link', { name: 'Open the Hub calendar' })).toHaveAttribute(
+      'href',
+      '/calendar',
+    )
+  })
+
   test('public API responds with JSON collections', async ({ request }) => {
     for (const path of ['/api/events', '/api/feed', '/api/groups']) {
       const res = await request.get(`${BASE}${path}`)
