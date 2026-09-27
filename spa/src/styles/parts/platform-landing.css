@@ -1,918 +1,380 @@
-/* Signed-out member desk. Colour decisions live in tokens.css. */
+/* Public front page; shares the Hub's colour and type tokens. */
 .platformLanding {
   min-height: 100dvh;
-  overflow-x: clip;
-  background: var(--landing-canvas);
-  color: var(--landing-ink);
-  font-family: var(--font-ui);
+  background: var(--bg-page);
+  color: var(--text-1);
 }
-
 .platformLanding h1,
-.platformLanding h2 {
-  font-family: var(--font-ui);
+.platformLanding h2,
+.platformLanding h3 {
   text-wrap: balance;
 }
-
-.platformLanding a:focus-visible,
-.platformLanding button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+.platformLanding a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 5px;
 }
-
-.platformLanding .brandLockup {
-  gap: var(--space-2);
-}
-
-.platformLanding .brandLogoPlate {
-  border-color: color-mix(in srgb, var(--landing-line) 80%, transparent);
-  background: var(--brand-surface);
-}
-
 .platformHeader {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  padding-top: env(safe-area-inset-top);
-  border-bottom: 1px solid var(--landing-line);
-  background: color-mix(in srgb, var(--landing-canvas) 88%, transparent);
-  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
 }
-
 .platformHeaderInner {
-  width: min(100%, 1120px);
-  min-height: 72px;
+  max-width: 1280px;
+  min-height: 84px;
+  margin: auto;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
-  gap: clamp(16px, 3vw, 32px);
-  margin: 0 auto;
-  padding: 10px clamp(20px, 4vw, 40px);
+  gap: 12px;
 }
-
 .platformBrand {
-  flex: 0 0 auto;
+  margin-right: auto;
+  flex-shrink: 0;
 }
-
 .platformNav {
   display: flex;
-  align-items: center;
-  gap: clamp(16px, 2vw, 24px);
-  margin-left: auto;
-}
-
-.platformNav a,
-.platformSignIn {
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.platformNav a {
-  position: relative;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
-
-.platformNav a::after {
-  position: absolute;
-  right: 0;
-  bottom: 10px;
-  left: 0;
-  height: 1px;
-  content: '';
-  background: var(--landing-forest);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform var(--motion-standard) var(--motion-ease);
-}
-
-.platformNav a:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-
-.platformHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.platformSignIn {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--space-3);
-}
-
-.platformJoinButton {
-  min-height: 44px;
-}
-
-.platformHero {
-  position: relative;
-  overflow: clip;
-  display: grid;
-  align-items: start;
-  border-bottom: 1px solid var(--landing-line);
-  background: linear-gradient(
-    105deg,
-    color-mix(in srgb, var(--landing-teal) 62%, var(--brand-surface)) 0%,
-    color-mix(in srgb, var(--landing-lime) 52%, var(--brand-surface)) 36%,
-    color-mix(in srgb, var(--landing-forest) 8%, var(--landing-canvas)) 64%,
-    var(--landing-canvas) 100%
-  );
-}
-
-.platformHero::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 6px;
-  content: '';
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    var(--landing-teal) 0%,
-    var(--landing-lime) 46%,
-    var(--landing-forest) 100%
-  );
-}
-
-[data-theme='dark'] .platformHero {
-  background: linear-gradient(
-    105deg,
-    color-mix(in srgb, var(--landing-teal) 28%, var(--landing-canvas)) 0%,
-    color-mix(in srgb, var(--landing-lime) 20%, var(--landing-canvas)) 38%,
-    var(--landing-canvas) 74%
-  );
-}
-
-.platformHeroInner,
-.platformSectionInner,
-.platformFooterInner {
-  width: min(100%, 1120px);
-  margin: 0 auto;
-  padding-inline: clamp(20px, 4vw, 40px);
-}
-
-.platformHeroInner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-  align-items: center;
-  gap: clamp(32px, 6vw, 72px);
-  padding-top: clamp(36px, 6vh, 64px);
-  padding-bottom: clamp(48px, 7vh, 80px);
-}
-
-.platformHeroCopy {
-  min-width: 0;
-}
-
-.platformKicker,
-.platformSectionLabel {
-  color: var(--landing-forest);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.platformKicker {
-  margin: 0;
-}
-
-.platformHero h1 {
-  max-width: 18ch;
-  margin-top: var(--space-4);
-  font-size: clamp(34px, 4.8vw, 52px);
-  font-weight: 650;
-  letter-spacing: -0.045em;
-  line-height: 1.08;
-}
-
-.platformHeroLead {
-  max-width: 46ch;
-  margin-top: var(--space-5);
-  color: var(--text-2);
-  font-size: clamp(16px, 1.4vw, 18px);
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-
-.platformBenefitList {
-  max-width: 44ch;
-  margin: var(--space-5) 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: var(--space-3);
-}
-
-.platformBenefitList li {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-3);
-  color: var(--text-1);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.platformBenefitList li::before {
-  width: 6px;
-  height: 6px;
-  margin-top: 0.55em;
-  border-radius: 50%;
-  background: var(--landing-forest);
-  content: '';
-}
-
-.platformBenefitList a {
-  color: inherit;
-  font-weight: 650;
-}
-
-.platformBenefitList a:hover {
-  color: var(--landing-forest);
-}
-
-.platformHeroActions,
-.platformFinalActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.platformHeroActions {
-  margin-top: var(--space-6);
-}
-
-.platformHeroPrimary {
-  min-height: 44px;
-  padding-inline: 18px;
-  font-weight: 650;
-}
-
-.platformTextLink {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-2);
-  color: var(--text-2);
+  gap: 28px;
+  margin-right: 20px;
   font-size: 14px;
   font-weight: 600;
 }
-
-.platformTextLink svg {
-  color: var(--landing-forest);
-  transition: transform var(--motion-standard) var(--motion-ease-out);
+.platformLanding main,
+.aroundFooter {
+  max-width: 1280px;
+  margin: auto;
+  padding-inline: 32px;
 }
-
-.platformTextLink:hover svg {
-  transform: translateY(2px);
+.aroundHero {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: clamp(32px, 6vw, 80px);
+  align-items: center;
+  padding-block: clamp(48px, 6vw, 88px);
 }
-
-.platformReassurance {
-  max-width: 48ch;
-  margin-top: var(--space-4);
-  color: var(--text-3);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.platformAuth {
-  scroll-margin-top: 96px;
-  width: 100%;
-  padding: clamp(20px, 2.4vw, 28px);
-  border: 1px solid var(--landing-line);
-  border-radius: var(--radius-modal);
-  background: var(--bg-card);
-  box-shadow: var(--landing-shadow);
-}
-
-.platformAuthTitle {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
-}
-
-.platformAuthLead {
-  margin: var(--space-2) 0 var(--space-5);
-  color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.platformAuth .authForm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.platformAuth .input {
-  background: var(--bg-raised);
-}
-
-.platformAuth .btn-primary {
-  width: 100%;
-  min-height: 44px;
-}
-
-.platformAuthJoin {
-  margin: var(--space-5) 0 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--landing-line);
-  color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.platformAuthJoin a {
+.aroundEyebrow {
+  margin: 0 0 18px;
   color: var(--accent);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.aroundHero h1 {
+  font-size: clamp(56px, 7.2vw, 96px);
   font-weight: 650;
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+  margin: 0 0 28px;
 }
-
-.platformAuthJoin a:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+.aroundHero h1 span {
+  color: var(--accent);
 }
-
-.platformAuth .detailActions {
+.aroundLead {
+  font-size: clamp(20px, 2vw, 26px);
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+  margin: 0 0 18px;
+  max-width: 30ch;
+}
+.aroundIntro {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-2);
+  max-width: 54ch;
+  margin: 0;
+}
+.aroundActions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 22px;
+  align-items: center;
+  margin-top: 28px;
 }
-
-.platformAuth .detailActions .btn {
-  width: auto;
-  flex: 1 1 140px;
+.aroundTextLink {
+  font-size: 14px;
+  font-weight: 600;
 }
-
-.platformSection,
-.platformTrust,
-.platformFinalCta {
-  scroll-margin-top: 88px;
+.aroundTextLink span {
+  margin-left: 8px;
 }
-
-.platformSection {
-  padding-block: clamp(56px, 8vw, 96px);
-}
-
-.platformSectionHeading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.62fr);
-  align-items: end;
-  gap: clamp(20px, 4vw, 56px);
-  margin-bottom: clamp(28px, 4vw, 48px);
-}
-
-.platformSectionHeading h2,
-.platformTrustStatement h2,
-.platformFinalCta h2 {
-  margin-top: var(--space-3);
-  font-size: clamp(28px, 3.6vw, 40px);
-  font-weight: 650;
-  letter-spacing: -0.04em;
-  line-height: 1.12;
-}
-
-.platformSectionHeading > p,
-.platformTrustStatement > p:last-child {
-  color: var(--text-2);
-  font-size: 15px;
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-
-.platformModuleGrid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.platformModuleGrid li {
+.aroundHeroImage {
+  position: relative;
   min-width: 0;
-  grid-column: span 2;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--landing-line);
-  border-radius: var(--radius-card);
-  background: var(--landing-surface);
+  overflow: hidden;
+  border-radius: 4px 64px 4px 4px;
+  background: var(--bg-raised);
+  aspect-ratio: 1 / 1.05;
 }
-
-.platformModuleGrid li:nth-child(4),
-.platformModuleGrid li:nth-child(5) {
-  grid-column: span 3;
+.aroundHeroImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-
-.platformModuleIcon {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
+.aroundImageCaption {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  padding: 60px 28px 26px;
+  background: var(--photo-caption);
+  color: var(--photo-text);
 }
-
-.platformModuleGrid strong {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+.aroundImageCaption span {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
 }
-
-.platformModuleGrid p {
+.aroundImageCaption strong {
+  font-size: 21px;
+  font-weight: 500;
+}
+.aroundSection {
+  padding-block: 48px 64px;
+  border-top: 1px solid var(--border);
+}
+.aroundSectionHeading {
+  margin-bottom: 30px;
+}
+.aroundSectionHeading .aroundEyebrow {
+  margin-bottom: 10px;
+}
+.aroundSection h2,
+.aroundJoin h2 {
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  font-weight: 600;
   margin: 0;
-  color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.5;
 }
-
-.platformStepsSection {
-  border-block: 1px solid var(--landing-line);
-  background: var(--landing-surface);
-}
-
-.platformSteps {
+.aroundSpaces {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 20px;
 }
-
-.platformSteps li {
-  position: relative;
-  min-width: 0;
-  padding-right: clamp(20px, 3vw, 40px);
-}
-
-.platformStepNumber {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--landing-line);
-  border-radius: 50%;
-  background: var(--landing-canvas);
-  color: var(--landing-forest);
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.platformStepConnector {
-  position: absolute;
-  top: 20px;
-  right: 12px;
-  left: 48px;
-  height: 1px;
-  background: var(--landing-line);
-}
-
-.platformSteps li:last-child .platformStepConnector {
-  display: none;
-}
-
-.platformSteps h3 {
-  margin-top: var(--space-4);
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-}
-
-.platformSteps p {
-  max-width: 32ch;
-  margin-top: var(--space-2);
-  color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.platformNetworkSection {
-  border-bottom: 1px solid var(--landing-line);
-}
-
-.platformNetworkGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.platformNetworkCard {
-  min-width: 0;
-  min-height: 100%;
+.aroundSpace {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: clamp(20px, 2.6vw, 28px);
-  border: 1px solid var(--landing-line);
-  border-radius: var(--radius-card);
-  background: var(--landing-surface);
-  color: inherit;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
 }
-
-.platformNetworkCard:hover {
-  border-color: color-mix(
-    in srgb,
-    var(--landing-forest) 42%,
-    var(--landing-line)
-  );
+.aroundSpace:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
 }
-
-.platformNetworkCard:hover .platformNetworkHost svg {
-  transform: translate(2px, -2px);
+.aroundSpaceTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--accent);
+  margin-bottom: 36px;
 }
-
-.platformNetworkCard strong {
-  font-size: 18px;
-  font-weight: 650;
+.aroundSpaceTop span {
+  font: 12px var(--font-ui);
+  color: var(--text-3);
+}
+.aroundSpace h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  line-height: 1.2;
   letter-spacing: -0.025em;
 }
-
-.platformNetworkCard p {
-  max-width: 42ch;
-  margin: 0;
+.aroundSpace p {
+  margin: 0 0 30px;
+  line-height: 1.65;
   color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15px;
 }
-
-.platformNetworkCard p.platformNetworkCurrent {
-  color: var(--landing-forest);
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: -0.015em;
-}
-
-.platformNetworkHost {
+.aroundSpaceLink {
   margin-top: auto;
-  display: inline-flex;
+  display: flex;
+  gap: 8px;
   align-items: center;
-  gap: var(--space-2);
-  color: var(--landing-forest);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.platformNetworkHost svg {
-  transition: transform var(--motion-standard) var(--motion-ease-out);
-}
-
-.platformTrust {
-  padding-block: clamp(56px, 8vw, 96px);
-}
-
-.platformTrustInner {
-  display: grid;
-  grid-template-columns: minmax(240px, 0.86fr) minmax(320px, 1.14fr);
-  align-items: start;
-  gap: clamp(32px, 6vw, 80px);
-}
-
-.platformTrustStatement h2 {
-  max-width: 16ch;
-}
-
-.platformTrustStatement > p:last-child {
-  max-width: 48ch;
-  margin-top: var(--space-5);
-}
-
-.platformTrustList {
-  display: grid;
-}
-
-.platformTrustList article {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: var(--space-4);
-  padding: var(--space-5) 0;
-  border-top: 1px solid var(--landing-line);
-}
-
-.platformTrustList article:last-child {
-  border-bottom: 1px solid var(--landing-line);
-}
-
-.platformTrustList article > span {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-}
-
-.platformTrustList h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.platformTrustList p {
-  max-width: 50ch;
-  margin-top: var(--space-2);
-  color: var(--text-2);
+  justify-content: space-between;
   font-size: 14px;
-  line-height: 1.55;
+  font-weight: 600;
 }
-
-.platformFinalCta {
+.aroundEvents {
   display: grid;
-  justify-items: start;
-  padding: clamp(56px, 8vw, 88px) clamp(20px, 4vw, 40px);
-  border-top: 1px solid var(--landing-line);
-  background: var(--landing-surface);
+  grid-template-columns: 1fr 1.5fr;
+  gap: 48px;
 }
-
-.platformFinalCta h2 {
-  max-width: 18ch;
+.aroundEventList {
+  border-top: 1px solid var(--border);
 }
-
-.platformFinalCta > p:not(.platformSectionLabel) {
-  max-width: 52ch;
-  margin-top: var(--space-4);
+.aroundEvent {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 22px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.aroundEvent:hover h3 {
+  color: var(--accent);
+}
+.aroundEvent time {
+  flex: 0 0 70px;
+  text-align: center;
+}
+.aroundEvent time strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+.aroundEvent time span,
+.aroundEvent p {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.aroundEvent div {
+  flex: 1;
+  min-width: 0;
+}
+.aroundEvent h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.aroundEvent p {
+  margin: 0;
+}
+.aroundEvent > svg {
+  flex-shrink: 0;
+}
+.aroundStatus {
   color: var(--text-2);
   font-size: 15px;
   line-height: 1.6;
 }
-
-.platformFinalActions {
-  margin-top: var(--space-6);
-}
-
-.platformFinalActions .btn {
-  min-height: 44px;
-}
-
-.platformFooter {
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--landing-line);
-  background: var(--landing-canvas);
-}
-
-.platformFooterInner {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
-  align-items: center;
-  gap: clamp(20px, 4vw, 48px);
-  padding-block: var(--space-8);
-}
-
-.platformFooterLead p {
-  max-width: 38ch;
-  margin-top: var(--space-3);
-  color: var(--text-3);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.platformFooterInner nav {
+.aroundJoin {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin: 0 0 64px;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.platformFooterInner nav a,
-.platformFooterActions > a:first-child {
-  min-height: 44px;
-  display: inline-flex;
+  gap: 32px;
   align-items: center;
+  justify-content: space-between;
+}
+.aroundJoin p:last-child {
   color: var(--text-2);
+  max-width: 58ch;
+  line-height: 1.6;
+  margin: 16px 0 0;
+}
+.aroundJoin > .btn {
+  flex-shrink: 0;
+}
+.aroundFooter {
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 28px;
   font-size: 13px;
+  color: var(--text-2);
+}
+.aroundFooter nav {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.aroundFooter p {
+  margin: 0;
   font-weight: 600;
 }
-
-.platformFooterActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.platformFooterLegal {
-  margin: 0 clamp(20px, 4vw, 40px);
-  padding: var(--space-3) 0 var(--space-5);
-  border-top: 1px solid var(--landing-line);
-  color: var(--text-3);
-  font-size: 12px;
-  text-align: center;
-}
-
-@media (max-width: 1040px) {
+@media (max-width: 900px) {
   .platformNav {
     display: none;
   }
-
-  .platformHeaderActions {
-    margin-left: auto;
+  .aroundHero {
+    gap: 28px;
   }
-
-  .platformHero {
-    min-height: 0;
+  .aroundSpaces {
+    gap: 12px;
   }
-
-  .platformModuleGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .aroundSpace {
+    padding: 22px;
   }
-
-  .platformNetworkGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .platformModuleGrid li,
-  .platformModuleGrid li:nth-child(4),
-  .platformModuleGrid li:nth-child(5),
-  .platformModuleGrid li:last-child {
-    grid-column: auto;
-  }
-
-  .platformFooterInner {
-    grid-template-columns: 1fr auto;
-  }
-
-  .platformFooterInner nav {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-}
-
-@media (max-width: 800px) {
-  .platformHeaderInner {
-    min-height: 64px;
-  }
-
-  .platformHeroInner {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-    padding-top: var(--space-6);
-    padding-bottom: var(--space-8);
-  }
-
-  .platformHero h1 {
-    max-width: 18ch;
-    font-size: clamp(30px, 8vw, 40px);
-  }
-
-  /* On phones the member desk leads straight to sign-in; the benefits,
-     hero CTAs, and reassurance copy stay available in the sections below. */
-  .platformBenefitList,
-  .platformHeroActions,
-  .platformReassurance {
-    display: none;
-  }
-
-  .platformAuth {
-    order: 2;
-  }
-
-  .platformSectionHeading,
-  .platformTrustInner {
-    grid-template-columns: 1fr;
-  }
-
-  .platformSteps {
+  .aroundEvents {
     grid-template-columns: 1fr;
     gap: 0;
   }
-
-  .platformSteps li {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    column-gap: var(--space-4);
-    padding: 0 0 var(--space-6);
-  }
-
-  .platformStepConnector {
-    top: 40px;
-    right: auto;
-    bottom: 0;
-    left: 20px;
-    width: 1px;
-    height: auto;
-  }
-
-  .platformSteps h3,
-  .platformSteps p {
-    grid-column: 2;
-  }
-
-  .platformSteps h3 {
-    grid-row: 1;
-    align-self: center;
-    margin-top: 0;
-  }
-
-  .platformSteps p {
-    grid-row: 2;
-    margin-top: var(--space-2);
-  }
 }
-
-@media (max-width: 620px) {
-  .platformLanding .brandLogoPlate img {
-    width: 126px;
-    height: auto;
-  }
-
+@media (max-width: 640px) {
   .platformHeaderInner {
-    padding-inline: var(--space-3);
+    padding: 14px 20px;
+    min-height: 72px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
-
-  .platformHeroInner,
-  .platformSectionInner,
-  .platformFooterInner,
-  .platformFinalCta {
-    padding-inline: var(--space-3);
+  .platformHeaderInner .btn {
+    padding-inline: 12px;
+    font-size: 12px;
   }
-
-  .platformModuleGrid {
+  .platformBrand .brandLogoPlate img {
+    width: 118px;
+  }
+  .platformLanding main,
+  .aroundFooter {
+    padding-inline: 20px;
+  }
+  .aroundHero {
+    grid-template-columns: 1fr;
+    padding-block: 40px;
+  }
+  .aroundHero h1 {
+    font-size: clamp(48px, 16vw, 66px);
+  }
+  .aroundHeroImage {
+    aspect-ratio: 1.5;
+    border-top-right-radius: 40px;
+  }
+  .aroundSpaces {
     grid-template-columns: 1fr;
   }
-
-  .platformModuleGrid li,
-  .platformModuleGrid li:nth-child(4),
-  .platformModuleGrid li:nth-child(5),
-  .platformModuleGrid li:last-child {
-    grid-column: auto;
+  .aroundSpaceTop {
+    margin-bottom: 24px;
   }
-
-  .platformModuleGrid li {
-    display: grid;
-    grid-template-columns: 36px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: var(--space-3);
-    row-gap: var(--space-1);
-    align-items: start;
+  .aroundSpace p {
+    margin-bottom: 24px;
   }
-
-  .platformModuleIcon {
-    grid-row: 1 / span 2;
+  .aroundSection {
+    padding-block: 32px 40px;
   }
-
-  .platformFooterInner {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .platformFooterInner nav,
-  .platformFooterActions {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .platformFooterInner nav {
-    display: grid;
-    gap: 0;
-  }
-
-  .platformFooterActions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .platformFinalActions {
-    width: 100%;
+  .aroundJoin {
+    padding: 28px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    margin-bottom: 40px;
   }
-
-  .platformFinalActions .btn {
-    width: 100%;
-    justify-content: center;
+  .aroundFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
   }
-}
-
-@media (max-width: 390px) {
-  .platformLanding .platformHeader .brandLogoPlate img {
-    width: 108px;
-  }
-
-  .platformSignIn {
-    padding-inline: var(--space-2);
+  .aroundFooter nav {
+    gap: 18px;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .platformNav a::after,
-  .platformTextLink svg,
-  .platformNetworkHost svg {
+  .aroundSpace {
     transition: none;
+  }
+  .aroundSpace:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .platformHeaderInner > .btn-primary {
+    display: none;
   }
 }

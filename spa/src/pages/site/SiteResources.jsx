@@ -1,5 +1,4 @@
 import { ResourceCatalogue } from '../../components/ResourceHub.jsx'
-import { A } from '../../components/ui.jsx'
 import {
   TbBook2 as BookOpen,
   TbChevronRight as ChevronRight,
@@ -10,7 +9,7 @@ export function SiteResources() {
     <div className="siteMain">
       <header className="sitePageHeader">
         <p className="pageEyebrow">Open climate knowledge</p>
-        <h1>Science Resource Hub</h1>
+        <h1>Resources</h1>
         <p className="sitePageLead">
           Explore climate resources for climate work, research, learning, and
           funding. The catalogue is public; YOUNGO members can suggest additions
@@ -26,8 +25,7 @@ export function SiteResources() {
         <div>
           <h2>Know a useful resource?</h2>
           <p className="meta">
-            Sign in as a verified member to send it to the Content Publisher
-            review queue. Drafts are never shown publicly.
+            Verified members can suggest resources for review.
           </p>
         </div>
         <a className="btn btn-primary" href="/resources">
@@ -35,17 +33,7 @@ export function SiteResources() {
           <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
         </a>
       </section>
-      <p className="metaMuted sitePageFootnote">
-        Looking for YOUNGO processes instead? Visit the{' '}
-        <A href="/about/gys" className="inlineLink">
-          Global Youth Statement
-        </A>{' '}
-        or{' '}
-        <A href="/about/coy" className="inlineLink">
-          Conference of Youth
-        </A>{' '}
-        pages.
-      </p>
+
     </div>
   )
 }

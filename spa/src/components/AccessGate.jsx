@@ -6,15 +6,9 @@ import { ChangePasswordGate } from './ChangePasswordGate.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { PublicSite } from '../pages/site/PublicSite.jsx'
 import { PlatformLanding } from '../pages/PlatformLanding.jsx'
-import { PlatformLandingV2 } from '../pages/PlatformLandingV2.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { apiGet } from '../lib/api.js'
-import {
-  clearSession,
-  getCachedAccount,
-  hasCachedSession,
-  setSession,
-} from '../lib/session.js'
+import { clearSession, getCachedAccount, setSession } from '../lib/session.js'
 import { navigate, usePath } from '../lib/router.js'
 
 /**
@@ -61,15 +55,10 @@ export function AccessGate({ children }) {
       const policy = hasAcknowledgedMembershipPolicy()
       if (!alive) return
       setPolicyOk(policy)
-      // The session cookie is HttpOnly, so the client cannot inspect it — the
-      // server is asked on every load. Cached profile data only pre-fills the
-      // first paint; `/auth/me` confirms or clears it. Anonymous visitors see
-      // the member desk immediately; a background 401 must not clear a login
-      // that happens on that desk.
-      if (hasCachedSession()) {
-        setAccount(getCachedAccount())
-        await refreshSession()
-      }
+      // The HttpOnly cookie is the authority. A missing local cache must not
+      // strand an otherwise valid session (for example, after clearing storage).
+      setAccount(getCachedAccount())
+      await refreshSession()
       if (alive) setReady(true)
     })()
     return () => {
@@ -94,10 +83,9 @@ export function AccessGate({ children }) {
     return <PublicSite />
   }
 
-  // Constituency-facing landing preview. Public like /about so a signed-in
-  // teammate can review it; the live member desk stays at /.
+  // Keep the old preview URL as an alias to the current public front page.
   if (path === '/landingV2' || path.startsWith('/landingV2/')) {
-    return <PlatformLandingV2 onAuthenticated={handleAuthenticated} />
+    return <PlatformLanding onAuthenticated={handleAuthenticated} />
   }
 
   if (!ready) {
@@ -157,10 +145,6 @@ export function AccessGate({ children }) {
 
   const initialMode = path === '/join' ? 'register' : 'signin'
   return (
-    <AuthGate
-      key={initialMode}
-      initialMode={initialMode}
-      onAuthenticated={handleAuthenticated}
-    />
+    <AuthGate key={initialMode} initialMode={initialMode} onAuthenticated={handleAuthenticated} />
   )
 }

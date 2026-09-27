@@ -4,6 +4,7 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { defaultEmailFrom } from './lib/env'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -149,6 +150,17 @@ export default buildConfig({
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
+  // Payload's own password emails must also stay inside the demo. Its default
+  // development adapter logs complete messages, including reset links.
+  email:
+    process.env.HUB_DEMO_MODE === 'true'
+      ? () => ({
+          name: 'demo-disabled',
+          defaultFromAddress: defaultEmailFrom(),
+          defaultFromName: 'YOUNGO Hub',
+          sendEmail: async () => undefined,
+        })
+      : undefined,
   // Canonical origin for generated links (emails, admin). Cross-site cookie
   // requests are already blocked by SameSite=Lax on the session cookie.
   serverURL: process.env.APP_BASE_URL || undefined,

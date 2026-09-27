@@ -93,7 +93,7 @@ const WHAT_WE_DO = [
     title: 'Science resources',
     body: 'Reviewed research, learning, career, and funding resources for climate action.',
     href: '/about/resources',
-    link: 'Browse the Resource Hub',
+    link: 'Browse resources',
   },
   {
     icon: Globe,

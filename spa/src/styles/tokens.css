@@ -1,8 +1,8 @@
 /* YOUNGO Hub design tokens — the only file where interface colors live. */
 :root {
-  --bg-page: #e7eee9;
+  --bg-page: #f4f6f3;
   --bg-card: #ffffff;
-  --bg-raised: #dfe9e2;
+  --bg-raised: #eaf0e9;
   --bg-popover: #ffffff;
   --brand-surface: #ffffff;
   --text-1: #132b20;
@@ -37,14 +37,14 @@
   --radius-control: 8px;
   --radius-card: 12px;
   --radius-modal: 16px;
-  --content-max: 1480px;
+  --content-max: 1440px;
   --detail-max: 1120px;
   --catalog-card-min: 280px;
   --catalog-card-max: 320px;
   --catalog-columns: 4;
   --text-measure: 62ch;
   --card-padding: var(--space-4);
-  --section-gap: var(--space-5);
+  --section-gap: var(--space-8);
   --motion-fast: 120ms;
   --motion-standard: 180ms;
   --motion-panel: 240ms;
@@ -73,13 +73,8 @@
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
-  /* Campaign door at /landingV2. Do not flip in dark theme — the photo
-     page has to stay ink, paper, and the wordmark greens. */
-  --landing-v2-ink: #0b2e22;
-  --landing-v2-paper: #f3f6f1;
-  --landing-v2-teal: #62c4bb;
-  --landing-v2-lime: #8bc65e;
-  --landing-v2-forest: #1f6c38;
+  --photo-caption: linear-gradient(transparent, #09251be6);
+  --photo-text: #ffffff;
 }
 
 @media (max-width: 1599px) {

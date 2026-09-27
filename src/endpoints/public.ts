@@ -1,13 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { isVerifiedAccount } from '../lib/accounts'
-import {
-  eventView,
-  groupView,
-  feedView,
-  searchView,
-  directoryView,
-} from '../lib/views'
+import { eventView, groupView, feedView, searchView, directoryView } from '../lib/views'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 
@@ -41,6 +35,29 @@ const gysSignupLimit = rateLimit({
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 export const publicEndpoints: Endpoint[] = [
+  {
+    path: '/landing',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const { docs } = await req.payload.find({
+        collection: 'content-events',
+        where: {
+          and: [
+            { state: { equals: 'published' } },
+            { startsAt: { greater_than_equal: new Date().toISOString() } },
+          ],
+        },
+        select: { slug: true, title: true, startsAt: true },
+        sort: 'startsAt',
+        limit: 3,
+        depth: 0,
+        overrideAccess: false,
+        req,
+      })
+      // Deliberately project only public fields, even for signed-in requests.
+      return json({ events: docs.map(({ slug, title, startsAt }) => ({ slug, title, startsAt })) })
+    }),
+  },
   {
     path: '/recognition',
     method: 'get',
@@ -120,11 +137,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
-      const d = await store.getDecision(
-        req,
-        String(req.routeParams?.slug),
-        opts.includePrivate,
-      )
+      const d = await store.getDecision(req, String(req.routeParams?.slug), opts.includePrivate)
       if (!d) throw fail.notFound('Unknown decision')
       return json(d)
     }),
@@ -167,12 +180,8 @@ export const publicEndpoints: Endpoint[] = [
       const opts = viewOptions(req)
       const group = await store.getGroup(req, slug)
       if (!group) throw fail.notFound('Unknown working group')
-      const progress = opts.account
-        ? await wgProgressFor(req, slug)
-        : null
-      const includeWorkspace = Boolean(
-        progress?.presentationOk && progress?.rulesOk,
-      )
+      const progress = opts.account ? await wgProgressFor(req, slug) : null
+      const includeWorkspace = Boolean(progress?.presentationOk && progress?.rulesOk)
       const res = json(groupView(group, { ...opts, includeWorkspace }))
       if (opts.includePrivate) res.headers.set('Cache-Control', 'no-store')
       return res
