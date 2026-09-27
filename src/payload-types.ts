@@ -78,7 +78,6 @@ export interface Config {
     'content-events': ContentEvent;
     'content-announcements': ContentAnnouncement;
     'content-submissions': ContentSubmission;
-    'council-decisions': CouncilDecision;
     'content-coys': ContentCoy;
     'directory-contacts': DirectoryContact;
     'catalogue-resources': CatalogueResource;
@@ -142,7 +141,6 @@ export interface Config {
     'content-events': ContentEventsSelect<false> | ContentEventsSelect<true>;
     'content-announcements': ContentAnnouncementsSelect<false> | ContentAnnouncementsSelect<true>;
     'content-submissions': ContentSubmissionsSelect<false> | ContentSubmissionsSelect<true>;
-    'council-decisions': CouncilDecisionsSelect<false> | CouncilDecisionsSelect<true>;
     'content-coys': ContentCoysSelect<false> | ContentCoysSelect<true>;
     'directory-contacts': DirectoryContactsSelect<false> | DirectoryContactsSelect<true>;
     'catalogue-resources': CatalogueResourcesSelect<false> | CatalogueResourcesSelect<true>;
@@ -616,36 +614,6 @@ export interface ContentSubmission {
   finalUrl?: string | null;
   unfcccUrl?: string | null;
   contributeNote?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "council-decisions".
- */
-export interface CouncilDecision {
-  id: number;
-  slug: string;
-  title: string;
-  status: 'proposed' | 'open_for_input' | 'objection_window' | 'adopted' | 'rejected' | 'withdrawn';
-  summary?: string | null;
-  proposer?: string | null;
-  proposalUrl?: string | null;
-  finalUrl?: string | null;
-  respondNote?: string | null;
-  outcomeNote?: string | null;
-  inputDeadline?: string | null;
-  objectionDeadline?: string | null;
-  decidedAt?: string | null;
-  statusLog?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1803,10 +1771,6 @@ export interface PayloadLockedDocument {
         value: number | ContentSubmission;
       } | null)
     | ({
-        relationTo: 'council-decisions';
-        value: number | CouncilDecision;
-      } | null)
-    | ({
         relationTo: 'content-coys';
         value: number | ContentCoy;
       } | null)
@@ -2322,27 +2286,6 @@ export interface ContentSubmissionsSelect<T extends boolean = true> {
   finalUrl?: T;
   unfcccUrl?: T;
   contributeNote?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "council-decisions_select".
- */
-export interface CouncilDecisionsSelect<T extends boolean = true> {
-  slug?: T;
-  title?: T;
-  status?: T;
-  summary?: T;
-  proposer?: T;
-  proposalUrl?: T;
-  finalUrl?: T;
-  respondNote?: T;
-  outcomeNote?: T;
-  inputDeadline?: T;
-  objectionDeadline?: T;
-  decidedAt?: T;
-  statusLog?: T;
   updatedAt?: T;
   createdAt?: T;
 }

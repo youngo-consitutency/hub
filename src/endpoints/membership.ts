@@ -1,7 +1,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { endpoint, fail, json } from '../lib/respond'
+import {
+  accountView,
+  requireVerifiedMember,
+} from '../lib/accounts'
+import { audit } from '../lib/audit'
 import {
   destroyAllSessions,
   findAccountRowById,
@@ -15,39 +18,6 @@ import { requireTeam } from './staff'
 // every transition writes an audit-log entry.
 
 const DAY = 86_400_000
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-function requireVerifiedMember(req: PayloadRequest) {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
-
-async function audit(
-  req: PayloadRequest,
-  actor: any,
-  entry: Record<string, any>,
-) {
-  await req.payload.create({
-    collection: 'audit-log',
-    data: {
-      actor: actor?.id,
-      actorEmail: actor?.email,
-      requestId: (req.headers.get('x-request-id') as string) || null,
-      ...entry,
-    } as any,
-    overrideAccess: true,
-  })
-}
 
 // Last day of the next February — CW renewals run annually each February.
 export function nextCWRenewalDue(from = new Date()): string {

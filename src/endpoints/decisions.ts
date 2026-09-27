@@ -1,5 +1,6 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
+import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import {
   DECISION_TYPES,
   RED_FLAG_CATEGORIES,
@@ -18,8 +19,6 @@ import {
   proposalFlags,
   proposalView,
   recordEvent,
-  requireCwMember,
-  requireVerifiedMember,
   vetoView,
 } from '../lib/decisionRuntime'
 

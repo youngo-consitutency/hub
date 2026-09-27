@@ -529,7 +529,6 @@ describe('generated API access control', () => {
       'opportunities',
       'working-groups',
       'assignments',
-      'council-decisions',
       'feedback-tickets',
     ]) {
       const res = await api(`/${slug}`, {

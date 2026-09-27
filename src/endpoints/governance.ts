@@ -1,36 +1,19 @@
 import crypto from 'node:crypto'
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { endpoint, fail, json } from '../lib/respond'
+import {
+  requireCwMember,
+  requireVerifiedMember,
+  VERIFIED_PLATFORM_ROLES,
+} from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import { tallyIrv } from '../lib/decisions'
+import { audit } from '../lib/audit'
 
 // S10 elections + S24 selections. Secret ballots are keyed by voter
 // credentials (HMAC'd tokens) and never reference an account — server-trust
 // secrecy. Facilitators are admins or members carrying the
 // `election_facilitation` / `selection_team` assignment (team scope).
-
-const VERIFIED_ROLES = new Set(['admin', 'focal_point'])
-
-function requireVerifiedMember(req: PayloadRequest) {
-  const account = requireAccount(req)
-  const ok =
-    account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' || VERIFIED_ROLES.has(account?.role))
-  if (!ok)
-    throw new ApiError(403, 'not_verified', 'Complete onboarding and verification first.')
-  return account
-}
-
-function requireCwMember(req: PayloadRequest) {
-  const account = requireVerifiedMember(req)
-  if (
-    account.membershipTrack !== 'constituency_work' &&
-    !VERIFIED_ROLES.has(account.role)
-  )
-    throw new ApiError(403, 'not_constituency_work', 'Constituency Work membership required (S17 §1.1).')
-  return account
-}
 
 async function isFacilitator(req: PayloadRequest, account: any) {
   if (account.role === 'admin') return true
@@ -41,7 +24,7 @@ async function isFacilitator(req: PayloadRequest, account: any) {
 }
 
 async function isSelector(req: PayloadRequest, account: any) {
-  if (VERIFIED_ROLES.has(account.role)) return true
+  if (VERIFIED_PLATFORM_ROLES.has(account.role)) return true
   const access = await getAccessProfile(req, account)
   return access.teamRoles.some((r) =>
     ['selection_team', 'gct', 'election_facilitation'].includes(r),
@@ -53,9 +36,10 @@ const accountRef = (a: any) =>
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
+// Voter credentials are HMAC'd under PAYLOAD_SECRET (required at boot).
 const tokenHash = (electionId: number | string, token: string) =>
   crypto
-    .createHmac('sha256', process.env.PAYLOAD_SECRET || 'dev')
+    .createHmac('sha256', process.env.PAYLOAD_SECRET!)
     .update(`${electionId}:${token}`)
     .digest('hex')
 
@@ -69,20 +53,6 @@ async function loadSelection(req: PayloadRequest, id: string | number) {
   return req.payload
     .findByID({ collection: 'selections', id: Number(id), overrideAccess: true })
     .catch(() => { throw fail.notFound('Selection not found.') })
-}
-
-async function audit(req: PayloadRequest, account: any, action: string, targetId: string) {
-  await req.payload.create({
-    collection: 'audit-log',
-    data: {
-      actor: account?.id ?? null,
-      actorEmail: account?.email ?? null,
-      action,
-      targetType: 'governance',
-      targetId,
-    } as any,
-    overrideAccess: true,
-  })
 }
 
 const candidateView = (c: any) => ({
@@ -156,7 +126,7 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'election.created', String(election.id))
+      await audit(req, account, { action: 'election.created', targetType: 'governance', targetId: String(election.id) })
       return json({ election: electionView(election) }, { status: 201 })
     }),
   },
@@ -249,7 +219,7 @@ export const electionEndpoints: Endpoint[] = [
         data: patch,
         overrideAccess: true,
       })
-      await audit(req, account, `election.${next}`, String(e.id))
+      await audit(req, account, { action: `election.${next}`, targetType: 'governance', targetId: String(e.id) })
       return json({ election: electionView(updated) })
     }),
   },
@@ -293,7 +263,7 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'election.candidate_nominated', String(e.id))
+      await audit(req, account, { action: 'election.candidate_nominated', targetType: 'governance', targetId: String(e.id) })
       return json({ candidate: candidateView(candidate) }, { status: 201 })
     }),
   },
@@ -324,7 +294,7 @@ export const electionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, `election.candidate_${b.status}`, String(e.id))
+      await audit(req, account, { action: `election.candidate_${b.status}`, targetType: 'governance', targetId: String(e.id) })
       return json({ candidate: candidateView(updated) })
     }),
   },
@@ -364,7 +334,7 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'election.credential_issued', String(e.id))
+      await audit(req, account, { action: 'election.credential_issued', targetType: 'governance', targetId: String(e.id) })
       // The token is returned once and never stored in raw form.
       return json({ token, kind }, { status: 201 })
     }),
@@ -530,7 +500,7 @@ export const electionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, `election.${e.status}`, String(e.id))
+      await audit(req, account, { action: `election.${e.status}`, targetType: 'governance', targetId: String(e.id) })
       return json({ election: electionView(e) })
     }),
   },
@@ -620,7 +590,7 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.created', String(sel.id))
+      await audit(req, account, { action: 'selection.created', targetType: 'governance', targetId: String(sel.id) })
       return json({ selection: selectionView(sel) }, { status: 201 })
     }),
   },
@@ -668,7 +638,7 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.committee_joined', String(s.id))
+      await audit(req, account, { action: 'selection.committee_joined', targetType: 'governance', targetId: String(s.id) })
       return json({ member }, { status: 201 })
     }),
   },
@@ -705,7 +675,7 @@ export const selectionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.opened', String(s.id))
+      await audit(req, account, { action: 'selection.opened', targetType: 'governance', targetId: String(s.id) })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -747,7 +717,7 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.applied', String(s.id))
+      await audit(req, account, { action: 'selection.applied', targetType: 'governance', targetId: String(s.id) })
       return json({ application: { id: app.id, status: app.status } }, { status: 201 })
     }),
   },
@@ -771,7 +741,7 @@ export const selectionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.recusal_declared', String(s.id))
+      await audit(req, account, { action: 'selection.recusal_declared', targetType: 'governance', targetId: String(s.id) })
       return json({ member: updated })
     }),
   },
@@ -792,7 +762,7 @@ export const selectionEndpoints: Endpoint[] = [
         data: { status: 'evaluating' },
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.closed', String(s.id))
+      await audit(req, account, { action: 'selection.closed', targetType: 'governance', targetId: String(s.id) })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -861,7 +831,7 @@ export const selectionEndpoints: Endpoint[] = [
             data,
             overrideAccess: true,
           })
-      await audit(req, account, 'selection.evaluated', String(s.id))
+      await audit(req, account, { action: 'selection.evaluated', targetType: 'governance', targetId: String(s.id) })
       return json({ evaluation: evalRecord })
     }),
   },
@@ -906,7 +876,7 @@ export const selectionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.decided', String(s.id))
+      await audit(req, account, { action: 'selection.decided', targetType: 'governance', targetId: String(s.id) })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -938,7 +908,7 @@ export const selectionEndpoints: Endpoint[] = [
         data: { status: 'announced' },
         overrideAccess: true,
       })
-      await audit(req, account, 'selection.announced', String(s.id))
+      await audit(req, account, { action: 'selection.announced', targetType: 'governance', targetId: String(s.id) })
       return json({
         selection: selectionView(updated),
         selected: (apps as any[]).map((a) => ({

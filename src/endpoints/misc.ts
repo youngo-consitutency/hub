@@ -1,6 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
+import { requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import { getPgPool } from '../lib/pg'
 import * as store from '../lib/content'
@@ -34,24 +34,9 @@ import {
   renderEmailTemplate,
   sendTemplatedEmail,
   unsubscribeUrl,
+  verifyUnsubscribeToken,
 } from '../lib/notifications'
-import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
 const trimmed = (v: unknown, max: number) =>
@@ -96,45 +81,6 @@ const intelligenceLimit = rateLimit({
   max: 30,
   scope: 'intelligence',
 })
-
-const EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
-
-function unsubscribeSecret() {
-  return (
-    String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() ||
-    process.env.PAYLOAD_SECRET ||
-    'youngo-development-unsubscribe-secret'
-  )
-}
-
-function unsubSignature(payload: string) {
-  return createHmac('sha256', unsubscribeSecret())
-    .update(payload)
-    .digest('base64url')
-}
-
-function verifyUnsubscribeToken(token: string) {
-  const [payload, supplied] = String(token || '').split('.')
-  if (!payload || !supplied) return null
-  const expected = unsubSignature(payload)
-  const left = Buffer.from(supplied)
-  const right = Buffer.from(expected)
-  if (left.length !== right.length || !timingSafeEqual(left, right)) return null
-  try {
-    const parsed = JSON.parse(
-      Buffer.from(payload, 'base64url').toString('utf8'),
-    )
-    if (
-      parsed.v !== 1 ||
-      !parsed.accountId ||
-      !EMAIL_CATEGORIES.includes(parsed.category)
-    )
-      return null
-    return { accountId: String(parsed.accountId), category: parsed.category }
-  } catch {
-    return null
-  }
-}
 
 const resultPage = (title: string, message: string) =>
   `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;max-width:42rem;margin:4rem auto;padding:0 1rem;color:#14251d"><h1>${title}</h1><p>${message}</p><p><a href="/profile">Return to YOUNGO Hub</a></p></body></html>`
@@ -195,7 +141,7 @@ async function evidenceForQuery(
       store.listAnnouncements(req),
       store.listGroups(req),
       store.listSubmissions(req, 'all'),
-      store.listCouncil(req, 'all'),
+      store.listDecisions(req, 'all', true),
     ])
   for (const e of events)
     push('event', e.title, e.description || '', `/events/${e.slug}`)
@@ -902,7 +848,7 @@ export const miscEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       intelligenceLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       const b = ((await req.json?.()) || {}) as any
       const query = String(b.query || '').trim()
@@ -950,7 +896,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const isAdmin = account.role === 'admin'
       const where: any = isAdmin ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
@@ -969,7 +915,7 @@ export const miscEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       intelligenceLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       if (b.action !== 'save_research_note')
         throw fail.validation({ action: 'Unsupported writeback action.' })
@@ -1028,7 +974,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/approve',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (account.role !== 'admin')
         throw fail.forbidden('Research notes are approved by administrators.')
       const id = String(req.routeParams?.id)
@@ -1076,7 +1022,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/apply',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (account.role !== 'admin')
         throw fail.forbidden('Research notes are applied by administrators.')
       const id = String(req.routeParams?.id)
@@ -1126,7 +1072,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/intelligence/metrics',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const isAdmin = account.role === 'admin'
       const where: any = isAdmin ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
@@ -1155,7 +1101,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1181,7 +1127,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/award',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1227,7 +1173,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/award-suggestion',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',
@@ -1275,7 +1221,7 @@ export const miscEndpoints: Endpoint[] = [
     path: '/member/staff/points/reasons',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canAwardPoints(req, account)))
         throw fail.forbidden(
           'Only admins, Focal Points, or Membership Team can award NGO contribution points.',

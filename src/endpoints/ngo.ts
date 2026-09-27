@@ -1,28 +1,12 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
+import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { createHash, randomBytes } from 'node:crypto'
 import { requirePgPool } from '../lib/pg'
 import { getAccessProfile } from '../lib/access'
 import { opportunityShape } from '../lib/content'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
 
 const AFFILIATION_ROLES = ['affiliate', 'viewer', 'representative']
 
@@ -75,7 +59,7 @@ async function requireOrgScope(
   req: PayloadRequest,
   permission: 'read' | 'requests' | 'seats' = 'read',
 ) {
-  const account = verifiedAccount(req)
+  const account = requireVerifiedMember(req)
   const ctx = await resolveOrgContext(req, account)
   if (!ctx) throw fail.forbidden('Accredited NGO access required.')
   if (permission === 'requests' && !ctx.canManageRequests)
@@ -493,7 +477,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/organisations',
     method: 'get',
     handler: endpoint(async (req) => {
-      verifiedAccount(req)
+      requireVerifiedMember(req)
       const term = String(req.query?.search || '').trim().toLowerCase()
       const { docs } = await req.payload.find({
         collection: 'accounts',
@@ -521,7 +505,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/affiliations',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'ngo-seats',
         where: { memberAccount: { equals: account.id } },
@@ -543,7 +527,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/affiliations',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const orgAccountId = String(b.orgAccountId || '').trim()
       if (!orgAccountId)
@@ -791,7 +775,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
@@ -848,7 +832,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/trust/:orgAccountId',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
@@ -896,7 +880,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/unpublish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden()

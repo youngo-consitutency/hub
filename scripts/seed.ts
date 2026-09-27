@@ -138,30 +138,6 @@ async function main() {
     })
   }
 
-  // ── Council decisions ─────────────────────────────────────────────
-  for (const c of fixtures.council) {
-    await upsert(payload, 'council-decisions', { slug: { equals: c.slug } }, {
-      slug: c.slug,
-      title: c.title,
-      status: c.status,
-      summary: c.summary,
-      proposer: c.proposer || null,
-      proposalUrl: c.proposalUrl || null,
-      finalUrl: c.finalUrl || null,
-      respondNote: c.respondNote || null,
-      outcomeNote: c.outcomeNote || null,
-      inputDeadline: c.inputInDays != null ? daysAhead(c.inputInDays, true) : null,
-      objectionDeadline:
-        c.objectionInDays != null ? daysAhead(c.objectionInDays, true) : null,
-      decidedAt: c.decidedDaysAgo != null ? daysAgo(c.decidedDaysAgo) : null,
-      statusLog: (c.log || []).map((entry: any) => ({
-        status: entry.status,
-        at: entry.daysAgo != null ? daysAgo(entry.daysAgo) : NOW.toISOString(),
-        note: entry.note || null,
-      })),
-    })
-  }
-
   // ── COYs ──────────────────────────────────────────────────────────
   for (const c of fixtures.coys) {
     await upsert(payload, 'content-coys', { slug: { equals: c.slug } }, {

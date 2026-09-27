@@ -13,7 +13,6 @@ import { WorkingGroups } from './collections/WorkingGroups'
 import { Events } from './collections/Events'
 import { Announcements } from './collections/Announcements'
 import { Submissions } from './collections/Submissions'
-import { CouncilDecisions } from './collections/CouncilDecisions'
 import { Coys } from './collections/Coys'
 import { DirectoryContacts } from './collections/DirectoryContacts'
 import { Resources } from './collections/Resources'
@@ -101,7 +100,6 @@ export default buildConfig({
     Events,
     Announcements,
     Submissions,
-    CouncilDecisions,
     Coys,
     DirectoryContacts,
     Resources,
@@ -151,6 +149,9 @@ export default buildConfig({
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
+  // Canonical origin for generated links (emails, admin). Cross-site cookie
+  // requests are already blocked by SameSite=Lax on the session cookie.
+  serverURL: process.env.APP_BASE_URL || undefined,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

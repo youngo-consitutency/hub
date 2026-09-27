@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
-import { ApiError, fail } from './respond'
-import { requireAccount } from './accounts'
+import { fail } from './respond'
+import { VERIFIED_PLATFORM_ROLES } from './accounts'
 import { getAccessProfile } from './access'
 import {
   computeWindows,
@@ -18,38 +18,6 @@ import {
 // (src/endpoints/decisions.ts) and the platform bridge
 // (src/modules/platform/decisionsBridge.ts) drive proposals through these
 // helpers so there is exactly one state machine.
-
-export const VERIFIED_ROLES = new Set(['admin', 'focal_point'])
-
-export function requireVerifiedMember(req: PayloadRequest) {
-  const account = requireAccount(req)
-  const ok =
-    account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' || VERIFIED_ROLES.has(account?.role))
-  if (!ok)
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete onboarding and verification to take part in decisions.',
-    )
-  return account
-}
-
-// Constituency Work membership is required to raise flags / cast ballots /
-// veto (S17 §1.1: decision-making rights belong to CW members).
-export function requireCwMember(req: PayloadRequest) {
-  const account = requireVerifiedMember(req)
-  if (
-    account.membershipTrack !== 'constituency_work' &&
-    !VERIFIED_ROLES.has(account.role)
-  )
-    throw new ApiError(
-      403,
-      'not_constituency_work',
-      'Decision rights require Constituency Work membership (S17 §1.1).',
-    )
-  return account
-}
 
 export const ids = (rel: any): number[] =>
   (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) =>
@@ -131,7 +99,7 @@ export async function isBodyMember(
   account: any,
   proposal: any,
 ): Promise<boolean> {
-  if (VERIFIED_ROLES.has(account.role)) return true
+  if (VERIFIED_PLATFORM_ROLES.has(account.role)) return true
   const access = await getAccessProfile(req, account)
   const scopeIds = new Set(
     access.wgAssignments.map((w) => `working_group:${w.wgSlug}`),

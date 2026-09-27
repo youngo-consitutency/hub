@@ -20,10 +20,12 @@ import {
   loadProposal,
   proposalFlags,
   recordEvent,
-  requireVerifiedMember,
-  requireCwMember,
-  VERIFIED_ROLES,
 } from '../../lib/decisionRuntime'
+import {
+  requireCwMember,
+  requireVerifiedMember,
+  VERIFIED_PLATFORM_ROLES,
+} from '../../lib/accounts'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
 // S09 decision engine. decision_proposals is the single store; the legacy
@@ -276,7 +278,7 @@ export async function decisionDetail(
   await syncProjection(proposal)
   const p = await permissions(actor)
   const bodyId = platformBodyId(proposal)
-  if (!p.participates(bodyId) && !VERIFIED_ROLES.has(account.role))
+  if (!p.participates(bodyId) && !VERIFIED_PLATFORM_ROLES.has(account.role))
     fail(403, 'Only members of this body can read the process.')
 
   const flags = await proposalFlags(req, proposal.id)

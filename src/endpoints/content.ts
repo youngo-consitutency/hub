@@ -1,17 +1,12 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
-  if (!isVerified(account))
+  if (!isVerifiedAccount(account))
     throw new ApiError(
       403,
       'not_verified',

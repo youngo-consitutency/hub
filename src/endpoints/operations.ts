@@ -1,24 +1,13 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { endpoint, fail, json } from '../lib/respond'
+import { requireVerifiedMember } from '../lib/accounts'
+import { audit } from '../lib/audit'
 import { getAccessProfile } from '../lib/access'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
 // recognition (S20), partnerships (S13), privacy requests (S08). Members
 // file and track their own records; the responsible teams review through
 // scoped endpoints. Generated REST writes stay staff-only throughout.
-
-const VERIFIED_ROLES = new Set(['admin', 'focal_point'])
-
-function requireVerifiedMember(req: PayloadRequest) {
-  const account = requireAccount(req)
-  const ok =
-    account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' || VERIFIED_ROLES.has(account?.role))
-  if (!ok)
-    throw new ApiError(403, 'not_verified', 'Complete onboarding and verification first.')
-  return account
-}
 
 // Review authority: an admin, or a member holding one of the named team
 // scopes (e.g. 'finance_team', 'safeguarding_team').
@@ -29,28 +18,6 @@ async function requireOpsTeam(req: PayloadRequest, teams: string[]) {
   if (!teams.some((t) => access.teamRoles.includes(t)))
     throw fail.forbidden('This workspace is not assigned to your account.')
   return { account }
-}
-
-async function audit(
-  req: PayloadRequest,
-  actor: any,
-  action: string,
-  targetType: string,
-  targetId: string,
-  extra?: Record<string, any>,
-) {
-  await req.payload.create({
-    collection: 'audit-log',
-    data: {
-      actor: actor?.id,
-      actorEmail: actor?.email,
-      action,
-      targetType,
-      targetId,
-      ...(extra ?? {}),
-    } as any,
-    overrideAccess: true,
-  })
 }
 
 const accountRef = (a: any) =>
@@ -151,7 +118,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'funding.submitted', 'funding_request', String(rec.id))
+      await audit(req, account, { action: 'funding.submitted', targetType: 'funding_request', targetId: String(rec.id) })
       return json({ request: fundingView(rec) }, { status: 201 })
     }),
   },
@@ -181,7 +148,7 @@ export const operationEndpoints: Endpoint[] = [
         data: { status: 'cancelled' },
         overrideAccess: true,
       })
-      await audit(req, account, 'funding.withdrawn', 'funding_request', String(f.id))
+      await audit(req, account, { action: 'funding.withdrawn', targetType: 'funding_request', targetId: String(f.id) })
       return json({ request: fundingView(updated) })
     }),
   },
@@ -208,7 +175,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, 'funding.reported', 'funding_request', String(f.id))
+      await audit(req, account, { action: 'funding.reported', targetType: 'funding_request', targetId: String(f.id) })
       return json({ request: fundingView(updated) })
     }),
   },
@@ -258,7 +225,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `funding.${next}`, 'funding_request', String(f.id))
+      await audit(req, staff, { action: `funding.${next}`, targetType: 'funding_request', targetId: String(f.id) })
       return json({ request: fundingView(updated, true) })
     }),
   },
@@ -276,7 +243,7 @@ export const operationEndpoints: Endpoint[] = [
         data: { status: 'disbursed', disbursedAt: new Date().toISOString() },
         overrideAccess: true,
       })
-      await audit(req, staff, 'funding.disbursed', 'funding_request', String(f.id))
+      await audit(req, staff, { action: 'funding.disbursed', targetType: 'funding_request', targetId: String(f.id) })
       return json({ request: fundingView(updated, true) })
     }),
   },
@@ -312,7 +279,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'safeguarding.reported', 'safeguarding_case', String(rec.id))
+      await audit(req, account, { action: 'safeguarding.reported', targetType: 'safeguarding_case', targetId: String(rec.id) })
       // Reporters get the reference and status — never team internals.
       return json(
         { caseRef: `SG-${rec.id}`, status: 'received' },
@@ -418,7 +385,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `safeguarding.${next}`, 'safeguarding_case', String(c.id))
+      await audit(req, staff, { action: `safeguarding.${next}`, targetType: 'safeguarding_case', targetId: String(c.id) })
       return json({ case: { id: (updated as any).id, status: (updated as any).status } })
     }),
   },
@@ -461,7 +428,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'coi.declared', 'coi_declaration', String(rec.id))
+      await audit(req, account, { action: 'coi.declared', targetType: 'coi_declaration', targetId: String(rec.id) })
       return json({ declaration: rec }, { status: 201 })
     }),
   },
@@ -503,7 +470,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `coi.${b.status}`, 'coi_declaration', String(d.id))
+      await audit(req, staff, { action: `coi.${b.status}`, targetType: 'coi_declaration', targetId: String(d.id) })
       return json({ declaration: updated })
     }),
   },
@@ -547,7 +514,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'recognition.requested', 'recognition_request', String(rec.id))
+      await audit(req, account, { action: 'recognition.requested', targetType: 'recognition_request', targetId: String(rec.id) })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -596,7 +563,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `recognition.${b.status}`, 'recognition_request', String(r.id))
+      await audit(req, staff, { action: `recognition.${b.status}`, targetType: 'recognition_request', targetId: String(r.id) })
       return json({ request: updated })
     }),
   },
@@ -628,7 +595,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'partnership.proposed', 'partnership_request', String(rec.id))
+      await audit(req, account, { action: 'partnership.proposed', targetType: 'partnership_request', targetId: String(rec.id) })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -688,7 +655,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `partnership.${b.status}`, 'partnership_request', String(p.id))
+      await audit(req, staff, { action: `partnership.${b.status}`, targetType: 'partnership_request', targetId: String(p.id) })
       return json({ request: updated })
     }),
   },
@@ -732,7 +699,7 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, 'privacy.requested', 'privacy_request', String(rec.id))
+      await audit(req, account, { action: 'privacy.requested', targetType: 'privacy_request', targetId: String(rec.id) })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -782,7 +749,7 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, `privacy.${b.status}`, 'privacy_request', String(p.id))
+      await audit(req, staff, { action: `privacy.${b.status}`, targetType: 'privacy_request', targetId: String(p.id) })
       return json({ request: updated })
     }),
   },
