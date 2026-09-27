@@ -21,7 +21,8 @@ test.describe('Payload console', () => {
   test('can navigate to accounts list', async () => {
     await page.goto('http://localhost:3000/console/collections/accounts')
     await expect(page).toHaveURL(
-      'http://localhost:3000/console/collections/accounts',
+      (url) =>
+        url.origin === 'http://localhost:3000' && url.pathname === '/console/collections/accounts',
     )
     await expect(page.locator('body')).toContainText('Account')
   })

@@ -1,16 +1,14 @@
 # Contributing to YOUNGO Hub
 
-Thanks for helping. Small fixes, clearer docs, translations, accessibility work, and thoughtful reports are useful contributions.
-
 ## Choose a task
 
-Check [open issues](https://github.com/youngo-consitutency/hub/issues) first. `good first issue` means a maintainer has checked that a task is suitable for a newcomer; `help wanted` means outside help is welcome. These labels may not always have open tasks.
+Look for `good first issue` or `help wanted` in [open issues](https://github.com/youngo-consitutency/hub/issues).
 
-Use [Discussions](https://github.com/youngo-consitutency/hub/discussions) for questions and early ideas. Open an issue for a specific bug or agreed change. For a large change, agree on the scope before writing code.
+Use [issues](https://github.com/youngo-consitutency/hub/issues/new/choose) for bugs, proposals, and documentation corrections. Agree on the scope of larger changes before starting.
 
 ## Set up
 
-Fork the repository, clone your fork, and create a branch:
+Work on a branch in your fork:
 
 ```sh
 git clone https://github.com/YOUR-USERNAME/hub.git
@@ -23,6 +21,8 @@ npm run dev
 Use Node.js 22.13 or later in the Node 22 series. The app needs `DATABASE_URL` and `PAYLOAD_SECRET`; see [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
 
 ## Make the change
+
+Use British English for documentation, interface copy, and comments. Keep API names, identifiers, official titles, and quotations unchanged.
 
 Keep each pull request focused on one problem. Follow the existing components and styles, and avoid adding a dependency for a small task. Keep access checks on the server. Use made-up accounts and public sample data when testing.
 
@@ -42,17 +42,17 @@ git diff --check
 
 The build runs TypeScript checking. `npm run test:int` and `npm run test:e2e` need a running server and seeded demo accounts — mention skipped checks in your pull request.
 
-If formatting fails, run `npm run format`, inspect the diff, and commit only changes that belong to your task. Markdown guides are checked separately; keep their links working.
+Format only files changed by your task, inspect the diff, and keep documentation links working.
 
 ## Open a pull request
 
-Push your branch to your fork and open a pull request against `main`. Explain the problem, the change, and what you tested. Link the issue if there is one. A small fix does not need a separate issue first.
+Open a pull request against `main` with the problem, change, and test results. Link the issue when relevant; small fixes do not need one.
 
-Changes to `main` need one approving review, passing checks, and resolved review conversations. New commits can require a fresh review. Maintainers may ask for a smaller change or more evidence. A merged change is not automatically proof of a live deployment.
+Changes to `main` require a pull request, passing checks, and resolved review comments. The normal rule also requires one approval and a branch that is up to date with `main`. Only `unnobatroo` can bypass the approval and branch-update requirements when merging a pull request. Passing checks and branch protections still apply.
 
 ## Docs and public content
 
-Keep short setup and contribution guides with the code. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
+Keep short setup and contribution guides with the code. The [organisation and permissions guide](https://github.com/youngo-consitutency/hub/wiki/Organisation-and-permissions) describes the proposed access model. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
 
 Public content changes need a reliable source link. Never commit account exports, private meeting links, identity documents, access tokens, or local agent notes.
 

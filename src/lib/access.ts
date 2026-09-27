@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 
 // Port of server/lib/access.js — derives the capability model from the
-// account role plus active assignments. Authorization stays source-side here;
+// account role plus active assignments. Authorisation stays source-side here;
 // every endpoint derives access from this module.
 export interface AccessProfile {
   teamRoles: string[]

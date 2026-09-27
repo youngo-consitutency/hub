@@ -16,7 +16,7 @@ export const ConsultationContributions: CollectionConfig = {
     { name: 'kind', type: 'text', required: true, index: true },
     { name: 'name', type: 'text' },
     { name: 'email', type: 'text' },
-    { name: 'organization', type: 'text' },
+    { name: 'organization', type: 'text', label: 'Organisation' },
     { name: 'body', type: 'textarea' },
     { name: 'meta', type: 'json' },
     { name: 'consentGiven', type: 'checkbox', defaultValue: false },

@@ -1,23 +1,18 @@
 # YOUNGO Hub
 
-A shared home for YOUNGO members to find meetings, join working groups, complete onboarding, and organise their work.
+YOUNGO’s membership and coordination platform: working groups, events, resources, submissions, and staff tools.
 
-[Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/youngo-consitutency/hub/issues/new/choose) · [Discussions](https://github.com/youngo-consitutency/hub/discussions)
+[Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contributing](CONTRIBUTING.md)
 
-## What’s here
+## Application
 
-The Hub brings together membership, working groups, events, opportunities, resources, submissions, and staff tools. What you can see or change depends on your account and responsibilities.
+One Next.js and Payload application, backed by PostgreSQL. The member interface is in `spa/`, the staff console is at `/console`, and server code is in `src/`.
 
-| Location                                | What it contains                                                                                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Repository root                         | One Next.js and Payload application: member interface in `spa/`, staff console at `/console`, PostgreSQL via Payload migrations |
-| [`mcp-content/`](mcp-content/README.md) | A small service that lets authorised assistants work with Hub content through the website’s API |
+[`mcp-content/`](mcp-content/README.md) is a separate service for assistant tools that use the Hub’s API and account permissions.
 
-The presence of a feature in this repository does not mean it is enabled on the live website. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status).
+## Development
 
-## Run it locally
-
-Use Node.js 22.13 or later in the Node 22 series, as selected by `.nvmrc`, and a local PostgreSQL database.
+Use Node.js 22.13 or later in the Node 22 series, or Node 24, and a local PostgreSQL database.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
@@ -30,33 +25,16 @@ npm run migrate
 npm run dev
 ```
 
-Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between local sessions so existing sessions stay valid, and never commit it. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for troubleshooting.
+Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and never commit it. The app requires PostgreSQL; it has no database-free fixture mode.
 
-`npm run seed` reads files from `data/` and creates demo accounts with known passwords. Some input files are not included in a public clone — use it only with a disposable local database.
+```sh
+npm run check
+```
 
-## Help improve it
+This runs lint and the production build, including type checks. Integration and browser tests need a running server and a separate seeded database. `npm run seed` creates demo accounts with known passwords; use it only with a disposable local database. Some seed inputs are not included in a public clone.
 
-Code, clearer wording, accessibility fixes, documentation, and careful bug reports are all welcome. You do not need a Hub account to contribute on GitHub.
-
-1. Read the [contribution guide](CONTRIBUTING.md).
-2. Find an issue or discuss a larger idea before starting.
-3. Make a focused change in your fork and open a pull request.
-4. Run `npm run check` and explain what you tested.
-
-Please follow the [code of conduct](CODE_OF_CONDUCT.md). Report security problems [privately](SECURITY.md), not in public issues.
-
-## Find the right guide
-
-| I want to…                        | Guide                                                                                                                                                     |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Use the Hub                       | [Member guide](https://github.com/youngo-consitutency/hub/wiki/Member-guide)                                                                              |
-| Add or correct information        | [Content and publishing](https://github.com/youngo-consitutency/hub/wiki/Content-and-publishing)                                                          |
-| Manage membership or staff access | [Staff guide](https://github.com/youngo-consitutency/hub/wiki/Staff-guide)                                                                                |
-| Understand the code               | [Code map](https://github.com/youngo-consitutency/hub/wiki/Code-map)                                                                                      |
-| Set up or deploy a service        | [Configuration](https://github.com/youngo-consitutency/hub/wiki/Configuration) · [Deployment](https://github.com/youngo-consitutency/hub/wiki/Deployment) |
-| Work with an assistant            | [Agent tools](https://github.com/youngo-consitutency/hub/wiki/Agent-tools)                                                                                |
-| Maintain this repository          | [Project maintenance](https://github.com/youngo-consitutency/hub/wiki/Project-maintenance)                                                                |
+The Payload schema is separate from the former Express schema. Do not point its migrations at an existing member database without a verified migration and rollback plan. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status) for remaining deployment requirements.
 
 ## Licence
 
-See [LICENSE](LICENSE) for the repository’s GPL-3.0 licence. Third-party code and materials keep their own notices. The [project status page](https://github.com/youngo-consitutency/hub/wiki/Project-status) records any unresolved licence labels.
+[GPL-3.0](LICENSE). Third-party notices still apply. The package’s inherited MIT label remains unresolved.
