@@ -1,3 +1,4 @@
+import { canManageGroup, canManageGroups } from './lib/groupPermissions.js'
 import { Shell } from './components/Shell.jsx'
 import { AccessGate } from './components/AccessGate.jsx'
 import { AccountProvider, useAccount } from './lib/accountContext.jsx'
@@ -13,18 +14,9 @@ const lazyPage = (loader, name) =>
   lazy(() => loader().then((module) => ({ default: module[name] })))
 const Home = lazyPage(() => import('./pages/Home.jsx'), 'Home')
 const Calendar = lazyPage(() => import('./pages/Calendar.jsx'), 'Calendar')
-const Submissions = lazyPage(
-  () => import('./pages/Submissions.jsx'),
-  'Submissions',
-)
-const Council = lazyPage(
-  () => import('./features/platform/Platform.tsx'),
-  'Decisions',
-)
-const Platform = lazyPage(
-  () => import('./features/platform/Platform.tsx'),
-  'Platform',
-)
+const Submissions = lazyPage(() => import('./pages/Submissions.jsx'), 'Submissions')
+const Council = lazyPage(() => import('./features/platform/Platform.tsx'), 'Decisions')
+const Platform = lazyPage(() => import('./features/platform/Platform.tsx'), 'Platform')
 const Work = lazyPage(() => import('./features/platform/Platform.tsx'), 'Work')
 const Coys = lazyPage(() => import('./pages/Coys.jsx'), 'Coys')
 const Groups = lazyPage(() => import('./pages/Groups.jsx'), 'Groups')
@@ -36,18 +28,9 @@ const MembershipLifecycle = lazyPage(
 const Directory = lazyPage(() => import('./pages/Directory.jsx'), 'Directory')
 const Search = lazyPage(() => import('./pages/Search.jsx'), 'Search')
 const Statement = lazyPage(() => import('./pages/Statement.jsx'), 'Statement')
-const Opportunities = lazyPage(
-  () => import('./pages/Opportunities.jsx'),
-  'Opportunities',
-)
-const EventDetail = lazyPage(
-  () => import('./pages/EventDetail.jsx'),
-  'EventDetail',
-)
-const SubmissionDetail = lazyPage(
-  () => import('./pages/SubmissionDetail.jsx'),
-  'SubmissionDetail',
-)
+const Opportunities = lazyPage(() => import('./pages/Opportunities.jsx'), 'Opportunities')
+const EventDetail = lazyPage(() => import('./pages/EventDetail.jsx'), 'EventDetail')
+const SubmissionDetail = lazyPage(() => import('./pages/SubmissionDetail.jsx'), 'SubmissionDetail')
 const SubmissionProposal = lazyPage(
   () => import('./pages/SubmissionProposal.jsx'),
   'SubmissionProposal',
@@ -60,10 +43,7 @@ const SubmissionWorkspace = lazyPage(
   () => import('./pages/SubmissionWorkspace.jsx'),
   'SubmissionWorkspace',
 )
-const Negotiations = lazyPage(
-  () => import('./pages/Negotiations.jsx'),
-  'Negotiations',
-)
+const Negotiations = lazyPage(() => import('./pages/Negotiations.jsx'), 'Negotiations')
 const NegotiationDetail = lazyPage(
   () => import('./pages/NegotiationDetail.jsx'),
   'NegotiationDetail',
@@ -73,59 +53,26 @@ const DecisionDetail = lazyPage(
   'DecisionPage',
 )
 const CoyDetail = lazyPage(() => import('./pages/CoyDetail.jsx'), 'CoyDetail')
-const GroupDetail = lazyPage(
-  () => import('./pages/GroupDetail.jsx'),
-  'GroupDetail',
-)
+const GroupDetail = lazyPage(() => import('./pages/GroupDetail.jsx'), 'GroupDetail')
 const TaskForce = lazyPage(() => import('./pages/TaskForce.jsx'), 'TaskForce')
-const Onboarding = lazyPage(
-  () => import('./pages/Onboarding.jsx'),
-  'Onboarding',
-)
+const Onboarding = lazyPage(() => import('./pages/Onboarding.jsx'), 'Onboarding')
 const Course = lazyPage(() => import('./pages/Course.jsx'), 'Course')
 const Library = lazyPage(() => import('./pages/Library.jsx'), 'Library')
-const ResourceIssues = lazyPage(
-  () => import('./pages/ResourceIssues.jsx'),
-  'ResourceIssues',
-)
+const ResourceIssues = lazyPage(() => import('./pages/ResourceIssues.jsx'), 'ResourceIssues')
 const Resources = lazyPage(() => import('./pages/Resources.jsx'), 'Resources')
 const Workspace = lazyPage(() => import('./pages/Workspace.jsx'), 'Workspace')
 const CpManage = lazyPage(() => import('./pages/CpManage.jsx'), 'CpManage')
 const NgoPortal = lazyPage(() => import('./pages/NgoPortal.jsx'), 'NgoPortal')
 const Admin = lazyPage(() => import('./pages/Admin.jsx'), 'Admin')
-const CpOverview = lazyPage(
-  () => import('./pages/CpOverview.jsx'),
-  'CpOverview',
-)
-const FocalPoint = lazyPage(
-  () => import('./pages/FocalPoint.jsx'),
-  'FocalPoint',
-)
-const MembershipTeam = lazyPage(
-  () => import('./pages/MembershipTeam.jsx'),
-  'MembershipTeam',
-)
-const MembershipAppeal = lazyPage(
-  () => import('./pages/MembershipAppeal.jsx'),
-  'MembershipAppeal',
-)
-const GysPolicyTeam = lazyPage(
-  () => import('./pages/GysPolicyTeam.jsx'),
-  'GysPolicyTeam',
-)
-const ContentWorkspace = lazyPage(
-  () => import('./pages/ContentWorkspace.jsx'),
-  'ContentWorkspace',
-)
+const CpOverview = lazyPage(() => import('./pages/CpOverview.jsx'), 'CpOverview')
+const FocalPoint = lazyPage(() => import('./pages/FocalPoint.jsx'), 'FocalPoint')
+const MembershipTeam = lazyPage(() => import('./pages/MembershipTeam.jsx'), 'MembershipTeam')
+const MembershipAppeal = lazyPage(() => import('./pages/MembershipAppeal.jsx'), 'MembershipAppeal')
+const GysPolicyTeam = lazyPage(() => import('./pages/GysPolicyTeam.jsx'), 'GysPolicyTeam')
+const ContentWorkspace = lazyPage(() => import('./pages/ContentWorkspace.jsx'), 'ContentWorkspace')
 const Profile = lazyPage(() => import('./pages/Profile.jsx'), 'Profile')
-const ReviewQueue = lazyPage(
-  () => import('./pages/ReviewQueue.jsx'),
-  'ReviewQueue',
-)
-const CpCallBook = lazyPage(
-  () => import('./pages/CpCallBook.jsx'),
-  'CpCallBook',
-)
+const ReviewQueue = lazyPage(() => import('./pages/ReviewQueue.jsx'), 'ReviewQueue')
+const CpCallBook = lazyPage(() => import('./pages/CpCallBook.jsx'), 'CpCallBook')
 const Help = lazyPage(() => import('./pages/Help.jsx'), 'Help')
 
 // These pages remain available while the membership course is incomplete.
@@ -238,8 +185,8 @@ function RetiredPoints() {
     <div className="stack">
       <h1>Contribution points have been retired</h1>
       <p>
-        Track responsibilities, decisions and completed work in the operational
-        workspace. Existing award records are retained for the audit trail.
+        Track responsibilities, decisions and completed work in the operational workspace. Existing
+        award records are retained for the audit trail.
       </p>
       <a className="btn btn-primary" href="/work">
         Open work and follow-up
@@ -250,11 +197,9 @@ function RetiredPoints() {
 
 function PeopleRedirect() {
   const { account } = useAccount()
-  const membershipTeam = (
-    account?.access?.teamRoles ||
-    account?.teamRoles ||
-    []
-  ).includes('membership_team')
+  const membershipTeam = (account?.access?.teamRoles || account?.teamRoles || []).includes(
+    'membership_team',
+  )
   useEffect(() => {
     replace(membershipTeam ? '/team/membership/renewals' : '/directory/people')
   }, [membershipTeam])
@@ -341,19 +286,13 @@ function AppRoutes() {
   if (path.startsWith('/admin') && account && account.role !== 'admin') {
     return (
       <Shell>
-        <Locked
-          title="Admin only"
-          body="This workspace requires platform administration access."
-        />
+        <Locked title="Admin only" body="This workspace requires platform administration access." />
       </Shell>
     )
   }
   if (path.startsWith('/staff/content') && account) {
     const capabilities = account.access?.capabilities || []
-    if (
-      !capabilities.includes('content.draft') &&
-      !capabilities.includes('content.review')
-    ) {
+    if (!capabilities.includes('content.draft') && !capabilities.includes('content.review')) {
       return (
         <Shell>
           <Locked
@@ -364,11 +303,7 @@ function AppRoutes() {
       )
     }
   }
-  if (
-    path.startsWith('/focal') &&
-    account &&
-    !['admin', 'focal_point'].includes(account.role)
-  ) {
+  if (path.startsWith('/focal') && account && !['admin', 'focal_point'].includes(account.role)) {
     return (
       <Shell>
         <Locked
@@ -379,12 +314,7 @@ function AppRoutes() {
     )
   }
   // The NGO portal needs an organisation context, including for administrators.
-  if (
-    path.startsWith('/ngo') &&
-    account &&
-    account.role !== 'ngo_admin' &&
-    !account.access?.ngo
-  ) {
+  if (path.startsWith('/ngo') && account && account.role !== 'ngo_admin' && !account.access?.ngo) {
     // Any signed-in account may open an invitation before it has an NGO seat.
     if (!path.startsWith('/ngo/accept')) {
       return (
@@ -399,9 +329,7 @@ function AppRoutes() {
   }
   if (path.startsWith('/cp/') && account && account.role !== 'admin') {
     const requestedWg = path.split('/')[2]
-    const managesRequestedWg =
-      account.access?.managedWgs?.includes(requestedWg) ||
-      account.access?.wgAssignments?.some((item) => item.wgSlug === requestedWg)
+    const managesRequestedWg = canManageGroup(account, requestedWg)
     if (!managesRequestedWg) {
       return (
         <Shell>
@@ -414,11 +342,7 @@ function AppRoutes() {
     }
   }
   const access = account?.access
-  const hasCpWorkspace =
-    account?.role === 'admin' ||
-    account?.isWgContact ||
-    access?.wgAssignments?.length > 0 ||
-    access?.managedWgs?.length > 0
+  const hasCpWorkspace = canManageGroups(account)
   if (path === '/cp' && account && access && !hasCpWorkspace) {
     return (
       <Shell>
@@ -462,9 +386,7 @@ function AppRoutes() {
 
   const peekBackground = window.history.state?.peekBackground
   const peekRoute =
-    canPeek(path) && typeof peekBackground === 'string'
-      ? routeFor(peekBackground)
-      : null
+    canPeek(path) && typeof peekBackground === 'string' ? routeFor(peekBackground) : null
 
   const BackgroundPage = peekRoute?.Page || Page
   const backgroundSlug = peekRoute ? peekRoute.slug : slug
@@ -491,12 +413,20 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AccessGate>
-      {(account) => (
-        <AccountProvider initialAccount={account}>
-          <AppRoutes />
-        </AccountProvider>
+    <>
+      {process.env.NEXT_PUBLIC_HUB_DEMO === 'true' && (
+        <div className="demoNotice">
+          <strong>Demo environment.</strong> Fictional accounts and records. Do not enter personal
+          information.
+        </div>
       )}
-    </AccessGate>
+      <AccessGate>
+        {(account) => (
+          <AccountProvider initialAccount={account}>
+            <AppRoutes />
+          </AccountProvider>
+        )}
+      </AccessGate>
+    </>
   )
 }

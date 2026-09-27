@@ -3,6 +3,7 @@ import Script from 'next/script'
 
 export const metadata: Metadata = {
   title: 'YOUNGO Hub',
+  robots: process.env.HUB_DEMO_MODE === 'true' ? { index: false, follow: false } : undefined,
   description:
     'YOUNGO Hub brings the work of the UNFCCC children and youth constituency into one shared platform — meetings, working groups, submissions, decisions, opportunities, and trusted knowledge.',
   manifest: '/manifest.json',

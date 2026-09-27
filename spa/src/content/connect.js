@@ -44,13 +44,6 @@ export const COY_CURRENT = {
  */
 export const YOUNGO_NETWORK = [
   {
-    key: 'science',
-    title: 'Climate Resource Hub',
-    host: 'YOUNGO Hub',
-    url: '/about/resources',
-    body: 'Climate work, evidence, learning, and funding in a public, community-maintained catalogue.',
-  },
-  {
     key: 'coy',
     title: 'Conference of Youth',
     host: 'climatecoy.com',

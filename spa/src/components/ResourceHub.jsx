@@ -93,9 +93,7 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }) {
       </div>
       <div className="resourceHubCardCopy">
         <h3>{resource.title}</h3>
-        {resource.publisher && (
-          <p className="metaMuted">{resource.publisher}</p>
-        )}
+        {resource.publisher && <p className="metaMuted">{resource.publisher}</p>}
         <p className="meta">{resource.summary}</p>
       </div>
       <div className="chipRow resourceHubTags" aria-label="Resource metadata">
@@ -143,10 +141,7 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }) {
   )
 }
 
-export function ResourceCatalogue({
-  heading = 'Resource catalogue',
-  onCorrect,
-}) {
+export function ResourceCatalogue({ heading = 'Resource catalogue', onCorrect }) {
   const query = useApi('/resources')
   const { account } = useAccount()
   const [reported, setReported] = useState(null)
@@ -179,41 +174,22 @@ export function ResourceCatalogue({
         (type === 'all' || item.type === type) &&
         (topic === 'all' || (item.topics || [item.topic]).includes(topic)) &&
         (!verifiedOnly ||
-          (item.verification?.status === 'verified' &&
-            !item.verification.openIssues))
+          (item.verification?.status === 'verified' && !item.verification.openIssues))
       )
     })
   }, [pathway, query.data?.items, search, topic, type, verifiedOnly])
 
   return (
     <>
-      <p className="sectionIntro resourceAttribution">
-        Includes the full{' '}
-        <a
-          className="inlineLink"
-          href="https://github.com/unnobatroo/climate-resource-hub"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Climate Resource Hub collection
-        </a>{' '}
-        and member contributions. Imported links await human verification; a
-        listing is not an endorsement.
-      </p>
       {reported && (
-        <SidePanel
-          title="Report a resource issue"
-          onClose={() => setReported(null)}
-        >
+        <SidePanel title="Report a resource issue" onClose={() => setReported(null)}>
           <ResourceReport
             key={reported.slug}
             resource={reported}
             onClose={() => setReported(null)}
             onSaved={() => {
               setReported(null)
-              setNotice(
-                'Issue reported. A Content Publisher can now review it.',
-              )
+              setNotice('Issue reported. A Content Publisher can now review it.')
               query.retry()
             }}
           />
@@ -224,10 +200,7 @@ export function ResourceCatalogue({
           {notice}
         </p>
       )}
-      <Section
-        label={heading}
-        meta={query.data ? `${items.length} listed` : null}
-      >
+      <Section label={heading} meta={query.data ? `${items.length} listed` : null}>
         <div className="resourceHubControls">
           <div className="catalogSearchRow">
             <label className="searchInputWrap resourceHubSearch">
@@ -259,74 +232,82 @@ export function ResourceCatalogue({
               </select>
             </label>
           </div>
-          <div className="resourceHubFilterRows">
-            <fieldset className="filterLevel">
-              <legend>Pathway</legend>
-              <div className="pillRow" aria-label="Pathway">
-                <FilterPill
-                  active={pathway === 'all'}
-                  icon={World}
-                  onClick={() => {
-                    setPathway('all')
-                    setLimit(12)
-                  }}
-                >
-                  All pathways
-                </FilterPill>
-                {RESOURCE_PATHWAYS.map((item) => (
+          <details className="resourceMoreFilters">
+            <summary>
+              Filters
+              {[pathway !== 'all', type !== 'all', topic !== 'all'].filter(Boolean).length > 0
+                ? ` · ${[pathway !== 'all', type !== 'all', topic !== 'all'].filter(Boolean).length} active`
+                : ''}
+            </summary>
+            <div className="resourceHubFilterRows">
+              <fieldset className="filterLevel">
+                <legend>Pathway</legend>
+                <div className="pillRow" aria-label="Pathway">
                   <FilterPill
-                    key={item.value}
-                    active={pathway === item.value}
-                    icon={PATHWAY_ICONS[item.value]}
+                    active={pathway === 'all'}
+                    icon={World}
                     onClick={() => {
-                      setPathway(item.value)
+                      setPathway('all')
                       setLimit(12)
                     }}
                   >
-                    {item.label}
+                    All pathways
                   </FilterPill>
-                ))}
-              </div>
-            </fieldset>
-            <div className="resourceHubSelects">
-              <label>
-                <span>Type</span>
-                <select
-                  className="input"
-                  value={type}
-                  onChange={(event) => {
-                    setType(event.target.value)
-                    setLimit(12)
-                  }}
-                >
-                  <option value="all">All types</option>
-                  {RESOURCE_TYPES.map((item) => (
-                    <option key={item.value} value={item.value}>
+                  {RESOURCE_PATHWAYS.map((item) => (
+                    <FilterPill
+                      key={item.value}
+                      active={pathway === item.value}
+                      icon={PATHWAY_ICONS[item.value]}
+                      onClick={() => {
+                        setPathway(item.value)
+                        setLimit(12)
+                      }}
+                    >
                       {item.label}
-                    </option>
+                    </FilterPill>
                   ))}
-                </select>
-              </label>
-              <label>
-                <span>Topic</span>
-                <select
-                  className="input"
-                  value={topic}
-                  onChange={(event) => {
-                    setTopic(event.target.value)
-                    setLimit(12)
-                  }}
-                >
-                  <option value="all">All topics</option>
-                  {RESOURCE_TOPICS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                </div>
+              </fieldset>
+              <div className="resourceHubSelects">
+                <label>
+                  <span>Type</span>
+                  <select
+                    className="input"
+                    value={type}
+                    onChange={(event) => {
+                      setType(event.target.value)
+                      setLimit(12)
+                    }}
+                  >
+                    <option value="all">All types</option>
+                    {RESOURCE_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Topic</span>
+                  <select
+                    className="input"
+                    value={topic}
+                    onChange={(event) => {
+                      setTopic(event.target.value)
+                      setLimit(12)
+                    }}
+                  >
+                    <option value="all">All topics</option>
+                    {RESOURCE_TOPICS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
-          </div>
+          </details>
           <div className="resourceFilterFooter">
             <label className="resourceCheck">
               <input
@@ -343,11 +324,7 @@ export function ResourceCatalogue({
               sm
               variant="secondary"
               disabled={
-                !search &&
-                pathway === 'all' &&
-                type === 'all' &&
-                topic === 'all' &&
-                !verifiedOnly
+                !search && pathway === 'all' && type === 'all' && topic === 'all' && !verifiedOnly
               }
               onClick={() => {
                 setSearch('')
@@ -367,20 +344,24 @@ export function ResourceCatalogue({
             items.length ? (
               groupBy === 'pathway' && pathway === 'all' ? (
                 <div className="catalogGroups">
-                  {RESOURCE_PATHWAYS.map((group) => {
-                    const matches = items.filter(
-                      (item) => item.pathway === group.value,
-                    )
-                    return matches.length ? (
-                      <ResourcePathwayGroup
-                        key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
-                        group={group}
-                        items={matches}
-                        onReport={account?.isVerified ? setReported : null}
-                        onCorrect={onCorrect}
-                      />
-                    ) : null
-                  })}
+                  {[...RESOURCE_PATHWAYS, { value: 'other', label: 'Other resources' }].map(
+                    (group) => {
+                      const matches = items.filter((item) =>
+                        group.value === 'other'
+                          ? !RESOURCE_PATHWAYS.some((path) => path.value === item.pathway)
+                          : item.pathway === group.value,
+                      )
+                      return matches.length ? (
+                        <ResourcePathwayGroup
+                          key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
+                          group={group}
+                          items={matches}
+                          onReport={account?.isVerified ? setReported : null}
+                          onCorrect={onCorrect}
+                        />
+                      ) : null
+                    },
+                  )}
                 </div>
               ) : (
                 <div className="resourceHubGrid cardGrid">
@@ -413,10 +394,7 @@ export function ResourceCatalogue({
         </Async>
         {(groupBy === 'none' || pathway !== 'all') && items.length > limit && (
           <div className="resourceLoadMore">
-            <Button
-              variant="secondary"
-              onClick={() => setLimit((value) => value + 12)}
-            >
+            <Button variant="secondary" onClick={() => setLimit((value) => value + 12)}>
               Show more resources ({items.length - limit} remaining)
             </Button>
           </div>
@@ -430,7 +408,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }) {
   const [visible, setVisible] = useState(3)
   return (
     <Section label={group.label} meta={`${items.length} resources`}>
-      <p className="catalogGroupDescription">{group.description}</p>
+      {group.description && <p className="catalogGroupDescription">{group.description}</p>}
       <div className="cardGrid resourceHubGrid">
         {items.slice(0, visible).map((resource) => (
           <ResourceCard
@@ -442,11 +420,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }) {
         ))}
       </div>
       {items.length > visible && (
-        <Button
-          sm
-          variant="secondary"
-          onClick={() => setVisible((count) => count + 6)}
-        >
+        <Button sm variant="secondary" onClick={() => setVisible((count) => count + 6)}>
           Show more in {group.label} ({items.length - visible} remaining)
         </Button>
       )}
@@ -457,9 +431,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }) {
 export function ResourceSubmissionPanel({ initialResource, onCancel }) {
   const submissions = useApi('/member/resources/submissions/mine')
   const [payload, setPayload] = useState(
-    initialResource
-      ? { ...EMPTY_RESOURCE, ...initialResource }
-      : EMPTY_RESOURCE,
+    initialResource ? { ...EMPTY_RESOURCE, ...initialResource } : EMPTY_RESOURCE,
   )
   const [editingId, setEditingId] = useState(null)
   const [open, setOpen] = useState(Boolean(initialResource))
@@ -474,12 +446,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
       [key]: value,
       ...(key === 'topic'
         ? {
-            topics: [
-              value,
-              ...current.topics.filter(
-                (t) => t !== current.topic && t !== value,
-              ),
-            ],
+            topics: [value, ...current.topics.filter((t) => t !== current.topic && t !== value)],
           }
         : {}),
     }))
@@ -507,13 +474,9 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
     setMessage('')
     setFields({})
     try {
-      if (editingId)
-        await apiPatch(`/member/resources/submissions/${editingId}`, payload)
+      if (editingId) await apiPatch(`/member/resources/submissions/${editingId}`, payload)
       else if (initialResource)
-        await apiPost(
-          `/member/resources/${initialResource.slug}/corrections`,
-          payload,
-        )
+        await apiPost(`/member/resources/${initialResource.slug}/corrections`, payload)
       else await apiPost('/member/resources/submissions', payload)
       setMessage('Resource sent to the Content Publisher review queue.')
       reset()
@@ -529,24 +492,16 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
 
   return (
     <Section
-      label={
-        initialResource
-          ? `Suggest an edit: ${initialResource.title}`
-          : 'Suggest a resource'
-      }
+      label={initialResource ? `Suggest an edit: ${initialResource.title}` : 'Suggest a resource'}
       action={
-        <Button
-          sm
-          variant={open ? 'ghost' : 'primary'}
-          onClick={() => setOpen((value) => !value)}
-        >
+        <Button sm variant={open ? 'ghost' : 'primary'} onClick={() => setOpen((value) => !value)}>
           {open ? 'Close form' : 'Add resource'}
         </Button>
       }
     >
       <p className="sectionIntro">
-        Share a useful public resource. A Content Publisher checks the link,
-        description, and tags before it becomes public.
+        Share a useful public resource. A Content Publisher checks the link, description, and tags
+        before it becomes public.
       </p>
       {message && (
         <div className="noticeBanner">
@@ -682,8 +637,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
                 <FieldError msg={fields.language} />
               </label>
               <label>
-                Publisher or author{' '}
-                <span className="metaMuted">(optional)</span>
+                Publisher or author <span className="metaMuted">(optional)</span>
                 <input
                   className="input"
                   value={payload.publisher}
@@ -695,9 +649,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
             <fieldset className="resourceTopicPicker">
               <legend>
                 Additional topic tags{' '}
-                <span className="metaMuted">
-                  (up to five including the main topic)
-                </span>
+                <span className="metaMuted">(up to five including the main topic)</span>
               </legend>
               <div className="resourceTopicOptions">
                 {RESOURCE_TOPICS.map((topic) => (
@@ -707,8 +659,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
                       checked={payload.topics.includes(topic)}
                       disabled={
                         topic === payload.topic ||
-                        (!payload.topics.includes(topic) &&
-                          payload.topics.length >= 5)
+                        (!payload.topics.includes(topic) && payload.topics.length >= 5)
                       }
                       onChange={(event) =>
                         set(
@@ -728,11 +679,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
             <div className="resourceSubmissionActions">
               <Button type="submit" variant="primary" disabled={busy}>
                 <Send size={16} strokeWidth={1.75} aria-hidden />
-                {busy
-                  ? 'Sending…'
-                  : editingId
-                    ? 'Resubmit for review'
-                    : 'Send for review'}
+                {busy ? 'Sending…' : editingId ? 'Resubmit for review' : 'Send for review'}
               </Button>
               {(editingId || initialResource) && (
                 <Button
@@ -755,17 +702,12 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
           data.items.length ? (
             <div className="resourceSubmissionList">
               {data.items.map((item) => (
-                <article
-                  key={item.id}
-                  className="card cardTight resourceSubmissionItem"
-                >
+                <article key={item.id} className="card cardTight resourceSubmissionItem">
                   <div>
                     <strong>{item.payload.title}</strong>
                     <p className="meta">Submitted resource</p>
                     {item.reviewNote && (
-                      <p className="contentReviewNote">
-                        Review note: {item.reviewNote}
-                      </p>
+                      <p className="contentReviewNote">Review note: {item.reviewNote}</p>
                     )}
                   </div>
                   <div className="resourceSubmissionStatus">
@@ -810,17 +752,11 @@ function ResourceReport({ resource, onClose, onSaved }) {
   return (
     <form className="card resourceSubmissionForm" onSubmit={submit}>
       <h2>Report an issue: {resource.title}</h2>
-      <p className="meta">
-        Your report goes privately to Content Publishers for verification.
-      </p>
+      <p className="meta">Your report goes privately to Content Publishers for verification.</p>
       {error && <ErrorCard message={error} />}
       <label>
         Issue type
-        <select
-          className="input"
-          value={kind}
-          onChange={(event) => setKind(event.target.value)}
-        >
+        <select className="input" value={kind} onChange={(event) => setKind(event.target.value)}>
           {RESOURCE_ISSUE_KINDS.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}

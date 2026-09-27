@@ -271,7 +271,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
             rel="noreferrer"
             href={`${item.source.repository}/blob/${item.source.commit}/${item.source.path}`}
           >
-            Climate Resource Hub
+            Resources
           </a>
           . Original group: {item.source.category} / {item.source.subcategory}.
           The source listing date is not a verification date.

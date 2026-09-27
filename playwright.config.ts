@@ -35,8 +35,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: `npm run dev -- --port ${new URL(process.env.TEST_BASE_URL || 'http://localhost:3000').port || '3000'}`,
     reuseExistingServer: true,
-    url: 'http://localhost:3000',
+    url: process.env.TEST_BASE_URL || 'http://localhost:3000',
   },
 })

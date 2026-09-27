@@ -52,7 +52,7 @@ Changes to `main` require a pull request, passing checks, and resolved review co
 
 ## Docs and public content
 
-Keep short setup and contribution guides with the code. The [organisation and permissions guide](https://github.com/youngo-consitutency/hub/wiki/Organisation-and-permissions) describes the proposed access model. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
+Keep short setup and contribution guides with the code. The [organisation and permissions guide](https://github.com/youngo-consitutency/hub/wiki/Organisation-and-permissions) describes the intended access boundaries. Longer guides live in the [wiki](https://github.com/youngo-consitutency/hub/wiki). Suggest a wiki correction through the documentation issue form; maintainers can apply it to the separate wiki repository.
 
 Public content changes need a reliable source link. Never commit account exports, private meeting links, identity documents, access tokens, or local agent notes.
 

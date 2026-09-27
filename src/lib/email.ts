@@ -4,7 +4,10 @@ import { defaultEmailFrom } from './env'
 // unconfigured, messages are logged and dropped (delivery-failure pattern from
 // server/lib/notifications/transport.js).
 export function emailConfigured(): boolean {
-  return Boolean(process.env.SMTP_URL || (process.env.SMTP_HOST && process.env.EMAIL_FROM))
+  return (
+    process.env.HUB_DEMO_MODE !== 'true' &&
+    Boolean(process.env.SMTP_URL || (process.env.SMTP_HOST && process.env.EMAIL_FROM))
+  )
 }
 
 let transporter: Transporter | null = null
@@ -37,6 +40,7 @@ export async function sendEmail({
   text: string
   html?: string
 }) {
+  if (process.env.HUB_DEMO_MODE === 'true') return { delivered: false }
   const t = getTransporter()
   if (!t) {
     console.warn('email not configured; dropping message to', to)

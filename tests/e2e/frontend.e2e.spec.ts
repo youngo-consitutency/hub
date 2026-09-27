@@ -2,17 +2,28 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
 
-const BASE = 'http://localhost:3000'
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:3000'
 // Provisioned by tests/e2e/global-setup.ts — generated per run.
 const { memberEmail, memberPassword } = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, '.credentials.json'), 'utf8'),
 )
 
 test.describe('Public site', () => {
-  test('homepage renders the Hub shell', async ({ page }) => {
+  test('the public homepage matches About and keeps Home links at the root', async ({ page }) => {
     await page.goto(BASE)
     await expect(page).toHaveTitle(/YOUNGO Hub/)
-    await expect(page.locator('body')).not.toBeEmpty()
+    await expect(
+      page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
+    ).toBeVisible()
+    await expect(page.locator('img[src*="working-together"]')).toHaveCount(0)
+    await page.goto(`${BASE}/about`)
+    await expect(
+      page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'YOUNGO home', exact: true })).toHaveAttribute(
+      'href',
+      '/',
+    )
   })
 
   test('public API responds with JSON collections', async ({ request }) => {
@@ -34,15 +45,15 @@ test.describe('Member app', () => {
     // The SPA shows a sign-in gate when unauthenticated.
     const email = page.locator('input[type="email"], input[name="email"]').first()
     await email.fill(memberEmail)
-    const password = page
-      .locator('input[type="password"], input[name="password"]')
-      .first()
+    const password = page.locator('input[type="password"], input[name="password"]').first()
     await password.fill(memberPassword)
-    await page
-      .locator('button[type="submit"], button:has-text("Sign in")')
-      .first()
-      .click()
+    await page.locator('button[type="submit"], button:has-text("Sign in")').first().click()
     // Signed-in members land on the member workspace; the gate disappears.
     await expect(email).toBeHidden({ timeout: 15000 })
+    await page.goto(BASE)
+    await expect(page.getByRole('heading', { name: 'Your Hub', exact: true })).toBeVisible()
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Your Hub', exact: true })).toBeVisible()
   })
 })

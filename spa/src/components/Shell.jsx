@@ -1,3 +1,4 @@
+import { canManageGroups } from '../lib/groupPermissions.js'
 import { navigationActive as isActive } from '../lib/pageSections.js'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { A } from './ui.jsx'
@@ -203,9 +204,7 @@ export function Shell({ children }) {
         label: 'WG Contact Point',
         icon: Briefcase,
         when:
-          account?.isWgContact ||
-          access.wgAssignments?.length > 0 ||
-          access.manageAllWgs,
+          canManageGroups(account),
       },
       {
         section: SECTION.mine,

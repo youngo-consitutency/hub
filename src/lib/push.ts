@@ -14,7 +14,8 @@ if (vapidPublicKey && vapidPrivateKey) {
   webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
 }
 
-export const pushConfigured = Boolean(vapidPublicKey && vapidPrivateKey)
+export const pushConfigured =
+  process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
 
 const publicRow = (row: any) => ({
   id: row.id,
@@ -44,19 +45,10 @@ export function validatedPushEndpoint(value: any) {
     throw invalid()
   }
   const allowed =
-    [
-      'fcm.googleapis.com',
-      'updates.push.services.mozilla.com',
-      'web.push.apple.com',
-    ].includes(url.hostname) || url.hostname.endsWith('.notify.windows.com')
-  if (
-    !allowed ||
-    url.protocol !== 'https:' ||
-    url.port ||
-    url.username ||
-    url.password ||
-    url.hash
-  )
+    ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'web.push.apple.com'].includes(
+      url.hostname,
+    ) || url.hostname.endsWith('.notify.windows.com')
+  if (!allowed || url.protocol !== 'https:' || url.port || url.username || url.password || url.hash)
     throw invalid()
   return url.href
 }
@@ -69,10 +61,9 @@ export function toWebPushSubscription(row: any) {
 }
 
 const subscriptionLimitError = () =>
-  Object.assign(
-    new Error('Remove an old device before adding another (maximum 20).'),
-    { code: 'push_subscription_limit' },
-  )
+  Object.assign(new Error('Remove an old device before adding another (maximum 20).'), {
+    code: 'push_subscription_limit',
+  })
 
 export async function saveSubscription({
   accountId,
@@ -84,17 +75,12 @@ export async function saveSubscription({
   userAgent?: string | null
 }) {
   const endpoint = validatedPushEndpoint(subscription?.endpoint)
-  const keys =
-    subscription?.keys && typeof subscription.keys === 'object'
-      ? subscription.keys
-      : {}
+  const keys = subscription?.keys && typeof subscription.keys === 'object' ? subscription.keys : {}
   const pool = getPgPool()!
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
-    await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [
-      accountId,
-    ])
+    await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [accountId])
     const count = await client.query(
       'SELECT count(*)::int AS count FROM push_subscriptions WHERE account_id=$1 AND endpoint<>$2',
       [accountId, endpoint],
@@ -153,10 +139,7 @@ export async function listSubscriberAccounts() {
   return rows.map((row: any) => ({
     id: row.id,
     email: row.email,
-    name:
-      row.name ||
-      [row.first_name, row.last_name].filter(Boolean).join(' ') ||
-      row.email,
+    name: row.name || [row.first_name, row.last_name].filter(Boolean).join(' ') || row.email,
     devices: row.devices,
   }))
 }
@@ -170,13 +153,11 @@ export async function deleteSubscription({
 }) {
   const pool = getPgPool()!
   const { rowCount } = endpoint
-    ? await pool.query(
-        'DELETE FROM push_subscriptions WHERE account_id=$1 AND endpoint=$2',
-        [accountId, endpoint],
-      )
-    : await pool.query('DELETE FROM push_subscriptions WHERE account_id=$1', [
+    ? await pool.query('DELETE FROM push_subscriptions WHERE account_id=$1 AND endpoint=$2', [
         accountId,
+        endpoint,
       ])
+    : await pool.query('DELETE FROM push_subscriptions WHERE account_id=$1', [accountId])
   return rowCount || 0
 }
 
@@ -193,6 +174,9 @@ export async function pruneEndpoints(endpoints: string[]) {
 
 /** Send a notification and prune endpoints the push service reports expired. */
 export async function deliverPush(rows: any[], payload: string) {
+  if (process.env.HUB_DEMO_MODE === 'true')
+    return { sent: 0, failed: 0, pruned: 0, total: rows.length }
+
   const results: PromiseSettledResult<any>[] = []
   for (let offset = 0; offset < rows.length; offset += 10) {
     results.push(
@@ -207,8 +191,7 @@ export async function deliverPush(rows: any[], payload: string) {
   }
   const expired: string[] = []
   results.forEach((result, index) => {
-    const status =
-      result.status === 'rejected' ? (result.reason as any)?.statusCode : null
+    const status = result.status === 'rejected' ? (result.reason as any)?.statusCode : null
     if (status === 404 || status === 410) expired.push(rows[index].endpoint)
   })
   if (expired.length) await pruneEndpoints(expired)

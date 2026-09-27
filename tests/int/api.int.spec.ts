@@ -39,6 +39,7 @@ const api = (
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      Origin: BASE,
       ...(cookie ? { Cookie: cookie } : {}),
       ...(init.headers || {}),
     },
@@ -1501,7 +1502,7 @@ describe('platform decision bridge', () => {
       expect(published.status).toBe(200)
 
       // public register exposes it anonymously
-      const publicRes = await fetch('http://localhost:3000/api/platform/public')
+      const publicRes = await fetch(`${BASE}/api/platform/public`)
       const pub = await publicRes.json()
       expect(
         pub.decisions.some((x: any) => x.title === 'Bridged proposal'),
