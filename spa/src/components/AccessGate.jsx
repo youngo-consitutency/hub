@@ -5,7 +5,6 @@ import { ResetPassword } from '../pages/ResetPassword.jsx'
 import { ChangePasswordGate } from './ChangePasswordGate.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { PublicSite } from '../pages/site/PublicSite.jsx'
-import { PlatformLanding } from '../pages/PlatformLanding.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
 import { apiGet } from '../lib/api.js'
 import { clearSession, getCachedAccount, setSession } from '../lib/session.js'
@@ -13,7 +12,7 @@ import { navigate, usePath } from '../lib/router.js'
 
 /**
  * Controls access before the main application loads. Signed-out visitors land
- * on a member desk where they can sign in. New members still accept the
+ * on the public YOUNGO homepage. New members still accept the
  * membership policy before registering. App.jsx handles course-verification
  * and role-specific routes.
  */
@@ -85,7 +84,7 @@ export function AccessGate({ children }) {
 
   // Keep the old preview URL as an alias to the current public front page.
   if (path === '/landingV2' || path.startsWith('/landingV2/')) {
-    return <PlatformLanding onAuthenticated={handleAuthenticated} />
+    return <PublicSite />
   }
 
   if (!ready) {
@@ -134,9 +133,9 @@ export function AccessGate({ children }) {
     return <>{typeof children === 'function' ? children(account) : children}</>
   }
 
-  // The signed-out front door is a member desk: sign in here, or go to /join.
+  // Signed-out visitors see the same public homepage as /about.
   if (path === '/') {
-    return <PlatformLanding onAuthenticated={handleAuthenticated} />
+    return <PublicSite />
   }
 
   if (path === '/join' && !policyOk) {

@@ -9,10 +9,21 @@ const { memberEmail, memberPassword } = JSON.parse(
 )
 
 test.describe('Public site', () => {
-  test('homepage renders the Hub shell', async ({ page }) => {
+  test('the public homepage matches About and keeps Home links at the root', async ({ page }) => {
     await page.goto(BASE)
     await expect(page).toHaveTitle(/YOUNGO Hub/)
-    await expect(page.locator('body')).not.toBeEmpty()
+    await expect(
+      page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
+    ).toBeVisible()
+    await expect(page.locator('img[src*="working-together"]')).toHaveCount(0)
+    await page.goto(`${BASE}/about`)
+    await expect(
+      page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'YOUNGO home', exact: true })).toHaveAttribute(
+      'href',
+      '/',
+    )
   })
 
   test('public API responds with JSON collections', async ({ request }) => {

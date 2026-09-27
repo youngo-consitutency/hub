@@ -73,8 +73,6 @@
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
-  --photo-caption: linear-gradient(transparent, #09251be6);
-  --photo-text: #ffffff;
 }
 
 @media (max-width: 1599px) {
