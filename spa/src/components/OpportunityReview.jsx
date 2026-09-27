@@ -1,4 +1,4 @@
-import { formatDateTime } from '../lib/dateTime.js'
+import { formatDateTime } from '../lib/time.js'
 import { regionLabel } from '../lib/regions.js'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'

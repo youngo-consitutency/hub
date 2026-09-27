@@ -8,31 +8,31 @@ import {
   TbHeartHandshake as Handshake,
   TbMapPin as MapPin,
   TbSpeakerphone as Megaphone,
-  TbSitemap as Network,
   TbScript as ScrollText,
   TbUsers as Users,
 } from 'react-icons/tb'
 import { A } from '../../components/ui.jsx'
+import { UpcomingEvents } from './UpcomingEvents.jsx'
 
 const MISSION = [
   {
     icon: GraduationCap,
-    title: 'Awareness, knowledge & capacity building',
+    title: 'Learn together',
     body: 'We help children and young people understand the UN climate process and build the skills to take part in it — from first-time followers to trained negotiators.',
   },
   {
     icon: Handshake,
-    title: 'Collaboration, cooperation & network',
+    title: 'Connect across borders',
     body: 'We connect youth-led organisations, groups, delegations, and individuals across every region so local action adds up to a global movement.',
   },
   {
     icon: ScrollText,
-    title: 'Policy, lobby & advocacy',
+    title: 'Shape climate policy',
     body: 'We draft, coordinate, and deliver youth policy positions into the UNFCCC process, so the perspectives of young and future generations are heard where decisions are made.',
   },
   {
     icon: Megaphone,
-    title: 'Youth action',
+    title: 'Take action',
     body: 'We turn participation into agency: members run campaigns, actions, and initiatives inside and around the negotiations.',
   },
 ]
@@ -44,13 +44,11 @@ const ORGANISATION = [
   },
   {
     value: 'Consensus',
-    label:
-      'All decisions are taken by consensus via established decision-making guidelines.',
+    label: 'All decisions are taken by consensus via established decision-making guidelines.',
   },
   {
     value: 'Equal voice',
-    label:
-      'Every engaging entity — irrespective of an NGO’s scale — has an equal voice.',
+    label: 'Every engaging entity — irrespective of an NGO’s scale — has an equal voice.',
   },
   {
     value: 'Since 2009',
@@ -142,24 +140,6 @@ const TIMELINE = [
   },
 ]
 
-const START_STEPS = [
-  {
-    icon: HandHeart,
-    title: 'Create your free account',
-    body: 'Join as an individual or through a youth-led organisation.',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Take the short introduction',
-    body: 'Learn how YOUNGO works and the principles members share.',
-  },
-  {
-    icon: Network,
-    title: 'Find where you fit',
-    body: 'Choose working groups, calls, and opportunities that matter to you.',
-  },
-]
-
 export function SiteHome() {
   return (
     <>
@@ -172,10 +152,9 @@ export function SiteHome() {
               </p>
               <h1>Your place in global climate action.</h1>
               <p className="siteHeroLead">
-                YOUNGO brings together young people, youth-led organisations,
-                groups, and delegations working on climate change. Learn the UN
-                climate process, contribute to policy, and meet people taking
-                action around the world.
+                YOUNGO brings together young people, youth-led organisations, groups, and
+                delegations working on climate change. Learn the UN climate process, contribute to
+                policy, and meet people taking action around the world.
               </p>
               <div className="siteHeroActions">
                 <A className="btn btn-primary btn-glow" href="/join">
@@ -191,28 +170,7 @@ export function SiteHome() {
               </p>
             </div>
 
-            <aside className="card siteStartCard" aria-labelledby="start-title">
-              <div className="siteStartHeading">
-                <p className="pageEyebrow">New here?</p>
-                <h2 id="start-title">Start in three simple steps</h2>
-              </div>
-              <ol className="siteStartList">
-                {START_STEPS.map(({ icon: Icon, title, body }, index) => (
-                  <li key={title}>
-                    <span className="siteStartIcon" aria-hidden>
-                      <Icon size={17} strokeWidth={1.75} />
-                    </span>
-                    <span className="siteStartCopy">
-                      <span className="siteStartStepLabel">
-                        Step {index + 1}
-                      </span>
-                      <strong>{title}</strong>
-                      <span className="meta">{body}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </aside>
+            <UpcomingEvents />
           </div>
         </div>
       </section>
@@ -222,10 +180,9 @@ export function SiteHome() {
           <p className="pageEyebrow">How members make a difference</p>
           <h2 id="mission-heading">Four ways we work</h2>
           <p className="siteSectionLead">
-            There is no single way to take part. Start with the work that feels
-            most useful to you.
+            There is no single way to take part. Start with the work that feels most useful to you.
           </p>
-          <div className="cardGrid">
+          <div className="siteMissionGrid">
             {MISSION.map(({ icon: Icon, title, body }) => (
               <article key={title} className="card siteMissionCard">
                 <span className="iconTile" aria-hidden>
@@ -242,11 +199,11 @@ export function SiteHome() {
           <p className="pageEyebrow">Built for participation</p>
           <h2 id="organised-heading">How YOUNGO is organised</h2>
           <p className="siteSectionLead">
-            YOUNGO was designed by young people, for young people — with as
-            little hierarchy as possible. Every member is invited to take the
-            initiative: start a submission, an action, or a new working group.
+            YOUNGO was designed by young people, for young people — with as little hierarchy as
+            possible. Every member is invited to take the initiative: start a submission, an action,
+            or a new working group.
           </p>
-          <div className="cardGrid">
+          <div className="siteOrganisationGrid">
             {ORGANISATION.map(({ value, label }) => (
               <article key={value} className="card siteOrgCard">
                 <strong>{value}</strong>
@@ -255,18 +212,17 @@ export function SiteHome() {
             ))}
           </div>
           <p className="meta siteOrgNote">
-            Two Global Focal Points — one from the Global South, one from the
-            Global North — are the constituency’s face to the UNFCCC
-            Secretariat, COP hosts, and the other constituencies. A Global
-            Coordination Team keeps an overview, working groups run
-            independently, and the whole constituency meets on a monthly call.
+            Two Global Focal Points — one from the Global South, one from the Global North — are the
+            constituency’s face to the UNFCCC Secretariat, COP hosts, and the other constituencies.
+            A Global Coordination Team keeps an overview, working groups run independently, and the
+            whole constituency meets on a monthly call.
           </p>
         </section>
 
         <section className="siteSection" aria-labelledby="what-heading">
           <p className="pageEyebrow">Inside the constituency</p>
           <h2 id="what-heading">What you can take part in</h2>
-          <div className="cardGrid">
+          <div className="siteActivityGrid">
             {WHAT_WE_DO.map(({ icon: Icon, title, body, href, link }) => (
               <article key={title} className="card siteDoCard">
                 <span className="iconTile" aria-hidden>
@@ -285,14 +241,13 @@ export function SiteHome() {
           </div>
         </section>
 
-        <section className="siteSection" aria-labelledby="values-heading">
+        <section className="siteSection siteValuesSection" aria-labelledby="values-heading">
           <p className="pageEyebrow">How we work together</p>
           <h2 id="values-heading">Values &amp; principles</h2>
           <p className="siteSectionLead">
-            Our principles guide how members work together. YOUNGO condemns all
-            types of harassment; an internal Awareness Team and a Code of
-            Conduct — including an Anti-Harassment Policy — keep the space safe
-            and open.
+            Our principles guide how members work together. YOUNGO condemns all types of harassment;
+            an internal Awareness Team and a Code of Conduct — including an Anti-Harassment Policy —
+            keep the space safe and open.
           </p>
           <ul className="sitePrincipleChips" aria-label="YOUNGO principles">
             {PRINCIPLES.map((principle) => (
@@ -306,7 +261,7 @@ export function SiteHome() {
         <section className="siteSection" aria-labelledby="history-heading">
           <p className="pageEyebrow">Where this began</p>
           <h2 id="history-heading">Our history</h2>
-          <div className="cardGrid siteTimeline">
+          <div className="siteTimeline">
             {TIMELINE.map(({ year, title, body }) => (
               <article key={year} className="siteTimelineItem">
                 <span className="siteTimelineYear mono">{year}</span>
@@ -324,10 +279,9 @@ export function SiteHome() {
           <div>
             <h2 id="cta-heading">Take your seat in the process</h2>
             <p className="meta">
-              Membership is free and open to all children and youth up to 35,
-              and to youth-led organisations. Register, pass a short membership
-              course, and the full Hub opens: calendar, working groups,
-              submissions, and more.
+              Membership is free and open to all children and youth up to 35, and to youth-led
+              organisations. Register, pass a short membership course, and the full Hub opens:
+              calendar, working groups, submissions, and more.
             </p>
           </div>
           <A className="btn btn-primary" href="/join">

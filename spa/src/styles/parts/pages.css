@@ -36,9 +36,9 @@
   gap: var(--space-2);
   text-align: center;
   padding: 40px 16px;
-  border: 0;
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius-card);
-  background: var(--bg-raised);
+  background: color-mix(in srgb, var(--bg-raised) 45%, var(--bg-page));
 }
 
 .emptyBody {
@@ -1413,10 +1413,7 @@ a.monogram:hover {
 
 .roleHubGrid {
   display: grid;
-  grid-template-columns: repeat(
-    var(--catalog-columns),
-    minmax(0, var(--catalog-card-max))
-  );
+  grid-template-columns: repeat(var(--catalog-columns), minmax(0, var(--catalog-card-max)));
   grid-auto-rows: 1fr;
   justify-content: start;
   align-items: stretch;
@@ -1425,10 +1422,7 @@ a.monogram:hover {
 
 .dashboardCardGrid {
   display: grid;
-  grid-template-columns: repeat(
-    var(--catalog-columns),
-    minmax(0, var(--catalog-card-max))
-  );
+  grid-template-columns: repeat(var(--catalog-columns), minmax(0, var(--catalog-card-max)));
   grid-auto-rows: 1fr;
   justify-content: start;
   align-items: stretch;

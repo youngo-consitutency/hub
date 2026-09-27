@@ -6,7 +6,10 @@ import { contentEndpoints } from './content'
 import { ngoEndpoints } from './ngo'
 import { resourceEndpoints } from './resources'
 import { negotiationEndpoints } from './negotiations'
-import { miscEndpoints } from './misc'
+import { consultationEndpoints } from './consultation'
+import { pushEndpoints } from './push'
+import { notificationEndpoints } from './notifications'
+import { intelligenceEndpoints } from './intelligence'
 import { platformEndpoints } from './platform'
 import { decisionEndpoints } from './decisions'
 import { electionEndpoints, selectionEndpoints } from './governance'
@@ -22,7 +25,10 @@ export const domainEndpoints = [
   ...ngoEndpoints,
   ...resourceEndpoints,
   ...negotiationEndpoints,
-  ...miscEndpoints,
+  ...consultationEndpoints,
+  ...pushEndpoints,
+  ...notificationEndpoints,
+  ...intelligenceEndpoints,
   ...platformEndpoints,
   ...decisionEndpoints,
   ...electionEndpoints,

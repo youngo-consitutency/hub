@@ -1,0 +1,193 @@
+import type { Endpoint } from 'payload'
+import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { requireAccount } from '../lib/accounts'
+import { rateLimit } from '../lib/rateLimit'
+import {
+  deleteSubscription,
+  deliverPush,
+  listAllSubscriptions,
+  listSubscriberAccounts,
+  listSubscriptionsForAccounts,
+  pushConfigured,
+  saveSubscription,
+} from '../lib/push'
+import { audit } from '../lib/audit'
+
+// Keyed on the account rather than the caller IP — venue networks share IPs.
+const pushTestLimit = rateLimit({
+  windowMs: 60_000,
+  max: 5,
+  scope: 'push-test',
+  key: (req) => String((req as any).user?.id || 'anon'),
+})
+const pushSendLimit = rateLimit({ windowMs: 60_000, max: 10, scope: 'push-send' })
+
+const pushUnavailable = () =>
+  new ApiError(503, 'push_not_configured', 'Push notifications are not configured.')
+
+export const pushEndpoints: Endpoint[] = [
+  {
+    path: '/push/vapid-key',
+    method: 'get',
+    handler: endpoint(async () => {
+      if (!pushConfigured) throw pushUnavailable()
+      return json({ publicKey: process.env.VAPID_PUBLIC_KEY })
+    }),
+  },
+  {
+    path: '/push/subscribe',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      if (!pushConfigured) throw pushUnavailable()
+      const b = ((await req.json?.()) || {}) as any
+      const subscription = b.subscription?.endpoint ? b.subscription : b
+      if (!subscription?.endpoint)
+        throw fail.validation({ endpoint: 'A subscription endpoint is required.' })
+      try {
+        const saved = await saveSubscription({
+          accountId: account.id,
+          subscription,
+          userAgent: req.headers.get('user-agent') || null,
+        })
+        return json({
+          ok: true,
+          subscription: { id: saved.id, endpoint: saved.endpoint },
+        })
+      } catch (error: any) {
+        if (
+          ['invalid_push_endpoint', 'push_subscription_limit'].includes(
+            error.code,
+          )
+        )
+          throw new ApiError(400, error.code, error.message)
+        throw error
+      }
+    }),
+  },
+  {
+    path: '/push/unsubscribe',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      const b = ((await req.json?.()) || {}) as any
+      const removed = await deleteSubscription({
+        accountId: account.id,
+        endpoint: b.endpoint || null,
+      })
+      return json({ ok: true, removed })
+    }),
+  },
+  {
+    path: '/push/status',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      const rows = await listSubscriptionsForAccounts([account.id])
+      return json({
+        configured: pushConfigured,
+        subscribed: rows.length > 0,
+        subscriptions: rows.map((row: any) => ({
+          id: row.id,
+          endpoint: row.endpoint,
+          createdAt: row.createdAt,
+        })),
+      })
+    }),
+  },
+  {
+    // Test notification to the caller's own devices — account-keyed limit.
+    path: '/push/test',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      pushTestLimit(req)
+      if (!pushConfigured) throw pushUnavailable()
+      const rows = await listSubscriptionsForAccounts([account.id])
+      if (!rows.length)
+        throw new ApiError(404, 'no_subscriptions', 'Subscribe on this device first.')
+      const b = ((await req.json?.()) || {}) as any
+      const payload = JSON.stringify({
+        title: b.title || 'YOUNGO Hub',
+        body: b.body || 'Test notification.',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-72.png',
+        tag: 'test-notification',
+        data: { url: '/' },
+      })
+      return json({ ok: true, ...(await deliverPush(rows, payload)) })
+    }),
+  },
+  {
+    path: '/push/send',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      if (account.role !== 'admin')
+        throw fail.forbidden('Admin access required.')
+      pushSendLimit(req)
+      if (!pushConfigured) throw pushUnavailable()
+      const b = ((await req.json?.()) || {}) as any
+      const { userIds, title, body, icon, badge, tag, data, requireInteraction } = b
+      const targetAll = userIds === 'all'
+      if (!targetAll && (!Array.isArray(userIds) || !userIds.length))
+        throw fail.validation({ userIds: 'Provide userIds as an array, or "all".' })
+      if (!title || !body)
+        throw fail.validation({ title: 'A title and body are required.' })
+      const rows = targetAll
+        ? await listAllSubscriptions()
+        : await listSubscriptionsForAccounts(userIds)
+      if (!rows.length)
+        throw new ApiError(
+          404,
+          'no_subscriptions',
+          'No active subscriptions for those members.',
+        )
+      const payload = JSON.stringify({
+        title,
+        body,
+        icon: icon || '/icons/icon-192.png',
+        badge: badge || '/icons/icon-72.png',
+        tag: tag || 'youngo-notification',
+        data: data || { url: '/' },
+        requireInteraction: Boolean(requireInteraction),
+      })
+      const result = await deliverPush(rows, payload)
+      await audit(req, account, {
+        action: 'push.broadcast',
+        targetType: 'push',
+        targetId: targetAll ? 'all' : userIds.join(','),
+        after: { title, recipients: result.total, sent: result.sent },
+      })
+      return json({ ok: true, ...result })
+    }),
+  },
+  {
+    path: '/push/admin/summary',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      if (account.role !== 'admin')
+        throw fail.forbidden('Admin access required.')
+      const subscribers = await listSubscriberAccounts()
+      return json({
+        configured: pushConfigured,
+        accounts: subscribers.length,
+        devices: subscribers.reduce((total: number, row: any) => total + row.devices, 0),
+      })
+    }),
+  },
+  {
+    path: '/push/admin/subscribers',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      if (account.role !== 'admin')
+        throw fail.forbidden('Admin access required.')
+      return json({
+        configured: pushConfigured,
+        items: await listSubscriberAccounts(),
+      })
+    }),
+  },
+]

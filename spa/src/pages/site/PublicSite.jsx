@@ -222,6 +222,10 @@ export function PublicSite() {
       <a className="skipLink" href="#site-main">
         Skip to main content
       </a>
+      <SiteHeader />
+      <main id="site-main" tabIndex="-1">
+        <Page />
+      </main>
       <p className="siteConsultBanner">
         <span>
           <strong>Hub consultation 1 · 7 Sep 2026.</strong> The first session locked complete YOUNGO
@@ -232,10 +236,6 @@ export function PublicSite() {
           <a href="/consultation">Join session 2</a>
         </span>
       </p>
-      <SiteHeader />
-      <main id="site-main" tabIndex="-1">
-        <Page />
-      </main>
       <SiteFooter />
     </div>
   )

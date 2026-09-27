@@ -24,8 +24,6 @@
     "mcp:content:http": "node mcp-content/server.mjs"
   },
   "dependencies": {
-    "@neon/config": "^1.8.2",
-    "@neon/env": "^1.4.7",
     "@payloadcms/db-postgres": "^3.90.1",
     "@payloadcms/next": "3.90.1",
     "@payloadcms/richtext-lexical": "3.90.1",

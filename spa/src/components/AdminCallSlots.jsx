@@ -81,7 +81,7 @@ export function AdminCallSlots() {
             className="input"
             value={hostLabel}
             onChange={(event) => setHostLabel(event.target.value)}
-            placeholder="Jalo"
+            placeholder="Your name"
           />
         </label>
         <label className="field">
