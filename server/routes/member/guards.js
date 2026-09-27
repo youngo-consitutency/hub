@@ -1,4 +1,4 @@
-// Authentication, authorization and membership-lifecycle helpers shared by the
+// Authentication, authorisation and membership-lifecycle helpers shared by the
 // member route modules. Guards live here so no route file redefines them.
 import { getAccessProfile, hasCapability } from '../../lib/access.js'
 import { destroyAllSessions, getSessionAccount } from '../../lib/accounts.js'
@@ -93,7 +93,7 @@ export async function requireOrgScope(req, res, permission = 'read') {
     res.status(403).json({
       error: {
         code: 'forbidden',
-        message: 'Only the organization owner may manage seats.',
+        message: 'Only the organisation owner may manage seats.',
       },
     })
     return null

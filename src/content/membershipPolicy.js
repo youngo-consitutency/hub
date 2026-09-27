@@ -51,7 +51,7 @@ export const POLICY_META = {
       label: 'All policies (Drive folder)',
       href: 'https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA',
     },
-    { label: 'Library catalog', href: '/library' },
+    { label: 'Library catalogue', href: '/library' },
   ],
   officialSource: {
     label: 'YOUNGO Membership Policy [UPDATED 2025]',

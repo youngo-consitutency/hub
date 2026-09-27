@@ -35,7 +35,7 @@ export const Assignments: CollectionConfig = {
         'negotiation_project',
         'platform_body',
         'body',
-        'organization',
+        { label: 'Organisation', value: 'organization' },
         'platform',
       ],
     },

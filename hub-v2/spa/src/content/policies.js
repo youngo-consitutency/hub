@@ -1,5 +1,5 @@
 /**
- * Official YOUNGO Policies & Guidelines catalog.
+ * Official YOUNGO Policies & Guidelines catalogue.
  * Source of truth: public Google Drive folder (not mirrored into the hub).
  * Hub points members back to Drive — it does not replace it.
  *

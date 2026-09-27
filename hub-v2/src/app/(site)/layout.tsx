@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-GB" suppressHydrationWarning>
       <head>
         {/* Applies the saved theme before paint, matching the legacy index.html. */}
         <Script src="/theme-init.js" strategy="beforeInteractive" />
