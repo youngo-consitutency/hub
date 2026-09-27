@@ -7,6 +7,8 @@ import * as migration_20260919_190000_wg_activities_content_drafts_trust_note fr
 import * as migration_20260927_120000_decision_engine from './20260927_120000_decision_engine';
 import * as migration_20260927_123000_decision_locked_rels from './20260927_123000_decision_locked_rels';
 import * as migration_20260927_130000_governance_elections_selections from './20260927_130000_governance_elections_selections';
+import * as migration_20260927_140000_handovers from './20260927_140000_handovers'
+import * as migration_20260927_150000_operations from './20260927_150000_operations';
 
 export const migrations = [
   {
@@ -53,5 +55,10 @@ export const migrations = [
     up: migration_20260927_130000_governance_elections_selections.up,
     down: migration_20260927_130000_governance_elections_selections.down,
     name: '20260927_130000_governance_elections_selections'
+  },
+  {
+    up: migration_20260927_140000_handovers.up,
+    down: migration_20260927_140000_handovers.down,
+    name: '20260927_140000_handovers'
   },
 ];

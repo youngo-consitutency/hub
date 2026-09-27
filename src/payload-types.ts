@@ -118,6 +118,13 @@ export interface Config {
     'selection-committee': SelectionCommittee;
     'selection-applications': SelectionApplication;
     'selection-evaluations': SelectionEvaluation;
+    handovers: Handover;
+    'funding-requests': FundingRequest;
+    'safeguarding-cases': SafeguardingCase;
+    'coi-declarations': CoiDeclaration;
+    'recognition-requests': RecognitionRequest;
+    'partnership-requests': PartnershipRequest;
+    'privacy-requests': PrivacyRequest;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -175,6 +182,13 @@ export interface Config {
     'selection-committee': SelectionCommitteeSelect<false> | SelectionCommitteeSelect<true>;
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
     'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
+    handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
+    'safeguarding-cases': SafeguardingCasesSelect<false> | SafeguardingCasesSelect<true>;
+    'coi-declarations': CoiDeclarationsSelect<false> | CoiDeclarationsSelect<true>;
+    'recognition-requests': RecognitionRequestsSelect<false> | RecognitionRequestsSelect<true>;
+    'partnership-requests': PartnershipRequestsSelect<false> | PartnershipRequestsSelect<true>;
+    'privacy-requests': PrivacyRequestsSelect<false> | PrivacyRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -1545,6 +1559,170 @@ export interface SelectionEvaluation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handovers".
+ */
+export interface Handover {
+  id: number;
+  account: number | Account;
+  reason: 'resignation' | 'termination' | 'cw_expiry' | 'mandate_end' | 'other';
+  scopeLabel: string;
+  items?:
+    | {
+        label: string;
+        done?: boolean | null;
+        doneAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  dueAt: string;
+  status: 'open' | 'completed' | 'overdue' | 'waived';
+  notes?: string | null;
+  openedBy: number | Account;
+  openedAt: string;
+  closedAt?: string | null;
+  closedBy?: (number | null) | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "funding-requests".
+ */
+export interface FundingRequest {
+  id: number;
+  account: number | Account;
+  title: string;
+  purpose: string;
+  amountNumeric: number;
+  currency: string;
+  category: 'event_travel' | 'project' | 'operations' | 'other';
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'disbursed' | 'reported' | 'cancelled';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  reviewedAt?: string | null;
+  disbursedAt?: string | null;
+  reportNote?: string | null;
+  reportedAt?: string | null;
+  submittedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safeguarding-cases".
+ */
+export interface SafeguardingCase {
+  id: number;
+  reporter?: (number | null) | Account;
+  anonymous?: boolean | null;
+  kind: 'safeguarding' | 'child_safeguarding' | 'concern' | 'coc';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  involvedParties?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'received' | 'triaged' | 'investigating' | 'resolved' | 'closed';
+  assignedTo?: (number | null) | Account;
+  updates?:
+    | {
+        note: string;
+        status?: string | null;
+        by?: (number | null) | Account;
+        at?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  outcomeNote?: string | null;
+  receivedAt: string;
+  closedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coi-declarations".
+ */
+export interface CoiDeclaration {
+  id: number;
+  account: number | Account;
+  interest: string;
+  details: string;
+  relatedScope?: string | null;
+  status: 'declared' | 'under_review' | 'resolved' | 'dismissed';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  reviewedAt?: string | null;
+  declaredAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recognition-requests".
+ */
+export interface RecognitionRequest {
+  id: number;
+  account: number | Account;
+  kind: 'certificate' | 'letter' | 'other';
+  purpose: string;
+  eventRef?: string | null;
+  status: 'requested' | 'approved' | 'issued' | 'declined';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  issuedAt?: string | null;
+  requestedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partnership-requests".
+ */
+export interface PartnershipRequest {
+  id: number;
+  account: number | Account;
+  organisationName: string;
+  kind: 'partnership' | 'sponsorship' | 'mou' | 'other';
+  summary: string;
+  valueNote?: string | null;
+  requiresCouncilDecision?: boolean | null;
+  councilDecision?: (number | null) | DecisionProposal;
+  status: 'proposed' | 'under_review' | 'approved' | 'active' | 'declined' | 'ended';
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | Account;
+  proposedAt: string;
+  endedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privacy-requests".
+ */
+export interface PrivacyRequest {
+  id: number;
+  account: number | Account;
+  kind: 'access' | 'erasure' | 'rectification' | 'portability' | 'objection';
+  details: string;
+  status: 'received' | 'in_progress' | 'fulfilled' | 'declined';
+  responseNote?: string | null;
+  dueAt: string;
+  handledBy?: (number | null) | Account;
+  fulfilledAt?: string | null;
+  requestedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1766,6 +1944,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'selection-evaluations';
         value: number | SelectionEvaluation;
+      } | null)
+    | ({
+        relationTo: 'handovers';
+        value: number | Handover;
+      } | null)
+    | ({
+        relationTo: 'funding-requests';
+        value: number | FundingRequest;
+      } | null)
+    | ({
+        relationTo: 'safeguarding-cases';
+        value: number | SafeguardingCase;
+      } | null)
+    | ({
+        relationTo: 'coi-declarations';
+        value: number | CoiDeclaration;
+      } | null)
+    | ({
+        relationTo: 'recognition-requests';
+        value: number | RecognitionRequest;
+      } | null)
+    | ({
+        relationTo: 'partnership-requests';
+        value: number | PartnershipRequest;
+      } | null)
+    | ({
+        relationTo: 'privacy-requests';
+        value: number | PrivacyRequest;
       } | null);
   globalSlug?: string | null;
   user:
@@ -2804,6 +3010,155 @@ export interface SelectionEvaluationsSelect<T extends boolean = true> {
   scores?: T;
   comment?: T;
   evaluatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handovers_select".
+ */
+export interface HandoversSelect<T extends boolean = true> {
+  account?: T;
+  reason?: T;
+  scopeLabel?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        done?: T;
+        doneAt?: T;
+        id?: T;
+      };
+  dueAt?: T;
+  status?: T;
+  notes?: T;
+  openedBy?: T;
+  openedAt?: T;
+  closedAt?: T;
+  closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "funding-requests_select".
+ */
+export interface FundingRequestsSelect<T extends boolean = true> {
+  account?: T;
+  title?: T;
+  purpose?: T;
+  amountNumeric?: T;
+  currency?: T;
+  category?: T;
+  periodStart?: T;
+  periodEnd?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  disbursedAt?: T;
+  reportNote?: T;
+  reportedAt?: T;
+  submittedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safeguarding-cases_select".
+ */
+export interface SafeguardingCasesSelect<T extends boolean = true> {
+  reporter?: T;
+  anonymous?: T;
+  kind?: T;
+  severity?: T;
+  description?: T;
+  involvedParties?: T;
+  status?: T;
+  assignedTo?: T;
+  updates?:
+    | T
+    | {
+        note?: T;
+        status?: T;
+        by?: T;
+        at?: T;
+        id?: T;
+      };
+  outcomeNote?: T;
+  receivedAt?: T;
+  closedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coi-declarations_select".
+ */
+export interface CoiDeclarationsSelect<T extends boolean = true> {
+  account?: T;
+  interest?: T;
+  details?: T;
+  relatedScope?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  declaredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recognition-requests_select".
+ */
+export interface RecognitionRequestsSelect<T extends boolean = true> {
+  account?: T;
+  kind?: T;
+  purpose?: T;
+  eventRef?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  issuedAt?: T;
+  requestedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partnership-requests_select".
+ */
+export interface PartnershipRequestsSelect<T extends boolean = true> {
+  account?: T;
+  organisationName?: T;
+  kind?: T;
+  summary?: T;
+  valueNote?: T;
+  requiresCouncilDecision?: T;
+  councilDecision?: T;
+  status?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  proposedAt?: T;
+  endedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privacy-requests_select".
+ */
+export interface PrivacyRequestsSelect<T extends boolean = true> {
+  account?: T;
+  kind?: T;
+  details?: T;
+  status?: T;
+  responseNote?: T;
+  dueAt?: T;
+  handledBy?: T;
+  fulfilledAt?: T;
+  requestedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

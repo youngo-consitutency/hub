@@ -10,6 +10,8 @@ import { miscEndpoints } from './misc'
 import { platformEndpoints } from './platform'
 import { decisionEndpoints } from './decisions'
 import { electionEndpoints, selectionEndpoints } from './governance'
+import { membershipEndpoints } from './membership'
+import { operationEndpoints } from './operations'
 
 export const domainEndpoints = [
   ...authEndpoints,
@@ -25,4 +27,6 @@ export const domainEndpoints = [
   ...decisionEndpoints,
   ...electionEndpoints,
   ...selectionEndpoints,
+  ...membershipEndpoints,
+  ...operationEndpoints,
 ]

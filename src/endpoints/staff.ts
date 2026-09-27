@@ -44,7 +44,7 @@ const verifiedAccount = (req: PayloadRequest) => {
   return account
 }
 
-async function requireTeam(req: PayloadRequest, teamRole: string) {
+export async function requireTeam(req: PayloadRequest, teamRole: string) {
   const account = verifiedAccount(req)
   const access = await getAccessProfile(req, account)
   if (account.role !== 'admin' && !access.teamRoles.includes(teamRole))

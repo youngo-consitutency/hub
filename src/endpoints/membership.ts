@@ -1,0 +1,564 @@
+import type { Endpoint, PayloadRequest } from 'payload'
+import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { accountView, requireAccount } from '../lib/accounts'
+import { getAccessProfile } from '../lib/access'
+import {
+  destroyAllSessions,
+  findAccountRowById,
+  setAccountFields,
+} from '../lib/membership'
+import { requireTeam } from './staff'
+
+// S17 membership lifecycle: Constituency Work renewal (every February),
+// resignation, termination, and the two-week handover duty. Account status
+// columns are updated through the same helpers the staff console uses, and
+// every transition writes an audit-log entry.
+
+const DAY = 86_400_000
+
+const isVerified = (account: any) =>
+  account?.hubAccessStatus === 'active' &&
+  (account?.memberStatus === 'verified' ||
+    ['admin', 'focal_point'].includes(account?.role))
+
+function requireVerifiedMember(req: PayloadRequest) {
+  const account = requireAccount(req)
+  if (!isVerified(account))
+    throw new ApiError(
+      403,
+      'not_verified',
+      'Complete the membership course to use this feature.',
+    )
+  return account
+}
+
+async function audit(
+  req: PayloadRequest,
+  actor: any,
+  entry: Record<string, any>,
+) {
+  await req.payload.create({
+    collection: 'audit-log',
+    data: {
+      actor: actor?.id,
+      actorEmail: actor?.email,
+      requestId: (req.headers.get('x-request-id') as string) || null,
+      ...entry,
+    } as any,
+    overrideAccess: true,
+  })
+}
+
+// Last day of the next February — CW renewals run annually each February.
+export function nextCWRenewalDue(from = new Date()): string {
+  const year =
+    from.getUTCMonth() > 1 ? from.getUTCFullYear() + 1 : from.getUTCFullYear()
+  return new Date(Date.UTC(year, 2, 0, 23, 59, 59)).toISOString()
+}
+
+const HANDOVER_ITEMS = [
+  'Return YOUNGO documents and files in your possession',
+  'Hand over credentials, inboxes and shared accounts you manage',
+  'Brief your successor or contact point on pending work',
+  'Confirm removal of YOUNGO data from personal devices',
+]
+
+async function openHandover(
+  req: PayloadRequest,
+  {
+    accountId,
+    reason,
+    scopeLabel,
+    actorId,
+    items = HANDOVER_ITEMS,
+  }: {
+    accountId: number
+    reason: string
+    scopeLabel: string
+    actorId: number
+    items?: string[]
+  },
+) {
+  return req.payload.create({
+    collection: 'handovers',
+    data: {
+      account: accountId,
+      reason,
+      scopeLabel,
+      items: items.map((label) => ({ label, done: false })),
+      dueAt: new Date(Date.now() + 14 * DAY).toISOString(),
+      status: 'open',
+      openedBy: actorId,
+      openedAt: new Date().toISOString(),
+    } as any,
+    overrideAccess: true,
+  })
+}
+
+// End active assignments; `scopeTypes` limits which scopes are closed.
+async function endAssignments(
+  req: PayloadRequest,
+  accountId: number,
+  { scopeTypes }: { scopeTypes?: string[] } = {},
+) {
+  const and: any[] = [
+    { account: { equals: accountId } },
+    { status: { equals: 'active' } },
+  ]
+  if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
+  const { docs } = await req.payload.find({
+    collection: 'assignments',
+    where: { and },
+    limit: 1000,
+    overrideAccess: true,
+  })
+  const ended = new Date().toISOString()
+  for (const doc of docs as any[]) {
+    await req.payload.update({
+      collection: 'assignments',
+      id: doc.id,
+      data: { status: 'expired', endsAt: ended },
+      overrideAccess: true,
+    })
+  }
+  return docs.length
+}
+
+const handoverView = (h: any) => ({
+  id: h.id,
+  reason: h.reason,
+  scopeLabel: h.scopeLabel,
+  items: (h.items ?? []).map((i: any) => ({
+    label: i.label,
+    done: Boolean(i.done),
+    doneAt: i.doneAt,
+  })),
+  dueAt: h.dueAt,
+  status:
+    h.status === 'open' && h.dueAt && new Date(h.dueAt).getTime() < Date.now()
+      ? 'overdue'
+      : h.status,
+  openedAt: h.openedAt,
+  closedAt: h.closedAt,
+})
+
+// Scopes a Constituency Work exit closes — platform/staff teams survive a
+// CW resignation; full resignation closes everything.
+const CW_SCOPES = ['working_group', 'platform_body', 'body']
+
+export const membershipEndpoints: Endpoint[] = [
+  {
+    path: '/member/membership/state',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      const { docs: handovers } = await req.payload.find({
+        collection: 'handovers',
+        where: {
+          and: [
+            { account: { equals: account.id } },
+            { status: { in: ['open', 'overdue'] } },
+          ],
+        },
+        limit: 20,
+        overrideAccess: true,
+      })
+      const { docs: assignments } = await req.payload.find({
+        collection: 'assignments',
+        where: {
+          and: [
+            { account: { equals: account.id } },
+            { status: { equals: 'active' } },
+          ],
+        },
+        limit: 200,
+        overrideAccess: true,
+      })
+      return json({
+        membershipStatus: account.membershipStatus,
+        membershipTrack: account.membershipTrack,
+        constituencyWorkStatus: account.constituencyWorkStatus,
+        renewalDueAt: account.renewalDueAt,
+        membershipEndedAt: account.membershipEndedAt,
+        assignments: (assignments as any[]).map((a) => ({
+          id: a.id,
+          scopeType: a.scopeType,
+          scopeId: a.scopeId,
+          role: a.role,
+          startsAt: a.startsAt,
+          endsAt: a.endsAt,
+        })),
+        openHandovers: (handovers as any[]).map(handoverView),
+      })
+    }),
+  },
+  {
+    path: '/member/membership/renew',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      if (account.membershipTrack !== 'constituency_work')
+        throw fail.validation({
+          _: 'Only Constituency Work membership renews annually.',
+        })
+      if (!['active', 'expired'].includes(account.membershipStatus))
+        throw fail.conflict(
+          'invalid_state',
+          `Cannot renew while membership status is ${account.membershipStatus}.`,
+        )
+      const due = nextCWRenewalDue()
+      const updated = await setAccountFields(account.id, {
+        membership_status: 'active',
+        constituency_work_status: 'active',
+        renewal_due_at: due,
+      })
+      await audit(req, account, {
+        action: 'membership.cw_renewed',
+        targetType: 'account',
+        targetId: String(account.id),
+        after: { renewalDueAt: due },
+      })
+      return json({
+        membershipStatus: updated.membership_status,
+        constituencyWorkStatus: updated.constituency_work_status,
+        renewalDueAt: updated.renewal_due_at,
+      })
+    }),
+  },
+  {
+    path: '/member/membership/resign',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      const b = ((await req.json?.()) || {}) as any
+      const scope = b.scope === 'membership' ? 'membership' : 'constituency_work'
+      if (scope === 'constituency_work') {
+        if (account.membershipTrack !== 'constituency_work')
+          throw fail.validation({ scope: 'You are not on the Constituency Work track.' })
+        const ended = await endAssignments(req, account.id, {
+          scopeTypes: CW_SCOPES,
+        })
+        const updated = await setAccountFields(account.id, {
+          constituency_work_status: '',
+          renewal_due_at: null,
+        })
+        const handover = await openHandover(req, {
+          accountId: account.id,
+          reason: 'resignation',
+          scopeLabel: 'Constituency Work roles',
+          actorId: account.id,
+        })
+        await audit(req, account, {
+          action: 'membership.cw_resigned',
+          targetType: 'account',
+          targetId: String(account.id),
+          after: { assignmentsEnded: ended },
+        })
+        return json({
+          membershipStatus: updated.membership_status,
+          constituencyWorkStatus: updated.constituency_work_status || null,
+          handover: handoverView(handover),
+        })
+      }
+      // Full resignation: membership ends entirely (S17).
+      await endAssignments(req, account.id)
+      const updated = await setAccountFields(account.id, {
+        membership_status: 'expired',
+        membership_ended_at: new Date().toISOString(),
+        membership_end_reason: 'resigned',
+        constituency_work_status: '',
+      })
+      await destroyAllSessions(account.id)
+      const handover = await openHandover(req, {
+        accountId: account.id,
+        reason: 'resignation',
+        scopeLabel: 'Membership',
+        actorId: account.id,
+      })
+      await audit(req, account, {
+        action: 'membership.resigned',
+        targetType: 'account',
+        targetId: String(account.id),
+      })
+      return json({
+        membershipStatus: updated.membership_status,
+        handover: handoverView(handover),
+      })
+    }),
+  },
+  {
+    path: '/member/handovers',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      const { docs } = await req.payload.find({
+        collection: 'handovers',
+        where: { account: { equals: account.id } },
+        sort: '-openedAt',
+        limit: 20,
+        overrideAccess: true,
+      })
+      return json({ items: (docs as any[]).map(handoverView) })
+    }),
+  },
+  {
+    path: '/member/handovers/:id/items/:idx/complete',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      const h = await req.payload
+        .findByID({
+          collection: 'handovers',
+          id: Number(req.routeParams!.id),
+          overrideAccess: true,
+        })
+        .catch(() => { throw fail.notFound('Handover not found.') })
+      const owner = (h.account as any)?.id ?? h.account
+      if (owner !== account.id)
+        throw fail.forbidden('This is not your handover.')
+      if (h.status !== 'open')
+        throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
+      const idx = Number(req.routeParams!.idx)
+      const items = (h.items ?? []) as any[]
+      if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
+        throw fail.validation({ idx: 'No such handover item.' })
+      items[idx] = {
+        ...items[idx],
+        done: true,
+        doneAt: new Date().toISOString(),
+      }
+      const allDone = items.every((i) => i.done)
+      const updated = await req.payload.update({
+        collection: 'handovers',
+        id: h.id,
+        data: {
+          items,
+          ...(allDone
+            ? {
+                status: 'completed',
+                closedAt: new Date().toISOString(),
+                closedBy: account.id,
+              }
+            : {}),
+        },
+        overrideAccess: true,
+      })
+      await audit(req, account, {
+        action: 'membership.handover_item_completed',
+        targetType: 'handover',
+        targetId: String(h.id),
+      })
+      return json({ handover: handoverView(updated) })
+    }),
+  },
+
+  // ── Membership team ───────────────────────────────────────────────
+  {
+    // Annual renewal expiry sweep (S17): CW members who did not renew by
+    // the February deadline lose CW status but keep Network membership.
+    path: '/member/team/membership/renewals/run',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account: staff } = await requireTeam(req, 'membership_team')
+      const { docs } = await req.payload.find({
+        collection: 'accounts',
+        where: {
+          and: [
+            { membershipTrack: { equals: 'constituency_work' } },
+            { constituencyWorkStatus: { equals: 'active' } },
+            { renewalDueAt: { less_than: new Date().toISOString() } },
+          ],
+        },
+        limit: 10000,
+        overrideAccess: true,
+      })
+      const results: any[] = []
+      for (const row of docs as any[]) {
+        const ended = await endAssignments(req, row.id, {
+          scopeTypes: CW_SCOPES,
+        })
+        await setAccountFields(row.id, {
+          constituency_work_status: '',
+          renewal_due_at: null,
+        })
+        await openHandover(req, {
+          accountId: row.id,
+          reason: 'cw_expiry',
+          scopeLabel: 'Constituency Work roles',
+          actorId: staff.id,
+        })
+        await audit(req, staff, {
+          action: 'membership.cw_expired',
+          targetType: 'account',
+          targetId: String(row.id),
+          after: { assignmentsEnded: ended },
+        })
+        results.push({ accountId: row.id, assignmentsEnded: ended })
+      }
+      return json({ expired: results.length, items: results })
+    }),
+  },
+  {
+    path: '/member/team/membership/accounts/:id/terminate',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account: staff } = await requireTeam(req, 'membership_team')
+      const id = String(req.routeParams!.id)
+      const b = ((await req.json?.()) || {}) as any
+      const reason = String(b.reason || '').trim()
+      if (reason.length < 8)
+        throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
+      const target = await findAccountRowById(id)
+      if (!target) throw fail.notFound('Account not found.')
+      if (target.id === staff.id)
+        throw fail.validation({ _: 'You cannot terminate your own account.' })
+      if (['admin', 'focal_point'].includes(target.role) && staff.role !== 'admin')
+        throw fail.forbidden('Only an admin can terminate platform staff membership.')
+      await endAssignments(req, target.id)
+      const updated = await setAccountFields(id, {
+        membership_status: 'terminated',
+        membership_ended_at: new Date().toISOString(),
+        membership_end_reason: reason.slice(0, 500),
+        constituency_work_status: '',
+        hub_access_status: 'suspended',
+      })
+      await destroyAllSessions(target.id)
+      const handover = await openHandover(req, {
+        accountId: target.id,
+        reason: 'termination',
+        scopeLabel: 'Membership',
+        actorId: staff.id,
+      })
+      await audit(req, staff, {
+        action: 'membership.terminated',
+        targetType: 'account',
+        targetId: id,
+        reason: reason.slice(0, 500),
+        after: accountView(updated),
+      })
+      return json({
+        account: accountView(updated),
+        handover: handoverView(handover),
+      })
+    }),
+  },
+  {
+    // End a single mandate/assignment (revocation, vacancy, handover).
+    path: '/member/team/membership/accounts/:id/assignments/:aid/end',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account: staff } = await requireTeam(req, 'membership_team')
+      const b = ((await req.json?.()) || {}) as any
+      const reason = String(b.reason || '').trim()
+      if (reason.length < 8)
+        throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
+      const assignment = await req.payload
+        .findByID({
+          collection: 'assignments',
+          id: Number(req.routeParams!.aid),
+          overrideAccess: true,
+        })
+        .catch(() => { throw fail.notFound('Assignment not found.') })
+      const owner = (assignment.account as any)?.id ?? assignment.account
+      if (String(owner) !== String(req.routeParams!.id))
+        throw fail.validation({ id: 'Assignment does not belong to that account.' })
+      if (assignment.status !== 'active')
+        throw fail.conflict('invalid_phase', `Assignment is already ${assignment.status}.`)
+      const updated = await req.payload.update({
+        collection: 'assignments',
+        id: assignment.id,
+        data: { status: 'expired', endsAt: new Date().toISOString() },
+        overrideAccess: true,
+      })
+      // Coordination mandates carry a handover duty to the body they served.
+      let handover = null
+      if (['contact', 'lead', 'coordinator', 'contact_point'].includes(assignment.role)) {
+        handover = await openHandover(req, {
+          accountId: Number(owner),
+          reason: 'mandate_end',
+          scopeLabel: `${assignment.scopeId} ${assignment.scopeType} (${assignment.role})`,
+          actorId: staff.id,
+        })
+      }
+      await audit(req, staff, {
+        action: 'membership.assignment_ended',
+        targetType: 'assignment',
+        targetId: String(assignment.id),
+        reason: reason.slice(0, 500),
+        after: {
+          accountId: owner,
+          scopeType: assignment.scopeType,
+          scopeId: assignment.scopeId,
+          role: assignment.role,
+        },
+      })
+      return json({
+        assignment: { id: updated.id, status: updated.status, endsAt: updated.endsAt },
+        handover: handover ? handoverView(handover) : null,
+      })
+    }),
+  },
+  {
+    path: '/member/team/membership/handovers',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      await requireTeam(req, 'membership_team')
+      const { docs } = await req.payload.find({
+        collection: 'handovers',
+        where: { status: { in: ['open', 'overdue'] } },
+        sort: 'dueAt',
+        limit: 200,
+        overrideAccess: true,
+      })
+      const items = []
+      for (const h of docs as any[]) {
+        const acct =
+          typeof h.account === 'object'
+            ? { id: h.account.id, name: h.account.name }
+            : { id: h.account }
+        items.push({ ...handoverView(h), account: acct })
+      }
+      return json({ items })
+    }),
+  },
+  {
+    // Close a handover without full completion (e.g. member unreachable —
+    // data access is already revoked; record the decision).
+    path: '/member/team/membership/handovers/:id/waive',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account: staff } = await requireTeam(req, 'membership_team')
+      const b = ((await req.json?.()) || {}) as any
+      const reason = String(b.reason || '').trim()
+      if (reason.length < 8)
+        throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
+      const h = await req.payload
+        .findByID({
+          collection: 'handovers',
+          id: Number(req.routeParams!.id),
+          overrideAccess: true,
+        })
+        .catch(() => { throw fail.notFound('Handover not found.') })
+      if (h.status !== 'open')
+        throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
+      const updated = await req.payload.update({
+        collection: 'handovers',
+        id: h.id,
+        data: {
+          status: 'waived',
+          notes: reason.slice(0, 500),
+          closedAt: new Date().toISOString(),
+          closedBy: staff.id,
+        },
+        overrideAccess: true,
+      })
+      await audit(req, staff, {
+        action: 'membership.handover_waived',
+        targetType: 'handover',
+        targetId: String(h.id),
+        reason: reason.slice(0, 500),
+      })
+      return json({ handover: handoverView(updated) })
+    }),
+  },
+]

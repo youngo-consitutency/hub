@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test'
 
 const BASE = 'http://localhost:3000'
 // Provisioned by tests/e2e/global-setup.ts — generated per run.
-const { email: memberEmail, password: memberPassword } = JSON.parse(
+const { memberEmail, memberPassword } = JSON.parse(
   readFileSync(path.resolve(__dirname, '.credentials.json'), 'utf8'),
 )
 

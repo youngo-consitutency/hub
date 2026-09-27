@@ -981,3 +981,353 @@ describe('elections (S10) and selections (S24)', () => {
     },
   )
 })
+
+describe('membership lifecycle (S17)', () => {
+  let cwMember: { cookie: string; account: any }
+  let staff: { cookie: string; account: any }
+  let member: { cookie: string; account: any }
+
+  beforeAll(async () => {
+    cwMember = await session({
+      membershipTrack: 'constituency_work',
+      wg: { slug: 'finance', role: 'contact' },
+    })
+    staff = await session({ teams: ['membership_team'] })
+    member = await session({})
+  })
+
+  it('reports the member state and renews Constituency Work', async () => {
+    const state = await api('/member/membership/state', {
+      cookie: cwMember.cookie,
+    })
+    expect(state.status).toBe(200)
+    const body = await state.json()
+    expect(body.constituencyWorkStatus).toBe('active')
+    expect(
+      body.assignments.some(
+        (a: any) => a.scopeId === 'finance' && a.role === 'contact',
+      ),
+    ).toBe(true)
+
+    const renew = await api('/member/membership/renew', {
+      method: 'POST',
+      cookie: cwMember.cookie,
+    })
+    expect(renew.status).toBe(200)
+    const renewed = await renew.json()
+    expect(renewed.constituencyWorkStatus).toBe('active')
+    expect(new Date(renewed.renewalDueAt).getUTCMonth()).toBe(1) // February
+
+    // Network-track member has nothing to renew.
+    expect(
+      (await api('/member/membership/renew', {
+        method: 'POST',
+        cookie: member.cookie,
+      })).status,
+    ).toBe(400)
+  })
+
+  it(
+    'CW resignation ends WG assignments and opens a two-week handover',
+    { timeout: 60000 },
+    async () => {
+      const resign = await api('/member/membership/resign', {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({ scope: 'constituency_work' }),
+      })
+      expect(resign.status).toBe(200)
+      const body = await resign.json()
+      expect(body.handover.status).toBe('open')
+      expect(body.handover.items.length).toBeGreaterThanOrEqual(3)
+      const dueMs =
+        new Date(body.handover.dueAt).getTime() - Date.now()
+      expect(dueMs).toBeGreaterThan(13 * 86400000)
+
+      const state = await (
+        await api('/member/membership/state', { cookie: cwMember.cookie })
+      ).json()
+      expect(state.constituencyWorkStatus).toBeFalsy()
+      expect(state.assignments).toHaveLength(0)
+
+      // member completes the checklist → handover closes
+      const handoverId = body.handover.id
+      const itemCount = body.handover.items.length
+      for (let i = 0; i < itemCount; i += 1) {
+        const res = await api(
+          `/member/handovers/${handoverId}/items/${i}/complete`,
+          { method: 'POST', cookie: cwMember.cookie },
+        )
+        expect(res.status).toBe(200)
+      }
+      const handovers = await (
+        await api('/member/handovers', { cookie: cwMember.cookie })
+      ).json()
+      expect(handovers.items[0].status).toBe('completed')
+    },
+  )
+
+  it(
+    'termination ends assignments, opens a handover, and the expiry sweep clears lapsed CW members',
+    { timeout: 90000 },
+    async () => {
+      // Termination by the membership team.
+      const target = await session({
+        membershipTrack: 'constituency_work',
+        wg: { slug: 'finance', role: 'member' },
+      })
+      const terminate = await api(
+        `/member/team/membership/accounts/${target.account.id}/terminate`,
+        {
+          method: 'POST',
+          cookie: staff.cookie,
+          body: JSON.stringify({ reason: 'contract test termination' }),
+        },
+      )
+      expect(terminate.status).toBe(200)
+      const terminated = await terminate.json()
+      expect(terminated.account.membershipStatus).toBe('terminated')
+      expect(terminated.handover.status).toBe('open')
+
+      // Ordinary members cannot terminate.
+      expect(
+        (
+          await api(
+            `/member/team/membership/accounts/${member.account.id}/terminate`,
+            {
+              method: 'POST',
+              cookie: member.cookie,
+              body: JSON.stringify({ reason: 'should not work' }),
+            },
+          )
+        ).status,
+      ).toBe(403)
+
+      // Expiry sweep: lapse the renewal due date, then run the job.
+      const lapsed = await session({
+        membershipTrack: 'constituency_work',
+        wg: { slug: 'ace', role: 'member' },
+      })
+      await payload.update({
+        collection: 'accounts',
+        id: lapsed.account.id,
+        data: {
+          renewalDueAt: new Date(Date.now() - 86400000).toISOString(),
+        } as any,
+        overrideAccess: true,
+      })
+      const sweep = await api('/member/team/membership/renewals/run', {
+        method: 'POST',
+        cookie: staff.cookie,
+      })
+      expect(sweep.status).toBe(200)
+      const swept = await sweep.json()
+      const hit = swept.items.find(
+        (i: any) => i.accountId === lapsed.account.id,
+      )
+      expect(hit).toBeTruthy()
+      expect(hit.assignmentsEnded).toBe(1)
+
+      // membership team can see the open handovers queue
+      const queue = await api('/member/team/membership/handovers', {
+        cookie: staff.cookie,
+      })
+      expect(queue.status).toBe(200)
+      const { items } = await queue.json()
+      expect(items.length).toBeGreaterThanOrEqual(2)
+      expect(
+        (
+          await api('/member/team/membership/handovers', {
+            cookie: member.cookie,
+          })
+        ).status,
+      ).toBe(403)
+    },
+  )
+})
+
+describe('operational workflows', () => {
+  let member: { cookie: string; account: any }
+  let finance: { cookie: string; account: any }
+  let safeguarding: { cookie: string; account: any }
+  let dpo: { cookie: string; account: any }
+
+  beforeAll(async () => {
+    member = await session({ membershipTrack: 'constituency_work' })
+    finance = await session({ teams: ['finance_team'] })
+    safeguarding = await session({ teams: ['safeguarding_team'] })
+    dpo = await session({ teams: ['data_controller'] })
+  })
+
+  it('funding: member submits, finance reviews, disburses, member reports', async () => {
+    const created = await api('/member/funding', {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({
+        title: 'Travel support',
+        purpose: 'Regional meeting travel',
+        amountNumeric: 150,
+        category: 'event_travel',
+      }),
+    })
+    expect(created.status).toBe(201)
+    const { request } = await created.json()
+    expect(request.status).toBe('submitted')
+
+    // member sees own request; finance sees the queue
+    expect((await api(`/member/funding/${request.id}`, { cookie: member.cookie })).status).toBe(200)
+    const queue = await api('/member/team/funding', { cookie: finance.cookie })
+    expect(queue.status).toBe(200)
+    expect((await queue.json()).items.some((i: any) => i.id === request.id)).toBe(true)
+
+    // ordinary member cannot review
+    expect(
+      (
+        await api(`/member/team/funding/${request.id}/review`, {
+          method: 'POST',
+          cookie: member.cookie,
+          body: JSON.stringify({ status: 'approved' }),
+        })
+      ).status,
+    ).toBe(403)
+
+    // review → approve → disburse (finance only) → member reports
+    for (const status of ['under_review', 'approved']) {
+      const res = await api(`/member/team/funding/${request.id}/review`, {
+        method: 'POST',
+        cookie: finance.cookie,
+        body: JSON.stringify({ status }),
+      })
+      expect(res.status).toBe(200)
+    }
+    const disbursed = await api(`/member/team/funding/${request.id}/disburse`, {
+      method: 'POST',
+      cookie: finance.cookie,
+    })
+    expect(disbursed.status).toBe(200)
+    const reported = await api(`/member/funding/${request.id}/report`, {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({ reportNote: 'Funds used for booked travel.' }),
+    })
+    expect(reported.status).toBe(200)
+    expect((await reported.json()).request.status).toBe('reported')
+  })
+
+  it('safeguarding: confidential report, team-only case list and updates', async () => {
+    const created = await api('/member/safeguarding', {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({
+        kind: 'concern',
+        severity: 'high',
+        description: 'A concern about member conduct at an event.',
+        anonymous: true,
+      }),
+    })
+    expect(created.status).toBe(201)
+    const { caseRef } = await created.json()
+    expect(caseRef).toMatch(/^SG-/)
+
+    // reporter sees only their own reference + status
+    const mine = await api('/member/safeguarding', { cookie: member.cookie })
+    expect(mine.status).toBe(200)
+    const { items } = await mine.json()
+    expect(items[0].caseRef).toBe(caseRef)
+    expect(items[0].description).toBeUndefined()
+
+    // non-team members cannot list cases
+    expect(
+      (await api('/member/team/safeguarding', { cookie: finance.cookie })).status,
+    ).toBe(403)
+
+    // team sees the case; anonymous hides the reporter
+    const team = await api('/member/team/safeguarding', { cookie: safeguarding.cookie })
+    expect(team.status).toBe(200)
+    const cases = (await team.json()).items
+    const found = cases.find((c: any) => `SG-${c.id}` === caseRef)
+    expect(found).toBeTruthy()
+    expect(found.reporter).toBeNull()
+
+    // update flow: received → triaged → investigating
+    for (const status of ['triaged', 'investigating']) {
+      const res = await api(`/member/team/safeguarding/${found.id}/update`, {
+        method: 'POST',
+        cookie: safeguarding.cookie,
+        body: JSON.stringify({ status, note: `Moved to ${status}.` }),
+      })
+      expect(res.status).toBe(200)
+    }
+  })
+
+  it('COI, recognition and privacy request lifecycles', async () => {
+    // COI: declare → membership team resolves
+    const coi = await api('/member/coi', {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({
+        interest: 'Employer grant',
+        details: 'Employer funds a related programme.',
+        relatedScope: 'finance',
+      }),
+    })
+    expect(coi.status).toBe(201)
+    const coiId = (await coi.json()).declaration.id
+    const membership = await session({ teams: ['membership_team'] })
+    const resolved = await api(`/member/team/membership/coi/${coiId}/review`, {
+      method: 'POST',
+      cookie: membership.cookie,
+      body: JSON.stringify({ status: 'resolved', reviewNote: 'Noted; recusal recorded.' }),
+    })
+    expect(resolved.status).toBe(200)
+
+    // privacy: request → data controller fulfils
+    const priv = await api('/member/privacy', {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({ kind: 'access', details: 'Request copy of my data.' }),
+    })
+    expect(priv.status).toBe(201)
+    const privId = (await priv.json()).request.id
+    await api(`/member/team/privacy/${privId}/respond`, {
+      method: 'POST',
+      cookie: dpo.cookie,
+      body: JSON.stringify({ status: 'in_progress' }),
+    })
+    const fulfilled = await api(`/member/team/privacy/${privId}/respond`, {
+      method: 'POST',
+      cookie: dpo.cookie,
+      body: JSON.stringify({ status: 'fulfilled', responseNote: 'Export provided.' }),
+    })
+    expect(fulfilled.status).toBe(200)
+    expect((await fulfilled.json()).request.status).toBe('fulfilled')
+  })
+
+  it('partnerships: major sponsorship requires a council decision before approval', async () => {
+    const p = await api('/member/partnerships', {
+      method: 'POST',
+      cookie: member.cookie,
+      body: JSON.stringify({
+        organisationName: 'Example Foundation',
+        kind: 'sponsorship',
+        summary: 'Grant sponsorship for the assembly.',
+        requiresCouncilDecision: true,
+      }),
+    })
+    expect(p.status).toBe(201)
+    const pid = (await p.json()).request.id
+    const partnerships = await session({ teams: ['partnerships_team'] })
+    await api(`/member/team/partnerships/${pid}/review`, {
+      method: 'POST',
+      cookie: partnerships.cookie,
+      body: JSON.stringify({ status: 'under_review' }),
+    })
+    const blocked = await api(`/member/team/partnerships/${pid}/review`, {
+      method: 'POST',
+      cookie: partnerships.cookie,
+      body: JSON.stringify({ status: 'approved' }),
+    })
+    expect(blocked.status).toBe(409)
+    expect((await blocked.json()).error.code).toBe('council_decision_required')
+  })
+})

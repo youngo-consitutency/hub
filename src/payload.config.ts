@@ -63,6 +63,15 @@ import {
   SelectionApplications,
   SelectionEvaluations,
 } from './collections/Governance'
+import { Handovers } from './collections/Handovers'
+import {
+  FundingRequests,
+  SafeguardingCases,
+  CoiDeclarations,
+  RecognitionRequests,
+  PartnershipRequests,
+  PrivacyRequests,
+} from './collections/Operations'
 import { domainEndpoints } from './endpoints'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
@@ -132,6 +141,13 @@ export default buildConfig({
     SelectionCommittee,
     SelectionApplications,
     SelectionEvaluations,
+    Handovers,
+    FundingRequests,
+    SafeguardingCases,
+    CoiDeclarations,
+    RecognitionRequests,
+    PartnershipRequests,
+    PrivacyRequests,
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
