@@ -107,7 +107,7 @@ export function SubmissionProposal() {
           title="Proposal saved for triage"
           body={
             created.is_initiative
-              ? 'This is labeled as an initiative because no verified external call was selected. It is not endorsed or ready for transmission.'
+              ? 'This is labelled as an initiative because no verified external call was selected. It is not endorsed or ready for transmission.'
               : 'The first immutable draft is saved. This does not represent constituency endorsement or external transmission.'
           }
           cta={

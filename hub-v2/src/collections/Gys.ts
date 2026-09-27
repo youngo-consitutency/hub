@@ -73,7 +73,7 @@ export const GysTrackedContributions: CollectionConfig = {
     { name: 'region', type: 'text' },
     { name: 'country', type: 'text' },
     { name: 'submitterType', type: 'text' },
-    { name: 'organization', type: 'text' },
+    { name: 'organization', type: 'text', label: 'Organisation' },
     { name: 'source', type: 'text', defaultValue: 'manual' },
     { name: 'externalId', type: 'text' },
     { name: 'rawAnswers', type: 'json' },
@@ -107,6 +107,6 @@ export const GysContributions: CollectionConfig = {
     { name: 'name', type: 'text', required: true },
     { name: 'email', type: 'email', required: true },
     { name: 'country', type: 'text' },
-    { name: 'organization', type: 'text' },
+    { name: 'organization', type: 'text', label: 'Organisation' },
   ],
 }
