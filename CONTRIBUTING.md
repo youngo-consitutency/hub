@@ -15,12 +15,10 @@ git clone https://github.com/YOUR-USERNAME/hub.git
 cd hub
 git switch -c fix/short-description
 npm ci
-npm run dev-all
+npm run dev
 ```
 
-Use Node.js 22.13 or later in the Node 22 series. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
-
-Root checks do not cover `hub-v2/`. Use [its setup and checks](hub-v2/README.md) for changes there.
+Use Node.js 22.13 or later in the Node 22 series. The app needs `DATABASE_URL` and `PAYLOAD_SECRET`; see [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
 
 ## Make the change
 
@@ -37,13 +35,14 @@ AI-assisted work is welcome. You are responsible for understanding it, checking 
 From the repository root:
 
 ```sh
-npm run check
+npm run lint
+npm run build
 git diff --check
 ```
 
-`check` validates public content, formatting, code quality, types, tests, and the production build. Database tests need `TEST_DATABASE_URL`; some tests also need local material that is not included in a public clone. Mention skipped checks in your pull request.
+The build runs TypeScript checking. `npm run test:int` and `npm run test:e2e` need a running server and seeded demo accounts — mention skipped checks in your pull request.
 
-If formatting fails, run `npm run format`, inspect the diff, and commit only changes that belong to your task. Markdown guides are checked separately; keep their links working.
+Format only files changed by your task, inspect the diff, and keep documentation links working.
 
 ## Open a pull request
 
