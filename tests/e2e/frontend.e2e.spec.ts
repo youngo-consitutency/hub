@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
 
-const BASE = 'http://localhost:3000'
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:3000'
 // Provisioned by tests/e2e/global-setup.ts — generated per run.
 const { memberEmail, memberPassword } = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, '.credentials.json'), 'utf8'),
@@ -34,15 +34,15 @@ test.describe('Member app', () => {
     // The SPA shows a sign-in gate when unauthenticated.
     const email = page.locator('input[type="email"], input[name="email"]').first()
     await email.fill(memberEmail)
-    const password = page
-      .locator('input[type="password"], input[name="password"]')
-      .first()
+    const password = page.locator('input[type="password"], input[name="password"]').first()
     await password.fill(memberPassword)
-    await page
-      .locator('button[type="submit"], button:has-text("Sign in")')
-      .first()
-      .click()
+    await page.locator('button[type="submit"], button:has-text("Sign in")').first().click()
     // Signed-in members land on the member workspace; the gate disappears.
     await expect(email).toBeHidden({ timeout: 15000 })
+    await page.goto(BASE)
+    await expect(page.getByRole('heading', { name: 'Your Hub', exact: true })).toBeVisible()
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Your Hub', exact: true })).toBeVisible()
   })
 })

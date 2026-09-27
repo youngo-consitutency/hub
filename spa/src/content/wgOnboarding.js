@@ -317,7 +317,7 @@ export const WG_ONBOARDING = {
     presentation: [
       'The Science Working Group is a YOUNGO space for children and youth to learn climate science, the science–policy interface, and science diplomacy, including engagement with the IPCC.',
       '2026 Contact Points are Jude Earls and Debosmita Ghosh. Join via the public form (bit.ly/YOUNGO_SWG_2025); the form still carries a 2025 title but is the roster join URL.',
-      'The WG’s Climate Resource Hub (youngo-science.org) is an open directory of climate work, research, learning, and funding. IPCC assessments are policy-relevant but not policy-prescriptive.',
+      'The Hub’s Resources section is an open collection of climate work, research, learning, and funding. IPCC assessments are policy-relevant but not policy-prescriptive.',
     ],
     rules: [
       'When citing IPCC or other assessments, keep the distinction: they inform policy; they do not prescribe it.',

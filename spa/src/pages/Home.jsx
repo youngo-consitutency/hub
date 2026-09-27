@@ -1,22 +1,8 @@
+import { canManageGroups } from '../lib/groupPermissions.js'
 import { useApi } from '../lib/api.js'
-import {
-  A,
-  Async,
-  LifecycleTiming,
-  Section,
-  Empty,
-  PageHeader,
-} from '../components/ui.jsx'
-import {
-  EventCard,
-  ClosingCard,
-  CoyCard,
-  GroupCard,
-} from '../components/cards.jsx'
-import {
-  MissionCountdown,
-  MissionMetric,
-} from '../components/MissionConsole.jsx'
+import { A, Async, LifecycleTiming, Section, Empty, PageHeader } from '../components/ui.jsx'
+import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards.jsx'
+import { MissionMetric } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
@@ -77,26 +63,41 @@ export function Home() {
         {(data) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <PageHeader title="YOUNGO, in one place" />
+            <PageHeader title="Your Hub" />
 
             <div className="mcHero homeHero">
-              <MissionCountdown label="Days to COP31 · Antalya, Türkiye" />
+              <div className="homeNextEvent">
+                <p className="pageEyebrow">Coming up this week</p>
+                <h2>{data.week[0]?.title || 'Time for your next contribution'}</h2>
+                <p>
+                  {data.week[0]
+                    ? fmtDual(data.week[0].startsAt)
+                    : 'Find a group or explore current opportunities.'}
+                </p>
+                <A
+                  className="btn btn-ghost"
+                  href={data.week[0] ? `/calendar/${data.week[0].slug}` : '/opportunities'}
+                >
+                  {data.week[0] ? 'Event details' : 'Explore opportunities'}{' '}
+                  <ArrowUpRight size={16} aria-hidden />
+                </A>
+              </div>
               <div className="mcHeroMetrics">
                 <MissionMetric
-                  value={String(data.closing.length)}
+                  value={String(data.counts?.closing ?? data.closing.length)}
                   label="Closing soon"
                   href="/submissions"
                   tone={data.closing.length > 0 ? 'warn' : undefined}
                   icon={Alarm}
                 />
                 <MissionMetric
-                  value={String(data.week.length)}
-                  label="Meetings this week"
+                  value={String(data.counts?.week ?? data.week.length)}
+                  label="Events this week"
                   href="/calendar"
                   icon={CalendarStats}
                 />
                 <MissionMetric
-                  value={String(data.coys.length)}
+                  value={String(data.counts?.coys ?? data.coys.length)}
                   label="COYs listed"
                   href="/coys"
                   icon={Megaphone}
@@ -105,19 +106,15 @@ export function Home() {
             </div>
 
             <WorkspaceSection groups={groups} workspaces={workspaces} />
-            {(account?.isWgContact ||
-              account?.access?.wgAssignments?.length > 0) && (
-              <Section label="WG section call">
+            {canManageGroups(account) && (
+              <Section label="Group support">
                 <A href="/book" className="card cardTight roleHubCard">
                   <span className="iconTile" aria-hidden>
                     <ClipboardCheck size={20} strokeWidth={1.75} />
                   </span>
                   <span className="roleHubCopy">
-                    <strong>Book 45 minutes with Genn or Jalo</strong>
-                    <small>
-                      Set your working-group page and onboarding. Pick a time on
-                      the Hub — don’t negotiate it in the group chat.
-                    </small>
+                    <strong>Book a group support call</strong>
+                    <small>Get help with your group’s page and member induction.</small>
                   </span>
                 </A>
               </Section>
@@ -150,19 +147,14 @@ export function Home() {
                         <Pin size={16} strokeWidth={2} />
                       </span>
                       <div className="pinnedBannerCopy">
-                        <p className="pinnedBannerEyebrow">
-                          Pinned announcement
-                        </p>
+                        <p className="pinnedBannerEyebrow">Pinned announcement</p>
                         <h3 className="pinnedBannerTitle">{a.title}</h3>
                         <p className="pinnedBannerBody">{a.body}</p>
                       </div>
                       {(a.ctaUrl || a.ctaDeadlineAt) && (
                         <div className="announcementActions pinnedBannerActions">
                           {a.ctaDeadlineAt && (
-                            <LifecycleTiming
-                              iso={a.ctaDeadlineAt}
-                              label="Closes"
-                            />
+                            <LifecycleTiming iso={a.ctaDeadlineAt} label="Closes" />
                           )}
                           {a.ctaUrl && (
                             <a
@@ -240,10 +232,7 @@ function ResponsibilitySection({ account }) {
       label: 'WG Contact Point',
       detail: 'Manage your working groups, calls, channels, and member access.',
       icon: Briefcase,
-      visible:
-        account?.isWgContact ||
-        access.wgAssignments?.length > 0 ||
-        access.manageAllWgs,
+      visible: canManageGroups(account),
     },
     {
       href: '/focal',
@@ -271,9 +260,7 @@ function ResponsibilitySection({ account }) {
       label: 'Content operations',
       detail: 'Draft, review, and publish Hub content.',
       icon: FilePenLine,
-      visible:
-        capabilities.includes('content.draft') ||
-        capabilities.includes('content.review'),
+      visible: capabilities.includes('content.draft') || capabilities.includes('content.review'),
     },
     {
       href: '/ngo',
@@ -330,9 +317,7 @@ function WorkspaceSection({ groups, workspaces }) {
               const progressBySlug = new Map(
                 workspaceData.items.map((item) => [item.wg_slug, item]),
               )
-              const joined = groupData.items.filter((group) =>
-                progressBySlug.has(group.slug),
-              )
+              const joined = groupData.items.filter((group) => progressBySlug.has(group.slug))
               if (!joined.length) {
                 return (
                   <Empty
@@ -346,9 +331,7 @@ function WorkspaceSection({ groups, workspaces }) {
                 <div className="dashboardCardGrid">
                   {joined.map((group) => {
                     const progress = progressBySlug.get(group.slug)
-                    const ready = Boolean(
-                      progress?.presentation_ok && progress?.rules_ok,
-                    )
+                    const ready = Boolean(progress?.presentation_ok && progress?.rules_ok)
                     return (
                       <GroupCard
                         key={group.slug}

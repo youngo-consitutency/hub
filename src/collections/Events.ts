@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { isStaffField, staffWrites } from '../lib/collectionAccess'
 
 export const Events: CollectionConfig = {
   slug: 'content-events',
@@ -25,9 +25,21 @@ export const Events: CollectionConfig = {
       relationTo: 'working-groups',
       index: true,
     },
-    { name: 'meetingUrl', type: 'text', admin: { description: 'Join link — members only, never published anonymously' } },
+    {
+      name: 'meetingUrl',
+      type: 'text',
+      access: { read: isStaffField },
+      admin: { description: 'Join link — members only, never published anonymously' },
+    },
     { name: 'recordingUrl', type: 'text' },
-    { name: 'state', type: 'select', required: true, defaultValue: 'published', index: true, options: ['published', 'unpublished'] },
+    {
+      name: 'state',
+      type: 'select',
+      required: true,
+      defaultValue: 'published',
+      index: true,
+      options: ['published', 'unpublished'],
+    },
     { name: 'legacySource', type: 'text', admin: { readOnly: true } },
   ],
 }

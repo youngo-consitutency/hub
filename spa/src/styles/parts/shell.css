@@ -125,8 +125,8 @@
 }
 
 .navItem.active {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
   border-left-color: var(--accent);
   border-radius: var(--radius-control);
 }

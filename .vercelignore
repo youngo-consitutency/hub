@@ -7,3 +7,9 @@ playwright-report/
 .codex-vault/
 docs/
 mcp-content/
+.agent-vault/
+.agents/
+.local/
+.codex/
+.cursor/
+.neon/

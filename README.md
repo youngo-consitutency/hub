@@ -1,18 +1,27 @@
 # YOUNGO Hub
 
-YOUNGO’s membership and coordination platform: working groups, events, resources, submissions, and staff tools.
+A shared space for YOUNGO members to find groups, attend events, share resources and work on proposals, decisions and elections.
 
-[Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contributing](CONTRIBUTING.md)
+[Website](https://youngohub.org) · [How the Hub works](https://github.com/youngo-consitutency/hub/wiki/How-the-Hub-works) · [Contributing](CONTRIBUTING.md)
 
-## Application
+## What is here
 
-One Next.js and Payload application, backed by PostgreSQL. The member interface is in `spa/`, the staff console is at `/console`, and server code is in `src/`.
+- Public information about YOUNGO, its working groups, youth conferences and resources.
+- Member accounts, induction, group workspaces, opportunities and policy contributions.
+- Decision-making processes, voting, elections and operational requests, with access based on membership and assigned responsibilities.
+- Review tools for membership and content teams, plus a separate staff console at `/console`.
 
-[`mcp-content/`](mcp-content/README.md) is a separate service for assistant tools that use the Hub’s API and account permissions.
+The resource collection is part of the Hub. Existing source credits and review records remain attached to imported material.
 
-## Development
+## How it is built
 
-Use Node.js 22.13 or later in the Node 22 series, or Node 24, and a local PostgreSQL database.
+React draws the member interface in `spa/`. Next.js runs the website and server. Payload manages accounts, content and the staff console. PostgreSQL stores the records. Server code and access checks are in `src/`.
+
+The separate [content service](mcp-content/README.md) lets authorised assistant tools use the Hub’s API. It does not receive database credentials.
+
+## Run locally
+
+Use Node.js 22.13 or later in the Node 22 series, or Node 24, and PostgreSQL.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
@@ -25,15 +34,18 @@ npm run migrate
 npm run dev
 ```
 
-Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and never commit it. The app requires PostgreSQL; it has no database-free fixture mode.
+Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and private. Use a separate development database; do not run migrations against an existing member database without a tested migration plan.
 
 ```sh
 npm run check
+npm test
 ```
 
-This runs lint and the production build, including type checks. Integration and browser tests need a running server and a seeded database; the test suites provision their own accounts. For throwaway local logins, `npm run seed:demo` requires `DEMO_EMAIL_DOMAIN` and `DEMO_PASSWORD` in the environment — use it only with a disposable database. Some seed inputs are not included in a public clone.
+`check` runs lint and a production build, including type checks. Tests need the matching database and server; they create their own accounts. Set `TEST_BASE_URL` to use a different local port. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development).
 
-The Payload schema is separate from the former Express schema. Do not point its migrations at an existing member database without a verified migration and rollback plan. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status) for remaining deployment requirements.
+## Demo data
+
+Demo accounts and content belong in a separate database. The interface always loads records through the normal API; there are no bundled fictional listings or sign-in shortcuts. See [demo environments](https://github.com/youngo-consitutency/hub/wiki/Demo-environments) for setup, delivery controls and account handling.
 
 ## Licence
 
