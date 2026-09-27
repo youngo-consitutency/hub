@@ -50,6 +50,7 @@ describe('payload', () => {
   })
 
   it('reads seeded accounts and content collections', async () => {
+    await provisionAccount({})
     const accounts = await payload.find({ collection: 'accounts', limit: 1 })
     expect(accounts.totalDocs).toBeGreaterThan(0)
     const events = await payload.find({ collection: 'content-events', limit: 1 })
