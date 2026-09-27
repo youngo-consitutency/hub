@@ -147,28 +147,6 @@ export function ClosingCard({ item }) {
   )
 }
 
-export function DecisionCard({ decision, statusFilterState, onStatusFilter }) {
-  const windowIso = decision.windowDeadline
-  return (
-    <LinkedEntityCard href={`/council/${decision.slug}`} label={`Open ${decision.title}`}>
-      <EntityHeader title={decision.title} />
-      <div className="entityCardBody">
-        {decision.summary && <p className="meta">{decision.summary}</p>}
-      </div>
-      <div className="entityCardFooter">
-        <LifecycleTiming
-          status={decision.status}
-          iso={windowIso}
-          label="Decision window"
-          statusFilterState={statusFilterState}
-          onStatusFilter={onStatusFilter}
-        />
-        <span className="metaMuted entityCardOwner">{decision.proposer}</span>
-      </div>
-    </LinkedEntityCard>
-  )
-}
-
 export function CoyCard({ coy, typeFilterState, regionFilterState, onTypeFilter, onRegionFilter }) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   const CoyIcon = COY_ICONS[coy.type] || Globe

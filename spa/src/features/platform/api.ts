@@ -68,4 +68,4 @@ export function values(form: HTMLFormElement): Record<string, unknown> {
       result[name] = new Date(result[name]).toISOString()
   return result
 }
-export { formatDateTime as formatDate } from '../../lib/dateTime.js'
+export { formatDateTime as formatDate } from '../../lib/time.js'

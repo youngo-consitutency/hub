@@ -1,4 +1,4 @@
-import { formatDateTime } from '../lib/dateTime.js'
+import { formatDateTime } from '../lib/time.js'
 import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api.js'
 import { Empty, ErrorCard, Section, Skeletons } from './ui.jsx'

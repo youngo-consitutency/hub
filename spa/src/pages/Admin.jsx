@@ -1,4 +1,4 @@
-import { formatDateTime } from '../lib/dateTime.js'
+import { formatDateTime } from '../lib/time.js'
 import {
   TEAM_LABELS,
   WEBSITE_PERMISSIONS,

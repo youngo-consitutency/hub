@@ -16,7 +16,7 @@ import { Announcements } from './collections/Announcements'
 import { Submissions } from './collections/Submissions'
 import { Coys } from './collections/Coys'
 import { DirectoryContacts } from './collections/DirectoryContacts'
-import { Resources } from './collections/Resources'
+import { Resources, ResourceIssues, ResourceReviews } from './collections/Resources'
 import { Opportunities } from './collections/Opportunities'
 import { FeedbackTickets } from './collections/FeedbackTickets'
 import { MemberProfiles } from './collections/MemberProfiles'
@@ -32,19 +32,16 @@ import { CpCallSlots } from './collections/CpCallSlots'
 import { ContentDrafts } from './collections/ContentDrafts'
 import { ConsultationContributions } from './collections/ConsultationContributions'
 import { PasswordResets } from './collections/PasswordResets'
+import { NgoSeats, NgoRequests } from './collections/Ngo'
+import { MembershipAppeals } from './collections/Membership'
 import {
-  NgoSeats,
-  NgoRequests,
-  MembershipAppeals,
   NotificationPrefs,
-  AuditLog,
+  EmailVerificationTokens,
   PushSubscriptions,
   NotificationOutbox,
-  ResourceIssues,
-  ResourceReviews,
-  ResearchNotes,
-  EmailVerificationTokens,
-} from './collections/misc'
+} from './collections/Notifications'
+import { AuditLog } from './collections/Audit'
+import { ResearchNotes } from './collections/Intelligence'
 import {
   DecisionProposals,
   DecisionFlags,
