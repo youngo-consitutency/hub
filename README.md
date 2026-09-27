@@ -1,26 +1,18 @@
 # YOUNGO Hub
 
-A shared home for YOUNGO members to find meetings, join working groups, complete onboarding, and organise their work.
+YOUNGO’s membership and coordination platform: working groups, events, resources, submissions, and staff tools.
 
-[Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/youngo-consitutency/hub/issues/new/choose) · [Discussions](https://github.com/youngo-consitutency/hub/discussions)
+[Website](https://youngohub.com) · [Wiki](https://github.com/youngo-consitutency/hub/wiki) · [Contributing](CONTRIBUTING.md)
 
-## What’s here
+## Applications
 
-The Hub brings together membership, working groups, events, opportunities, resources, submissions, and staff tools. What you can see or change depends on your account and responsibilities.
+- **Root:** React, Express, and PostgreSQL. The root Railway configuration deploys this app.
+- **[hub-v2](hub-v2/README.md):** a separate Next.js and Payload application with its own database and tests.
+- **[mcp-content](mcp-content/README.md):** assistant tools that use the Hub’s API and account permissions.
 
-There are two applications in this repository:
+## Development
 
-| Location                                | What it contains                                                                                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Repository root                         | React website, Express server, PostgreSQL database changes, and the root Railway setup          |
-| [`hub-v2/`](hub-v2/README.md)           | A separate Next.js and Payload application, with its own setup and tests                        |
-| [`mcp-content/`](mcp-content/README.md) | A small service that lets authorised assistants work with Hub content through the website’s API |
-
-The root commands below run the first application. The presence of a feature in this repository does not mean it is enabled on the live website. See [project status](https://github.com/youngo-consitutency/hub/wiki/Project-status).
-
-## Run it locally
-
-Use Node.js 22.13 or later in the Node 22 series, as selected by `.nvmrc`.
+Use Node.js 22.13 or later in the Node 22 series.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
@@ -29,33 +21,14 @@ npm ci
 npm run dev-all
 ```
 
-Open <http://localhost:5173>. The server runs on port `8787`.
+Open <http://localhost:5173>. Express runs on port `8787`. Without PostgreSQL, the root app uses public fixtures and local JSON files. See [database setup](https://github.com/youngo-consitutency/hub/wiki/Local-development#database) for database-backed features.
 
-You can explore the local site without PostgreSQL. It uses the public sample content and local JSON files. Database features need a local database; use [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for the setup.
+```sh
+npm run check
+```
 
-## Help improve it
-
-Code, clearer wording, accessibility fixes, documentation, and careful bug reports are all welcome. You do not need a Hub account to contribute on GitHub.
-
-1. Read the [contribution guide](CONTRIBUTING.md).
-2. Find an issue or discuss a larger idea before starting.
-3. Make a focused change in your fork and open a pull request.
-4. Run `npm run check` and explain what you tested.
-
-Please follow the [code of conduct](CODE_OF_CONDUCT.md). Report security problems [privately](SECURITY.md), not in public issues.
-
-## Find the right guide
-
-| I want to…                        | Guide                                                                                                                                                     |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Use the Hub                       | [Member guide](https://github.com/youngo-consitutency/hub/wiki/Member-guide)                                                                              |
-| Add or correct information        | [Content and publishing](https://github.com/youngo-consitutency/hub/wiki/Content-and-publishing)                                                          |
-| Manage membership or staff access | [Staff guide](https://github.com/youngo-consitutency/hub/wiki/Staff-guide)                                                                                |
-| Understand the code               | [Code map](https://github.com/youngo-consitutency/hub/wiki/Code-map)                                                                                      |
-| Set up or deploy a service        | [Configuration](https://github.com/youngo-consitutency/hub/wiki/Configuration) · [Deployment](https://github.com/youngo-consitutency/hub/wiki/Deployment) |
-| Work with an assistant            | [Agent tools](https://github.com/youngo-consitutency/hub/wiki/Agent-tools)                                                                                |
-| Maintain this repository          | [Project maintenance](https://github.com/youngo-consitutency/hub/wiki/Project-maintenance)                                                                |
+This runs the root content, formatting, lint, type, test, and build checks. Hub v2 has separate checks.
 
 ## Licence
 
-See [LICENSE](LICENSE) for the repository’s GPL-3.0 licence. Third-party code and materials keep their own notices. The [project status page](https://github.com/youngo-consitutency/hub/wiki/Project-status) records any unresolved licence labels.
+[GPL-3.0](LICENSE). Third-party notices still apply. The `hub-v2` package’s MIT label remains unresolved.
