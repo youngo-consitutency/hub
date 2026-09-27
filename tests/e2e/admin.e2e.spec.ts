@@ -5,7 +5,7 @@ import { login } from '../helpers/login'
 
 // Provisioned by tests/e2e/global-setup.ts — generated per run.
 const { consoleEmail, consolePassword } = JSON.parse(
-  readFileSync(path.resolve(__dirname, '.credentials.json'), 'utf8'),
+  readFileSync(path.resolve(import.meta.dirname, '.credentials.json'), 'utf8'),
 )
 
 test.describe('Payload console', () => {

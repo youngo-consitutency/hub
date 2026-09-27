@@ -27,7 +27,7 @@ export default async function globalSetup() {
   })
 
   writeFileSync(
-    path.resolve(__dirname, '.credentials.json'),
+    path.resolve(import.meta.dirname, '.credentials.json'),
     JSON.stringify({
       memberEmail,
       memberPassword,
