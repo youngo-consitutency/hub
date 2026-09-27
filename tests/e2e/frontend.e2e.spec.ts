@@ -26,25 +26,31 @@ test.describe('Public site', () => {
     )
   })
 
-  test('public event preview can retry and shows an honest empty state', async ({ page }) => {
-    let unavailable = true
-    await page.route('**/api/landing', (route) => {
-      return route.fulfill({
-        status: unavailable ? 503 : 200,
-        contentType: 'application/json',
-        body: JSON.stringify(unavailable ? { error: { message: 'Unavailable' } } : { events: [] }),
+  test.describe('Public event preview', () => {
+    // Network failures are mocked here; service workers bypass page routes.
+    test.use({ serviceWorkers: 'block' })
+    test('public event preview can retry and shows an honest empty state', async ({ page }) => {
+      let unavailable = true
+      await page.route('**/api/landing', (route) => {
+        return route.fulfill({
+          status: unavailable ? 503 : 200,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            unavailable ? { error: { message: 'Unavailable' } } : { events: [] },
+          ),
+        })
       })
+      await page.goto(BASE)
+      const preview = page.getByRole('complementary', { name: 'Coming up' })
+      await expect(preview.getByText('Events could not be loaded.')).toBeVisible()
+      unavailable = false
+      await preview.getByRole('button', { name: 'Try again' }).click()
+      await expect(preview.getByText('No upcoming events have been published.')).toBeVisible()
+      await expect(preview.getByRole('link', { name: 'Open the Hub calendar' })).toHaveAttribute(
+        'href',
+        '/calendar',
+      )
     })
-    await page.goto(BASE)
-    const preview = page.getByRole('complementary', { name: 'Coming up' })
-    await expect(preview.getByText('Events could not be loaded.')).toBeVisible()
-    unavailable = false
-    await preview.getByRole('button', { name: 'Try again' }).click()
-    await expect(preview.getByText('No upcoming events have been published.')).toBeVisible()
-    await expect(preview.getByRole('link', { name: 'Open the Hub calendar' })).toHaveAttribute(
-      'href',
-      '/calendar',
-    )
   })
 
   test('public API responds with JSON collections', async ({ request }) => {
