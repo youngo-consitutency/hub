@@ -109,6 +109,11 @@ main > .mcStatusBar {
 
 /* Outside .mcConsole the hero has no flex gap to lean on. */
 .homeHero {
+  grid-template-columns: minmax(0, 1.4fr) minmax(250px, 0.8fr);
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent-tint) 25%, var(--bg-card));
   margin-bottom: var(--section-gap);
 }
 
@@ -479,5 +484,59 @@ a.mcMetricLink:focus-visible {
 
   .mcQueueActions .btn {
     flex: 1;
+  }
+}
+
+.homeHero .mcHeroMetrics {
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 12px 24px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  align-content: center;
+}
+.homeHero .mcMetric {
+  display: grid;
+  grid-template-columns: 24px 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  background: transparent;
+  border-radius: 0;
+}
+.homeHero .mcMetric + .mcMetric {
+  border-top: 1px solid var(--border);
+}
+.homeHero .mcMetric span {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.homeHero .mcMetric strong {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+.homeHero a.mcMetricLink:hover {
+  color: var(--accent);
+}
+@media (max-width: 1100px) {
+  .homeHero {
+    grid-template-columns: 1fr;
+  }
+  .homeHero .mcHeroMetrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding: 16px;
+    gap: 16px;
+  }
+  .homeHero .mcMetric {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0;
+  }
+  .homeHero .mcMetric + .mcMetric {
+    border-top: 0;
   }
 }

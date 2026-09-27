@@ -1,4 +1,5 @@
 import { A, StatusChip, FilterChip, LifecycleTiming } from './ui.jsx'
+import { DateStamp } from './DateStamp.jsx'
 import { MemberAvatar } from './MemberAvatar.jsx'
 import { fmtMoment, fmtDateRange } from '../lib/time.js'
 import { workingGroupTopic } from '../../shared/workingGroups.js'
@@ -91,11 +92,14 @@ export function EventCard({ event }) {
   const TypeIcon = EVENT_ICONS[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
-    <A href={`/calendar/${event.slug}`} className="card cardTight entityCard" peek>
-      <EntityHeader title={event.title}>
-        <FilterChip icon={TypeIcon}>{EVENT_LABEL[event.type] || event.type}</FilterChip>
-        {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
-      </EntityHeader>
+    <A href={`/calendar/${event.slug}`} className="card entityCard eventCard" peek>
+      <div className="eventCardIdentity">
+        <DateStamp iso={event.startsAt} />
+        <EntityHeader title={event.title}>
+          <FilterChip icon={TypeIcon}>{EVENT_LABEL[event.type] || event.type}</FilterChip>
+          {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
+        </EntityHeader>
+      </div>
       <div className="entityCardFooter">
         <CardSchedule iso={event.startsAt} label="Starts" />
       </div>

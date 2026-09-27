@@ -1,3 +1,4 @@
+import { DateStamp } from '../components/DateStamp.jsx'
 import { canManageGroups } from '../lib/groupPermissions.js'
 import { useApi } from '../lib/api.js'
 import { A, Async, LifecycleTiming, Section, Empty, PageHeader } from '../components/ui.jsx'
@@ -58,15 +59,24 @@ export function Home() {
   const { account } = useAccount()
 
   return (
-    <div>
+    <div className="homePage">
       <Async query={feed} skeletons={4}>
         {(data) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <PageHeader title="Your Hub" />
+            <PageHeader
+              title="Your Hub"
+              icon={Network}
+              action={
+                <A href="/calendar" className="btn btn-secondary">
+                  <CalendarStats size={17} aria-hidden /> Calendar
+                </A>
+              }
+            />
 
             <div className="mcHero homeHero">
               <div className="homeNextEvent">
+                {data.week[0] && <DateStamp iso={data.week[0].startsAt} />}
                 <p className="pageEyebrow">Coming up this week</p>
                 <h2>{data.week[0]?.title || 'Time for your next contribution'}</h2>
                 <p>
@@ -75,7 +85,7 @@ export function Home() {
                     : 'Find a group or explore current opportunities.'}
                 </p>
                 <A
-                  className="btn btn-ghost"
+                  className="btn btn-primary"
                   href={data.week[0] ? `/calendar/${data.week[0].slug}` : '/opportunities'}
                 >
                   {data.week[0] ? 'Event details' : 'Explore opportunities'}{' '}

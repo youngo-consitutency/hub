@@ -188,114 +188,6 @@ main#site-main {
   font-size: 13px;
 }
 
-.siteStartCard {
-  container: site-start / inline-size;
-  padding: var(--space-5);
-  border-top: 3px solid var(--accent);
-}
-
-.siteStartHeading {
-  display: grid;
-  gap: 2px;
-}
-
-.siteStartHeading .pageEyebrow {
-  margin-bottom: 2px;
-}
-
-.siteStartHeading h2 {
-  font-size: 18px;
-}
-
-.siteStartList {
-  display: grid;
-  gap: 0;
-  margin: var(--space-4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.siteStartList li {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-2);
-  padding: var(--space-3) 0;
-  border-top: 1px solid var(--border);
-}
-
-.siteStartList li:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.siteStartList li:last-child {
-  padding-bottom: 0;
-}
-
-.siteStartIcon {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-}
-
-.siteStartCopy {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.siteStartStepLabel {
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-.siteStartList strong,
-.siteStartList .meta {
-  display: block;
-}
-
-.siteStartList strong {
-  font-size: 14px;
-}
-
-.siteStartList .meta {
-  margin-top: 0;
-}
-
-@container site-start (min-width: 600px) {
-  .siteStartList {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .siteStartList li {
-    grid-template-columns: 1fr;
-    align-content: start;
-    padding: 0 var(--space-4);
-    border-top: 0;
-    border-left: 1px solid var(--border);
-  }
-
-  .siteStartList li:first-child {
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .siteStartList li:last-child {
-    padding-right: 0;
-  }
-}
-
-/* ── Public page structure ────────────────────────── */
 .siteSection {
   margin-top: clamp(40px, 6vw, 64px);
 }
@@ -431,10 +323,13 @@ main#site-main {
 
 .siteOrgCard {
   min-height: 130px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   display: grid;
   align-content: start;
   gap: var(--space-1);
-  border-top: 3px solid var(--accent);
+  border-top: 2px solid var(--accent);
 }
 
 .siteOrgCard strong {
@@ -502,6 +397,9 @@ main#site-main {
 }
 
 .siteTimeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
   margin-top: var(--space-5);
 }
 
@@ -513,8 +411,8 @@ main#site-main {
   gap: var(--space-2);
   padding: var(--space-4);
   border: 1px solid var(--border-card);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--radius-card);
+  border-top: 3px solid var(--accent);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
 }
@@ -789,10 +687,6 @@ main#site-main {
     grid-template-columns: 1fr;
   }
 
-  .siteStartCard {
-    max-width: 720px;
-  }
-
   .siteFooterInner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -885,10 +779,6 @@ main#site-main {
     justify-content: center;
   }
 
-  .siteStartCard {
-    padding: var(--space-4);
-  }
-
   .siteCtaBand,
   .siteCurrentCoy {
     grid-template-columns: 1fr;
@@ -956,5 +846,159 @@ main#site-main {
 
   .siteJoinBtn {
     padding-inline: var(--space-2);
+  }
+}
+
+/* Public sections use grids fitted to their content rather than catalogue columns. */
+.siteMissionGrid,
+.siteOrganisationGrid,
+.siteActivityGrid {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.siteActivityGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.siteMissionGrid > *,
+.siteOrganisationGrid > *,
+.siteActivityGrid > * {
+  min-width: 0;
+}
+.siteMissionCard {
+  padding: 24px;
+  gap: 14px;
+}
+.siteMissionCard h3,
+.siteDoCard h3 {
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.siteMissionCard:nth-child(even) .iconTile {
+  background: var(--info-tint);
+  color: var(--info);
+}
+.siteOrganisationGrid {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.siteOrgCard strong {
+  font-size: 23px;
+  letter-spacing: -0.03em;
+}
+.siteDoCard {
+  padding: 24px;
+}
+.siteDoCard > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+.siteDoLink {
+  margin-top: auto;
+  padding-top: 8px;
+}
+.siteValuesSection {
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent-tint) 30%, var(--bg-card));
+}
+.sitePrincipleChips .chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.siteUpcoming {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+.siteUpcomingHeading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.siteUpcomingHeading h2 {
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+.siteUpcomingBody {
+  min-height: 240px;
+  padding: 4px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.siteEventList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.siteEventList li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+}
+.siteEventList li + li {
+  border-top: 1px solid var(--border);
+}
+.siteEventList h3 {
+  font-size: 16px;
+  line-height: 1.35;
+  margin-bottom: 5px;
+}
+.siteUpcomingLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  background: var(--bg-raised);
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+.siteUpcomingLink:hover {
+  background: var(--accent-tint);
+}
+@media (max-width: 1100px) {
+  .siteMissionGrid,
+  .siteOrganisationGrid,
+  .siteActivityGrid,
+  .siteTimeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .siteMissionGrid,
+  .siteActivityGrid,
+  .siteTimeline {
+    grid-template-columns: 1fr;
+  }
+  .siteOrganisationGrid {
+    gap: 12px;
+  }
+  .siteOrgCard {
+    padding: 12px 0;
+  }
+  .siteOrgCard strong {
+    font-size: 20px;
+  }
+  .siteUpcomingHeading,
+  .siteUpcomingLink {
+    padding: 20px;
+  }
+  .siteUpcomingBody {
+    padding-inline: 20px;
   }
 }
