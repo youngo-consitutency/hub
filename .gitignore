@@ -22,11 +22,19 @@ data/research/
 .codex-vault/
 .cursor/
 
-# Documentation, AI notes, and reference material stay outside the source tree.
+# Long guides live in the GitHub wiki. Keep contributor entry points here.
 
 *.[mM][dD]
 *.[mM][dD][xX]
 *.[mM][aA][rR][kK][dD][oO][wW][nN]
+!README.md
+!AGENTS.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+!SECURITY.md
+!hub-v2/README.md
+!mcp-content/README.md
+!.github/PULL_REQUEST_TEMPLATE.md
 docs/
 openspec/
 scripts/docs/

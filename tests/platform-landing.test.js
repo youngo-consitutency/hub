@@ -9,39 +9,39 @@ import {
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
-test('platform landing keeps About YOUNGO and a distinct join path on the fold', async () => {
+test('platform landing keeps public information, sign-in, and joining reachable', async () => {
   const [landing, css] = await Promise.all([
     read('src/pages/PlatformLanding.jsx'),
     read('src/styles/parts/platform-landing.css'),
   ])
 
-  assert.match(landing, /className="platformHeaderAbout"/)
-  assert.match(landing, /I already have an account/)
+  assert.match(landing, /href="\/about">About YOUNGO/)
+  assert.match(landing, /className="platformSignIn" href="#signin"/)
+  assert.match(
+    landing,
+    /className="btn btn-primary platformJoinButton" href="\/join"/,
+  )
   assert.match(landing, /href="#signin"/)
   assert.match(landing, /href="\/join"/)
   assert.match(landing, /<LandingSignIn onAuthenticated={onAuthenticated} \/>/)
   assert.match(landing, /usePublicLandingProof/)
 
-  assert.match(css, /\.platformHeaderAbout\s*{[\s\S]*?display:\s*none/)
-  assert.match(
-    css,
-    /@media \(max-width: 1040px\)[\s\S]*?\.platformHeaderAbout\s*{[\s\S]*?display:\s*inline-flex/,
-  )
   assert.match(css, /grid-template-columns:\s*repeat\(6, minmax\(0, 1fr\)\)/)
   assert.match(
     css,
     /li:nth-child\(4\),\s*\n\s*\.platformModuleGrid li:nth-child\(5\)/,
   )
 
-  const mobile = css.split('@media (max-width: 800px)')[1] || ''
-  assert.doesNotMatch(
-    mobile.split('@media')[0],
-    /\.platformHeroActions[\s\S]{0,80}display:\s*none/,
+  const mobile = (css.split('@media (max-width: 800px)')[1] || '').split(
+    '@media',
+  )[0]
+  assert.match(
+    mobile,
+    /\.platformHeroInner\s*{[\s\S]*?grid-template-columns:\s*1fr/,
   )
-  assert.doesNotMatch(
-    mobile.split('@media')[0],
-    /\.platformBenefitList[\s\S]{0,80}display:\s*none/,
-  )
+  // The mobile header retains entry points while the duplicate hero actions hide.
+  assert.doesNotMatch(mobile, /\.platformHeaderActions[^}]*display:\s*none/)
+  assert.doesNotMatch(mobile, /\.platformAuth[^}]*display:\s*none/)
 })
 
 test('public landing proof falls back when the public APIs are quiet or fail', () => {

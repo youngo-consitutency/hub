@@ -277,3 +277,27 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep the onboarding artwork colours fixed in both themes. */
+.wgOnboard {
+  --jt-mint: #e7f6e4;
+  --jt-forest: #14632d;
+  --jt-deep: #0e4f24;
+  --jt-lime: #3c9a32;
+  --jt-ink: #24382c;
+  --jt-muted: #4d6556;
+  --onboarding-paper: #fff;
+  --onboarding-shadow-soft: rgba(20, 99, 45, 0.06);
+  --onboarding-on-forest: #f4fbf4;
+  --onboarding-disabled-bg: #c5d7c8;
+  --onboarding-disabled-text: #5d7264;
+  --onboarding-disabled-muted: #6d7f72;
+  --onboarding-shadow-deep: rgba(14, 79, 36, 0.16);
+  --onboarding-blob: #1f8f3d;
+  --onboarding-rule: #b7dfb4;
+  --onboarding-section-a: #8fd36a;
+  --onboarding-section-b: #4caf3a;
+  --onboarding-section-c: #2f9a34;
+  --onboarding-section-d: #1f8a3b;
+  --onboarding-rule-muted: #b7cfc0;
+}

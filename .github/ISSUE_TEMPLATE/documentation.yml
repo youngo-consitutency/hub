@@ -1,0 +1,23 @@
+name: Improve the docs
+description: Fix an unclear guide, missing step, or outdated public source.
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Which page or file?
+      description: Link the wiki page, guide, or public content item.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What needs changing?
+      description: Tell us what is unclear, missing, or outdated.
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Suggested wording or source
+      description: Add a reliable public source when correcting facts. Do not include private group links.
