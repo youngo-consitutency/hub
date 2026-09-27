@@ -1,7 +1,12 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
-import { getAccessProfile, canManageWg } from '../lib/access'
+import {
+  accountView,
+  isVerifiedAccount,
+  requireAccount,
+  requireVerifiedMember,
+} from '../lib/accounts'
+import { getAccessProfile } from '../lib/access'
 import { opportunityShape } from '../lib/content'
 import { requirePgPool } from '../lib/pg'
 import * as store from '../lib/content'
@@ -23,26 +28,7 @@ import {
   deleteMemberPhoto,
   submitAppeal,
 } from '../lib/membership'
-
-const verifiedRoles = new Set(['admin', 'focal_point'])
-function isVerified(account: any): boolean {
-  return (
-    account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' || verifiedRoles.has(account?.role))
-  )
-}
-
-function verifiedAccount(req: PayloadRequest) {
-  const account = requireAccount(req)
-  if (!isVerified(account)) {
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  }
-  return account
-}
+import { audit } from '../lib/audit'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -199,7 +185,7 @@ export const memberEndpoints: Endpoint[] = [
         modules: COURSE_MODULES,
         quiz: QUIZ.map(({ id, prompt, choices }) => ({ id, prompt, choices })),
         accountStatus: account.memberStatus,
-        alreadyPassed: isVerified(account),
+        alreadyPassed: isVerifiedAccount(account),
       })
     }),
   },
@@ -260,7 +246,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/workspace',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'wg-progress',
         where: { account: { equals: account.id } },
@@ -277,7 +263,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/workspace/:wg',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const wg = String(req.routeParams?.wg)
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
@@ -302,7 +288,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/workspace/:wg/onboard',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const progress = await upsertWgProgress(
         req,
@@ -321,7 +307,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/workspace/:wg/join',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const progress = await upsertWgProgress(
         req,
         account.id,
@@ -337,7 +323,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/profile',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'member-profiles',
         where: { account: { equals: account.id } },
@@ -375,7 +361,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/profile',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const fields: Record<string, string> = {}
       const displayName = trimmed(b.displayName, 120)
@@ -438,7 +424,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/people',
     method: 'get',
     handler: endpoint(async (req) => {
-      verifiedAccount(req)
+      requireVerifiedMember(req)
       return json(
         await listMemberPeople({
           search: req.query?.search,
@@ -455,7 +441,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/people/:id',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       const person = await getMemberPerson(
         { ...accountView(account), access },
@@ -589,7 +575,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/opportunities',
     method: 'get',
     handler: endpoint(async (req) => {
-      verifiedAccount(req)
+      requireVerifiedMember(req)
       const items = await store.listOpportunities(req, {
         kind: req.query?.kind as string,
         format: req.query?.format as string,
@@ -778,10 +764,10 @@ export const memberEndpoints: Endpoint[] = [
         throw fail.forbidden()
       const [feed, events, submissions, decisions, groups, directory] =
         await Promise.all([
-          store.getFeed(req),
+          store.getFeed(req, new Date(), true),
           store.listEvents(req),
           store.listSubmissions(req, 'open'),
-          store.listCouncil(req, 'all'),
+          store.listDecisions(req, 'all', true),
           store.listGroups(req),
           store.listDirectory(req),
         ])
@@ -837,16 +823,10 @@ export const memberEndpoints: Endpoint[] = [
         bytes,
         contentType: String(req.headers.get('content-type') || ''),
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'membership.appeal_submitted',
-          targetType: 'membership_appeal',
-          targetId: String(appeal.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'membership.appeal_submitted',
+        targetType: 'membership_appeal',
+        targetId: String(appeal.id),
       })
       return Response.json({ appeal }, { status: 201 })
     }),
@@ -857,7 +837,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/profile/photo',
     method: 'put',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const bytes = Buffer.from(await (req as any).arrayBuffer())
       const photo = await saveMemberPhoto(
         account.id,
@@ -865,21 +845,15 @@ export const memberEndpoints: Endpoint[] = [
         String(req.headers.get('content-type') || ''),
         account.id,
       )
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'member.profile_photo_updated',
-          targetType: 'member_profile',
-          targetId: String(account.id),
-          after: {
-            contentType: photo.content_type,
-            byteSize: photo.byte_size,
-            revision: photo.revision,
-          },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'member.profile_photo_updated',
+        targetType: 'member_profile',
+        targetId: String(account.id),
+        after: {
+          contentType: photo.content_type,
+          byteSize: photo.byte_size,
+          revision: photo.revision,
+        },
       })
       return json({ profile: await getOwnMemberProfile(accountView(account)) })
     }),
@@ -888,19 +862,13 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/profile/photo',
     method: 'delete',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const removed = await deleteMemberPhoto(account.id)
       if (removed)
-        await req.payload.create({
-          collection: 'audit-log',
-          data: {
-            actor: account.id,
-            action: 'member.profile_photo_removed',
-            targetType: 'member_profile',
-            targetId: String(account.id),
-          } as any,
-          overrideAccess: true,
-          req,
+        await audit(req, account, {
+          action: 'member.profile_photo_removed',
+          targetType: 'member_profile',
+          targetId: String(account.id),
         })
       return json({
         ok: true,
@@ -912,7 +880,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/people/:id/photo',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       const id = Number(req.routeParams?.id)
       const person = await getMemberPerson({ ...accountView(account), access }, id)

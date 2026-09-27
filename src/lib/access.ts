@@ -14,6 +14,15 @@ export interface AccessProfile {
   accountId?: string
 }
 
+// Only coordination responsibilities carry wg.manage. Ordinary group
+// membership is an affiliation, not a management mandate [S25].
+export const WG_COORDINATION_ROLES = new Set([
+  'contact',
+  'lead',
+  'coordinator',
+  'contact_point',
+])
+
 export async function getAccessProfile(
   req: PayloadRequest,
   account: any,
@@ -113,7 +122,8 @@ export async function getAccessProfile(
   )
     capabilities.add('intelligence.contacts.read')
   for (const item of wgAssignments)
-    capabilities.add(`wg.manage:${item.wgSlug}`)
+    if (WG_COORDINATION_ROLES.has(item.role))
+      capabilities.add(`wg.manage:${item.wgSlug}`)
   for (const item of negotiationAssignments) {
     const scope = `${item.scopeType}:${item.scopeId}`
     capabilities.add(`negotiations.read:${scope}`)

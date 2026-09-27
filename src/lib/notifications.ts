@@ -1,6 +1,7 @@
-import { createHmac } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { emailConfigured, sendEmail } from './email'
+import { appBaseUrl } from './env'
 
 // Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
 // — the announcement broadcast surface (preview/send/outbox). The queue rows
@@ -9,8 +10,6 @@ import { emailConfigured, sendEmail } from './email'
 
 export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
-const appOrigin = () =>
-  String(process.env.APP_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -185,10 +184,11 @@ ${content.action}
 
 // ── Unsubscribe links ────────────────────────────────────────────
 
+// PAYLOAD_SECRET is required at boot, so a key always exists. Set
+// EMAIL_UNSUBSCRIBE_SECRET to rotate unsubscribe links independently.
 const unsubscribeSecret = () =>
   String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() ||
-  process.env.PAYLOAD_SECRET ||
-  'youngo-development-unsubscribe-secret'
+  process.env.PAYLOAD_SECRET!
 
 export function createUnsubscribeToken(accountId: any, category: string) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
@@ -202,8 +202,33 @@ export function createUnsubscribeToken(accountId: any, category: string) {
   return `${payload}.${signature}`
 }
 
+export function verifyUnsubscribeToken(token: string) {
+  const [payload, supplied] = String(token || '').split('.')
+  if (!payload || !supplied) return null
+  const expected = createHmac('sha256', unsubscribeSecret())
+    .update(payload)
+    .digest('base64url')
+  const left = Buffer.from(supplied)
+  const right = Buffer.from(expected)
+  if (left.length !== right.length || !timingSafeEqual(left, right)) return null
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf8'),
+    )
+    if (
+      parsed.v !== 1 ||
+      !parsed.accountId ||
+      !OPTIONAL_EMAIL_CATEGORIES.includes(parsed.category)
+    )
+      return null
+    return { accountId: String(parsed.accountId), category: parsed.category }
+  } catch {
+    return null
+  }
+}
+
 export function unsubscribeUrl(accountId: any, category: string) {
-  return `${appOrigin()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
+  return `${appBaseUrl()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
 }
 
 // ── Transport ────────────────────────────────────────────────────

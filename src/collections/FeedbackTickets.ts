@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaff, isStaffField } from '../lib/collectionAccess'
 
 export const FeedbackTickets: CollectionConfig = {
   slug: 'feedback-tickets',
@@ -13,7 +14,13 @@ export const FeedbackTickets: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    create: ({ req }) => Boolean(req.user),
+    create: ({ req, data }) => {
+      if (req.user?.collection === 'users') return true
+      // Members may only file tickets under their own account.
+      return req.user?.collection === 'accounts' && (!data?.account || data?.account === req.user.id)
+    },
+    update: isStaff,
+    delete: isStaff,
   },
   fields: [
     { name: 'title', type: 'text', required: true },

@@ -43,6 +43,9 @@ jobs:
     env:
       PAYLOAD_SECRET: ci-build-placeholder
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/youngo_ci
+      # Test-only opt-out: the suite drives more auth requests than a real
+      # client. Never set this on a deployed environment.
+      HUB_DISABLE_RATE_LIMIT: '1'
 
     steps:
       - name: Check out repository

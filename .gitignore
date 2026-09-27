@@ -91,3 +91,4 @@ coverage/
 test-results/
 playwright-report/
 .neon
+tests/e2e/.credentials.json

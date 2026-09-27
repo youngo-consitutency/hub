@@ -171,10 +171,7 @@ export function ClosingCard({ item }) {
 }
 
 export function DecisionCard({ decision, statusFilterState, onStatusFilter }) {
-  const windowIso =
-    decision.status === 'objection_window'
-      ? decision.objectionDeadline
-      : decision.inputDeadline
+  const windowIso = decision.windowDeadline
   return (
     <LinkedEntityCard
       href={`/council/${decision.slug}`}

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { staffWrites } from '../lib/collectionAccess'
 
 // Replaces account_assignments: scoped responsibilities (team roles, WG
 // contact/lead, negotiation scopes, platform bodies) with an active window.
@@ -15,6 +16,9 @@ export const Assignments: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
+    // Assignments are granted through governed appointment/selection flows,
+    // never written directly over the generated API.
+    ...staffWrites,
   },
   fields: [
     {

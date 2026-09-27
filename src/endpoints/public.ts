@@ -1,5 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
+import { isVerifiedAccount } from '../lib/accounts'
 import {
   eventView,
   groupView,
@@ -13,12 +14,7 @@ import { rateLimit } from '../lib/rateLimit'
 // Members who are verified get the private view of shared content.
 const viewOptions = (req: PayloadRequest) => {
   const account = req.user?.collection === 'accounts' ? req.user : null
-  const verified =
-    account &&
-    (account.hubAccessStatus === 'active' ||
-      account.memberStatus === 'verified' ||
-      ['admin', 'focal_point'].includes(account.role))
-  return { includePrivate: Boolean(verified), account }
+  return { includePrivate: isVerifiedAccount(account), account }
 }
 
 async function wgProgressFor(req: PayloadRequest, wgSlug: string) {
@@ -65,7 +61,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
-      const feed = await store.getFeed(req)
+      const feed = await store.getFeed(req, new Date(), opts.includePrivate)
       const res = json(feedView(feed, opts))
       if (opts.includePrivate) res.headers.set('Cache-Control', 'no-store')
       return res
@@ -113,14 +109,22 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const state = (req.query?.state as string) || 'active'
-      return json({ items: await store.listCouncil(req, state) })
+      const opts = viewOptions(req)
+      return json({
+        items: await store.listDecisions(req, state, opts.includePrivate),
+      })
     }),
   },
   {
     path: '/council/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const d = await store.getDecision(req, String(req.routeParams?.slug))
+      const opts = viewOptions(req)
+      const d = await store.getDecision(
+        req,
+        String(req.routeParams?.slug),
+        opts.includePrivate,
+      )
       if (!d) throw fail.notFound('Unknown decision')
       return json(d)
     }),
@@ -249,7 +253,7 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
       const q = String(req.query?.q || '')
-      const results = await store.search(req, q)
+      const results = await store.search(req, q, opts.includePrivate)
       return json(searchView(results, opts))
     }),
   },

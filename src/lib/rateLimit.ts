@@ -8,6 +8,10 @@ type Bucket = { count: number; resetAt: number }
 const buckets = new Map<string, Bucket>()
 const MAX_BUCKETS = 10_000
 
+// Tests drive far more auth requests than any real client — the suite opts
+// out via HUB_DISABLE_RATE_LIMIT on the local/CI test server only.
+const DISABLED = process.env.HUB_DISABLE_RATE_LIMIT === '1'
+
 export function rateLimit({
   windowMs,
   max,
@@ -19,6 +23,7 @@ export function rateLimit({
   key?: (req: PayloadRequest) => string
   scope: string
 }) {
+  if (DISABLED) return () => {}
   return (req: PayloadRequest) => {
     const id = key
       ? key(req)

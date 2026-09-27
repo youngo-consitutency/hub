@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { test, expect, Page } from '@playwright/test'
 import { login } from '../helpers/login'
-import { testUser } from '../helpers/seedUser'
+
+// Provisioned by tests/e2e/global-setup.ts — generated per run.
+const { consoleEmail, consolePassword } = JSON.parse(
+  readFileSync(path.resolve(import.meta.dirname, '.credentials.json'), 'utf8'),
+)
 
 test.describe('Payload console', () => {
   let page: Page
@@ -9,7 +15,7 @@ test.describe('Payload console', () => {
     const context = await browser.newContext()
     page = await context.newPage()
 
-    await login({ page, user: testUser })
+    await login({ page, user: { email: consoleEmail, password: consolePassword } })
   })
 
   test('can navigate to dashboard', async () => {

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
 
 export const Submissions: CollectionConfig = {
   slug: 'content-submissions',
@@ -9,6 +10,7 @@ export const Submissions: CollectionConfig = {
   },
   access: {
     read: () => true,
+    ...staffWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
@@ -28,7 +30,8 @@ export const Submissions: CollectionConfig = {
       relationTo: 'working-groups',
       index: true,
     },
-    { name: 'draftUrl', type: 'text' },
+    // Internal drafting workspace link — members only, not for anonymous reads.
+    { name: 'draftUrl', type: 'text', access: { read: isStaffOrMemberField } },
     { name: 'finalUrl', type: 'text' },
     { name: 'unfcccUrl', type: 'text' },
     { name: 'contributeNote', type: 'textarea' },

@@ -39,15 +39,14 @@ export function assembleFeed(data: AnyRecord, now = new Date()) {
 
   const openDecisions = (data.council || [])
     .filter((d: AnyRecord) =>
-      ['open_for_input', 'objection_window'].includes(d.status),
+      ['consultation', 'revision', 'decision', 'voting'].includes(d.status),
     )
     .map((d: AnyRecord) => ({
       kind: 'decision',
       slug: d.slug,
       title: d.title,
       status: d.status,
-      deadlineAt:
-        d.status === 'objection_window' ? d.objectionDeadline : d.inputDeadline,
+      deadlineAt: d.windowDeadline,
     }))
     .filter((d: AnyRecord) => d.deadlineAt && new Date(d.deadlineAt) > now)
 

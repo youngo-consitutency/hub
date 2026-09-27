@@ -20,7 +20,6 @@ import {
   TbCalendarTime as CalendarClock,
   TbCircleCheck as CheckCircle2,
   TbClock as Clock,
-  TbFilePlus as FilePlus2,
   TbGavel as Gavel,
   TbFilter as ListFilter,
   TbMessage as MessageSquareText,
@@ -33,9 +32,10 @@ import {
 
 const ACTIVE_STATUSES = [
   { key: 'all', label: 'All stages', icon: ListFilter },
-  { key: 'proposed', label: 'Proposed', icon: FilePlus2 },
-  { key: 'open_for_input', label: 'Open for input', icon: MessageSquareText },
-  { key: 'objection_window', label: 'Objection window', icon: ShieldAlert },
+  { key: 'consultation', label: 'Consultation', icon: MessageSquareText },
+  { key: 'revision', label: 'Revision', icon: MessageSquareText },
+  { key: 'decision', label: 'Decision', icon: ShieldAlert },
+  { key: 'voting', label: 'Voting', icon: ShieldAlert },
 ]
 
 const DECIDED_STATUSES = [
@@ -46,12 +46,7 @@ const DECIDED_STATUSES = [
 ]
 
 function decisionDate(decision) {
-  return (
-    decision.objectionDeadline ||
-    decision.inputDeadline ||
-    decision.decidedAt ||
-    '9999'
-  )
+  return decision.windowDeadline || decision.decidedAt || '9999'
 }
 
 export function Council() {

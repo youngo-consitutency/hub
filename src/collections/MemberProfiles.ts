@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { staffWrites } from '../lib/collectionAccess'
 
 export const MemberProfiles: CollectionConfig = {
   slug: 'member-profiles',
@@ -8,7 +9,7 @@ export const MemberProfiles: CollectionConfig = {
   },
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
+    ...staffWrites,
   },
   fields: [
     {

@@ -6,6 +6,7 @@ import { type Pool } from 'pg'
 import { requirePgPool, getPgPool } from './pg'
 import { accountView } from './accounts'
 import { sendEmail } from './email'
+import { appBaseUrl } from './env'
 
 export function membershipError(status: number, code: string, message: string) {
   return Object.assign(new Error(message), { status, code })
@@ -1013,7 +1014,7 @@ export async function sendMembershipActivatedEmail(account: any) {
     String(account.firstName || account.first_name || account.name || '')
       .trim()
       .split(/\s+/)[0] || 'there'
-  const origin = process.env.APP_BASE_URL || 'http://localhost:3000'
+  const origin = appBaseUrl()
   try {
     const { delivered } = await sendEmail({
       to: account.email,

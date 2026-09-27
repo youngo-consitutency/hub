@@ -1,28 +1,14 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAccount } from '../lib/accounts'
+import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { createHash, randomBytes } from 'node:crypto'
 import { requirePgPool } from '../lib/pg'
 import { getAccessProfile } from '../lib/access'
 import { opportunityShape } from '../lib/content'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
+import { audit } from '../lib/audit'
+import { appBaseUrl } from '../lib/env'
 
 const AFFILIATION_ROLES = ['affiliate', 'viewer', 'representative']
 
@@ -75,7 +61,7 @@ async function requireOrgScope(
   req: PayloadRequest,
   permission: 'read' | 'requests' | 'seats' = 'read',
 ) {
-  const account = verifiedAccount(req)
+  const account = requireVerifiedMember(req)
   const ctx = await resolveOrgContext(req, account)
   if (!ctx) throw fail.forbidden('Accredited NGO access required.')
   if (permission === 'requests' && !ctx.canManageRequests)
@@ -227,16 +213,10 @@ export const ngoEndpoints: Endpoint[] = [
         ],
       )
       const item = rows[0]
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.request_created',
-          targetType: 'ngo_request',
-          targetId: String(item.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.request_created',
+        targetType: 'ngo_request',
+        targetId: String(item.id),
       })
       return json({ item }, { status: 201 })
     }),
@@ -258,17 +238,11 @@ export const ngoEndpoints: Endpoint[] = [
       const item = rows[0]
       if (!item) throw fail.notFound('Request not found.')
       const updated = item
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.request_status_changed',
-          targetType: 'ngo_request',
-          targetId: String(item.id),
-          after: { status: nextStatus },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.request_status_changed',
+        targetType: 'ngo_request',
+        targetId: String(item.id),
+        after: { status: nextStatus },
       })
       return json({ item: updated })
     }),
@@ -340,7 +314,7 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      const base = process.env.APP_BASE_URL || 'http://localhost:3000'
+      const base = appBaseUrl()
       const inviteUrl = `${base}/#/ngo/accept?token=${token}`
       const { delivered } = await sendEmail({
         to: email,
@@ -361,16 +335,10 @@ export const ngoEndpoints: Endpoint[] = [
           'The email provider did not accept the invitation.',
         )
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.seat_invited',
-          targetType: 'ngo_seat',
-          targetId: String(seat.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.seat_invited',
+        targetType: 'ngo_seat',
+        targetId: String(seat.id),
       })
       return json(
         {
@@ -408,16 +376,10 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.seat_revoked',
-          targetType: 'ngo_seat',
-          targetId: String(seat.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.seat_revoked',
+        targetType: 'ngo_seat',
+        targetId: String(seat.id),
       })
       return json({ seat: seatView(updated) })
     }),
@@ -493,7 +455,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/organisations',
     method: 'get',
     handler: endpoint(async (req) => {
-      verifiedAccount(req)
+      requireVerifiedMember(req)
       const term = String(req.query?.search || '').trim().toLowerCase()
       const { docs } = await req.payload.find({
         collection: 'accounts',
@@ -521,7 +483,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/affiliations',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'ngo-seats',
         where: { memberAccount: { equals: account.id } },
@@ -543,7 +505,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/affiliations',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const orgAccountId = String(b.orgAccountId || '').trim()
       if (!orgAccountId)
@@ -581,17 +543,11 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.affiliation_requested',
-          targetType: 'ngo_seat',
-          targetId: String(seat.id),
-          after: { orgAccountId },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.affiliation_requested',
+        targetType: 'ngo_seat',
+        targetId: String(seat.id),
+        after: { orgAccountId },
       })
       return json({ seat: seatView(seat) }, { status: 201 })
     }),
@@ -636,16 +592,10 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       } as any)
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: approve ? 'ngo.affiliation_approved' : 'ngo.affiliation_declined',
-          targetType: 'ngo_seat',
-          targetId: String(seat.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: approve ? 'ngo.affiliation_approved' : 'ngo.affiliation_declined',
+        targetType: 'ngo_seat',
+        targetId: String(seat.id),
       })
       return json({ seat: seatView(updated) })
     }),
@@ -721,17 +671,11 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.opportunity_created',
-          targetType: 'opportunity',
-          targetId: String(created.id),
-          after: { status },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.opportunity_created',
+        targetType: 'opportunity',
+        targetId: String(created.id),
+        after: { status },
       })
       return json(
         {
@@ -773,16 +717,10 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.opportunity_withdrawn',
-          targetType: 'opportunity',
-          targetId: String(item.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.opportunity_withdrawn',
+        targetType: 'opportunity',
+        targetId: String(item.id),
       })
       return json({ item: opportunityShape(updated) })
     }),
@@ -791,7 +729,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
@@ -825,20 +763,14 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: approve
-            ? 'ngo.opportunity_approved'
-            : 'ngo.opportunity_rejected',
-          targetType: 'ngo_opportunity',
-          targetId: String(item.id),
-          after: { status: updated.status },
-          reason: reviewNote,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: approve
+          ? 'ngo.opportunity_approved'
+          : 'ngo.opportunity_rejected',
+        targetType: 'ngo_opportunity',
+        targetId: String(item.id),
+        after: { status: updated.status },
+        reason: reviewNote,
       })
       return json({ item: opportunityShape(updated) })
     }),
@@ -848,7 +780,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/trust/:orgAccountId',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden('Posting review is for admins and the Membership Team.')
@@ -876,18 +808,12 @@ export const ngoEndpoints: Endpoint[] = [
         req,
       })
       const result = { orgAccountId, state }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.opportunity_trust_set',
-          targetType: 'hub_account',
-          targetId: orgAccountId,
-          after: result,
-          reason: trimmed(b.note, 500) || null,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.opportunity_trust_set',
+        targetType: 'hub_account',
+        targetId: orgAccountId,
+        after: result,
+        reason: trimmed(b.note, 500) || null,
       })
       return json(result)
     }),
@@ -896,7 +822,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/unpublish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
         throw fail.forbidden()
@@ -923,18 +849,12 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'ngo.opportunity_unpublished',
-          targetType: 'ngo_opportunity',
-          targetId: String(item.id),
-          after: { status: 'rejected' },
-          reason: reviewNote,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'ngo.opportunity_unpublished',
+        targetType: 'ngo_opportunity',
+        targetId: String(item.id),
+        after: { status: 'rejected' },
+        reason: reviewNote,
       })
       return json({ item: opportunityShape(updated) })
     }),

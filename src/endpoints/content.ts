@@ -1,17 +1,13 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
+import { audit } from '../lib/audit'
 
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
-  if (!isVerified(account))
+  if (!isVerifiedAccount(account))
     throw new ApiError(
       403,
       'not_verified',
@@ -407,17 +403,10 @@ export const contentEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       const payload = b.payload ?? b
       const item = await applyToLive(req, contentType, slug, payload)
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          actorEmail: account.email,
-          action: 'content.live_patch',
-          targetType: contentType,
-          targetId: slug,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'content.live_patch',
+        targetType: contentType,
+        targetId: slug,
       })
       return json({ item })
     }),
@@ -495,19 +484,13 @@ export const contentEndpoints: Endpoint[] = [
         unpublishedAt: now,
         unpublishReason: cleanReason,
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'content.unpublished',
-          targetType: contentType,
-          targetId: live.slug,
-          before,
-          after: { unpublished: true, status: 'unpublished' },
-          reason: cleanReason,
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'content.unpublished',
+        targetType: contentType,
+        targetId: live.slug,
+        before,
+        after: { unpublished: true, status: 'unpublished' },
+        reason: cleanReason,
       })
       return json({
         contentType,

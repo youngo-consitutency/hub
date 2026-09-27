@@ -1,5 +1,5 @@
 import nodemailer, { type Transporter } from 'nodemailer'
-
+import { defaultEmailFrom } from './env'
 // Outbound email. Mirrors EMAIL_* / SMTP_* envs from the legacy service; when
 // unconfigured, messages are logged and dropped (delivery-failure pattern from
 // server/lib/notifications/transport.js).
@@ -43,7 +43,7 @@ export async function sendEmail({
     return { delivered: false }
   }
   await t.sendMail({
-    from: process.env.EMAIL_FROM || 'hub@youngohub.org',
+    from: process.env.EMAIL_FROM || defaultEmailFrom(),
     to,
     subject,
     text,

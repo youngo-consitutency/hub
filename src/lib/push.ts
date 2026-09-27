@@ -1,5 +1,6 @@
 import webPush from 'web-push'
 import { getPgPool } from './pg'
+import { defaultEmailFrom } from './env'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
 // Rows live in the Payload `push-subscriptions` table; endpoints are validated
@@ -7,7 +8,7 @@ import { getPgPool } from './pg'
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
-const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@youngo-hub.org'
+const vapidSubject = process.env.VAPID_SUBJECT || `mailto:${defaultEmailFrom()}`
 
 if (vapidPublicKey && vapidPrivateKey) {
   webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)

@@ -1,26 +1,11 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { RESOURCE_ISSUE_KINDS } from '../../spa/shared/resourceHub.js'
-
-const isVerified = (account: any) =>
-  account?.hubAccessStatus === 'active' &&
-  (account?.memberStatus === 'verified' ||
-    ['admin', 'focal_point'].includes(account?.role))
-
-const verifiedAccount = (req: PayloadRequest) => {
-  const account = requireAccount(req)
-  if (!isVerified(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
-  return account
-}
+import { audit } from '../lib/audit'
 
 const canReview = async (req: PayloadRequest, account: any) => {
   const access = await getAccessProfile(req, account)
@@ -82,7 +67,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/submissions/mine',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'content-drafts',
         where: {
@@ -101,7 +86,7 @@ export const resourceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       submissionLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       await checkDuplicateUrl(req, b.url)
       const slug = resourceSlug(b.title)
@@ -118,16 +103,10 @@ export const resourceEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'resource.submitted',
-          targetType: 'content_revision',
-          targetId: String(draft.id),
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'resource.submitted',
+        targetType: 'content_revision',
+        targetId: String(draft.id),
       })
       return json({ item: draftView(draft) }, { status: 201 })
     }),
@@ -136,7 +115,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/submissions/:id',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const draft = (await req.payload.findByID({
         collection: 'content-drafts',
         id: String(req.routeParams?.id),
@@ -167,7 +146,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/issues',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canReview(req, account)))
         throw fail.forbidden('This content responsibility is not assigned to your account.')
       const [items, issues, reviews, submissions] = await Promise.all([
@@ -228,7 +207,7 @@ export const resourceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       submissionLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const slug = String(req.routeParams?.slug)
       await requireResource(req, slug)
       const b = ((await req.json?.()) || {}) as any
@@ -271,7 +250,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/:slug/verify',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       if (!(await canReview(req, account)))
         throw fail.forbidden('This content responsibility is not assigned to your account.')
       const slug = String(req.routeParams?.slug)
@@ -370,17 +349,11 @@ export const resourceEndpoints: Endpoint[] = [
           })
         }
       }
-      await req.payload.create({
-        collection: 'audit-log',
-        data: {
-          actor: account.id,
-          action: 'resource.verified_review',
-          targetType: 'resource_review',
-          targetId: String(review.id),
-          after: { resourceSlug: slug, status: b.status },
-        } as any,
-        overrideAccess: true,
-        req,
+      await audit(req, account, {
+        action: 'resource.verified_review',
+        targetType: 'resource_review',
+        targetId: String(review.id),
+        after: { resourceSlug: slug, status: b.status },
       })
       return json({ item: review })
     }),
@@ -390,7 +363,7 @@ export const resourceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       submissionLimit(req)
-      const account = verifiedAccount(req)
+      const account = requireVerifiedMember(req)
       const slug = String(req.routeParams?.slug)
       await requireResource(req, slug)
       const b = ((await req.json?.()) || {}) as any

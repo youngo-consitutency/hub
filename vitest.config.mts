@@ -7,5 +7,8 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts'],
+    // Network-backed dev databases make each request several round trips.
+    testTimeout: 30000,
+    hookTimeout: 60000,
   },
 })
