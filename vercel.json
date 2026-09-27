@@ -10,7 +10,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "{data,dist}/**",
+      "includeFiles": "{data,dist,server,shared}/**",
       "maxDuration": 10
     }
   }
