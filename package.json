@@ -33,14 +33,14 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "libphonenumber-js": "^1.13.11",
-    "mjml": "^5.4.0",
+    "libphonenumber-js": "^1.13.14",
+    "mjml": "^5.4.1",
     "nodemailer": "^9.1.1",
     "pg": "^8.23.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-icons": "^5.7.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
