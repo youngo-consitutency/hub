@@ -1,7 +1,7 @@
 {
   "name": "youngo-hub",
   "version": "1.0.0",
-  "description": "YOUNGO Hub — member platform and mission control (Next.js + Payload CMS)",
+  "description": "YOUNGO Hub \u2014 member platform and mission control (Next.js + Payload CMS)",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -62,7 +62,7 @@
     "eslint-config-next": "16.3.6",
     "prettier": "^3.9.9",
     "tsx": "4.23.15",
-    "typescript": "5.7.3",
+    "typescript": "6.0.3",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.11"
   },
