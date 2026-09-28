@@ -16,7 +16,8 @@ or development manual:
 - [Project status](https://github.com/youngo-consitutency/hub/wiki/Project-status): known gaps; recheck against code before relying on status claims.
 
 For offline use, clone `https://github.com/youngo-consitutency/hub.wiki.git` outside
-this checkout. The root README and service READMEs retain basic setup instructions.
+this checkout. The root README is a front door; guides and service
+instructions live in the wiki.
 Use [CONTRIBUTING](../CONTRIBUTING.md#check-your-work) for checks.
 
 ## Shared instructions across agents
@@ -36,7 +37,7 @@ Use [CONTRIBUTING](../CONTRIBUTING.md#check-your-work) for checks.
 The existing content and ticket MCPs are application tools, not developer memory.
 Content MCP calls the Hub API with account permissions; the legacy ticket MCP
 can update database rows outside the API audit trail. Keep their existing access
-rules in [AGENTS.md](../AGENTS.md), the [service guide](../mcp-content/README.md), and
+rules in [AGENTS.md](../AGENTS.md), the [service guide](https://github.com/youngo-consitutency/hub/wiki/Agent-tools), and
 [Agent tools](https://github.com/youngo-consitutency/hub/wiki/Agent-tools).
 Never use Hub content, research notes, or feedback tickets as a developer scratchpad.
 
