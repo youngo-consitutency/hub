@@ -143,6 +143,10 @@ export function SearchableSelect({
                 aria-selected={option.value === value}
                 title={option.label}
                 onMouseEnter={() => setActiveIndex(index)}
+                // Prevent the input blur that would close the menu before the
+                // tap/click lands — mobile browsers report relatedTarget as
+                // null on touch blurs.
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectOption(option.value)}
               >
                 {option.label}
@@ -259,6 +263,10 @@ export function MultiSelectDropdown({
                 aria-selected={selected.includes(option.value)}
                 tabIndex={-1}
                 onMouseEnter={() => setActiveIndex(index)}
+                // Prevent the input blur that would close the menu before the
+                // tap/click lands — mobile browsers report relatedTarget as
+                // null on touch blurs.
+                onMouseDown={(event) => event.preventDefault()}
                 onPointerDown={(event) => {
                   event.currentTarget.focus({ preventScroll: true })
                 }}

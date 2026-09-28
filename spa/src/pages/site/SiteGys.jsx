@@ -32,7 +32,7 @@ export function SiteGys() {
               <h2 id="gys-process-heading">{processCopy.title}</h2>
               <p className="siteSectionLead">{processCopy.lead}</p>
               <ol className="siteGysSteps">
-                {gys.process.map((item, index) => (
+                {(Array.isArray(gys.process) ? gys.process : []).map((item, index) => (
                   <li key={item.step} className="card">
                     <span className="stepNum" aria-hidden>
                       {index + 1}
