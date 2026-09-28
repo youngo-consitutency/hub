@@ -8,8 +8,8 @@ import {
   AGE_BANDS,
   YOUTH_AFFILIATIONS,
 } from '../../spa/shared/registration.js'
+import { getDocument } from './documents'
 import { NATIONALITIES } from '../../spa/shared/nationalities.js'
-import { PRIVACY_VERSION, CONSENT_STATEMENT } from '../../spa/shared/privacyNotice.js'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
@@ -84,24 +84,34 @@ function requireAgreements(b: Body, fields: Fields) {
   }
 }
 
-function requirePrivacyConsent(b: Body, fields: Fields) {
+function requirePrivacyConsent(
+  b: Body,
+  fields: Fields,
+  notice: { PRIVACY_VERSION?: string; CONSENT_STATEMENT?: string } | null,
+) {
   const consented = Boolean(b.privacyConsent)
   if (!consented) {
     fields.privacyConsent =
       'Please read the YOUNGO Hub Privacy Notice and confirm you consent to your data being used as it describes.'
     return null
   }
+  const version = notice?.PRIVACY_VERSION
+  if (!version || !notice?.CONSENT_STATEMENT) {
+    fields.privacyConsent =
+      'The Privacy Notice is unavailable right now. Please try again shortly.'
+    return null
+  }
   const claimed = String(b.privacyNoticeVersion || '').trim()
-  if (claimed && claimed !== PRIVACY_VERSION) {
+  if (claimed && claimed !== version) {
     fields.privacyConsent =
       'The Privacy Notice has been updated since this page was opened. Please reload, read the current notice, and consent again.'
     return null
   }
   return {
     privacyConsent: true,
-    privacyNoticeVersion: PRIVACY_VERSION,
+    privacyNoticeVersion: version,
     privacyConsentAt: new Date().toISOString(),
-    privacyConsentStatement: CONSENT_STATEMENT,
+    privacyConsentStatement: notice.CONSENT_STATEMENT,
   }
 }
 
@@ -116,7 +126,8 @@ function sanitizeWgInterests(value: unknown): string[] {
   return asStringArray(value).slice(0, 30)
 }
 
-export function validateRegistration(body: Body) {
+export async function validateRegistration(req: any, body: Body) {
+  const notice = (await getDocument(req, 'privacy-notice'))?.body || null
   const b = body || {}
   const fields: Fields = {}
 
@@ -190,7 +201,7 @@ export function validateRegistration(body: Body) {
     }
 
     const agreements = requireAgreements(b, fields)
-    const privacy = requirePrivacyConsent(b, fields)
+    const privacy = requirePrivacyConsent(b, fields, notice)
 
     if (isUnfcccAdmitted === true) {
       if (!YOUTH_AFFILIATIONS.includes(youthAffiliation as any)) {
@@ -349,7 +360,7 @@ export function validateRegistration(body: Body) {
     fields.motivation = 'Please keep this under 2000 characters.'
 
   const agreements = requireAgreements(b, fields)
-  const privacy = requirePrivacyConsent(b, fields)
+  const privacy = requirePrivacyConsent(b, fields, notice)
   if (memberOfAccreditedNgo === null) {
     fields.memberOfAccreditedNgo = 'Please answer for statistics.'
   }

@@ -160,18 +160,25 @@ export async function listGroups(req: Req): Promise<AnyRecord[]> {
 export async function getGroup(req: Req, slug: string, now = new Date()) {
   const group = (await allGroups(req)).find((g) => g.slug === slug)
   if (!group) return null
-  const events = (await listEvents(req))
-    .filter((e) => e.wg?.slug === slug && new Date(e.endsAt) >= now)
-    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
-    .slice(0, 5)
-  const submissions = (await listSubmissionsRaw(req))
-    .filter((s) => s.wg?.slug === slug && OPEN_SUB_STATES.includes(s.status))
-    .sort(
-      (a, b) =>
-        new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime(),
-    )
-  const contact =
-    (await listDirectory(req)).find((c) => c.wg?.slug === slug) || null
+  const [events, submissions, contact] = await Promise.all([
+    listEvents(req).then((items) =>
+      items
+        .filter((e) => e.wg?.slug === slug && new Date(e.endsAt) >= now)
+        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+        .slice(0, 5),
+    ),
+    listSubmissionsRaw(req).then((items) =>
+      items
+        .filter((s) => s.wg?.slug === slug && OPEN_SUB_STATES.includes(s.status))
+        .sort(
+          (a, b) =>
+            new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime(),
+        ),
+    ),
+    listDirectory(req).then(
+      (items) => items.find((c) => c.wg?.slug === slug) || null,
+    ),
+  ])
   return { ...group, events, submissions, contact }
 }
 

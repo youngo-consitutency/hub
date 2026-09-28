@@ -101,7 +101,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      pushTestLimit(req)
+      await pushTestLimit(req)
       if (!pushConfigured) throw pushUnavailable()
       const rows = await listSubscriptionsForAccounts([account.id])
       if (!rows.length)
@@ -125,7 +125,7 @@ export const pushEndpoints: Endpoint[] = [
       const account = requireAccount(req)
       if (account.role !== 'admin')
         throw fail.forbidden('Admin access required.')
-      pushSendLimit(req)
+      await pushSendLimit(req)
       if (!pushConfigured) throw pushUnavailable()
       const b = ((await req.json?.()) || {}) as any
       const { userIds, title, body, icon, badge, tag, data, requireInteraction } = b

@@ -29,7 +29,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/enquiries',
     method: 'post',
     handler: endpoint(async (req) => {
-      enquiryLimit(req)
+      await enquiryLimit(req)
       return json(await platform.createEnquiry(await body(req)), {
         status: 201,
       })

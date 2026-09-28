@@ -1,3 +1,4 @@
+import { useDocument } from '../lib/documents.js'
 import { regionLabel } from '../lib/regions.js'
 import { useEffect, useRef, useState } from 'react'
 import { apiDelete, apiPatch, apiPutFile } from '../lib/api.js'
@@ -42,6 +43,9 @@ function Detail({ term, children }) {
 }
 
 export function MemberProfileEditor({ query, account, roleLabel }) {
+  const { doc: privacyNotice } = useDocument('privacy-notice')
+  const privacyContactEmail = privacyNotice?.PRIVACY_META?.contactEmail
+
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -250,7 +254,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                     Need a correction?{' '}
                     <a
                       className="inlineLink"
-                      href="mailto:membership@youngoclimate.org"
+                      href={`mailto:${privacyContactEmail}`}
                     >
                       Contact the Membership Team
                     </a>

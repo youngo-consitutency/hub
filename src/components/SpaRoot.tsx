@@ -3,6 +3,8 @@
 // Mounts the preserved member SPA verbatim. The SPA manages its own
 // history-based router, API calls to /api/*, styles and PWA behaviour.
 import { useEffect } from 'react'
+import { SWRConfig } from 'swr'
+import { Router } from 'wouter'
 import '../../spa/src/styles/tokens.css'
 import '../../spa/src/styles/app.css'
 import App from '../../spa/src/App'
@@ -16,5 +18,21 @@ export default function SpaRoot() {
     else disablePWAInDevelopment()
     return () => stopThemeSync?.()
   }, [])
-  return <App />
+  // SWR defaults: collapse duplicate in-flight GETs and avoid a refetch storm
+  // on every tab focus.
+  return (
+    <SWRConfig
+      value={{
+        dedupingInterval: 5000,
+        focusThrottleInterval: 60000,
+        errorRetryCount: 3,
+      }}
+    >
+      {/* ssrPath keeps the SPA renderable during Next.js SSR — the old router
+          served '/' as the server snapshot. */}
+      <Router ssrPath="/">
+        <App />
+      </Router>
+    </SWRConfig>
+  )
 }

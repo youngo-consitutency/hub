@@ -118,7 +118,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/query',
     method: 'post',
     handler: endpoint(async (req) => {
-      intelligenceLimit(req)
+      await intelligenceLimit(req)
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       const b = ((await req.json?.()) || {}) as any
@@ -178,7 +178,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks',
     method: 'post',
     handler: endpoint(async (req) => {
-      intelligenceLimit(req)
+      await intelligenceLimit(req)
       const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       if (b.action !== 'save_research_note')

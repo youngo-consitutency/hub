@@ -7,7 +7,15 @@ let pool: pg.Pool | null = null
 export function getPgPool(): pg.Pool | null {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) return null
-  if (!pool) pool = new pg.Pool({ connectionString })
+  if (!pool)
+    pool = new pg.Pool({
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 10_000,
+      // TCP keepalive so idle connections survive proxies and Neon suspends.
+      keepAlive: true,
+    })
   return pool
 }
 

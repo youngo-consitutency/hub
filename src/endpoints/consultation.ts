@@ -74,7 +74,7 @@ export const consultationEndpoints: Endpoint[] = [
     path: '/consultation/contributions',
     method: 'post',
     handler: endpoint(async (req) => {
-      consultationLimit(req)
+      await consultationLimit(req)
       const b = ((await req.json?.()) || {}) as any
       if (b.website) return json({ ok: true, item: null }, { status: 201 })
       const kind = String(b.kind || '')

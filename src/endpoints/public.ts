@@ -1,8 +1,9 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, PUBLIC_CACHE, viewCache } from '../lib/respond'
 import { isVerifiedAccount } from '../lib/accounts'
 import { eventView, groupView, feedView, searchView, directoryView } from '../lib/views'
 import * as store from '../lib/content'
+import { getDocument } from '../lib/documents'
 import { rateLimit } from '../lib/rateLimit'
 
 // Members who are verified get the private view of shared content.
@@ -55,7 +56,9 @@ export const publicEndpoints: Endpoint[] = [
         req,
       })
       // Deliberately project only public fields, even for signed-in requests.
-      return json({ events: docs.map(({ slug, title, startsAt }) => ({ slug, title, startsAt })) })
+      const res = json({ events: docs.map(({ slug, title, startsAt }) => ({ slug, title, startsAt })) })
+      res.headers.set('Cache-Control', PUBLIC_CACHE)
+      return res
     }),
   },
   {
@@ -79,9 +82,7 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
       const feed = await store.getFeed(req, new Date(), opts.includePrivate)
-      const res = json(feedView(feed, opts))
-      if (opts.includePrivate) res.headers.set('Cache-Control', 'no-store')
-      return res
+      return viewCache(json(feedView(feed, opts)), opts.includePrivate)
     }),
   },
   {
@@ -91,7 +92,7 @@ export const publicEndpoints: Endpoint[] = [
       const opts = viewOptions(req)
       const type = (req.query?.type as string) || undefined
       const items = await store.listEvents(req, { type })
-      return json({ items: items.map((e) => eventView(e, opts)) })
+      return viewCache(json({ items: items.map((e) => eventView(e, opts)) }), opts.includePrivate)
     }),
   },
   {
@@ -101,7 +102,7 @@ export const publicEndpoints: Endpoint[] = [
       const opts = viewOptions(req)
       const event = await store.getEvent(req, String(req.routeParams?.slug))
       if (!event) throw fail.notFound('Unknown event')
-      return json(eventView(event, opts))
+      return viewCache(json(eventView(event, opts)), opts.includePrivate)
     }),
   },
   {
@@ -109,7 +110,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const state = (req.query?.state as string) || 'open'
-      return json({ items: await store.listSubmissions(req, state) })
+      return viewCache(json({ items: await store.listSubmissions(req, state) }), false)
     }),
   },
   {
@@ -118,7 +119,7 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const sub = await store.getSubmission(req, String(req.routeParams?.slug))
       if (!sub) throw fail.notFound('Unknown submission')
-      return json(sub)
+      return viewCache(json(sub), false)
     }),
   },
   {
@@ -127,9 +128,10 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const state = (req.query?.state as string) || 'active'
       const opts = viewOptions(req)
-      return json({
-        items: await store.listDecisions(req, state, opts.includePrivate),
-      })
+      return viewCache(
+        json({ items: await store.listDecisions(req, state, opts.includePrivate) }),
+        opts.includePrivate,
+      )
     }),
   },
   {
@@ -139,19 +141,22 @@ export const publicEndpoints: Endpoint[] = [
       const opts = viewOptions(req)
       const d = await store.getDecision(req, String(req.routeParams?.slug), opts.includePrivate)
       if (!d) throw fail.notFound('Unknown decision')
-      return json(d)
+      return viewCache(json(d), opts.includePrivate)
     }),
   },
   {
     path: '/coys',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json({
-        items: await store.listCoys(req, {
-          type: req.query?.type as string,
-          region: req.query?.region as string,
+      return viewCache(
+        json({
+          items: await store.listCoys(req, {
+            type: req.query?.type as string,
+            region: req.query?.region as string,
+          }),
         }),
-      })
+        false,
+      )
     }),
   },
   {
@@ -160,7 +165,7 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const coy = await store.getCoy(req, String(req.routeParams?.slug))
       if (!coy) throw fail.notFound('Unknown COY')
-      return json(coy)
+      return viewCache(json(coy), false)
     }),
   },
   {
@@ -169,7 +174,7 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
       const items = await store.listGroups(req)
-      return json({ items: items.map((g) => groupView(g, opts)) })
+      return viewCache(json({ items: items.map((g) => groupView(g, opts)) }), opts.includePrivate)
     }),
   },
   {
@@ -182,9 +187,10 @@ export const publicEndpoints: Endpoint[] = [
       if (!group) throw fail.notFound('Unknown working group')
       const progress = opts.account ? await wgProgressFor(req, slug) : null
       const includeWorkspace = Boolean(progress?.presentationOk && progress?.rulesOk)
-      const res = json(groupView(group, { ...opts, includeWorkspace }))
-      if (opts.includePrivate) res.headers.set('Cache-Control', 'no-store')
-      return res
+      return viewCache(
+        json(groupView(group, { ...opts, includeWorkspace })),
+        opts.includePrivate,
+      )
     }),
   },
   {
@@ -193,11 +199,14 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
       const items = await store.listDirectory(req)
-      return json({
-        items: directoryView(items, {
-          includePrivate: opts.includePrivate,
+      return viewCache(
+        json({
+          items: directoryView(items, {
+            includePrivate: opts.includePrivate,
+          }),
         }),
-      })
+        opts.includePrivate,
+      )
     }),
   },
   {
@@ -206,21 +215,21 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const gys = await store.getGys(req)
       if (!gys) throw fail.notFound('No statement available')
-      return json(gys)
+      return viewCache(json(gys), false)
     }),
   },
   {
     path: '/resources',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json({ items: await store.listResources(req) })
+      return viewCache(json({ items: await store.listResources(req) }), false)
     }),
   },
   {
     path: '/gys/signup',
     method: 'post',
     handler: endpoint(async (req) => {
-      gysSignupLimit(req)
+      await gysSignupLimit(req)
       const b = ((await req.json?.()) || {}) as Record<string, any>
       if (b.website) return json({ ok: true }, { status: 201 })
 
@@ -257,13 +266,22 @@ export const publicEndpoints: Endpoint[] = [
     }),
   },
   {
+    path: '/documents/:slug',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const doc = await getDocument(req, String(req.routeParams?.slug))
+      if (!doc) throw fail.notFound('Unknown document')
+      return viewCache(json(doc), false)
+    }),
+  },
+  {
     path: '/search',
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
       const q = String(req.query?.q || '')
       const results = await store.search(req, q, opts.includePrivate)
-      return json(searchView(results, opts))
+      return viewCache(json(searchView(results, opts)), opts.includePrivate)
     }),
   },
 ]

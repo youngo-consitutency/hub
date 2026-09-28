@@ -4,7 +4,9 @@ import { defineConfig, devices } from '@playwright/test'
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-import 'dotenv/config'
+// Load .env files (.env.local first — Next.js precedence, same as vitest)
+import dotenv from 'dotenv'
+dotenv.config({ path: ['.env.local', '.env'] })
 
 /**
  * See https://playwright.dev/docs/test-configuration.

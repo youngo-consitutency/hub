@@ -44,7 +44,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts',
     method: 'get',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       await requireAdmin(req)
       return json(
         await queryAccountsForAdmin({
@@ -63,7 +63,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/audit',
     method: 'get',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       await requireAdmin(req)
       const where: any = {}
       if (req.query?.action) where.action = { contains: req.query.action }
@@ -82,7 +82,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts/:id/verify',
     method: 'post',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       const admin = await requireAdmin(req)
       const id = String(req.routeParams?.id)
       const b = ((await req.json?.()) || {}) as any
@@ -113,7 +113,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts/:id/status',
     method: 'patch',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       const admin = await requireAdmin(req)
       const id = String(req.routeParams?.id)
       const b = ((await req.json?.()) || {}) as any
@@ -138,7 +138,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts/:id/role',
     method: 'post',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       const admin = await requireAdmin(req)
       const id = String(req.routeParams?.id)
       const b = ((await req.json?.()) || {}) as any
@@ -176,7 +176,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts/:id/team-role',
     method: 'post',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       const admin = await requireAdmin(req)
       const id = String(req.routeParams?.id)
       const b = ((await req.json?.()) || {}) as any
@@ -219,7 +219,7 @@ export const adminEndpoints: Endpoint[] = [
     path: '/member/admin/accounts/:id/reset-link',
     method: 'post',
     handler: endpoint(async (req) => {
-      adminLimit(req)
+      await adminLimit(req)
       const admin = await requireAdmin(req)
       const id = String(req.routeParams?.id)
       const b = ((await req.json?.()) || {}) as any

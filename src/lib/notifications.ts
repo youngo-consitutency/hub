@@ -50,13 +50,6 @@ const paragraphs = (value: any) =>
     )
     .join('\n')
 
-const SOCIAL_LINKS = [
-  { label: 'Instagram', url: 'https://www.instagram.com/youngo.unfccc' },
-  { label: 'Facebook', url: 'https://www.facebook.com/youngo.unfccc' },
-  { label: 'X (IYCM)', url: 'https://twitter.com/IYCM' },
-  { label: 'LinkedIn', url: 'https://www.linkedin.com/company/youngo-unfccc' },
-  { label: 'YouTube', url: 'https://www.youtube.com/@youngo.unfccc' },
-]
 
 function templateContent(templateKey: string, data: any = {}) {
   const actionUrl = safeUrl(data.actionUrl)
@@ -108,7 +101,9 @@ function templateContent(templateKey: string, data: any = {}) {
 
   if (templateKey === 'membership-activated') {
     const firstName = singleLine(data.firstName || 'there', 40)
-    const social = SOCIAL_LINKS.filter((link) => link.url)
+    const social: { label: string; url: string }[] = (
+      Array.isArray(data.socialLinks) ? data.socialLinks : []
+    ).filter((link: any) => link?.url)
     const socialHtml = social
       .map(
         (link) =>

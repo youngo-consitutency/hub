@@ -2,13 +2,7 @@ import {
   TbArrowLeft as ArrowLeft,
   TbExternalLink as ExternalLink,
 } from 'react-icons/tb'
-import {
-  PRIVACY_META,
-  PRIVACY_VERSION,
-  PRIVACY_SECTIONS,
-  DATA_CATEGORIES,
-} from '../../shared/privacyNotice.js'
-import { POLICY_BY_SLUG } from '../content/policies.js'
+import { useDocument } from '../lib/documents.js'
 import { Brand } from '../components/Brand.jsx'
 
 function ExtLink({ href, children }) {
@@ -52,7 +46,12 @@ function DataCategory({ category }) {
   )
 }
 
-function Body() {
+function Body({ notice, policies }) {
+  const PRIVACY_META = notice?.PRIVACY_META || {}
+  const PRIVACY_VERSION = notice?.PRIVACY_VERSION
+  const PRIVACY_SECTIONS = notice?.PRIVACY_SECTIONS || []
+  const DATA_CATEGORIES = notice?.DATA_CATEGORIES || []
+  const POLICY_BY_SLUG = policies?.POLICY_BY_SLUG || {}
   return (
     <>
       <section className="mandateAnalysis card privacySummary">
@@ -141,7 +140,9 @@ function Body() {
   )
 }
 
-function Header() {
+function Header({ notice }) {
+  const PRIVACY_META = notice?.PRIVACY_META || {}
+  const PRIVACY_VERSION = notice?.PRIVACY_VERSION
   return (
     <div className="privacyNoticeHeader">
       <p className="metaMuted">
@@ -162,6 +163,32 @@ function Header() {
  * The standalone route lets visitors review it before registration.
  */
 export function Privacy({ standalone = false }) {
+  const { doc: notice, loading, error, retry } = useDocument('privacy-notice')
+  const { doc: policies } = useDocument('policies')
+  if (loading) {
+    return (
+      <main className="mandateGate" aria-busy="true">
+        <div className="mandateShell">
+          <p className="meta" role="status">Loading the Privacy Notice…</p>
+        </div>
+      </main>
+    )
+  }
+  if (error || !notice) {
+    return (
+      <main className="mandateGate">
+        <div className="mandateShell">
+          <p className="meta" role="alert">
+            The Privacy Notice could not be loaded.{' '}
+            <button type="button" className="btn btn-secondary" onClick={retry}>
+              Try again
+            </button>
+          </p>
+        </div>
+      </main>
+    )
+  }
+  const PRIVACY_META = notice.PRIVACY_META || {}
   if (standalone) {
     return (
       <div className="mandateGate mandatePolicyGate privacyGate">
@@ -170,11 +197,11 @@ export function Privacy({ standalone = false }) {
             <div className="gateBrand">
               <Brand />
             </div>
-            <Header />
+            <Header notice={notice} />
           </header>
           <div className="mandateBody">
             <div className="mandatePolicy privacyDocument">
-              <Body />
+              <Body notice={notice} policies={policies} />
             </div>
           </div>
           <footer className="mandateFooter privacyGateFooter">
@@ -202,9 +229,9 @@ export function Privacy({ standalone = false }) {
   return (
     <div>
       <p className="pageEyebrow">Data protection</p>
-      <Header />
+      <Header notice={notice} />
       <div className="mandatePolicy privacyDocument">
-        <Body />
+        <Body notice={notice} policies={policies} />
       </div>
     </div>
   )

@@ -3,7 +3,6 @@ import {
   MINORITY_OPTIONS,
   REGIONS,
 } from '../../../shared/registration.js'
-import { WORKING_GROUPS } from '../../../shared/workingGroups.js'
 
 export const asOptions = (values) =>
   values.map((value) => ({ value, label: value }))
@@ -11,11 +10,6 @@ export const asOptions = (values) =>
 export const REGION_OPTIONS = asOptions(REGIONS)
 export const GENDER_OPTIONS = asOptions(GENDERS)
 export const MINORITY_SELECT_OPTIONS = asOptions(MINORITY_OPTIONS)
-export const WG_SELECT_OPTIONS = WORKING_GROUPS.map((g) => ({
-  value: g.slug,
-  label: g.name,
-}))
-
 let phoneSupportPromise
 let nationalityOptionsPromise
 

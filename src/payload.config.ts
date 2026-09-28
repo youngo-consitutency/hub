@@ -4,7 +4,9 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { defaultEmailFrom } from './lib/env'
+import { emailConfigured, getEmailTransport } from './lib/email'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -15,6 +17,7 @@ import { Events } from './collections/Events'
 import { Announcements } from './collections/Announcements'
 import { Submissions } from './collections/Submissions'
 import { Coys } from './collections/Coys'
+import { ContentDocuments } from './collections/ContentDocuments'
 import { DirectoryContacts } from './collections/DirectoryContacts'
 import { Resources, ResourceIssues, ResourceReviews } from './collections/Resources'
 import { Opportunities } from './collections/Opportunities'
@@ -99,6 +102,7 @@ export default buildConfig({
     Announcements,
     Submissions,
     Coys,
+    ContentDocuments,
     DirectoryContacts,
     Resources,
     Opportunities,
@@ -147,8 +151,10 @@ export default buildConfig({
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
-  // Payload's own password emails must also stay inside the demo. Its default
-  // development adapter logs complete messages, including reset links.
+  // Payload's own emails (console password resets, verifications) share the
+  // app's SMTP settings via the nodemailer adapter. Demo mode keeps a no-op
+  // adapter so nothing leaves the environment; without SMTP config the
+  // default adapter logs messages, which suits local development.
   email:
     process.env.HUB_DEMO_MODE === 'true'
       ? () => ({
@@ -157,7 +163,14 @@ export default buildConfig({
           defaultFromName: 'YOUNGO Hub',
           sendEmail: async () => undefined,
         })
-      : undefined,
+      : emailConfigured()
+        ? nodemailerAdapter({
+            defaultFromAddress:
+              process.env.EMAIL_FROM || defaultEmailFrom(),
+            defaultFromName: 'YOUNGO Hub',
+            transport: getEmailTransport()!,
+          })
+        : undefined,
   // Canonical origin for generated links (emails, admin). Cross-site cookie
   // requests are already blocked by SameSite=Lax on the session cookie.
   serverURL: process.env.APP_BASE_URL || undefined,

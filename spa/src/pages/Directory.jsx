@@ -9,8 +9,8 @@ import {
   PersonCard,
   WorkingGroupContactCard,
 } from '../components/cards.jsx'
-import { DIRECTORY_LAYERS } from '../content/directory.js'
-import { WORKING_GROUPS } from '../../shared/workingGroups.js'
+import { useDocument } from '../lib/documents.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import {
   TbAt as AtSign,
   TbSearch as Search,
@@ -18,6 +18,7 @@ import {
 } from 'react-icons/tb'
 
 function PeopleDirectory() {
+  const wg = useWorkingGroups()
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [draftSearch, setDraftSearch] = useState('')
   const [search, setSearch] = useState('')
@@ -66,7 +67,7 @@ function PeopleDirectory() {
             onChange={(event) => setWorkingGroup(event.target.value)}
           >
             <option value="">All working groups</option>
-            {WORKING_GROUPS.map((group) => (
+            {wg.groups.map((group) => (
               <option key={group.slug} value={group.slug}>
                 {group.name}
               </option>
@@ -135,6 +136,9 @@ function PeopleDirectory() {
 }
 
 export function Directory() {
+  const { doc: directory } = useDocument('directory')
+  const DIRECTORY_LAYERS = directory?.DIRECTORY_LAYERS || []
+
   const query = useApi('/directory')
   return (
     <div>

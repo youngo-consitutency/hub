@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useDocument } from '../lib/documents.js'
 import { apiPostFile, useApi } from '../lib/api.js'
 import { Button, ErrorCard } from '../components/ui.jsx'
 import { Brand } from '../components/Brand.jsx'
@@ -22,6 +23,9 @@ const IDENTITY_OPTIONS = [
 const ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf'
 
 export function MembershipAppeal() {
+  const { doc: connect } = useDocument('connect')
+  const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
+
   const { account } = useAccount()
   const query = useApi('/member/membership/appeal')
   const [identityKind, setIdentityKind] = useState('passport')
@@ -179,9 +183,9 @@ export function MembershipAppeal() {
           Signed in as {account?.email}. Help:{' '}
           <a
             className="mandateExtLink"
-            href="mailto:youngomembership@gmail.com"
+            href={`mailto:${membershipEmail}`}
           >
-            youngomembership@gmail.com
+            {membershipEmail}
           </a>
         </p>
         <Button variant="ghost" onClick={() => signOut()}>

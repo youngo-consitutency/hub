@@ -24,10 +24,7 @@ import {
   TbUsers as Users,
   TbBolt as Zap,
 } from 'react-icons/tb'
-import {
-  WORKING_GROUP_TOPICS,
-  workingGroupTopic,
-} from '../../shared/workingGroups.js'
+import { useDocument } from '../lib/documents.js'
 import {
   activeFilterCount,
   matchesFilters,
@@ -48,6 +45,10 @@ export function Groups() {
   const [topics, setTopics] = useState({})
   const [descending, setDescending] = useState(false)
   const query = useApi('/groups')
+  const { doc: directory } = useDocument('directory')
+  const topicList = directory?.topics || []
+  const topicLabel = (key) =>
+    topicList.find((t) => t.key === key)?.label || key
 
   return (
     <div>
@@ -71,12 +72,12 @@ export function Groups() {
                 [
                   group.name,
                   group.focusLine,
-                  workingGroupTopic(group.slug)?.label,
+                  topicLabel(group.topic),
                 ]
                   .join(' ')
                   .toLocaleLowerCase()
                   .includes(needle)
-              const topicKey = workingGroupTopic(group.slug)?.key
+              const topicKey = group.topic
               const matchesTopic = matchesFilters(topicKey, topics)
               return matchesSearch && matchesTopic
             })
@@ -91,10 +92,10 @@ export function Groups() {
               key={group.slug}
               group={group}
               topicFilterState={
-                topics[workingGroupTopic(group.slug)?.key] || 'neutral'
+                topics[group.topic] || 'neutral'
               }
               onTopicFilter={() => {
-                const topicKey = workingGroupTopic(group.slug)?.key
+                const topicKey = group.topic
                 if (!topicKey) return
                 setTopics((current) => toggleFilter(current, topicKey))
               }}
@@ -143,7 +144,7 @@ export function Groups() {
                         >
                           All topics
                         </FilterPill>
-                        {WORKING_GROUP_TOPICS.map((item) => (
+                        {topicList.map((item) => (
                           <FilterPill
                             key={item.key}
                             state={topics[item.key] || 'neutral'}

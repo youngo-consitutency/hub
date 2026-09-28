@@ -6,8 +6,7 @@ import {
 } from 'react-icons/tb'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
-import { POLICY_VERSION } from '../content/membershipPolicy.js'
-import { PRIVACY_VERSION } from '../../shared/privacyNotice.js'
+import { useDocument } from '../lib/documents.js'
 import { wordCount } from '../../shared/registration.js'
 import { A, Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
@@ -30,6 +29,10 @@ import { RegisterOrgForm } from './auth/RegisterOrgForm.jsx'
  * Sign-in and registration for individuals and organisations.
  */
 export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
+  // Versions stamped on registration come from the CMS documents the user
+  // actually read — the bundle no longer ships legal copy.
+  const { doc: membershipPolicy } = useDocument('membership-policy')
+  const { doc: privacyNotice } = useDocument('privacy-notice')
   const [mode, setMode] = useState(initialMode)
   const [login, setLogin] = useState({ email: '', password: '', website: '' })
   const [form, setForm] = useState(initialRegistrationForm)
@@ -258,8 +261,8 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
         phone: normalizePhone(form.phone, form.phoneCountry),
         dcpPhone: normalizePhone(form.dcpPhone, form.dcpPhoneCountry),
         ycpPhone: normalizePhone(form.ycpPhone, form.ycpPhoneCountry),
-        membershipPolicyVersion: POLICY_VERSION,
-        privacyNoticeVersion: PRIVACY_VERSION,
+        membershipPolicyVersion: membershipPolicy?.POLICY_VERSION,
+        privacyNoticeVersion: privacyNotice?.PRIVACY_VERSION,
         memberOfAccreditedNgo:
           form.memberOfAccreditedNgo === 'yes'
             ? true
@@ -447,6 +450,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
               )}
 
               <PrivacyConsentSection
+                notice={privacyNotice}
                 checked={form.privacyConsent}
                 onChange={setReg('privacyConsent')}
                 error={fields.privacyConsent}

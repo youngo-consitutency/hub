@@ -1,7 +1,7 @@
 import { TEAM_LABELS } from '../../shared/responsibilities.js'
 import { useState } from 'react'
 import { TbMail as Mail, TbSend as Send } from 'react-icons/tb'
-import { WORKING_GROUPS } from '../../shared/workingGroups.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import { apiPost } from '../lib/api.js'
 import { Button, ErrorCard } from './ui.jsx'
 
@@ -13,6 +13,7 @@ const TEAM_OPTIONS = [
 ].map((role) => [role, TEAM_LABELS[role]])
 
 export function AdminEmailBroadcast() {
+  const wg = useWorkingGroups()
   const [form, setForm] = useState({
     title: '',
     message: '',
@@ -120,7 +121,7 @@ export function AdminEmailBroadcast() {
                 onChange={change}
               >
                 <option value="">Choose a working group</option>
-                {WORKING_GROUPS.map((group) => (
+                {wg.groups.map((group) => (
                   <option key={group.slug} value={group.slug}>
                     {group.name}
                   </option>

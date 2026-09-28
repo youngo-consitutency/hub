@@ -7,23 +7,6 @@ import {
   RESOURCE_TYPES,
 } from './resourceHub.js'
 
-const REQUIRED_LISTS = [
-  'groups',
-  'events',
-  'submissions',
-  'council',
-  'coys',
-  'announcements',
-  'directory',
-]
-const SLUG_LISTS = [
-  'groups',
-  'events',
-  'submissions',
-  'council',
-  'coys',
-  'announcements',
-]
 export const EVENT_TYPES = Object.freeze([
   'constituency_call',
   'wg_call',
@@ -52,21 +35,6 @@ export const ANNOUNCEMENT_PATCH_FIELDS = Object.freeze([
   'ctaDeadlineAt',
 ])
 const EVENT_TYPE_SET = new Set(EVENT_TYPES)
-const DIRECTORY_GROUPS = new Set([
-  'focal_points',
-  'wg_contacts',
-  'liaisons',
-  'operations',
-])
-const OPPORTUNITY_KINDS = new Set([
-  'event',
-  'workshop',
-  'hackathon',
-  'opportunity',
-  'call',
-  'training',
-])
-const OPPORTUNITY_FORMATS = new Set(['online', 'in_person', 'hybrid'])
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function isWebUrl(value) {
@@ -76,133 +44,6 @@ function isWebUrl(value) {
   } catch {
     return false
   }
-}
-
-function validateUrls(value, path, errors) {
-  if (Array.isArray(value)) {
-    value.forEach((item, index) =>
-      validateUrls(item, `${path}[${index}]`, errors),
-    )
-    return
-  }
-  if (!value || typeof value !== 'object') return
-
-  for (const [key, item] of Object.entries(value)) {
-    const itemPath = path ? `${path}.${key}` : key
-    if (key.endsWith('Url') && item != null && item !== '' && !isWebUrl(item)) {
-      errors.push(`${itemPath} must be a full http:// or https:// URL`)
-    } else {
-      validateUrls(item, itemPath, errors)
-    }
-  }
-}
-
-export function validateContent(content) {
-  const errors = []
-  if (!content || typeof content !== 'object' || Array.isArray(content)) {
-    return ['The content file must contain one JSON object.']
-  }
-
-  for (const key of REQUIRED_LISTS) {
-    if (!Array.isArray(content[key])) errors.push(`${key} must be a list`)
-  }
-  if (errors.length > 0) return errors
-
-  for (const key of SLUG_LISTS) {
-    const seen = new Set()
-    content[key].forEach((item, index) => {
-      const slug = String(item?.slug || '').trim()
-      if (!slug) {
-        errors.push(`${key}[${index}].slug is required`)
-      } else if (seen.has(slug)) {
-        errors.push(`${key} contains the duplicate slug "${slug}"`)
-      }
-      seen.add(slug)
-    })
-  }
-
-  const groupSlugs = new Set(content.groups.map((group) => group.slug))
-  content.groups.forEach((group, index) => {
-    if (!Array.isArray(group.tags) || group.tags.length === 0) {
-      errors.push(`groups[${index}].tags must contain at least one topic`)
-      return
-    }
-    const tags = group.tags.map((tag) => String(tag || '').trim())
-    if (tags.some((tag) => !tag || tag.length > 40)) {
-      errors.push(`groups[${index}].tags must be 1–40 characters each`)
-    }
-    if (
-      new Set(tags.map((tag) => tag.toLocaleLowerCase())).size !== tags.length
-    ) {
-      errors.push(`groups[${index}].tags must not contain duplicates`)
-    }
-  })
-  content.events.forEach((event, index) => {
-    if (!String(event.title || '').trim())
-      errors.push(`events[${index}].title is required`)
-    if (!EVENT_TYPE_SET.has(event.type))
-      errors.push(`events[${index}].type "${event.type}" is not supported`)
-    if (event.wg && !groupSlugs.has(event.wg))
-      errors.push(
-        `events[${index}].wg "${event.wg}" does not match a group slug`,
-      )
-  })
-  content.submissions.forEach((submission, index) => {
-    if (submission.wg && !groupSlugs.has(submission.wg)) {
-      errors.push(
-        `submissions[${index}].wg "${submission.wg}" does not match a group slug`,
-      )
-    }
-  })
-  content.directory.forEach((contact, index) => {
-    if (!DIRECTORY_GROUPS.has(contact.group)) {
-      errors.push(
-        `directory[${index}].group "${contact.group}" is not supported`,
-      )
-    }
-    if (!String(contact.roleTitle || '').trim())
-      errors.push(`directory[${index}].roleTitle is required`)
-    if (!String(contact.description || '').trim())
-      errors.push(`directory[${index}].description is required`)
-  })
-
-  // Optional board feed: shared / channel opportunities (not WG-inherent work).
-  if (content.opportunities != null) {
-    if (!Array.isArray(content.opportunities)) {
-      errors.push('opportunities must be a list')
-    } else {
-      const seenOpp = new Set()
-      content.opportunities.forEach((item, index) => {
-        const slug = String(item?.slug || '').trim()
-        if (!slug) {
-          errors.push(`opportunities[${index}].slug is required`)
-        } else if (seenOpp.has(slug)) {
-          errors.push(`opportunities contains the duplicate slug "${slug}"`)
-        } else if (!SLUG_PATTERN.test(slug)) {
-          errors.push(`opportunities[${index}].slug is not a valid slug`)
-        } else {
-          seenOpp.add(slug)
-        }
-        if (!String(item?.title || '').trim()) {
-          errors.push(`opportunities[${index}].title is required`)
-        }
-        if (!OPPORTUNITY_KINDS.has(item?.kind)) {
-          errors.push(
-            `opportunities[${index}].kind "${item?.kind}" is not supported`,
-          )
-        }
-        const format = item?.format || 'online'
-        if (!OPPORTUNITY_FORMATS.has(format)) {
-          errors.push(
-            `opportunities[${index}].format "${format}" is not supported`,
-          )
-        }
-      })
-    }
-  }
-
-  validateUrls(content, '', errors)
-  return errors
 }
 
 function cleanText(value) {

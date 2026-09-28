@@ -46,8 +46,8 @@ export function ForgotPasswordForm({
       )}
       {hideOperatorNote ? null : (
         <p className="metaMuted">
-          Until email delivery is connected, reset links appear in Railway
-          deploy/runtime logs for operators. Admins can also issue links from
+          Until email delivery is connected, reset links appear in the
+          server runtime logs for operators. Admins can also issue links from
           Admin.
         </p>
       )}

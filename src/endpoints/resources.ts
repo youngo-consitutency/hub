@@ -85,7 +85,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/submissions',
     method: 'post',
     handler: endpoint(async (req) => {
-      submissionLimit(req)
+      await submissionLimit(req)
       const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       await checkDuplicateUrl(req, b.url)
@@ -206,7 +206,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/:slug/issues',
     method: 'post',
     handler: endpoint(async (req) => {
-      submissionLimit(req)
+      await submissionLimit(req)
       const account = requireVerifiedMember(req)
       const slug = String(req.routeParams?.slug)
       await requireResource(req, slug)
@@ -362,7 +362,7 @@ export const resourceEndpoints: Endpoint[] = [
     path: '/member/resources/:slug/corrections',
     method: 'post',
     handler: endpoint(async (req) => {
-      submissionLimit(req)
+      await submissionLimit(req)
       const account = requireVerifiedMember(req)
       const slug = String(req.routeParams?.slug)
       await requireResource(req, slug)

@@ -2,7 +2,7 @@
  * Closed lists the content MCP advertises. Keep in sync with
  * spa/shared/resourceHub.js, spa/shared/contentValidation.js (EVENT_TYPES),
  * spa/shared/workingGroups.js, and src/collections/Opportunities.ts. Isolated here so
- * the Railway HTTP service never imports Hub server modules or DATABASE_URL.
+ * the hosted HTTP service never imports Hub server modules or DATABASE_URL.
  */
 
 export const EVENT_TYPES = Object.freeze([

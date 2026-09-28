@@ -6,13 +6,8 @@ import {
   TbExternalLink as ExternalLink,
   TbScript as ScrollText,
 } from 'react-icons/tb'
-import {
-  MANDATE_ANALYSIS,
-  POLICY_META,
-  POLICY_SECTIONS,
-  POLICY_VERSION,
-} from '../content/membershipPolicy.js'
 import { acknowledgeMembershipPolicy } from '../lib/membershipGate.js'
+import { useDocument } from '../lib/documents.js'
 import { A, Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
 
@@ -22,6 +17,11 @@ import { Brand } from './Brand.jsx'
  * in a collapsible section that still requires scroll-to-end.
  */
 export function MembershipMandateGate({ onComplete }) {
+  const { doc, loading, error, retry } = useDocument('membership-policy')
+  const MANDATE_ANALYSIS = doc?.MANDATE_ANALYSIS
+  const POLICY_META = doc?.POLICY_META
+  const POLICY_SECTIONS = doc?.POLICY_SECTIONS || []
+  const POLICY_VERSION = doc?.POLICY_VERSION
   const [scrolledToEnd, setScrolledToEnd] = useState(false)
   const [progress, setProgress] = useState(0)
   const [checked, setChecked] = useState(false)
@@ -76,11 +76,33 @@ export function MembershipMandateGate({ onComplete }) {
     })
   }
 
+  if (loading) {
+    return (
+      <main className="mandateGate" aria-busy="true">
+        <div className="mandateShell">
+          <p className="meta" role="status">Loading the Membership Policy…</p>
+        </div>
+      </main>
+    )
+  }
+  if (error || !doc) {
+    return (
+      <main className="mandateGate">
+        <div className="mandateShell">
+          <p className="meta" role="alert">
+            The Membership Policy could not be loaded.{' '}
+            <Button type="button" variant="secondary" onClick={retry}>Try again</Button>
+          </p>
+        </div>
+      </main>
+    )
+  }
+
   const canContinue = scrolledToEnd && checked
 
   const finish = () => {
     if (!canContinue) return
-    acknowledgeMembershipPolicy()
+    acknowledgeMembershipPolicy(POLICY_VERSION)
     onComplete?.()
   }
 

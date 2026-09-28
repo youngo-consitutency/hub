@@ -11,14 +11,9 @@ import {
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { fmtDual } from '../lib/time.js'
-import { WORKING_GROUPS } from '../../shared/workingGroups.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { TbCalendarCheck as CalendarCheck } from 'react-icons/tb'
-
-const WG_OPTIONS = WORKING_GROUPS.map((group) => ({
-  value: group.slug,
-  label: group.name,
-}))
 
 function groupByDay(slots) {
   const map = new Map()
@@ -37,6 +32,11 @@ function groupByDay(slots) {
 
 export function CpCallBook() {
   const { account } = useAccount()
+  const wg = useWorkingGroups()
+  const WG_OPTIONS = wg.groups.map((group) => ({
+    value: group.slug,
+    label: group.name,
+  }))
   const query = useApi('/member/cp-calls/slots')
   const [wgSlug, setWgSlug] = useState(
     account?.access?.wgAssignments?.[0]?.wgSlug ||

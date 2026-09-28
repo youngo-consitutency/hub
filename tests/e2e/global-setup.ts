@@ -26,6 +26,32 @@ export default async function globalSetup() {
     overrideAccess: true,
   })
 
+  // The public-site specs assert rendered copy, so the `site` content
+  // document is provisioned like any other test fixture — nothing in the
+  // repository carries real content.
+  const siteDoc = await payload.find({
+    collection: 'content-documents',
+    where: { slug: { equals: 'site' } },
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+  })
+  if (!siteDoc.docs[0]) {
+    await payload.create({
+      collection: 'content-documents',
+      data: {
+        slug: 'site',
+        title: 'Public site copy',
+        body: {
+          home: {
+            hero: { title: 'Your place in global climate action.' },
+          },
+        },
+      } as any,
+      overrideAccess: true,
+    })
+  }
+
   writeFileSync(
     path.resolve(import.meta.dirname, '.credentials.json'),
     JSON.stringify({

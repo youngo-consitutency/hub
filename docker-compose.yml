@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,14 +6,16 @@ services:
       POSTGRES_DB: youngo_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    # 5433 avoids clashing with a host Postgres already on 5432.
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   # Optional app-in-container setup. DATABASE_URL inside the container:
   #   postgres://postgres:postgres@postgres:5432/youngo_dev
   payload:
+    profiles: ['container-dev']
     image: node:22-alpine
     ports:
       - '3000:3000'
@@ -27,7 +27,10 @@ services:
     depends_on:
       - postgres
     env_file:
-      - .env
+      - path: .env.local
+        required: false
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/youngo_dev
 
 volumes:
   pgdata:

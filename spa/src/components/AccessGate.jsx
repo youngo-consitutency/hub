@@ -6,6 +6,7 @@ import { ChangePasswordGate } from './ChangePasswordGate.jsx'
 import { Privacy } from '../pages/Privacy.jsx'
 import { PublicSite } from '../pages/site/PublicSite.jsx'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate.js'
+import { useDocument } from '../lib/documents.js'
 import { apiGet } from '../lib/api.js'
 import { clearSession, getCachedAccount, setSession } from '../lib/session.js'
 import { navigate, usePath } from '../lib/router.js'
@@ -21,6 +22,9 @@ export function AccessGate({ children }) {
   const [ready, setReady] = useState(false)
   const [policyOk, setPolicyOk] = useState(false)
   const [account, setAccount] = useState(null)
+  // The governing policy version lives in the CMS document, not the bundle.
+  const { doc: membershipPolicy } = useDocument('membership-policy')
+  const policyVersion = membershipPolicy?.POLICY_VERSION
 
   const handleAuthenticated = useCallback(
     (acc) => {
@@ -51,9 +55,6 @@ export function AccessGate({ children }) {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const policy = hasAcknowledgedMembershipPolicy()
-      if (!alive) return
-      setPolicyOk(policy)
       // The HttpOnly cookie is the authority. A missing local cache must not
       // strand an otherwise valid session (for example, after clearing storage).
       setAccount(getCachedAccount())
@@ -64,6 +65,10 @@ export function AccessGate({ children }) {
       alive = false
     }
   }, [refreshSession])
+
+  useEffect(() => {
+    if (policyVersion) setPolicyOk(hasAcknowledgedMembershipPolicy(policyVersion))
+  }, [policyVersion])
 
   if (path.startsWith('/reset-password')) {
     return <ResetPassword />

@@ -79,6 +79,7 @@ export interface Config {
     'content-announcements': ContentAnnouncement;
     'content-submissions': ContentSubmission;
     'content-coys': ContentCoy;
+    'content-documents': ContentDocument;
     'directory-contacts': DirectoryContact;
     'catalogue-resources': CatalogueResource;
     opportunities: Opportunity;
@@ -142,6 +143,7 @@ export interface Config {
     'content-announcements': ContentAnnouncementsSelect<false> | ContentAnnouncementsSelect<true>;
     'content-submissions': ContentSubmissionsSelect<false> | ContentSubmissionsSelect<true>;
     'content-coys': ContentCoysSelect<false> | ContentCoysSelect<true>;
+    'content-documents': ContentDocumentsSelect<false> | ContentDocumentsSelect<true>;
     'directory-contacts': DirectoryContactsSelect<false> | DirectoryContactsSelect<true>;
     'catalogue-resources': CatalogueResourcesSelect<false> | CatalogueResourcesSelect<true>;
     opportunities: OpportunitiesSelect<false> | OpportunitiesSelect<true>;
@@ -639,6 +641,26 @@ export interface ContentCoy {
   organizerOrg?: string | null;
   registerUrl?: string | null;
   websiteUrl?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-documents".
+ */
+export interface ContentDocument {
+  id: number;
+  slug: string;
+  title: string;
+  body:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1775,6 +1797,10 @@ export interface PayloadLockedDocument {
         value: number | ContentCoy;
       } | null)
     | ({
+        relationTo: 'content-documents';
+        value: number | ContentDocument;
+      } | null)
+    | ({
         relationTo: 'directory-contacts';
         value: number | DirectoryContact;
       } | null)
@@ -2310,6 +2336,17 @@ export interface ContentCoysSelect<T extends boolean = true> {
   organizerOrg?: T;
   registerUrl?: T;
   websiteUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-documents_select".
+ */
+export interface ContentDocumentsSelect<T extends boolean = true> {
+  slug?: T;
+  title?: T;
+  body?: T;
   updatedAt?: T;
   createdAt?: T;
 }
