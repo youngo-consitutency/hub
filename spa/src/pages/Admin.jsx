@@ -1,6 +1,9 @@
 import { formatDateTime } from '../lib/time.js'
-import { WEBSITE_PERMISSIONS } from '../../shared/responsibilities.js'
-import { useContentOptionLabels } from '../lib/documents.js'
+import { WEBSITE_PERMISSIONS } from '../../shared/protocol.js'
+import {
+  optionLabel as labelFor,
+  useContentOptionLabels,
+} from '../lib/documents.js'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbSettings as AdminIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
@@ -63,10 +66,6 @@ const TEAM_ROLES = [
   'gys_policy_team',
   ...WEBSITE_PERMISSIONS,
 ]
-
-function labelFor(options, value) {
-  return options.find((option) => option.value === value)?.label || value
-}
 
 function AdminDialog({ title, children, onClose }) {
   return (

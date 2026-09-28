@@ -5,6 +5,7 @@ import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
+import { slugify } from '../../spa/shared/slug.js'
 import { audit } from '../lib/audit'
 
 const canReview = async (req: PayloadRequest, account: any) => {
@@ -18,12 +19,7 @@ const submissionLimit = rateLimit({
   scope: 'resource-submit',
 })
 
-const resourceSlug = (title: string) =>
-  String(title || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 120)
+const resourceSlug = slugify
 
 const draftView = (d: any) => ({
   id: d.id,

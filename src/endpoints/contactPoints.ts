@@ -9,7 +9,7 @@ import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
-import { TASK_FORCE_SLUGS } from '../../spa/shared/taskForces.js'
+import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol.js'
 
 
 function publicSlot(s: any) {

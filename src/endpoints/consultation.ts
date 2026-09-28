@@ -2,27 +2,17 @@ import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
+import { getDocument } from '../lib/documents'
 
-
-const CONTRIBUTION_KINDS = [
-  { value: 'question', label: 'Question' },
-  { value: 'concern', label: 'Concern' },
-  { value: 'comment', label: 'Comment' },
-  { value: 'feature', label: 'New feature' },
-]
-const CONTRIBUTION_SECTIONS = [
-  { value: 'general', label: 'Whole consultation' },
-  { value: 'open', label: 'Open' },
-  { value: 'aims', label: 'Aims' },
-  { value: 'need', label: 'Need' },
-  { value: 'security', label: 'Security' },
-  { value: 'concerns', label: 'Concerns' },
-  { value: 'uses', label: 'Features' },
-  { value: 'serve', label: 'Who it serves' },
-  { value: 'safeguards', label: 'Safeguards' },
-  { value: 'agree', label: 'Agree' },
-  { value: 'next', label: 'Next steps' },
-]
+// The questionnaire structure (kinds + sections) is console-editable content
+// in the `consultation` document; the API both serves and validates with it.
+async function consultationOptions(req: any) {
+  const body = (await getDocument(req, 'consultation'))?.body || {}
+  return {
+    kinds: Array.isArray(body.kinds) ? body.kinds : [],
+    sections: Array.isArray(body.sections) ? body.sections : [],
+  }
+}
 
 const consultationLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -34,11 +24,10 @@ export const consultationEndpoints: Endpoint[] = [
   {
     path: '/consultation/kinds',
     method: 'get',
-    handler: endpoint(async () =>
-      json(
-        { kinds: CONTRIBUTION_KINDS, sections: CONTRIBUTION_SECTIONS },
-        { headers: { 'Cache-Control': 'no-store' } },
-      ),
+    handler: endpoint(async (req) =>
+      json(await consultationOptions(req), {
+        headers: { 'Cache-Control': 'no-store' },
+      }),
     ),
   },
   {
@@ -77,17 +66,18 @@ export const consultationEndpoints: Endpoint[] = [
       await consultationLimit(req)
       const b = ((await req.json?.()) || {}) as any
       if (b.website) return json({ ok: true, item: null }, { status: 201 })
+      const { kinds, sections } = await consultationOptions(req)
       const kind = String(b.kind || '')
-      if (!CONTRIBUTION_KINDS.some((k) => k.value === kind))
-        throw fail.validation({ kind: 'Choose question, concern, comment, or new feature.' })
+      if (!kinds.some((k: any) => k.value === kind))
+        throw fail.validation({ kind: 'Choose a contribution type.' })
       const body = cleanText(b.body, 800)
       if (body.length < 8)
         throw fail.validation({
           body: 'Write at least a short sentence so the room can use it.',
         })
-      const section = CONTRIBUTION_SECTIONS.some((s) => s.value === b.section)
+      const section = sections.some((s: any) => s.value === b.section)
         ? b.section
-        : 'general'
+        : sections[0]?.value || null
       const item = await req.payload.create({
         collection: 'consultation-contributions',
         data: {

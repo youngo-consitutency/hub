@@ -35,8 +35,24 @@ import {
   TbSparkles as Sparkles,
   TbVideo as Video,
 } from 'react-icons/tb'
-import { groupOpportunitiesByStatus } from '../lib/opportunityStatus.js'
 import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions.js'
+
+function timestamp(value) {
+  if (!value) return null
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : null
+}
+
+function groupOpportunitiesByStatus(items, now = Date.now()) {
+  return items.reduce(
+    (groups, item) => {
+      const closesAt = timestamp(item.deadlineAt) ?? timestamp(item.endsAt)
+      groups[closesAt != null && closesAt <= Number(now) ? 'closed' : 'open'].push(item)
+      return groups
+    },
+    { open: [], closed: [] },
+  )
+}
 
 const KINDS = [
   { key: 'all', label: 'All types', icon: Layers3 },

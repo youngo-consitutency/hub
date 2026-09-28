@@ -10,6 +10,9 @@ import {
   OPPORTUNITY_FORMATS,
   OPPORTUNITY_KINDS,
 } from '../../spa/shared/opportunities.js'
+import { slugify } from '../../spa/shared/slug.js'
+
+export { slugify }
 
 export const HUB_CONTENT_TOOLS = [
   {
@@ -307,15 +310,9 @@ export async function catalogOptions(client) {
   }
 }
 
-export function slugify(title) {
-  const base = String(title || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 72)
-  return base || 'item'
-}
+// slugs share one algorithm with the Hub API (spa/shared/slug.js); 'item' is
+// the MCP fallback when a title normalises to nothing.
+const contentSlug = (title) => slugify(title) || 'item'
 
 export function resolveHubOrigin(env = process.env) {
   const raw = String(env.HUB_ORIGIN || 'http://localhost:3000').trim()
@@ -497,7 +494,7 @@ export async function callHubContentTool(name, args, client) {
       )
     case 'create_content_draft': {
       const payload = { ...(args.payload || {}) }
-      if (!payload.slug && payload.title) payload.slug = slugify(payload.title)
+      if (!payload.slug && payload.title) payload.slug = contentSlug(payload.title)
       return client.memberPost('/api/member/content/drafts', {
         contentType: args.contentType,
         payload,

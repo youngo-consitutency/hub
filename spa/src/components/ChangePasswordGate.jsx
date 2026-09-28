@@ -1,7 +1,7 @@
 import { TbKey as KeyRound } from 'react-icons/tb'
 import { ChangePasswordForm } from './ChangePasswordForm.jsx'
 import { Button } from './ui.jsx'
-import { signOut } from '../lib/logout.js'
+import { signOut } from '../lib/session.js'
 
 export function ChangePasswordGate({ account, onChanged }) {
   return (

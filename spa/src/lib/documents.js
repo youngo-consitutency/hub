@@ -48,8 +48,10 @@ export function publishedLinks(links) {
   return (links || []).filter((link) => link.url)
 }
 
-export function policiesInCategory(policies, categoryId) {
-  return (policies || []).filter((p) => p.category === categoryId)
+// Single {value,label} lookup used wherever an option list needs a display
+// label (documents-driven vocab and local option constants alike).
+export function optionLabel(items, value) {
+  return items.find((item) => item.value === value)?.label || value
 }
 
 export function getWgOnboarding(wgOnboarding, slug) {

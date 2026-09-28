@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Payload, PayloadRequest } from 'payload'
 import { assembleFeed } from './feed'
 import { resolveCoyStatus } from '../../spa/shared/coyStatus.js'
-import { normalizeTaskForces } from '../../spa/shared/taskForces.js'
+import { normalizeTaskForces } from '../../spa/shared/protocol.js'
 
 type AnyRecord = Record<string, any>
 type Req = PayloadRequest | Payload

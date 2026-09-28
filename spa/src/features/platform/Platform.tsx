@@ -1,4 +1,4 @@
-import { bodyRoles } from '../../../shared/responsibilities.js'
+import { bodyRoles } from '../../../shared/protocol.js'
 import { useContentOptionLabels } from '../../lib/documents.js'
 import { SidePanel } from '../../components/SidePanel.tsx'
 import {

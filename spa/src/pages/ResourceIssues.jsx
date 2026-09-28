@@ -2,7 +2,10 @@ import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions.js'
 import { useState } from 'react'
-import { resourceLabel } from '../../shared/resourceHub.js'
+import {
+  optionLabel as resourceLabel,
+  useContentOptions,
+} from '../lib/documents.js'
 import {
   ResourceCard,
   ResourceSubmissionPanel,
@@ -17,7 +20,6 @@ import {
 } from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import { apiPost, useApi } from '../lib/api.js'
-import { useContentOptions } from '../lib/documents.js'
 
 export function ResourceIssues() {
   const { account } = useAccount()

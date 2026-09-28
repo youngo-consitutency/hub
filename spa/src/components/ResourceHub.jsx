@@ -20,9 +20,11 @@ import {
   TbTool as Tool,
   TbWorld as World,
 } from 'react-icons/tb'
-import { resourceLabel } from '../../shared/resourceHub.js'
+import {
+  optionLabel as resourceLabel,
+  useContentOptions,
+} from '../lib/documents.js'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
-import { useContentOptions } from '../lib/documents.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { FieldError } from './FormControls.jsx'
 import {

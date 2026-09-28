@@ -1,4 +1,4 @@
-import { bodyRoles } from '../../../spa/shared/responsibilities.js'
+import { bodyRoles } from '../../../spa/shared/protocol.js'
 import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
 

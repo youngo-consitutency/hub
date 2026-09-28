@@ -3,8 +3,12 @@ import { endpoint, fail, json } from '../lib/respond'
 import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
-import { contributionsFromCsv, previewCsvImport } from '../lib/gysImport.js'
-import { synthesizeGysContributions } from '../lib/gysSynthesis.js'
+import {
+  contributionsFromCsv,
+  previewCsvImport,
+  synthesizeGysContributions,
+} from '../lib/gys.js'
+
 
 const GYS_STATUSES = [
   'submitted',

@@ -1,4 +1,4 @@
-import { WEBSITE_PERMISSIONS } from '../../shared/responsibilities.js'
+import { WEBSITE_PERMISSIONS } from '../../shared/protocol.js'
 import { useContentOptionLabels } from '../lib/documents.js'
 import { TbUserCircle as ProfileIcon } from 'react-icons/tb'
 import { useAccount } from '../lib/accountContext.jsx'

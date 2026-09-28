@@ -3,7 +3,7 @@ import { useDocument } from '../lib/documents.js'
 import { apiPostFile, useApi } from '../lib/api.js'
 import { Button, ErrorCard } from '../components/ui.jsx'
 import { Brand } from '../components/Brand.jsx'
-import { signOut } from '../lib/logout.js'
+import { signOut } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import {
   TbLogout as LogOut,
