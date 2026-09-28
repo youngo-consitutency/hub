@@ -17,7 +17,7 @@ The resource collection is part of the Hub. Existing source credits and review r
 
 React draws the member interface in `spa/`. Next.js runs the website and server. Payload manages accounts, content and the staff console. PostgreSQL stores the records. Server code and access checks are in `src/`.
 
-The separate [content service](mcp-content/README.md) lets authorised assistant tools use the Hub’s API. It does not receive database credentials.
+The separate [content service](https://github.com/youngo-consitutency/hub/wiki/Agent-tools) lets authorised assistant tools use the Hub’s API. It does not receive database credentials.
 
 ## Run locally
 
