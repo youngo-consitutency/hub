@@ -3,7 +3,7 @@
  * Streamable HTTP MCP for YOUNGO Hub content, on the official
  * @modelcontextprotocol/sdk (stateless transport — no session state).
  *
- * Hosted on Railway so Grok Build on a phone (Connectors) can reach it.
+ * Run as a hosted HTTP service so remote clients (e.g. phone connectors) can reach it.
  * Signs in as a Hub account and calls the live member API. Never uses
  * DATABASE_URL.
  *

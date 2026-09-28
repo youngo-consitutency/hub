@@ -1,6 +1,6 @@
 /**
  * Re-export of the Hub content MCP client. Implementation lives in
- * mcp-content/ so the Railway HTTP service can deploy without Hub server
+ * mcp-content/ so the hosted HTTP service can deploy without Hub server
  * modules or DATABASE_URL.
  */
 export {

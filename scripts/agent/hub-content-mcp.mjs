@@ -12,7 +12,7 @@
  *   HUB_PASSWORD
  *   HUB_TOKEN      optional session token instead of email/password
  *
- * Remote / phone clients should use the Railway HTTP server instead:
+ * Remote / phone clients should use the hosted HTTP server instead:
  *   node mcp-content/server.mjs
  */
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
