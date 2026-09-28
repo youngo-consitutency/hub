@@ -1,4 +1,5 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
+import { useCombobox } from 'downshift'
 
 export function FieldError({ msg }) {
   if (!msg) return null
@@ -51,110 +52,67 @@ export function SearchableSelect({
   disabled = false,
   children,
 }) {
-  const listboxId = useId()
   const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
-  const selected = options.find((option) => option.value === value)
+  const selected = options.find((option) => option.value === value) || null
   const visibleOptions = matchingOptions(options, query)
 
-  const selectOption = (nextValue) => {
-    onChange(nextValue)
-    setQuery('')
-    setOpen(false)
-    setActiveIndex(0)
-  }
+  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } =
+    useCombobox({
+      items: visibleOptions,
+      itemToString: (item) => item?.label || '',
+      selectedItem: selected,
+      onSelectedItemChange: ({ selectedItem }) => {
+        setQuery('')
+        if (selectedItem) onChange(selectedItem.value)
+      },
+      onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
+      onIsOpenChange: ({ isOpen }) => {
+        if (isOpen) onOpen?.()
+      },
+    })
 
   return (
     <div
       className={`field${error ? ' hasError' : ''} comboField ${className}`.trim()}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setOpen(false)
-          setQuery('')
-        }
-      }}
     >
-      <span className={hideLabel ? 'srOnly' : undefined}>{label}</span>
+      <span {...getLabelProps()} className={hideLabel ? 'srOnly' : undefined}>
+        {label}
+      </span>
       <input
-        className="input"
-        type="search"
-        role="combobox"
-        aria-label={label}
-        aria-expanded={open}
-        aria-controls={open ? listboxId : undefined}
-        aria-activedescendant={
-          open && visibleOptions.length
-            ? `${listboxId}-option-${activeIndex}`
-            : undefined
-        }
-        aria-autocomplete="list"
-        aria-invalid={!!error}
-        disabled={disabled}
-        value={open ? query : selected?.label || ''}
-        placeholder={open ? searchPlaceholder : placeholder}
-        onFocus={() => {
-          setQuery('')
-          setOpen(true)
-          setActiveIndex(0)
-          onOpen?.()
-        }}
-        onChange={(event) => {
-          setQuery(event.target.value)
-          setOpen(true)
-          setActiveIndex(0)
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setOpen(false)
-            setQuery('')
-            event.currentTarget.blur()
-          } else if (event.key === 'ArrowDown') {
-            event.preventDefault()
-            setOpen(true)
-            setActiveIndex((current) =>
-              Math.min(current + 1, Math.max(visibleOptions.length - 1, 0)),
-            )
-          } else if (event.key === 'ArrowUp') {
-            event.preventDefault()
-            setOpen(true)
-            setActiveIndex((current) => Math.max(current - 1, 0))
-          } else if (event.key === 'Enter' && open && visibleOptions.length) {
-            event.preventDefault()
-            selectOption(visibleOptions[activeIndex].value)
-          }
-        }}
+        {...getInputProps({
+          className: 'input',
+          type: 'search',
+          'aria-invalid': !!error,
+          disabled,
+          placeholder: isOpen ? searchPlaceholder : placeholder,
+        })}
       />
-      {open && (
-        <div
-          className="comboMenu"
-          id={listboxId}
-          role="listbox"
-          aria-label={label}
-        >
-          {visibleOptions.length ? (
-            visibleOptions.map((option, index) => (
-              <button
-                key={option.value}
-                id={`${listboxId}-option-${index}`}
-                className="comboOption"
-                type="button"
-                role="option"
-                aria-selected={option.value === value}
-                title={option.label}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => selectOption(option.value)}
-              >
-                {option.label}
-              </button>
-            ))
-          ) : (
-            <span className="metaMuted comboEmpty">
-              {options.length ? 'No matches' : 'Loading…'}
-            </span>
-          )}
-        </div>
-      )}
+      <div
+        {...getMenuProps()}
+        className="comboMenu"
+        role="listbox"
+        hidden={!isOpen}
+      >
+        {visibleOptions.length ? (
+          visibleOptions.map((option, index) => (
+            <button
+              {...getItemProps({ item: option, index })}
+              key={option.value}
+              className="comboOption"
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              title={option.label}
+            >
+              {option.label}
+            </button>
+          ))
+        ) : (
+          <span className="metaMuted comboEmpty">
+            {options.length ? 'No matches' : 'Loading…'}
+          </span>
+        )}
+      </div>
       <FieldError msg={error} />
       {children}
     </div>
@@ -169,113 +127,73 @@ export function MultiSelectDropdown({
   error,
   hideLabel = false,
 }) {
-  const listboxId = useId()
   const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
   const selectedLabels = options
     .filter((option) => selected.includes(option.value))
     .map((option) => option.label)
   const visibleOptions = matchingOptions(options, query)
 
+  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } =
+    useCombobox({
+      items: visibleOptions,
+      itemToString: () => '',
+      selectedItem: null,
+      inputValue: query,
+      stateReducer: (state, { type, changes }) =>
+        type === useCombobox.stateChangeTypes.ItemClick
+          ? { ...changes, isOpen: true, inputValue: '' }
+          : changes,
+      onSelectedItemChange: ({ selectedItem }) => {
+        setQuery('')
+        if (selectedItem) onToggle(selectedItem.value)
+      },
+      onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
+    })
+
   return (
-    <div
-      className={`field${error ? ' hasError' : ''} comboField`}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setOpen(false)
-          setQuery('')
-        }
-      }}
-    >
-      <span className={hideLabel ? 'srOnly' : undefined}>{label}</span>
+    <div className={`field${error ? ' hasError' : ''} comboField`}>
+      <span {...getLabelProps()} className={hideLabel ? 'srOnly' : undefined}>
+        {label}
+      </span>
       <input
-        className="input"
-        type="search"
-        role="combobox"
-        aria-label={label}
-        aria-expanded={open}
-        aria-controls={open ? listboxId : undefined}
-        aria-activedescendant={
-          open && visibleOptions.length
-            ? `${listboxId}-option-${activeIndex}`
-            : undefined
-        }
-        aria-autocomplete="list"
-        aria-invalid={!!error}
-        value={query}
-        placeholder={
-          selectedLabels.length
+        {...getInputProps({
+          className: 'input',
+          type: 'search',
+          'aria-invalid': !!error,
+          placeholder: selectedLabels.length
             ? `${selectedLabels.length} selected: ${selectedLabels.join(', ')}`
-            : 'Type to search…'
-        }
-        onFocus={() => {
-          setOpen(true)
-          setActiveIndex(0)
-        }}
-        onChange={(event) => {
-          setQuery(event.target.value)
-          setOpen(true)
-          setActiveIndex(0)
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setOpen(false)
-            setQuery('')
-            event.currentTarget.blur()
-          } else if (event.key === 'ArrowDown') {
-            event.preventDefault()
-            setOpen(true)
-            setActiveIndex((current) =>
-              Math.min(current + 1, Math.max(visibleOptions.length - 1, 0)),
-            )
-          } else if (event.key === 'ArrowUp') {
-            event.preventDefault()
-            setOpen(true)
-            setActiveIndex((current) => Math.max(current - 1, 0))
-          } else if (event.key === 'Enter' && open && visibleOptions.length) {
-            event.preventDefault()
-            onToggle(visibleOptions[activeIndex].value)
-            setQuery('')
-            setActiveIndex(0)
-          }
-        }}
+            : 'Type to search…',
+        })}
       />
-      {open && (
-        <div
-          className="comboMenu"
-          id={listboxId}
-          role="listbox"
-          aria-label={label}
-          aria-multiselectable="true"
-        >
-          {visibleOptions.length ? (
-            visibleOptions.map((option, index) => (
-              <label
-                key={option.value}
-                id={`${listboxId}-option-${index}`}
-                className="comboOption comboOptionMulti"
-                role="option"
-                aria-selected={selected.includes(option.value)}
+      <div
+        {...getMenuProps()}
+        className="comboMenu"
+        aria-multiselectable="true"
+        hidden={!isOpen}
+      >
+        {visibleOptions.length ? (
+          visibleOptions.map((option, index) => (
+            <div
+              key={option.value}
+              {...getItemProps({ item: option, index })}
+              className="comboOption comboOptionMulti"
+              role="option"
+              aria-selected={selected.includes(option.value)}
+            >
+              <input
+                key="checkbox"
+                type="checkbox"
+                checked={selected.includes(option.value)}
+                readOnly
                 tabIndex={-1}
-                onMouseEnter={() => setActiveIndex(index)}
-                onPointerDown={(event) => {
-                  event.currentTarget.focus({ preventScroll: true })
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.includes(option.value)}
-                  onChange={() => onToggle(option.value)}
-                />
-                <span>{option.label}</span>
-              </label>
-            ))
-          ) : (
-            <span className="metaMuted comboEmpty">No matches</span>
-          )}
-        </div>
-      )}
+              />
+              <span key="label">{option.label}</span>
+            </div>
+          ))
+        ) : (
+          <span className="metaMuted comboEmpty">No matches</span>
+        )}
+      </div>
       <FieldError msg={error} />
     </div>
   )

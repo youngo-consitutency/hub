@@ -635,6 +635,10 @@ ul.mandateBulletGroup {
   box-shadow: var(--shadow-popover);
 }
 
+.comboMenu[hidden] {
+  display: none;
+}
+
 .comboOption {
   width: 100%;
   min-height: 40px;

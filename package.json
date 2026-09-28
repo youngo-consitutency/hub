@@ -1,7 +1,7 @@
 {
   "name": "youngo-hub",
   "version": "1.0.0",
-  "description": "YOUNGO Hub \u2014 member platform and mission control (Next.js + Payload CMS)",
+  "description": "YOUNGO Hub — member platform and mission control (Next.js + Payload CMS)",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -32,6 +32,7 @@
     "calendar-link": "^2.11.6",
     "cross-env": "^10.1.0",
     "dotenv": "16.4.7",
+    "downshift": "^9.4.0",
     "graphql": "^16.8.1",
     "ical-generator": "^11.1.1",
     "libphonenumber-js": "^1.13.14",
