@@ -34,7 +34,15 @@ export function SiteHome() {
   const { doc: site, loading } = useDocument('site')
   const home = site?.home
   if (!home) return loading ? <Skeletons n={5} /> : null
-  const { hero, mission, organisation, takePart, principles, history, cta } = home
+  const {
+    hero = {},
+    mission = {},
+    organisation = {},
+    takePart = {},
+    principles = {},
+    history = {},
+    cta = {},
+  } = home
 
   return (
     <>

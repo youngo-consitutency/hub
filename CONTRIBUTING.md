@@ -40,7 +40,7 @@ npm run build
 git diff --check
 ```
 
-The build runs TypeScript checking. `npm run test:int` and `npm run test:e2e` need a running server and seeded demo accounts — mention skipped checks in your pull request.
+The build runs TypeScript checking. `npm run test:int` and `npm run test:e2e` need a running server and a migrated PostgreSQL database — tests provision their own accounts and content. Mention skipped checks in your pull request.
 
 Format only files changed by your task, inspect the diff, and keep documentation links working.
 

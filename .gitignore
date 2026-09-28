@@ -39,19 +39,14 @@ yarn-error.log*
 # Payload media uploads are runtime state, not source.
 /media
 
-# Only reviewed public catalogues belong in version control. Runtime stores
-# include accounts, tokens, member profiles, notifications, queries and audits.
+# The repository carries no data: content, catalogues, accounts and runtime
+# stores all live in the database. Keep scratch dumps and research out.
 
-data/*.json
-!data/fixtures.json
-!data/resource-hub.json
-!data/resource-import.json
-!data/content-documents.json
+data/
 *.local
 .local/
 .local-demo/
 .wwebjs_cache/
-data/research/
 .claude/
 .codex-vault/
 .cursor/
@@ -69,7 +64,6 @@ data/research/
 !CONTRIBUTING.md
 !CODE_OF_CONDUCT.md
 !SECURITY.md
-!mcp-content/README.md
 !.github/PULL_REQUEST_TEMPLATE.md
 !.github/ISSUE_TEMPLATE/*.md
 !.github/ISSUE_TEMPLATE/*.yml

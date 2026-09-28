@@ -43,7 +43,7 @@ The former OpenSpec handoff and contracts are not included in this public checko
 
 ## Verification
 
-Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a seeded PostgreSQL database. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.
+Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through the console. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.
 
 The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 

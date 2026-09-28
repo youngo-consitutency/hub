@@ -50,10 +50,22 @@ describe('payload', () => {
     payload = await testPayload()
   })
 
-  it('reads seeded accounts and content collections', async () => {
+  it('reads provisioned accounts and content collections', async () => {
     await provisionAccount({})
     const accounts = await payload.find({ collection: 'accounts', limit: 1 })
     expect(accounts.totalDocs).toBeGreaterThan(0)
+    await (await testPayload()).create({
+      collection: 'content-events',
+      data: {
+        slug: `it-event-${Math.random().toString(36).slice(2, 8)}`,
+        title: 'Contract test event',
+        type: 'wg_call',
+        startsAt: new Date(Date.now() + 86_400_000).toISOString(),
+        state: 'published',
+      },
+      draft: false,
+      overrideAccess: true,
+    })
     const events = await payload.find({ collection: 'content-events', limit: 1 })
     expect(events.totalDocs).toBeGreaterThan(0)
   })
@@ -181,9 +193,19 @@ describe('API contract (requires dev server on :3000)', () => {
   })
 
   it('unpublishes live content and hides it from public reads', async () => {
-    const events = await (await api('/events')).json()
-    const list = Array.isArray(events) ? events : events.items || []
-    const slug = list[0]?.slug
+    const event = await (await testPayload()).create({
+      collection: 'content-events',
+      data: {
+        slug: `it-unpublish-${Math.random().toString(36).slice(2, 8)}`,
+        title: 'Unpublish contract event',
+        type: 'webinar',
+        startsAt: new Date(Date.now() + 86_400_000).toISOString(),
+        state: 'published',
+      },
+      draft: false,
+      overrideAccess: true,
+    })
+    const slug = event.slug
     expect(slug).toBeTruthy()
     const unpub = await api(`/member/content/live/event/${slug}/unpublish`, {
       method: 'POST',
@@ -198,7 +220,7 @@ describe('API contract (requires dev server on :3000)', () => {
     await api(`/member/content/live/event/${slug}`, {
       method: 'PATCH',
       cookie: admin.cookie,
-      body: JSON.stringify({ payload: { title: list[0].title } }),
+      body: JSON.stringify({ payload: { title: event.title } }),
     })
   })
 
