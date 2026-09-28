@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import type { PayloadRequest } from 'payload'
 
 // Uniform error surface matching the legacy API contract:
@@ -84,6 +85,11 @@ export function endpoint(handler: Handler): Handler {
         { err, path: req.routeParams?.slug ?? req.url },
         'endpoint failed',
       )
+      // Unhandled exception → error tracking. ApiError/status-coded branches
+      // above are expected responses and stay out of Sentry on purpose.
+      Sentry.captureException(err, {
+        extra: { path: req.routeParams?.slug ?? req.url },
+      })
       return Response.json(
         {
           error: {

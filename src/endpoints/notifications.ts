@@ -1,20 +1,17 @@
 import type { Endpoint } from 'payload'
+import { after } from 'next/server'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
-import { getPgPool } from '../lib/pg'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
 import {
+  drainNotificationOutbox,
   enqueueNotification,
   listEligibleNotificationAccountIds,
   listQueuedNotifications,
-  markNotificationFailed,
-  markNotificationSent,
   renderEmailTemplate,
-  sendTemplatedEmail,
-  unsubscribeUrl,
   verifyUnsubscribeToken,
 } from '../lib/notifications'
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
@@ -170,35 +167,13 @@ export const notificationEndpoints: Endpoint[] = [
         },
         reason: input.reason,
       })
-      // v2 has no background scheduler: drain the campaign inline so queued
-      // rows actually deliver (dedup guards re-sends).
-      const pool = getPgPool()
-      if (pool) {
-        const { rows } = await pool.query(
-          `SELECT o.*, a.email AS recipient_email
-           FROM notification_outbox o
-           JOIN accounts a ON a.id = o.account_id
-           WHERE o.source_id = $1 AND o.status = 'queued'`,
-          [campaignId],
-        )
-        const connect = (await getDocument(req, 'connect'))?.body
-        for (const row of rows) {
-          try {
-            await sendTemplatedEmail({
-              to: row.recipient_email,
-              templateKey: row.template_key,
-              data: {
-                ...(row.payload || {}),
-                socialLinks: connect?.SOCIAL_LINKS || [],
-              },
-              unsubscribe: unsubscribeUrl(row.account_id, row.category),
-            })
-            await markNotificationSent(row.id)
-          } catch (error: any) {
-            await markNotificationFailed(row.id, error.code || 'send_failed')
-          }
-        }
-      }
+      // Delivery runs after the response: the worker claims the queued rows,
+      // retries with backoff, and the cron drain picks up anything left.
+      after(() =>
+        drainNotificationOutbox(req).catch((error) =>
+          req.payload.logger.error({ err: error }, 'notification drain failed'),
+        ),
+      )
       return json(
         { ok: true, campaignId, eligible: eligible.length, queued },
         { status: 202 },
@@ -211,6 +186,24 @@ export const notificationEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await requireNotifyCapability(req)
       return json({ items: await listQueuedNotifications() })
+    }),
+  },
+  {
+    // Scheduled backstop (vercel.json crons → CRON_SECRET bearer): picks up
+    // retried rows and anything an after() drain couldn't finish in time.
+    path: '/cron/notifications-drain',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const secret = String(process.env.CRON_SECRET || '')
+      const supplied = String(req.headers.get('authorization') || '')
+      const expected = `Bearer ${secret}`
+      if (
+        !secret ||
+        supplied.length !== expected.length ||
+        !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
+      )
+        throw fail.unauthorized()
+      return json(await drainNotificationOutbox(req, { limit: 200 }))
     }),
   },
 
