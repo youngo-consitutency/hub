@@ -1,9 +1,16 @@
 import { publicEndpoints } from './public'
 import { authEndpoints } from './auth'
 import { memberEndpoints } from './member'
-import { staffEndpoints } from './staff'
+import { peopleEndpoints } from './people'
+import { feedbackEndpoints } from './feedback'
+import { adminEndpoints } from './admin'
+import { membershipTeamEndpoints } from './membershipTeam'
+import { gysEndpoints } from './gys'
+import { contactPointEndpoints } from './contactPoints'
 import { contentEndpoints } from './content'
+import { opportunityEndpoints } from './opportunities'
 import { ngoEndpoints } from './ngo'
+import { organisationEndpoints } from './organisations'
 import { resourceEndpoints } from './resources'
 import { negotiationEndpoints } from './negotiations'
 import { consultationEndpoints } from './consultation'
@@ -12,7 +19,8 @@ import { notificationEndpoints } from './notifications'
 import { intelligenceEndpoints } from './intelligence'
 import { platformEndpoints } from './platform'
 import { decisionEndpoints } from './decisions'
-import { electionEndpoints, selectionEndpoints } from './governance'
+import { electionEndpoints } from './elections'
+import { selectionEndpoints } from './selections'
 import { membershipEndpoints } from './membership'
 import { operationEndpoints } from './operations'
 
@@ -20,9 +28,16 @@ export const domainEndpoints = [
   ...authEndpoints,
   ...publicEndpoints,
   ...memberEndpoints,
-  ...staffEndpoints,
+  ...peopleEndpoints,
+  ...feedbackEndpoints,
+  ...opportunityEndpoints,
+  ...adminEndpoints,
+  ...membershipTeamEndpoints,
+  ...gysEndpoints,
+  ...contactPointEndpoints,
   ...contentEndpoints,
   ...ngoEndpoints,
+  ...organisationEndpoints,
   ...resourceEndpoints,
   ...negotiationEndpoints,
   ...consultationEndpoints,

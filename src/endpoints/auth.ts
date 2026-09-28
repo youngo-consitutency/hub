@@ -10,8 +10,9 @@ import {
 import { verifyLegacyPassword } from '../lib/password'
 import { rateLimit } from '../lib/rateLimit'
 import { sendEmail, emailConfigured } from '../lib/email'
-import { createHash, randomBytes } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
+import { sha256Hex } from '../lib/crypto'
 
 const registerLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -385,7 +386,7 @@ export const authEndpoints: Endpoint[] = [
       const account = docs[0] as any
       if (account) {
         const rawToken = randomBytes(32).toString('hex')
-        const tokenHash = createHash('sha256').update(rawToken).digest('hex')
+        const tokenHash = sha256Hex(rawToken)
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
         await req.payload.create({
           collection: 'password-resets' as never,
@@ -439,7 +440,7 @@ export const authEndpoints: Endpoint[] = [
         fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
-      const tokenHash = createHash('sha256').update(token).digest('hex')
+      const tokenHash = sha256Hex(token)
       const { docs } = await req.payload.find({
         collection: 'password-resets' as never,
         where: {
