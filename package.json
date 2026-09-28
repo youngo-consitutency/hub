@@ -28,7 +28,7 @@
     "@payloadcms/next": "3.90.1",
     "@payloadcms/richtext-lexical": "3.90.1",
     "@payloadcms/ui": "3.90.1",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "libphonenumber-js": "^1.13.12",
