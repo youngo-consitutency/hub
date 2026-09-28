@@ -4,7 +4,7 @@ import { isStaff, isStaffField } from '../lib/collectionAccess'
 // Member accounts — replaces hub_accounts + hub_sessions + password/verify
 // token tables. Payload auth provides login/logout/me/forgot/reset and
 // httpOnly cookie sessions; the fields below carry YOUNGO's registration and
-// lifecycle model (see docs/existing-system.md and docs/migration.md).
+// lifecycle model.
 export const Accounts: CollectionConfig = {
   slug: 'accounts',
   auth: {
