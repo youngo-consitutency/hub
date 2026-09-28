@@ -16,17 +16,12 @@ import {
   unsubscribeUrl,
   verifyUnsubscribeToken,
 } from '../lib/notifications'
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
+import { cleanText } from '../lib/text'
+import { sha256Hex } from '../lib/crypto'
 
-const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
-const trimmed = (v: unknown, max: number) =>
-  String(v ?? '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, max)
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -273,7 +268,7 @@ export const notificationEndpoints: Endpoint[] = [
       const { docs } = await req.payload.find({
         collection: 'email-verification-tokens',
         where: {
-          tokenHash: { equals: sha256(token) },
+          tokenHash: { equals: sha256Hex(token) },
           usedAt: { exists: false },
           expiresAt: { greater_than: new Date().toISOString() },
         },
@@ -334,7 +329,7 @@ export const notificationEndpoints: Endpoint[] = [
         collection: 'email-verification-tokens',
         data: {
           account: account.id,
-          tokenHash: sha256(token),
+          tokenHash: sha256Hex(token),
           expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
         } as any,
         overrideAccess: true,
@@ -373,11 +368,105 @@ export const notificationEndpoints: Endpoint[] = [
       await audit(req, null, {
         action: 'notification.provider_event',
         after: {
-          type: trimmed(b.type, 80),
+          type: cleanText(b.type, 80),
           received: true,
         },
       })
       return json({ ok: true })
+    }),
+  },
+
+  // ── Notification preferences ──────────────────────────────────────
+  {
+    path: '/member/notifications/preferences',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      const { docs } = await req.payload.find({
+        collection: 'notification-prefs',
+        where: { account: { equals: account.id } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      const row = docs[0] as any
+      return json({
+        accountId: account.id,
+        timezone: row?.timezone || 'UTC',
+        digestDay: row?.digestDay ?? 1,
+        digestHourUtc: row?.digestHourUtc ?? 6,
+        email: {
+          digest: Boolean(row?.email?.digest),
+          deadline: Boolean(row?.email?.deadline),
+          announcement: Boolean(row?.email?.announcement),
+        },
+        emailVerified: Boolean(account.emailVerifiedAt),
+        deliveryConfigured: Boolean(
+          process.env.SMTP_URL || process.env.SMTP_HOST,
+        ),
+      })
+    }),
+  },
+  {
+    path: '/member/notifications/preferences',
+    method: 'patch',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      const b = ((await req.json?.()) || {}) as any
+      if (
+        !account.emailVerifiedAt &&
+        Object.values(b?.email || {}).some(Boolean)
+      ) {
+        return json(
+          {
+            error: {
+              code: 'email_unverified',
+              message:
+                'Verify your email address before enabling email updates.',
+            },
+          },
+          { status: 409 },
+        )
+      }
+      const timezone = String(b.timezone || 'UTC').trim()
+      const digestDay = Number(b.digestDay ?? 1)
+      const digestHourUtc = Number(b.digestHourUtc ?? 6)
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: timezone }).format()
+      } catch {
+        throw fail.validation({ timezone: 'Invalid timezone.' })
+      }
+      if (!Number.isInteger(digestDay) || digestDay < 0 || digestDay > 6)
+        throw fail.validation({ digestDay: 'Digest day must be between 0 and 6.' })
+      if (!Number.isInteger(digestHourUtc) || digestHourUtc < 0 || digestHourUtc > 23)
+        throw fail.validation({ digestHourUtc: 'Digest hour must be between 0 and 23.' })
+      const email = {
+        digest: Boolean(b.email?.digest),
+        deadline: Boolean(b.email?.deadline),
+        announcement: Boolean(b.email?.announcement),
+      }
+      const { docs } = await req.payload.find({
+        collection: 'notification-prefs',
+        where: { account: { equals: account.id } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      const data = { account: account.id, timezone, digestDay, digestHourUtc, email }
+      const row = docs[0] as any
+      const saved = row
+        ? await req.payload.update({
+            collection: 'notification-prefs',
+            id: row.id,
+            data: data as any,
+            overrideAccess: true,
+            req,
+          })
+        : await req.payload.create({
+            collection: 'notification-prefs',
+            data: data as any,
+            overrideAccess: true,
+            req,
+          })
+      return json({ preferences: saved })
     }),
   },
 ]

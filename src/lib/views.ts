@@ -193,3 +193,20 @@ export function directoryView(
 ) {
   return (items || []).map((contact) => contactView(contact, { includePrivate }))
 }
+
+// WG activity rows -> member-facing JSON.
+export function wgActivityView(d: any) {
+  return {
+    id: d.id,
+    wg_slug: d.wgSlug,
+    kind: d.kind,
+    title: d.title,
+    body: d.body,
+    starts_at: d.startsAt,
+    ends_at: d.endsAt,
+    url: d.url,
+    task_force_slug: d.taskForceSlug,
+    created_by: typeof d.createdBy === 'object' ? d.createdBy?.id : d.createdBy,
+    created_at: d.createdAt,
+  }
+}

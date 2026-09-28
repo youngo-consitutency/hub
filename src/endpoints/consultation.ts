@@ -1,13 +1,8 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
+import { cleanText } from '../lib/text'
 
-const trimmed = (v: unknown, max: number) =>
-  String(v ?? '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, max)
 
 const CONTRIBUTION_KINDS = [
   { value: 'question', label: 'Question' },
@@ -85,7 +80,7 @@ export const consultationEndpoints: Endpoint[] = [
       const kind = String(b.kind || '')
       if (!CONTRIBUTION_KINDS.some((k) => k.value === kind))
         throw fail.validation({ kind: 'Choose question, concern, comment, or new feature.' })
-      const body = trimmed(b.body, 800)
+      const body = cleanText(b.body, 800)
       if (body.length < 8)
         throw fail.validation({
           body: 'Write at least a short sentence so the room can use it.',
@@ -98,7 +93,7 @@ export const consultationEndpoints: Endpoint[] = [
         data: {
           kind,
           body,
-          displayName: trimmed(b.name, 80) || null,
+          displayName: cleanText(b.name, 80) || null,
           section,
         } as any,
         overrideAccess: true,
@@ -111,7 +106,7 @@ export const consultationEndpoints: Endpoint[] = [
             id: item.id,
             kind,
             body,
-            name: trimmed(b.name, 80) || null,
+            name: cleanText(b.name, 80) || null,
             section,
             createdAt: (item as any).createdAt,
           },

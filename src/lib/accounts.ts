@@ -145,6 +145,30 @@ export async function requireCapability(
   return { account, access }
 }
 
+export async function requireTeam(req: PayloadRequest, teamRole: string) {
+  const account = requireVerifiedMember(req)
+  const access = await getAccessProfile(req, account)
+  if (account.role !== 'admin' && !access.teamRoles.includes(teamRole))
+    throw fail.forbidden('This team workspace is not assigned to your account.')
+  return { account, access }
+}
+
+export async function requireAdmin(req: PayloadRequest) {
+  const account = requireVerifiedMember(req)
+  if (account.role !== 'admin')
+    throw fail.forbidden('This console is for administrators.')
+  return account
+}
+
+export function adminReason(body: any): string {
+  const reason = String(body?.reason || '').trim()
+  if (reason.length < 8)
+    throw fail.validation({
+      _: 'Give a reason of at least 8 characters for this admin action.',
+    })
+  return reason.slice(0, 500)
+}
+
 // Payload's auth cookie. Setting it ourselves keeps the legacy
 // {ok, token, account, expiresAt} response contract.
 export const SESSION_COOKIE = 'payload-token'

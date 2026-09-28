@@ -21,3 +21,15 @@ export function requirePgPool(): pg.Pool {
   }
   return found
 }
+
+// Dual-shape row access: Payload docs expose camelCase while raw pg rows
+// return snake_case.
+export function pickField(
+  row: any,
+  snake: string,
+  camel: string,
+  fallback: any = null,
+) {
+  const value = row?.[snake] ?? row?.[camel]
+  return value == null ? fallback : value
+}

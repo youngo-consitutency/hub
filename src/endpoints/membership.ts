@@ -1,7 +1,8 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json } from '../lib/respond'
 import {
   accountView,
+  requireAccount,
   requireVerifiedMember,
 } from '../lib/accounts'
 import { audit } from '../lib/audit'
@@ -10,7 +11,8 @@ import {
   findAccountRowById,
   setAccountFields,
 } from '../lib/membership'
-import { requireTeam } from './staff'
+import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
+import { requireTeam } from '../lib/accounts'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -20,7 +22,7 @@ import { requireTeam } from './staff'
 const DAY = 86_400_000
 
 // Last day of the next February — CW renewals run annually each February.
-export function nextCWRenewalDue(from = new Date()): string {
+function nextCWRenewalDue(from = new Date()): string {
   const year =
     from.getUTCMonth() > 1 ? from.getUTCFullYear() + 1 : from.getUTCFullYear()
   return new Date(Date.UTC(year, 2, 0, 23, 59, 59)).toISOString()
@@ -529,6 +531,54 @@ export const membershipEndpoints: Endpoint[] = [
         reason: reason.slice(0, 500),
       })
       return json({ handover: handoverView(updated) })
+    }),
+  },
+
+  // ── Membership appeal ─────────────────────────────────────────────
+  {
+    path: '/member/membership/appeal',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      return json({
+        membershipStatus: account.membershipStatus,
+        membershipEndReason: account.membershipEndReason || null,
+        appeal: await getOwnAppeal(account.id),
+      })
+    }),
+  },
+  {
+    // Raw file body: X-Identity-Kind + X-Appeal-Statement (URI-encoded) headers,
+    // Content-Type = the file's type. Matches the legacy SPA apiPostFile call.
+    path: '/member/membership/appeal',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const account = requireAccount(req)
+      if (account.membershipStatus !== 'rejected') {
+        throw new ApiError(
+          409,
+          'not_rejected',
+          'Only a rejected application can be appealed.',
+        )
+      }
+      const bytes = Buffer.from(await (req as any).arrayBuffer())
+      const identityKind = String(req.headers.get('x-identity-kind') || '')
+      const statement = decodeURIComponent(
+        String(req.headers.get('x-appeal-statement') || ''),
+      )
+      const appeal = await submitAppeal({
+        account,
+        statement,
+        identityKind,
+        bytes,
+        contentType: String(req.headers.get('content-type') || ''),
+      })
+      await audit(req, account, {
+        action: 'membership.appeal_submitted',
+        targetType: 'membership_appeal',
+        targetId: String(appeal.id),
+      })
+      return Response.json({ appeal }, { status: 201 })
     }),
   },
 ]

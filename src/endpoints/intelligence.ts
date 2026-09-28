@@ -4,6 +4,7 @@ import { requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
+import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
 
 const intelligenceLimit = rateLimit({
@@ -12,12 +13,6 @@ const intelligenceLimit = rateLimit({
   scope: 'intelligence',
 })
 
-const trimmed = (v: unknown, max: number) =>
-  String(v ?? '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, max)
 
 type Evidence = {
   evidenceId: string
@@ -188,8 +183,8 @@ export const intelligenceEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       if (b.action !== 'save_research_note')
         throw fail.validation({ action: 'Unsupported writeback action.' })
-      const title = trimmed(b.title, 160)
-      const note = trimmed(b.note || b.body, 4000)
+      const title = cleanText(b.title, 160)
+      const note = cleanText(b.note || b.body, 4000)
       const citations = Array.isArray(b.citations) ? b.citations.slice(0, 50) : []
       if (!title || !note || !citations.length)
         throw fail.validation({
