@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { emailConfigured, sendEmail } from './email'
+import { deliverPush, listSubscriptionsForAccounts } from './push'
+import { getDocument } from './documents'
 import { appBaseUrl } from './env'
 
 // Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
@@ -272,6 +274,7 @@ function publicOutbox(row: any) {
   return {
     id: row.id,
     accountId: row.account_id ?? row.accountId,
+    channel: row.channel || 'email',
     category: row.category,
     templateKey: row.template_key ?? row.templateKey,
     sourceType: row.source_type ?? row.sourceType ?? null,
@@ -289,8 +292,11 @@ function publicOutbox(row: any) {
   }
 }
 
+export const NOTIFICATION_CHANNELS = ['email', 'push']
+
 export async function enqueueNotification({
   accountId,
+  channel = 'email',
   category,
   templateKey,
   sourceType = null,
@@ -300,7 +306,8 @@ export async function enqueueNotification({
   availableAt = new Date(),
 }: {
   accountId: any
-  category: string
+  channel?: string
+  category?: string | null
   templateKey: string
   sourceType?: string | null
   sourceId?: string | null
@@ -308,8 +315,12 @@ export async function enqueueNotification({
   payload?: any
   availableAt?: Date
 }) {
-  if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
+  if (!NOTIFICATION_CHANNELS.includes(channel))
+    throw new Error('Invalid notification channel.')
+  if (channel === 'email' && !OPTIONAL_EMAIL_CATEGORIES.includes(category!))
     throw new Error('Invalid notification category.')
+  if (channel === 'push' && category != null)
+    throw new Error('Push notifications have no preference category.')
   if (!accountId || !templateKey || !deduplicationKey)
     throw new Error(
       'Notification account, template, and deduplication key are required.',
@@ -317,14 +328,15 @@ export async function enqueueNotification({
   const pool = getPgPool()!
   const { rows } = await pool.query(
     `INSERT INTO notification_outbox(
-       account_id,category,template_key,source_type,source_id,
+       account_id,channel,category,template_key,source_type,source_id,
        deduplication_key,payload,available_at
-     ) VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+     ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
      ON CONFLICT(deduplication_key) DO NOTHING
      RETURNING *`,
     [
       accountId,
-      category,
+      channel,
+      channel === 'push' ? null : category,
       templateKey,
       sourceType,
       sourceId ? String(sourceId) : null,
@@ -340,7 +352,8 @@ export async function markNotificationSent(id: any) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
-     SET status='sent', sent_at=now(), attempts=attempts+1, updated_at=now()
+     SET status='sent', sent_at=now(), attempts=attempts+1,
+         lease_until=NULL, updated_at=now()
      WHERE id=$1`,
     [id],
   )
@@ -350,10 +363,119 @@ export async function markNotificationFailed(id: any, code: string) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
-     SET status='failed', last_error_code=$2, attempts=attempts+1, updated_at=now()
+     SET status='failed', last_error_code=$2, attempts=attempts+1,
+         lease_until=NULL, updated_at=now()
      WHERE id=$1`,
     [id, String(code || 'send_failed').slice(0, 80)],
   )
+}
+
+// ── Worker ───────────────────────────────────────────────────────
+
+// Terminal after five delivery attempts; earlier failures back off
+// exponentially (30s → 30m cap) so a slow gateway doesn't stall the queue.
+const MAX_DELIVERY_ATTEMPTS = 5
+const retryDelayMs = (attempts: number) =>
+  Math.min(30_000 * 2 ** attempts, 30 * 60_000)
+
+// Claim due rows with a short lease so concurrent drains (after() tasks, the
+// cron endpoint, overlapping deployments) never double-deliver the same row.
+export async function claimNotificationBatch(limit = 50) {
+  const pool = getPgPool()!
+  const { rows } = await pool.query(
+    `UPDATE notification_outbox o
+     SET lease_until = now() + interval '2 minutes', updated_at = now()
+     WHERE o.id = ANY(
+       SELECT id FROM notification_outbox
+       WHERE status = 'queued'
+         AND available_at <= now()
+         AND (lease_until IS NULL OR lease_until < now())
+       ORDER BY available_at, id
+       LIMIT $1
+       FOR UPDATE SKIP LOCKED
+     )
+     RETURNING o.*`,
+    [Math.max(1, Math.min(Number(limit) || 50, 200))],
+  )
+  return rows
+}
+
+// Requeue with backoff; rows past the attempt ceiling go terminal instead.
+export async function rescheduleNotification(row: any, code: string) {
+  const pool = getPgPool()!
+  const attempts = Number(row.attempts || 0) + 1
+  if (attempts >= MAX_DELIVERY_ATTEMPTS)
+    return markNotificationFailed(row.id, code)
+  await pool.query(
+    `UPDATE notification_outbox
+     SET attempts = attempts + 1,
+         last_error_code = $2,
+         lease_until = NULL,
+         available_at = now() + ($3::bigint * interval '1 millisecond'),
+         updated_at = now()
+     WHERE id = $1`,
+    [row.id, String(code || 'send_failed').slice(0, 80), retryDelayMs(attempts)],
+  )
+}
+
+async function deliverOutboxRow(req: any, row: any, connectBody: any) {
+  if (row.channel === 'push') {
+    const subscriptions = await listSubscriptionsForAccounts([row.account_id])
+    if (!subscriptions.length)
+      throw Object.assign(new Error('No active push subscriptions.'), {
+        code: 'no_subscriptions',
+      })
+    const payload =
+      typeof row.payload === 'string' ? row.payload : JSON.stringify(row.payload || {})
+    const result = await deliverPush(subscriptions, payload)
+    // deliverPush prunes dead endpoints itself; zero reachable devices means
+    // the member has nothing left to deliver to — retrying is pointless.
+    if (!result.sent && result.failed)
+      throw Object.assign(
+        new Error(`Push delivery failed (${result.failed}/${result.total}).`),
+        { code: 'push_delivery_failed' },
+      )
+    return result
+  }
+  const pool = getPgPool()!
+  const { rows } = await pool.query('SELECT email FROM accounts WHERE id=$1', [
+    row.account_id,
+  ])
+  if (!rows[0]?.email)
+    throw Object.assign(new Error('Recipient account has no email.'), {
+      code: 'recipient_missing',
+    })
+  return sendTemplatedEmail({
+    to: rows[0].email,
+    templateKey: row.template_key,
+    data: {
+      ...(row.payload || {}),
+      socialLinks: connectBody?.SOCIAL_LINKS || [],
+    },
+    unsubscribe: unsubscribeUrl(row.account_id, row.category),
+  })
+}
+
+// Bounded batch so a single invocation stays well under the platform's
+// request duration budget; whatever remains is picked up by the next drain
+// (another enqueue's after() task or the cron endpoint).
+export async function drainNotificationOutbox(req: any, { limit = 50 } = {}) {
+  const connectBody = (await getDocument(req, 'connect').catch(() => null))?.body
+  const claimed = await claimNotificationBatch(limit)
+  const results = { claimed: claimed.length, sent: 0, retried: 0, failed: 0 }
+  for (const row of claimed) {
+    try {
+      await deliverOutboxRow(req, row, connectBody)
+      await markNotificationSent(row.id)
+      results.sent += 1
+    } catch (error: any) {
+      const attempts = Number(row.attempts || 0) + 1
+      await rescheduleNotification(row, error.code || 'send_failed')
+      if (attempts >= MAX_DELIVERY_ATTEMPTS) results.failed += 1
+      else results.retried += 1
+    }
+  }
+  return results
 }
 
 export async function listQueuedNotifications() {

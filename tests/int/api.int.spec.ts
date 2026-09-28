@@ -2,11 +2,7 @@ import type { Payload } from 'payload'
 
 import { describe, it, beforeAll, expect } from 'vitest'
 
-import {
-  provisionAccount,
-  testPayload,
-  type TestSpec,
-} from './provision'
+import { provisionAccount, testPayload, type TestSpec } from './provision'
 
 let payload: Payload
 
@@ -31,10 +27,7 @@ async function session(spec: TestSpec) {
   return { ...(await login(email, password)), account }
 }
 
-const api = (
-  path: string,
-  { cookie, ...init }: { cookie?: string } & RequestInit = {},
-) =>
+const api = (path: string, { cookie, ...init }: { cookie?: string } & RequestInit = {}) =>
   fetch(`${BASE}/api${path}`, {
     ...init,
     headers: {
@@ -54,7 +47,9 @@ describe('payload', () => {
     await provisionAccount({})
     const accounts = await payload.find({ collection: 'accounts', limit: 1 })
     expect(accounts.totalDocs).toBeGreaterThan(0)
-    await (await testPayload()).create({
+    await (
+      await testPayload()
+    ).create({
       collection: 'content-events',
       data: {
         slug: `it-event-${Math.random().toString(36).slice(2, 8)}`,
@@ -193,7 +188,9 @@ describe('API contract (requires dev server on :3000)', () => {
   })
 
   it('unpublishes live content and hides it from public reads', async () => {
-    const event = await (await testPayload()).create({
+    const event = await (
+      await testPayload()
+    ).create({
       collection: 'content-events',
       data: {
         slug: `it-unpublish-${Math.random().toString(36).slice(2, 8)}`,
@@ -267,9 +264,7 @@ describe('decision engine (S09)', () => {
   it('rejects anonymous and unverified reads', async () => {
     expect((await api('/decisions')).status).toBe(401)
     // an unverified member hasn't completed the course → no decision read
-    expect((await api('/decisions', { cookie: pending.cookie })).status).toBe(
-      403,
-    )
+    expect((await api('/decisions', { cookie: pending.cookie })).status).toBe(403)
   })
 
   // Drive a proposal into 'voting': present, raise a red flag (which the
@@ -338,115 +333,119 @@ describe('decision engine (S09)', () => {
     'runs the full lifecycle: draft → present → flag → withdraw → consensus',
     { timeout: 60000 },
     async () => {
-    const create = await api('/decisions', {
-      method: 'POST',
-      cookie: cwMember.cookie,
-      body: JSON.stringify({
-        title: 'Lifecycle test proposal',
-        context: 'contract test',
-        proposalText: 'Do the test thing.',
-        decisionType: 'standard',
-        body: 'working_group',
-        bodyRef: 'finance',
-      }),
-    })
-    expect(create.status).toBe(201)
-    const { proposal } = await create.json()
-    expect(proposal.status).toBe('draft')
-
-    const present = await api(`/decisions/${proposal.id}/present`, {
-      method: 'POST',
-      cookie: cwMember.cookie,
-    })
-    const presented = (await present.json()).proposal
-    expect(presented.status).toBe('consultation')
-    // standard: 5d consult + 24h revision + 24h decision
-    const consult = new Date(presented.consultationEndsAt).getTime()
-    const revision = new Date(presented.revisionEndsAt).getTime()
-    const decision = new Date(presented.decisionEndsAt).getTime()
-    // timestamps round-trip through Postgres → allow small drift
-    expect(
-      Math.abs(
-        consult - new Date(presented.presentedAt).getTime() -
-          5 * 24 * 3600 * 1000,
-      ),
-    ).toBeLessThan(60_000)
-    expect(Math.abs(decision - revision - 24 * 3600 * 1000)).toBeLessThan(
-      60_000,
-    )
-
-    // a non-contact member of the body cannot present it
-    expect(
-      (await api(`/decisions/${proposal.id}/present`, {
-        method: 'POST',
-        cookie: wgContact.cookie,
-      })).status,
-    ).toBe(403)
-    // and the contact person cannot present it twice (wrong phase)
-    expect(
-      (await api(`/decisions/${proposal.id}/present`, {
+      const create = await api('/decisions', {
         method: 'POST',
         cookie: cwMember.cookie,
-      })).status,
-    ).toBe(409)
+        body: JSON.stringify({
+          title: 'Lifecycle test proposal',
+          context: 'contract test',
+          proposalText: 'Do the test thing.',
+          decisionType: 'standard',
+          body: 'working_group',
+          bodyRef: 'finance',
+        }),
+      })
+      expect(create.status).toBe(201)
+      const { proposal } = await create.json()
+      expect(proposal.status).toBe('draft')
 
-    // grey flag — finance WG member raising on WG decision
-    const flagRes = await api(`/decisions/${proposal.id}/flags`, {
-      method: 'POST',
-      cookie: cwMember.cookie,
-      body: JSON.stringify({ kind: 'grey', reason: 'test grey flag' }),
-    })
-    expect(flagRes.status).toBe(201)
-    const flag = (await flagRes.json()).flag
-
-    // red flag needs category + alternative
-    const badRed = await api(`/decisions/${proposal.id}/flags`, {
-      method: 'POST',
-      cookie: cwMember.cookie,
-      body: JSON.stringify({ kind: 'red', reason: 'x' }),
-    })
-    expect(badRed.status).toBe(400)
-
-    // only the raiser may withdraw
-    expect(
-      (await api(`/decisions/${proposal.id}/flags/${flag.id}/withdraw`, {
+      const present = await api(`/decisions/${proposal.id}/present`, {
         method: 'POST',
-        cookie: wgContact.cookie,
-      })).status,
-    ).toBe(403)
-    expect(
-      (await api(`/decisions/${proposal.id}/flags/${flag.id}/withdraw`, {
-        method: 'POST',
-        cookie: cwMember.cookie,
-      })).status,
-    ).toBe(200)
-
-    // close → no standing flags → consensus
-    const close = await api(`/decisions/${proposal.id}/close`, {
-      method: 'POST',
-      cookie: cwMember.cookie,
-    })
-    const closed = (await close.json()).proposal
-    expect(closed.status).toBe('adopted')
-    expect(closed.adoptedVia).toBe('consensus')
-
-    const events = await (
-      await api(`/decisions/${proposal.id}/events`, {
         cookie: cwMember.cookie,
       })
-    ).json()
-    expect(events.items.map((e: any) => e.type)).toEqual(
-      expect.arrayContaining([
-        'created',
-        'presented',
-        'flag_grey_raised',
-        'flag_withdrawn',
-        'phase_revision',
-        'phase_decision',
-        'adopted',
-      ]),
-    )
-  })
+      const presented = (await present.json()).proposal
+      expect(presented.status).toBe('consultation')
+      // standard: 5d consult + 24h revision + 24h decision
+      const consult = new Date(presented.consultationEndsAt).getTime()
+      const revision = new Date(presented.revisionEndsAt).getTime()
+      const decision = new Date(presented.decisionEndsAt).getTime()
+      // timestamps round-trip through Postgres → allow small drift
+      expect(
+        Math.abs(consult - new Date(presented.presentedAt).getTime() - 5 * 24 * 3600 * 1000),
+      ).toBeLessThan(60_000)
+      expect(Math.abs(decision - revision - 24 * 3600 * 1000)).toBeLessThan(60_000)
+
+      // a non-contact member of the body cannot present it
+      expect(
+        (
+          await api(`/decisions/${proposal.id}/present`, {
+            method: 'POST',
+            cookie: wgContact.cookie,
+          })
+        ).status,
+      ).toBe(403)
+      // and the contact person cannot present it twice (wrong phase)
+      expect(
+        (
+          await api(`/decisions/${proposal.id}/present`, {
+            method: 'POST',
+            cookie: cwMember.cookie,
+          })
+        ).status,
+      ).toBe(409)
+
+      // grey flag — finance WG member raising on WG decision
+      const flagRes = await api(`/decisions/${proposal.id}/flags`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({ kind: 'grey', reason: 'test grey flag' }),
+      })
+      expect(flagRes.status).toBe(201)
+      const flag = (await flagRes.json()).flag
+
+      // red flag needs category + alternative
+      const badRed = await api(`/decisions/${proposal.id}/flags`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({ kind: 'red', reason: 'x' }),
+      })
+      expect(badRed.status).toBe(400)
+
+      // only the raiser may withdraw
+      expect(
+        (
+          await api(`/decisions/${proposal.id}/flags/${flag.id}/withdraw`, {
+            method: 'POST',
+            cookie: wgContact.cookie,
+          })
+        ).status,
+      ).toBe(403)
+      expect(
+        (
+          await api(`/decisions/${proposal.id}/flags/${flag.id}/withdraw`, {
+            method: 'POST',
+            cookie: cwMember.cookie,
+          })
+        ).status,
+      ).toBe(200)
+
+      // close → no standing flags → consensus
+      const close = await api(`/decisions/${proposal.id}/close`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+      })
+      const closed = (await close.json()).proposal
+      expect(closed.status).toBe('adopted')
+      expect(closed.adoptedVia).toBe('consensus')
+
+      const events = await (
+        await api(`/decisions/${proposal.id}/events`, {
+          cookie: cwMember.cookie,
+        })
+      ).json()
+      expect(events.items.map((e: any) => e.type)).toEqual(
+        expect.arrayContaining([
+          'created',
+          'presented',
+          'flag_grey_raised',
+          'flag_withdrawn',
+          'phase_revision',
+          'phase_decision',
+          'adopted',
+        ]),
+      )
+    },
+  )
 
   it('gates ballots by membership track and body scope', { timeout: 90000 }, async () => {
     // A finance-WG snap decision in its voting phase.
@@ -491,6 +490,41 @@ describe('decision engine (S09)', () => {
         })
       ).status,
     ).toBe(409)
+  })
+
+  it('rejects concurrent duplicate ballots via the unique index', { timeout: 90000 }, async () => {
+    const voting = await makeVotingProposal()
+
+    // The pre-check and the insert are separate queries, so parallel
+    // submissions can both observe "no ballot yet". The unique
+    // (proposal, account) index must turn every loser into 409 already_voted.
+    const attempts = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        api(`/decisions/${voting.id}/ballots`, {
+          method: 'POST',
+          cookie: cwMember.cookie,
+          body: JSON.stringify({ choice: 'for' }),
+        }),
+      ),
+    )
+    const statuses = attempts.map((r) => r.status).sort()
+    expect(statuses, JSON.stringify(statuses)).toEqual([201, 409, 409, 409])
+    for (const res of attempts) {
+      if (res.status !== 409) continue
+      const body = await res.json()
+      expect(body.error.code).toBe('already_voted')
+    }
+
+    // Exactly one ballot row regardless of which request won the race.
+    const { totalDocs } = await (
+      await testPayload()
+    ).find({
+      collection: 'decision-ballots',
+      where: { proposal: { equals: voting.id } },
+      limit: 0,
+      overrideAccess: true,
+    })
+    expect(totalDocs).toBe(1)
   })
 
   it('validates veto request shape', { timeout: 90000 }, async () => {
@@ -767,14 +801,11 @@ describe('elections (S10) and selections (S24)', () => {
       expect(nomB.status).toBe(201)
       const candB = (await nomB.json()).candidate
       for (const cand of [candA, candB]) {
-        const res = await api(
-          `/governance/elections/${election.id}/candidates/${cand.id}/screen`,
-          {
-            method: 'POST',
-            cookie: facilitator.cookie,
-            body: JSON.stringify({ status: 'screened_in' }),
-          },
-        )
+        const res = await api(`/governance/elections/${election.id}/candidates/${cand.id}/screen`, {
+          method: 'POST',
+          cookie: facilitator.cookie,
+          body: JSON.stringify({ status: 'screened_in' }),
+        })
         expect(res.status).toBe(200)
       }
 
@@ -1026,11 +1057,9 @@ describe('membership lifecycle (S17)', () => {
     expect(state.status).toBe(200)
     const body = await state.json()
     expect(body.constituencyWorkStatus).toBe('active')
-    expect(
-      body.assignments.some(
-        (a: any) => a.scopeId === 'finance' && a.role === 'contact',
-      ),
-    ).toBe(true)
+    expect(body.assignments.some((a: any) => a.scopeId === 'finance' && a.role === 'contact')).toBe(
+      true,
+    )
 
     const renew = await api('/member/membership/renew', {
       method: 'POST',
@@ -1043,10 +1072,12 @@ describe('membership lifecycle (S17)', () => {
 
     // Network-track member has nothing to renew.
     expect(
-      (await api('/member/membership/renew', {
-        method: 'POST',
-        cookie: member.cookie,
-      })).status,
+      (
+        await api('/member/membership/renew', {
+          method: 'POST',
+          cookie: member.cookie,
+        })
+      ).status,
     ).toBe(400)
   })
 
@@ -1063,8 +1094,7 @@ describe('membership lifecycle (S17)', () => {
       const body = await resign.json()
       expect(body.handover.status).toBe('open')
       expect(body.handover.items.length).toBeGreaterThanOrEqual(3)
-      const dueMs =
-        new Date(body.handover.dueAt).getTime() - Date.now()
+      const dueMs = new Date(body.handover.dueAt).getTime() - Date.now()
       expect(dueMs).toBeGreaterThan(13 * 86400000)
 
       const state = await (
@@ -1077,15 +1107,13 @@ describe('membership lifecycle (S17)', () => {
       const handoverId = body.handover.id
       const itemCount = body.handover.items.length
       for (let i = 0; i < itemCount; i += 1) {
-        const res = await api(
-          `/member/handovers/${handoverId}/items/${i}/complete`,
-          { method: 'POST', cookie: cwMember.cookie },
-        )
+        const res = await api(`/member/handovers/${handoverId}/items/${i}/complete`, {
+          method: 'POST',
+          cookie: cwMember.cookie,
+        })
         expect(res.status).toBe(200)
       }
-      const handovers = await (
-        await api('/member/handovers', { cookie: cwMember.cookie })
-      ).json()
+      const handovers = await (await api('/member/handovers', { cookie: cwMember.cookie })).json()
       expect(handovers.items[0].status).toBe('completed')
     },
   )
@@ -1115,14 +1143,11 @@ describe('membership lifecycle (S17)', () => {
       // Ordinary members cannot terminate.
       expect(
         (
-          await api(
-            `/member/team/membership/accounts/${member.account.id}/terminate`,
-            {
-              method: 'POST',
-              cookie: member.cookie,
-              body: JSON.stringify({ reason: 'should not work' }),
-            },
-          )
+          await api(`/member/team/membership/accounts/${member.account.id}/terminate`, {
+            method: 'POST',
+            cookie: member.cookie,
+            body: JSON.stringify({ reason: 'should not work' }),
+          })
         ).status,
       ).toBe(403)
 
@@ -1145,9 +1170,7 @@ describe('membership lifecycle (S17)', () => {
       })
       expect(sweep.status).toBe(200)
       const swept = await sweep.json()
-      const hit = swept.items.find(
-        (i: any) => i.accountId === lapsed.account.id,
-      )
+      const hit = swept.items.find((i: any) => i.accountId === lapsed.account.id)
       expect(hit).toBeTruthy()
       expect(hit.assignmentsEnded).toBe(1)
 
@@ -1260,9 +1283,7 @@ describe('operational workflows', () => {
     expect(items[0].description).toBeUndefined()
 
     // non-team members cannot list cases
-    expect(
-      (await api('/member/team/safeguarding', { cookie: finance.cookie })).status,
-    ).toBe(403)
+    expect((await api('/member/team/safeguarding', { cookie: finance.cookie })).status).toBe(403)
 
     // team sees the case; anonymous hides the reporter
     const team = await api('/member/team/safeguarding', { cookie: safeguarding.cookie })
@@ -1383,152 +1404,134 @@ describe('platform decision bridge', () => {
     })
   })
 
-  it(
-    'bridges the platform UI onto the S09 engine end to end',
-    { timeout: 120000 },
-    async () => {
-      const payload = await testPayload()
-      const pool = (payload.db as any).pool
+  it('bridges the platform UI onto the S09 engine end to end', { timeout: 120000 }, async () => {
+    const payload = await testPayload()
+    const pool = (payload.db as any).pool
 
-      // create via the platform surface — stored in the S09 engine
-      const created = await api('/platform/decisions', {
-        method: 'POST',
-        cookie: coordinator.cookie,
-        body: JSON.stringify({
-          bodyId: BODY,
-          title: 'Bridged proposal',
-          proposal: 'Adopt the shared minutes convention.',
-          process: 'standard',
-          policyVersion: 'S09-current',
-        }),
-      })
-      expect(created.status).toBe(201)
-      const { id } = await created.json()
-      expect(id).toMatch(/^[0-9a-f-]{36}$/)
+    // create via the platform surface — stored in the S09 engine
+    const created = await api('/platform/decisions', {
+      method: 'POST',
+      cookie: coordinator.cookie,
+      body: JSON.stringify({
+        bodyId: BODY,
+        title: 'Bridged proposal',
+        proposal: 'Adopt the shared minutes convention.',
+        process: 'standard',
+        policyVersion: 'S09-current',
+      }),
+    })
+    expect(created.status).toBe(201)
+    const { id } = await created.json()
+    expect(id).toMatch(/^[0-9a-f-]{36}$/)
 
-      // platform uuid resolves to the S09 row through the projection
-      const { rows } = await pool.query(
-        'SELECT s09_proposal_id FROM platform_decisions WHERE id=$1',
-        [id],
-      )
-      const s09Id = rows[0].s09_proposal_id
-      expect(s09Id).toBeTruthy()
+    // platform uuid resolves to the S09 row through the projection
+    const { rows } = await pool.query(
+      'SELECT s09_proposal_id FROM platform_decisions WHERE id=$1',
+      [id],
+    )
+    const s09Id = rows[0].s09_proposal_id
+    expect(s09Id).toBeTruthy()
 
-      // detail: legacy shape, S09 data
-      const detail = await api(`/platform/decisions/${id}`, {
-        cookie: member.cookie,
-      })
-      expect(detail.status).toBe(200)
-      const d = (await detail.json()).decision
-      expect(d.stage).toBe('draft')
-      expect(d.bodyId).toBe(BODY)
+    // detail: legacy shape, S09 data
+    const detail = await api(`/platform/decisions/${id}`, {
+      cookie: member.cookie,
+    })
+    expect(detail.status).toBe(200)
+    const d = (await detail.json()).decision
+    expect(d.stage).toBe('draft')
+    expect(d.bodyId).toBe(BODY)
 
-      // a non-coordinator cannot drive transitions
-      expect(
-        (
-          await api(`/platform/decisions/${id}/transition`, {
-            method: 'POST',
-            cookie: member.cookie,
-            body: JSON.stringify({
-              stage: 'consultation',
-              version: d.version,
-              reason: 'Presented for consultation.',
-            }),
-          })
-        ).status,
-      ).toBe(403)
-      const presented = await api(`/platform/decisions/${id}/transition`, {
-        method: 'POST',
-        cookie: coordinator.cookie,
-        body: JSON.stringify({
-              stage: 'consultation',
-              version: d.version,
-              reason: 'Presented for consultation.',
-            }),
-      })
-      expect(presented.status).toBe(200)
-
-      // member contributes a comment and a red flag
-      for (const input of [
-        { kind: 'comment', text: 'Supportive note on the proposal.' },
-        {
-          kind: 'red',
-          text: 'This conflicts with an earlier decision.',
-          grounds: 'Contradicts the standing charter clause.',
-          alternative: 'Amend to reference the charter explicitly.',
-        },
-      ]) {
-        const res = await api(`/platform/decisions/${id}/contributions`, {
+    // a non-coordinator cannot drive transitions
+    expect(
+      (
+        await api(`/platform/decisions/${id}/transition`, {
           method: 'POST',
           cookie: member.cookie,
-          body: JSON.stringify(input),
+          body: JSON.stringify({
+            stage: 'consultation',
+            version: d.version,
+            reason: 'Presented for consultation.',
+          }),
         })
-        expect(res.status).toBe(201)
-      }
+      ).status,
+    ).toBe(403)
+    const presented = await api(`/platform/decisions/${id}/transition`, {
+      method: 'POST',
+      cookie: coordinator.cookie,
+      body: JSON.stringify({
+        stage: 'consultation',
+        version: d.version,
+        reason: 'Presented for consultation.',
+      }),
+    })
+    expect(presented.status).toBe(200)
 
-      // expire consultation + revision windows — auto-advance reaches
-      // 'decision'; the open red flag forces a vote once decision closes
-      await pool.query(
-        'UPDATE decision_proposals SET consultation_ends_at=$2, revision_ends_at=$2 WHERE id=$1',
-        [s09Id, past()],
-      )
-      let current = (
-        await (
-          await api(`/platform/decisions/${id}`, { cookie: member.cookie })
-        ).json()
-      ).decision
-      expect(current.stage).toBe('decision')
-
-      // resolve the flag? No — keep it standing so consensus fails to a vote.
-      await pool.query(
-        'UPDATE decision_proposals SET decision_ends_at=$2 WHERE id=$1',
-        [s09Id, past()],
-      )
-      current = (
-        await (
-          await api(`/platform/decisions/${id}`, { cookie: member.cookie })
-        ).json()
-      ).decision
-      expect(current.stage).toBe('voting')
-
-      // ballots go through the real S09 vote — body-scope members count as
-      // the electorate
-      for (const cookie of [member.cookie, coordinator.cookie]) {
-        const res = await api(`/decisions/${s09Id}/ballots`, {
-          method: 'POST',
-          cookie,
-          body: JSON.stringify({ choice: 'for' }),
-        })
-        expect(res.status).toBe(201)
-      }
-
-      // close the vote window — S09 tallies and adopts by two-thirds
-      await pool.query(
-        'UPDATE decision_proposals SET voting_ends_at=$2 WHERE id=$1',
-        [s09Id, past()],
-      )
-      current = (
-        await (
-          await api(`/platform/decisions/${id}`, { cookie: member.cookie })
-        ).json()
-      ).decision
-      expect(current.stage).toBe('adopted')
-      expect(Number(current.votesFor)).toBe(2)
-
-      // a different, assigned publisher approves the public register entry
-      const published = await api(`/platform/decisions/${id}/publish`, {
+    // member contributes a comment and a red flag
+    for (const input of [
+      { kind: 'comment', text: 'Supportive note on the proposal.' },
+      {
+        kind: 'red',
+        text: 'This conflicts with an earlier decision.',
+        grounds: 'Contradicts the standing charter clause.',
+        alternative: 'Amend to reference the charter explicitly.',
+      },
+    ]) {
+      const res = await api(`/platform/decisions/${id}/contributions`, {
         method: 'POST',
-        cookie: publisher.cookie,
-        body: JSON.stringify({ version: current.version }),
+        cookie: member.cookie,
+        body: JSON.stringify(input),
       })
-      expect(published.status).toBe(200)
+      expect(res.status).toBe(201)
+    }
 
-      // public register exposes it anonymously
-      const publicRes = await fetch(`${BASE}/api/platform/public`)
-      const pub = await publicRes.json()
-      expect(
-        pub.decisions.some((x: any) => x.title === 'Bridged proposal'),
-      ).toBe(true)
-    },
-  )
+    // expire consultation + revision windows — auto-advance reaches
+    // 'decision'; the open red flag forces a vote once decision closes
+    await pool.query(
+      'UPDATE decision_proposals SET consultation_ends_at=$2, revision_ends_at=$2 WHERE id=$1',
+      [s09Id, past()],
+    )
+    let current = (await (await api(`/platform/decisions/${id}`, { cookie: member.cookie })).json())
+      .decision
+    expect(current.stage).toBe('decision')
+
+    // resolve the flag? No — keep it standing so consensus fails to a vote.
+    await pool.query('UPDATE decision_proposals SET decision_ends_at=$2 WHERE id=$1', [
+      s09Id,
+      past(),
+    ])
+    current = (await (await api(`/platform/decisions/${id}`, { cookie: member.cookie })).json())
+      .decision
+    expect(current.stage).toBe('voting')
+
+    // ballots go through the real S09 vote — body-scope members count as
+    // the electorate
+    for (const cookie of [member.cookie, coordinator.cookie]) {
+      const res = await api(`/decisions/${s09Id}/ballots`, {
+        method: 'POST',
+        cookie,
+        body: JSON.stringify({ choice: 'for' }),
+      })
+      expect(res.status).toBe(201)
+    }
+
+    // close the vote window — S09 tallies and adopts by two-thirds
+    await pool.query('UPDATE decision_proposals SET voting_ends_at=$2 WHERE id=$1', [s09Id, past()])
+    current = (await (await api(`/platform/decisions/${id}`, { cookie: member.cookie })).json())
+      .decision
+    expect(current.stage).toBe('adopted')
+    expect(Number(current.votesFor)).toBe(2)
+
+    // a different, assigned publisher approves the public register entry
+    const published = await api(`/platform/decisions/${id}/publish`, {
+      method: 'POST',
+      cookie: publisher.cookie,
+      body: JSON.stringify({ version: current.version }),
+    })
+    expect(published.status).toBe(200)
+
+    // public register exposes it anonymously
+    const publicRes = await fetch(`${BASE}/api/platform/public`)
+    const pub = await publicRes.json()
+    expect(pub.decisions.some((x: any) => x.title === 'Bridged proposal')).toBe(true)
+  })
 })
