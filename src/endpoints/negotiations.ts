@@ -14,15 +14,19 @@ import {
   SourceIngestionError,
 } from '../modules/negotiation/sources'
 import {
-  appendAmendmentVersion,
-  appendSubmissionVersion,
-  confirmAmendmentReconciliation,
-  createAmendment,
   createSubmissionProject,
+  appendSubmissionVersion,
   getAccessibleProject,
   listAccessibleProjects,
+} from '../modules/negotiation/contributionProjects'
+import {
+  createAmendment,
+  appendAmendmentVersion,
+} from '../modules/negotiation/contributionAmendments'
+import {
+  confirmAmendmentReconciliation,
   suggestAmendmentReconciliation,
-} from '../modules/negotiation/contributions'
+} from '../modules/negotiation/contributionReconciliation'
 
 // ContributionError carries .status/.code on a plain Error — the endpoint
 // wrapper in respond.ts already maps that shape.
