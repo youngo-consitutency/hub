@@ -7,7 +7,7 @@ import {
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { useDocument } from '../lib/documents.js'
-import { wordCount } from '../../shared/registration.js'
+import { wordCount } from './auth/helpers.js'
 import { A, Button } from './ui.jsx'
 import { Brand } from './Brand.jsx'
 import { FieldError } from './FormControls.jsx'

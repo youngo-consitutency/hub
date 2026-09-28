@@ -8,13 +8,7 @@ import {
 } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import * as store from '../lib/content'
-import {
-  COURSE_MODULES,
-  COURSE_VERSION,
-  PASS_SCORE,
-  QUIZ,
-  scoreQuiz,
-} from '../lib/membershipCourse.js'
+import { getDocument } from '../lib/documents'
 import { getOwnMemberProfile } from '../lib/memberDirectory'
 import {
   saveMemberPhoto,
@@ -23,6 +17,25 @@ import {
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
+
+// Course structure (modules, quiz, pass score) is staff-editable content —
+// the `membership-course` content document holds the whole definition.
+type CourseDoc = {
+  version: string
+  passScore: number
+  modules: any[]
+  quiz: { id: string; prompt: string; choices: any[]; correct: string }[]
+}
+
+async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
+  const course = (await getDocument(req, 'membership-course'))?.body as
+    | CourseDoc
+    | undefined
+  if (!course?.quiz?.length) {
+    throw fail.notFound('The onboarding course is not configured yet.')
+  }
+  return { ...course, modules: course.modules || [] }
+}
 
 async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlug: string) {
   const { docs } = await req.payload.find({
@@ -135,11 +148,16 @@ export const memberEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
+      const course = await getCourse(req)
       return json({
-        version: COURSE_VERSION,
-        passScore: PASS_SCORE,
-        modules: COURSE_MODULES,
-        quiz: QUIZ.map(({ id, prompt, choices }) => ({ id, prompt, choices })),
+        version: course.version,
+        passScore: course.passScore,
+        modules: course.modules,
+        quiz: course.quiz.map(({ id, prompt, choices }) => ({
+          id,
+          prompt,
+          choices,
+        })),
         accountStatus: account.memberStatus,
         alreadyPassed: isVerifiedAccount(account),
       })
@@ -150,14 +168,19 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
+      const course = await getCourse(req)
       const b = ((await req.json?.()) || {}) as any
-      const { score, total, passed } = scoreQuiz(b?.answers || {})
+      const answers = b?.answers || {}
+      let score = 0
+      for (const q of course.quiz) if (answers[q.id] === q.correct) score += 1
+      const total = course.quiz.length
+      const passed = score >= course.passScore
       if (!passed) {
         return json(
           {
             error: {
               code: 'quiz_failed',
-              message: `You scored ${score}/${total}. You need at least ${PASS_SCORE} correct to pass. Review the modules and try again.`,
+              message: `You scored ${score}/${total}. You need at least ${course.passScore} correct to pass. Review the modules and try again.`,
             },
             score,
             total,

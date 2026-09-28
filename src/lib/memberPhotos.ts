@@ -1,3 +1,4 @@
+import { fileTypeFromBuffer } from 'file-type'
 import { type Pool } from 'pg'
 import { ApiError } from './respond'
 import { requirePgPool, getPgPool } from './pg'
@@ -8,7 +9,7 @@ import { requirePgPool, getPgPool } from './pg'
 const MEMBER_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MEMBER_PHOTO_MAX_BYTES = 768 * 1024
 
-export function validateMemberPhoto(bytes: Buffer, contentType: string) {
+export async function validateMemberPhoto(bytes: Buffer, contentType: string) {
   const type = String(contentType || '').split(';')[0].trim().toLowerCase()
   if (!MEMBER_PHOTO_TYPES.has(type))
     throw new ApiError(400, 'validation', 'Use a JPEG, PNG, or WebP image.')
@@ -20,19 +21,8 @@ export function validateMemberPhoto(bytes: Buffer, contentType: string) {
       'payload_too_large',
       'Profile photos must be 768 KB or smaller.',
     )
-  const signatureOk =
-    (type === 'image/jpeg' &&
-      bytes[0] === 0xff &&
-      bytes[1] === 0xd8 &&
-      bytes[2] === 0xff) ||
-    (type === 'image/png' &&
-      bytes
-        .subarray(0, 8)
-        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) ||
-    (type === 'image/webp' &&
-      bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
-      bytes.subarray(8, 12).toString('ascii') === 'WEBP')
-  if (!signatureOk)
+  const detected = await fileTypeFromBuffer(bytes)
+  if (detected?.mime !== type)
     throw new ApiError(
       400,
       'validation',
@@ -47,7 +37,7 @@ export async function saveMemberPhoto(
   contentType: string,
   actorId?: number,
 ) {
-  const type = validateMemberPhoto(bytes, contentType)
+  const type = await validateMemberPhoto(bytes, contentType)
   const pool = requirePgPool()
   await pool.query(
     `INSERT INTO member_profiles(account_id, display_name, created_at, updated_at)

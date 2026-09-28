@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { apiDelete, apiPatch, apiPutFile } from '../lib/api.js'
 import { Async, Button, ErrorCard } from './ui.jsx'
 import { MemberAvatar } from './MemberAvatar.jsx'
-import { signOut } from '../lib/logout.js'
+import { signOut } from '../lib/session.js'
 import {
   TbRosetteDiscountCheck as BadgeCheck,
   TbCamera as Camera,

@@ -8,8 +8,8 @@ import {
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
-import { WG_ACTIVITY_KIND_VALUES } from '../../spa/shared/workflows.js'
-import { TASK_FORCE_SLUGS } from '../../spa/shared/taskForces.js'
+import { getDocument } from '../lib/documents'
+import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol.js'
 
 
 function publicSlot(s: any) {
@@ -134,7 +134,11 @@ export const contactPointEndpoints: Endpoint[] = [
       const title = String(b.title || '').trim().slice(0, 200)
       if (!title || !b.kind)
         throw fail.validation({ title: 'title and kind are required.' })
-      if (!WG_ACTIVITY_KIND_VALUES.includes(String(b.kind)))
+      const options = await getDocument(req, 'content-options')
+      const kinds = (options?.body?.wgActivityKinds || []).map((k: any) =>
+        String(k.value),
+      )
+      if (!kinds.includes(String(b.kind)))
         throw new ApiError(400, 'validation', 'Invalid activity kind.')
       if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))
         throw new ApiError(400, 'validation', 'Invalid start date.')

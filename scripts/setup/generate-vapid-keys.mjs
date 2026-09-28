@@ -17,6 +17,11 @@ console.log('Private Key (add to .env as VAPID_PRIVATE_KEY):')
 console.log(keys.privateKey)
 console.log('')
 console.log('Subject (add to .env as VAPID_SUBJECT):')
-console.log('mailto:admin@youngo-hub.org')
+console.log(
+  process.env.VAPID_SUBJECT ||
+    (process.env.EMAIL_FROM
+      ? `mailto:${process.env.EMAIL_FROM}`
+      : 'mailto:<your-hub-admin-email>'),
+)
 console.log('')
 console.log('Add these to your deployment environment variables.')

@@ -7,9 +7,7 @@ import {
   SearchableSelect,
 } from '../FormControls.jsx'
 import {
-  GENDER_OPTIONS,
-  MINORITY_SELECT_OPTIONS,
-  REGION_OPTIONS,
+  asOptions,
   fieldClass,
   checkClass,
   loadPhoneSupport,
@@ -34,8 +32,13 @@ export function RegisterIndividualForm({
 }) {
   const { doc: policiesDoc } = useDocument('policies')
   const { doc: connect } = useDocument('connect')
+  const { doc: regOptions } = useDocument('registration-options')
   const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
   const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
+  const GENDER_OPTIONS = asOptions(regOptions?.genders || [])
+  const REGION_OPTIONS = asOptions(regOptions?.regions || [])
+  const MINORITY_SELECT_OPTIONS = asOptions(regOptions?.minorityOptions || [])
+  const AGE_BAND_OPTIONS = regOptions?.ageBands || []
 
   return (
     <>
@@ -64,11 +67,7 @@ export function RegisterIndividualForm({
       <section className="card authSection">
         <h2 className="authSectionTitle">How old are you? *</h2>
         <div className="authChoiceGrid">
-          {[
-            { value: 'under_18', label: 'Under 18' },
-            { value: '18_35', label: '18–35' },
-            { value: '35_plus', label: '35+' },
-          ].map((opt) => (
+          {AGE_BAND_OPTIONS.map((opt) => (
             <label
               key={opt.value}
               className={`authChoice ${form.ageBand === opt.value ? 'active' : ''}`}
@@ -477,11 +476,13 @@ export function RegisterIndividualForm({
           </label>
           <FieldError msg={fields.acceptCoiPolicy} />
         </div>
-        <p className="metaMuted">
-          <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
-            Browse all YOUNGO policies
-          </PolicyLink>
-        </p>
+        {policiesDoc?.browseAllUrl ? (
+          <p className="metaMuted">
+            <PolicyLink href={policiesDoc.browseAllUrl}>
+              Browse all YOUNGO policies
+            </PolicyLink>
+          </p>
+        ) : null}
       </section>
     </>
   )

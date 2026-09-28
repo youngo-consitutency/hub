@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Payload, PayloadRequest } from 'payload'
 import { assembleFeed } from './feed'
 import { resolveCoyStatus } from '../../spa/shared/coyStatus.js'
-import { normalizeTaskForces } from '../../spa/shared/taskForces.js'
+import { normalizeTaskForces } from '../../spa/shared/protocol.js'
 
 type AnyRecord = Record<string, any>
 type Req = PayloadRequest | Payload
@@ -147,7 +147,7 @@ async function allGroups(req: Req): Promise<AnyRecord[]> {
   return groups.map((g) => ({
     ...g,
     tags: (g.tags || []).map((t: AnyRecord) => t.tag ?? t),
-    taskForces: normalizeTaskForces(g.taskForces, g.slug),
+    taskForces: normalizeTaskForces(g.taskForces),
     publicSpace: Boolean(g.publicSpace),
     isActive: true,
   }))

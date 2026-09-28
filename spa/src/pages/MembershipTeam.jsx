@@ -1,5 +1,5 @@
 import { Children, useState } from 'react'
-import { TEAM_LABELS } from '../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../lib/documents.js'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
@@ -409,6 +409,7 @@ function AppealPanel({ item, busy, onReview }) {
 }
 
 export function MembershipTeam() {
+  const { teamLabels } = useContentOptionLabels()
   const [ending, setEnding] = useState(null)
   const [reason, setReason] = useState('')
   const query = useApi('/member/team/membership/overview')
@@ -609,7 +610,7 @@ export function MembershipTeam() {
                                     key={role}
                                     className="chip chip-neutral"
                                   >
-                                    {TEAM_LABELS[role] ||
+                                    {teamLabels[role] ||
                                       role.replaceAll('_', ' ')}
                                   </span>
                                 ))}

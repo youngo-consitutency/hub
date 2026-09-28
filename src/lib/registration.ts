@@ -1,20 +1,41 @@
 // Port of the registration validator from server/lib/accounts.js — kept
 // behaviour-identical so the SPA's registration form validates exactly as
-// before.
-import {
-  REGIONS,
-  GENDERS,
-  MINORITY_OPTIONS,
-  AGE_BANDS,
-  YOUTH_AFFILIATIONS,
-} from '../../spa/shared/registration.js'
+// before. Option lists (regions, genders, nationalities, …) live in the
+// `registration-options` content document, edited via the console.
 import { getDocument } from './documents'
-import { NATIONALITIES } from '../../spa/shared/nationalities.js'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const PHONE_RE = /^\+?[\d\s().-]{7,22}$/
 const WORD_LIMIT = 250
-const NATIONALITY_SET = new Set(NATIONALITIES)
+
+type RegistrationOptions = {
+  regions?: string[]
+  genders?: string[]
+  minorityOptions?: string[]
+  ageBands?: { value: string }[]
+  youthAffiliations?: { value: string }[]
+  nationalities?: string[]
+}
+
+// When the document is absent the whitelist degrades to a non-empty check so
+// a fresh install stays usable; once staff publish options they are enforced.
+function optionSets(options: RegistrationOptions) {
+  return {
+    regions: new Set(options.regions || []),
+    genders: new Set(options.genders || []),
+    minorities: new Set(options.minorityOptions || []),
+    ageBands: new Set((options.ageBands || []).map((o) => o.value)),
+    affiliations: new Set(
+      (options.youthAffiliations || []).map((o) => o.value),
+    ),
+    nationalities: new Set(options.nationalities || []),
+  }
+}
+
+// Non-empty when no managed list exists; membership otherwise.
+function allowed(set: Set<string>, value: string) {
+  return set.size ? set.has(value) : Boolean(value)
+}
 
 type Fields = Record<string, string>
 type Body = Record<string, any>
@@ -127,7 +148,12 @@ function sanitizeWgInterests(value: unknown): string[] {
 }
 
 export async function validateRegistration(req: any, body: Body) {
-  const notice = (await getDocument(req, 'privacy-notice'))?.body || null
+  const [noticeDoc, optionsDoc] = await Promise.all([
+    getDocument(req, 'privacy-notice'),
+    getDocument(req, 'registration-options'),
+  ])
+  const notice = noticeDoc?.body || null
+  const opts = optionSets((optionsDoc?.body as RegistrationOptions) || {})
   const b = body || {}
   const fields: Fields = {}
 
@@ -204,11 +230,11 @@ export async function validateRegistration(req: any, body: Body) {
     const privacy = requirePrivacyConsent(b, fields, notice)
 
     if (isUnfcccAdmitted === true) {
-      if (!YOUTH_AFFILIATIONS.includes(youthAffiliation as any)) {
+      if (!allowed(opts.affiliations, youthAffiliation || '')) {
         fields.youthAffiliation =
           'Indicate affiliation with “youth” within the UNFCCC.'
       }
-      if (!(REGIONS as readonly string[]).includes(region))
+      if (!allowed(opts.regions, region))
         fields.region =
           'Select the UN region where the organisation is legally established.'
       if (!country)
@@ -341,19 +367,19 @@ export async function validateRegistration(req: any, body: Body) {
     fields.phone =
       'Enter a phone number with country code (e.g. +123 456 7890).'
   }
-  if (!(GENDERS as readonly string[]).includes(gender))
+  if (!allowed(opts.genders, gender))
     fields.gender = 'Please select your gender.'
   if (gender === 'Other' && !genderOther) fields.genderOther = 'Please specify.'
-  if (!(AGE_BANDS as readonly string[]).includes(ageBand))
+  if (!allowed(opts.ageBands, ageBand))
     fields.ageBand = 'Please select your age group.'
   if (ageBand === '35_plus') {
     fields.ageBand =
       'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.'
   }
   if (!dateOfBirth) fields.dateOfBirth = 'Date of birth is required.'
-  if (!(REGIONS as readonly string[]).includes(region))
+  if (!allowed(opts.regions, region))
     fields.region = 'Please select your UN region.'
-  if (!NATIONALITY_SET.has(nationality))
+  if (!allowed(opts.nationalities, nationality))
     fields.nationality = 'Please select a nationality from the list.'
   if (!country) fields.country = 'Country of residence is required.'
   if (motivation && motivation.length > 2000)
@@ -365,9 +391,9 @@ export async function validateRegistration(req: any, body: Body) {
     fields.memberOfAccreditedNgo = 'Please answer for statistics.'
   }
 
-  const invalidMinority = minorityGroups.filter(
-    (g) => !(MINORITY_OPTIONS as readonly string[]).includes(g),
-  )
+  const invalidMinority = opts.minorities.size
+    ? minorityGroups.filter((g) => !opts.minorities.has(g))
+    : []
   if (minorityIdentity === null)
     fields.minorityIdentity = 'Please answer yes or no.'
   if (minorityIdentity === true && minorityGroups.length === 0) {
