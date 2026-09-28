@@ -4,7 +4,7 @@ import { A } from '../../components/ui.jsx'
 import { Brand } from '../../components/Brand.jsx'
 import { DestinationIcon } from '../../components/DestinationLink.jsx'
 import { usePath } from '../../lib/router.js'
-import { publishedLinks, YOUNGO_NETWORK } from '../../content/connect.js'
+import { publishedLinks, useDocument } from '../../lib/documents.js'
 import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
 import { SiteHome } from './SiteHome.jsx'
 import { SiteWorkingGroups } from './SiteWorkingGroups.jsx'
@@ -116,54 +116,61 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
-  const socials = publishedLinks()
+  const { doc: connect } = useDocument('connect')
+  const { doc: site } = useDocument('site')
+  const footer = site?.footer || {}
+  const socials = publishedLinks(connect?.SOCIAL_LINKS)
+  const YOUNGO_NETWORK = connect?.YOUNGO_NETWORK || []
   return (
     <footer className="siteFooter">
       <div className="siteFooterInner">
         <div className="siteFooterBrand">
           <Brand constituencyOnly />
-          <p className="meta">
-            The official children and youth constituency of the UNFCCC. By youth, with youth, for
-            youth.
-          </p>
+          <p className="meta">{footer.brand}</p>
         </div>
         <nav className="siteFooterCol" aria-label="Site pages">
-          <h2>Explore</h2>
+          <h2>{footer.exploreTitle}</h2>
           {NAV.map(({ href, label }) => (
             <A key={href} href={href}>
               {label}
             </A>
           ))}
-          <a href="/privacy">Privacy notice</a>
+          <a href="/privacy">{footer.privacyLabel}</a>
         </nav>
         <div className="siteFooterCol">
-          <h2>Get involved</h2>
-          <A href="/join">Join YOUNGO</A>
-          <a href="/consultation/recap">Hub consultation recap</a>
-          <A href="/signin">Sign in</A>
-          <a
-            href="https://unfccc.int/topics/action-for-climate-empowerment-children-and-youth/youth/youngo"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            YOUNGO on UNFCCC
-            <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
-          </a>
-          {YOUNGO_NETWORK.map((site) => (
+          <h2>{footer.involvedTitle}</h2>
+          {(footer.involved || []).map((link) =>
+            link.external ? (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {link.label}
+                <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
+              </a>
+            ) : (
+              <A key={link.label} href={link.href}>
+                {link.label}
+              </A>
+            ),
+          )}
+          {YOUNGO_NETWORK.map((network) => (
             <a
-              key={site.key}
-              href={site.url}
-              target={site.url.startsWith('/') ? undefined : '_blank'}
+              key={network.key}
+              href={network.url}
+              target={network.url.startsWith('/') ? undefined : '_blank'}
               rel="noreferrer noopener"
             >
-              {site.title}
+              {network.title}
               <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
             </a>
           ))}
         </div>
         {socials.length > 0 && (
           <div className="siteFooterCol">
-            <h2>Follow</h2>
+            <h2>{footer.followTitle}</h2>
             {socials.map((link) => (
               <a key={link.key} href={link.url} target="_blank" rel="noreferrer noopener">
                 <DestinationIcon url={link.url} size={15} />
@@ -175,24 +182,26 @@ function SiteFooter() {
         )}
       </div>
       <p className="siteFooterLegal metaMuted">
-        YOUNGO · the children and youth constituency of the UNFCCC · membership is free and runs on
-        volunteers · <a href="/privacy">privacy</a>
+        {footer.legal}{' '}
+        <a href={footer.legalLink?.href || '/privacy'}>{footer.legalLink?.label}</a>
       </p>
     </footer>
   )
 }
 
 function SiteNotFound() {
+  const { doc: site } = useDocument('site')
+  const nf = site?.notFound || {}
   return (
     <div className="siteMain">
       <div className="card siteHeroCard">
-        <h1>Page not found</h1>
+        <h1>{nf.title}</h1>
         <p className="meta">
-          That page does not exist on the public site. Head back to the{' '}
+          {nf.before}{' '}
           <A href="/" className="inlineLink">
-            home page
+            {nf.linkLabel}
           </A>{' '}
-          to keep exploring.
+          {nf.after}
         </p>
       </div>
     </div>
@@ -206,6 +215,8 @@ function SiteNotFound() {
  */
 export function PublicSite() {
   const path = usePath()
+  const { doc: site } = useDocument('site')
+  const consult = site?.consultBanner
   let Page = SiteNotFound
   if (path === '/' || path === '/about' || path === '/about/' || /^\/landingV2(?:\/|$)/.test(path))
     Page = SiteHome
@@ -226,16 +237,20 @@ export function PublicSite() {
       <main id="site-main" tabIndex="-1">
         <Page />
       </main>
-      <p className="siteConsultBanner">
-        <span>
-          <strong>Hub consultation 1 · 7 Sep 2026.</strong> The first session locked complete YOUNGO
-          ownership and control.
-        </span>
-        <span className="siteConsultBannerActions">
-          <a href="/consultation/recap">Read the recap</a>
-          <a href="/consultation">Join session 2</a>
-        </span>
-      </p>
+      {consult && (
+        <p className="siteConsultBanner">
+          <span>
+            <strong>{consult.title}</strong> {consult.body}
+          </span>
+          <span className="siteConsultBannerActions">
+            {(consult.links || []).map((link) => (
+              <a key={link.href} href={link.href}>
+                {link.label}
+              </a>
+            ))}
+          </span>
+        </p>
+      )}
       <SiteFooter />
     </div>
   )

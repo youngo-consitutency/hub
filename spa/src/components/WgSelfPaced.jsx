@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { WG_DECK_BRAND, deckStyle } from '../content/wgDeckBrand.js'
+import { deckStyle, useDocument } from '../lib/documents.js'
 import {
   TbChevronLeft as ChevronLeft,
   TbChevronRight as ChevronRight,
 } from 'react-icons/tb'
 
 const ACCENTS = ['#e8943a', '#1f8a3b', '#2f6fed']
-const DeckBrand = createContext(WG_DECK_BRAND)
+const DeckBrand = createContext({})
 
 function readStoredIndex(storageKey, length) {
   try {
@@ -209,6 +209,8 @@ function SlideFace({ slide }) {
 }
 
 export function WgSelfPaced({ course, storageKey, onReachEnd }) {
+  const { doc: deckBrandDoc } = useDocument('wg-deck-brand')
+  const WG_DECK_BRAND = deckBrandDoc?.WG_DECK_BRAND || {}
   const slides = course.slides
   const [index, setIndex] = useState(() =>
     readStoredIndex(storageKey, slides.length),

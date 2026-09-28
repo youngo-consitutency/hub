@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import { clearSession } from './session.js'
 
 // The browser sends the HttpOnly session cookie; no token is stored in JS.
@@ -76,23 +76,17 @@ export function apiDelete(path) {
   return request(path, { method: 'DELETE' })
 }
 
-// Fetch state for independently rendered sections, including retry support.
+// Fetch state for independently rendered sections, backed by SWR (request
+// dedup, revalidation, retry). Keyed by [path, ...deps] so dep changes refetch.
 export function useApi(path, deps = []) {
-  const [state, setState] = useState({ data: null, error: null, loading: true })
-  const [nonce, setNonce] = useState(0)
-  useEffect(() => {
-    let alive = true
-    setState((s) => ({ ...s, loading: true, error: null }))
-    apiGet(path)
-      .then((data) => alive && setState({ data, error: null, loading: false }))
-      .catch(
-        (error) =>
-          alive &&
-          setState({ data: null, error: error.message, loading: false }),
-      )
-    return () => {
-      alive = false
-    }
-  }, [path, nonce, ...deps])
-  return { ...state, retry: () => setNonce((n) => n + 1) }
+  const { data, error, isLoading, mutate } = useSWR(
+    path ? [path, ...deps] : null,
+    ([p]) => apiGet(p),
+  )
+  return {
+    data: data ?? null,
+    error: error ? error.message : null,
+    loading: isLoading,
+    retry: () => mutate(),
+  }
 }

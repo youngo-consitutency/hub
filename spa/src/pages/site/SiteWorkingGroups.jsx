@@ -2,48 +2,45 @@ import {
   TbChevronRight as ChevronRight,
   TbUsers as Users,
 } from 'react-icons/tb'
-import { A, Async, Empty } from '../../components/ui.jsx'
+import { A, Async, Empty, Skeletons } from '../../components/ui.jsx'
 import { useApi } from '../../lib/api.js'
+import { useDocument } from '../../lib/documents.js'
 import { workingGroupIcon } from '../../lib/workingGroupIcons.js'
-import { WORKING_GROUP_TOPICS } from '../../../shared/workingGroups.js'
 
 export function SiteWorkingGroups() {
   const query = useApi('/groups')
+  const { doc: site, loading } = useDocument('site')
+  const { doc: directory } = useDocument('directory')
+  const wg = site?.workingGroups
+  const topics = directory?.topics || []
+  if (!wg || !directory) return loading ? <Skeletons n={4} /> : null
+  const empty = wg.empty || {}
+  const cta = wg.cta || {}
+  const footnote = wg.footnote || {}
 
   return (
     <div className="siteMain">
       <header className="sitePageHeader">
-        <p className="pageEyebrow">The policy work of the constituency</p>
-        <h1>Working groups</h1>
-        <p className="sitePageLead">
-          YOUNGO’s working groups focus on different aspects of the UNFCCC
-          negotiations and beyond. Active Constituency Work members can join
-          through an expression of interest. Proposals for new working groups
-          follow YOUNGO’s governance and decision-making process.
-        </p>
+        <p className="pageEyebrow">{wg.eyebrow}</p>
+        <h1>{wg.title}</h1>
+        <p className="sitePageLead">{wg.lead}</p>
       </header>
 
       <Async
         query={query}
         empty={(data) =>
           data.items.length === 0 ? (
-            <Empty
-              icon={Users}
-              title="Working groups are listed on request"
-              body="The public list is maintained by the constituency. Members see the full directory in the Hub."
-            />
+            <Empty icon={Users} title={empty.title} body={empty.body} />
           ) : null
         }
       >
         {(data) => {
-          const bySlug = new Map(data.items.map((g) => [g.slug, g]))
-          const groupsFor = (slugs) =>
-            slugs.map((slug) => bySlug.get(slug)).filter(Boolean)
-
           return (
             <>
-              {WORKING_GROUP_TOPICS.map((topic) => {
-                const groups = groupsFor(topic.groups)
+              {topics.map((topic) => {
+                const groups = data.items.filter(
+                  (g) => g.topic === topic.key,
+                )
                 if (!groups.length) return null
                 return (
                   <section
@@ -89,25 +86,19 @@ export function SiteWorkingGroups() {
               <section className="siteCtaBand card">
                 <Users size={24} strokeWidth={1.75} aria-hidden />
                 <div>
-                  <h2>Join a working group</h2>
-                  <p className="meta">
-                    Working-group channels, calls, and contact points open once
-                    you are a member. Register in the Hub, pick your groups, and
-                    finish each group’s short introduction to get started.
-                  </p>
+                  <h2>{cta.title}</h2>
+                  <p className="meta">{cta.body}</p>
                 </div>
                 <A className="btn btn-primary" href="/join">
-                  Join YOUNGO Hub
+                  {cta.label}
                   <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
                 </A>
               </section>
 
               <p className="metaMuted sitePageFootnote">
-                Working groups may be added or reorganised by the constituency;
-                this list follows the live Hub directory. Members find contact
-                points, calls, and member channels{' '}
+                {footnote.before}{' '}
                 <A href="/groups" className="inlineLink">
-                  inside the Hub
+                  {footnote.linkLabel}
                 </A>
                 .
               </p>

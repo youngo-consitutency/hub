@@ -63,7 +63,8 @@
         }
       ],
       "whatsappUrl": "https://chat.whatsapp.com/GlBYgIGHcYFGWmt3btBKgR",
-      "groupUrl": "https://forms.gle/ac2fUZ8jHFzWduaV9"
+      "groupUrl": "https://forms.gle/ac2fUZ8jHFzWduaV9",
+      "topic": "participation-learning"
     },
     {
       "slug": "finance",
@@ -154,7 +155,8 @@
           "description": "Shared Google Doc to add ideas for the Finance & Markets 2026 workplan.",
           "url": "https://docs.google.com/document/d/1KveP7TnWO74Ceukxi-HDZZ1Vs6QSnV4jietTh2e89SA/edit?usp=sharing"
         }
-      ]
+      ],
+      "topic": "economy-technology"
     },
     {
       "slug": "adaptation",
@@ -211,7 +213,8 @@
           "description": "COP29 NAP progress assessment context, linked from the Adaptation join form.",
           "url": "https://www.iisd.org/articles/explainer/cop-29-nap-assessment-adaptation"
         }
-      ]
+      ],
+      "topic": "climate-action"
     },
     {
       "slug": "loss-and-damage",
@@ -254,7 +257,8 @@
           "description": "Technical assistance network under the WIM for averting, minimising, and addressing loss and damage.",
           "url": "https://unfccc.int/santiago-network/about"
         }
-      ]
+      ],
+      "topic": "climate-action"
     },
     {
       "slug": "health",
@@ -291,7 +295,8 @@
           "description": "Constituency membership is the usual path into WG channels. Complete this, then use the Health WG join form / Contact Points.",
           "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
         }
-      ]
+      ],
+      "topic": "people-rights"
     },
     {
       "slug": "energy",
@@ -355,7 +360,8 @@
           "url": "https://climateactiontracker.org/global/cat-net-zero-target-evaluations/"
         }
       ],
-      "groupUrl": "https://linktr.ee/youngoenergy"
+      "groupUrl": "https://linktr.ee/youngoenergy",
+      "topic": "economy-technology"
     },
     {
       "slug": "mitigation",
@@ -387,7 +393,8 @@
           "description": "Tracks 2035 NDC submissions and 1.5°C alignment of analysed countries.",
           "url": "https://climateactiontracker.org/climate-target-update-tracker-2035/"
         }
-      ]
+      ],
+      "topic": "climate-action"
     },
     {
       "slug": "ndcs",
@@ -435,7 +442,8 @@
           "description": "Public registry of NDCs communicated by Parties under Article 4.12 of the Paris Agreement.",
           "url": "https://unfccc.int/NDCREG"
         }
-      ]
+      ],
+      "topic": "climate-action"
     },
     {
       "slug": "oceans",
@@ -488,7 +496,8 @@
           "description": "Constituency membership is the usual path into WG channels while the Ocean's Voice community form is down.",
           "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
         }
-      ]
+      ],
+      "topic": "nature-food"
     },
     {
       "slug": "agriculture",
@@ -557,7 +566,8 @@
           "url": "https://unfccc.int/documents/655286"
         }
       ],
-      "cadenceNote": "Food & Agriculture Academy: eight virtual sessions July–December 2026, paused in November while YOUNGO is at COP31."
+      "cadenceNote": "Food & Agriculture Academy: eight virtual sessions July–December 2026, paused in November while YOUNGO is at COP31.",
+      "topic": "nature-food"
     },
     {
       "slug": "nature",
@@ -605,7 +615,8 @@
           "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
         }
       ],
-      "groupUrl": "https://linktr.ee/youngonature"
+      "groupUrl": "https://linktr.ee/youngonature",
+      "topic": "nature-food"
     },
     {
       "slug": "gender",
@@ -663,7 +674,8 @@
           "description": "Canonical Working Groups and Operational Teams roster — use this to check whether Contact Points are named after you join.",
           "url": "https://checkered-griffin-0b3.notion.site/YOUNGO-Working-Groups-and-Operational-Teams-22a3cafc05f78151b602eebc5c3e717e"
         }
-      ]
+      ],
+      "topic": "people-rights"
     },
     {
       "slug": "human-rights",
@@ -711,7 +723,8 @@
           "url": "https://drive.google.com/file/d/17esIC7iiJsnLVwPer9ADP9aXGLENFMFS/view"
         }
       ],
-      "groupUrl": "https://linktr.ee/YHRWG"
+      "groupUrl": "https://linktr.ee/YHRWG",
+      "topic": "people-rights"
     },
     {
       "slug": "technology",
@@ -743,7 +756,8 @@
           "description": "TEC meets at least twice a year. Observer organisations may attend; agendas, papers, and reports are posted here (TEC 33: 15–18 September 2026).",
           "url": "https://unfccc.int/ttclear/tec/meetings.html"
         }
-      ]
+      ],
+      "topic": "economy-technology"
     },
     {
       "slug": "conflict-of-interest",
@@ -805,7 +819,8 @@
           "description": "Membership signup, onboarding slides (includes the Conflict of Interest Policy), Code of Conduct, and WG/OT contacts.",
           "url": "https://linktr.ee/YOUNGO.UNFCCC"
         }
-      ]
+      ],
+      "topic": "governance-integrity"
     },
     {
       "slug": "coy",
@@ -894,7 +909,8 @@
           "url": "https://forms.gle/5aU7EcHGj7te4Q2p8"
         }
       ],
-      "groupUrl": "https://climatecoy.com/"
+      "groupUrl": "https://climatecoy.com/",
+      "topic": "participation-learning"
     },
     {
       "slug": "ach",
@@ -947,7 +963,8 @@
           "purpose": "Public events, partner organisations, and collaborations the group hosts or joins."
         }
       ],
-      "publicSpace": false
+      "publicSpace": false,
+      "topic": "participation-learning"
     },
     {
       "slug": "child-rights",
@@ -989,7 +1006,8 @@
           "description": "Constituency membership is the usual path into WG channels. Then write the Child Rights WG inbox.",
           "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
         }
-      ]
+      ],
+      "topic": "people-rights"
     },
     {
       "slug": "cities",
@@ -1038,7 +1056,8 @@
           "url": "https://iclei.org/town-hall-cop/"
         }
       ],
-      "groupUrl": "https://linktr.ee/youngo.cities"
+      "groupUrl": "https://linktr.ee/youngo.cities",
+      "topic": "economy-technology"
     },
     {
       "slug": "just-transition",
@@ -1086,7 +1105,8 @@
           "description": "Public entry points named on the 2026 onboarding deck.",
           "url": "https://linktr.ee/just.transition.youngo"
         }
-      ]
+      ],
+      "topic": "economy-technology"
     },
     {
       "slug": "migration",
@@ -1125,7 +1145,8 @@
           "description": "Central YOUNGO entry points including membership and WG/OT roster.",
           "url": "https://linktr.ee/YOUNGO.UNFCCC"
         }
-      ]
+      ],
+      "topic": "people-rights"
     },
     {
       "slug": "peace-and-security",
@@ -1168,7 +1189,8 @@
           "description": "Constituency membership is the usual path into WG channels. Then complete the CPS membership form.",
           "url": "https://forms.gle/SmLx8n3dezbtMWaC8"
         }
-      ]
+      ],
+      "topic": "people-rights"
     },
     {
       "slug": "science",
@@ -1211,7 +1233,8 @@
           "url": "https://www.ipcc.ch/report/ar6/wg3/"
         }
       ],
-      "groupUrl": "https://youngo-science.org/"
+      "groupUrl": "https://youngo-science.org/",
+      "topic": "climate-action"
     },
     {
       "slug": "water",
@@ -1248,7 +1271,8 @@
           "description": "Archived YOUNGO commitment describing a Water and Climate Working Group; listed completion 31 January 2025. Not a 2026 join path.",
           "url": "https://sdgs.un.org/partnerships/mobilizing-progress-towards-water-and-climate-action-through-youth-empowerment"
         }
-      ]
+      ],
+      "topic": "nature-food"
     }
   ],
   "events": [

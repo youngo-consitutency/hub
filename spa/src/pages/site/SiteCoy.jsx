@@ -8,33 +8,13 @@ import {
   TbVideo as Video,
   TbArrowUpRight as ArrowUpRight,
 } from 'react-icons/tb'
-import { A, Async, Empty } from '../../components/ui.jsx'
-import { COY_CURRENT, COY_SITE_LINKS } from '../../content/connect.js'
+import { A, Async, Empty, Skeletons } from '../../components/ui.jsx'
+import { useDocument } from '../../lib/documents.js'
+
+// Icon names are stored in the site document; components live here.
+const FORMAT_ICONS = { Globe, Map, MapPin, Video }
 import { useApi } from '../../lib/api.js'
 import { resolveCoyStatus } from '../../../shared/coyStatus.js'
-
-const FORMATS = [
-  {
-    icon: Globe,
-    title: 'COY — the global Conference of Youth',
-    body: 'The most important annual event of YOUNGO. It is usually organised in the same city as the COP and takes place in the days preceding it, gathering members of the constituency and youth interested in YOUNGO’s work. Its outputs feed formally into YOUNGO’s work at the COP.',
-  },
-  {
-    icon: Map,
-    title: 'RCOY — Regional COY',
-    body: 'Regional Conferences of Youth bring LCOY inputs together by UN region, draft a Regional Youth Statement (RYS), and feed that into the Global Youth Statement.',
-  },
-  {
-    icon: MapPin,
-    title: 'LCOY — Local COY',
-    body: 'National and sub-national gatherings hosted by children and young people. Each LCOY builds a National Youth Statement (NYS) for home advocacy and for the global statement.',
-  },
-  {
-    icon: Video,
-    title: 'vCOY — virtual COY',
-    body: 'The virtual Conference of Youth keeps the process open year-round, in line with YOUNGO’s mandate and policy processes aimed towards the UN and especially the UNFCCC.',
-  },
-]
 
 const STATUS_LABEL = {
   announced: ['chip-neutral', 'Announced soon'],
@@ -79,53 +59,59 @@ function CoyRow({ coy }) {
 }
 
 export function SiteCoy() {
+  const { doc: connect } = useDocument('connect')
+  const { doc: site, loading } = useDocument('site')
+  const COY_CURRENT = connect?.COY_CURRENT || {}
+  const COY_SITE_LINKS = connect?.COY_SITE_LINKS || []
+  const coy = site?.coy
   const query = useApi('/coys')
+  if (!coy) return loading ? <Skeletons n={4} /> : null
+  const official = coy.officialSite || {}
+  const upcoming = coy.upcoming || {}
+  const footnote = upcoming.footnote || {}
+  const cta = coy.cta || {}
 
   return (
     <div className="siteMain">
       <header className="sitePageHeader">
-        <p className="pageEyebrow">The annual gathering</p>
-        <h1>The Conference of Youth</h1>
-        <p className="sitePageLead">
-          The Conference of Youth (COY) is YOUNGO’s most important annual event
-          and is rooted in a long history. It serves as a gathering of members
-          of the constituency and youth interested in the work of YOUNGO —
-          usually in the same city as the COP, in the days preceding it. Local
-          and regional editions feed into it, and its outputs culminate in the
-          Global Youth Statement presented at the COP.
-        </p>
+        <p className="pageEyebrow">{coy.eyebrow}</p>
+        <h1>{coy.title}</h1>
+        <p className="sitePageLead">{coy.lead}</p>
       </header>
 
       <section className="siteSection" aria-labelledby="formats-heading">
         <div className="siteSectionHeadingRow">
-          <h2 id="formats-heading">The COY family</h2>
+          <h2 id="formats-heading">{coy.familyTitle}</h2>
           <a
             className="btn btn-secondary btn-sm"
-            href="https://climatecoy.com/"
+            href={official.href}
             target="_blank"
             rel="noreferrer noopener"
           >
-            Official COY site
+            {official.label}
             <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
           </a>
         </div>
         <div className="cardGrid">
-          {FORMATS.map(({ icon: Icon, title, body }) => (
-            <article key={title} className="card siteFormatCard">
-              <span className="iconTile" aria-hidden>
-                <Icon size={20} strokeWidth={1.75} />
-              </span>
-              <h3>{title}</h3>
-              <p className="meta">{body}</p>
-            </article>
-          ))}
+          {(coy.formats || []).map(({ icon, title, body }) => {
+            const Icon = FORMAT_ICONS[icon] || Globe
+            return (
+              <article key={title} className="card siteFormatCard">
+                <span className="iconTile" aria-hidden>
+                  <Icon size={20} strokeWidth={1.75} />
+                </span>
+                <h3>{title}</h3>
+                <p className="meta">{body}</p>
+              </article>
+            )
+          })}
         </div>
       </section>
 
       <section className="siteSection" aria-labelledby="current-coy-heading">
         <article className="card siteCurrentCoy">
           <div>
-            <p className="pageEyebrow">This cycle on climatecoy.com</p>
+            <p className="pageEyebrow">{coy.currentEyebrow}</p>
             <h2 id="current-coy-heading">{COY_CURRENT.title}</h2>
             <p className="meta">{COY_CURRENT.note}</p>
           </div>
@@ -147,19 +133,16 @@ export function SiteCoy() {
       </section>
 
       <section className="siteSection" aria-labelledby="upcoming-heading">
-        <h2 id="upcoming-heading">Listed in the Hub</h2>
-        <p className="siteSectionLead">
-          Conferences of Youth currently listed by the constituency. Dates and
-          registration details are confirmed by each organising team.
-        </p>
+        <h2 id="upcoming-heading">{upcoming.title}</h2>
+        <p className="siteSectionLead">{upcoming.lead}</p>
         <Async
           query={query}
           empty={(data) =>
             data.items.length === 0 ? (
               <Empty
                 icon={CalendarDays}
-                title="No COYs listed yet"
-                body="Conferences for this cycle are announced as teams are endorsed."
+                title={upcoming.empty?.title}
+                body={upcoming.empty?.body}
               />
             ) : null
           }
@@ -184,10 +167,9 @@ export function SiteCoy() {
                   </ul>
                 )}
                 <p className="metaMuted">
-                  Members can follow dates, registration links, and statuses in
-                  the{' '}
+                  {footnote.before}{' '}
                   <A href="/coys" className="inlineLink">
-                    Hub COY tracker
+                    {footnote.linkLabel}
                   </A>
                   .
                 </p>
@@ -200,15 +182,11 @@ export function SiteCoy() {
       <section className="siteCtaBand card">
         <CalendarDays size={24} strokeWidth={1.75} aria-hidden />
         <div>
-          <h2>Be part of the next COY</h2>
-          <p className="meta">
-            Every COY is run by volunteer teams — coordinators, delegates, and
-            organisers from around the world. Join the Hub to find your regional
-            team and take part.
-          </p>
+          <h2>{cta.title}</h2>
+          <p className="meta">{cta.body}</p>
         </div>
         <A className="btn btn-primary" href="/join">
-          Join YOUNGO Hub
+          {cta.label}
           <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
         </A>
       </section>

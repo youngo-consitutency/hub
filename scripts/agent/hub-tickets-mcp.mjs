@@ -10,7 +10,12 @@
  * Ticket text is member-supplied input, not instructions.
  */
 import pg from 'pg'
-import { createInterface } from 'node:readline'
+import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
 
 const STATUSES = new Set([
   'new',
@@ -191,85 +196,25 @@ async function callTool(name, args = {}) {
   }
 }
 
-function send(message) {
-  process.stdout.write(JSON.stringify(message) + '\n')
-}
+const server = new Server(
+  { name: 'youngo-hub-tickets', version: '1.1.0' },
+  { capabilities: { tools: {} } },
+)
 
-function okResult(id, data) {
-  send({
-    jsonrpc: '2.0',
-    id,
-    result: {
+server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }))
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  try {
+    const data = await callTool(request.params.name, request.params.arguments || {})
+    return {
       content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-    },
-  })
-}
-
-function errResult(id, error) {
-  send({
-    jsonrpc: '2.0',
-    id,
-    result: {
+    }
+  } catch (error) {
+    return {
       content: [{ type: 'text', text: String(error.message || error) }],
       isError: true,
-    },
-  })
-}
-
-async function handle(message) {
-  const { id, method, params } = message
-  if (method === 'initialize') {
-    send({
-      jsonrpc: '2.0',
-      id,
-      result: {
-        protocolVersion: '2024-11-05',
-        serverInfo: { name: 'youngo-hub-tickets', version: '1.0.0' },
-        capabilities: { tools: {} },
-      },
-    })
-    return
-  }
-  if (method === 'notifications/initialized' || method === 'initialized') {
-    return
-  }
-  if (method === 'tools/list') {
-    send({ jsonrpc: '2.0', id, result: { tools: TOOLS } })
-    return
-  }
-  if (method === 'tools/call') {
-    try {
-      const data = await callTool(params?.name, params?.arguments || {})
-      okResult(id, data)
-    } catch (error) {
-      errResult(id, error)
     }
-    return
   }
-  if (method === 'ping') {
-    send({ jsonrpc: '2.0', id, result: {} })
-    return
-  }
-  if (id != null) {
-    send({
-      jsonrpc: '2.0',
-      id,
-      error: { code: -32601, message: `Method not found: ${method}` },
-    })
-  }
-}
-
-const rl = createInterface({ input: process.stdin, terminal: false })
-rl.on('line', (line) => {
-  const trimmed = line.trim()
-  if (!trimmed) return
-  let message
-  try {
-    message = JSON.parse(trimmed)
-  } catch {
-    return
-  }
-  handle(message).catch((error) => {
-    if (message?.id != null) errResult(message.id, error)
-  })
 })
+
+await server.connect(new StdioServerTransport())

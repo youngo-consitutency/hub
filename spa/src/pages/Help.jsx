@@ -16,7 +16,7 @@ import {
 } from 'react-icons/tb'
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import { FeedbackButton } from '../components/FeedbackButton.jsx'
-import { HUB_LAUNCHERS } from '../content/connect.js'
+import { useDocument } from '../lib/documents.js'
 
 const HUB_DESTINATIONS = [
   {
@@ -114,6 +114,9 @@ function PersonBehindHub({ person }) {
 }
 
 export function Help() {
+  const { doc: connect } = useDocument('connect')
+  const HUB_LAUNCHERS = connect?.HUB_LAUNCHERS || []
+
   return (
     <div className="detailPage helpPage">
       <PageHeader

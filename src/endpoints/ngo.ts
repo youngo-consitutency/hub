@@ -140,7 +140,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/ngo/seats/invite',
     method: 'post',
     handler: endpoint(async (req) => {
-      inviteLimit(req)
+      await inviteLimit(req)
       const { account, ctx } = await requireOrgScope(req, 'seats')
       const b = ((await req.json?.()) || {}) as any
       const email = trimmed(b.email, 200).toLowerCase()

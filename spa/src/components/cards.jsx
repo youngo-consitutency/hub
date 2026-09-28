@@ -2,7 +2,7 @@ import { A, StatusChip, FilterChip, LifecycleTiming } from './ui.jsx'
 import { DateStamp } from './DateStamp.jsx'
 import { MemberAvatar } from './MemberAvatar.jsx'
 import { fmtMoment, fmtDateRange } from '../lib/time.js'
-import { workingGroupTopic } from '../../shared/workingGroups.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
 import { regionLabel, regionFilterPrefix } from '../lib/regions.js'
 import { DestinationIcon } from './DestinationLink.jsx'
@@ -194,7 +194,8 @@ export function GroupCard({
 }) {
   const GroupIcon = workingGroupIcon(group.slug)
   const destination = href || `/groups/${group.slug}`
-  const topic = workingGroupTopic(group.slug)
+  const wg = useWorkingGroups()
+  const topicLabel = group.topic ? wg.topicLabel(group.topic) : null
   return (
     <div className="card cardTight groupCard entityCard">
       <A
@@ -224,9 +225,9 @@ export function GroupCard({
             {statusLabel}
           </FilterChip>
         )}
-        {topic && (
+        {topicLabel && (
           <FilterChip state={topicFilterState} onClick={onTopicFilter}>
-            {topic.label}
+            {topicLabel}
           </FilterChip>
         )}
       </div>

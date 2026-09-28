@@ -46,6 +46,7 @@ data/*.json
 !data/fixtures.json
 !data/resource-hub.json
 !data/resource-import.json
+!data/content-documents.json
 *.local
 .local/
 .local-demo/

@@ -63,6 +63,7 @@ async function main() {
   const payload = await getPayload({ config })
   const fixtures = legacyData('fixtures.json')
   const resources = legacyData('resource-hub.json')
+  const documents = legacyData('content-documents.json')
 
   // ── Console admin (opt-in) ──────────────────────────────────────
   // Provision a Payload-console login only when credentials are
@@ -86,6 +87,7 @@ async function main() {
       slug: g.slug,
       name: g.name,
       monogram: g.monogram,
+      topic: g.topic || null,
       focusLine: g.focusLine,
       description: g.description || null,
       cadenceNote: g.cadenceNote || null,
@@ -256,6 +258,16 @@ async function main() {
   }
   console.log(`resources: ${resourceCount}`)
 
+  // ── Content documents (onboarding, policies, contacts) ───────────
+  for (const d of documents) {
+    await upsert(
+      payload,
+      'content-documents',
+      { slug: { equals: d.slug } },
+      { slug: d.slug, title: d.title, body: d.body },
+    )
+  }
+  console.log(`content-documents: ${documents.length}`)
 
   console.log('Seed complete.')
   process.exit(0)

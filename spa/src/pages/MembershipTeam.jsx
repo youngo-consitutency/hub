@@ -15,7 +15,7 @@ import {
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { MemberAvatar } from '../components/MemberAvatar.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
-import { workingGroupLabel } from '../../shared/workingGroups.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import {
   TbClipboardCheck as ClipboardCheck,
   TbClock as Clock3,
@@ -169,8 +169,9 @@ function SocialLinks({ links }) {
 }
 
 function ApplicationResponses({ item }) {
+  const wg = useWorkingGroups()
   const app = item.application || {}
-  const groups = (item.wgInterests || []).map(workingGroupLabel)
+  const groups = (item.wgInterests || []).map(wg.label)
   const isOrg = (app.entityType || item.entityType) === 'organization'
   const gender =
     app.gender === 'Other' && app.genderOther

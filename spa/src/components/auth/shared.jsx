@@ -1,14 +1,11 @@
 import { TbExternalLink as ExternalLink } from 'react-icons/tb'
-import {
-  PRIVACY_VERSION,
-  CONSENT_STATEMENT,
-  CONSENT_SUMMARY,
-  PRIVACY_META,
-} from '../../../shared/privacyNotice.js'
 import { FieldError, MultiSelectDropdown } from '../FormControls.jsx'
-import { WG_SELECT_OPTIONS, fieldClass, checkClass } from './helpers.js'
+import { fieldClass, checkClass } from './helpers.js'
+import { useWorkingGroups } from '../../lib/workingGroups.js'
 
 export function WgInterestsSection({ selected, onToggle }) {
+  const wg = useWorkingGroups()
+  const options = wg.groups.map((g) => ({ value: g.slug, label: g.name }))
   return (
     <section className="card authSection">
       <h2 className="authSectionTitle">Working groups you’re interested in</h2>
@@ -19,7 +16,7 @@ export function WgInterestsSection({ selected, onToggle }) {
       <MultiSelectDropdown
         label="Working groups"
         hideLabel
-        options={WG_SELECT_OPTIONS}
+        options={options}
         selected={selected}
         onToggle={onToggle}
       />
@@ -104,7 +101,11 @@ export function PolicyLink({ href, children }) {
  * Privacy consent is separate from agreeing to follow YOUNGO policies. The
  * summary remains visible without opening the full notice.
  */
-export function PrivacyConsentSection({ checked, onChange, error, isOrg }) {
+export function PrivacyConsentSection({ checked, onChange, error, isOrg, notice }) {
+  const CONSENT_SUMMARY = notice?.CONSENT_SUMMARY || []
+  const CONSENT_STATEMENT = notice?.CONSENT_STATEMENT
+  const PRIVACY_VERSION = notice?.PRIVACY_VERSION
+  const PRIVACY_META = notice?.PRIVACY_META || {}
   return (
     <section className="card authSection">
       <h2 className="authSectionTitle">Your data and your consent *</h2>
