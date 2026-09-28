@@ -122,8 +122,7 @@ export const gysEndpoints: Endpoint[] = [
         contributions: workflow.contributions,
         statuses: workflow.statuses,
         synthesis: workflow.synthesis,
-        formUrl:
-          gys?.current?.inputsUrl || 'https://forms.gle/7Hw2ZQoxPvWzaotL9',
+        formUrl: gys?.current?.inputsUrl || null,
         submissions: await store.listSubmissions(req, 'open'),
         decisions: await store.listDecisions(req, 'active', true),
       })

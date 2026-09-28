@@ -1,8 +1,5 @@
-import {
-  TEAM_LABELS,
-  ASSIGNMENT_LABELS,
-  bodyRoles,
-} from '../../../shared/responsibilities.js'
+import { bodyRoles } from '../../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../../lib/documents.js'
 import { SidePanel } from '../../components/SidePanel.tsx'
 import {
   TbSitemap as BodiesIcon,
@@ -96,6 +93,7 @@ export function Platform({
 }
 
 function Workspace({ tab }: { tab: Tab }) {
+  const { teamLabels, assignmentLabels } = useContentOptionLabels()
   const [assignmentBody, setAssignmentBody] = useState('')
   const [attentionOpen, setAttentionOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -452,17 +450,14 @@ function Workspace({ tab }: { tab: Tab }) {
                     <article className="card entityCard" key={a.id}>
                       <h3>
                         {a.name} ·{' '}
-                        {ASSIGNMENT_LABELS[
-                          a.role as keyof typeof ASSIGNMENT_LABELS
-                        ] || a.role}
+                        {assignmentLabels[a.role] || a.role}
                       </h3>
                       <p>
                         {a.scopeType.replaceAll('_', ' ')} /{' '}
                         {a.scopeType === 'body'
                           ? bodyName(a.scopeId)
-                          : TEAM_LABELS[
-                              a.scopeId as keyof typeof TEAM_LABELS
-                            ] || a.scopeId.replaceAll('_', ' ')}
+                          : teamLabels[a.scopeId] ||
+                            a.scopeId.replaceAll('_', ' ')}
                       </p>
                       <p className="meta">
                         {formatDate(a.startsAt)} → {formatDate(a.endsAt)} ·{' '}
@@ -574,8 +569,7 @@ function Workspace({ tab }: { tab: Tab }) {
                               'gys_policy_team',
                             ].map((r) => (
                               <option key={r} value={r}>
-                                {TEAM_LABELS[r as keyof typeof TEAM_LABELS] ||
-                                  r.replaceAll('_', ' ')}
+                                {teamLabels[r] || r.replaceAll('_', ' ')}
                               </option>
                             ))}
                           </Select>
@@ -604,9 +598,7 @@ function Workspace({ tab }: { tab: Tab }) {
                               : ['contact']
                           ).map((r: string) => (
                             <option key={r} value={r}>
-                              {ASSIGNMENT_LABELS[
-                                r as keyof typeof ASSIGNMENT_LABELS
-                              ] || r}
+                              {assignmentLabels[r] || r}
                             </option>
                           ))}
                         </Select>

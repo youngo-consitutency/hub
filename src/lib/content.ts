@@ -147,7 +147,7 @@ async function allGroups(req: Req): Promise<AnyRecord[]> {
   return groups.map((g) => ({
     ...g,
     tags: (g.tags || []).map((t: AnyRecord) => t.tag ?? t),
-    taskForces: normalizeTaskForces(g.taskForces, g.slug),
+    taskForces: normalizeTaskForces(g.taskForces),
     publicSpace: Boolean(g.publicSpace),
     isActive: true,
   }))

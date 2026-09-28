@@ -2,12 +2,7 @@ import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions.js'
 import { useState } from 'react'
-import {
-  RESOURCE_ISSUE_KINDS,
-  RESOURCE_PATHWAYS,
-  RESOURCE_TYPES,
-  resourceLabel,
-} from '../../shared/resourceHub.js'
+import { resourceLabel } from '../../shared/resourceHub.js'
 import {
   ResourceCard,
   ResourceSubmissionPanel,
@@ -22,6 +17,7 @@ import {
 } from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import { apiPost, useApi } from '../lib/api.js'
+import { useContentOptions } from '../lib/documents.js'
 
 export function ResourceIssues() {
   const { account } = useAccount()
@@ -209,6 +205,11 @@ function ResourceQueue({ account }) {
 }
 
 function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
+  const {
+    resourcePathways: RESOURCE_PATHWAYS,
+    resourceTypes: RESOURCE_TYPES,
+    resourceIssueKinds: RESOURCE_ISSUE_KINDS,
+  } = useContentOptions()
   const [checks, setChecks] = useState({
     link: false,
     description: false,

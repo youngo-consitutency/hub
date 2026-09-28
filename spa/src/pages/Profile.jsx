@@ -1,8 +1,5 @@
-import {
-  TEAM_LABELS,
-  ASSIGNMENT_LABELS,
-  WEBSITE_PERMISSIONS,
-} from '../../shared/responsibilities.js'
+import { WEBSITE_PERMISSIONS } from '../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../lib/documents.js'
 import { TbUserCircle as ProfileIcon } from 'react-icons/tb'
 import { useAccount } from '../lib/accountContext.jsx'
 import { useApi } from '../lib/api.js'
@@ -30,6 +27,7 @@ const ROLE_LABELS = {
 }
 
 export function Profile() {
+  const { teamLabels, assignmentLabels } = useContentOptionLabels()
   const { account } = useAccount()
   const profileQuery = useApi('/member/profile')
   const wg = useWorkingGroups()
@@ -86,7 +84,7 @@ export function Profile() {
                 <h3>Teams</h3>
                 <ul className="profileList">
                   {teamRoles.map((role) => (
-                    <li key={role}>{TEAM_LABELS[role] || role}</li>
+                    <li key={role}>{teamLabels[role] || role}</li>
                   ))}
                 </ul>
               </div>
@@ -96,7 +94,7 @@ export function Profile() {
                 <h3>Website permissions</h3>
                 <ul className="profileList">
                   {websitePermissions.map((role) => (
-                    <li key={role}>{TEAM_LABELS[role]}</li>
+                    <li key={role}>{teamLabels[role] || role}</li>
                   ))}
                 </ul>
                 <p className="meta">
@@ -110,7 +108,7 @@ export function Profile() {
                 <ul className="profileList">
                   {wgAssignments.map((assignment) => (
                     <li
-                      key={`${assignment.wgSlug}-${ASSIGNMENT_LABELS[assignment.role] || 'Member'}`}
+                      key={`${assignment.wgSlug}-${assignmentLabels[assignment.role] || 'Member'}`}
                     >
                       <A
                         href={`/groups/${assignment.wgSlug}`}
@@ -120,7 +118,7 @@ export function Profile() {
                         {assignment.wgName ||
                           wg.label(assignment.wgSlug)}
                       </A>{' '}
-                      · {ASSIGNMENT_LABELS[assignment.role] || 'Member'}
+                      · {assignmentLabels[assignment.role] || 'Member'}
                     </li>
                   ))}
                 </ul>

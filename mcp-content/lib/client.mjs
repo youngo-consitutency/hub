@@ -3,17 +3,13 @@
  * calls the same member APIs the website uses, so authorisation and audit stay
  * on the server. Never opens a database.
  */
+// Schema-bound enums (select-field options) come from spa/shared; content
+// vocab and working groups are fetched live from the Hub API so the catalogue
+// always reflects the database — nothing operational is baked into this file.
 import {
-  EVENT_TYPES,
   OPPORTUNITY_FORMATS,
   OPPORTUNITY_KINDS,
-  RESOURCE_LANGUAGES,
-  RESOURCE_PATHWAYS,
-  RESOURCE_REGIONS,
-  RESOURCE_TOPICS,
-  RESOURCE_TYPES,
-  WORKING_GROUPS,
-} from './catalog.mjs'
+} from '../../spa/shared/opportunities.js'
 
 export const HUB_CONTENT_TOOLS = [
   {
@@ -48,6 +44,7 @@ export const HUB_CONTENT_TOOLS = [
   },
   {
     name: 'list_org_opportunities',
+
     description:
       'List this organisation’s own postings, including those still in review. Requires an organisation seat that can manage requests.',
     inputSchema: {
@@ -136,18 +133,24 @@ export const HUB_CONTENT_TOOLS = [
         publisher: { type: 'string', maxLength: 120 },
         pathway: {
           type: 'string',
-          enum: RESOURCE_PATHWAYS.map((item) => item.value),
+          description: 'One of catalog_options.resourcePathways',
         },
         type: {
           type: 'string',
-          enum: RESOURCE_TYPES.map((item) => item.value),
+          description: 'One of catalog_options.resourceTypes',
         },
-        topic: { type: 'string', enum: [...RESOURCE_TOPICS] },
+        topic: {
+          type: 'string',
+          description: 'One of catalog_options.resourceTopics',
+        },
         region: {
           type: 'string',
-          enum: RESOURCE_REGIONS.map((item) => item.value),
+          description: 'One of catalog_options.resourceRegions',
         },
-        language: { type: 'string', enum: [...RESOURCE_LANGUAGES] },
+        language: {
+          type: 'string',
+          description: 'One of catalog_options.resourceLanguages',
+        },
       },
       required: ['title', 'url', 'summary', 'pathway', 'type', 'topic'],
     },
@@ -256,12 +259,22 @@ export const HUB_CONTENT_TOOLS = [
   },
 ]
 
-export function catalogOptions() {
+// Vocab + working groups are live Hub data — fetched per call so the MCP
+// advertises what the database actually accepts, not a bundled snapshot.
+export async function catalogOptions(client) {
+  const [options, groups] = await Promise.all([
+    client.memberGet('/api/documents/content-options').catch(() => null),
+    client.memberGet('/api/groups').catch(() => null),
+  ])
+  const body = options?.body || {}
   return {
     opportunityKinds: OPPORTUNITY_KINDS,
     opportunityFormats: OPPORTUNITY_FORMATS,
-    eventTypes: EVENT_TYPES,
-    workingGroups: WORKING_GROUPS,
+    eventTypes: body.eventTypes || [],
+    workingGroups: (groups?.items || []).map((g) => ({
+      slug: g.slug,
+      name: g.name,
+    })),
     announcementHint: {
       fields: [
         'slug',
@@ -286,11 +299,11 @@ export function catalogOptions() {
         'recordingUrl',
       ],
     },
-    resourcePathways: RESOURCE_PATHWAYS,
-    resourceTypes: RESOURCE_TYPES,
-    resourceTopics: RESOURCE_TOPICS,
-    resourceRegions: RESOURCE_REGIONS,
-    resourceLanguages: RESOURCE_LANGUAGES,
+    resourcePathways: body.resourcePathways || [],
+    resourceTypes: body.resourceTypes || [],
+    resourceTopics: body.resourceTopics || [],
+    resourceRegions: body.resourceRegions || [],
+    resourceLanguages: body.resourceLanguages || [],
   }
 }
 
@@ -305,7 +318,7 @@ export function slugify(title) {
 }
 
 export function resolveHubOrigin(env = process.env) {
-  const raw = String(env.HUB_ORIGIN || 'https://youngohub.org').trim()
+  const raw = String(env.HUB_ORIGIN || 'http://localhost:3000').trim()
   const origin = raw.replace(/\/+$/, '')
   if (!/^https?:\/\//i.test(origin)) {
     throw new Error('HUB_ORIGIN must be an http(s) URL.')
@@ -408,7 +421,7 @@ export async function callHubContentTool(name, args, client) {
     case 'whoami':
       return client.whoami()
     case 'catalog_options':
-      return catalogOptions()
+      return catalogOptions(client)
     case 'list_opportunities':
       return client.memberGet('/api/member/opportunities', {
         kind: args.kind,
@@ -458,8 +471,8 @@ export async function callHubContentTool(name, args, client) {
         pathway: args.pathway,
         type: args.type,
         topic: args.topic,
-        region: args.region || 'global',
-        language: args.language || 'English',
+        region: args.region,
+        language: args.language,
       })
     case 'list_my_resource_submissions':
       return client.memberGet('/api/member/resources/submissions/mine')

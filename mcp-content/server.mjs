@@ -12,7 +12,7 @@
  *   MCP_ALLOW_ANONYMOUS  1/true — Grok Connectors can use the URL with no
  *                        OAuth and no bearer token. Hub login stays server-side.
  *   MCP_TOKEN            optional shared secret (Bearer, ?token=, or /t/<token>/mcp)
- *   HUB_ORIGIN           default https://youngohub.org
+ *   HUB_ORIGIN           default http://localhost:3000
  *   HUB_EMAIL / HUB_PASSWORD  or HUB_TOKEN
  */
 import http from 'node:http'

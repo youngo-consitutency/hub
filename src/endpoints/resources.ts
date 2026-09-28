@@ -4,7 +4,7 @@ import { requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
-import { RESOURCE_ISSUE_KINDS } from '../../spa/shared/resourceHub.js'
+import { getDocument } from '../lib/documents'
 import { audit } from '../lib/audit'
 
 const canReview = async (req: PayloadRequest, account: any) => {
@@ -212,8 +212,12 @@ export const resourceEndpoints: Endpoint[] = [
       await requireResource(req, slug)
       const b = ((await req.json?.()) || {}) as any
       const detail = String(b.detail || '').trim()
+      const options = await getDocument(req, 'content-options')
+      const issueKinds = (options?.body?.resourceIssueKinds || []).map(
+        (k: any) => String(k.value),
+      )
       if (
-        !RESOURCE_ISSUE_KINDS.some((k: any) => k.value === b.kind) ||
+        !issueKinds.includes(String(b.kind)) ||
         detail.length < 8 ||
         detail.length > 2000
       )

@@ -15,7 +15,7 @@ import {
   StatusChip,
 } from '../components/ui.jsx'
 import { FieldError, SearchableSelect } from '../components/FormControls.jsx'
-import { EVENT_TYPES } from '../../shared/contentValidation.js'
+import { useContentOptions } from '../lib/documents.js'
 import {
   TbCalendar as CalendarDays,
   TbCircleCheck as CheckCircle2,
@@ -47,15 +47,6 @@ const EMPTY_ANNOUNCEMENT = {
   ctaDeadlineAt: '',
 }
 
-const TYPE_LABELS = {
-  constituency_call: 'Constituency call',
-  wg_call: 'Working-group call',
-  wgf: 'Working-group forum',
-  unfccc_session: 'UNFCCC session',
-  webinar: 'Webinar',
-  coordination: 'Coordination',
-}
-
 function localDateTime(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -84,6 +75,7 @@ function announcementForm(payload = {}) {
 }
 
 export function ContentWorkspace() {
+  const { eventTypes } = useContentOptions()
   const [editorOpen, setEditorOpen] = useState(false)
   const query = useApi('/member/content')
   const { account } = useAccount()
@@ -290,10 +282,7 @@ export function ContentWorkspace() {
                       <div className="formGrid">
                         <SearchableSelect
                           label="Event type"
-                          options={EVENT_TYPES.map((type) => ({
-                            value: type,
-                            label: TYPE_LABELS[type],
-                          }))}
+                          options={eventTypes}
                           value={payload.type}
                           onChange={(type) => set('type', type)}
                           error={fields.type}

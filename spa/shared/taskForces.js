@@ -5,33 +5,8 @@ export const TASK_FORCE_SLUGS = new Set([
   'events-partnerships',
 ])
 
-export const DEFAULT_TASK_FORCES = {
-  ach: [
-    {
-      slug: 'programming',
-      name: 'Programming',
-      purpose:
-        'Sessions, workshops, and creative programmes the working group runs for members and partners.',
-    },
-    {
-      slug: 'policy',
-      name: 'Policy',
-      purpose:
-        'UNFCCC and related policy inputs where arts, culture, and heritage meet climate negotiations.',
-    },
-    {
-      slug: 'events-partnerships',
-      name: 'Events and partnerships',
-      purpose:
-        'Public events, partner organisations, and collaborations the group hosts or joins.',
-    },
-  ],
-}
-
-export function normalizeTaskForces(value, groupSlug) {
-  const raw = Array.isArray(value)
-    ? value
-    : DEFAULT_TASK_FORCES[groupSlug] || []
+export function normalizeTaskForces(value) {
+  const raw = Array.isArray(value) ? value : []
   return raw
     .filter((item) => item?.slug && TASK_FORCE_SLUGS.has(item.slug))
     .map((item) => ({
@@ -43,7 +18,7 @@ export function normalizeTaskForces(value, groupSlug) {
 
 export function taskForceBySlug(group, slug) {
   return (
-    normalizeTaskForces(group?.taskForces, group?.slug).find(
+    normalizeTaskForces(group?.taskForces).find(
       (item) => item.slug === slug,
     ) || null
   )

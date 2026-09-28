@@ -20,16 +20,9 @@ import {
   TbTool as Tool,
   TbWorld as World,
 } from 'react-icons/tb'
-import {
-  RESOURCE_LANGUAGES,
-  RESOURCE_PATHWAYS,
-  RESOURCE_REGIONS,
-  RESOURCE_ISSUE_KINDS,
-  RESOURCE_TOPICS,
-  RESOURCE_TYPES,
-  resourceLabel,
-} from '../../shared/resourceHub.js'
+import { resourceLabel } from '../../shared/resourceHub.js'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
+import { useContentOptions } from '../lib/documents.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { FieldError } from './FormControls.jsx'
 import {
@@ -62,20 +55,21 @@ const TYPE_ICONS = {
   opportunity: Briefcase,
 }
 
-const EMPTY_RESOURCE = {
+const EMPTY_RESOURCE = (vocab) => ({
   title: '',
   url: '',
   summary: '',
   publisher: '',
-  pathway: 'research',
-  type: 'guide',
-  topic: 'Climate basics',
-  topics: ['Climate basics'],
-  region: 'global',
-  language: 'English',
-}
+  pathway: vocab.resourcePathways[0]?.value || '',
+  type: vocab.resourceTypes[0]?.value || '',
+  topic: vocab.resourceTopics[0] || '',
+  topics: vocab.resourceTopics[0] ? [vocab.resourceTopics[0]] : [],
+  region: vocab.resourceRegions[0]?.value || '',
+  language: vocab.resourceLanguages[0] || '',
+})
 
 export function ResourceCard({ resource, onReport, onCorrect, onReview }) {
+  const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = TYPE_ICONS[resource.type] || BookOpen
   return (
     <article className="card resourceHubCard">
@@ -143,6 +137,11 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }) {
 
 export function ResourceCatalogue({ heading = 'Resource catalogue', onCorrect }) {
   const query = useApi('/resources')
+  const {
+    resourcePathways: RESOURCE_PATHWAYS,
+    resourceTypes: RESOURCE_TYPES,
+    resourceTopics: RESOURCE_TOPICS,
+  } = useContentOptions()
   const { account } = useAccount()
   const [reported, setReported] = useState(null)
   const [notice, setNotice] = useState('')
@@ -430,8 +429,18 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }) {
 
 export function ResourceSubmissionPanel({ initialResource, onCancel }) {
   const submissions = useApi('/member/resources/submissions/mine')
+  const vocab = useContentOptions()
+  const {
+    resourcePathways: RESOURCE_PATHWAYS,
+    resourceTypes: RESOURCE_TYPES,
+    resourceTopics: RESOURCE_TOPICS,
+    resourceRegions: RESOURCE_REGIONS,
+    resourceLanguages: RESOURCE_LANGUAGES,
+  } = vocab
   const [payload, setPayload] = useState(
-    initialResource ? { ...EMPTY_RESOURCE, ...initialResource } : EMPTY_RESOURCE,
+    initialResource
+      ? { ...EMPTY_RESOURCE(vocab), ...initialResource }
+      : EMPTY_RESOURCE(vocab),
   )
   const [editingId, setEditingId] = useState(null)
   const [open, setOpen] = useState(Boolean(initialResource))
@@ -451,14 +460,14 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
         : {}),
     }))
   const reset = () => {
-    setPayload(EMPTY_RESOURCE)
+    setPayload(EMPTY_RESOURCE(vocab))
     setEditingId(null)
     setOpen(false)
     setFields({})
   }
   const edit = (item) => {
     setPayload({
-      ...EMPTY_RESOURCE,
+      ...EMPTY_RESOURCE(vocab),
       ...item.payload,
       topics: item.payload.topics || [item.payload.topic],
     })
@@ -729,7 +738,9 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
 }
 
 function ResourceReport({ resource, onClose, onSaved }) {
-  const [kind, setKind] = useState('broken')
+  const { resourceIssueKinds } = useContentOptions()
+  const [kind, setKind] = useState('')
+  const selectedKind = kind || resourceIssueKinds[0]?.value || ''
   const [detail, setDetail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -739,7 +750,7 @@ function ResourceReport({ resource, onClose, onSaved }) {
     setError('')
     try {
       await apiPost(`/member/resources/${resource.slug}/issues`, {
-        kind,
+        kind: selectedKind,
         detail,
       })
       onSaved()
@@ -756,8 +767,8 @@ function ResourceReport({ resource, onClose, onSaved }) {
       {error && <ErrorCard message={error} />}
       <label>
         Issue type
-        <select className="input" value={kind} onChange={(event) => setKind(event.target.value)}>
-          {RESOURCE_ISSUE_KINDS.map((item) => (
+        <select className="input" value={selectedKind} onChange={(event) => setKind(event.target.value)}>
+          {resourceIssueKinds.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>

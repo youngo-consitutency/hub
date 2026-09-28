@@ -11,6 +11,37 @@ export function useDocument(slug) {
   return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
 }
 
+// Event types + resource taxonomy are staff-editable in the `content-options`
+// document. Empty arrays until the document loads (or while it is unset).
+export function useContentOptions() {
+  const { doc } = useDocument('content-options')
+  return {
+    eventTypes: doc?.eventTypes || [],
+    resourcePathways: doc?.resourcePathways || [],
+    resourceTypes: doc?.resourceTypes || [],
+    resourceTopics: doc?.resourceTopics || [],
+    resourceRegions: doc?.resourceRegions || [],
+    resourceLanguages: doc?.resourceLanguages || [],
+    teamLabels: doc?.teamLabels || [],
+    assignmentLabels: doc?.assignmentLabels || [],
+    wgActivityKinds: doc?.wgActivityKinds || [],
+    resourceIssueKinds: doc?.resourceIssueKinds || [],
+  }
+}
+
+// {value,label} lists become lookup maps: labels.teamLabels['membership_team'].
+export function useContentOptionLabels() {
+  const options = useContentOptions()
+  const toMap = (items) =>
+    Object.fromEntries((items || []).map((item) => [item.value, item.label]))
+  return {
+    teamLabels: toMap(options.teamLabels),
+    assignmentLabels: toMap(options.assignmentLabels),
+    wgActivityKinds: toMap(options.wgActivityKinds),
+    resourceIssueKinds: toMap(options.resourceIssueKinds),
+  }
+}
+
 // ── Pure helpers over fetched bodies ──────────────────────────────
 
 export function publishedLinks(links) {
