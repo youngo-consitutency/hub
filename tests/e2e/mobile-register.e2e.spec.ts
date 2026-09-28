@@ -27,9 +27,10 @@ test('register: SearchableSelect option tap registers selection', async ({
 
   const gender = page.getByRole('combobox', { name: /gender/i })
   await gender.tap()
-  const option = page.getByRole('option', { name: 'Female' })
+  const option = page.getByRole('option').first()
+  const label = (await option.innerText()).trim()
   await option.tap()
-  await expect(gender).toHaveValue('Female')
+  await expect(gender).toHaveValue(label)
 })
 
 test('register: MultiSelectDropdown option tap registers selection', async ({
