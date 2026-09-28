@@ -3,8 +3,12 @@ import { endpoint, fail, json } from '../lib/respond'
 import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
-import { contributionsFromCsv, previewCsvImport } from '../lib/gysImport.js'
-import { synthesizeGysContributions } from '../lib/gysSynthesis.js'
+import {
+  contributionsFromCsv,
+  previewCsvImport,
+  synthesizeGysContributions,
+} from '../lib/gys.js'
+
 
 const GYS_STATUSES = [
   'submitted',
@@ -122,8 +126,7 @@ export const gysEndpoints: Endpoint[] = [
         contributions: workflow.contributions,
         statuses: workflow.statuses,
         synthesis: workflow.synthesis,
-        formUrl:
-          gys?.current?.inputsUrl || 'https://forms.gle/7Hw2ZQoxPvWzaotL9',
+        formUrl: gys?.current?.inputsUrl || null,
         submissions: await store.listSubmissions(req, 'open'),
         decisions: await store.listDecisions(req, 'active', true),
       })

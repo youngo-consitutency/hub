@@ -7,43 +7,6 @@ import { requirePgPool, getPgPool } from './pg'
 
 // Port of server/lib/memberProfiles.js people listing / safePerson.
 
-const WORKING_GROUP_NAMES: Record<string, string> = {
-  ace: 'ACE',
-  ach: 'Arts, Culture and Heritage',
-  finance: 'Finance & Markets',
-  adaptation: 'Adaptation',
-  'loss-and-damage': 'Loss & Damage',
-  health: 'Health',
-  energy: 'Energy',
-  mitigation: 'Mitigation',
-  ndcs: 'NDCs',
-  oceans: 'Oceans',
-  agriculture: 'Food & Agriculture',
-  nature: 'Nature',
-  water: 'Water',
-  gender: 'Women & Gender',
-  'human-rights': 'Human Rights',
-  'child-rights': 'Child Rights',
-  'peace-and-security': 'Peace & Security',
-  migration: 'Migration',
-  cities: 'Cities',
-  'just-transition': 'Just Transition',
-  science: 'Science',
-  technology: 'Technology',
-  'conflict-of-interest': 'Conflict of Interest',
-  coy: 'Conference of Youth',
-}
-
-const workingGroupLabel = (slug: string) =>
-  slug ? WORKING_GROUP_NAMES[slug] || String(slug) : ''
-
-const TEAM_LABELS: Record<string, string> = {
-  membership_team: 'GCT · Membership',
-  partnerships: 'GCT · Partnerships',
-  gys_policy_team: 'Global Youth Statement Policy Team',
-  content_editor: 'Website access · Draft content',
-  content_publisher: 'Website access · Review and publish',
-}
 const WEBSITE_PERMISSIONS = ['content_editor', 'content_publisher']
 
 const wgDutyRoleLabel = (role: string | null | undefined) =>
@@ -71,24 +34,30 @@ async function relationshipMaps(accounts: any[]) {
   if (!ids.length) return { progressByAccount, orgByAccount }
   const pool = getPgPool()
   if (!pool) return { progressByAccount, orgByAccount }
-  const [progressResult, seatsResult] = await Promise.all([
-    pool.query(
-      `SELECT account_id, wg_slug, role_in_wg, status
-       FROM wg_progress
-       WHERE account_id=ANY($1::int[])
-         AND status IN ('interested','pending_approval','active')
-       ORDER BY joined_at ASC`,
-      [ids],
-    ),
-    pool.query(
-      `SELECT s.member_account_id, s.seat_role,
-              COALESCE(o.organization_name, o.name) AS organization_name
-       FROM ngo_seats s
-       JOIN accounts o ON o.id=s.org_account_id
-       WHERE s.member_account_id=ANY($1::int[]) AND s.status='active'`,
-      [ids],
-    ),
-  ])
+  const [progressResult, seatsResult, wgResult, optionsResult] =
+    await Promise.all([
+      pool.query(
+        `SELECT account_id, wg_slug, role_in_wg, status
+         FROM wg_progress
+         WHERE account_id=ANY($1::int[])
+           AND status IN ('interested','pending_approval','active')
+         ORDER BY joined_at ASC`,
+        [ids],
+      ),
+      pool.query(
+        `SELECT s.member_account_id, s.seat_role,
+                COALESCE(o.organization_name, o.name) AS organization_name
+         FROM ngo_seats s
+         JOIN accounts o ON o.id=s.org_account_id
+         WHERE s.member_account_id=ANY($1::int[]) AND s.status='active'`,
+        [ids],
+      ),
+      // Working-group names and staff labels live in the database.
+      pool.query(`SELECT slug, name FROM working_groups`),
+      pool.query(
+        `SELECT body FROM content_documents WHERE slug='content-options'`,
+      ),
+    ])
   for (const row of progressResult.rows)
     progressByAccount.get(row.account_id)?.push(row)
   for (const row of seatsResult.rows)
@@ -96,16 +65,27 @@ async function relationshipMaps(accounts: any[]) {
       name: row.organization_name,
       seatRole: row.seat_role,
     })
-  return { progressByAccount, orgByAccount }
+  const workingGroupNames = Object.fromEntries(
+    (wgResult.rows || []).map((g: any) => [g.slug, g.name]),
+  )
+  const teamLabels = Object.fromEntries(
+    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: any) => [
+      t.value,
+      t.label,
+    ]),
+  )
+  return { progressByAccount, orgByAccount, workingGroupNames, teamLabels }
 }
 
 function relationshipsFor(account: any, maps: any) {
+  const wgName = (slug: string) =>
+    maps.workingGroupNames?.[slug] || slug
   const progress = maps.progressByAccount.get(account.id) || []
   const bySlug = new Map<string, any>()
   for (const item of progress)
     bySlug.set(item.wg_slug, {
       slug: item.wg_slug,
-      name: workingGroupLabel(item.wg_slug),
+      name: wgName(item.wg_slug),
       role: item.role_in_wg || 'member',
       status: item.status,
     })
@@ -113,7 +93,7 @@ function relationshipsFor(account: any, maps: any) {
     if (!bySlug.has(slug))
       bySlug.set(slug, {
         slug,
-        name: workingGroupLabel(slug),
+        name: wgName(slug),
         role: 'interested',
         status: 'interested',
       })
@@ -123,7 +103,7 @@ function relationshipsFor(account: any, maps: any) {
       .filter((role: string) => !WEBSITE_PERMISSIONS.includes(role))
       .map((slug: string) => ({
         slug,
-        name: TEAM_LABELS[slug] || slug.replaceAll('_', ' '),
+        name: maps.teamLabels?.[slug] || slug.replaceAll('_', ' '),
       })),
     organization: maps.orgByAccount.get(account.id) || null,
     platformRole:

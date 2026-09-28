@@ -2,16 +2,22 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import ical, { ICalAlarmType, ICalCalendarMethod } from 'ical-generator'
 import { getEvent, getGroup, listEventsForIcs } from '@/lib/content'
+import { getDocument } from '@/lib/documents'
 
 export const dynamic = 'force-dynamic'
 
-const TYPE_LABEL: Record<string, string> = {
-  constituency_call: 'Constituency calls',
-  wg_call: 'Working group calls',
-  wgf: 'WG forums',
-  unfccc_session: 'UNFCCC sessions',
-  webinar: 'Webinars',
-  coordination: 'Coordination',
+// Feed names come from the `content-options` document so new event types
+// need no code change. `plural` labels the per-type feeds.
+async function typeLabels(req: any): Promise<Record<string, string>> {
+  const doc = await getDocument(req, 'content-options').catch(() => null)
+  const entries = Array.isArray(doc?.body?.eventTypes)
+    ? doc.body.eventTypes
+    : []
+  return Object.fromEntries(
+    entries
+      .filter((t: any) => t?.value)
+      .map((t: any) => [t.value, String(t.plural || t.label || t.value)]),
+  )
 }
 
 const stripIcs = (file: string) => file.replace(/\.ics$/, '')
@@ -73,9 +79,10 @@ export async function GET(
   const id = stripIcs(file)
   if (scope === 'type') {
     const events = await listEventsForIcs(req, { type: id })
+    const labels = await typeLabels(req)
     return send(
       `youngo-${id}.ics`,
-      buildCalendar({ name: `YOUNGO — ${TYPE_LABEL[id] || id}`, events }),
+      buildCalendar({ name: `YOUNGO — ${labels[id] || id}`, events }),
     )
   }
   if (scope === 'wg') {

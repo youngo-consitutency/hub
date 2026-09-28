@@ -2,12 +2,12 @@
 /**
  * Stdio MCP for adding Hub information with a YOUNGO Hub account.
  *
- * Talks to the live HTTP API (default https://youngohub.org). Authorisation,
+ * Talks to the Hub HTTP API (default http://localhost:3000). Authorisation,
  * review queues, and the audit trail stay on the server. Never uses
  * DATABASE_URL — set HUB_EMAIL + HUB_PASSWORD, or HUB_TOKEN.
  *
  * Env:
- *   HUB_ORIGIN     default https://youngohub.org
+ *   HUB_ORIGIN     default http://localhost:3000
  *   HUB_EMAIL
  *   HUB_PASSWORD
  *   HUB_TOKEN      optional session token instead of email/password

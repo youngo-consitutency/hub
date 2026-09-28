@@ -1,4 +1,4 @@
-import { ASSIGNMENT_LABELS } from '../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../lib/documents.js'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, useApi } from '../lib/api.js'
 import { A, Async, Empty, StatusChip, PageHeader } from '../components/ui.jsx'
@@ -19,6 +19,7 @@ function roleForGroup(access, slug) {
 }
 
 export function CpOverview() {
+  const { assignmentLabels } = useContentOptionLabels()
   const groups = useApi('/groups')
   const { account } = useAccount()
   const access = account?.access || { wgAssignments: [], manageAllWgs: false }
@@ -134,7 +135,7 @@ export function CpOverview() {
                         <span className="mcPill mono">
                           {role === 'admin'
                             ? 'Administrative access'
-                            : ASSIGNMENT_LABELS[role] || role}
+                            : assignmentLabels[role] || role}
                         </span>
                         {pending > 0 ? (
                           <span className="mcPill mcPillWarn mono">

@@ -1,6 +1,7 @@
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api.js'
+import { useContentOptions } from '../lib/documents.js'
 import {
   Async,
   Empty,
@@ -53,15 +54,6 @@ const FILTERS = [
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-const EVENT_TYPES = {
-  constituency_call: 'Constituency',
-  wg_call: 'Working group',
-  wgf: 'Forum',
-  unfccc_session: 'UNFCCC',
-  webinar: 'Webinar',
-  coordination: 'Coordination',
-}
-
 const EVENT_ICONS = {
   constituency_call: UsersRound,
   wg_call: Network,
@@ -81,6 +73,10 @@ function CalendarEventIcon({ type }) {
 }
 
 export function Calendar() {
+  const { eventTypes } = useContentOptions()
+  const EVENT_TYPES = Object.fromEntries(
+    eventTypes.map((t) => [t.value, t.short || t.label]),
+  )
   const [typeFilters, setTypeFilters] = useState({})
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState(null)

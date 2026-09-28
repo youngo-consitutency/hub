@@ -1,3 +1,5 @@
+import { apiPost } from './api.js'
+
 // The session credential lives ONLY in the HttpOnly `youngo_session` cookie the
 // server sets at login. It is deliberately unreadable from JavaScript, so a
 // cross-site-scripting bug cannot exfiltrate it. Nothing here may store a token.
@@ -55,4 +57,14 @@ export function hasCachedSession() {
 
 export function isSignedIn() {
   return hasCachedSession()
+}
+
+export async function signOut() {
+  try {
+    await apiPost('/auth/logout', {})
+  } catch {
+    // A failed network request must not trap someone in the local session UI.
+  }
+  clearSession()
+  window.location.reload()
 }

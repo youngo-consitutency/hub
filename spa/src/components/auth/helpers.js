@@ -1,17 +1,25 @@
-import {
-  GENDERS,
-  MINORITY_OPTIONS,
-  REGIONS,
-} from '../../../shared/registration.js'
+import { apiGet } from '../../lib/api.js'
 
 export const asOptions = (values) =>
   values.map((value) => ({ value, label: value }))
 
-export const REGION_OPTIONS = asOptions(REGIONS)
-export const GENDER_OPTIONS = asOptions(GENDERS)
-export const MINORITY_SELECT_OPTIONS = asOptions(MINORITY_OPTIONS)
-let phoneSupportPromise
+// Registration option lists (regions, genders, nationalities, …) are
+// staff-editable content in the `registration-options` document.
+let registrationOptionsPromise
 let nationalityOptionsPromise
+let phoneSupportPromise
+
+export function loadRegistrationOptions() {
+  registrationOptionsPromise ||= apiGet('/documents/registration-options').then(
+    (data) => data?.body || {},
+  )
+  return registrationOptionsPromise
+}
+
+export function wordCount(value) {
+  const text = String(value || '').trim()
+  return text ? text.split(/\s+/).length : 0
+}
 
 export function loadPhoneSupport() {
   // Retry if a prior dynamic import failed (e.g. broken Vite HMR), otherwise
@@ -24,12 +32,11 @@ export function loadPhoneSupport() {
 }
 
 export function loadNationalityOptions() {
-  nationalityOptionsPromise ||= import('../../../shared/nationalities.js').then(
-    ({ NATIONALITIES }) =>
-      NATIONALITIES.map((nationality) => ({
-        value: nationality,
-        label: nationality,
-      })),
+  nationalityOptionsPromise ||= loadRegistrationOptions().then((options) =>
+    (options.nationalities || []).map((nationality) => ({
+      value: nationality,
+      label: nationality,
+    })),
   )
   return nationalityOptionsPromise
 }

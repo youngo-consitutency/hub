@@ -1,7 +1,7 @@
 import { useDocument } from '../../lib/documents.js'
 import { FieldError, SearchableSelect } from '../FormControls.jsx'
 import {
-  REGION_OPTIONS,
+  asOptions,
   fieldClass,
   checkClass,
   loadPhoneSupport,
@@ -24,8 +24,11 @@ export function RegisterOrgForm({
 }) {
   const { doc: policiesDoc } = useDocument('policies')
   const { doc: connect } = useDocument('connect')
+  const { doc: regOptions } = useDocument('registration-options')
   const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
   const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
+  const REGION_OPTIONS = asOptions(regOptions?.regions || [])
+  const YOUTH_AFFILIATION_OPTIONS = regOptions?.youthAffiliations || []
 
   return (
     <>
@@ -156,11 +159,7 @@ export function RegisterOrgForm({
               Is your organisation affiliated with “youth” within the UNFCCC? *
             </p>
             <div className="authChoiceGrid">
-              {[
-                { value: 'primary', label: 'Yes — Primary' },
-                { value: 'secondary', label: 'Yes — Secondary' },
-                { value: 'no', label: 'No' },
-              ].map((opt) => (
+              {YOUTH_AFFILIATION_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
                   className={`authChoice ${form.youthAffiliation === opt.value ? 'active' : ''}`}
@@ -459,11 +458,13 @@ export function RegisterOrgForm({
               fields.acceptCoiPolicy
             }
           />
-          <p className="metaMuted">
-            <PolicyLink href="https://drive.google.com/drive/folders/1z7WAwxkJOzNaTlccZ4vr2fMn7vvXtReA">
-              All policies folder
-            </PolicyLink>
-          </p>
+          {policiesDoc?.browseAllUrl ? (
+            <p className="metaMuted">
+              <PolicyLink href={policiesDoc.browseAllUrl}>
+                All policies folder
+              </PolicyLink>
+            </p>
+          ) : null}
         </section>
       )}
     </>

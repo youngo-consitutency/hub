@@ -8,7 +8,7 @@ import {
   Section,
 } from '../components/ui.jsx'
 import { WgActivityCard } from '../components/WgActivityCard.jsx'
-import { taskForceBySlug } from '../../shared/taskForces.js'
+import { taskForceBySlug } from '../../shared/protocol.js'
 import { TbFlag as Flag, TbLock as Lock } from 'react-icons/tb'
 
 export function TaskForce({ slug, extra }) {

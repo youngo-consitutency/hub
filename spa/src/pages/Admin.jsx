@@ -1,8 +1,9 @@
 import { formatDateTime } from '../lib/time.js'
+import { WEBSITE_PERMISSIONS } from '../../shared/protocol.js'
 import {
-  TEAM_LABELS,
-  WEBSITE_PERMISSIONS,
-} from '../../shared/responsibilities.js'
+  optionLabel as labelFor,
+  useContentOptionLabels,
+} from '../lib/documents.js'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbSettings as AdminIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
@@ -64,11 +65,7 @@ const TEAM_ROLES = [
   'membership_team',
   'gys_policy_team',
   ...WEBSITE_PERMISSIONS,
-].map((role) => [role, TEAM_LABELS[role]])
-
-function labelFor(options, value) {
-  return options.find((option) => option.value === value)?.label || value
-}
+]
 
 function AdminDialog({ title, children, onClose }) {
   return (
@@ -79,6 +76,7 @@ function AdminDialog({ title, children, onClose }) {
 }
 
 function AccountManager({ account, onClose, onChanged, onReset }) {
+  const { teamLabels } = useContentOptionLabels()
   const [status, setStatus] = useState(account.membershipStatus)
   const [role, setRole] = useState(account.role)
   const [reason, setReason] = useState('')
@@ -197,7 +195,8 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
       <div className="adminActionBlock">
         <p className="fieldLabel">Responsibilities & website permissions</p>
         <div className="rowGap">
-          {TEAM_ROLES.map(([teamRole, label]) => {
+          {TEAM_ROLES.map((teamRole) => {
+            const label = teamLabels[teamRole] || teamRole.replaceAll('_', ' ')
             const assigned = account.teamRoles?.includes(teamRole)
             return (
               <Button

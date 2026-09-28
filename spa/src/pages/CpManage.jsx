@@ -1,6 +1,6 @@
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
-import { ASSIGNMENT_LABELS } from '../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../lib/documents.js'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
 import {
@@ -13,9 +13,9 @@ import {
   FilterPill,
 } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
-import { WG_ACTIVITY_KINDS } from '../../shared/workflows.js'
 
 export function CpManage({ slug }) {
+  const { assignmentLabels, wgActivityKinds } = useContentOptionLabels()
   const [activityBusy, setActivityBusy] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [filter, setFilter] = useState('pending')
@@ -176,7 +176,7 @@ export function CpManage({ slug }) {
                                 <span aria-hidden> · </span>
                                 {m.status.replaceAll('_', ' ')}
                                 <span aria-hidden> · </span>
-                                {ASSIGNMENT_LABELS[m.role_in_wg] ||
+                                {assignmentLabels[m.role_in_wg] ||
                                   m.role_in_wg}
                               </p>
                             </div>
@@ -218,10 +218,7 @@ export function CpManage({ slug }) {
                     <form className="stack" onSubmit={addActivity}>
                       <SearchableSelect
                         label="Kind"
-                        options={WG_ACTIVITY_KINDS.map(([value, label]) => ({
-                          value,
-                          label,
-                        }))}
+                        options={wgActivityKinds}
                         value={form.kind}
                         onChange={(kind) =>
                           setForm((current) => ({ ...current, kind }))

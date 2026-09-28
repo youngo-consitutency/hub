@@ -1,5 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
+import {
+  OPPORTUNITY_FORMAT_VALUES,
+  OPPORTUNITY_KIND_VALUES,
+} from '../../spa/shared/opportunities.js'
 
 // Shared opportunity board + NGO-posted opportunities.
 export const Opportunities: CollectionConfig = {
@@ -20,7 +24,7 @@ export const Opportunities: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'call',
-      options: ['event', 'workshop', 'hackathon', 'opportunity', 'call', 'training'],
+      options: OPPORTUNITY_KIND_VALUES,
       index: true,
     },
     { name: 'title', type: 'text', required: true },
@@ -30,7 +34,7 @@ export const Opportunities: CollectionConfig = {
       name: 'format',
       type: 'select',
       defaultValue: 'online',
-      options: ['online', 'in_person', 'hybrid'],
+      options: OPPORTUNITY_FORMAT_VALUES,
       index: true,
     },
     { name: 'location', type: 'text' },

@@ -1,18 +1,19 @@
-import { TEAM_LABELS } from '../../shared/responsibilities.js'
+import { useContentOptionLabels } from '../lib/documents.js'
 import { useState } from 'react'
 import { TbMail as Mail, TbSend as Send } from 'react-icons/tb'
 import { useWorkingGroups } from '../lib/workingGroups.js'
 import { apiPost } from '../lib/api.js'
 import { Button, ErrorCard } from './ui.jsx'
 
-const TEAM_OPTIONS = [
+const TEAM_ROLES = [
   'membership_team',
   'gys_policy_team',
   'content_editor',
   'content_publisher',
-].map((role) => [role, TEAM_LABELS[role]])
+]
 
 export function AdminEmailBroadcast() {
+  const { teamLabels } = useContentOptionLabels()
   const wg = useWorkingGroups()
   const [form, setForm] = useState({
     title: '',
@@ -139,7 +140,7 @@ export function AdminEmailBroadcast() {
                 onChange={change}
               >
                 <option value="">Choose a team</option>
-                {TEAM_OPTIONS.map(([value, label]) => (
+                {TEAM_ROLES.map((value) => [value, teamLabels[value] || value]).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>

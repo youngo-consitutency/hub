@@ -3,11 +3,9 @@ import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions.js'
 import { useState } from 'react'
 import {
-  RESOURCE_ISSUE_KINDS,
-  RESOURCE_PATHWAYS,
-  RESOURCE_TYPES,
-  resourceLabel,
-} from '../../shared/resourceHub.js'
+  optionLabel as resourceLabel,
+  useContentOptions,
+} from '../lib/documents.js'
 import {
   ResourceCard,
   ResourceSubmissionPanel,
@@ -209,6 +207,11 @@ function ResourceQueue({ account }) {
 }
 
 function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
+  const {
+    resourcePathways: RESOURCE_PATHWAYS,
+    resourceTypes: RESOURCE_TYPES,
+    resourceIssueKinds: RESOURCE_ISSUE_KINDS,
+  } = useContentOptions()
   const [checks, setChecks] = useState({
     link: false,
     description: false,
