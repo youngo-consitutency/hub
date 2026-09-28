@@ -13,10 +13,7 @@ import { MemberProfileEditor } from '../components/MemberProfileEditor.jsx'
 import { NotificationSettings } from '../components/NotificationSettings.jsx'
 import { EmailNotificationSettings } from '../components/EmailNotificationSettings.jsx'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
-import {
-  workingGroupLabel,
-  WORKING_GROUP_TOPICS,
-} from '../../shared/workingGroups.js'
+import { useWorkingGroups } from '../lib/workingGroups.js'
 import {
   TbBook2 as BookOpenCheck,
   TbSchool as GraduationCap,
@@ -35,6 +32,7 @@ const ROLE_LABELS = {
 export function Profile() {
   const { account } = useAccount()
   const profileQuery = useApi('/member/profile')
+  const wg = useWorkingGroups()
   const access = account?.access || {}
   const permissions = access.teamRoles || account?.teamRoles || []
   const teamRoles = permissions.filter(
@@ -45,10 +43,14 @@ export function Profile() {
   )
   const wgAssignments = access.wgAssignments || []
   const interests = account?.wgInterests || []
-  const interestGroups = WORKING_GROUP_TOPICS.map((topic) => ({
-    ...topic,
-    groups: topic.groups.filter((slug) => interests.includes(slug)),
-  })).filter((topic) => topic.groups.length > 0)
+  const interestGroups = wg.topics
+    .map((topic) => ({
+      ...topic,
+      groups: interests.filter(
+        (slug) => wg.bySlug.get(slug)?.topic === topic.key,
+      ),
+    }))
+    .filter((topic) => topic.groups.length > 0)
 
   return (
     <div>
@@ -116,7 +118,7 @@ export function Profile() {
                         peek
                       >
                         {assignment.wgName ||
-                          workingGroupLabel(assignment.wgSlug)}
+                          wg.label(assignment.wgSlug)}
                       </A>{' '}
                       · {ASSIGNMENT_LABELS[assignment.role] || 'Member'}
                     </li>
@@ -146,7 +148,7 @@ export function Profile() {
                                   strokeWidth={1.75}
                                   aria-hidden
                                 />
-                                {workingGroupLabel(slug)}
+                                {wg.label(slug)}
                               </A>
                             </li>
                           )

@@ -63,7 +63,7 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback',
     method: 'post',
     handler: endpoint(async (req) => {
-      feedbackLimit(req)
+      await feedbackLimit(req)
       const account = requireAccount(req)
       const b = ((await req.json?.()) || {}) as any
       const title = trimmed(b.title, 200)

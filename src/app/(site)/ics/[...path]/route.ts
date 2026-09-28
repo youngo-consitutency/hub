@@ -1,6 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { buildCalendar } from '@/lib/ics.js'
+import ical, { ICalAlarmType, ICalCalendarMethod } from 'ical-generator'
 import { getEvent, getGroup, listEventsForIcs } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +15,30 @@ const TYPE_LABEL: Record<string, string> = {
 }
 
 const stripIcs = (file: string) => file.replace(/\.ics$/, '')
+
+// Calendar feeds carry UTC times, meeting URLs and a 15-minute VALARM.
+function buildCalendar({ name, events }: { name: string; events: any[] }) {
+  const cal = ical({
+    name,
+    prodId: { company: 'YOUNGO Hub', product: 'Hub', language: 'EN' },
+    method: ICalCalendarMethod.PUBLISH,
+  })
+  for (const e of events) {
+    cal.createEvent({
+      id: `${e.slug}@youngohub`,
+      start: new Date(e.startsAt),
+      end: new Date(e.endsAt),
+      summary: e.title,
+      description: e.description,
+      url: e.meetingUrl,
+      location: e.meetingUrl,
+      alarms: [
+        { type: ICalAlarmType.display, trigger: 900, description: 'Reminder' },
+      ],
+    })
+  }
+  return cal.toString()
+}
 
 function send(filename: string, body: string) {
   return new Response(body, {

@@ -18,7 +18,6 @@ import {
   TbBrandYoutube,
   TbBrandZoom,
   TbCalendar,
-  TbCloudComputing,
   TbFileText,
   TbForms,
   TbGlobe,
@@ -71,7 +70,6 @@ export function destinationIconFor(rawUrl = '') {
     return TbMail
   }
   if (host.endsWith('openstreetmap.org')) return TbMap
-  if (host.endsWith('railway.com')) return TbCloudComputing
   if (
     host.endsWith('microsoft.com') ||
     host.endsWith('office.com') ||

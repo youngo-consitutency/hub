@@ -12,43 +12,11 @@
  *   HUB_PASSWORD
  *   HUB_TOKEN      optional session token instead of email/password
  *
- * Remote / phone clients should use the Railway HTTP server instead:
+ * Remote / phone clients should use the hosted HTTP server instead:
  *   node mcp-content/server.mjs
  */
-import { createInterface } from 'node:readline'
-import { createToolRunner } from '../../mcp-content/lib/protocol.mjs'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { createHubMcpServer } from '../../mcp-content/lib/mcpServer.mjs'
 
-function send(message) {
-  process.stdout.write(`${JSON.stringify(message)}\n`)
-}
-
-const runner = createToolRunner()
-
-const rl = createInterface({ input: process.stdin, terminal: false })
-rl.on('line', (line) => {
-  const trimmed = line.trim()
-  if (!trimmed) return
-  let message
-  try {
-    message = JSON.parse(trimmed)
-  } catch {
-    return
-  }
-  runner
-    .dispatch(message)
-    .then((out) => {
-      if (out) send(out)
-    })
-    .catch((error) => {
-      if (message?.id != null) {
-        send({
-          jsonrpc: '2.0',
-          id: message.id,
-          result: {
-            content: [{ type: 'text', text: String(error.message || error) }],
-            isError: true,
-          },
-        })
-      }
-    })
-})
+const server = createHubMcpServer()
+await server.connect(new StdioServerTransport())

@@ -1,4 +1,4 @@
-import { POLICY_BY_SLUG } from '../../content/policies.js'
+import { useDocument } from '../../lib/documents.js'
 import { Button } from '../ui.jsx'
 import {
   DatePicker,
@@ -32,6 +32,11 @@ export function RegisterIndividualForm({
   ensureCountryOptions,
   ensureNationalityOptions,
 }) {
+  const { doc: policiesDoc } = useDocument('policies')
+  const { doc: connect } = useDocument('connect')
+  const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
+  const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
+
   return (
     <>
       <section className="card authSection authIntro">
@@ -49,9 +54,9 @@ export function RegisterIndividualForm({
           Help:{' '}
           <a
             className="mandateExtLink"
-            href="mailto:youngomembership@gmail.com"
+            href={`mailto:${membershipEmail}`}
           >
-            youngomembership@gmail.com
+            {membershipEmail}
           </a>
         </p>
       </section>
@@ -111,7 +116,7 @@ export function RegisterIndividualForm({
               </Button>
               <a
                 className="btn btn-ghost btn-sm"
-                href="mailto:youngomembership@gmail.com?subject=Membership%20question"
+                href={membershipEmail ? `mailto:${membershipEmail}?subject=Membership%20question` : undefined}
               >
                 Email the membership team
               </a>

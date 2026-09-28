@@ -1,4 +1,4 @@
-import { POLICY_BY_SLUG } from '../../content/policies.js'
+import { useDocument } from '../../lib/documents.js'
 import { FieldError, SearchableSelect } from '../FormControls.jsx'
 import {
   REGION_OPTIONS,
@@ -22,6 +22,11 @@ export function RegisterOrgForm({
   toggleWg,
   ensureCountryOptions,
 }) {
+  const { doc: policiesDoc } = useDocument('policies')
+  const { doc: connect } = useDocument('connect')
+  const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
+  const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
+
   return (
     <>
       <section className="card authSection authIntro">
@@ -37,9 +42,9 @@ export function RegisterOrgForm({
           Help:{' '}
           <a
             className="mandateExtLink"
-            href="mailto:youngomembership@gmail.com"
+            href={`mailto:${membershipEmail}`}
           >
-            youngomembership@gmail.com
+            {membershipEmail}
           </a>
         </p>
       </section>

@@ -98,3 +98,15 @@ export function endpoint(handler: Handler): Handler {
 }
 
 export const json = (data: unknown, init?: ResponseInit) => Response.json(data, init)
+
+// Shared-cache policy for anonymous-safe public reads — CDN/edge caches (and
+// SWR's client cache) hold them briefly; member data never takes this path.
+export const PUBLIC_CACHE =
+  'public, s-maxage=60, stale-while-revalidate=300'
+export const NO_STORE = 'no-store'
+
+/** Cache policy for views that differ between anonymous and verified members. */
+export const viewCache = (res: Response, includePrivate: boolean): Response => {
+  res.headers.set('Cache-Control', includePrivate ? NO_STORE : PUBLIC_CACHE)
+  return res
+}

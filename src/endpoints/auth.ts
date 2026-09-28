@@ -120,9 +120,9 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/register',
     method: 'post',
     handler: endpoint(async (req) => {
-      registerLimit(req)
+      await registerLimit(req)
       const b = ((await req.json?.()) || {}) as Record<string, any>
-      const result = validateRegistration(b)
+      const result = await validateRegistration(req, b)
       if (result.honeypot) {
         req.payload.logger.info({ event: 'hub_register_rejected_as_automated' })
         return noStore(json({ ok: true }, { status: 201 }))
@@ -240,8 +240,8 @@ export const authEndpoints: Endpoint[] = [
       const email = String(b.email || '').trim()
       const password = String(b.password || '')
       ;(req as any)._bodyEmail = email
-      loginLimit(req)
-      loginAccountLimit(req)
+      await loginLimit(req)
+      await loginAccountLimit(req)
 
       const fields: Record<string, string> = {}
       if (!email) fields.email = 'Please enter your email.'
@@ -319,7 +319,7 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/change-password',
     method: 'post',
     handler: endpoint(async (req) => {
-      changePasswordLimit(req)
+      await changePasswordLimit(req)
       const account = requireAccount(req)
       const b = ((await req.json?.()) || {}) as Record<string, any>
       const currentPassword = String(b.currentPassword || '')
@@ -367,7 +367,7 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/forgot-password',
     method: 'post',
     handler: endpoint(async (req) => {
-      resetRequestLimit(req)
+      await resetRequestLimit(req)
       const b = ((await req.json?.()) || {}) as Record<string, any>
       if (b.website) return noStore(json({ ok: true, message: GENERIC_FORGOT }))
       const email = String(b.email || '')
@@ -424,7 +424,7 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/reset-password',
     method: 'post',
     handler: endpoint(async (req) => {
-      resetConsumeLimit(req)
+      await resetConsumeLimit(req)
       const b = ((await req.json?.()) || {}) as Record<string, any>
       if (b.website) return noStore(json({ ok: true }))
       const token = String(b.token || '').trim()

@@ -1,4 +1,0 @@
-# Railway npm ci runs with NODE_ENV=production, which skips devDependencies.
-# The Next.js/Payload build still needs them; prune happens after.
-[phases.install]
-cmds = ["npm ci --include=dev"]

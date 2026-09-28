@@ -4,6 +4,7 @@ import { requireAccount } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import { getPgPool } from '../lib/pg'
 import { rateLimit } from '../lib/rateLimit'
+import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
 import {
   enqueueNotification,
@@ -101,12 +102,14 @@ export const notificationEndpoints: Endpoint[] = [
       } catch (error: any) {
         throw new ApiError(400, 'validation', error.message)
       }
+      const connect = (await getDocument(req, 'connect'))?.body
       return json(
         renderEmailTemplate('announcement', {
           title: input.title,
           message: input.message,
           actionUrl: input.actionUrl,
           actionLabel: 'Open YOUNGO Hub',
+          socialLinks: connect?.SOCIAL_LINKS || [],
         }),
       )
     }),
@@ -116,7 +119,7 @@ export const notificationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = await requireNotifyCapability(req)
-      broadcastLimit(req)
+      await broadcastLimit(req)
       if (!emailConfigured())
         throw new ApiError(
           503,
@@ -178,12 +181,16 @@ export const notificationEndpoints: Endpoint[] = [
            WHERE o.source_id = $1 AND o.status = 'queued'`,
           [campaignId],
         )
+        const connect = (await getDocument(req, 'connect'))?.body
         for (const row of rows) {
           try {
             await sendTemplatedEmail({
               to: row.recipient_email,
               templateKey: row.template_key,
-              data: row.payload || {},
+              data: {
+                ...(row.payload || {}),
+                socialLinks: connect?.SOCIAL_LINKS || [],
+              },
               unsubscribe: unsubscribeUrl(row.account_id, row.category),
             })
             await markNotificationSent(row.id)
@@ -315,7 +322,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/member/notifications/verify-email/request',
     method: 'post',
     handler: endpoint(async (req) => {
-      verificationLimit(req)
+      await verificationLimit(req)
       const account = requireAccount(req)
       if (account.emailVerifiedAt) return json({ ok: true, verified: true })
       if (!emailConfigured())

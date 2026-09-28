@@ -12,7 +12,9 @@ export function emailConfigured(): boolean {
 
 let transporter: Transporter | null = null
 
-function getTransporter() {
+// Shared transport — payload.config.ts wires the same connection into
+// Payload's nodemailer adapter so console emails use identical SMTP settings.
+export function getEmailTransport(): Transporter | null {
   if (transporter) return transporter
   if (process.env.SMTP_URL) {
     transporter = nodemailer.createTransport(process.env.SMTP_URL)
@@ -41,7 +43,7 @@ export async function sendEmail({
   html?: string
 }) {
   if (process.env.HUB_DEMO_MODE === 'true') return { delivered: false }
-  const t = getTransporter()
+  const t = getEmailTransport()
   if (!t) {
     console.warn('email not configured; dropping message to', to)
     return { delivered: false }

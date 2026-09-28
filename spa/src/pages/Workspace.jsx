@@ -14,9 +14,7 @@ import {
 import { ContactCard } from '../components/cards.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
 import { WgActivityCard } from '../components/WgActivityCard.jsx'
-import { getWgOnboarding } from '../content/wgOnboarding.js'
-import { getWgSelfPaced } from '../content/jtOnboardingCourse.js'
-import { deckStyle } from '../content/wgDeckBrand.js'
+import { getWgOnboarding, deckStyle, useDocument } from '../lib/documents.js'
 import { WgSelfPaced } from '../components/WgSelfPaced.jsx'
 import {
   TbArrowUpRight as ArrowUpRight,
@@ -68,8 +66,12 @@ export function Workspace({ slug }) {
     load()
   }, [slug])
 
-  const onboard = getWgOnboarding(slug)
-  const course = getWgSelfPaced(slug)
+  const { doc: wgOnboardingDoc } = useDocument('wg-onboarding')
+  const { doc: selfPacedMap } = useDocument('self-paced-map')
+  const { doc: courseDoc } = useDocument(selfPacedMap?.map?.[slug])
+  const { doc: deckBrand } = useDocument('wg-deck-brand')
+  const onboard = getWgOnboarding(wgOnboardingDoc?.WG_ONBOARDING, slug)
+  const course = courseDoc?.COURSE || null
   const unlocked = state.progress?.presentation_ok && state.progress?.rules_ok
   const introductionRead = course
     ? courseDone && presentationOk
@@ -110,7 +112,7 @@ export function Workspace({ slug }) {
               {!state.loading && !unlocked && (
                 <section
                   className={course ? 'wgOnboard' : 'card workspaceOnboarding'}
-                  style={course ? deckStyle(course.brand) : undefined}
+                  style={course ? deckStyle(course.brand, deckBrand?.WG_DECK_BRAND) : undefined}
                   aria-labelledby="workspace-onboarding-title"
                 >
                   <header
@@ -292,7 +294,7 @@ export function Workspace({ slug }) {
                   {course && (
                     <section
                       className="wgOnboard"
-                      style={deckStyle(course.brand)}
+                      style={deckStyle(course.brand, deckBrand?.WG_DECK_BRAND)}
                     >
                       <footer className="wgOnboardFoot">
                         <p>The introduction stays available after you join.</p>

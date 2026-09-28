@@ -18,7 +18,7 @@ For a local assistant that starts its own process, run `npm run mcp:content` fro
 
 ## Deployment and access
 
-Deploy this directory as a separate Railway service using its own `railway.json`. Set `HUB_ORIGIN` explicitly: the client has a default domain that may differ from the website you intend to use.
+Deploy this directory as a separate Node.js service on your platform of choice (`node server.mjs`, or a container). Keep it off the Hub web process. Set `HUB_ORIGIN` explicitly: the client has a default domain that may differ from the website you intend to use.
 
 Never give this service `DATABASE_URL`. Keep `MCP_ALLOW_ANONYMOUS` unset; turning it on lets callers use the configured Hub account without authenticating to this service. Prefer the bearer header over token-bearing URLs, which can appear in history and logs.
 

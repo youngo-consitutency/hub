@@ -1,5 +1,6 @@
 // Google Forms CSV → GYS contribution mapping (heuristic + override).
 import { createHash } from 'node:crypto'
+import Papa from 'papaparse'
 
 const FIELD_PATTERNS = {
   timestamp: [/^timestamp$/i, /^submitted?\s*at$/i],
@@ -42,57 +43,9 @@ const FIELD_PATTERNS = {
 export function parseCsv(text) {
   const source = String(text || '').replace(/^\uFEFF/, '')
   if (!source.trim()) return { headers: [], rows: [] }
-
-  const rows = []
-  let row = []
-  let field = ''
-  let inQuotes = false
-
-  for (let i = 0; i < source.length; i += 1) {
-    const ch = source[i]
-    const next = source[i + 1]
-    if (inQuotes) {
-      if (ch === '"' && next === '"') {
-        field += '"'
-        i += 1
-      } else if (ch === '"') {
-        inQuotes = false
-      } else {
-        field += ch
-      }
-      continue
-    }
-    if (ch === '"') {
-      inQuotes = true
-      continue
-    }
-    if (ch === ',') {
-      row.push(field)
-      field = ''
-      continue
-    }
-    if (ch === '\n' || (ch === '\r' && next === '\n')) {
-      row.push(field)
-      field = ''
-      if (row.some((cell) => String(cell).trim())) rows.push(row)
-      row = []
-      if (ch === '\r') i += 1
-      continue
-    }
-    if (ch === '\r') {
-      row.push(field)
-      field = ''
-      if (row.some((cell) => String(cell).trim())) rows.push(row)
-      row = []
-      continue
-    }
-    field += ch
-  }
-  row.push(field)
-  if (row.some((cell) => String(cell).trim())) rows.push(row)
-
-  const headers = (rows.shift() || []).map((h) => String(h || '').trim())
-  const objects = rows.map((cells) => {
+  const { data } = Papa.parse(source, { skipEmptyLines: 'greedy' })
+  const headers = (data.shift() || []).map((h) => String(h || '').trim())
+  const objects = data.map((cells) => {
     const obj = {}
     headers.forEach((header, index) => {
       obj[header] = String(cells[index] ?? '').trim()

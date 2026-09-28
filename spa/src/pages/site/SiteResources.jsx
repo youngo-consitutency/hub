@@ -3,37 +3,35 @@ import {
   TbBook2 as BookOpen,
   TbChevronRight as ChevronRight,
 } from 'react-icons/tb'
+import { Skeletons } from '../../components/ui.jsx'
+import { useDocument } from '../../lib/documents.js'
 
 export function SiteResources() {
+  const { doc: site, loading } = useDocument('site')
+  const res = site?.resources
+  if (!res) return loading ? <Skeletons n={3} /> : null
+  const cta = res.cta || {}
   return (
     <div className="siteMain">
       <header className="sitePageHeader">
-        <p className="pageEyebrow">Open climate knowledge</p>
-        <h1>Resources</h1>
-        <p className="sitePageLead">
-          Explore climate resources for climate work, research, learning, and
-          funding. The catalogue is public; YOUNGO members can suggest additions
-          for independent review. Each listing shows whether its link has been
-          checked.
-        </p>
+        <p className="pageEyebrow">{res.eyebrow}</p>
+        <h1>{res.title}</h1>
+        <p className="sitePageLead">{res.lead}</p>
       </header>
       <div className="siteResourceCatalogue">
-        <ResourceCatalogue heading="Public catalogue" />
+        <ResourceCatalogue heading={res.catalogueHeading} />
       </div>
       <section className="siteCtaBand card">
         <BookOpen size={24} strokeWidth={1.75} aria-hidden />
         <div>
-          <h2>Know a useful resource?</h2>
-          <p className="meta">
-            Verified members can suggest resources for review.
-          </p>
+          <h2>{cta.title}</h2>
+          <p className="meta">{cta.body}</p>
         </div>
         <a className="btn btn-primary" href="/resources">
-          Suggest a resource
+          {cta.label}
           <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
         </a>
       </section>
-
     </div>
   )
 }
