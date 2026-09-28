@@ -14,10 +14,21 @@ let transporter: Transporter | null = null
 
 // Shared transport — payload.config.ts wires the same connection into
 // Payload's nodemailer adapter so console emails use identical SMTP settings.
+// Bound every phase of the SMTP exchange — the outbox worker must not hang a
+// whole batch on an unresponsive gateway.
+const SMTP_TIMEOUTS = {
+  connectionTimeout: 20_000,
+  greetingTimeout: 20_000,
+  socketTimeout: 60_000,
+}
+
 export function getEmailTransport(): Transporter | null {
   if (transporter) return transporter
   if (process.env.SMTP_URL) {
-    transporter = nodemailer.createTransport(process.env.SMTP_URL)
+    transporter = nodemailer.createTransport({
+      url: process.env.SMTP_URL,
+      ...SMTP_TIMEOUTS,
+    })
   } else if (process.env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -26,6 +37,7 @@ export function getEmailTransport(): Transporter | null {
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
+      ...SMTP_TIMEOUTS,
     })
   }
   return transporter

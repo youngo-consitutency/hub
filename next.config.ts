@@ -1,4 +1,5 @@
 import { withPayload } from '@payloadcms/next/withPayload'
+import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -40,4 +41,12 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withPayload(nextConfig, { devBundleServerPackages: false })
+// withPayload stays outermost (Payload requirement); Sentry only wraps the
+// build for source-map upload when its auth token is configured.
+export default withPayload(
+  withSentryConfig(nextConfig, {
+    silent: true,
+    sourcemaps: { deleteSourcemapsAfterUpload: true },
+  }),
+  { devBundleServerPackages: false },
+)

@@ -243,6 +243,9 @@ export const DecisionBallots: CollectionConfig = {
     read: isStaffOrMember,
     ...staffWrites,
   },
+  // One ballot per member per proposal — enforced at the database so
+  // concurrent submissions cannot double-count.
+  indexes: [{ unique: true, fields: ['proposal', 'account'] }],
   fields: [
     {
       name: 'proposal',

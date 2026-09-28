@@ -2,8 +2,6 @@
 
 A shared space for YOUNGO members to find groups, attend events, share resources and work on proposals, decisions and elections.
 
-[Website](https://youngohub.org) · [How the Hub works](https://github.com/youngo-consitutency/hub/wiki/How-the-Hub-works) · [Contributing](CONTRIBUTING.md)
-
 ## What is here
 
 - Public information about YOUNGO, its working groups, youth conferences and resources.
@@ -42,6 +40,13 @@ npm test
 ```
 
 `check` runs lint and a production build, including type checks. Tests need the matching database and server; they create their own accounts. Set `TEST_BASE_URL` to use a different local port. See [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development).
+
+Optional environment variables:
+
+- `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` — error tracking (server and browser). Events are scrubbed of credentials and member-identifying fields before leaving the process.
+- `CRON_SECRET` — bearer token for `GET /api/cron/notifications-drain`, the scheduled notification-queue backstop (wired in `vercel.json`; Vercel sends the secret automatically).
+- `SMTP_URL` or `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` + `EMAIL_FROM` — outbound email; broadcasts are queued in `notification_outbox` and delivered asynchronously with retries.
+- `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — web push delivery.
 
 ## Demo data
 

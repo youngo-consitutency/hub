@@ -114,10 +114,9 @@ export function PushBroadcast() {
         {result && (
           <p className="notificationNotice notificationNoticeOk" role="status">
             <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden />
-            Sent to {result.sent} of {result.total} device
-            {result.total === 1 ? '' : 's'}
-            {result.failed ? ` · ${result.failed} failed` : ''}
-            {result.pruned ? ` · ${result.pruned} stale devices removed` : ''}.
+            Queued for {result.targeted ?? result.total} member
+            {result.targeted === 1 ? '' : 's'} — delivery runs in the
+            background and retries automatically.
           </p>
         )}
 

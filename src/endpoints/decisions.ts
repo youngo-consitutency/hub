@@ -1,10 +1,7 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
-import {
-  DECISION_TYPES,
-  RED_FLAG_CATEGORIES,
-} from '../lib/decisions'
+import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
 import {
   accountRef,
   advanceIfDue,
@@ -27,6 +24,28 @@ import {
 // every transition below also appends to decision-events and audit-log.
 // The state machine itself lives in src/lib/decisionRuntime.ts so the
 // platform bridge (src/modules/platform/decisionsBridge.ts) shares it.
+
+// A duplicate (proposal, account) insert can surface two ways: the raw
+// PostgreSQL 23505, or the ValidationError the drizzle adapter converts it
+// into (data.collection = collection slug, errors[].tableName = table). The
+// ballots table's only unique constraint is this pair — the serial primary
+// key cannot collide — so either shape is unambiguous here.
+function isDuplicateBallot(error: any): boolean {
+  let current: any = error
+  while (current) {
+    if (current?.code === '23505') return true
+    if (
+      current?.name === 'ValidationError' &&
+      current?.data?.collection === 'decision-ballots' &&
+      (current.data.errors || []).some(
+        (e: any) => e.tableName === 'decision_ballots',
+      )
+    )
+      return true
+    current = current.cause === current ? null : current.cause
+  }
+  return false
+}
 
 export const decisionEndpoints: Endpoint[] = [
   {
@@ -68,8 +87,7 @@ export const decisionEndpoints: Endpoint[] = [
       if (b.decisionType === 'snap') {
         if (!b.snapJustification?.trim())
           fields.snapJustification = 'Snap decisions require a justification.'
-        if (!b.snapDeadline)
-          fields.snapDeadline = 'Snap decisions require a deadline.'
+        if (!b.snapDeadline) fields.snapDeadline = 'Snap decisions require a deadline.'
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
       const proposal = await req.payload.create({
@@ -121,10 +139,7 @@ export const decisionEndpoints: Endpoint[] = [
       const { docs: mine } = await req.payload.find({
         collection: 'decision-ballots',
         where: {
-          and: [
-            { proposal: { equals: p.id } },
-            { account: { equals: account.id } },
-          ],
+          and: [{ proposal: { equals: p.id } }, { account: { equals: account.id } }],
         },
         limit: 1,
         overrideAccess: true,
@@ -175,7 +190,10 @@ export const decisionEndpoints: Endpoint[] = [
       const account = requireCwMember(req)
       const p = await advanceIfDue(req, await loadProposal(req, req.routeParams!.id as string))
       if (!['consultation', 'decision'].includes(p.status))
-        throw fail.conflict('invalid_phase', 'Comments are only open during consultation or decision periods.')
+        throw fail.conflict(
+          'invalid_phase',
+          'Comments are only open during consultation or decision periods.',
+        )
       const b = (await req.json?.()) ?? ({} as any)
       if (!b.body?.trim()) throw fail.validation({ body: 'Required.' })
       const comment = await req.payload.create({
@@ -242,11 +260,15 @@ export const decisionEndpoints: Endpoint[] = [
       const p = await loadProposal(req, req.routeParams!.id as string)
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only contact person(s) respond to flags.')
-      const flag = await req.payload.findByID({
-        collection: 'decision-flags',
-        id: Number(req.routeParams!.flagId),
-        overrideAccess: true,
-      }).catch(() => { throw fail.notFound('Flag not found.') })
+      const flag = await req.payload
+        .findByID({
+          collection: 'decision-flags',
+          id: Number(req.routeParams!.flagId),
+          overrideAccess: true,
+        })
+        .catch(() => {
+          throw fail.notFound('Flag not found.')
+        })
       if (!['open'].includes((flag as any).status))
         throw fail.conflict('invalid_phase', 'Flag is no longer open.')
       const b = (await req.json?.()) ?? ({} as any)
@@ -271,11 +293,15 @@ export const decisionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
       const p = await loadProposal(req, req.routeParams!.id as string)
-      const flag = await req.payload.findByID({
-        collection: 'decision-flags',
-        id: Number(req.routeParams!.flagId),
-        overrideAccess: true,
-      }).catch(() => { throw fail.notFound('Flag not found.') })
+      const flag = await req.payload
+        .findByID({
+          collection: 'decision-flags',
+          id: Number(req.routeParams!.flagId),
+          overrideAccess: true,
+        })
+        .catch(() => {
+          throw fail.notFound('Flag not found.')
+        })
       const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
       if (raiser !== account.id && account.role !== 'admin')
         throw fail.forbidden('Only the flag raiser may withdraw it.')
@@ -339,26 +365,32 @@ export const decisionEndpoints: Endpoint[] = [
       const { totalDocs: existing } = await req.payload.find({
         collection: 'decision-ballots',
         where: {
-          and: [
-            { proposal: { equals: p.id } },
-            { account: { equals: account.id } },
-          ],
+          and: [{ proposal: { equals: p.id } }, { account: { equals: account.id } }],
         },
         limit: 0,
         overrideAccess: true,
       })
-      if (existing > 0)
-        throw fail.conflict('already_voted', 'Each member may vote once.')
-      const ballot = await req.payload.create({
-        collection: 'decision-ballots',
-        data: {
-          proposal: p.id,
-          account: account.id,
-          choice: b.choice,
-          castAt: new Date().toISOString(),
-        } as any,
-        overrideAccess: true,
-      })
+      if (existing > 0) throw fail.conflict('already_voted', 'Each member may vote once.')
+      let ballot
+      try {
+        ballot = await req.payload.create({
+          collection: 'decision-ballots',
+          data: {
+            proposal: p.id,
+            account: account.id,
+            choice: b.choice,
+            castAt: new Date().toISOString(),
+          } as any,
+          overrideAccess: true,
+        })
+      } catch (error: any) {
+        // The pre-check above is only a fast path: two concurrent submissions
+        // can both see zero ballots, so the unique (proposal, account) index
+        // is the real guard. Its violation is the same already_voted case.
+        if (isDuplicateBallot(error))
+          throw fail.conflict('already_voted', 'Each member may vote once.')
+        throw error
+      }
       await recordEvent(req, p.id, 'ballot_cast', account)
       return json({ ballot: ballotView(ballot) }, { status: 201 })
     }),
@@ -376,8 +408,7 @@ export const decisionEndpoints: Endpoint[] = [
       if (!['org', 'org_global_south', 'wg_or_ot'].includes(b.requesterKind))
         fields.requesterKind = 'Must be org, org_global_south or wg_or_ot.'
       if (!b.groupKey?.trim()) fields.groupKey = 'Required.'
-      if (!b.reasoning?.trim())
-        fields.reasoning = 'A veto request requires detailed reasoning.'
+      if (!b.reasoning?.trim()) fields.reasoning = 'A veto request requires detailed reasoning.'
       if (Object.keys(fields).length) throw fail.validation(fields)
       const veto = await req.payload.create({
         collection: 'decision-vetoes',
@@ -404,11 +435,15 @@ export const decisionEndpoints: Endpoint[] = [
       if (account.role !== 'admin')
         throw fail.forbidden('Veto requests are confirmed by the coordination team.')
       let p = await loadProposal(req, req.routeParams!.id as string)
-      const veto = await req.payload.findByID({
-        collection: 'decision-vetoes',
-        id: Number(req.routeParams!.vetoId),
-        overrideAccess: true,
-      }).catch(() => { throw fail.notFound('Veto request not found.') })
+      const veto = await req.payload
+        .findByID({
+          collection: 'decision-vetoes',
+          id: Number(req.routeParams!.vetoId),
+          overrideAccess: true,
+        })
+        .catch(() => {
+          throw fail.notFound('Veto request not found.')
+        })
       const updated = await req.payload.update({
         collection: 'decision-vetoes',
         id: veto.id,

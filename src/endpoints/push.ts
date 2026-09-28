@@ -1,4 +1,6 @@
 import type { Endpoint } from 'payload'
+import { after } from 'next/server'
+import { randomUUID } from 'node:crypto'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
@@ -11,6 +13,7 @@ import {
   pushConfigured,
   saveSubscription,
 } from '../lib/push'
+import { drainNotificationOutbox, enqueueNotification } from '../lib/notifications'
 import { audit } from '../lib/audit'
 
 // Keyed on the account rather than the caller IP — venue networks share IPs.
@@ -152,14 +155,41 @@ export const pushEndpoints: Endpoint[] = [
         data: data || { url: '/' },
         requireInteraction: Boolean(requireInteraction),
       })
-      const result = await deliverPush(rows, payload)
+      // One outbox job per member — delivery, endpoint pruning and retries
+      // happen in the post-response drain (after() and the cron backstop),
+      // never inside this request.
+      const accountIds = [...new Set(rows.map((row: any) => row.accountId))]
+      const campaignId =
+        String(req.headers.get('x-idempotency-key') || '').trim().slice(0, 120) ||
+        randomUUID()
+      let queued = 0
+      for (const accountId of accountIds) {
+        const { created } = await enqueueNotification({
+          accountId,
+          channel: 'push',
+          templateKey: 'push',
+          sourceType: 'push_broadcast',
+          sourceId: campaignId,
+          deduplicationKey: `push:${campaignId}:${accountId}`,
+          payload,
+        })
+        if (created) queued += 1
+      }
       await audit(req, account, {
         action: 'push.broadcast',
         targetType: 'push',
-        targetId: targetAll ? 'all' : userIds.join(','),
-        after: { title, recipients: result.total, sent: result.sent },
+        targetId: campaignId,
+        after: { title, recipients: accountIds.length, queued },
       })
-      return json({ ok: true, ...result })
+      after(() =>
+        drainNotificationOutbox(req).catch((error) =>
+          req.payload.logger.error({ err: error }, 'notification drain failed'),
+        ),
+      )
+      return json(
+        { ok: true, campaignId, targeted: accountIds.length, queued },
+        { status: 202 },
+      )
     }),
   },
   {
