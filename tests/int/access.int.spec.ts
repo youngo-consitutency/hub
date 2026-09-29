@@ -82,12 +82,26 @@ describe('generated API access control', () => {
   })
 
   it('hides gated working-group channels from members via REST', async () => {
-    const res = await api('/working-groups?limit=1', { cookie: member.cookie })
+    // Members can read working groups over REST; the gated contact-channel
+    // fields are staff-only. Provision the group with those fields set so
+    // the assertion runs on real data.
+    const payload = await testPayload()
+    const slug = `gated-${Math.random().toString(36).slice(2, 8)}`
+    await payload.create({
+      collection: 'working-groups',
+      data: {
+        slug,
+        name: 'Gated channels fixture',
+        whatsappUrl: 'https://chat.example/fixture',
+        groupUrl: 'https://group.example/fixture',
+        driveUrl: 'https://drive.example/fixture',
+      } as any,
+      overrideAccess: true,
+    })
+    const res = await api('/working-groups?limit=50', { cookie: member.cookie })
     expect(res.status).toBe(200)
     const body = await res.json()
-    // The provisioned member's working group must be listed, and must not
-    // carry the gated contact-channel fields.
-    const doc = body.docs?.[0]
+    const doc = body.docs?.find((d: any) => d.slug === slug)
     expect(doc).toBeTruthy()
     expect(doc.whatsappUrl).toBeUndefined()
     expect(doc.groupUrl).toBeUndefined()
