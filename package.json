@@ -76,8 +76,9 @@
     "node": ">=22.13.0"
   },
   "overrides": {
-    "@esbuild-kit/core-utils": {
-      "esbuild": "0.28.2"
+    "undici": "7.29.1",
+    "@payloadcms/email-nodemailer": {
+      "nodemailer": "10.0.12"
     }
   }
 }
