@@ -11,7 +11,6 @@ export function useWorkingGroups() {
   const topics = directory?.topics || []
   const bySlug = new Map(groups.map((g) => [g.slug, g]))
   const label = (slug) => bySlug.get(slug)?.name || slug
-  const topicLabel = (key) =>
-    topics.find((t) => t.key === key)?.label || null
+  const topicLabel = (key) => topics.find((t) => t.key === key)?.label || null
   return { query, groups, topics, bySlug, label, topicLabel }
 }

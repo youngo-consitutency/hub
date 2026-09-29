@@ -11,29 +11,21 @@ export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 export function isVerifiedAccount(account: any): boolean {
   return (
     account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' ||
-      VERIFIED_PLATFORM_ROLES.has(account?.role))
+    (account?.memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(account?.role))
   )
 }
 
 export function requireVerifiedMember(req: PayloadRequest) {
   const account = requireAccount(req)
   if (!isVerifiedAccount(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete onboarding and verification first.',
-    )
+    throw new ApiError(403, 'not_verified', 'Complete onboarding and verification first.')
   return account
 }
 
 // Constituency Work membership is required for decision rights (S17 §1.1).
 export function requireCwMember(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
-  if (
-    account.membershipTrack !== 'constituency_work' &&
-    !VERIFIED_PLATFORM_ROLES.has(account.role)
-  )
+  if (account.membershipTrack !== 'constituency_work' && !VERIFIED_PLATFORM_ROLES.has(account.role))
     throw new ApiError(
       403,
       'not_constituency_work',
@@ -73,13 +65,10 @@ export function accountView(row: any) {
     isUnfcccAdmitted: Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted),
     youthAffiliation: row.youth_affiliation ?? row.youthAffiliation ?? null,
     under18: Boolean(row.under_18 ?? row.under18),
-    constituencyWorkStatus:
-      row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
-    membershipPolicyVersion:
-      row.membership_policy_version ?? row.membershipPolicyVersion,
+    constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
+    membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
     privacyConsent: Boolean(row.privacy_consent ?? row.privacyConsent),
-    privacyNoticeVersion:
-      row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
+    privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
     privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
     emailVerifiedAt: row.email_verified_at ?? row.emailVerifiedAt ?? null,
     memberStatus,
@@ -87,14 +76,11 @@ export function accountView(row: any) {
     membershipStatus:
       row.membership_status ??
       row.membershipStatus ??
-      (row.course_passed_at || row.coursePassedAt
-        ? 'course_passed'
-        : 'registered'),
+      (row.course_passed_at || row.coursePassedAt ? 'course_passed' : 'registered'),
     onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
     renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
     membershipEndedAt: row.membership_ended_at ?? row.membershipEndedAt ?? null,
-    membershipEndReason:
-      row.membership_end_reason ?? row.membershipEndReason ?? null,
+    membershipEndReason: row.membership_end_reason ?? row.membershipEndReason ?? null,
     role,
     teamRoles: row.team_roles ?? row.teamRoles ?? [],
     wgInterests: row.wg_interests ?? row.wgInterests ?? [],
@@ -108,20 +94,13 @@ export function accountView(row: any) {
     }),
     isAdmin: role === 'admin',
     isFocalPoint: role === 'focal_point',
-    isMandateHolder: [
-      'admin',
-      'focal_point',
-      'wg_contact',
-      'ngo_admin',
-    ].includes(role),
+    isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: (row.entity_type ?? row.entityType) === 'organization',
     isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: row.created_at ?? row.createdAt,
     lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
-    mustChangePassword: Boolean(
-      row.must_change_password ?? row.mustChangePassword,
-    ),
+    mustChangePassword: Boolean(row.must_change_password ?? row.mustChangePassword),
   }
 }
 
@@ -135,10 +114,7 @@ export function requireAccount(req: PayloadRequest): any {
   return user
 }
 
-export async function requireCapability(
-  req: PayloadRequest,
-  capability: string,
-) {
+export async function requireCapability(req: PayloadRequest, capability: string) {
   const account = requireAccount(req)
   const access = await getAccessProfile(req, account)
   if (!access.capabilities.includes(capability)) throw fail.forbidden()
@@ -155,8 +131,7 @@ export async function requireTeam(req: PayloadRequest, teamRole: string) {
 
 export async function requireAdmin(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
-  if (account.role !== 'admin')
-    throw fail.forbidden('This console is for administrators.')
+  if (account.role !== 'admin') throw fail.forbidden('This console is for administrators.')
   return account
 }
 
@@ -173,10 +148,7 @@ export function adminReason(body: any): string {
 // {ok, token, account, expiresAt} response contract.
 export const SESSION_COOKIE = 'payload-token'
 
-export function sessionCookieHeader(
-  token: string,
-  expiresAt: Date | string | number,
-) {
+export function sessionCookieHeader(token: string, expiresAt: Date | string | number) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
   return `${SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Expires=${new Date(expiresAt).toUTCString()}${secure}`
 }

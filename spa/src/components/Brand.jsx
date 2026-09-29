@@ -1,7 +1,5 @@
 export function Brand({ constituencyOnly = false }) {
-  const src = constituencyOnly
-    ? '/brand/youngo-logo.png'
-    : '/brand/youngo-hub-logo.png'
+  const src = constituencyOnly ? '/brand/youngo-logo.png' : '/brand/youngo-hub-logo.png'
 
   return (
     <span

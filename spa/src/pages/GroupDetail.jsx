@@ -1,19 +1,9 @@
 import { useApi } from '../lib/api.js'
-import {
-  A,
-  Async,
-  BackLink,
-  Section,
-  Empty,
-  PageHeader,
-} from '../components/ui.jsx'
+import { A, Async, BackLink, Section, Empty, PageHeader } from '../components/ui.jsx'
 import { EventCard, PersonCard, SubmissionCard } from '../components/cards.jsx'
 import { CopyFeedButton } from '../components/Subscribe.jsx'
 import { ExternalResourceRow } from '../components/DestinationLink.jsx'
-import {
-  groupResourcesByCategory,
-  isPublicGroupResource,
-} from '../../shared/resourceCategories.js'
+import { groupResourcesByCategory, isPublicGroupResource } from '../../shared/resourceCategories.js'
 import {
   TbArrowRight as ArrowRight,
   TbBook2 as Book,
@@ -73,8 +63,8 @@ function GroupCommunity({ slug }) {
           data.items.length ? (
             <Section label="People in this group">
               <p className="meta groupPeopleNote">
-                Members shown here have chosen to publish their profile. Group
-                membership and roles update from the workspace automatically.
+                Members shown here have chosen to publish their profile. Group membership and roles
+                update from the workspace automatically.
               </p>
               <div className="peopleGrid groupPeopleGrid">
                 {data.items.map((person) => (
@@ -91,9 +81,7 @@ function GroupCommunity({ slug }) {
 
 function GroupResourceGroups({ slug, resources, locked }) {
   const categories = groupResourcesByCategory(resources)
-  const publicCategories = groupResourcesByCategory(
-    resources.filter(isPublicGroupResource),
-  )
+  const publicCategories = groupResourcesByCategory(resources.filter(isPublicGroupResource))
   const midpoint = Math.ceil(categories.length / 2)
   const columns = locked
     ? [publicCategories].filter((column) => column.length > 0)
@@ -118,9 +106,7 @@ function GroupResourceGroups({ slug, resources, locked }) {
               >
                 <h3 className="groupResourceGroupTitle" id={headingId}>
                   <CategoryIcon size={16} strokeWidth={1.75} aria-hidden />
-                  {locked
-                    ? PUBLIC_RESOURCE_LABELS[category.key] || category.label
-                    : category.label}
+                  {locked ? PUBLIC_RESOURCE_LABELS[category.key] || category.label : category.label}
                 </h3>
                 <div className="resourceList groupResourceList">
                   {category.resources.map((resource) => (
@@ -162,17 +148,15 @@ export function GroupDetail({ slug }) {
         {(g) => (
           <>
             <PageHeader title={g.name} description={g.focusLine}>
-              {g.cadenceNote && (
-                <p className="metaMuted mono">{g.cadenceNote}</p>
-              )}
+              {g.cadenceNote && <p className="metaMuted mono">{g.cadenceNote}</p>}
             </PageHeader>
 
             <section className="card groupOverview" aria-label="Group access">
               <div className="groupOverviewCopy">
                 <h2>Member workspace</h2>
                 <p className="metaMuted detailHelp">
-                  Complete the short group introduction once to open member
-                  channels, activities, and full Contact Point details.
+                  Complete the short group introduction once to open member channels, activities,
+                  and full Contact Point details.
                 </p>
               </div>
               <div className="detailActions groupOverviewActions">

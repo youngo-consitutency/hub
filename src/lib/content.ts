@@ -116,8 +116,7 @@ function coyView(coy: AnyRecord, now = new Date()): AnyRecord {
 export function opportunityShape(o: AnyRecord): AnyRecord {
   return {
     id: o.id,
-    orgAccountId:
-      typeof o.orgAccount === 'object' ? o.orgAccount?.id : o.orgAccount || null,
+    orgAccountId: typeof o.orgAccount === 'object' ? o.orgAccount?.id : o.orgAccount || null,
     organizationName: o.organizationName || 'Shared opportunity',
     kind: o.kind,
     title: o.title,
@@ -138,12 +137,7 @@ export function opportunityShape(o: AnyRecord): AnyRecord {
 }
 
 async function allGroups(req: Req): Promise<AnyRecord[]> {
-  const groups = await findAll(
-    req,
-    'working-groups',
-    { isActive: { equals: true } },
-    'sortOrder',
-  )
+  const groups = await findAll(req, 'working-groups', { isActive: { equals: true } }, 'sortOrder')
   return groups.map((g) => ({
     ...g,
     tags: (g.tags || []).map((t: AnyRecord) => t.tag ?? t),
@@ -170,36 +164,24 @@ export async function getGroup(req: Req, slug: string, now = new Date()) {
     listSubmissionsRaw(req).then((items) =>
       items
         .filter((s) => s.wg?.slug === slug && OPEN_SUB_STATES.includes(s.status))
-        .sort(
-          (a, b) =>
-            new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime(),
-        ),
+        .sort((a, b) => new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime()),
     ),
-    listDirectory(req).then(
-      (items) => items.find((c) => c.wg?.slug === slug) || null,
-    ),
+    listDirectory(req).then((items) => items.find((c) => c.wg?.slug === slug) || null),
   ])
   return { ...group, events, submissions, contact }
 }
 
 async function listSubmissionsRaw(req: Req): Promise<AnyRecord[]> {
-  return (await findAll(req, 'content-submissions', undefined, 'deadlineAt')).map(
-    submissionShape,
-  )
+  return (await findAll(req, 'content-submissions', undefined, 'deadlineAt')).map(submissionShape)
 }
 
 // Unpublished items vanish from both public and staff reads, matching the
 // legacy publication-store behaviour (requireLiveItem → not_found).
 const LIVE_ONLY = { state: { not_equals: 'unpublished' } }
 
-export async function listEvents(
-  req: Req,
-  { type }: { type?: string } = {},
-): Promise<AnyRecord[]> {
+export async function listEvents(req: Req, { type }: { type?: string } = {}): Promise<AnyRecord[]> {
   const where =
-    type && type !== 'all'
-      ? { and: [{ type: { equals: type } }, LIVE_ONLY] }
-      : LIVE_ONLY
+    type && type !== 'all' ? { and: [{ type: { equals: type } }, LIVE_ONLY] } : LIVE_ONLY
   return (await findAll(req, 'content-events', where, 'startsAt')).map(eventShape)
 }
 
@@ -231,10 +213,7 @@ export async function listSubmissions(req: Req, state = 'open') {
         ? !OPEN_SUB_STATES.includes(s.status)
         : OPEN_SUB_STATES.includes(s.status),
     )
-    .sort(
-      (a, b) =>
-        new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime(),
-    )
+    .sort((a, b) => new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime())
 }
 
 export async function getSubmission(req: Req, slug: string) {
@@ -253,15 +232,12 @@ export async function listDecisions(req: Req, state = 'active', verified = false
   const decided = all.filter((d) => !DECISION_OPEN.includes(d.status))
   if (state === 'decided' || state === 'all') {
     const sorted = decided.sort(
-      (a, b) =>
-        new Date(b.decidedAt || 0).getTime() - new Date(a.decidedAt || 0).getTime(),
+      (a, b) => new Date(b.decidedAt || 0).getTime() - new Date(a.decidedAt || 0).getTime(),
     )
     return state === 'all' ? [...active, ...sorted] : sorted
   }
   return active.sort((a, b) =>
-    String(a.windowDeadline || '9999').localeCompare(
-      String(b.windowDeadline || '9999'),
-    ),
+    String(a.windowDeadline || '9999').localeCompare(String(b.windowDeadline || '9999')),
   )
 }
 
@@ -308,17 +284,15 @@ export async function getCoy(req: Req, slug: string) {
 }
 
 export async function listDirectory(req: Req): Promise<AnyRecord[]> {
-  return (await findAll(req, 'directory-contacts', undefined, 'sortOrder')).map(
-    (c) => ({
-      group: c.group,
-      roleTitle: c.roleTitle,
-      description: c.description,
-      publicEmail: c.publicEmail || null,
-      wg: wgRef(c.wg),
-      personName: c.personName || null,
-      channelValue: c.channelValue || null,
-    }),
-  )
+  return (await findAll(req, 'directory-contacts', undefined, 'sortOrder')).map((c) => ({
+    group: c.group,
+    roleTitle: c.roleTitle,
+    description: c.description,
+    publicEmail: c.publicEmail || null,
+    wg: wgRef(c.wg),
+    personName: c.personName || null,
+    channelValue: c.channelValue || null,
+  }))
 }
 
 export async function getGys(req: Req) {
@@ -357,14 +331,13 @@ export async function addGysSignup(
 }
 
 export async function getFeed(req: Req, now = new Date(), verified = false) {
-  const [events, submissions, council, announcements, coys] =
-    await Promise.all([
-      listEvents(req),
-      listSubmissionsRaw(req),
-      listDecisions(req, 'all', verified),
-      listAnnouncements(req),
-      listCoys(req),
-    ])
+  const [events, submissions, council, announcements, coys] = await Promise.all([
+    listEvents(req),
+    listSubmissionsRaw(req),
+    listDecisions(req, 'all', verified),
+    listAnnouncements(req),
+    listCoys(req),
+  ])
   return assembleFeed({ events, submissions, council, announcements, coys }, now)
 }
 
@@ -455,30 +428,21 @@ export async function search(req: Req, q: string, verified = false) {
   }
   const hit = (...fields: unknown[]) =>
     fields.some((f) => f && String(f).toLowerCase().includes(needle))
-  const [events, submissions, council, coys, groups, directory] =
-    await Promise.all([
-      listEvents(req),
-      listSubmissionsRaw(req),
-      listDecisions(req, 'all', verified),
-      listCoys(req),
-      allGroups(req),
-      listDirectory(req),
-    ])
+  const [events, submissions, council, coys, groups, directory] = await Promise.all([
+    listEvents(req),
+    listSubmissionsRaw(req),
+    listDecisions(req, 'all', verified),
+    listCoys(req),
+    allGroups(req),
+    listDirectory(req),
+  ])
   return {
-    events: events
-      .filter((e) => hit(e.title, e.description, e.wg?.name))
-      .slice(0, 4),
-    submissions: submissions
-      .filter((s) => hit(s.title, s.wg?.name))
-      .slice(0, 4),
+    events: events.filter((e) => hit(e.title, e.description, e.wg?.name)).slice(0, 4),
+    submissions: submissions.filter((s) => hit(s.title, s.wg?.name)).slice(0, 4),
     decisions: council.filter((d) => hit(d.title, d.summary)).slice(0, 4),
-    coys: coys
-      .filter((c) => hit(c.title, c.city, c.country))
-      .slice(0, 4),
+    coys: coys.filter((c) => hit(c.title, c.city, c.country)).slice(0, 4),
     groups: groups.filter((g) => hit(g.name, g.focusLine)).slice(0, 4),
-    contacts: directory
-      .filter((c) => hit(c.roleTitle, c.description))
-      .slice(0, 4),
+    contacts: directory.filter((c) => hit(c.roleTitle, c.description)).slice(0, 4),
   }
 }
 
@@ -493,9 +457,6 @@ export async function listEventsForIcs(
   return (await listEvents(req))
     .filter((e) => !type || type === 'all' || e.type === type)
     .filter((e) => !wg || e.wg?.slug === wg)
-    .filter(
-      (e) =>
-        new Date(e.endsAt) >= now && new Date(e.startsAt).getTime() <= horizon,
-    )
+    .filter((e) => new Date(e.endsAt) >= now && new Date(e.startsAt).getTime() <= horizon)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
 }

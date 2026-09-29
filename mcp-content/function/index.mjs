@@ -21,9 +21,7 @@ const transport = new StreamableHTTPTransport()
 const server = createHubMcpServer(process.env)
 let connected = false
 
-const expected = String(
-  process.env.MCP_TOKEN || process.env.HUB_MCP_TOKEN || '',
-).trim()
+const expected = String(process.env.MCP_TOKEN || process.env.HUB_MCP_TOKEN || '').trim()
 const anonymous = /^(1|true)$/i.test(process.env.MCP_ALLOW_ANONYMOUS || '')
 
 const safeEq = (a, b) => {

@@ -8,10 +8,7 @@ export const NgoSeats: CollectionConfig = {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
       const where: Where = {
-        or: [
-          { memberAccount: { equals: req.user.id } },
-          { orgAccount: { equals: req.user.id } },
-        ],
+        or: [{ memberAccount: { equals: req.user.id } }, { orgAccount: { equals: req.user.id } }],
       }
       return where
     },
@@ -19,12 +16,31 @@ export const NgoSeats: CollectionConfig = {
     ...staffWrites,
   },
   fields: [
-    { name: 'orgAccount', type: 'relationship', relationTo: 'accounts', required: true, index: true },
+    {
+      name: 'orgAccount',
+      type: 'relationship',
+      relationTo: 'accounts',
+      required: true,
+      index: true,
+    },
     { name: 'memberAccount', type: 'relationship', relationTo: 'accounts', index: true },
     { name: 'email', type: 'text', index: true }, // invite target before account exists
     { name: 'name', type: 'text' },
-    { name: 'seatRole', type: 'select', required: true, options: ['owner', 'representative', 'viewer', 'affiliate'], defaultValue: 'representative' },
-    { name: 'status', type: 'select', required: true, defaultValue: 'invited', options: ['invited', 'requested', 'active', 'revoked', 'declined'], index: true },
+    {
+      name: 'seatRole',
+      type: 'select',
+      required: true,
+      options: ['owner', 'representative', 'viewer', 'affiliate'],
+      defaultValue: 'representative',
+    },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'invited',
+      options: ['invited', 'requested', 'active', 'revoked', 'declined'],
+      index: true,
+    },
     { name: 'inviteTokenHash', type: 'text' },
     { name: 'inviteExpiresAt', type: 'date' },
     { name: 'invitedBy', type: 'relationship', relationTo: 'accounts' },
@@ -44,7 +60,13 @@ export const NgoRequests: CollectionConfig = {
     ...staffWrites,
   },
   fields: [
-    { name: 'orgAccount', type: 'relationship', relationTo: 'accounts', required: true, index: true },
+    {
+      name: 'orgAccount',
+      type: 'relationship',
+      relationTo: 'accounts',
+      required: true,
+      index: true,
+    },
     {
       name: 'kind',
       type: 'select',

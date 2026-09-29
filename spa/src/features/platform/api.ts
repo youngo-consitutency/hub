@@ -2,10 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../../lib/api.js'
 
 export const get = <T>(path: string): Promise<T> => apiGet(`/platform${path}`)
-export const post = (path: string, body: unknown = {}) =>
-  apiPost(`/platform${path}`, body)
-export const patch = (path: string, body: unknown) =>
-  apiPatch(`/platform${path}`, body)
+export const post = (path: string, body: unknown = {}) => apiPost(`/platform${path}`, body)
+export const patch = (path: string, body: unknown) => apiPatch(`/platform${path}`, body)
 export function usePlatform<T>(path: string) {
   const [data, setData] = useState<T | null>(null),
     [error, setError] = useState(''),
@@ -27,11 +25,7 @@ export function usePlatform<T>(path: string) {
       })
       .catch((error) => {
         if (active)
-          setError(
-            error instanceof Error
-              ? error.message
-              : 'Could not load the workspace.',
-          )
+          setError(error instanceof Error ? error.message : 'Could not load the workspace.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -54,16 +48,8 @@ export function values(form: HTMLFormElement): Record<string, unknown> {
     'vetoGlobalSouth',
     'vetoBodies',
   ])
-    if (result[name] !== undefined && result[name] !== '')
-      result[name] = Number(result[name])
-  for (const name of [
-    'startsAt',
-    'endsAt',
-    'dueAt',
-    'reviewDueAt',
-    'followUpAt',
-    'renewalDueAt',
-  ])
+    if (result[name] !== undefined && result[name] !== '') result[name] = Number(result[name])
+  for (const name of ['startsAt', 'endsAt', 'dueAt', 'reviewDueAt', 'followUpAt', 'renewalDueAt'])
     if (typeof result[name] === 'string' && result[name])
       result[name] = new Date(result[name]).toISOString()
   return result

@@ -45,10 +45,7 @@ export function MissionStatusBar({ station, liveLabel, right }) {
   )
 }
 
-export function MissionCountdown({
-  iso = COP31_OPENS_AT,
-  label = 'Days to COP31',
-}) {
+export function MissionCountdown({ iso = COP31_OPENS_AT, label = 'Days to COP31' }) {
   const now = useUtcClock(1000)
   const target = new Date(iso)
   const ms = Math.max(0, target - now)
@@ -75,19 +72,10 @@ export function MissionCountdown({
 }
 
 export function MissionMetric({ value, label, tone, href, icon: Icon }) {
-  const className = `mcMetric${tone ? ` mcMetric-${tone}` : ''}${
-    href ? ' mcMetricLink' : ''
-  }`
+  const className = `mcMetric${tone ? ` mcMetric-${tone}` : ''}${href ? ' mcMetricLink' : ''}`
   const inner = (
     <>
-      {Icon ? (
-        <Icon
-          className="mcMetricIcon"
-          size={16}
-          strokeWidth={1.75}
-          aria-hidden
-        />
-      ) : null}
+      {Icon ? <Icon className="mcMetricIcon" size={16} strokeWidth={1.75} aria-hidden /> : null}
       <strong className="mono">{value}</strong>
       <span>{label}</span>
     </>

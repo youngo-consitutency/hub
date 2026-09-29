@@ -11,7 +11,6 @@ const feedbackLimit = rateLimit({
   scope: 'feedback',
 })
 
-
 const FEEDBACK_KINDS = [
   { value: 'bug', label: 'Something is broken' },
   { value: 'ui_ux', label: 'Design or usability' },
@@ -27,7 +26,6 @@ const FEEDBACK_SEVERITIES = [
   { value: 'critical', label: 'Cannot use the Hub' },
 ]
 
-
 export const feedbackEndpoints: Endpoint[] = [
   // ── Feedback ──────────────────────────────────────────────────────
   {
@@ -39,8 +37,7 @@ export const feedbackEndpoints: Endpoint[] = [
       return json({
         kinds: FEEDBACK_KINDS,
         severities: FEEDBACK_SEVERITIES,
-        canTriage:
-          account.role === 'admin' || access.teamRoles.includes('membership_team'),
+        canTriage: account.role === 'admin' || access.teamRoles.includes('membership_team'),
       })
     }),
   },
@@ -67,9 +64,7 @@ export const feedbackEndpoints: Endpoint[] = [
       const account = requireAccount(req)
       const b = ((await req.json?.()) || {}) as any
       const title = trimmed(b.title, 200)
-      const kind = FEEDBACK_KINDS.some((k) => k.value === b.kind)
-        ? b.kind
-        : null
+      const kind = FEEDBACK_KINDS.some((k) => k.value === b.kind) ? b.kind : null
       const severity = FEEDBACK_SEVERITIES.some((s) => s.value === b.severity)
         ? b.severity
         : 'normal'
@@ -106,8 +101,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const access = await getAccessProfile(req, account)
-      const canTriage =
-        account.role === 'admin' || access.teamRoles.includes('membership_team')
+      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
       if (!canTriage) throw fail.forbidden('Feedback triage is for admins and the Membership Team.')
       const where: any = {}
       if (req.query?.status) where.status = { equals: req.query.status }
@@ -128,8 +122,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const access = await getAccessProfile(req, account)
-      const canTriage =
-        account.role === 'admin' || access.teamRoles.includes('membership_team')
+      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
       if (!canTriage) throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const data: any = {}
@@ -146,5 +139,4 @@ export const feedbackEndpoints: Endpoint[] = [
       return json({ item: updated })
     }),
   },
-
 ]

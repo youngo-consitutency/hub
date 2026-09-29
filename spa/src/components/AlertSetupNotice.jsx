@@ -37,12 +37,7 @@ export function AlertSetupNotice() {
   ) : (
     <div className="noticeActions">
       {setup.installAvailable && (
-        <Button
-          sm
-          variant="secondary"
-          onClick={setup.install}
-          disabled={setup.busy}
-        >
+        <Button sm variant="secondary" onClick={setup.install} disabled={setup.busy}>
           <Plus size={16} strokeWidth={1.75} aria-hidden />
           Install app
         </Button>
@@ -56,18 +51,14 @@ export function AlertSetupNotice() {
 
   return (
     <>
-      <div
-        className="noticeBanner noticeBannerInfo"
-        role="region"
-        aria-label={title}
-      >
+      <div className="noticeBanner noticeBannerInfo" role="region" aria-label={title}>
         <span className="noticeDot noticeDotInfo" />
         <div className="noticeCopy">
           <p>{title}</p>
           {ios && (
             <p className="metaMuted">
-              Safari cannot send banners from a tab. Tap Show me how for the
-              Share → Add to Home Screen steps.
+              Safari cannot send banners from a tab. Tap Show me how for the Share → Add to Home
+              Screen steps.
             </p>
           )}
         </div>
@@ -82,10 +73,7 @@ export function AlertSetupNotice() {
         </button>
       </div>
       {helpOpen && (
-        <NotificationGuide
-          device={currentDevice()}
-          onClose={() => setHelpOpen(false)}
-        />
+        <NotificationGuide device={currentDevice()} onClose={() => setHelpOpen(false)} />
       )}
     </>
   )

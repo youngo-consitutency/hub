@@ -25,10 +25,7 @@ export function SiteGys() {
               <p className="sitePageLead">{gys.current.intro}</p>
             </header>
 
-            <section
-              className="siteSection"
-              aria-labelledby="gys-process-heading"
-            >
+            <section className="siteSection" aria-labelledby="gys-process-heading">
               <h2 id="gys-process-heading">{processCopy.title}</h2>
               <p className="siteSectionLead">{processCopy.lead}</p>
               <ol className="siteGysSteps">

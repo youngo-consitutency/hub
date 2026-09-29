@@ -203,8 +203,7 @@ export function Shell({ children }) {
         href: '/cp',
         label: 'WG Contact Point',
         icon: Briefcase,
-        when:
-          canManageGroups(account),
+        when: canManageGroups(account),
       },
       {
         section: SECTION.mine,
@@ -225,9 +224,7 @@ export function Shell({ children }) {
         href: '/staff/content',
         label: 'Content studio',
         icon: FilePenLine,
-        when:
-          capabilities.includes('content.draft') ||
-          capabilities.includes('content.review'),
+        when: capabilities.includes('content.draft') || capabilities.includes('content.review'),
       },
       {
         section: SECTION.mine,
@@ -276,16 +273,8 @@ export function Shell({ children }) {
       if (group) group.items.push(item)
       else sections.push({ section: entry.section, items: [item] })
     }
-    const order = [
-      SECTION.home,
-      SECTION.now,
-      SECTION.people,
-      SECTION.act,
-      SECTION.mine,
-    ]
-    return sections.sort(
-      (a, b) => order.indexOf(a.section) - order.indexOf(b.section),
-    )
+    const order = [SECTION.home, SECTION.now, SECTION.people, SECTION.act, SECTION.mine]
+    return sections.sort((a, b) => order.indexOf(a.section) - order.indexOf(b.section))
   }, [
     account,
     verified,
@@ -389,9 +378,7 @@ export function Shell({ children }) {
                   aria-hidden
                 />
               </span>
-              {account.role === 'admin' && (
-                <span className="metaMuted">Administrator</span>
-              )}
+              {account.role === 'admin' && <span className="metaMuted">Administrator</span>}
               {account.role === 'focal_point' && (
                 <span className="metaMuted">Global Focal Point</span>
               )}
@@ -421,9 +408,7 @@ export function Shell({ children }) {
               type="button"
               className={`btn btn-ghost btn-sm mobileMenuButton ${sheet ? 'active' : ''}`}
               onClick={() => setSheet((open) => !open)}
-              aria-label={
-                sheet ? 'Close navigation menu' : 'Open navigation menu'
-              }
+              aria-label={sheet ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={sheet}
               aria-controls="mobile-navigation"
             >
@@ -471,11 +456,7 @@ export function Shell({ children }) {
           >
             <div className="sheetHeader">
               {verified && (
-                <A
-                  href="/search"
-                  className="sheetSearch"
-                  onClick={() => setSheet(false)}
-                >
+                <A href="/search" className="sheetSearch" onClick={() => setSheet(false)}>
                   <Search size={19} strokeWidth={1.75} aria-hidden />
                   <span>Search the Hub</span>
                 </A>
@@ -496,9 +477,7 @@ export function Shell({ children }) {
             <div className="sheetSections">
               {nav.map((group) => (
                 <section className="sheetSection" key={group.section}>
-                  {group.section && (
-                    <p className="navSection">{group.section}</p>
-                  )}
+                  {group.section && <p className="navSection">{group.section}</p>}
                   <div className="sheetNavGrid">
                     {group.items.map(({ href, label, icon: Icon }) => (
                       <A

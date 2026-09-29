@@ -2,11 +2,7 @@ import { useMemo, useState } from 'react'
 import { apiPost } from '../lib/api.js'
 import { Button } from '../components/ui.jsx'
 import { navigate } from '../lib/router.js'
-import {
-  TbArrowLeft as ArrowLeft,
-  TbCheck as Check,
-  TbKey as KeyRound,
-} from 'react-icons/tb'
+import { TbArrowLeft as ArrowLeft, TbCheck as Check, TbKey as KeyRound } from 'react-icons/tb'
 
 function tokenFromUrl() {
   try {
@@ -48,15 +44,12 @@ export function ResetPassword() {
   if (!token) {
     return (
       <div className="mandateGate">
-        <div
-          className="mandateShell"
-          style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}
-        >
+        <div className="mandateShell" style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
           <div className="card">
             <h1>Invalid reset link</h1>
             <p className="meta" style={{ marginTop: 8 }}>
-              This page needs a full reset link. Use “Forgot password” on the
-              sign-in screen, or ask an admin for a new link.
+              This page needs a full reset link. Use “Forgot password” on the sign-in screen, or ask
+              an admin for a new link.
             </p>
             <div className="detailActions">
               <Button variant="primary" onClick={() => navigate('/')}>
@@ -73,10 +66,7 @@ export function ResetPassword() {
   if (done) {
     return (
       <div className="mandateGate">
-        <div
-          className="mandateShell"
-          style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}
-        >
+        <div className="mandateShell" style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
           <div className="card">
             <div className="rowGap" style={{ marginBottom: 12 }}>
               <span className="iconTile">
@@ -98,10 +88,7 @@ export function ResetPassword() {
 
   return (
     <div className="mandateGate">
-      <div
-        className="mandateShell"
-        style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}
-      >
+      <div className="mandateShell" style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
         <form className="card authForm" onSubmit={submit} noValidate>
           <div className="rowGap" style={{ marginBottom: 8 }}>
             <span className="iconTile">
@@ -123,9 +110,7 @@ export function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {fields.password && (
-              <span className="fieldError">{fields.password}</span>
-            )}
+            {fields.password && <span className="fieldError">{fields.password}</span>}
           </label>
           <label className="field">
             <span>Confirm password *</span>
@@ -136,9 +121,7 @@ export function ResetPassword() {
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
             />
-            {fields.passwordConfirm && (
-              <span className="fieldError">{fields.passwordConfirm}</span>
-            )}
+            {fields.passwordConfirm && <span className="fieldError">{fields.passwordConfirm}</span>}
           </label>
           {error && (
             <p className="meta" style={{ color: 'var(--danger)' }} role="alert">

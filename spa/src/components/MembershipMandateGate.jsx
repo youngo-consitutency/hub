@@ -43,10 +43,7 @@ export function MembershipMandateGate({ onComplete }) {
     }
     const ratio = Math.min(1, scrollTop / max)
     setProgress(ratio)
-    if (
-      showFull &&
-      el.getBoundingClientRect().bottom <= window.innerHeight + 48
-    ) {
+    if (showFull && el.getBoundingClientRect().bottom <= window.innerHeight + 48) {
       setScrolledToEnd(true)
     }
   }, [showFull])
@@ -80,7 +77,9 @@ export function MembershipMandateGate({ onComplete }) {
     return (
       <main className="mandateGate" aria-busy="true">
         <div className="mandateShell">
-          <p className="meta" role="status">Loading the Membership Policy…</p>
+          <p className="meta" role="status">
+            Loading the Membership Policy…
+          </p>
         </div>
       </main>
     )
@@ -91,7 +90,9 @@ export function MembershipMandateGate({ onComplete }) {
         <div className="mandateShell">
           <p className="meta" role="alert">
             The Membership Policy could not be loaded.{' '}
-            <Button type="button" variant="secondary" onClick={retry}>Try again</Button>
+            <Button type="button" variant="secondary" onClick={retry}>
+              Try again
+            </Button>
           </p>
         </div>
       </main>
@@ -138,34 +139,22 @@ export function MembershipMandateGate({ onComplete }) {
                 </A>
                 .
               </p>
-              <p
-                id="mandate-desc"
-                className="meta"
-                style={{ marginTop: 6, maxWidth: 520 }}
-              >
-                A short overview of YOUNGO membership. Open the full policy,
-                scroll to the end, then continue.
+              <p id="mandate-desc" className="meta" style={{ marginTop: 6, maxWidth: 520 }}>
+                A short overview of YOUNGO membership. Open the full policy, scroll to the end, then
+                continue.
               </p>
             </div>
           </div>
         </header>
 
         <div className="mandateProgress" aria-hidden>
-          <div
-            className="mandateProgressBar"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
+          <div className="mandateProgressBar" style={{ width: `${Math.round(progress * 100)}%` }} />
         </div>
 
         <div className="mandateBody" ref={bodyRef} tabIndex={0}>
           <section className="mandateAnalysis card">
             <div className="rowGap" style={{ marginBottom: 10 }}>
-              <BookOpen
-                size={18}
-                strokeWidth={1.75}
-                aria-hidden
-                color="var(--accent)"
-              />
+              <BookOpen size={18} strokeWidth={1.75} aria-hidden color="var(--accent)" />
               <h2>{MANDATE_ANALYSIS.title}</h2>
             </div>
             <p className="meta mandateAnalysisLead">{MANDATE_ANALYSIS.lede}</p>
@@ -210,12 +199,7 @@ export function MembershipMandateGate({ onComplete }) {
               {POLICY_META.translations.map((t, i) => (
                 <span key={t.lang}>
                   {i > 0 && ' · '}
-                  <a
-                    href={t.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mandateExtLink"
-                  >
+                  <a href={t.href} target="_blank" rel="noreferrer" className="mandateExtLink">
                     {t.lang}
                   </a>
                 </span>
@@ -226,15 +210,10 @@ export function MembershipMandateGate({ onComplete }) {
           {!showFull ? (
             <div className="card mandateExpandCard">
               <p className="meta" style={{ marginBottom: 12 }}>
-                The full Membership Policy is required before creating an
-                account. It is longer legal text — open it when you are ready to
-                read.
+                The full Membership Policy is required before creating an account. It is longer
+                legal text — open it when you are ready to read.
               </p>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={openFullPolicy}
-              >
+              <Button type="button" variant="secondary" onClick={openFullPolicy}>
                 <ScrollText size={16} strokeWidth={1.75} aria-hidden />
                 Read full Membership Policy
               </Button>
@@ -245,17 +224,10 @@ export function MembershipMandateGate({ onComplete }) {
                 Full policy text · scroll to the end to enable the checkbox
               </p>
               {POLICY_SECTIONS.map((section) => (
-                <section
-                  key={section.id}
-                  className="mandateSection"
-                  id={`policy-${section.id}`}
-                >
+                <section key={section.id} className="mandateSection" id={`policy-${section.id}`}>
                   <h2>{section.heading}</h2>
                   {section.paragraphs?.map((para, i) => (
-                    <p
-                      key={`${section.id}-p-${i}`}
-                      className="meta mandatePara"
-                    >
+                    <p key={`${section.id}-p-${i}`} className="meta mandatePara">
                       {para}
                     </p>
                   ))}
@@ -272,10 +244,7 @@ export function MembershipMandateGate({ onComplete }) {
                     </div>
                   ))}
                   {section.paragraphsAfter?.map((para, i) => (
-                    <p
-                      key={`${section.id}-pa-${i}`}
-                      className="meta mandatePara"
-                    >
+                    <p key={`${section.id}-pa-${i}`} className="meta mandatePara">
                       {para}
                     </p>
                   ))}
@@ -283,10 +252,7 @@ export function MembershipMandateGate({ onComplete }) {
               ))}
               <p className="metaMuted mandateEndMark">
                 End of policy · version {POLICY_VERSION} · contact{' '}
-                <a
-                  href={`mailto:${POLICY_META.contactEmail}`}
-                  className="mandateExtLink"
-                >
+                <a href={`mailto:${POLICY_META.contactEmail}`} className="mandateExtLink">
                   {POLICY_META.contactEmail}
                 </a>
               </p>
@@ -315,8 +281,8 @@ export function MembershipMandateGate({ onComplete }) {
               onChange={(e) => setChecked(e.target.checked)}
             />
             <span>
-              I have read and understood the YOUNGO Membership Policy (
-              {POLICY_META.issue}, updated {POLICY_META.updatedOn}).
+              I have read and understood the YOUNGO Membership Policy ({POLICY_META.issue}, updated{' '}
+              {POLICY_META.updatedOn}).
             </span>
           </label>
 

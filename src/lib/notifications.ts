@@ -12,7 +12,6 @@ import { appBaseUrl } from './env'
 
 export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
-
 // ── Templates ────────────────────────────────────────────────────
 
 const escapeHtml = (value: any) =>
@@ -52,12 +51,9 @@ const paragraphs = (value: any) =>
     )
     .join('\n')
 
-
 function templateContent(templateKey: string, data: any = {}) {
   const actionUrl = safeUrl(data.actionUrl)
-  const actionLabel = escapeHtml(
-    singleLine(data.actionLabel || 'Open YOUNGO Hub', 80),
-  )
+  const actionLabel = escapeHtml(singleLine(data.actionLabel || 'Open YOUNGO Hub', 80))
   const action = actionUrl
     ? `<p style="margin:18px 0 0"><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#087f5b;color:#ffffff;border-radius:8px;font-weight:700;padding:12px 22px;text-decoration:none">${actionLabel}</a></p>`
     : ''
@@ -112,9 +108,7 @@ function templateContent(templateKey: string, data: any = {}) {
           `<a href="${escapeHtml(link.url)}" style="color:#087f5b;font-weight:700;text-decoration:none">${escapeHtml(link.label)}</a>`,
       )
       .join(' &nbsp;·&nbsp; ')
-    const socialText = social
-      .map((link) => `${link.label}: ${link.url}`)
-      .join('\n')
+    const socialText = social.map((link) => `${link.label}: ${link.url}`).join('\n')
     return {
       subject: 'Welcome — your YOUNGO membership is active',
       eyebrow: 'YOUNGO membership',
@@ -184,8 +178,7 @@ ${content.action}
 // PAYLOAD_SECRET is required at boot, so a key always exists. Set
 // EMAIL_UNSUBSCRIBE_SECRET to rotate unsubscribe links independently.
 const unsubscribeSecret = () =>
-  String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() ||
-  process.env.PAYLOAD_SECRET!
+  String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() || process.env.PAYLOAD_SECRET!
 
 export function createUnsubscribeToken(accountId: any, category: string) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
@@ -193,30 +186,20 @@ export function createUnsubscribeToken(accountId: any, category: string) {
   const payload = Buffer.from(
     JSON.stringify({ v: 1, accountId: String(accountId), category }),
   ).toString('base64url')
-  const signature = createHmac('sha256', unsubscribeSecret())
-    .update(payload)
-    .digest('base64url')
+  const signature = createHmac('sha256', unsubscribeSecret()).update(payload).digest('base64url')
   return `${payload}.${signature}`
 }
 
 export function verifyUnsubscribeToken(token: string) {
   const [payload, supplied] = String(token || '').split('.')
   if (!payload || !supplied) return null
-  const expected = createHmac('sha256', unsubscribeSecret())
-    .update(payload)
-    .digest('base64url')
+  const expected = createHmac('sha256', unsubscribeSecret()).update(payload).digest('base64url')
   const left = Buffer.from(supplied)
   const right = Buffer.from(expected)
   if (left.length !== right.length || !timingSafeEqual(left, right)) return null
   try {
-    const parsed = JSON.parse(
-      Buffer.from(payload, 'base64url').toString('utf8'),
-    )
-    if (
-      parsed.v !== 1 ||
-      !parsed.accountId ||
-      !OPTIONAL_EMAIL_CATEGORIES.includes(parsed.category)
-    )
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
+    if (parsed.v !== 1 || !parsed.accountId || !OPTIONAL_EMAIL_CATEGORIES.includes(parsed.category))
       return null
     return { accountId: String(parsed.accountId), category: parsed.category }
   } catch {
@@ -246,10 +229,9 @@ export async function sendTemplatedEmail({
     .map((v) => v.trim().toLowerCase())
     .filter(Boolean)
   if (allowlist.length && !allowlist.includes(String(to).trim().toLowerCase())) {
-    throw Object.assign(
-      new Error('Recipient is not in the email delivery allowlist.'),
-      { code: 'recipient_not_allowlisted' },
-    )
+    throw Object.assign(new Error('Recipient is not in the email delivery allowlist.'), {
+      code: 'recipient_not_allowlisted',
+    })
   }
   const rendered = renderEmailTemplate(templateKey, data, {
     unsubscribeUrl: unsubUrl,
@@ -315,16 +297,13 @@ export async function enqueueNotification({
   payload?: any
   availableAt?: Date
 }) {
-  if (!NOTIFICATION_CHANNELS.includes(channel))
-    throw new Error('Invalid notification channel.')
+  if (!NOTIFICATION_CHANNELS.includes(channel)) throw new Error('Invalid notification channel.')
   if (channel === 'email' && !OPTIONAL_EMAIL_CATEGORIES.includes(category!))
     throw new Error('Invalid notification category.')
   if (channel === 'push' && category != null)
     throw new Error('Push notifications have no preference category.')
   if (!accountId || !templateKey || !deduplicationKey)
-    throw new Error(
-      'Notification account, template, and deduplication key are required.',
-    )
+    throw new Error('Notification account, template, and deduplication key are required.')
   const pool = getPgPool()!
   const { rows } = await pool.query(
     `INSERT INTO notification_outbox(
@@ -375,8 +354,7 @@ export async function markNotificationFailed(id: any, code: string) {
 // Terminal after five delivery attempts; earlier failures back off
 // exponentially (30s → 30m cap) so a slow gateway doesn't stall the queue.
 const MAX_DELIVERY_ATTEMPTS = 5
-const retryDelayMs = (attempts: number) =>
-  Math.min(30_000 * 2 ** attempts, 30 * 60_000)
+const retryDelayMs = (attempts: number) => Math.min(30_000 * 2 ** attempts, 30 * 60_000)
 
 // Claim due rows with a short lease so concurrent drains (after() tasks, the
 // cron endpoint, overlapping deployments) never double-deliver the same row.
@@ -404,8 +382,7 @@ export async function claimNotificationBatch(limit = 50) {
 export async function rescheduleNotification(row: any, code: string) {
   const pool = getPgPool()!
   const attempts = Number(row.attempts || 0) + 1
-  if (attempts >= MAX_DELIVERY_ATTEMPTS)
-    return markNotificationFailed(row.id, code)
+  if (attempts >= MAX_DELIVERY_ATTEMPTS) return markNotificationFailed(row.id, code)
   await pool.query(
     `UPDATE notification_outbox
      SET attempts = attempts + 1,
@@ -431,16 +408,13 @@ async function deliverOutboxRow(req: any, row: any, connectBody: any) {
     // deliverPush prunes dead endpoints itself; zero reachable devices means
     // the member has nothing left to deliver to — retrying is pointless.
     if (!result.sent && result.failed)
-      throw Object.assign(
-        new Error(`Push delivery failed (${result.failed}/${result.total}).`),
-        { code: 'push_delivery_failed' },
-      )
+      throw Object.assign(new Error(`Push delivery failed (${result.failed}/${result.total}).`), {
+        code: 'push_delivery_failed',
+      })
     return result
   }
   const pool = getPgPool()!
-  const { rows } = await pool.query('SELECT email FROM accounts WHERE id=$1', [
-    row.account_id,
-  ])
+  const { rows } = await pool.query('SELECT email FROM accounts WHERE id=$1', [row.account_id])
   if (!rows[0]?.email)
     throw Object.assign(new Error('Recipient account has no email.'), {
       code: 'recipient_missing',
@@ -495,10 +469,7 @@ export async function listEligibleNotificationAccountIds({
 }) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
     throw new Error('Invalid notification category.')
-  if (
-    !scope ||
-    !['all_active', 'working_group', 'team', 'account_ids'].includes(scope.type)
-  )
+  if (!scope || !['all_active', 'working_group', 'team', 'account_ids'].includes(scope.type))
     throw new Error('Invalid notification scope.')
   const ids = Array.isArray(scope.ids) ? scope.ids.map(String) : []
   const filters: Record<string, string> = {

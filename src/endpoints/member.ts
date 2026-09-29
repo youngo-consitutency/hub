@@ -10,10 +10,7 @@ import { getAccessProfile } from '../lib/access'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
 import { getOwnMemberProfile } from '../lib/memberDirectory'
-import {
-  saveMemberPhoto,
-  deleteMemberPhoto,
-} from '../lib/memberPhotos'
+import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
@@ -28,9 +25,7 @@ type CourseDoc = {
 }
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
-  const course = (await getDocument(req, 'membership-course'))?.body as
-    | CourseDoc
-    | undefined
+  const course = (await getDocument(req, 'membership-course'))?.body as CourseDoc | undefined
   if (!course?.quiz?.length) {
     throw fail.notFound('The onboarding course is not configured yet.')
   }
@@ -57,22 +52,25 @@ async function upsertWgProgress(
   patch: Record<string, any>,
 ) {
   const existing = await wgProgress(req, accountId, wgSlug)
-  const presentationOk = patch.presentationOk ?? patch.presentation_ok ?? existing?.presentationOk ?? false
+  const presentationOk =
+    patch.presentationOk ?? patch.presentation_ok ?? existing?.presentationOk ?? false
   const rulesOk = patch.rulesOk ?? patch.rules_ok ?? existing?.rulesOk ?? false
   const unlocked =
     presentationOk && rulesOk
       ? existing?.unlockedAt || new Date().toISOString()
       : existing?.unlockedAt || null
   const status =
-    patch.status ??
-    (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
+    patch.status ?? (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
   const data = {
     account: accountId,
     wgSlug,
     presentationOk,
     rulesOk,
     unlockedAt: unlocked,
-    joinedAt: existing?.joinedAt || (patch.status ? new Date().toISOString() : existing?.joinedAt) || new Date().toISOString(),
+    joinedAt:
+      existing?.joinedAt ||
+      (patch.status ? new Date().toISOString() : existing?.joinedAt) ||
+      new Date().toISOString(),
     status,
     roleInWg: patch.roleInWg ?? patch.role_in_wg ?? existing?.roleInWg ?? 'member',
   }
@@ -107,7 +105,6 @@ function wgProgressView(d: any, accountId?: string | number) {
   }
 }
 
-
 export const memberEndpoints: Endpoint[] = [
   {
     path: '/member/access',
@@ -134,9 +131,7 @@ export const memberEndpoints: Endpoint[] = [
         ngo: seat
           ? {
               orgAccountId:
-                typeof seat.orgAccount === 'object'
-                  ? seat.orgAccount.id
-                  : seat.orgAccount,
+                typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount,
               seatRole: seat.seatRole,
             }
           : null,
@@ -191,9 +186,7 @@ export const memberEndpoints: Endpoint[] = [
       }
       const now = new Date().toISOString()
       const status = account.membershipStatus
-      const nextStatus = ['active', 'renewal_due', 'awaiting_onboarding'].includes(
-        status,
-      )
+      const nextStatus = ['active', 'renewal_due', 'awaiting_onboarding'].includes(status)
         ? status
         : account.membershipTrack === 'constituency_work'
           ? 'awaiting_onboarding'
@@ -269,16 +262,11 @@ export const memberEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
-      const progress = await upsertWgProgress(
-        req,
-        account.id,
-        String(req.routeParams?.wg),
-        {
-          presentationOk: Boolean(b.presentationOk),
-          rulesOk: Boolean(b.rulesOk),
-          status: 'active',
-        },
-      )
+      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+        presentationOk: Boolean(b.presentationOk),
+        rulesOk: Boolean(b.rulesOk),
+        status: 'active',
+      })
       return json({ progress: wgProgressView(progress, account.id) })
     }),
   },
@@ -287,12 +275,9 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const progress = await upsertWgProgress(
-        req,
-        account.id,
-        String(req.routeParams?.wg),
-        { status: 'pending_approval' },
-      )
+      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+        status: 'pending_approval',
+      })
       return json({ progress: wgProgressView(progress, account.id) })
     }),
   },
@@ -350,11 +335,12 @@ export const memberEndpoints: Endpoint[] = [
       const pronouns = trimmed(b.pronouns, 60)
       const roleTitle = trimmed(b.roleTitle, 120)
       const expertiseTags = Array.isArray(b.expertiseTags)
-        ? b.expertiseTags.map((t: unknown) => String(t).trim()).filter(Boolean).slice(0, 20)
+        ? b.expertiseTags
+            .map((t: unknown) => String(t).trim())
+            .filter(Boolean)
+            .slice(0, 20)
         : []
-      const directoryVisibility = ['private', 'members', 'public'].includes(
-        b.directoryVisibility,
-      )
+      const directoryVisibility = ['private', 'members', 'public'].includes(b.directoryVisibility)
         ? b.directoryVisibility
         : 'private'
       if (Object.keys(fields).length) throw fail.validation(fields)
@@ -398,24 +384,21 @@ export const memberEndpoints: Endpoint[] = [
     }),
   },
 
-
   // ── Focal point overview ──────────────────────────────────────────
   {
     path: '/member/focal/overview',
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'focal_point' && account.role !== 'admin')
-        throw fail.forbidden()
-      const [feed, events, submissions, decisions, groups, directory] =
-        await Promise.all([
-          store.getFeed(req, new Date(), true),
-          store.listEvents(req),
-          store.listSubmissions(req, 'open'),
-          store.listDecisions(req, 'all', true),
-          store.listGroups(req),
-          store.listDirectory(req),
-        ])
+      if (account.role !== 'focal_point' && account.role !== 'admin') throw fail.forbidden()
+      const [feed, events, submissions, decisions, groups, directory] = await Promise.all([
+        store.getFeed(req, new Date(), true),
+        store.listEvents(req),
+        store.listSubmissions(req, 'open'),
+        store.listDecisions(req, 'all', true),
+        store.listGroups(req),
+        store.listDirectory(req),
+      ])
       return json({
         feed,
         events: events.filter((e) => Date.parse(e.startsAt) >= Date.now()),
@@ -428,7 +411,6 @@ export const memberEndpoints: Endpoint[] = [
       })
     }),
   },
-
 
   // ── Member profile photo (bytea, never the public media store) ──
   {

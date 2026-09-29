@@ -107,8 +107,7 @@ export function ContentWorkspace() {
     setEditorOpen(true)
   }
 
-  const set = (key, value) =>
-    setPayload((current) => ({ ...current, [key]: value }))
+  const set = (key, value) => setPayload((current) => ({ ...current, [key]: value }))
 
   const save = async (event) => {
     event.preventDefault()
@@ -121,12 +120,8 @@ export function ContentWorkspace() {
         contentType === 'event'
           ? {
               ...payload,
-              startsAt: payload.startsAt
-                ? new Date(payload.startsAt).toISOString()
-                : '',
-              endsAt: payload.endsAt
-                ? new Date(payload.endsAt).toISOString()
-                : '',
+              startsAt: payload.startsAt ? new Date(payload.startsAt).toISOString() : '',
+              endsAt: payload.endsAt ? new Date(payload.endsAt).toISOString() : '',
             }
           : {
               ...payload,
@@ -179,9 +174,7 @@ export function ContentWorkspace() {
             )
             ?.trim()
     if (decision !== 'approve' && !note) return
-    act(item.id, () =>
-      apiPost(`/member/content/drafts/${item.id}/review`, { decision, note }),
-    )
+    act(item.id, () => apiPost(`/member/content/drafts/${item.id}/review`, { decision, note }))
   }
   const publish = (item) =>
     act(item.id, () => apiPost(`/member/content/drafts/${item.id}/publish`, {}))
@@ -311,9 +304,7 @@ export function ContentWorkspace() {
                             required
                             type="datetime-local"
                             value={payload.startsAt}
-                            onChange={(event) =>
-                              set('startsAt', event.target.value)
-                            }
+                            onChange={(event) => set('startsAt', event.target.value)}
                           />
                           <FieldError msg={fields.startsAt} />
                         </label>
@@ -324,9 +315,7 @@ export function ContentWorkspace() {
                             required
                             type="datetime-local"
                             value={payload.endsAt}
-                            onChange={(event) =>
-                              set('endsAt', event.target.value)
-                            }
+                            onChange={(event) => set('endsAt', event.target.value)}
                           />
                           <FieldError msg={fields.endsAt} />
                         </label>
@@ -337,9 +326,7 @@ export function ContentWorkspace() {
                           className="input textarea"
                           rows="4"
                           value={payload.description}
-                          onChange={(event) =>
-                            set('description', event.target.value)
-                          }
+                          onChange={(event) => set('description', event.target.value)}
                         />
                         <FieldError msg={fields.description} />
                       </label>
@@ -350,9 +337,7 @@ export function ContentWorkspace() {
                             className="input"
                             type="url"
                             value={payload.meetingUrl}
-                            onChange={(event) =>
-                              set('meetingUrl', event.target.value)
-                            }
+                            onChange={(event) => set('meetingUrl', event.target.value)}
                             placeholder="https://…"
                           />
                           <FieldError msg={fields.meetingUrl} />
@@ -363,9 +348,7 @@ export function ContentWorkspace() {
                             className="input"
                             type="url"
                             value={payload.recordingUrl}
-                            onChange={(event) =>
-                              set('recordingUrl', event.target.value)
-                            }
+                            onChange={(event) => set('recordingUrl', event.target.value)}
                             placeholder="https://…"
                           />
                           <FieldError msg={fields.recordingUrl} />
@@ -389,9 +372,7 @@ export function ContentWorkspace() {
                         <input
                           type="checkbox"
                           checked={payload.pinned}
-                          onChange={(event) =>
-                            set('pinned', event.target.checked)
-                          }
+                          onChange={(event) => set('pinned', event.target.checked)}
                         />
                         Pin this announcement on the home feed
                       </label>
@@ -402,9 +383,7 @@ export function ContentWorkspace() {
                             className="input"
                             type="url"
                             value={payload.ctaUrl}
-                            onChange={(event) =>
-                              set('ctaUrl', event.target.value)
-                            }
+                            onChange={(event) => set('ctaUrl', event.target.value)}
                             placeholder="https://forms.gle/…"
                           />
                           <FieldError msg={fields.ctaUrl} />
@@ -414,9 +393,7 @@ export function ContentWorkspace() {
                           <input
                             className="input"
                             value={payload.ctaLabel}
-                            onChange={(event) =>
-                              set('ctaLabel', event.target.value)
-                            }
+                            onChange={(event) => set('ctaLabel', event.target.value)}
                             placeholder="Submit inputs"
                           />
                           <FieldError msg={fields.ctaLabel} />
@@ -428,9 +405,7 @@ export function ContentWorkspace() {
                           className="input"
                           type="datetime-local"
                           value={payload.ctaDeadlineAt}
-                          onChange={(event) =>
-                            set('ctaDeadlineAt', event.target.value)
-                          }
+                          onChange={(event) => set('ctaDeadlineAt', event.target.value)}
                         />
                         <FieldError msg={fields.ctaDeadlineAt} />
                       </label>
@@ -438,18 +413,11 @@ export function ContentWorkspace() {
                   )}
 
                   <div className="rowGap">
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={busy === 'save'}
-                    >
+                    <Button type="submit" variant="primary" disabled={busy === 'save'}>
                       {busy === 'save' ? 'Saving…' : 'Save draft'}
                     </Button>
                     {(editingId || payload.slug) && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => resetForm(contentType)}
-                      >
+                      <Button variant="ghost" onClick={() => resetForm(contentType)}>
                         Clear
                       </Button>
                     )}
@@ -469,22 +437,13 @@ export function ContentWorkspace() {
                 <div className="stackSm">
                   {orderedItems.map((item) => {
                     const own = item.createdBy === account?.id
-                    const editable =
-                      own &&
-                      ['draft', 'changes_requested'].includes(item.status)
+                    const editable = own && ['draft', 'changes_requested'].includes(item.status)
                     const reviewable =
-                      data.permissions.canReview &&
-                      !own &&
-                      item.status === 'in_review'
+                      data.permissions.canReview && !own && item.status === 'in_review'
                     const publishable =
-                      data.permissions.canPublish &&
-                      !own &&
-                      item.status === 'approved'
+                      data.permissions.canPublish && !own && item.status === 'approved'
                     return (
-                      <article
-                        key={item.id}
-                        className="card cardTight contentQueueItem"
-                      >
+                      <article key={item.id} className="card cardTight contentQueueItem">
                         <div className="contentQueueCopy">
                           <div className="rowGap">
                             {item.contentType === 'event' ? (
@@ -501,14 +460,10 @@ export function ContentWorkspace() {
                             {item.contentType} · {item.contentKey} · by{' '}
                             {own
                               ? 'you'
-                              : item.creatorName ||
-                                item.creatorEmail ||
-                                'another editor'}
+                              : item.creatorName || item.creatorEmail || 'another editor'}
                           </p>
                           {item.reviewNote && (
-                            <p className="contentReviewNote">
-                              Review note: {item.reviewNote}
-                            </p>
+                            <p className="contentReviewNote">Review note: {item.reviewNote}</p>
                           )}
                         </div>
                         <div className="rowGap contentQueueActions">
@@ -516,13 +471,7 @@ export function ContentWorkspace() {
                             <Button
                               sm
                               variant="ghost"
-                              onClick={() =>
-                                editPayload(
-                                  item.contentType,
-                                  item.payload,
-                                  item.id,
-                                )
-                              }
+                              onClick={() => editPayload(item.contentType, item.payload, item.id)}
                             >
                               Edit
                             </Button>
@@ -615,9 +564,7 @@ export function ContentWorkspace() {
                           key={announcement.slug}
                           type="button"
                           className="contentLiveItem"
-                          onClick={() =>
-                            editPayload('announcement', announcement)
-                          }
+                          onClick={() => editPayload('announcement', announcement)}
                         >
                           <span>{announcement.title}</span>
                           <small>{announcement.slug}</small>

@@ -58,8 +58,7 @@ export function isPrivateNetworkAddress(address: string) {
   if (normalized === '::' || normalized === '::1') return true
   if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
   if (/^fe[89ab]/.test(normalized)) return true
-  if (normalized.startsWith('ff') || normalized.startsWith('2001:db8:'))
-    return true
+  if (normalized.startsWith('ff') || normalized.startsWith('2001:db8:')) return true
   const mapped = normalized.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)
   if (mapped) return privateIpv4(mapped[1])
   const mappedHex = normalized.match(/^::ffff:([a-f0-9]{1,4}):([a-f0-9]{1,4})$/)
@@ -82,18 +81,15 @@ export async function validateSourceUrl(
     throw new SourceIngestionError('invalid_url', 'Source URL is invalid.')
   }
   if (!['http:', 'https:'].includes(url.protocol))
-    throw new SourceIngestionError(
-      'invalid_protocol',
-      'Source URL must use HTTP or HTTPS.',
-    )
+    throw new SourceIngestionError('invalid_protocol', 'Source URL must use HTTP or HTTPS.')
   if (url.username || url.password)
     throw new SourceIngestionError(
       'embedded_credentials',
       'Source URLs cannot contain credentials.',
     )
   const records = await resolve(url.hostname)
-  const addresses = (Array.isArray(records) ? records : [records]).map(
-    (record: any) => (typeof record === 'string' ? record : record.address),
+  const addresses = (Array.isArray(records) ? records : [records]).map((record: any) =>
+    typeof record === 'string' ? record : record.address,
   )
   if (!addresses.length || addresses.some(isPrivateNetworkAddress))
     throw new SourceIngestionError(
@@ -113,12 +109,8 @@ function mediaType(response: Response) {
 async function readBoundedBody(response: Response, maxBytes: number) {
   const declared = Number(response.headers.get('content-length'))
   if (Number.isFinite(declared) && declared > maxBytes)
-    throw new SourceIngestionError(
-      'source_too_large',
-      'Source exceeds size limit.',
-    )
-  if (!response.body)
-    throw new SourceIngestionError('empty_response', 'Source returned no body.')
+    throw new SourceIngestionError('source_too_large', 'Source exceeds size limit.')
+  if (!response.body) throw new SourceIngestionError('empty_response', 'Source returned no body.')
   const reader = response.body.getReader()
   const chunks: Uint8Array[] = []
   let size = 0
@@ -128,10 +120,7 @@ async function readBoundedBody(response: Response, maxBytes: number) {
     size += value.byteLength
     if (size > maxBytes) {
       await reader.cancel()
-      throw new SourceIngestionError(
-        'source_too_large',
-        'Source exceeds size limit.',
-      )
+      throw new SourceIngestionError('source_too_large', 'Source exceeds size limit.')
     }
     chunks.push(value)
   }
@@ -168,16 +157,10 @@ export async function fetchPermittedSource({
     })
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       if (redirect === limits.maxRedirects)
-        throw new SourceIngestionError(
-          'too_many_redirects',
-          'Source exceeded redirect limit.',
-        )
+        throw new SourceIngestionError('too_many_redirects', 'Source exceeded redirect limit.')
       const location = response.headers.get('location')
       if (!location)
-        throw new SourceIngestionError(
-          'invalid_redirect',
-          'Source redirect has no destination.',
-        )
+        throw new SourceIngestionError('invalid_redirect', 'Source redirect has no destination.')
       const next = await validateSourceUrl(new URL(location, current), {
         resolve,
       })
@@ -190,16 +173,10 @@ export async function fetchPermittedSource({
       continue
     }
     if (!response.ok)
-      throw new SourceIngestionError(
-        'upstream_failure',
-        `Source returned HTTP ${response.status}.`,
-      )
+      throw new SourceIngestionError('upstream_failure', `Source returned HTTP ${response.status}.`)
     const type = mediaType(response)
     if (!SAFE_MEDIA_TYPES.has(type))
-      throw new SourceIngestionError(
-        'unsafe_media_type',
-        'Source media type is not permitted.',
-      )
+      throw new SourceIngestionError('unsafe_media_type', 'Source media type is not permitted.')
     const bytes = await readBoundedBody(response, limits.maxBytes)
     return {
       bytes,
@@ -208,10 +185,7 @@ export async function fetchPermittedSource({
       contentHash: `sha256:${createHash('sha256').update(bytes).digest('hex')}`,
     }
   }
-  throw new SourceIngestionError(
-    'too_many_redirects',
-    'Source exceeded redirect limit.',
-  )
+  throw new SourceIngestionError('too_many_redirects', 'Source exceeded redirect limit.')
 }
 
 const EXTRACTION_MAX_CHARS = 1_000_000
@@ -227,18 +201,15 @@ const EXTRACTION_RISKS: [string, RegExp][] = [
 export function assessExtractionText(value: any) {
   const text = String(value || '')
   if (!text.trim())
-    throw new SourceIngestionError(
-      'invalid_extraction',
-      'Reviewed extraction text is required.',
-    )
+    throw new SourceIngestionError('invalid_extraction', 'Reviewed extraction text is required.')
   if (text.length > EXTRACTION_MAX_CHARS)
     throw new SourceIngestionError(
       'extraction_too_large',
       'Reviewed extraction exceeds the text limit.',
     )
-  const reasonCodes = EXTRACTION_RISKS.filter(([, pattern]) =>
-    pattern.test(text),
-  ).map(([code]) => code)
+  const reasonCodes = EXTRACTION_RISKS.filter(([, pattern]) => pattern.test(text)).map(
+    ([code]) => code,
+  )
   return {
     contentHash: `sha256:${createHash('sha256').update(text).digest('hex')}`,
     reviewStatus: reasonCodes.length ? 'quarantined' : 'safe',
@@ -278,10 +249,7 @@ export async function reviewDocumentExtraction({
       'Extraction review requires persistent storage.',
     )
   if (!account || account.principalType === 'service')
-    throw new SourceIngestionError(
-      'human_required',
-      'A scoped human reviewer is required.',
-    )
+    throw new SourceIngestionError('human_required', 'A scoped human reviewer is required.')
   const reviewNote = String(note || '').trim()
   if (reviewNote.length < 8 || reviewNote.length > 1000)
     throw new SourceIngestionError(
@@ -289,21 +257,13 @@ export async function reviewDocumentExtraction({
       'Review note must contain 8 to 1000 characters.',
     )
   const extractionMethod = String(method || 'manual_correction').trim()
-  if (
-    !['manual_review', 'manual_correction', 'verified_ocr'].includes(
-      extractionMethod,
-    )
-  )
+  if (!['manual_review', 'manual_correction', 'verified_ocr'].includes(extractionMethod))
     throw new SourceIngestionError(
       'invalid_extraction_method',
       'Extraction method is not permitted.',
     )
   const numericConfidence = Number(confidence)
-  if (
-    !Number.isFinite(numericConfidence) ||
-    numericConfidence < 0 ||
-    numericConfidence > 1
-  )
+  if (!Number.isFinite(numericConfidence) || numericConfidence < 0 || numericConfidence > 1)
     throw new SourceIngestionError(
       'invalid_confidence',
       'Extraction confidence must be between 0 and 1.',
@@ -321,10 +281,7 @@ export async function reviewDocumentExtraction({
       [documentId, versionId],
     )
     if (!target.rows[0])
-      throw new SourceIngestionError(
-        'version_not_found',
-        'Document version not found.',
-      )
+      throw new SourceIngestionError('version_not_found', 'Document version not found.')
     const trackResult = await client.query(
       `SELECT DISTINCT track_id::text FROM negotiation_track_documents
        WHERE document_id=$1`,
@@ -335,10 +292,7 @@ export async function reviewDocumentExtraction({
       !trackIds.length ||
       trackIds.some(
         (trackId: string) =>
-          !hasCapability(
-            access,
-            `negotiations.evidence.review:negotiation_track:${trackId}`,
-          ),
+          !hasCapability(access, `negotiations.evidence.review:negotiation_track:${trackId}`),
       )
     )
       throw new SourceIngestionError(

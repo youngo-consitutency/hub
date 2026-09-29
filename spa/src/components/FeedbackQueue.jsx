@@ -1,18 +1,8 @@
 import { formatDateTime } from '../lib/time.js'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api.js'
-import {
-  Button,
-  Empty,
-  ErrorCard,
-  FilterPill,
-  Section,
-  Skeletons,
-} from './ui.jsx'
-import {
-  TbMessagePlus as MessageSquarePlus,
-  TbExternalLink as ExternalLink,
-} from 'react-icons/tb'
+import { Button, Empty, ErrorCard, FilterPill, Section, Skeletons } from './ui.jsx'
+import { TbMessagePlus as MessageSquarePlus, TbExternalLink as ExternalLink } from 'react-icons/tb'
 
 const STATUS_FILTERS = [
   ['', 'All'],
@@ -68,12 +58,8 @@ function TicketCard({ ticket, onUpdate }) {
     <div className="card cardTight feedbackTicket">
       <div className="feedbackTicketMain">
         <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-          <span className="chip chip-info">
-            {KIND_LABEL[ticket.kind] || ticket.kind}
-          </span>
-          <span
-            className={`chip ${SEVERITY_CHIP[ticket.severity] || 'chip-neutral'}`}
-          >
+          <span className="chip chip-info">{KIND_LABEL[ticket.kind] || ticket.kind}</span>
+          <span className={`chip ${SEVERITY_CHIP[ticket.severity] || 'chip-neutral'}`}>
             {ticket.severity}
           </span>
           <span className="chip chip-neutral">{ticket.status}</span>
@@ -119,24 +105,22 @@ function TicketCard({ ticket, onUpdate }) {
               Save note
             </Button>
           )}
-          {NEXT_STATUS.filter(([value]) => value !== ticket.status).map(
-            ([value, label]) => (
-              <Button
-                key={value}
-                sm
-                variant="ghost"
-                disabled={saving}
-                onClick={() =>
-                  patch({
-                    status: value,
-                    ...(noteDirty ? { triageNote: note } : {}),
-                  })
-                }
-              >
-                {label}
-              </Button>
-            ),
-          )}
+          {NEXT_STATUS.filter(([value]) => value !== ticket.status).map(([value, label]) => (
+            <Button
+              key={value}
+              sm
+              variant="ghost"
+              disabled={saving}
+              onClick={() =>
+                patch({
+                  status: value,
+                  ...(noteDirty ? { triageNote: note } : {}),
+                })
+              }
+            >
+              {label}
+            </Button>
+          ))}
         </div>
       </div>
     </div>

@@ -28,10 +28,7 @@ const STATUS_LABEL = {
 
 function CoyRow({ coy }) {
   const status = resolveCoyStatus(coy)
-  const [chipClass, chipLabel] = STATUS_LABEL[status] || [
-    'chip-neutral',
-    status,
-  ]
+  const [chipClass, chipLabel] = STATUS_LABEL[status] || ['chip-neutral', status]
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   return (
     <li className="siteCoyRow">

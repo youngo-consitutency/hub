@@ -16,8 +16,7 @@ const CATEGORIES = [
   {
     key: 'deadline',
     label: 'Deadline reminders',
-    description:
-      'Published announcement deadlines, grouped seven and two days ahead (UTC).',
+    description: 'Published announcement deadlines, grouped seven and two days ahead (UTC).',
   },
   {
     key: 'announcement',
@@ -26,15 +25,7 @@ const CATEGORIES = [
   },
 ]
 
-const DAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-]
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function EmailNotificationSettings() {
   const [state, setState] = useState({ loading: true })
@@ -101,8 +92,7 @@ export function EmailNotificationSettings() {
         <div className="notificationHeadingCopy">
           <h2>Email updates</h2>
           <p className="meta">
-            Optional categories stay off until you verify your address and turn
-            them on.
+            Optional categories stay off until you verify your address and turn them on.
           </p>
         </div>
       </div>
@@ -125,14 +115,10 @@ export function EmailNotificationSettings() {
           Loading email preferences…
         </p>
       ) : !state.deliveryConfigured ? (
-        <p className="metaMuted">
-          Email delivery is not configured for this Hub deployment yet.
-        </p>
+        <p className="metaMuted">Email delivery is not configured for this Hub deployment yet.</p>
       ) : !state.emailVerified ? (
         <div className="stackSm">
-          <p className="meta">
-            Confirm your account address before enabling digests or alerts.
-          </p>
+          <p className="meta">Confirm your account address before enabling digests or alerts.</p>
           <Button onClick={requestVerification} disabled={busy}>
             Send verification email
           </Button>
@@ -182,8 +168,8 @@ export function EmailNotificationSettings() {
             </label>
           )}
           <p className="metaMuted">
-            Optional email is capped at three messages in seven days. Deadline
-            reminders and announcements are limited to one per day.
+            Optional email is capped at three messages in seven days. Deadline reminders and
+            announcements are limited to one per day.
           </p>
           <Button onClick={save} disabled={busy}>
             Save email preferences

@@ -12,11 +12,7 @@ export function bodyRoles(kind) {
   return ['member']
 }
 /** Canonical task-force slugs a working group may publish as subpages. */
-export const TASK_FORCE_SLUGS = new Set([
-  'programming',
-  'policy',
-  'events-partnerships',
-])
+export const TASK_FORCE_SLUGS = new Set(['programming', 'policy', 'events-partnerships'])
 
 export function normalizeTaskForces(value) {
   const raw = Array.isArray(value) ? value : []
@@ -30,11 +26,7 @@ export function normalizeTaskForces(value) {
 }
 
 export function taskForceBySlug(group, slug) {
-  return (
-    normalizeTaskForces(group?.taskForces).find(
-      (item) => item.slug === slug,
-    ) || null
-  )
+  return normalizeTaskForces(group?.taskForces).find((item) => item.slug === slug) || null
 }
 
 export function wgDutyRoleLabel(role) {

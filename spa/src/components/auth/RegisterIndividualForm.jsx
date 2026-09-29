@@ -1,17 +1,7 @@
 import { useDocument } from '../../lib/documents.js'
 import { Button } from '../ui.jsx'
-import {
-  DatePicker,
-  FieldError,
-  MultiSelectDropdown,
-  SearchableSelect,
-} from '../FormControls.jsx'
-import {
-  asOptions,
-  fieldClass,
-  checkClass,
-  loadPhoneSupport,
-} from './helpers.js'
+import { DatePicker, FieldError, MultiSelectDropdown, SearchableSelect } from '../FormControls.jsx'
+import { asOptions, fieldClass, checkClass, loadPhoneSupport } from './helpers.js'
 import { PhoneField, PolicyLink, WgInterestsSection } from './shared.jsx'
 
 export function RegisterIndividualForm({
@@ -48,17 +38,13 @@ export function RegisterIndividualForm({
           <li>Ages 35 and under · no membership fees.</li>
           <li>Membership Team usually contacts you within ~2 weeks.</li>
           <li>
-            2026 Contact Points and Focal Points: register with the email on the
-            official WG/OT roster, then confirm that inbox. The Hub assigns the
-            mandate from that match.
+            2026 Contact Points and Focal Points: register with the email on the official WG/OT
+            roster, then confirm that inbox. The Hub assigns the mandate from that match.
           </li>
         </ul>
         <p className="metaMuted">
           Help:{' '}
-          <a
-            className="mandateExtLink"
-            href={`mailto:${membershipEmail}`}
-          >
+          <a className="mandateExtLink" href={`mailto:${membershipEmail}`}>
             {membershipEmail}
           </a>
         </p>
@@ -89,15 +75,14 @@ export function RegisterIndividualForm({
           <div className="ageIneligible" role="alert">
             <h3>YOUNGO individual membership is for under-35s</h3>
             <p>
-              YOUNGO is the children and youth constituency of the UNFCCC, so
-              individual membership ends at 35. You cannot create an individual
-              account with this age group selected.
+              YOUNGO is the children and youth constituency of the UNFCCC, so individual membership
+              ends at 35. You cannot create an individual account with this age group selected.
             </p>
             <p>
-              <strong>You can still take part.</strong> If you work with a youth
-              organisation, register it here as an organisation — organisations
-              have no age limit and can nominate youth representatives. For
-              anything else, the membership team is happy to talk it through.
+              <strong>You can still take part.</strong> If you work with a youth organisation,
+              register it here as an organisation — organisations have no age limit and can nominate
+              youth representatives. For anything else, the membership team is happy to talk it
+              through.
             </p>
             <div className="ageIneligibleActions">
               <Button
@@ -115,7 +100,11 @@ export function RegisterIndividualForm({
               </Button>
               <a
                 className="btn btn-ghost btn-sm"
-                href={membershipEmail ? `mailto:${membershipEmail}?subject=Membership%20question` : undefined}
+                href={
+                  membershipEmail
+                    ? `mailto:${membershipEmail}?subject=Membership%20question`
+                    : undefined
+                }
               >
                 Email the membership team
               </a>
@@ -238,9 +227,7 @@ export function RegisterIndividualForm({
         <h2 className="authSectionTitle">Background</h2>
         <p className="meta">Do you identify as part of a minority group? *</p>
         <div className="authChoiceGrid">
-          <label
-            className={`authChoice ${form.minorityIdentity === 'yes' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.minorityIdentity === 'yes' ? 'active' : ''}`}>
             <input
               type="radio"
               name="minorityIdentity"
@@ -249,9 +236,7 @@ export function RegisterIndividualForm({
             />
             <strong>Yes</strong>
           </label>
-          <label
-            className={`authChoice ${form.minorityIdentity === 'no' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.minorityIdentity === 'no' ? 'active' : ''}`}>
             <input
               type="radio"
               name="minorityIdentity"
@@ -271,18 +256,17 @@ export function RegisterIndividualForm({
             error={fields.minorityGroups}
           />
         )}
-        {form.minorityIdentity === 'yes' &&
-          form.minorityGroups.includes('Other') && (
-            <label className="field">
-              <span>Please specify *</span>
-              <input
-                className="input"
-                value={form.minorityOther}
-                onChange={setReg('minorityOther')}
-              />
-              <FieldError msg={fields.minorityOther} />
-            </label>
-          )}
+        {form.minorityIdentity === 'yes' && form.minorityGroups.includes('Other') && (
+          <label className="field">
+            <span>Please specify *</span>
+            <input
+              className="input"
+              value={form.minorityOther}
+              onChange={setReg('minorityOther')}
+            />
+            <FieldError msg={fields.minorityOther} />
+          </label>
+        )}
         <SearchableSelect
           className="authSectionBreak"
           label="Region (UN classifications) *"
@@ -365,16 +349,12 @@ export function RegisterIndividualForm({
       <WgInterestsSection selected={form.wgInterests} onToggle={toggleWg} />
 
       <section className="card authSection">
-        <h2 className="authSectionTitle">
-          Accredited NGO membership (statistics)
-        </h2>
+        <h2 className="authSectionTitle">Accredited NGO membership (statistics)</h2>
         <p className="meta">
           Are you a member of an accredited NGO (which is a member of YOUNGO)? *
         </p>
         <div className="authChoiceGrid">
-          <label
-            className={`authChoice ${form.memberOfAccreditedNgo === 'yes' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.memberOfAccreditedNgo === 'yes' ? 'active' : ''}`}>
             <input
               type="radio"
               name="ngoStat"
@@ -388,9 +368,7 @@ export function RegisterIndividualForm({
             />
             <strong>Yes</strong>
           </label>
-          <label
-            className={`authChoice ${form.memberOfAccreditedNgo === 'no' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.memberOfAccreditedNgo === 'no' ? 'active' : ''}`}>
             <input
               type="radio"
               name="ngoStat"
@@ -411,8 +389,7 @@ export function RegisterIndividualForm({
       <section className="card authSection">
         <h2 className="authSectionTitle">Agreements *</h2>
         <p className="meta">
-          Open each policy link to read it, then tick the box. Links open in a
-          new tab.
+          Open each policy link to read it, then tick the box. Links open in a new tab.
         </p>
         <div className="authAgreementList">
           <label className={checkClass(fields.acceptCodeOfConduct)}>
@@ -423,10 +400,7 @@ export function RegisterIndividualForm({
             />
             <span>
               I agree to respect the YOUNGO{' '}
-              <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>
-                Code of Conduct
-              </PolicyLink>
-              . *
+              <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>Code of Conduct</PolicyLink>. *
             </span>
           </label>
           <FieldError msg={fields.acceptCodeOfConduct} />
@@ -453,10 +427,7 @@ export function RegisterIndividualForm({
             />
             <span>
               I agree to respect the YOUNGO{' '}
-              <PolicyLink href={POLICY_BY_SLUG.principles?.href}>
-                Principles
-              </PolicyLink>
-              . *
+              <PolicyLink href={POLICY_BY_SLUG.principles?.href}>Principles</PolicyLink>. *
             </span>
           </label>
           <FieldError msg={fields.acceptPrinciples} />
@@ -478,9 +449,7 @@ export function RegisterIndividualForm({
         </div>
         {policiesDoc?.browseAllUrl ? (
           <p className="metaMuted">
-            <PolicyLink href={policiesDoc.browseAllUrl}>
-              Browse all YOUNGO policies
-            </PolicyLink>
+            <PolicyLink href={policiesDoc.browseAllUrl}>Browse all YOUNGO policies</PolicyLink>
           </p>
         ) : null}
       </section>

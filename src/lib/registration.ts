@@ -27,9 +27,7 @@ function optionSets(options: RegistrationOptions) {
     genders: new Set(options.genders || []),
     minorities: new Set(options.minorityOptions || []),
     ageBands: new Set((options.ageBands || []).map((o) => o.value)),
-    affiliations: new Set(
-      (options.youthAffiliations || []).map((o) => o.value),
-    ),
+    affiliations: new Set((options.youthAffiliations || []).map((o) => o.value)),
     nationalities: new Set(options.nationalities || []),
   }
 }
@@ -54,8 +52,7 @@ function ageFromDob(dob: string | null): number | null {
 }
 
 function asStringArray(value: unknown): string[] {
-  if (Array.isArray(value))
-    return value.map((v) => String(v).trim()).filter(Boolean)
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean)
   if (typeof value === 'string' && value.trim()) return [value.trim()]
   return []
 }
@@ -68,12 +65,10 @@ function parseYesNo(value: unknown): boolean | null {
 
 // Normalising primitives — coerce the raw request body so constraint checks
 // and output mapping both see clean values.
-const str = <T extends z.ZodTypeAny>(inner: T) =>
-  z.preprocess((v) => String(v ?? ''), inner)
+const str = <T extends z.ZodTypeAny>(inner: T) => z.preprocess((v) => String(v ?? ''), inner)
 const strTrim = <T extends z.ZodTypeAny>(inner: T) =>
   z.preprocess((v) => String(v ?? '').trim(), inner)
-const strOpt = () =>
-  z.preprocess((v) => String(v ?? '').trim() || null, z.string().nullable())
+const strOpt = () => z.preprocess((v) => String(v ?? '').trim() || null, z.string().nullable())
 const strEmailOpt = () =>
   z.preprocess(
     (v) =>
@@ -150,13 +145,10 @@ function agreementFields(b: Body, fields: Fields) {
   if (!acceptCodeOfConduct)
     fields.acceptCodeOfConduct = 'You must agree to the YOUNGO Code of Conduct.'
   if (!acceptDataProtection)
-    fields.acceptDataProtection =
-      'You must agree to the YOUNGO Data Protection Policy.'
-  if (!acceptPrinciples)
-    fields.acceptPrinciples = 'You must agree to the YOUNGO Principles.'
+    fields.acceptDataProtection = 'You must agree to the YOUNGO Data Protection Policy.'
+  if (!acceptPrinciples) fields.acceptPrinciples = 'You must agree to the YOUNGO Principles.'
   if (!acceptCoiPolicy)
-    fields.acceptCoiPolicy =
-      'You must agree to the YOUNGO Conflict of Interest Policy.'
+    fields.acceptCoiPolicy = 'You must agree to the YOUNGO Conflict of Interest Policy.'
   return {
     acceptCodeOfConduct,
     acceptDataProtection,
@@ -183,10 +175,7 @@ function privacyConsentError(
   return null
 }
 
-function privacyConsentFragment(notice: {
-  PRIVACY_VERSION?: string
-  CONSENT_STATEMENT?: string
-}) {
+function privacyConsentFragment(notice: { PRIVACY_VERSION?: string; CONSENT_STATEMENT?: string }) {
   return {
     privacyConsent: true,
     privacyNoticeVersion: notice.PRIVACY_VERSION,
@@ -219,8 +208,7 @@ export async function validateRegistration(req: any, body: Body) {
   if (!baseResult.success) addIssues(baseResult.error, fields)
 
   const entityType = String(b.entityType || '').trim()
-  const membershipTrack =
-    String(b.membershipTrack || 'network').trim() || 'network'
+  const membershipTrack = String(b.membershipTrack || 'network').trim() || 'network'
   const membershipPolicyVersion = String(b.membershipPolicyVersion || '').trim()
   const password = String(b.password || '')
 
@@ -235,12 +223,7 @@ export async function validateRegistration(req: any, body: Body) {
   if (entityType === 'organization') {
     const orgSchema = z
       .object({
-        email: strTrim(
-          z
-            .string()
-            .toLowerCase()
-            .regex(EMAIL_RE, 'Please enter a valid email.'),
-        ),
+        email: strTrim(z.string().toLowerCase().regex(EMAIL_RE, 'Please enter a valid email.')),
         organizationName: strTrim(
           z
             .string()
@@ -270,23 +253,13 @@ export async function validateRegistration(req: any, body: Body) {
         ycpName: strOpt(),
         ycpEmail: strEmailOpt(),
         ycpPhone: strOpt(),
-        region: z.preprocess(
-          () => String(b.region || b.orgRegion || '').trim(),
-          z.string(),
-        ),
-        country: z.preprocess(
-          () => String(b.orgCountry || b.country || '').trim(),
-          z.string(),
-        ),
+        region: z.preprocess(() => String(b.region || b.orgRegion || '').trim(), z.string()),
+        country: z.preprocess(() => String(b.orgCountry || b.country || '').trim(), z.string()),
       })
       .superRefine((v, ctx) => {
         if (v.isUnfcccAdmitted === true) {
           if (!allowed(opts.affiliations, v.youthAffiliation || '')) {
-            issue(
-              ctx,
-              'youthAffiliation',
-              'Indicate affiliation with “youth” within the UNFCCC.',
-            )
+            issue(ctx, 'youthAffiliation', 'Indicate affiliation with “youth” within the UNFCCC.')
           }
           if (!allowed(opts.regions, v.region)) {
             issue(
@@ -305,11 +278,7 @@ export async function validateRegistration(req: any, body: Body) {
             issue(ctx, 'dcpEmail', "UNFCCC DCP's official email is required.")
           }
           if (!v.dcpPhone || !PHONE_RE.test(v.dcpPhone)) {
-            issue(
-              ctx,
-              'dcpPhone',
-              "UNFCCC DCP's phone (with country code) is required.",
-            )
+            issue(ctx, 'dcpPhone', "UNFCCC DCP's phone (with country code) is required.")
           }
           const ycpPartial = v.ycpName || v.ycpEmail || v.ycpPhone
           if (ycpPartial) {
@@ -337,25 +306,13 @@ export async function validateRegistration(req: any, body: Body) {
           }
         } else if (v.isUnfcccAdmitted === false) {
           if (!v.orgOperateIn) {
-            issue(
-              ctx,
-              'orgOperateIn',
-              'Please describe regions/countries of operation.',
-            )
+            issue(ctx, 'orgOperateIn', 'Please describe regions/countries of operation.')
           }
           if (!v.ycpName) {
-            issue(
-              ctx,
-              'ycpName',
-              "YOUNGO Contact Point's full name is required.",
-            )
+            issue(ctx, 'ycpName', "YOUNGO Contact Point's full name is required.")
           }
           if (!EMAIL_RE.test(v.ycpEmail || '')) {
-            issue(
-              ctx,
-              'ycpEmail',
-              "YOUNGO Contact Point's email is required.",
-            )
+            issue(ctx, 'ycpEmail', "YOUNGO Contact Point's email is required.")
           }
           if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
             issue(
@@ -375,9 +332,7 @@ export async function validateRegistration(req: any, body: Body) {
     const accountName = v.ycpName || v.dcpName || v.organizationName
     const nameParts = accountName.split(/\s+/)
     const firstName = nameParts[0] || v.organizationName
-    const lastName =
-      nameParts.slice(1).join(' ') ||
-      (v.isUnfcccAdmitted ? 'DCP' : 'Contact')
+    const lastName = nameParts.slice(1).join(' ') || (v.isUnfcccAdmitted ? 'DCP' : 'Contact')
 
     return {
       data: {
@@ -400,9 +355,7 @@ export async function validateRegistration(req: any, body: Body) {
         country: v.country || '—',
         motivation: null,
         organizationName: v.organizationName,
-        organizationType: v.isUnfcccAdmitted
-          ? 'unfccc_admitted'
-          : 'non_admitted',
+        organizationType: v.isUnfcccAdmitted ? 'unfccc_admitted' : 'non_admitted',
         isUnfcccAdmitted: Boolean(v.isUnfcccAdmitted),
         youthAffiliation: v.isUnfcccAdmitted ? v.youthAffiliation : null,
         orgOperateIn: v.orgOperateIn || null,
@@ -445,57 +398,33 @@ export async function validateRegistration(req: any, body: Body) {
           .max(160, 'Email is too long.'),
       ),
       firstName: strTrim(
-        z
-          .string()
-          .min(1, 'First name is required.')
-          .max(80, 'First name is too long.'),
+        z.string().min(1, 'First name is required.').max(80, 'First name is too long.'),
       ),
       lastName: strTrim(
-        z
-          .string()
-          .min(1, 'Last name is required.')
-          .max(80, 'Last name is too long.'),
+        z.string().min(1, 'Last name is required.').max(80, 'Last name is too long.'),
       ),
       phone: strTrim(
-        z
-          .string()
-          .regex(
-            PHONE_RE,
-            'Enter a phone number with country code (e.g. +123 456 7890).',
-          ),
+        z.string().regex(PHONE_RE, 'Enter a phone number with country code (e.g. +123 456 7890).'),
       ),
       gender: strTrim(
-        z
-          .string()
-          .refine((v) => allowed(opts.genders, v), 'Please select your gender.'),
+        z.string().refine((v) => allowed(opts.genders, v), 'Please select your gender.'),
       ),
       genderOther: strOpt(),
       ageBand: strTrim(
         z
           .string()
-          .refine(
-            (v) => allowed(opts.ageBands, v),
-            'Please select your age group.',
-          )
+          .refine((v) => allowed(opts.ageBands, v), 'Please select your age group.')
           .refine(
             (v) => v !== '35_plus',
             'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.',
           ),
       ),
-      dateOfBirth: strOpt().refine(
-        (v) => v !== null,
-        'Date of birth is required.',
-      ),
-      minorityIdentity: yesNo().refine(
-        (v) => v !== null,
-        'Please answer yes or no.',
-      ),
+      dateOfBirth: strOpt().refine((v) => v !== null, 'Date of birth is required.'),
+      minorityIdentity: yesNo().refine((v) => v !== null, 'Please answer yes or no.'),
       minorityGroups: strList(),
       minorityOther: strOpt(),
       region: strTrim(
-        z
-          .string()
-          .refine((v) => allowed(opts.regions, v), 'Please select your UN region.'),
+        z.string().refine((v) => allowed(opts.regions, v), 'Please select your UN region.'),
       ),
       nationality: strTrim(
         z
@@ -509,13 +438,8 @@ export async function validateRegistration(req: any, body: Body) {
         () => String(b.countryOfResidence || b.country || '').trim(),
         z.string().min(1, 'Country of residence is required.'),
       ),
-      motivation: strTrim(
-        z.string().max(2000, 'Please keep this under 2000 characters.'),
-      ),
-      memberOfAccreditedNgo: yesNo().refine(
-        (v) => v !== null,
-        'Please answer for statistics.',
-      ),
+      motivation: strTrim(z.string().max(2000, 'Please keep this under 2000 characters.')),
+      memberOfAccreditedNgo: yesNo().refine((v) => v !== null, 'Please answer for statistics.'),
       guardianName: strOpt(),
       guardianEmail: strEmailOpt(),
       guardianConsent: z.preprocess((v) => Boolean(v), z.boolean()),
@@ -530,11 +454,7 @@ export async function validateRegistration(req: any, body: Body) {
         if (age === null) {
           issue(ctx, 'dateOfBirth', 'Enter a valid date of birth.')
         } else if (age >= 35) {
-          issue(
-            ctx,
-            'dateOfBirth',
-            'Individual membership expires at age 35.',
-          )
+          issue(ctx, 'dateOfBirth', 'Individual membership expires at age 35.')
         } else if (age < 18) under18 = true
       }
       if (opts.minorities.size) {
@@ -546,34 +466,20 @@ export async function validateRegistration(req: any, body: Body) {
         issue(ctx, 'minorityGroups', 'Select at least one option.')
       }
       if (
-        (v.minorityIdentity === false ? [] : v.minorityGroups).includes(
-          'Other',
-        ) &&
+        (v.minorityIdentity === false ? [] : v.minorityGroups).includes('Other') &&
         !v.minorityOther
       ) {
         issue(ctx, 'minorityOther', 'Please specify.')
       }
       if (under18) {
         if (!v.guardianName) {
-          issue(
-            ctx,
-            'guardianName',
-            'Guardian name is required for members under 18.',
-          )
+          issue(ctx, 'guardianName', 'Guardian name is required for members under 18.')
         }
         if (!EMAIL_RE.test(v.guardianEmail || '')) {
-          issue(
-            ctx,
-            'guardianEmail',
-            'Guardian email is required for members under 18.',
-          )
+          issue(ctx, 'guardianEmail', 'Guardian email is required for members under 18.')
         }
         if (!v.guardianConsent) {
-          issue(
-            ctx,
-            'guardianConsent',
-            'Guardian permission is required for members under 18.',
-          )
+          issue(ctx, 'guardianConsent', 'Guardian permission is required for members under 18.')
         }
       }
     })
@@ -586,10 +492,8 @@ export async function validateRegistration(req: any, body: Body) {
   if (Object.keys(fields).length) return { fields }
   const v = parsed.data
 
-  const name =
-    `${v.firstName} ${v.lastName}`.trim() || String(b.name || '').trim()
-  const minorityGroups =
-    v.minorityIdentity === false ? [] : v.minorityGroups
+  const name = `${v.firstName} ${v.lastName}`.trim() || String(b.name || '').trim()
+  const minorityGroups = v.minorityIdentity === false ? [] : v.minorityGroups
   let under18 = v.ageBand === 'under_18'
   if (v.dateOfBirth) {
     const age = ageFromDob(v.dateOfBirth)

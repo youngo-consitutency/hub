@@ -46,21 +46,14 @@ export async function suggestAmendmentReconciliation({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(
-      client,
-      amendmentId,
-      account.id,
-    )
+    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
     if (amendment.target_type !== 'official_document')
       throw new ContributionError(
         422,
         'invalid_target',
         'Only official-document amendments use document reconciliation.',
       )
-    assertExpectedVersion(
-      amendment.current_version,
-      data.expectedAmendmentVersion,
-    )
+    assertExpectedVersion(amendment.current_version, data.expectedAmendmentVersion)
     const target = await client.query(
       `SELECT 1 FROM negotiation_document_versions old
        JOIN negotiation_document_versions proposed
@@ -160,31 +153,19 @@ export async function confirmAmendmentReconciliation({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(
-      client,
-      amendmentId,
-      account.id,
-    )
-    assertExpectedVersion(
-      amendment.current_version,
-      data.expectedAmendmentVersion,
-    )
+    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
+    assertExpectedVersion(amendment.current_version, data.expectedAmendmentVersion)
     const reconciliation = await client.query(
       `SELECT * FROM negotiation_amendment_reconciliations
        WHERE id=$1 AND amendment_id=$2 AND status='suggested' FOR UPDATE`,
       [reconciliationId, amendmentId],
     )
     if (!reconciliation.rows[0])
-      throw new ContributionError(
-        409,
-        'reconciliation_conflict',
-        'Mapping is no longer pending.',
-      )
+      throw new ContributionError(409, 'reconciliation_conflict', 'Mapping is no longer pending.')
     if (
       !data.citations.some(
         (citation: any) =>
-          citation.sourceVersionId ===
-          String(reconciliation.rows[0].suggested_document_version_id),
+          citation.sourceVersionId === String(reconciliation.rows[0].suggested_document_version_id),
       )
     )
       throw new ContributionError(
@@ -259,8 +240,7 @@ export async function confirmAmendmentReconciliation({
     const response = {
       reconciliationId,
       status: 'confirmed',
-      targetDocumentVersionId:
-        reconciliation.rows[0].suggested_document_version_id,
+      targetDocumentVersionId: reconciliation.rows[0].suggested_document_version_id,
       version: version.rows[0],
       reviewRequired: true,
       note: data.note,

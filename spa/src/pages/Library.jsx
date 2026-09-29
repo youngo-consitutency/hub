@@ -7,11 +7,7 @@ export function Library() {
   if (!library) return loading ? <Skeletons n={3} /> : null
   return (
     <div>
-      <PageHeader
-        icon={LibraryIcon}
-        title={library.title}
-        description={library.description}
-      />
+      <PageHeader icon={LibraryIcon} title={library.title} description={library.description} />
       <Section label={library.sectionLabel}>
         <div className="resourceList">
           {(library.guides || []).map((guide) => (

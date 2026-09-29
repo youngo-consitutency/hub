@@ -28,13 +28,7 @@ export const Handovers: CollectionConfig = {
       name: 'reason',
       type: 'select',
       required: true,
-      options: [
-        'resignation',
-        'termination',
-        'cw_expiry',
-        'mandate_end',
-        'other',
-      ],
+      options: ['resignation', 'termination', 'cw_expiry', 'mandate_end', 'other'],
       index: true,
     },
     // What is being handed over, e.g. "Constituency Work roles" or

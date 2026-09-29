@@ -13,11 +13,7 @@ import {
 } from '../components/ui.jsx'
 import { SubmissionCard } from '../components/cards.jsx'
 import { workingGroupIcon } from '../lib/workingGroupIcons.js'
-import {
-  activeFilterCount,
-  matchesFilters,
-  toggleFilter,
-} from '../lib/filterState.js'
+import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState.js'
 import {
   TbArchive as Archive,
   TbSortAscendingLetters as ArrowDownAZ,
@@ -68,11 +64,7 @@ export function Submissions() {
       >
         <PageSectionNav section="policy" />
         <div className="viewSwitch" role="group" aria-label="Submission view">
-          <FilterPill
-            active={state === 'open'}
-            icon={FileText}
-            onClick={() => changeState('open')}
-          >
+          <FilterPill active={state === 'open'} icon={FileText} onClick={() => changeState('open')}>
             Open
           </FilterPill>
           <FilterPill
@@ -116,9 +108,7 @@ export function Submissions() {
           const statuses = state === 'open' ? OPEN_STATUSES : ARCHIVE_STATUSES
           const groups = [
             ...new Map(
-              data.items
-                .filter((item) => item.wg)
-                .map((item) => [item.wg.slug, item.wg]),
+              data.items.filter((item) => item.wg).map((item) => [item.wg.slug, item.wg]),
             ).values(),
           ].sort((a, b) => a.name.localeCompare(b.name))
           const needle = search.trim().toLocaleLowerCase()
@@ -128,11 +118,7 @@ export function Submissions() {
                 matchesFilters(submission.status, statusFilters) &&
                 matchesFilters(submission.wg?.slug, groupFilters) &&
                 (!needle ||
-                  [
-                    submission.title,
-                    submission.description,
-                    submission.wg?.name,
-                  ]
+                  [submission.title, submission.description, submission.wg?.name]
                     .join(' ')
                     .toLocaleLowerCase()
                     .includes(needle)),
@@ -141,12 +127,8 @@ export function Submissions() {
               sort === 'title'
                 ? a.title.localeCompare(b.title)
                 : state === 'archive'
-                  ? String(b.deadlineAt || '').localeCompare(
-                      String(a.deadlineAt || ''),
-                    )
-                  : String(a.deadlineAt || '9999').localeCompare(
-                      String(b.deadlineAt || '9999'),
-                    ),
+                  ? String(b.deadlineAt || '').localeCompare(String(a.deadlineAt || ''))
+                  : String(a.deadlineAt || '9999').localeCompare(String(b.deadlineAt || '9999')),
             )
 
           return (
@@ -187,10 +169,7 @@ export function Submissions() {
                       setStatusFilters({})
                       setGroupFilters({})
                     }}
-                    activeCount={
-                      activeFilterCount(statusFilters) +
-                      activeFilterCount(groupFilters)
-                    }
+                    activeCount={activeFilterCount(statusFilters) + activeFilterCount(groupFilters)}
                   >
                     <fieldset className="filterLevel">
                       <legend>{state === 'open' ? 'Stage' : 'Outcome'}</legend>
@@ -198,22 +177,15 @@ export function Submissions() {
                         {statuses.map((item) => (
                           <FilterPill
                             key={item.key}
-                            active={
-                              item.key === 'all' &&
-                              activeFilterCount(statusFilters) === 0
-                            }
+                            active={item.key === 'all' && activeFilterCount(statusFilters) === 0}
                             state={
-                              item.key === 'all'
-                                ? undefined
-                                : statusFilters[item.key] || 'neutral'
+                              item.key === 'all' ? undefined : statusFilters[item.key] || 'neutral'
                             }
                             icon={item.icon}
                             onClick={() => {
                               if (item.key === 'all') setStatusFilters({})
                               else {
-                                setStatusFilters((current) =>
-                                  toggleFilter(current, item.key),
-                                )
+                                setStatusFilters((current) => toggleFilter(current, item.key))
                               }
                             }}
                           >
@@ -239,9 +211,7 @@ export function Submissions() {
                               state={groupFilters[item.slug] || 'neutral'}
                               icon={workingGroupIcon(item.slug)}
                               onClick={() =>
-                                setGroupFilters((current) =>
-                                  toggleFilter(current, item.slug),
-                                )
+                                setGroupFilters((current) => toggleFilter(current, item.slug))
                               }
                             >
                               {item.name}
@@ -259,16 +229,10 @@ export function Submissions() {
                     <SubmissionCard
                       key={submission.slug}
                       sub={submission}
-                      statusFilterState={
-                        statusFilters[submission.status] || 'neutral'
-                      }
-                      groupFilterState={
-                        groupFilters[submission.wg?.slug] || 'neutral'
-                      }
+                      statusFilterState={statusFilters[submission.status] || 'neutral'}
+                      groupFilterState={groupFilters[submission.wg?.slug] || 'neutral'}
                       onStatusFilter={() =>
-                        setStatusFilters((current) =>
-                          toggleFilter(current, submission.status),
-                        )
+                        setStatusFilters((current) => toggleFilter(current, submission.status))
                       }
                       onGroupFilter={
                         submission.wg

@@ -1,18 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiPost, useApi } from '../lib/api.js'
-import {
-  A,
-  Async,
-  BackLink,
-  Empty,
-  PageHeader,
-  Section,
-  StatusChip,
-} from '../components/ui.jsx'
-import {
-  TbFileDescription as FileDescription,
-  TbHistory as History,
-} from 'react-icons/tb'
+import { A, Async, BackLink, Empty, PageHeader, Section, StatusChip } from '../components/ui.jsx'
+import { TbFileDescription as FileDescription, TbHistory as History } from 'react-icons/tb'
 
 const formatDate = (value) =>
   value
@@ -63,21 +52,15 @@ function ProjectList() {
                 <div className="cardBody">
                   <div className="detailHeaderMeta">
                     <StatusChip status={project.lifecycleStatus} />
-                    <span className="muted">
-                      Version {project.currentVersion}
-                    </span>
+                    <span className="muted">Version {project.currentVersion}</span>
                   </div>
                   <h2>{project.title}</h2>
                   <p>{project.purpose}</p>
                   <p className="muted">
-                    {project.isInitiative
-                      ? 'Member initiative'
-                      : 'Call-linked proposal'}{' '}
-                    · {project.track.topic}
+                    {project.isInitiative ? 'Member initiative' : 'Call-linked proposal'} ·{' '}
+                    {project.track.topic}
                   </p>
-                  <p className="muted">
-                    Updated {formatDate(project.updatedAt)}
-                  </p>
+                  <p className="muted">Updated {formatDate(project.updatedAt)}</p>
                 </div>
               </A>
             ))}
@@ -152,17 +135,14 @@ function ProjectDetail({ id }) {
             <PageHeader title={item.title} description={item.purpose}>
               <div className="detailHeaderMeta">
                 <StatusChip status={item.lifecycleStatus} />
-                <span className="muted">
-                  Current version {item.currentVersion}
-                </span>
+                <span className="muted">Current version {item.currentVersion}</span>
               </div>
             </PageHeader>
             <div className="notice notice-info">
               {item.isInitiative
                 ? 'This is a member initiative with no verified external call.'
                 : `Linked to: ${item.call?.title || 'verified call'}.`}{' '}
-              It is not an endorsed position and cannot be transmitted from this
-              workspace.
+              It is not an endorsed position and cannot be transmitted from this workspace.
             </div>
 
             <Section label="Create the next immutable draft">
@@ -185,9 +165,7 @@ function ProjectDetail({ id }) {
                       className="input"
                       required
                       value={sourceVersionId}
-                      onChange={(event) =>
-                        setSourceVersionId(event.target.value)
-                      }
+                      onChange={(event) => setSourceVersionId(event.target.value)}
                     />
                   </label>
                   <label className="field">
@@ -211,22 +189,13 @@ function ProjectDetail({ id }) {
                   </label>
                 </div>
                 {message && (
-                  <p
-                    className={message.tone === 'error' ? 'formError' : 'muted'}
-                    role="status"
-                  >
+                  <p className={message.tone === 'error' ? 'formError' : 'muted'} role="status">
                     {message.text}
                   </p>
                 )}
                 <div className="detailActions">
-                  <button
-                    className="btn btn-primary"
-                    type="submit"
-                    disabled={saving}
-                  >
-                    {saving
-                      ? 'Saving…'
-                      : `Save version ${item.currentVersion + 1}`}
+                  <button className="btn btn-primary" type="submit" disabled={saving}>
+                    {saving ? 'Saving…' : `Save version ${item.currentVersion + 1}`}
                   </button>
                 </div>
               </form>
@@ -238,23 +207,14 @@ function ProjectDetail({ id }) {
                   <article className="card detailPanel" key={version.id}>
                     <div className="detailHeaderMeta">
                       <h3>Version {version.version}</h3>
-                      <span className="muted">
-                        {formatDate(version.createdAt)}
-                      </span>
+                      <span className="muted">{formatDate(version.createdAt)}</span>
                     </div>
                     <p className="preWrap">{version.contentText}</p>
-                    <p className="muted">
-                      Snapshot hash: {version.contentHash}
-                    </p>
+                    <p className="muted">Snapshot hash: {version.contentHash}</p>
                     {version.citations.map((citation, index) => (
-                      <p
-                        className="muted"
-                        key={`${citation.sourceVersionId}-${index}`}
-                      >
+                      <p className="muted" key={`${citation.sourceVersionId}-${index}`}>
                         Evidence: {citation.sourceVersionId}
-                        {citation.location?.paragraph
-                          ? ` · ${citation.location.paragraph}`
-                          : ''}
+                        {citation.location?.paragraph ? ` · ${citation.location.paragraph}` : ''}
                         {citation.quote ? ` · “${citation.quote}”` : ''}
                       </p>
                     ))}
@@ -270,26 +230,17 @@ function ProjectDetail({ id }) {
                     <article className="card detailPanel" key={amendment.id}>
                       <div className="detailHeaderMeta">
                         <StatusChip status={amendment.decisionStatus} />
-                        <span className="muted">
-                          Version {amendment.currentVersion}
-                        </span>
+                        <span className="muted">Version {amendment.currentVersion}</span>
                       </div>
                       <h3>{amendment.operation} proposal</h3>
-                      <p>
-                        {amendment.proposedText || 'Delete the anchored text.'}
-                      </p>
+                      <p>{amendment.proposedText || 'Delete the anchored text.'}</p>
                       <p className="muted">{amendment.rationale}</p>
-                      <p className="muted">
-                        Reconciliation: {amendment.reconciliationStatus}
-                      </p>
+                      <p className="muted">Reconciliation: {amendment.reconciliationStatus}</p>
                     </article>
                   ))}
                 </div>
               ) : (
-                <Empty
-                  icon={History}
-                  title="No paragraph amendments in this project"
-                />
+                <Empty icon={History} title="No paragraph amendments in this project" />
               )}
             </Section>
           </>

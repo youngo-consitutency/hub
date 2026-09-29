@@ -77,10 +77,7 @@ export function OrgAffiliation() {
     }))
 
   return (
-    <section
-      className="card organisationCard"
-      aria-labelledby="organisation-title"
-    >
+    <section className="card organisationCard" aria-labelledby="organisation-title">
       <div className="organisationTitleRow">
         <span className="iconTile" aria-hidden>
           <Building2 size={20} strokeWidth={1.75} />
@@ -116,8 +113,7 @@ export function OrgAffiliation() {
           <div className="organisationEmpty">
             <strong>Not linked to an organisation</strong>
             <p className="meta">
-              If you take part through a youth organisation, ask them to confirm
-              it here.
+              If you take part through a youth organisation, ask them to confirm it here.
             </p>
           </div>
         )}
@@ -126,8 +122,8 @@ export function OrgAffiliation() {
           <div className="organisationRequest">
             <h3>Ask an organisation to confirm you</h3>
             <p className="meta">
-              Choose the organisation you work with. They decide whether to
-              confirm, and whether it also gives you access to their portal.
+              Choose the organisation you work with. They decide whether to confirm, and whether it
+              also gives you access to their portal.
             </p>
             <SearchableSelect
               label="Organisation"

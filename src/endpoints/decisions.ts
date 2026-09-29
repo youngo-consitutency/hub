@@ -352,10 +352,7 @@ export const decisionEndpoints: Endpoint[] = [
         const { totalDocs } = await req.payload.find({
           collection: 'decision-ballots',
           where: {
-            and: [
-              { proposal: { equals: p.id } },
-              { account: { equals: account.id } },
-            ],
+            and: [{ proposal: { equals: p.id } }, { account: { equals: account.id } }],
           },
           limit: 0,
           overrideAccess: true,

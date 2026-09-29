@@ -150,25 +150,16 @@ export function NgoOpportunities() {
                     </div>
                     <h3 style={{ marginTop: 6 }}>{item.title}</h3>
                     <p className="meta">
-                      {item.startsAt
-                        ? formatDateTime(item.startsAt)
-                        : 'No date set'}
+                      {item.startsAt ? formatDateTime(item.startsAt) : 'No date set'}
                       {item.location ? ` · ${item.location}` : ''}
                     </p>
-                    {item.reviewNote && (
-                      <p className="metaMuted">Reviewer: {item.reviewNote}</p>
-                    )}
+                    {item.reviewNote && <p className="metaMuted">Reviewer: {item.reviewNote}</p>}
                   </div>
-                  {data.canPost &&
-                    ['published', 'pending_review'].includes(item.status) && (
-                      <Button
-                        sm
-                        variant="ghost"
-                        onClick={() => withdraw(item.id)}
-                      >
-                        Withdraw
-                      </Button>
-                    )}
+                  {data.canPost && ['published', 'pending_review'].includes(item.status) && (
+                    <Button sm variant="ghost" onClick={() => withdraw(item.id)}>
+                      Withdraw
+                    </Button>
+                  )}
                 </div>
               )
             })}
@@ -177,10 +168,7 @@ export function NgoOpportunities() {
       </Section>
 
       {data?.canPost && editorOpen && (
-        <SidePanel
-          title="Post an opportunity"
-          onClose={() => setEditorOpen(false)}
-        >
+        <SidePanel title="Post an opportunity" onClose={() => setEditorOpen(false)}>
           {error && <ErrorCard message={error} />}
           <form className="stack" onSubmit={submit}>
             <SearchableSelect
@@ -225,9 +213,7 @@ export function NgoOpportunities() {
               label="Format"
               options={FORMAT_OPTIONS}
               value={form.format}
-              onChange={(format) =>
-                setForm((current) => ({ ...current, format }))
-              }
+              onChange={(format) => setForm((current) => ({ ...current, format }))}
               searchPlaceholder="Search formats…"
             />
             {form.format !== 'online' && (
@@ -256,24 +242,18 @@ export function NgoOpportunities() {
               <DatePicker
                 label="Starts"
                 value={form.startsAt}
-                onChange={(startsAt) =>
-                  setForm((current) => ({ ...current, startsAt }))
-                }
+                onChange={(startsAt) => setForm((current) => ({ ...current, startsAt }))}
               />
               <DatePicker
                 label="Ends"
                 value={form.endsAt}
-                onChange={(endsAt) =>
-                  setForm((current) => ({ ...current, endsAt }))
-                }
+                onChange={(endsAt) => setForm((current) => ({ ...current, endsAt }))}
               />
             </div>
             <DatePicker
               label="Application deadline"
               value={form.deadlineAt}
-              onChange={(deadlineAt) =>
-                setForm((current) => ({ ...current, deadlineAt }))
-              }
+              onChange={(deadlineAt) => setForm((current) => ({ ...current, deadlineAt }))}
             />
             <label className="field">
               <span>Link</span>

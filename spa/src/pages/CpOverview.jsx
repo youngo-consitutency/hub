@@ -27,9 +27,7 @@ export function CpOverview() {
 
   const assignedSlugs = useMemo(() => {
     if (access.manageAllWgs) return null
-    return new Set(
-      (access.wgAssignments || []).map((item) => item.wgSlug).filter(Boolean),
-    )
+    return new Set((access.wgAssignments || []).map((item) => item.wgSlug).filter(Boolean))
   }, [access.manageAllWgs, access.wgAssignments])
 
   useEffect(() => {
@@ -42,9 +40,7 @@ export function CpOverview() {
     Promise.all(
       assigned.map(async (group) => {
         try {
-          const data = await apiGet(
-            `/member/cp/${encodeURIComponent(group.slug)}/members`,
-          )
+          const data = await apiGet(`/member/cp/${encodeURIComponent(group.slug)}/members`)
           const pending = (data.items || []).filter(
             (m) => m.status === 'pending_approval' || m.status === 'interested',
           ).length
@@ -74,9 +70,7 @@ export function CpOverview() {
       <div className="metricGrid">
         <div className="metricCard">
           <Users size={20} aria-hidden />
-          <strong>
-            {access.manageAllWgs ? 'All' : access.wgAssignments?.length || 0}
-          </strong>
+          <strong>{access.manageAllWgs ? 'All' : access.wgAssignments?.length || 0}</strong>
           <span>Accessible groups</span>
         </div>
         <div className="metricCard">
@@ -120,11 +114,7 @@ export function CpOverview() {
                   const pending = pendingByWg[group.slug] || 0
                   const role = roleForGroup(access, group.slug)
                   return (
-                    <A
-                      key={group.slug}
-                      href={`/cp/${group.slug}`}
-                      className="card entityCard"
-                    >
+                    <A key={group.slug} href={`/cp/${group.slug}`} className="card entityCard">
                       <div className="mcWgTileTop">
                         <Users size={22} aria-hidden />
                         <StatusChip status="active" />

@@ -1,16 +1,8 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import {
-  accountView,
-  requireAccount,
-  requireVerifiedMember,
-} from '../lib/accounts'
+import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import {
-  destroyAllSessions,
-  findAccountRowById,
-  setAccountFields,
-} from '../lib/membership'
+import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib/membership'
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
@@ -23,8 +15,7 @@ const DAY = 86_400_000
 
 // Last day of the next February — CW renewals run annually each February.
 function nextCWRenewalDue(from = new Date()): string {
-  const year =
-    from.getUTCMonth() > 1 ? from.getUTCFullYear() + 1 : from.getUTCFullYear()
+  const year = from.getUTCMonth() > 1 ? from.getUTCFullYear() + 1 : from.getUTCFullYear()
   return new Date(Date.UTC(year, 2, 0, 23, 59, 59)).toISOString()
 }
 
@@ -73,10 +64,7 @@ async function endAssignments(
   accountId: number,
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
-  const and: any[] = [
-    { account: { equals: accountId } },
-    { status: { equals: 'active' } },
-  ]
+  const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
   if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
   const { docs } = await req.payload.find({
     collection: 'assignments',
@@ -127,10 +115,7 @@ export const membershipEndpoints: Endpoint[] = [
       const { docs: handovers } = await req.payload.find({
         collection: 'handovers',
         where: {
-          and: [
-            { account: { equals: account.id } },
-            { status: { in: ['open', 'overdue'] } },
-          ],
+          and: [{ account: { equals: account.id } }, { status: { in: ['open', 'overdue'] } }],
         },
         limit: 20,
         overrideAccess: true,
@@ -138,10 +123,7 @@ export const membershipEndpoints: Endpoint[] = [
       const { docs: assignments } = await req.payload.find({
         collection: 'assignments',
         where: {
-          and: [
-            { account: { equals: account.id } },
-            { status: { equals: 'active' } },
-          ],
+          and: [{ account: { equals: account.id } }, { status: { equals: 'active' } }],
         },
         limit: 200,
         overrideAccess: true,
@@ -284,12 +266,12 @@ export const membershipEndpoints: Endpoint[] = [
           id: Number(req.routeParams!.id),
           overrideAccess: true,
         })
-        .catch(() => { throw fail.notFound('Handover not found.') })
+        .catch(() => {
+          throw fail.notFound('Handover not found.')
+        })
       const owner = (h.account as any)?.id ?? h.account
-      if (owner !== account.id)
-        throw fail.forbidden('This is not your handover.')
-      if (h.status !== 'open')
-        throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
+      if (owner !== account.id) throw fail.forbidden('This is not your handover.')
+      if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
       const idx = Number(req.routeParams!.idx)
       const items = (h.items ?? []) as any[]
       if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
@@ -430,7 +412,9 @@ export const membershipEndpoints: Endpoint[] = [
           id: Number(req.routeParams!.aid),
           overrideAccess: true,
         })
-        .catch(() => { throw fail.notFound('Assignment not found.') })
+        .catch(() => {
+          throw fail.notFound('Assignment not found.')
+        })
       const owner = (assignment.account as any)?.id ?? assignment.account
       if (String(owner) !== String(req.routeParams!.id))
         throw fail.validation({ id: 'Assignment does not belong to that account.' })
@@ -510,9 +494,10 @@ export const membershipEndpoints: Endpoint[] = [
           id: Number(req.routeParams!.id),
           overrideAccess: true,
         })
-        .catch(() => { throw fail.notFound('Handover not found.') })
-      if (h.status !== 'open')
-        throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
+        .catch(() => {
+          throw fail.notFound('Handover not found.')
+        })
+      if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
       const updated = await req.payload.update({
         collection: 'handovers',
         id: h.id,
@@ -555,17 +540,11 @@ export const membershipEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       if (account.membershipStatus !== 'rejected') {
-        throw new ApiError(
-          409,
-          'not_rejected',
-          'Only a rejected application can be appealed.',
-        )
+        throw new ApiError(409, 'not_rejected', 'Only a rejected application can be appealed.')
       }
       const bytes = Buffer.from(await (req as any).arrayBuffer())
       const identityKind = String(req.headers.get('x-identity-kind') || '')
-      const statement = decodeURIComponent(
-        String(req.headers.get('x-appeal-statement') || ''),
-      )
+      const statement = decodeURIComponent(String(req.headers.get('x-appeal-statement') || ''))
       const appeal = await submitAppeal({
         account,
         statement,

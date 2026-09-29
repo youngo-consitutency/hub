@@ -48,12 +48,7 @@ export function SignInForm({
         value={login.website}
         onChange={setLog('website')}
       />
-      <Button
-        type="submit"
-        variant="primary"
-        glow
-        disabled={status === 'submitting'}
-      >
+      <Button type="submit" variant="primary" glow disabled={status === 'submitting'}>
         {status === 'submitting' ? 'Signing in…' : 'Sign in & open hub'}
       </Button>
       <button

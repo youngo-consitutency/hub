@@ -95,15 +95,7 @@ export function destinationIconFor(rawUrl = '') {
 
 export function DestinationIcon({ url, size = 18, className = '', ...props }) {
   const Icon = destinationIconFor(url)
-  return (
-    <Icon
-      className={className}
-      size={size}
-      aria-hidden
-      focusable="false"
-      {...props}
-    />
-  )
+  return <Icon className={className} size={size} aria-hidden focusable="false" {...props} />
 }
 
 export function ExternalResourceRow({ href, label, meta, className = '' }) {
@@ -114,15 +106,9 @@ export function ExternalResourceRow({ href, label, meta, className = '' }) {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <DestinationIcon
-        url={href}
-        className="destinationResourceIcon"
-        size={20}
-      />
+      <DestinationIcon url={href} className="destinationResourceIcon" size={20} />
       <strong>{label}</strong>
-      {meta && (
-        <span className="metaMuted destinationResourceMeta">{meta}</span>
-      )}
+      {meta && <span className="metaMuted destinationResourceMeta">{meta}</span>}
       <TbArrowUpRight
         className="destinationResourceAction"
         size={16}

@@ -7,10 +7,7 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import {
-  OPPORTUNITY_FORMATS,
-  OPPORTUNITY_KINDS,
-} from '../../spa/shared/opportunities.js'
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../spa/shared/opportunities.js'
 import {
   HUB_CONTENT_TOOLS,
   callHubContentTool,
@@ -144,11 +141,7 @@ export function createHubMcpServer(env = process.env) {
       },
       async (args) => {
         try {
-          const data = await callHubContentTool(
-            tool.name,
-            args || {},
-            getClient(),
-          )
+          const data = await callHubContentTool(tool.name, args || {}, getClient())
           return {
             content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
           }

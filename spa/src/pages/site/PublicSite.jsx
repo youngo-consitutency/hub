@@ -141,12 +141,7 @@ function SiteFooter() {
           <h2>{footer.involvedTitle}</h2>
           {(footer.involved || []).map((link) =>
             link.external ? (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
+              <a key={link.label} href={link.href} target="_blank" rel="noreferrer noopener">
                 {link.label}
                 <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
               </a>
@@ -182,8 +177,7 @@ function SiteFooter() {
         )}
       </div>
       <p className="siteFooterLegal metaMuted">
-        {footer.legal}{' '}
-        <a href={footer.legalLink?.href || '/privacy'}>{footer.legalLink?.label}</a>
+        {footer.legal} <a href={footer.legalLink?.href || '/privacy'}>{footer.legalLink?.label}</a>
       </p>
     </footer>
   )

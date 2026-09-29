@@ -48,9 +48,7 @@ export function pageSectionFor(path) {
   if (matches(path, '/platform/partnerships')) return null
   return (
     Object.entries(PAGE_SECTIONS)
-      .flatMap(([section, { items }]) =>
-        items.map((item) => ({ section, ...item })),
-      )
+      .flatMap(([section, { items }]) => items.map((item) => ({ section, ...item })))
       .filter((item) => matches(path, item.href))
       .sort((a, b) => b.href.length - a.href.length)[0] || null
   )

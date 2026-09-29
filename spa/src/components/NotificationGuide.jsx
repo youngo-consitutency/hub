@@ -61,18 +61,14 @@ export function NotificationGuide({ device, onClose }) {
       <ol className="notificationGuideSteps">
         {guide.steps.map((step, index) => (
           <li key={step}>
-            {device === 'ios' && index === 0 && (
-              <Share size={16} strokeWidth={1.75} aria-hidden />
-            )}
+            {device === 'ios' && index === 0 && <Share size={16} strokeWidth={1.75} aria-hidden />}
             {step}
           </li>
         ))}
       </ol>
       <aside className="notificationDeviceNote">
         <Info size={17} strokeWidth={1.75} aria-hidden />
-        <p className="meta">
-          {guide.note} Setup is separate on every browser and device.
-        </p>
+        <p className="meta">{guide.note} Setup is separate on every browser and device.</p>
       </aside>
     </SidePanel>
   )

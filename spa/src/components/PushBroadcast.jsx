@@ -46,23 +46,17 @@ export function PushBroadcast() {
     () =>
       subscribers.map((row) => ({
         value: row.id,
-        label: `${row.name} (${row.email}) · ${row.devices} device${
-          row.devices === 1 ? '' : 's'
-        }`,
+        label: `${row.name} (${row.email}) · ${row.devices} device${row.devices === 1 ? '' : 's'}`,
       })),
     [subscribers],
   )
 
   const selected = subscribers.find((row) => row.id === accountId)
-  const allReady =
-    audience === 'all' && confirmAll.trim().toUpperCase() === ALL_CONFIRM
+  const allReady = audience === 'all' && confirmAll.trim().toUpperCase() === ALL_CONFIRM
   const oneReady = audience === 'one' && Boolean(accountId)
   const copyReady = title.trim() && body.trim()
   const canSend =
-    summary?.configured &&
-    copyReady &&
-    (audience === 'all' ? allReady : oneReady) &&
-    !busy
+    summary?.configured && copyReady && (audience === 'all' ? allReady : oneReady) && !busy
 
   const send = async () => {
     setBusy(true)
@@ -86,11 +80,7 @@ export function PushBroadcast() {
   }
 
   if (summary && !summary.configured)
-    return (
-      <p className="meta">
-        Device alerts are not enabled on this Hub. No alerts can be sent.
-      </p>
-    )
+    return <p className="meta">Device alerts are not enabled on this Hub. No alerts can be sent.</p>
   return (
     <div className="stack">
       {summary && (
@@ -100,14 +90,12 @@ export function PushBroadcast() {
       )}
       <div className="pushBroadcast">
         <p className="meta">
-          Send a banner to members who turned alerts on for a phone or laptop.
-          This does not email anyone.
+          Send a banner to members who turned alerts on for a phone or laptop. This does not email
+          anyone.
         </p>
 
         {summary && !summary.configured && (
-          <p className="metaMuted">
-            Device alerts are not configured on this deployment yet.
-          </p>
+          <p className="metaMuted">Device alerts are not configured on this deployment yet.</p>
         )}
 
         {error && <ErrorCard message={error} />}
@@ -115,8 +103,8 @@ export function PushBroadcast() {
           <p className="notificationNotice notificationNoticeOk" role="status">
             <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden />
             Queued for {result.targeted ?? result.total} member
-            {result.targeted === 1 ? '' : 's'} — delivery runs in the
-            background and retries automatically.
+            {result.targeted === 1 ? '' : 's'} — delivery runs in the background and retries
+            automatically.
           </p>
         )}
 
@@ -166,8 +154,7 @@ export function PushBroadcast() {
               autoComplete="off"
             />
             <small className="metaMuted">
-              Use one member for a test. Everyone is for a real constituency
-              notice.
+              Use one member for a test. Everyone is for a real constituency notice.
             </small>
           </label>
         )}
@@ -202,9 +189,7 @@ export function PushBroadcast() {
           </span>
           <div>
             <strong>{title.trim() || 'YOUNGO Hub'}</strong>
-            <p className="meta">
-              {body.trim() || 'The message members will see on the device.'}
-            </p>
+            <p className="meta">{body.trim() || 'The message members will see on the device.'}</p>
             {audience === 'one' && selected && (
               <p className="metaMuted">
                 {selected.name} · {selected.devices} device
@@ -213,9 +198,8 @@ export function PushBroadcast() {
             )}
             {audience === 'all' && summary && (
               <p className="metaMuted">
-                <TriangleAlert size={14} strokeWidth={1.75} aria-hidden />{' '}
-                {summary.devices} device{summary.devices === 1 ? '' : 's'}{' '}
-                across {summary.accounts} member
+                <TriangleAlert size={14} strokeWidth={1.75} aria-hidden /> {summary.devices} device
+                {summary.devices === 1 ? '' : 's'} across {summary.accounts} member
                 {summary.accounts === 1 ? '' : 's'}
               </p>
             )}

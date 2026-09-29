@@ -35,18 +35,10 @@ export const optionalUrl = (value: any, name: string) => {
   try {
     url = new URL(value)
   } catch {
-    throw new ContributionError(
-      422,
-      'validation',
-      `${name} must be a valid URL.`,
-    )
+    throw new ContributionError(422, 'validation', `${name} must be a valid URL.`)
   }
   if (!['http:', 'https:'].includes(url.protocol))
-    throw new ContributionError(
-      422,
-      'validation',
-      `${name} must use HTTP or HTTPS.`,
-    )
+    throw new ContributionError(422, 'validation', `${name} must use HTTP or HTTPS.`)
   return url.toString()
 }
 
@@ -69,11 +61,7 @@ export function citations(input: any) {
       'At least one immutable source citation is required.',
     )
   return input.map((citation: any) => ({
-    sourceVersionId: requiredText(
-      citation?.sourceVersionId,
-      'sourceVersionId',
-      100,
-    ),
+    sourceVersionId: requiredText(citation?.sourceVersionId, 'sourceVersionId', 100),
     location:
       citation?.location && typeof citation.location === 'object'
         ? citation.location
@@ -112,10 +100,10 @@ export async function beginIdempotentMutation(
   payload: any,
 ) {
   const requestHash = contentHash(payload)
-  await client.query(
-    `SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))`,
-    [String(actorId), `${operation}:${key}`],
-  )
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))`, [
+    String(actorId),
+    `${operation}:${key}`,
+  ])
   const replay = await client.query(
     `SELECT request_hash,response_payload FROM negotiation_mutation_idempotency
      WHERE actor_id=$1 AND operation=$2 AND idempotency_key=$3`,
@@ -155,10 +143,7 @@ export async function saveIdempotency(
   )
 }
 
-export function assertExpectedVersion(
-  currentVersion: number,
-  expectedVersion: number,
-) {
+export function assertExpectedVersion(currentVersion: number, expectedVersion: number) {
   if (Number(currentVersion) !== Number(expectedVersion))
     throw new ContributionError(
       409,
@@ -196,12 +181,7 @@ export async function insertEvidence(
     await client.query(
       `INSERT INTO ${table}(${ownerColumn},source_version_id,location,quote)
        VALUES($1,$2,$3,$4)`,
-      [
-        ownerId,
-        citation.sourceVersionId,
-        JSON.stringify(citation.location),
-        citation.quote,
-      ],
+      [ownerId, citation.sourceVersionId, JSON.stringify(citation.location), citation.quote],
     )
   }
 }
@@ -247,11 +227,7 @@ export function requirePool(pool: Pool | null): Pool {
   return pool
 }
 
-export async function assertProjectWrite(
-  client: PoolClient,
-  projectId: string,
-  accountId: number,
-) {
+export async function assertProjectWrite(client: PoolClient, projectId: string, accountId: number) {
   const project = await client.query(
     `SELECT p.* FROM negotiation_submission_projects p
      JOIN negotiation_submission_project_members m ON m.project_id=p.id
@@ -259,8 +235,7 @@ export async function assertProjectWrite(
      FOR UPDATE OF p`,
     [projectId, accountId],
   )
-  if (!project.rows[0])
-    throw new ContributionError(404, 'not_found', 'Project not found.')
+  if (!project.rows[0]) throw new ContributionError(404, 'not_found', 'Project not found.')
   return project.rows[0]
 }
 
@@ -278,7 +253,6 @@ export async function assertAmendmentWrite(
      FOR UPDATE OF a`,
     [amendmentId, accountId],
   )
-  if (!amendment.rows[0])
-    throw new ContributionError(404, 'not_found', 'Amendment not found.')
+  if (!amendment.rows[0]) throw new ContributionError(404, 'not_found', 'Amendment not found.')
   return amendment.rows[0]
 }

@@ -22,23 +22,13 @@ export type Input = Record<string, unknown>
 export function fail(status: number, message: string): never {
   throw Object.assign(new Error(message), {
     status,
-    code:
-      status === 403 ? 'forbidden' : status === 409 ? 'conflict' : 'validation',
+    code: status === 403 ? 'forbidden' : status === 409 ? 'conflict' : 'validation',
   })
 }
-export function text(
-  input: Input,
-  key: string,
-  max = 200,
-  required = true,
-): string {
+export function text(input: Input, key: string, max = 200, required = true): string {
   const value = input[key]
   if (value === undefined && !required) return ''
-  if (
-    typeof value !== 'string' ||
-    value.trim().length > max ||
-    (required && !value.trim())
-  )
+  if (typeof value !== 'string' || value.trim().length > max || (required && !value.trim()))
     fail(400, `Check ${key}.`)
   return value.trim()
 }
@@ -56,9 +46,7 @@ export function intId(value: unknown): number {
 export function uuid(value: unknown): string {
   if (
     typeof value !== 'string' ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      value,
-    )
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
   )
     fail(400, 'Invalid record identifier.')
   return value
@@ -73,9 +61,7 @@ export function db() {
     )
   return requirePgPool()
 }
-export async function transaction<T>(
-  run: (client: PoolClient) => Promise<T>,
-): Promise<T> {
+export async function transaction<T>(run: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await db().connect()
   try {
     await client.query('BEGIN')
@@ -102,10 +88,7 @@ async function audit(
     [actor.id, action, target, reason, after],
   )
 }
-export async function permissions(
-  actor: Actor,
-  client: Pick<PoolClient, 'query'> = db(),
-) {
+export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'> = db()) {
   const current = (
     await client.query(
       `SELECT role,membership_track,constituency_work_status,membership_status,hub_access_status FROM accounts WHERE id=$1 FOR SHARE`,
@@ -160,36 +143,32 @@ const enquirySelect = `SELECT id,organisation,contact_name AS "contactName",emai
 
 export async function overview(actor: Actor) {
   const p = await permissions(actor)
-  const bodyIds = p.rows
-    .filter((r) => r.scope_type === 'body')
-    .map((r) => r.scope_id)
-  const [bodies, people, assignments, tasks, decisions, enquiries] =
-    await Promise.all([
-      db().query(bodySelect + ' WHERE $1::boolean ORDER BY name', [
-        p.cw || p.admin,
-      ]),
-      db().query(
-        `SELECT id,name,entity_type AS "entityType",membership_track AS "membershipTrack",membership_status AS "membershipStatus" FROM accounts WHERE $1::boolean OR id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM assignments s WHERE s.account_id=accounts.id AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND ((s.scope_type='body' AND s.scope_id=ANY($4::text[])) OR ($5::boolean AND s.scope_type='team' AND s.scope_id='partnerships')))) ORDER BY name LIMIT 1000`,
-        [p.membership || p.admin, actor.id, p.cw, bodyIds, p.partnerships],
-      ),
-      db().query(
-        `SELECT s.id,s.account_id AS "accountId",a.name,s.scope_type AS "scopeType",s.scope_id AS "scopeId",s.role,s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.appointment_evidence AS evidence FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE $1::boolean OR s.account_id=$2 OR ($3::boolean AND s.scope_type='body' AND s.scope_id=ANY($4::text[])) ORDER BY s.created_at DESC LIMIT 1000`,
-        [p.admin || p.membership, actor.id, p.cw, bodyIds],
-      ),
-      db().query(
-        taskSelect +
-          ' WHERE t.body_id=ANY($1::text[]) ORDER BY t.due_at NULLS LAST LIMIT 500',
-        [p.cw ? bodyIds : []],
-      ),
-      db().query(
-        DECISION_VIEW_SELECT +
-          ' WHERE ' + BODY_ID_SQL + ' = ANY($1::text[]) ORDER BY dp.updated_at DESC LIMIT 500',
-        [p.cw ? bodyIds : []],
-      ),
-      p.partnerships
-        ? db().query(enquirySelect + ' ORDER BY created_at DESC LIMIT 500')
-        : Promise.resolve({ rows: [] }),
-    ])
+  const bodyIds = p.rows.filter((r) => r.scope_type === 'body').map((r) => r.scope_id)
+  const [bodies, people, assignments, tasks, decisions, enquiries] = await Promise.all([
+    db().query(bodySelect + ' WHERE $1::boolean ORDER BY name', [p.cw || p.admin]),
+    db().query(
+      `SELECT id,name,entity_type AS "entityType",membership_track AS "membershipTrack",membership_status AS "membershipStatus" FROM accounts WHERE $1::boolean OR id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM assignments s WHERE s.account_id=accounts.id AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND ((s.scope_type='body' AND s.scope_id=ANY($4::text[])) OR ($5::boolean AND s.scope_type='team' AND s.scope_id='partnerships')))) ORDER BY name LIMIT 1000`,
+      [p.membership || p.admin, actor.id, p.cw, bodyIds, p.partnerships],
+    ),
+    db().query(
+      `SELECT s.id,s.account_id AS "accountId",a.name,s.scope_type AS "scopeType",s.scope_id AS "scopeId",s.role,s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.appointment_evidence AS evidence FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE $1::boolean OR s.account_id=$2 OR ($3::boolean AND s.scope_type='body' AND s.scope_id=ANY($4::text[])) ORDER BY s.created_at DESC LIMIT 1000`,
+      [p.admin || p.membership, actor.id, p.cw, bodyIds],
+    ),
+    db().query(
+      taskSelect + ' WHERE t.body_id=ANY($1::text[]) ORDER BY t.due_at NULLS LAST LIMIT 500',
+      [p.cw ? bodyIds : []],
+    ),
+    db().query(
+      DECISION_VIEW_SELECT +
+        ' WHERE ' +
+        BODY_ID_SQL +
+        ' = ANY($1::text[]) ORDER BY dp.updated_at DESC LIMIT 500',
+      [p.cw ? bodyIds : []],
+    ),
+    p.partnerships
+      ? db().query(enquirySelect + ' ORDER BY created_at DESC LIMIT 500')
+      : Promise.resolve({ rows: [] }),
+  ])
   const renewals = await db().query(
     `SELECT name,renewal_due_at FROM accounts WHERE ($1::boolean OR id=$2) AND membership_track='constituency_work' AND renewal_due_at<=now()+interval '30 days'`,
     [p.membership, actor.id],
@@ -210,11 +189,7 @@ export async function overview(actor: Actor) {
       })
   const horizon = Date.now() + 30 * 86400000
   for (const a of assignments.rows)
-    if (
-      a.status === 'active' &&
-      a.endsAt &&
-      new Date(a.endsAt).getTime() < horizon
-    )
+    if (a.status === 'active' && a.endsAt && new Date(a.endsAt).getTime() < horizon)
       notices.push({
         kind: 'handover',
         title: `${a.name}: ${a.role} in ${a.scopeId}`,
@@ -224,21 +199,14 @@ export async function overview(actor: Actor) {
     if (t.status !== 'done' && t.dueAt && new Date(t.dueAt).getTime() < horizon)
       notices.push({ kind: 'task', title: t.title, dueAt: t.dueAt })
   for (const d of decisions.rows)
-    if (
-      d.deadlineAt &&
-      !['adopted', 'not_adopted', 'withdrawn'].includes(d.stage)
-    )
+    if (d.deadlineAt && !['adopted', 'not_adopted', 'withdrawn'].includes(d.stage))
       notices.push({
         kind: 'decision',
         title: `${d.title}: ${d.stage}`,
         dueAt: d.deadlineAt,
       })
   for (const b of bodies.rows)
-    if (
-      p.manages(b.id) &&
-      b.reviewDueAt &&
-      new Date(b.reviewDueAt).getTime() < horizon
-    )
+    if (p.manages(b.id) && b.reviewDueAt && new Date(b.reviewDueAt).getTime() < horizon)
       notices.push({
         kind: 'review',
         title: `Review public information: ${b.name}`,
@@ -248,8 +216,7 @@ export async function overview(actor: Actor) {
     bodies: bodies.rows.map((b: Body) => ({
       ...b,
       description: p.admin || p.participates(b.id) ? b.description : '',
-      publicSummary:
-        p.admin || p.publisher || p.participates(b.id) ? b.publicSummary : '',
+      publicSummary: p.admin || p.publisher || p.participates(b.id) ? b.publicSummary : '',
       canManage: p.manages(b.id),
       canParticipate: p.participates(b.id),
     })),
@@ -257,10 +224,7 @@ export async function overview(actor: Actor) {
     assignments: assignments.rows,
     tasks: tasks.rows.map((t: Task & { createdBy: string }) => ({
       ...t,
-      canEdit:
-        p.manages(t.bodyId) ||
-        t.ownerId === actor.id ||
-        t.createdBy === actor.id,
+      canEdit: p.manages(t.bodyId) || t.ownerId === actor.id || t.createdBy === actor.id,
     })),
     decisions: decisions.rows,
     enquiries: enquiries.rows,
@@ -268,9 +232,7 @@ export async function overview(actor: Actor) {
     canReviewMembership: p.membership,
     canManagePartnerships: p.partnerships,
     canPublish: p.publisher,
-    notices: notices.sort(
-      (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
-    ),
+    notices: notices.sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()),
   }
 }
 
@@ -283,9 +245,8 @@ export async function saveBody(actor: Actor, input: Input, id?: string) {
         'An assigned Contact Point, Liaison, coordinator or platform administrator is required.',
       )
     if (id && !p.admin) {
-      const body = (
-        await client.query('SELECT kind FROM platform_bodies WHERE id=$1', [id])
-      ).rows[0]
+      const body = (await client.query('SELECT kind FROM platform_bodies WHERE id=$1', [id]))
+        .rows[0]
       if (!body || body.kind !== input.kind)
         fail(403, 'Only an administrator can change the type of a body.')
     }
@@ -293,20 +254,11 @@ export async function saveBody(actor: Actor, input: Input, id?: string) {
       kind = text(input, 'kind'),
       description = text(input, 'description', 5000, false),
       summary = text(input, 'publicSummary', 3000, false)
-    if (!BODY_KINDS.includes(kind as (typeof BODY_KINDS)[number]))
-      fail(400, 'Choose a body type.')
+    if (!BODY_KINDS.includes(kind as (typeof BODY_KINDS)[number])) fail(400, 'Choose a body type.')
     const slug = id || text(input, 'id', 80)
     if (!/^[a-z][a-z0-9-]{1,79}$/.test(slug))
       fail(400, 'Use a short lowercase identifier with hyphens.')
-    const values = [
-      slug,
-      name,
-      kind,
-      description,
-      summary,
-      date(input, 'reviewDueAt'),
-      actor.id,
-    ]
+    const values = [slug, name, kind, description, summary, date(input, 'reviewDueAt'), actor.id]
     const result = id
       ? await client.query(
           `UPDATE platform_bodies SET name=$2,kind=$3,description=$4,public_summary=$5,review_due_at=$6,updated_by=$7,version=version+1,updated_at=now() WHERE id=$1 AND version=$8 RETURNING id`,
@@ -317,10 +269,7 @@ export async function saveBody(actor: Actor, input: Input, id?: string) {
           values,
         )
     if (!result.rowCount)
-      fail(
-        409,
-        'The body changed or this identifier already exists. Reload first.',
-      )
+      fail(409, 'The body changed or this identifier already exists. Reload first.')
     await audit(client, actor, 'body.saved', slug, description.slice(0, 200))
     return { id: slug }
   })
@@ -334,27 +283,14 @@ export async function publishBody(actor: Actor, id: string, version: unknown) {
       [id, actor.id, version],
     )
     if (!result.rowCount)
-      fail(
-        409,
-        'A different publisher must review the current, non-empty public summary.',
-      )
-    await audit(
-      client,
-      actor,
-      'body.published',
-      id,
-      'Reviewed public information',
-    )
+      fail(409, 'A different publisher must review the current, non-empty public summary.')
+    await audit(client, actor, 'body.published', id, 'Reviewed public information')
   })
 }
 export async function assign(actor: Actor, input: Input) {
   return transaction(async (client) => {
     const p = await permissions(actor, client)
-    if (!p.admin)
-      fail(
-        403,
-        'Only platform administrators can record an evidenced assignment.',
-      )
+    if (!p.admin) fail(403, 'Only platform administrators can record an evidenced assignment.')
     const accountId = intId(input.accountId),
       scopeType = text(input, 'scopeType'),
       scopeId = text(input, 'scopeId'),
@@ -364,13 +300,7 @@ export async function assign(actor: Actor, input: Input) {
       fail(400, 'Choose body, team or working group.')
     const valid =
       scopeType === 'body'
-        ? [
-            'member',
-            'coordinator',
-            'contact_point',
-            'liaison',
-            'council_representative',
-          ]
+        ? ['member', 'coordinator', 'contact_point', 'liaison', 'council_representative']
         : scopeType === 'working_group'
           ? ['contact']
           : ['member']
@@ -387,43 +317,28 @@ export async function assign(actor: Actor, input: Input) {
     )
       fail(400, 'Unknown team responsibility.')
     if (scopeType === 'body') {
-      const { rows: bodies } = await client.query(
-        'SELECT kind FROM platform_bodies WHERE id=$1',
-        [scopeId],
-      )
+      const { rows: bodies } = await client.query('SELECT kind FROM platform_bodies WHERE id=$1', [
+        scopeId,
+      ])
       if (!bodies.length) fail(400, 'Choose an existing body.')
       if (!bodyRoles(bodies[0].kind).includes(role))
         fail(400, 'Choose a documented responsibility for this type of body.')
     }
     if (scopeType === 'working_group') {
-      const exists = await client.query(
-        'SELECT 1 FROM working_groups WHERE slug=$1',
-        [scopeId],
-      )
+      const exists = await client.query('SELECT 1 FROM working_groups WHERE slug=$1', [scopeId])
       if (!exists.rowCount) fail(400, 'Choose an existing working group.')
     }
     const startsAt = date(input, 'startsAt', true),
       endsAt = date(input, 'endsAt', true)
-    if (Date.parse(endsAt!) <= Date.parse(startsAt!))
-      fail(400, 'The end must follow the start.')
+    if (Date.parse(endsAt!) <= Date.parse(startsAt!)) fail(400, 'The end must follow the start.')
     const eligible = await client.query(
       `SELECT 1 FROM accounts WHERE id=$1 AND entity_type='individual' AND hub_access_status='active' AND membership_track='constituency_work' AND constituency_work_status='active' AND membership_status IN ('active','renewal_due')`,
       [accountId],
     )
-    if (!eligible.rowCount)
-      fail(409, 'This person must have active Constituency Work membership.')
+    if (!eligible.rowCount) fail(409, 'This person must have active Constituency Work membership.')
     const { rows } = await client.query(
       `INSERT INTO assignments(account_id,scope_type,scope_id,role,starts_at,ends_at,appointment_evidence,assigned_by_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(account_id,scope_type,scope_id,role) DO UPDATE SET status='active',starts_at=$5,ends_at=$6,appointment_evidence=$7,assigned_by_id=$8,updated_at=now() RETURNING id`,
-      [
-        accountId,
-        scopeType,
-        scopeId,
-        role,
-        startsAt,
-        endsAt,
-        evidence,
-        actor.id,
-      ],
+      [accountId, scopeType, scopeId, role, startsAt, endsAt, evidence, actor.id],
     )
     await audit(client, actor, 'assignment.recorded', rows[0].id, evidence, {
       accountId,
@@ -439,8 +354,7 @@ export async function revoke(actor: Actor, id: string, reason: string) {
   return transaction(async (client) => {
     if (!(await permissions(actor, client)).admin)
       fail(403, 'Platform administrator access required.')
-    if (reason.length < 8)
-      fail(400, 'Give a reason for ending this assignment.')
+    if (reason.length < 8) fail(400, 'Give a reason for ending this assignment.')
     const result = await client.query(
       `UPDATE assignments SET status='inactive',ends_at=now(),updated_at=now() WHERE id=$1 RETURNING account_id`,
       [intId(id)],
@@ -455,10 +369,9 @@ export async function joinBody(actor: Actor, id: string) {
       fail(403, 'Active Constituency Work membership is required.')
     if (
       !(
-        await client.query(
-          "SELECT 1 FROM platform_bodies WHERE id=$1 AND kind='working_group'",
-          [id],
-        )
+        await client.query("SELECT 1 FROM platform_bodies WHERE id=$1 AND kind='working_group'", [
+          id,
+        ])
       ).rowCount
     )
       fail(403, 'This body requires an assigned or screened membership.')
@@ -466,13 +379,7 @@ export async function joinBody(actor: Actor, id: string) {
       `INSERT INTO assignments(account_id,scope_type,scope_id,role) VALUES($1,'body',$2,'member') ON CONFLICT(account_id,scope_type,scope_id,role) DO UPDATE SET status='active',starts_at=now(),ends_at=NULL`,
       [actor.id, id],
     )
-    await audit(
-      client,
-      actor,
-      'body.joined',
-      id,
-      'Member joined an open working group',
-    )
+    await audit(client, actor, 'body.joined', id, 'Member joined an open working group')
   })
 }
 
@@ -504,8 +411,7 @@ export async function saveTask(actor: Actor, input: Input, id?: string) {
     )
       fail(400, 'Link an adopted decision from this body.')
     const status = text(input, 'status')
-    if (!['open', 'in_progress', 'done'].includes(status))
-      fail(400, 'Choose a task status.')
+    if (!['open', 'in_progress', 'done'].includes(status)) fail(400, 'Choose a task status.')
     const values = [
       bodyId,
       text(input, 'title'),
@@ -525,28 +431,20 @@ export async function saveTask(actor: Actor, input: Input, id?: string) {
           `INSERT INTO platform_tasks(body_id,title,description,owner_id,due_at,status,decision_id,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
           values,
         )
-    if (!result.rowCount)
-      fail(409, 'Task changed, or you are not its owner/coordinator.')
+    if (!result.rowCount) fail(409, 'Task changed, or you are not its owner/coordinator.')
     await audit(client, actor, 'task.saved', result.rows[0].id, status)
     return result.rows[0]
   })
 }
 
 export async function createEnquiry(input: Input) {
-  if (input.consent !== true)
-    fail(400, 'Consent to using these details to respond is required.')
+  if (input.consent !== true) fail(400, 'Consent to using these details to respond is required.')
   if (input.websiteTrap) return { ok: true }
   const email = text(input, 'email', 254)
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    fail(400, 'Enter a valid email address.')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Enter a valid email address.')
   const { rows } = await db().query(
     `INSERT INTO platform_enquiries(organisation,contact_name,email,message,privacy_version) VALUES($1,$2,$3,$4,'partner-enquiry-2026-09') RETURNING id`,
-    [
-      text(input, 'organisation'),
-      text(input, 'contactName'),
-      email,
-      text(input, 'message', 5000),
-    ],
+    [text(input, 'organisation'), text(input, 'contactName'), email, text(input, 'message', 5000)],
   )
   return { ok: true, id: rows[0].id }
 }
@@ -626,9 +524,7 @@ export async function publicPlatform() {
     ),
   ])
   return {
-    bodies: bodies.rows.map(
-      (r: { public_snapshot: Record<string, unknown> }) => r.public_snapshot,
-    ),
+    bodies: bodies.rows.map((r: { public_snapshot: Record<string, unknown> }) => r.public_snapshot),
     decisions: decisions.rows,
     partners: partners.rows,
   }
@@ -641,23 +537,17 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
     const action = text(input, 'action'),
       reason = text(input, 'reason', 2000),
       renewalDueAt = date(input, 'renewalDueAt')
-    if (reason.length < 8)
-      fail(400, 'Record the onboarding or renewal evidence.')
-    const { rows } = await client.query(
-        'SELECT * FROM accounts WHERE id=$1 FOR UPDATE',
-        [intId(id)],
-      ),
+    if (reason.length < 8) fail(400, 'Record the onboarding or renewal evidence.')
+    const { rows } = await client.query('SELECT * FROM accounts WHERE id=$1 FOR UPDATE', [
+        intId(id),
+      ]),
       member = rows[0]
-    if (!member || member.entity_type !== 'individual')
-      fail(404, 'Individual member not found.')
+    if (!member || member.entity_type !== 'individual') fail(404, 'Individual member not found.')
     if (
       member.hub_access_status === 'suspended' ||
       ['expired', 'terminated'].includes(member.membership_status)
     )
-      fail(
-        409,
-        'Resolve the account suspension through the authorised membership process first.',
-      )
+      fail(409, 'Resolve the account suspension through the authorised membership process first.')
     if (action === 'activate_cw') {
       if (!renewalDueAt || Date.parse(renewalDueAt) <= Date.now())
         fail(400, 'Set a future renewal date.')
@@ -675,10 +565,7 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
         !renewalDueAt ||
         Date.parse(renewalDueAt) <= Date.now()
       )
-        fail(
-          409,
-          'Renew a current Constituency Work membership and set its next renewal date.',
-        )
+        fail(409, 'Renew a current Constituency Work membership and set its next renewal date.')
       await client.query(
         "UPDATE accounts SET membership_status='active',renewal_due_at=$2 WHERE id=$1",
         [id, renewalDueAt],
@@ -714,8 +601,7 @@ export async function withdrawPublication(
     const p = await permissions(actor, client)
     if (!p.publisher) fail(403, 'A content publisher assignment is required.')
     const reason = text(input, 'reason', 2000)
-    if (kind !== 'body')
-      fail(400, 'Decision publication is handled by the decision engine bridge.')
+    if (kind !== 'body') fail(400, 'Decision publication is handled by the decision engine bridge.')
     const result = await client.query(
       'UPDATE platform_bodies SET public_snapshot=NULL,published_version=NULL,published_by=NULL WHERE id=$1 AND version=$2 RETURNING id',
       [id, input.version],

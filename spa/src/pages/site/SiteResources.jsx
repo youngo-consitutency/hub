@@ -1,8 +1,5 @@
 import { ResourceCatalogue } from '../../components/ResourceHub.jsx'
-import {
-  TbBook2 as BookOpen,
-  TbChevronRight as ChevronRight,
-} from 'react-icons/tb'
+import { TbBook2 as BookOpen, TbChevronRight as ChevronRight } from 'react-icons/tb'
 import { Skeletons } from '../../components/ui.jsx'
 import { useDocument } from '../../lib/documents.js'
 

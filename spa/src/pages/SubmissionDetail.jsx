@@ -26,18 +26,13 @@ export function SubmissionDetail({ slug }) {
       <BackLink href="/submissions">Submissions</BackLink>
       <Async query={query}>
         {(sub) => {
-          const archived = !['open', 'drafting', 'internal_review'].includes(
-            sub.status,
-          )
+          const archived = !['open', 'drafting', 'internal_review'].includes(sub.status)
           return (
             <>
               <PageHeader title={sub.title}>
                 <div className="detailHeaderMeta">
                   {sub.wg && (
-                    <A
-                      href={`/groups/${sub.wg.slug}`}
-                      className="chip chip-neutral"
-                    >
+                    <A href={`/groups/${sub.wg.slug}`} className="chip chip-neutral">
                       {sub.wg.name} WG
                     </A>
                   )}
@@ -53,19 +48,14 @@ export function SubmissionDetail({ slug }) {
                     showCountdown={!archived}
                     className="detailLifecycleTiming"
                   />
-                  <Timeline
-                    steps={STEPS}
-                    currentIndex={STEP_INDEX[sub.status] ?? 0}
-                  />
+                  <Timeline steps={STEPS} currentIndex={STEP_INDEX[sub.status] ?? 0} />
                 </div>
               </Section>
 
               {!archived && (
                 <Section label="How to contribute">
                   <div className="card detailPanel detailActionPanel">
-                    {sub.contributeNote && (
-                      <p className="meta">{sub.contributeNote}</p>
-                    )}
+                    {sub.contributeNote && <p className="meta">{sub.contributeNote}</p>}
                     <div className="detailActions">
                       {sub.draftUrl && (
                         <a
@@ -75,9 +65,7 @@ export function SubmissionDetail({ slug }) {
                           rel="noreferrer"
                         >
                           <DestinationIcon url={sub.draftUrl} size={18} />
-                          {/forms\.gle|docs\.google\.com\/forms/i.test(
-                            sub.draftUrl,
-                          )
+                          {/forms\.gle|docs\.google\.com\/forms/i.test(sub.draftUrl)
                             ? 'Submit inputs'
                             : 'Open draft'}
                         </a>

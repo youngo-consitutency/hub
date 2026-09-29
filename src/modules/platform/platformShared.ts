@@ -171,7 +171,5 @@ export function transitionDeadline(
           decision: snapHours / 4,
         }
   const duration = stage === 'voting' ? 24 : hours[stage as keyof typeof hours]
-  return duration
-    ? new Date(now.getTime() + duration * 3600000).toISOString()
-    : null
+  return duration ? new Date(now.getTime() + duration * 3600000).toISOString() : null
 }

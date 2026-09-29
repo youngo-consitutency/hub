@@ -33,20 +33,14 @@ export function Profile() {
   const wg = useWorkingGroups()
   const access = account?.access || {}
   const permissions = access.teamRoles || account?.teamRoles || []
-  const teamRoles = permissions.filter(
-    (role) => !WEBSITE_PERMISSIONS.includes(role),
-  )
-  const websitePermissions = permissions.filter((role) =>
-    WEBSITE_PERMISSIONS.includes(role),
-  )
+  const teamRoles = permissions.filter((role) => !WEBSITE_PERMISSIONS.includes(role))
+  const websitePermissions = permissions.filter((role) => WEBSITE_PERMISSIONS.includes(role))
   const wgAssignments = access.wgAssignments || []
   const interests = account?.wgInterests || []
   const interestGroups = wg.topics
     .map((topic) => ({
       ...topic,
-      groups: interests.filter(
-        (slug) => wg.bySlug.get(slug)?.topic === topic.key,
-      ),
+      groups: interests.filter((slug) => wg.bySlug.get(slug)?.topic === topic.key),
     }))
     .filter((topic) => topic.groups.length > 0)
 
@@ -97,9 +91,7 @@ export function Profile() {
                     <li key={role}>{teamLabels[role] || role}</li>
                   ))}
                 </ul>
-                <p className="meta">
-                  These permissions do not appoint a YOUNGO mandate holder.
-                </p>
+                <p className="meta">These permissions do not appoint a YOUNGO mandate holder.</p>
               </div>
             )}
             {wgAssignments.length > 0 && (
@@ -110,13 +102,8 @@ export function Profile() {
                     <li
                       key={`${assignment.wgSlug}-${assignmentLabels[assignment.role] || 'Member'}`}
                     >
-                      <A
-                        href={`/groups/${assignment.wgSlug}`}
-                        className="inlineLink"
-                        peek
-                      >
-                        {assignment.wgName ||
-                          wg.label(assignment.wgSlug)}
+                      <A href={`/groups/${assignment.wgSlug}`} className="inlineLink" peek>
+                        {assignment.wgName || wg.label(assignment.wgSlug)}
                       </A>{' '}
                       · {assignmentLabels[assignment.role] || 'Member'}
                     </li>
@@ -141,11 +128,7 @@ export function Profile() {
                                 className="chip chip-neutral personLinkChip"
                                 peek
                               >
-                                <GroupIcon
-                                  size={13}
-                                  strokeWidth={1.75}
-                                  aria-hidden
-                                />
+                                <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
                                 {wg.label(slug)}
                               </A>
                             </li>

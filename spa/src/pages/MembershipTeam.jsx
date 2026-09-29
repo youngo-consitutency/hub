@@ -174,9 +174,7 @@ function ApplicationResponses({ item }) {
   const groups = (item.wgInterests || []).map(wg.label)
   const isOrg = (app.entityType || item.entityType) === 'organization'
   const gender =
-    app.gender === 'Other' && app.genderOther
-      ? `Other — ${app.genderOther}`
-      : app.gender
+    app.gender === 'Other' && app.genderOther ? `Other — ${app.genderOther}` : app.gender
   const minorityGroups = [
     ...(app.minorityGroups || []),
     app.minorityOther ? `Other — ${app.minorityOther}` : null,
@@ -187,33 +185,23 @@ function ApplicationResponses({ item }) {
       <dl className="membershipResponseList">
         <ResponseGroup title="Account">
           <ResponseField label="Account type">
-            {ENTITY_LABELS[app.entityType || item.entityType] ||
-              app.entityType ||
-              item.entityType}
+            {ENTITY_LABELS[app.entityType || item.entityType] || app.entityType || item.entityType}
           </ResponseField>
           <ResponseField label="Membership track">
             {TRACK_LABELS[app.membershipTrack || item.membershipTrack] ||
               app.membershipTrack ||
               item.membershipTrack}
           </ResponseField>
-          <ResponseField label="First name">
-            {app.firstName || item.firstName}
-          </ResponseField>
-          <ResponseField label="Last name">
-            {app.lastName || item.lastName}
-          </ResponseField>
+          <ResponseField label="First name">{app.firstName || item.firstName}</ResponseField>
+          <ResponseField label="Last name">{app.lastName || item.lastName}</ResponseField>
           <ResponseField label="Email">{app.email || item.email}</ResponseField>
         </ResponseGroup>
         {!isOrg && (
           <ResponseGroup title="Your details">
             <ResponseField label="Phone">{app.phone}</ResponseField>
             <ResponseField label="Gender">{gender}</ResponseField>
-            <ResponseField label="Date of birth">
-              {formatDateOnly(app.dateOfBirth)}
-            </ResponseField>
-            <ResponseField label="Age band">
-              {AGE_LABELS[app.ageBand] || app.ageBand}
-            </ResponseField>
+            <ResponseField label="Date of birth">{formatDateOnly(app.dateOfBirth)}</ResponseField>
+            <ResponseField label="Age band">{AGE_LABELS[app.ageBand] || app.ageBand}</ResponseField>
           </ResponseGroup>
         )}
         {!isOrg && (
@@ -221,29 +209,19 @@ function ApplicationResponses({ item }) {
             <ResponseField label="Identifies as part of a minority group">
               {yesNo(app.minorityIdentity)}
             </ResponseField>
-            <ResponseField label="Minority groups">
-              {minorityGroups}
-            </ResponseField>
-            <ResponseField label="Region (UN classifications)">
-              {app.region}
-            </ResponseField>
+            <ResponseField label="Minority groups">{minorityGroups}</ResponseField>
+            <ResponseField label="Region (UN classifications)">{app.region}</ResponseField>
             <ResponseField label="Nationality">{app.nationality}</ResponseField>
             <ResponseField label="Country of residence">
               {app.countryOfResidence || item.country}
             </ResponseField>
-            <ResponseField label="Why they want to join YOUNGO">
-              {app.motivation}
-            </ResponseField>
+            <ResponseField label="Why they want to join YOUNGO">{app.motivation}</ResponseField>
           </ResponseGroup>
         )}
         {app.under18 && (
           <ResponseGroup title="Guardian permission (under 18)">
-            <ResponseField label="Guardian name">
-              {app.guardianName}
-            </ResponseField>
-            <ResponseField label="Guardian email">
-              {app.guardianEmail}
-            </ResponseField>
+            <ResponseField label="Guardian name">{app.guardianName}</ResponseField>
+            <ResponseField label="Guardian email">{app.guardianEmail}</ResponseField>
             <ResponseField label="Guardian permission confirmed">
               {yesNo(app.guardianConsent)}
             </ResponseField>
@@ -254,19 +232,14 @@ function ApplicationResponses({ item }) {
             <ResponseField label="Legal name">
               {app.organizationName || item.organizationName}
             </ResponseField>
-            <ResponseField label="Organisation type">
-              {app.organizationType}
-            </ResponseField>
+            <ResponseField label="Organisation type">{app.organizationType}</ResponseField>
             <ResponseField label="UNFCCC admitted observer NGO">
               {yesNo(app.isUnfcccAdmitted)}
             </ResponseField>
             <ResponseField label="Youth affiliation within the UNFCCC">
-              {YOUTH_AFFILIATION_LABELS[app.youthAffiliation] ||
-                app.youthAffiliation}
+              {YOUTH_AFFILIATION_LABELS[app.youthAffiliation] || app.youthAffiliation}
             </ResponseField>
-            <ResponseField label="Region where legally established">
-              {app.region}
-            </ResponseField>
+            <ResponseField label="Region where legally established">{app.region}</ResponseField>
             <ResponseField label="Country where legally established">
               {app.countryOfResidence || item.country}
             </ResponseField>
@@ -275,9 +248,7 @@ function ApplicationResponses({ item }) {
             </ResponseField>
             <ResponseField label="Website">{app.orgWebsite}</ResponseField>
             <ResponseField label="Social media">{app.orgSocial}</ResponseField>
-            <ResponseField label="Mission and activities">
-              {app.orgMission}
-            </ResponseField>
+            <ResponseField label="Mission and activities">{app.orgMission}</ResponseField>
           </ResponseGroup>
         )}
         {(app.dcpName || app.dcpEmail || app.dcpPhone) && (
@@ -289,21 +260,13 @@ function ApplicationResponses({ item }) {
         )}
         {(app.ycpName || app.ycpEmail || app.ycpPhone) && (
           <ResponseGroup title="YOUNGO Contact Point">
-            <ResponseField label="Contact Point full name">
-              {app.ycpName}
-            </ResponseField>
-            <ResponseField label="Contact Point email">
-              {app.ycpEmail}
-            </ResponseField>
-            <ResponseField label="Contact Point phone">
-              {app.ycpPhone}
-            </ResponseField>
+            <ResponseField label="Contact Point full name">{app.ycpName}</ResponseField>
+            <ResponseField label="Contact Point email">{app.ycpEmail}</ResponseField>
+            <ResponseField label="Contact Point phone">{app.ycpPhone}</ResponseField>
           </ResponseGroup>
         )}
         <ResponseGroup title="Working groups">
-          <ResponseField label="Working group interests">
-            {groups}
-          </ResponseField>
+          <ResponseField label="Working group interests">{groups}</ResponseField>
         </ResponseGroup>
         {!isOrg && (
           <ResponseGroup title="Accredited NGO membership">
@@ -313,33 +276,23 @@ function ApplicationResponses({ item }) {
           </ResponseGroup>
         )}
         <ResponseGroup title="Agreements">
-          <ResponseField label="Code of Conduct">
-            {yesNo(app.acceptCodeOfConduct)}
-          </ResponseField>
+          <ResponseField label="Code of Conduct">{yesNo(app.acceptCodeOfConduct)}</ResponseField>
           <ResponseField label="Data Protection Policy">
             {yesNo(app.acceptDataProtection)}
           </ResponseField>
-          <ResponseField label="YOUNGO Principles">
-            {yesNo(app.acceptPrinciples)}
-          </ResponseField>
+          <ResponseField label="YOUNGO Principles">{yesNo(app.acceptPrinciples)}</ResponseField>
           <ResponseField label="Conflict of Interest Policy">
             {yesNo(app.acceptCoiPolicy)}
           </ResponseField>
           <ResponseField label="Membership Policy version">
             {app.membershipPolicyVersion}
           </ResponseField>
-          <ResponseField label="Privacy notice accepted">
-            {yesNo(app.privacyConsent)}
-          </ResponseField>
-          <ResponseField label="Privacy notice version">
-            {app.privacyNoticeVersion}
-          </ResponseField>
+          <ResponseField label="Privacy notice accepted">{yesNo(app.privacyConsent)}</ResponseField>
+          <ResponseField label="Privacy notice version">{app.privacyNoticeVersion}</ResponseField>
           <ResponseField label="Conflict of interest declared">
             {yesNo(app.coiDeclared)}
           </ResponseField>
-          <ResponseField label="Conflict of interest details">
-            {app.coiDetails}
-          </ResponseField>
+          <ResponseField label="Conflict of interest details">{app.coiDetails}</ResponseField>
         </ResponseGroup>
       </dl>
     </details>
@@ -383,27 +336,15 @@ function AppealPanel({ item, busy, onReview }) {
       )}
       {open && (
         <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-          <Button
-            sm
-            variant="primary"
-            disabled={busy}
-            onClick={() => onReview(item, 'grant')}
-          >
+          <Button sm variant="primary" disabled={busy} onClick={() => onReview(item, 'grant')}>
             Grant appeal
           </Button>
-          <Button
-            sm
-            variant="danger"
-            disabled={busy}
-            onClick={() => onReview(item, 'uphold')}
-          >
+          <Button sm variant="danger" disabled={busy} onClick={() => onReview(item, 'uphold')}>
             Uphold rejection
           </Button>
         </div>
       )}
-      {appeal.reviewerNote && (
-        <p className="metaMuted">Review note: {appeal.reviewerNote}</p>
-      )}
+      {appeal.reviewerNote && <p className="metaMuted">Review note: {appeal.reviewerNote}</p>}
     </div>
   )
 }
@@ -445,10 +386,7 @@ export function MembershipTeam() {
     setBusy(item.id)
     try {
       setActionError(null)
-      await apiPost(
-        `/member/team/membership/appeals/${item.appeal.id}/review`,
-        { decision },
-      )
+      await apiPost(`/member/team/membership/appeals/${item.appeal.id}/review`, { decision })
       query.retry()
     } catch (error) {
       setActionError(error.message)
@@ -468,18 +406,10 @@ export function MembershipTeam() {
       </PageHeader>
       <Async query={query} skeletons={5}>
         {(data) => {
-          const active = data.items.filter(
-            (item) => item.membershipStatus === 'active',
-          )
-          const pending = data.items.filter(
-            (item) => item.membershipStatus !== 'active',
-          )
-          const appeals = data.items.filter(
-            (item) => item.appeal?.status === 'submitted',
-          )
-          const rejected = data.items.filter(
-            (item) => item.membershipStatus === 'rejected',
-          )
+          const active = data.items.filter((item) => item.membershipStatus === 'active')
+          const pending = data.items.filter((item) => item.membershipStatus !== 'active')
+          const appeals = data.items.filter((item) => item.appeal?.status === 'submitted')
+          const rejected = data.items.filter((item) => item.membershipStatus === 'rejected')
           const shown = data.items.filter((item) => {
             const stateMatch =
               filter === 'all' ||
@@ -490,10 +420,7 @@ export function MembershipTeam() {
                   : filter === 'rejected'
                     ? item.membershipStatus === 'rejected'
                     : item.membershipStatus === 'active')
-            return (
-              stateMatch &&
-              applicationSearchText(item).includes(search.toLowerCase())
-            )
+            return stateMatch && applicationSearchText(item).includes(search.toLowerCase())
           })
           return (
             <>
@@ -511,11 +438,7 @@ export function MembershipTeam() {
                 <div className="metricCard">
                   <RefreshCw size={18} aria-hidden />
                   <strong>
-                    {
-                      data.items.filter(
-                        (item) => item.membershipStatus === 'renewal_due',
-                      ).length
-                    }
+                    {data.items.filter((item) => item.membershipStatus === 'renewal_due').length}
                   </strong>
                   <span>renewals due</span>
                 </div>
@@ -560,17 +483,11 @@ export function MembershipTeam() {
                   </label>
                 </div>
                 {!shown.length ? (
-                  <Empty
-                    icon={ClipboardCheck}
-                    title="No applications in this view"
-                  />
+                  <Empty icon={ClipboardCheck} title="No applications in this view" />
                 ) : (
                   <div className="stackSm">
                     {shown.map((item) => (
-                      <div
-                        key={item.id}
-                        className="card cardTight membershipQueueCard"
-                      >
+                      <div key={item.id} className="card cardTight membershipQueueCard">
                         <div className="queueRow">
                           <div className="queueIdentity membershipQueueIdentity">
                             <MemberAvatar
@@ -584,45 +501,32 @@ export function MembershipTeam() {
                             <div>
                               <strong>{item.name}</strong>
                               <p className="meta">
-                                {item.email} ·{' '}
-                                {item.country || 'Country not set'}
-                                {item.organizationName
-                                  ? ` · ${item.organizationName}`
-                                  : ''}
+                                {item.email} · {item.country || 'Country not set'}
+                                {item.organizationName ? ` · ${item.organizationName}` : ''}
                               </p>
                               <SocialLinks links={item.application?.links} />
                               <div className="rowGap" style={{ marginTop: 6 }}>
                                 <span
                                   className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
                                 >
-                                  {STATUS_LABELS[item.membershipStatus] ||
-                                    item.membershipStatus}
+                                  {STATUS_LABELS[item.membershipStatus] || item.membershipStatus}
                                 </span>
                                 <span className="chip chip-neutral">
-                                  {ENTITY_LABELS[item.entityType] ||
-                                    item.entityType}
+                                  {ENTITY_LABELS[item.entityType] || item.entityType}
                                 </span>
                                 <span className="chip chip-neutral">
                                   Hub: {item.hubAccessStatus}
                                 </span>
                                 {item.teamRoles?.map((role) => (
-                                  <span
-                                    key={role}
-                                    className="chip chip-neutral"
-                                  >
-                                    {teamLabels[role] ||
-                                      role.replaceAll('_', ' ')}
+                                  <span key={role} className="chip chip-neutral">
+                                    {teamLabels[role] || role.replaceAll('_', ' ')}
                                   </span>
                                 ))}
                                 <span className="chip chip-neutral">
-                                  Directory:{' '}
-                                  {item.profile?.directoryVisibility ||
-                                    'private'}
+                                  Directory: {item.profile?.directoryVisibility || 'private'}
                                 </span>
                                 {item.profile?.hasPhoto && (
-                                  <span className="chip chip-neutral">
-                                    Photo
-                                  </span>
+                                  <span className="chip chip-neutral">Photo</span>
                                 )}
                               </div>
                             </div>
@@ -630,9 +534,10 @@ export function MembershipTeam() {
                           <div className="membershipQueueActions">
                             <SearchableSelect
                               label="Membership status"
-                              options={Object.entries(STATUS_LABELS).map(
-                                ([value, label]) => ({ value, label }),
-                              )}
+                              options={Object.entries(STATUS_LABELS).map(([value, label]) => ({
+                                value,
+                                label,
+                              }))}
                               value={item.membershipStatus}
                               onChange={(status) => setStatus(item.id, status)}
                               disabled={busy === item.id}
@@ -653,11 +558,7 @@ export function MembershipTeam() {
                           </div>
                         </div>
                         <ApplicationResponses item={item} />
-                        <AppealPanel
-                          item={item}
-                          busy={busy === item.id}
-                          onReview={reviewAppeal}
-                        />
+                        <AppealPanel item={item} busy={busy === item.id} onReview={reviewAppeal} />
                       </div>
                     ))}
                   </div>
@@ -669,10 +570,7 @@ export function MembershipTeam() {
       </Async>
       {ending && (
         <SidePanel title="End membership" onClose={() => setEnding(null)}>
-          <p>
-            Record the reason for ending this membership. This removes the
-            member’s Hub access.
-          </p>
+          <p>Record the reason for ending this membership. This removes the member’s Hub access.</p>
           {actionError && <ErrorCard message={actionError} />}
           <form
             className="stack"
@@ -691,11 +589,7 @@ export function MembershipTeam() {
                 minLength={8}
               />
             </label>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={busy || reason.trim().length < 8}
-            >
+            <Button type="submit" variant="primary" disabled={busy || reason.trim().length < 8}>
               Confirm end of membership
             </Button>
           </form>

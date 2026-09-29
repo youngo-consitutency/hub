@@ -20,7 +20,6 @@ import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
 
-
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -47,28 +46,31 @@ function trustedActionUrl(value: any) {
   if (!text) return null
   const url = new URL(text, appBaseUrl())
   if (url.origin !== new URL(appBaseUrl()).origin)
-    throw Object.assign(
-      new Error('The action link must point to YOUNGO Hub.'),
-      { code: 'validation' },
-    )
+    throw Object.assign(new Error('The action link must point to YOUNGO Hub.'), {
+      code: 'validation',
+    })
   return url.toString()
 }
 
 function broadcastInput(body: any) {
-  const title = String(body?.title || '').trim().slice(0, 160)
-  const message = String(body?.message || '').trim().slice(0, 4000)
-  const reason = String(body?.reason || '').trim().slice(0, 500)
+  const title = String(body?.title || '')
+    .trim()
+    .slice(0, 160)
+  const message = String(body?.message || '')
+    .trim()
+    .slice(0, 4000)
+  const reason = String(body?.reason || '')
+    .trim()
+    .slice(0, 500)
   if (!title || !message) throw new Error('A title and message are required.')
-  if (reason.length < 8)
-    throw new Error('Give a reason of at least 8 characters for this send.')
+  if (reason.length < 8) throw new Error('Give a reason of at least 8 characters for this send.')
   const type = String(body?.scope?.type || '')
   if (!['all_active', 'working_group', 'team', 'account_ids'].includes(type))
     throw new Error('Choose a valid recipient scope.')
   const values = Array.isArray(body?.scope?.ids)
     ? body.scope.ids.map(String).filter(Boolean).slice(0, 200)
     : []
-  if (type !== 'all_active' && !values.length)
-    throw new Error('The selected scope is empty.')
+  if (type !== 'all_active' && !values.length) throw new Error('The selected scope is empty.')
   return {
     title,
     message,
@@ -135,8 +137,9 @@ export const notificationEndpoints: Endpoint[] = [
         scope: input.scope,
       })
       const campaignId =
-        String(req.headers.get('x-idempotency-key') || '').trim().slice(0, 120) ||
-        randomUUID()
+        String(req.headers.get('x-idempotency-key') || '')
+          .trim()
+          .slice(0, 120) || randomUUID()
       let queued = 0
       for (const recipientId of eligible) {
         const result = await enqueueNotification({
@@ -174,10 +177,7 @@ export const notificationEndpoints: Endpoint[] = [
           req.payload.logger.error({ err: error }, 'notification drain failed'),
         ),
       )
-      return json(
-        { ok: true, campaignId, eligible: eligible.length, queued },
-        { status: 202 },
-      )
+      return json({ ok: true, campaignId, eligible: eligible.length, queued }, { status: 202 })
     }),
   },
   {
@@ -211,9 +211,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/unsubscribe',
     method: 'get',
     handler: async (req) => {
-      const verified = verifyUnsubscribeToken(
-        String((req as any).query?.token || ''),
-      )
+      const verified = verifyUnsubscribeToken(String((req as any).query?.token || ''))
       if (!verified)
         return html(
           resultPage(
@@ -284,8 +282,7 @@ export const notificationEndpoints: Endpoint[] = [
           ),
           400,
         )
-      const accountId =
-        typeof row.account === 'object' ? row.account.id : row.account
+      const accountId = typeof row.account === 'object' ? row.account.id : row.account
       await req.payload.update({
         collection: 'email-verification-tokens',
         id: row.id,
@@ -300,15 +297,16 @@ export const notificationEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
-      await audit(req, { id: accountId }, {
-        action: 'account.email_verified',
-        targetType: 'account',
-        targetId: String(accountId),
-      })
-      return Response.redirect(
-        `${appBaseUrl()}/profile?emailVerified=1`,
-        303,
+      await audit(
+        req,
+        { id: accountId },
+        {
+          action: 'account.email_verified',
+          targetType: 'account',
+          targetId: String(accountId),
+        },
       )
+      return Response.redirect(`${appBaseUrl()}/profile?emailVerified=1`, 303)
     },
   },
   {
@@ -360,8 +358,7 @@ export const notificationEndpoints: Endpoint[] = [
       if (!expected || !supplied) throw fail.unauthorized()
       const left = Buffer.from(expected)
       const right = Buffer.from(supplied)
-      if (left.length !== right.length || !timingSafeEqual(left, right))
-        throw fail.unauthorized()
+      if (left.length !== right.length || !timingSafeEqual(left, right)) throw fail.unauthorized()
       const b = ((await req.json?.()) || {}) as any
       // Provider events are recorded for audit; suppression handled when email
       // delivery is wired to a real provider.
@@ -400,9 +397,7 @@ export const notificationEndpoints: Endpoint[] = [
           announcement: Boolean(row?.email?.announcement),
         },
         emailVerified: Boolean(account.emailVerifiedAt),
-        deliveryConfigured: Boolean(
-          process.env.SMTP_URL || process.env.SMTP_HOST,
-        ),
+        deliveryConfigured: Boolean(process.env.SMTP_URL || process.env.SMTP_HOST),
       })
     }),
   },
@@ -412,16 +407,12 @@ export const notificationEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const b = ((await req.json?.()) || {}) as any
-      if (
-        !account.emailVerifiedAt &&
-        Object.values(b?.email || {}).some(Boolean)
-      ) {
+      if (!account.emailVerifiedAt && Object.values(b?.email || {}).some(Boolean)) {
         return json(
           {
             error: {
               code: 'email_unverified',
-              message:
-                'Verify your email address before enabling email updates.',
+              message: 'Verify your email address before enabling email updates.',
             },
           },
           { status: 409 },

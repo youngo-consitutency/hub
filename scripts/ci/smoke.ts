@@ -15,10 +15,7 @@ dotenv.config({ path: ['.env.local', '.env'] })
 const { default: config } = await import('../../src/payload.config')
 const { applyAccountSpec } = await import('../lib/accountSpec')
 
-const BASE = (process.env.TEST_BASE_URL || 'http://localhost:3000').replace(
-  /\/+$/,
-  '',
-)
+const BASE = (process.env.TEST_BASE_URL || 'http://localhost:3000').replace(/\/+$/, '')
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`smoke failed: ${message}`)
@@ -55,10 +52,7 @@ async function main() {
   const profile = await fetch(`${BASE}/api/member/profile`, {
     headers: { Cookie: cookie },
   })
-  assert(
-    profile.status === 200,
-    `GET /api/member/profile authenticated → ${profile.status}`,
-  )
+  assert(profile.status === 200, `GET /api/member/profile authenticated → ${profile.status}`)
 
   // 4. The uniform error contract holds on a 4xx.
   const body = await anonymous.json()

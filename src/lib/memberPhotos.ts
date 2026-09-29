@@ -5,29 +5,23 @@ import { requirePgPool, getPgPool } from './pg'
 
 // Profile photos live in bytea tables — never the public media store.
 
-
 const MEMBER_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MEMBER_PHOTO_MAX_BYTES = 768 * 1024
 
 export async function validateMemberPhoto(bytes: Buffer, contentType: string) {
-  const type = String(contentType || '').split(';')[0].trim().toLowerCase()
+  const type = String(contentType || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase()
   if (!MEMBER_PHOTO_TYPES.has(type))
     throw new ApiError(400, 'validation', 'Use a JPEG, PNG, or WebP image.')
   if (!Buffer.isBuffer(bytes) || bytes.length === 0)
     throw new ApiError(400, 'validation', 'Choose an image to upload.')
   if (bytes.length > MEMBER_PHOTO_MAX_BYTES)
-    throw new ApiError(
-      413,
-      'payload_too_large',
-      'Profile photos must be 768 KB or smaller.',
-    )
+    throw new ApiError(413, 'payload_too_large', 'Profile photos must be 768 KB or smaller.')
   const detected = await fileTypeFromBuffer(bytes)
   if (detected?.mime !== type)
-    throw new ApiError(
-      400,
-      'validation',
-      'The uploaded file does not match its image type.',
-    )
+    throw new ApiError(400, 'validation', 'The uploaded file does not match its image type.')
   return type
 }
 
@@ -73,9 +67,8 @@ export async function readMemberPhoto(accountId: number, pool?: Pool | null) {
 
 export async function deleteMemberPhoto(accountId: number) {
   const pool = requirePgPool()
-  const result = await pool.query(
-    'DELETE FROM member_profile_photos WHERE account_id=$1',
-    [accountId],
-  )
+  const result = await pool.query('DELETE FROM member_profile_photos WHERE account_id=$1', [
+    accountId,
+  ])
   return (result.rowCount || 0) > 0
 }

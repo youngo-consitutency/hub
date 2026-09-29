@@ -63,8 +63,8 @@ export function MembershipLifecycle() {
           <section className="stack">
             <h2>Membership records</h2>
             <p className="meta">
-              Record reviewed Constituency Work onboarding and renewal here.
-              Application review and account status are in the Applications tab.
+              Record reviewed Constituency Work onboarding and renewal here. Application review and
+              account status are in the Applications tab.
             </p>
             <div
               className="platformTable"
@@ -94,10 +94,7 @@ export function MembershipLifecycle() {
               </table>
             </div>
             {data.canReviewMembership && editorOpen && (
-              <SidePanel
-                title="Record onboarding or renewal"
-                onClose={() => setEditorOpen(false)}
-              >
+              <SidePanel title="Record onboarding or renewal" onClose={() => setEditorOpen(false)}>
                 <Feedback error={failure} message="" />
                 <form className="platformForm" onSubmit={submit}>
                   <Select label="Person" name="accountId">
@@ -110,23 +107,14 @@ export function MembershipLifecycle() {
                       ))}
                   </Select>
                   <Select label="Action" name="action">
-                    <option value="activate_cw">
-                      Confirm Constituency Work onboarding
-                    </option>
+                    <option value="activate_cw">Confirm Constituency Work onboarding</option>
                     <option value="renew_cw">Record renewal</option>
                     <option value="expire_cw">
                       End Constituency Work; retain Network membership
                     </option>
                   </Select>
-                  <Field
-                    label="Onboarding cohort (for activation)"
-                    name="cohort"
-                  />
-                  <Field
-                    label="Next renewal due"
-                    name="renewalDueAt"
-                    type="datetime-local"
-                  />
+                  <Field label="Onboarding cohort (for activation)" name="cohort" />
+                  <Field label="Next renewal due" name="renewalDueAt" type="datetime-local" />
                   <Text
                     label="Review evidence and reason"
                     name="reason"
@@ -144,7 +132,8 @@ export function MembershipLifecycle() {
           <Empty
             icon={LockIcon}
             title="Membership Team only"
-            body="Membership Team access is required." />
+            body="Membership Team access is required."
+          />
         ))}
     </div>
   )

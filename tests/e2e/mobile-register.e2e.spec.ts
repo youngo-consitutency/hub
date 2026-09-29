@@ -14,14 +14,10 @@ async function passMandateGate(page: Page) {
   await expect(check).toBeEnabled()
   await check.tap()
   await page.getByRole('button', { name: /continue to account/i }).tap()
-  await expect(
-    page.getByRole('heading', { name: /individual registration/i }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: /individual registration/i })).toBeVisible()
 }
 
-test('register: SearchableSelect option tap registers selection', async ({
-  page,
-}) => {
+test('register: SearchableSelect option tap registers selection', async ({ page }) => {
   await page.goto(BASE + '/join')
   await passMandateGate(page)
 
@@ -33,9 +29,7 @@ test('register: SearchableSelect option tap registers selection', async ({
   await expect(gender).toHaveValue(label)
 })
 
-test('register: MultiSelectDropdown option tap registers selection', async ({
-  page,
-}) => {
+test('register: MultiSelectDropdown option tap registers selection', async ({ page }) => {
   await page.goto(BASE + '/join')
   await passMandateGate(page)
 

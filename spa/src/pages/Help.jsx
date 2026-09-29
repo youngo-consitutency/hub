@@ -84,12 +84,7 @@ function HubDestination({ item }) {
         <strong>{item.title}</strong>
         <span className="meta">{item.body}</span>
       </span>
-      <ArrowRight
-        className="helpDestinationArrow"
-        size={17}
-        strokeWidth={1.75}
-        aria-hidden
-      />
+      <ArrowRight className="helpDestinationArrow" size={17} strokeWidth={1.75} aria-hidden />
     </A>
   )
 }
@@ -134,8 +129,7 @@ export function Help() {
             <div className="helpActionCopy">
               <h3>Something is broken</h3>
               <p className="meta">
-                Send the page and device details needed to reproduce the
-                problem.
+                Send the page and device details needed to reproduce the problem.
               </p>
             </div>
             <div className="helpActionControl helpReportAction">
@@ -150,8 +144,7 @@ export function Help() {
             <div className="helpActionCopy">
               <h3>Membership and account</h3>
               <p className="meta">
-                Check verification, profile, organisation access, or your
-                membership course.
+                Check verification, profile, organisation access, or your membership course.
               </p>
             </div>
             <A href="/profile" className="btn btn-secondary helpActionControl">
@@ -165,9 +158,7 @@ export function Help() {
             </span>
             <div className="helpActionCopy">
               <h3>Working-group access</h3>
-              <p className="meta">
-                Find Contact Points, member workspaces, and official channels.
-              </p>
+              <p className="meta">Find Contact Points, member workspaces, and official channels.</p>
             </div>
             <A href="/groups" className="btn btn-secondary helpActionControl">
               Browse groups
@@ -180,9 +171,7 @@ export function Help() {
             </span>
             <div className="helpActionCopy">
               <h3>Organisation postings</h3>
-              <p className="meta">
-                Publish opportunities from your organisation workspace.
-              </p>
+              <p className="meta">Publish opportunities from your organisation workspace.</p>
             </div>
             <A href="/ngo" className="btn btn-secondary helpActionControl">
               Open NGO workspace
@@ -201,8 +190,7 @@ export function Help() {
 
       <Section label="People behind the Hub">
         <p className="meta helpPeopleIntro">
-          The Hub is designed, maintained, and governed by the two people below
-          inside YOUNGO.
+          The Hub is designed, maintained, and governed by the two people below inside YOUNGO.
         </p>
         <div className="helpPeopleGrid">
           {HUB_LAUNCHERS.map((person) => (
@@ -211,18 +199,15 @@ export function Help() {
         </div>
       </Section>
 
-      <section
-        className="card helpAboutStrip"
-        aria-labelledby="help-about-title"
-      >
+      <section className="card helpAboutStrip" aria-labelledby="help-about-title">
         <span className="iconTile" aria-hidden>
           <ShieldLock size={20} strokeWidth={1.75} />
         </span>
         <div>
           <h2 id="help-about-title">About the Hub</h2>
           <p className="meta">
-            The Hub is volunteer-maintained, runs at cost, and limits member
-            data to what its services need. Read the{' '}
+            The Hub is volunteer-maintained, runs at cost, and limits member data to what its
+            services need. Read the{' '}
             <A href="/privacy" className="inlineLink">
               Privacy Notice
             </A>{' '}

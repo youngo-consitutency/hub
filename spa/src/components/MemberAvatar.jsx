@@ -8,10 +8,7 @@ export function MemberAvatar({ person, size = 'md', className = '' }) {
   useEffect(() => setFailed(false), [photoUrl])
 
   return (
-    <span
-      className={`memberAvatar memberAvatar-${size} ${className}`.trim()}
-      aria-hidden="true"
-    >
+    <span className={`memberAvatar memberAvatar-${size} ${className}`.trim()} aria-hidden="true">
       {photoUrl && !failed ? (
         <img src={photoUrl} alt="" onError={() => setFailed(true)} />
       ) : (

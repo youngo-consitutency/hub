@@ -25,9 +25,7 @@ export function groupEventsByDate(events) {
 
 export function eventsInCalendarMonth(events, { year, month }) {
   const prefix = `${year}-${String(month + 1).padStart(2, '0')}-`
-  return events.filter((event) =>
-    eventDateKey(event.startsAt).startsWith(prefix),
-  )
+  return events.filter((event) => eventDateKey(event.startsAt).startsWith(prefix))
 }
 
 export function eventsOnCalendarDay(events, key) {
@@ -38,11 +36,7 @@ export function eventsInCalendarWeek(events, date = new Date()) {
   const current = new Date(date)
   const mondayOffset = (current.getUTCDay() + 6) % 7
   const start =
-    Date.UTC(
-      current.getUTCFullYear(),
-      current.getUTCMonth(),
-      current.getUTCDate(),
-    ) -
+    Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate()) -
     mondayOffset * DAY_MS
   const end = start + 7 * DAY_MS
 
@@ -61,8 +55,7 @@ export function buildCalendarDays({ year, month }, groupedEvents) {
     const date = new Date(gridStart + index * DAY_MS)
     const key = date.toISOString().slice(0, 10)
     const events = groupedEvents.get(key) || []
-    const inMonth =
-      date.getUTCFullYear() === year && date.getUTCMonth() === month
+    const inMonth = date.getUTCFullYear() === year && date.getUTCMonth() === month
     return {
       key,
       day: date.getUTCDate(),

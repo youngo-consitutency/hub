@@ -4,18 +4,10 @@ import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import { Async, Empty, PageHeader } from '../components/ui.jsx'
-import {
-  ContactCard,
-  PersonCard,
-  WorkingGroupContactCard,
-} from '../components/cards.jsx'
+import { ContactCard, PersonCard, WorkingGroupContactCard } from '../components/cards.jsx'
 import { useDocument } from '../lib/documents.js'
 import { useWorkingGroups } from '../lib/workingGroups.js'
-import {
-  TbAt as AtSign,
-  TbSearch as Search,
-  TbUsers as Users,
-} from 'react-icons/tb'
+import { TbAt as AtSign, TbSearch as Search, TbUsers as Users } from 'react-icons/tb'
 
 function PeopleDirectory() {
   const wg = useWorkingGroups()
@@ -28,18 +20,12 @@ function PeopleDirectory() {
   if (search) params.set('search', search)
   if (workingGroup) params.set('workingGroup', workingGroup)
   if (tag) params.set('tag', tag)
-  const query = useApi(`/member/people?${params.toString()}`, [
-    search,
-    workingGroup,
-    tag,
-  ])
+  const query = useApi(`/member/people?${params.toString()}`, [search, workingGroup, tag])
 
   return (
     <section aria-label="Member profiles">
       <div className="peopleDirectoryIntro">
-        <p className="meta">
-          Only members who choose to share their profile appear here.
-        </p>
+        <p className="meta">Only members who choose to share their profile appear here.</p>
       </div>
       <form
         className="peopleDirectoryTools"
@@ -124,10 +110,7 @@ function PeopleDirectory() {
         )}
       </Async>
       {selectedPerson && (
-        <SidePanel
-          title="Member profile"
-          onClose={() => setSelectedPerson(null)}
-        >
+        <SidePanel title="Member profile" onClose={() => setSelectedPerson(null)}>
           <PersonCard person={selectedPerson} expanded />
         </SidePanel>
       )}
@@ -152,9 +135,7 @@ export function Directory() {
       <Async
         query={query}
         empty={(d) =>
-          d.items.length === 0 ? (
-            <Empty icon={AtSign} title="Directory is empty" />
-          ) : null
+          d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null
         }
       >
         {(data) => {
@@ -171,24 +152,16 @@ export function Directory() {
           return (
             <>
               <p className="meta directoryNote">
-                This shape shows how broad each contact’s scope is. It is not a
-                ranking of people or importance.
+                This shape shows how broad each contact’s scope is. It is not a ranking of people or
+                importance.
               </p>
-              <ol
-                className="directoryPyramid"
-                aria-label="YOUNGO contact structure"
-              >
+              <ol className="directoryPyramid" aria-label="YOUNGO contact structure">
                 {layers.map((layer) => (
-                  <li
-                    key={layer.id}
-                    className={`directoryLayer directoryLayer-${layer.level}`}
-                  >
+                  <li key={layer.id} className={`directoryLayer directoryLayer-${layer.level}`}>
                     <section aria-labelledby={`directory-${layer.id}`}>
                       <p className="pageEyebrow">{layer.eyebrow}</p>
                       <h2 id={`directory-${layer.id}`}>{layer.title}</h2>
-                      <p className="meta directoryLayerDescription">
-                        {layer.description}
-                      </p>
+                      <p className="meta directoryLayerDescription">{layer.description}</p>
                       <div className="directoryContacts">
                         {layer.contacts.map((contact) =>
                           layer.id === 'working-groups' && contact.wg ? (

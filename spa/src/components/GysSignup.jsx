@@ -40,8 +40,7 @@ export function GysSignup({ embedded = false }) {
         <div className="gysSignupIntro">
           <h3>You’re on the participation list</h3>
           <p className="meta gysSignupLead">
-            The GYS team will contact you when consultations or drafting
-            sessions open.
+            The GYS team will contact you when consultations or drafting sessions open.
           </p>
         </div>
       </div>
@@ -49,9 +48,7 @@ export function GysSignup({ embedded = false }) {
   }
 
   return (
-    <div
-      className={`gysSignupCard ${embedded ? '' : 'card'} ${open ? 'isOpen' : ''}`.trim()}
-    >
+    <div className={`gysSignupCard ${embedded ? '' : 'card'} ${open ? 'isOpen' : ''}`.trim()}>
       <div className="gysSignupIntro">
         <h3>Join the next consultation cycle</h3>
         <p className="meta gysSignupLead">
@@ -88,9 +85,7 @@ export function GysSignup({ embedded = false }) {
                 onChange={set('email')}
                 autoComplete="email"
               />
-              {fields.email && (
-                <span className="fieldError">{fields.email}</span>
-              )}
+              {fields.email && <span className="fieldError">{fields.email}</span>}
             </label>
           </div>
           <div className="formRow">
@@ -102,9 +97,7 @@ export function GysSignup({ embedded = false }) {
                 onChange={set('country')}
                 autoComplete="country-name"
               />
-              {fields.country && (
-                <span className="fieldError">{fields.country}</span>
-              )}
+              {fields.country && <span className="fieldError">{fields.country}</span>}
             </label>
             <label className="field">
               <span>
@@ -132,11 +125,7 @@ export function GysSignup({ embedded = false }) {
           {error && <p className="meta formError">{error}</p>}
 
           <div className="detailActions">
-            <button
-              className="btn btn-primary"
-              type="submit"
-              disabled={status === 'submitting'}
-            >
+            <button className="btn btn-primary" type="submit" disabled={status === 'submitting'}>
               {status === 'submitting' ? 'Sending…' : 'Submit'}
             </button>
             <button

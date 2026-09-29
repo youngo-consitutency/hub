@@ -33,17 +33,12 @@ const draftView = (d: any) => ({
   updatedAt: d.updatedAt,
 })
 
-async function checkDuplicateUrl(
-  req: PayloadRequest,
-  url: string,
-  exceptSlug?: string,
-) {
+async function checkDuplicateUrl(req: PayloadRequest, url: string, exceptSlug?: string) {
   if (!url) return
   const target = String(url).trim().toLowerCase()
   const items = await store.listResources(req)
   const hit = items.find(
-    (r: any) =>
-      String(r.url || '').toLowerCase() === target && r.slug !== exceptSlug,
+    (r: any) => String(r.url || '').toLowerCase() === target && r.slug !== exceptSlug,
   )
   if (hit)
     throw fail.validation({
@@ -120,7 +115,10 @@ export const resourceEndpoints: Endpoint[] = [
       })) as any
       if (!draft || draft.contentType !== 'resource')
         throw fail.notFound('Resource submission not found.')
-      if (String(typeof draft.author === 'object' ? draft.author.id : draft.author) !== String(account.id))
+      if (
+        String(typeof draft.author === 'object' ? draft.author.id : draft.author) !==
+        String(account.id)
+      )
         throw fail.forbidden('Only the author can edit this submission.')
       const b = ((await req.json?.()) || {}) as any
       await checkDuplicateUrl(req, b.url, draft.contentKey)
@@ -174,8 +172,7 @@ export const resourceEndpoints: Endpoint[] = [
       ])
       const latestReviewBySlug = new Map<string, any>()
       for (const r of reviews.docs as any[]) {
-        if (!latestReviewBySlug.has(r.resourceSlug))
-          latestReviewBySlug.set(r.resourceSlug, r)
+        if (!latestReviewBySlug.has(r.resourceSlug)) latestReviewBySlug.set(r.resourceSlug, r)
       }
       return json({
         items,
@@ -191,8 +188,7 @@ export const resourceEndpoints: Endpoint[] = [
           status: r.status,
           note: r.note,
           reviewedAt: r.createdAt,
-          reviewerName:
-            typeof r.reviewedBy === 'object' ? r.reviewedBy?.name : null,
+          reviewerName: typeof r.reviewedBy === 'object' ? r.reviewedBy?.name : null,
         })),
         submissions: submissions.docs.map(draftView),
       })
@@ -209,14 +205,8 @@ export const resourceEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       const detail = String(b.detail || '').trim()
       const options = await getDocument(req, 'content-options')
-      const issueKinds = (options?.body?.resourceIssueKinds || []).map(
-        (k: any) => String(k.value),
-      )
-      if (
-        !issueKinds.includes(String(b.kind)) ||
-        detail.length < 8 ||
-        detail.length > 2000
-      )
+      const issueKinds = (options?.body?.resourceIssueKinds || []).map((k: any) => String(k.value))
+      if (!issueKinds.includes(String(b.kind)) || detail.length < 8 || detail.length > 2000)
         throw fail.validation({
           detail: 'Choose an issue type and explain the concern in 8–2,000 characters.',
         })
@@ -269,15 +259,18 @@ export const resourceEndpoints: Endpoint[] = [
         !['link', 'description', 'tags'].every((k) => b.checks?.[k] === true)
       )
         throw fail.validation({
-          checks:
-            'Check the destination, description, and tags before marking a link verified.',
+          checks: 'Check the destination, description, and tags before marking a link verified.',
         })
       const resolvedIssueIds = Array.isArray(b.resolvedIssueIds)
         ? b.resolvedIssueIds.filter((id: unknown) => typeof id === 'string')
         : []
       const resource = await requireResource(req, slug)
       if (resource.fingerprint && b.fingerprint && resource.fingerprint !== b.fingerprint)
-        throw new ApiError(409, 'conflict', 'This resource changed. Reload it and review the current version.')
+        throw new ApiError(
+          409,
+          'conflict',
+          'This resource changed. Reload it and review the current version.',
+        )
       const review = await req.payload.create({
         collection: 'resource-reviews',
         data: {
@@ -323,12 +316,14 @@ export const resourceEndpoints: Endpoint[] = [
         }
       }
       if (['verified', 'needs_changes', 'retired'].includes(b.status)) {
-        const res = (await req.payload.find({
-          collection: 'catalogue-resources',
-          where: { slug: { equals: slug } },
-          limit: 1,
-          overrideAccess: true,
-        })).docs[0] as any
+        const res = (
+          await req.payload.find({
+            collection: 'catalogue-resources',
+            where: { slug: { equals: slug } },
+            limit: 1,
+            overrideAccess: true,
+          })
+        ).docs[0] as any
         if (res) {
           await req.payload.update({
             collection: 'catalogue-resources',
@@ -341,8 +336,7 @@ export const resourceEndpoints: Endpoint[] = [
                     ? 'retired'
                     : 'verified',
               checkedAt: new Date().toISOString(),
-              retiredAt:
-                b.status === 'retired' ? new Date().toISOString() : null,
+              retiredAt: b.status === 'retired' ? new Date().toISOString() : null,
             } as any,
             overrideAccess: true,
             req,

@@ -36,11 +36,7 @@ export function rateLimit({
     try {
       await limiter.consume(id)
     } catch {
-      throw new ApiError(
-        429,
-        'rate_limited',
-        'Too many requests. Please wait and try again.',
-      )
+      throw new ApiError(429, 'rate_limited', 'Too many requests. Please wait and try again.')
     }
   }
 }

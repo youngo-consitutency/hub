@@ -70,8 +70,8 @@ export function AdminCallSlots() {
   return (
     <Section label="WG section calls">
       <p className="meta">
-        Publish times Contact Points can book on the Hub. Your name shows on the
-        slot. 45 minutes is the default.
+        Publish times Contact Points can book on the Hub. Your name shows on the slot. 45 minutes is
+        the default.
       </p>
       {error && <ErrorCard message={error} onRetry={() => setError('')} />}
       <form className="authForm" onSubmit={add}>

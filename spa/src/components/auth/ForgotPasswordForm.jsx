@@ -46,9 +46,8 @@ export function ForgotPasswordForm({
       )}
       {hideOperatorNote ? null : (
         <p className="metaMuted">
-          Until email delivery is connected, reset links appear in the
-          server runtime logs for operators. Admins can also issue links from
-          Admin.
+          Until email delivery is connected, reset links appear in the server runtime logs for
+          operators. Admins can also issue links from Admin.
         </p>
       )}
       <div className="detailActions">
@@ -56,12 +55,7 @@ export function ForgotPasswordForm({
           <ArrowLeft size={18} strokeWidth={2} aria-hidden />
           Back to sign in
         </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          glow
-          disabled={status === 'submitting'}
-        >
+        <Button type="submit" variant="primary" glow disabled={status === 'submitting'}>
           {status === 'submitting' ? 'Sending…' : 'Send reset link'}
         </Button>
       </div>

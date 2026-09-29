@@ -2,14 +2,7 @@ import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import {
-  Async,
-  Empty,
-  FilterMenu,
-  FilterPill,
-  PageHeader,
-  SortButton,
-} from '../components/ui.jsx'
+import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui.jsx'
 import { GroupCard } from '../components/cards.jsx'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
@@ -25,11 +18,7 @@ import {
   TbBolt as Zap,
 } from 'react-icons/tb'
 import { useDocument } from '../lib/documents.js'
-import {
-  activeFilterCount,
-  matchesFilters,
-  toggleFilter,
-} from '../lib/filterState.js'
+import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState.js'
 
 const TOPIC_ICONS = {
   'climate-action': CloudSun,
@@ -47,8 +36,7 @@ export function Groups() {
   const query = useApi('/groups')
   const { doc: directory } = useDocument('directory')
   const topicList = directory?.topics || []
-  const topicLabel = (key) =>
-    topicList.find((t) => t.key === key)?.label || key
+  const topicLabel = (key) => topicList.find((t) => t.key === key)?.label || key
 
   return (
     <div>
@@ -58,9 +46,7 @@ export function Groups() {
       <Async
         query={query}
         empty={(d) =>
-          d.items.length === 0 ? (
-            <Empty icon={Users} title="No working groups yet" />
-          ) : null
+          d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null
         }
       >
         {(data) => {
@@ -69,11 +55,7 @@ export function Groups() {
             .filter((group) => {
               const matchesSearch =
                 !needle ||
-                [
-                  group.name,
-                  group.focusLine,
-                  topicLabel(group.topic),
-                ]
+                [group.name, group.focusLine, topicLabel(group.topic)]
                   .join(' ')
                   .toLocaleLowerCase()
                   .includes(needle)
@@ -82,18 +64,14 @@ export function Groups() {
               return matchesSearch && matchesTopic
             })
             .sort((a, b) =>
-              descending
-                ? b.name.localeCompare(a.name)
-                : a.name.localeCompare(b.name),
+              descending ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name),
             )
 
           const renderGroup = (group) => (
             <GroupCard
               key={group.slug}
               group={group}
-              topicFilterState={
-                topics[group.topic] || 'neutral'
-              }
+              topicFilterState={topics[group.topic] || 'neutral'}
               onTopicFilter={() => {
                 const topicKey = group.topic
                 if (!topicKey) return
@@ -130,10 +108,7 @@ export function Groups() {
                   </div>
                 </div>
                 <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu
-                    activeCount={activeFilterCount(topics)}
-                    onClear={() => setTopics({})}
-                  >
+                  <FilterMenu activeCount={activeFilterCount(topics)} onClear={() => setTopics({})}>
                     <fieldset className="filterLevel">
                       <legend>Topics</legend>
                       <div className="pillRow">
@@ -149,11 +124,7 @@ export function Groups() {
                             key={item.key}
                             state={topics[item.key] || 'neutral'}
                             icon={TOPIC_ICONS[item.key]}
-                            onClick={() =>
-                              setTopics((current) =>
-                                toggleFilter(current, item.key),
-                              )
-                            }
+                            onClick={() => setTopics((current) => toggleFilter(current, item.key))}
                           >
                             {item.label}
                           </FilterPill>

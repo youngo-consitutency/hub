@@ -6,10 +6,7 @@
 // Schema-bound enums (select-field options) come from spa/shared; content
 // vocab and working groups are fetched live from the Hub API so the catalogue
 // always reflects the database — nothing operational is baked into this file.
-import {
-  OPPORTUNITY_FORMATS,
-  OPPORTUNITY_KINDS,
-} from '../../spa/shared/opportunities.js'
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../spa/shared/opportunities.js'
 import { slugify } from '../../spa/shared/slug.js'
 
 export { slugify }
@@ -55,8 +52,7 @@ export const HUB_CONTENT_TOOLS = [
       properties: {
         orgId: {
           type: 'string',
-          description:
-            'Organisation account id when the caller has several seats.',
+          description: 'Organisation account id when the caller has several seats.',
         },
       },
     },
@@ -238,8 +234,7 @@ export const HUB_CONTENT_TOOLS = [
   },
   {
     name: 'review_content_draft',
-    description:
-      'Approve or request changes on a draft. Requires content.review.',
+    description: 'Approve or request changes on a draft. Requires content.review.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -279,15 +274,7 @@ export async function catalogOptions(client) {
       name: g.name,
     })),
     announcementHint: {
-      fields: [
-        'slug',
-        'title',
-        'body',
-        'pinned',
-        'ctaUrl',
-        'ctaLabel',
-        'ctaDeadlineAt',
-      ],
+      fields: ['slug', 'title', 'body', 'pinned', 'ctaUrl', 'ctaLabel', 'ctaDeadlineAt'],
     },
     eventHint: {
       fields: [
@@ -325,10 +312,7 @@ export function resolveHubOrigin(env = process.env) {
 }
 
 function apiError(status, body) {
-  const message =
-    body?.error?.message ||
-    body?.message ||
-    `Hub API request failed (${status})`
+  const message = body?.error?.message || body?.message || `Hub API request failed (${status})`
   const error = new Error(message)
   error.status = status
   error.code = body?.error?.code
@@ -346,13 +330,7 @@ function apiError(status, body) {
  *   fetchImpl?: typeof fetch,
  * }} [options]
  */
-export function createHubClient({
-  origin,
-  email,
-  password,
-  token,
-  fetchImpl = fetch,
-} = {}) {
+export function createHubClient({ origin, email, password, token, fetchImpl = fetch } = {}) {
   const hubOrigin = String(origin || '').replace(/\/+$/, '')
   if (!hubOrigin) throw new Error('Hub origin is required.')
   let sessionToken = token || null
@@ -386,9 +364,7 @@ export function createHubClient({
       return account
     }
     if (!email || !password) {
-      throw new Error(
-        'Set HUB_EMAIL and HUB_PASSWORD, or HUB_TOKEN, for a YOUNGO Hub account.',
-      )
+      throw new Error('Set HUB_EMAIL and HUB_PASSWORD, or HUB_TOKEN, for a YOUNGO Hub account.')
     }
     const data = await request('/api/auth/login', {
       method: 'POST',
@@ -465,10 +441,10 @@ export async function callHubContentTool(name, args, client) {
     case 'list_opportunity_review':
       return client.memberGet('/api/member/opportunities/review')
     case 'review_opportunity':
-      return client.memberPost(
-        `/api/member/opportunities/${encodeURIComponent(args.id)}/review`,
-        { decision: args.decision, note: args.note },
-      )
+      return client.memberPost(`/api/member/opportunities/${encodeURIComponent(args.id)}/review`, {
+        decision: args.decision,
+        note: args.note,
+      })
     case 'submit_resource':
       return client.memberPost('/api/member/resources/submissions', {
         title: args.title,
@@ -516,10 +492,10 @@ export async function callHubContentTool(name, args, client) {
         {},
       )
     case 'review_content_draft':
-      return client.memberPost(
-        `/api/member/content/drafts/${encodeURIComponent(args.id)}/review`,
-        { decision: args.decision, note: args.note },
-      )
+      return client.memberPost(`/api/member/content/drafts/${encodeURIComponent(args.id)}/review`, {
+        decision: args.decision,
+        note: args.note,
+      })
     case 'publish_content_draft':
       return client.memberPost(
         `/api/member/content/drafts/${encodeURIComponent(args.id)}/publish`,

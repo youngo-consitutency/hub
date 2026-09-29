@@ -5,11 +5,7 @@ import {
   TbCopy as Copy,
   TbExternalLink as ExternalLink,
 } from 'react-icons/tb'
-import {
-  googleAddByUrlPage,
-  googleSubscribeUrl,
-  webcalFeedUrl,
-} from '../lib/calendarLinks.js'
+import { googleAddByUrlPage, googleSubscribeUrl, webcalFeedUrl } from '../lib/calendarLinks.js'
 
 // Copies the absolute ICS feed URL so a calendar app can subscribe (live feed),
 // rather than downloading a one-time snapshot.
@@ -110,9 +106,8 @@ export function CalendarSubscribe({ type }) {
             <div>
               <h3>Live calendar feed</h3>
               <p className="meta">
-                Subscribe once. New Hub events update automatically. Google
-                never signs in to the Hub — you add our public ICS URL to your
-                own calendar.
+                Subscribe once. New Hub events update automatically. Google never signs in to the
+                Hub — you add our public ICS URL to your own calendar.
               </p>
             </div>
           </div>
@@ -126,9 +121,7 @@ export function CalendarSubscribe({ type }) {
             <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
           </a>
           <FeedRow label="All events" path="/ics/all.ics" />
-          {filtered && (
-            <FeedRow label="This filter only" path={`/ics/type/${type}.ics`} />
-          )}
+          {filtered && <FeedRow label="This filter only" path={`/ics/type/${type}.ics`} />}
           <ol className="subscribeSteps">
             <li>
               <strong>Google</strong>

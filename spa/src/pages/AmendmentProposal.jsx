@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
-import {
-  Async,
-  BackLink,
-  Empty,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
+import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui.jsx'
 import { TbCircleCheck as CheckCircle } from 'react-icons/tb'
 
 const initialForm = {
@@ -120,12 +114,7 @@ export function AmendmentProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Negotiation track</span>
-                  <select
-                    className="input"
-                    required
-                    value={form.trackId}
-                    onChange={set('trackId')}
-                  >
+                  <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
                     {data.items.map((track) => (
                       <option value={track.id} key={track.id}>
@@ -145,10 +134,7 @@ export function AmendmentProposal() {
                   >
                     <option value="">Select a source version</option>
                     {(trackDetail?.documents || []).map((document) => (
-                      <option
-                        value={document.latestVersion.id}
-                        key={document.latestVersion.id}
-                      >
+                      <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>
                     ))}
@@ -156,12 +142,7 @@ export function AmendmentProposal() {
                 </label>
                 <label className="field">
                   <span>Page</span>
-                  <input
-                    className="input"
-                    required
-                    value={form.page}
-                    onChange={set('page')}
-                  />
+                  <input className="input" required value={form.page} onChange={set('page')} />
                 </label>
                 <label className="field">
                   <span>Paragraph or anchor label</span>
@@ -189,11 +170,7 @@ export function AmendmentProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Operation</span>
-                  <select
-                    className="input"
-                    value={form.operation}
-                    onChange={set('operation')}
-                  >
+                  <select className="input" value={form.operation} onChange={set('operation')}>
                     <option value="insert">Insert</option>
                     <option value="replace">Replace</option>
                     <option value="delete">Delete</option>
@@ -244,8 +221,8 @@ export function AmendmentProposal() {
               </div>
             </Section>
             <p className="meta">
-              This is a member proposal. It never modifies the cited official
-              source and does not represent YOUNGO endorsement.
+              This is a member proposal. It never modifies the cited official source and does not
+              represent YOUNGO endorsement.
             </p>
             {error && (
               <p className="formError" role="alert">
@@ -253,11 +230,7 @@ export function AmendmentProposal() {
               </p>
             )}
             <div className="detailActions detailPageActions">
-              <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={saving}
-              >
+              <button className="btn btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save text proposal'}
               </button>
             </div>

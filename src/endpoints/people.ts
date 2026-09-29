@@ -2,10 +2,7 @@ import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { accountView, requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
-import {
-  getMemberPerson,
-  listMemberPeople,
-} from '../lib/memberDirectory'
+import { getMemberPerson, listMemberPeople } from '../lib/memberDirectory'
 import { readMemberPhoto } from '../lib/memberPhotos'
 
 export const peopleEndpoints: Endpoint[] = [
@@ -33,15 +30,11 @@ export const peopleEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      const person = await getMemberPerson(
-        { ...accountView(account), access },
-        req.routeParams?.id,
-      )
+      const person = await getMemberPerson({ ...accountView(account), access }, req.routeParams?.id)
       if (!person) throw fail.notFound('Member profile not found.')
       return json({ person })
     }),
   },
-
 
   {
     path: '/member/people/:id/photo',
@@ -51,11 +44,9 @@ export const peopleEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       const id = Number(req.routeParams?.id)
       const person = await getMemberPerson({ ...accountView(account), access }, id)
-      if (!person)
-        throw fail.notFound('Profile photo not found.')
+      if (!person) throw fail.notFound('Profile photo not found.')
       const photo = await readMemberPhoto(id)
-      if (!photo)
-        throw fail.notFound('Profile photo not found.')
+      if (!photo) throw fail.notFound('Profile photo not found.')
       return new Response(new Uint8Array(photo.bytes), {
         headers: {
           'Content-Type': photo.content_type,

@@ -73,20 +73,15 @@ export function Workspace({ slug }) {
   const onboard = getWgOnboarding(wgOnboardingDoc?.WG_ONBOARDING, slug)
   const course = courseDoc?.COURSE || null
   const unlocked = state.progress?.presentation_ok && state.progress?.rules_ok
-  const introductionRead = course
-    ? courseDone && presentationOk
-    : presentationOk
+  const introductionRead = course ? courseDone && presentationOk : presentationOk
 
   const saveOnboard = async () => {
     setSaving(true)
     try {
-      const res = await apiPost(
-        `/member/workspace/${encodeURIComponent(slug)}/onboard`,
-        {
-          presentationOk,
-          rulesOk,
-        },
-      )
+      const res = await apiPost(`/member/workspace/${encodeURIComponent(slug)}/onboard`, {
+        presentationOk,
+        rulesOk,
+      })
       setState((s) => ({ ...s, progress: res.progress }))
     } catch (e) {
       setState((s) => ({ ...s, error: e.message }))
@@ -105,9 +100,7 @@ export function Workspace({ slug }) {
               <PageHeader title={group.name} description={group.focusLine} />
 
               {state.loading && <Skeletons n={3} />}
-              {state.error && (
-                <ErrorCard message={state.error} onRetry={load} />
-              )}
+              {state.error && <ErrorCard message={state.error} onRetry={load} />}
 
               {!state.loading && !unlocked && (
                 <section
@@ -115,11 +108,7 @@ export function Workspace({ slug }) {
                   style={course ? deckStyle(course.brand, deckBrand?.WG_DECK_BRAND) : undefined}
                   aria-labelledby="workspace-onboarding-title"
                 >
-                  <header
-                    className={
-                      course ? 'wgOnboardHead' : 'workspaceOnboardingHeader'
-                    }
-                  >
+                  <header className={course ? 'wgOnboardHead' : 'workspaceOnboardingHeader'}>
                     {course ? null : (
                       <span className="iconTile" aria-hidden>
                         <Lock size={20} strokeWidth={1.75} />
@@ -147,10 +136,7 @@ export function Workspace({ slug }) {
                         storageKey={`youngo-wg-course:${slug}`}
                         onReachEnd={markCourseDone}
                       />
-                      <section
-                        className="wgOnboardRules"
-                        aria-labelledby="wg-rules-title"
-                      >
+                      <section className="wgOnboardRules" aria-labelledby="wg-rules-title">
                         <h3 id="wg-rules-title">Shared rules</h3>
                         <ul>
                           {onboard.rules.map((rule) => (
@@ -162,9 +148,7 @@ export function Workspace({ slug }) {
                             type="checkbox"
                             checked={presentationOk}
                             disabled={!courseDone}
-                            onChange={(event) =>
-                              setPresentationOk(event.target.checked)
-                            }
+                            onChange={(event) => setPresentationOk(event.target.checked)}
                           />
                           <span>
                             {courseDone
@@ -176,14 +160,9 @@ export function Workspace({ slug }) {
                           <input
                             type="checkbox"
                             checked={rulesOk}
-                            onChange={(event) =>
-                              setRulesOk(event.target.checked)
-                            }
+                            onChange={(event) => setRulesOk(event.target.checked)}
                           />
-                          <span>
-                            I agree to follow these group rules and YOUNGO
-                            policies.
-                          </span>
+                          <span>I agree to follow these group rules and YOUNGO policies.</span>
                         </label>
                       </section>
                       <footer className="wgOnboardFoot">
@@ -222,9 +201,7 @@ export function Workspace({ slug }) {
                             <input
                               type="checkbox"
                               checked={presentationOk}
-                              onChange={(event) =>
-                                setPresentationOk(event.target.checked)
-                              }
+                              onChange={(event) => setPresentationOk(event.target.checked)}
                             />
                             <span>I have read the group introduction.</span>
                           </label>
@@ -242,14 +219,9 @@ export function Workspace({ slug }) {
                             <input
                               type="checkbox"
                               checked={rulesOk}
-                              onChange={(event) =>
-                                setRulesOk(event.target.checked)
-                              }
+                              onChange={(event) => setRulesOk(event.target.checked)}
                             />
-                            <span>
-                              I agree to follow these group rules and YOUNGO
-                              policies.
-                            </span>
+                            <span>I agree to follow these group rules and YOUNGO policies.</span>
                           </label>
                         </fieldset>
                       </div>
@@ -284,9 +256,7 @@ export function Workspace({ slug }) {
                       />
                       <div>
                         <h3>Workspace unlocked</h3>
-                        <p className="meta">
-                          Status: {state.progress?.status || 'active'}
-                        </p>
+                        <p className="meta">Status: {state.progress?.status || 'active'}</p>
                       </div>
                     </div>
                     <CheckCircle2 size={20} strokeWidth={1.75} aria-hidden />
@@ -326,11 +296,7 @@ export function Workspace({ slug }) {
                         >
                           <DestinationIcon url={group.whatsappUrl} size={20} />
                           <strong>WhatsApp</strong>
-                          <ArrowUpRight
-                            size={17}
-                            strokeWidth={1.75}
-                            aria-hidden
-                          />
+                          <ArrowUpRight size={17} strokeWidth={1.75} aria-hidden />
                         </a>
                       )}
                       {group.contact && <ContactCard contact={group.contact} />}
@@ -340,10 +306,7 @@ export function Workspace({ slug }) {
                     {state.activities?.length ? (
                       <div className="cardGrid">
                         {state.activities.map((activity) => (
-                          <WgActivityCard
-                            key={activity.id}
-                            activity={activity}
-                          />
+                          <WgActivityCard key={activity.id} activity={activity} />
                         ))}
                       </div>
                     ) : (

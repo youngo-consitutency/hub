@@ -5,12 +5,7 @@ import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
-import {
-  accountRef,
-  isFacilitator,
-  loadElection,
-  tokenHash,
-} from '../lib/governance'
+import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
 
 // S10 elections. See lib/governance.ts for shared helpers and the
 // credential-secrecy model.
@@ -86,7 +81,11 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'election.created', targetType: 'governance', targetId: String(election.id) })
+      await audit(req, account, {
+        action: 'election.created',
+        targetType: 'governance',
+        targetId: String(election.id),
+      })
       return json({ election: electionView(election) }, { status: 201 })
     }),
   },
@@ -101,17 +100,12 @@ export const electionEndpoints: Endpoint[] = [
       const { docs: all } = await req.payload.find({
         collection: 'election-candidates',
         where: {
-          and: [
-            { election: { equals: e.id } },
-            { status: { equals: 'screened_in' } },
-          ],
+          and: [{ election: { equals: e.id } }, { status: { equals: 'screened_in' } }],
         },
         limit: 500,
         overrideAccess: true,
       })
-      const published = ['voting', 'tallying', 'completed', 'restart_required'].includes(
-        e.status,
-      )
+      const published = ['voting', 'tallying', 'completed', 'restart_required'].includes(e.status)
       return json({
         election: electionView(e, {
           candidateCount: all.length,
@@ -135,8 +129,7 @@ export const electionEndpoints: Endpoint[] = [
         restart_required: 'nominations',
       }
       const next = flow[e.status]
-      if (!next)
-        throw fail.conflict('invalid_phase', `Cannot advance from ${e.status}.`)
+      if (!next) throw fail.conflict('invalid_phase', `Cannot advance from ${e.status}.`)
       const now = new Date().toISOString()
       const patch: any = { status: next }
       if (next === 'nominations') {
@@ -151,10 +144,7 @@ export const electionEndpoints: Endpoint[] = [
         const ind = await req.payload.find({
           collection: 'election-voters',
           where: {
-            and: [
-              { election: { equals: e.id } },
-              { kind: { equals: 'individual' } },
-            ],
+            and: [{ election: { equals: e.id } }, { kind: { equals: 'individual' } }],
           },
           limit: 0,
           overrideAccess: true,
@@ -162,10 +152,7 @@ export const electionEndpoints: Endpoint[] = [
         const org = await req.payload.find({
           collection: 'election-voters',
           where: {
-            and: [
-              { election: { equals: e.id } },
-              { kind: { equals: 'organisation' } },
-            ],
+            and: [{ election: { equals: e.id } }, { kind: { equals: 'organisation' } }],
           },
           limit: 0,
           overrideAccess: true,
@@ -179,7 +166,11 @@ export const electionEndpoints: Endpoint[] = [
         data: patch,
         overrideAccess: true,
       })
-      await audit(req, account, { action: `election.${next}`, targetType: 'governance', targetId: String(e.id) })
+      await audit(req, account, {
+        action: `election.${next}`,
+        targetType: 'governance',
+        targetId: String(e.id),
+      })
       return json({ election: electionView(updated) })
     }),
   },
@@ -200,10 +191,7 @@ export const electionEndpoints: Endpoint[] = [
       const existing = await req.payload.find({
         collection: 'election-candidates',
         where: {
-          and: [
-            { election: { equals: e.id } },
-            { account: { equals: account.id } },
-          ],
+          and: [{ election: { equals: e.id } }, { account: { equals: account.id } }],
         },
         limit: 1,
         overrideAccess: true,
@@ -223,7 +211,11 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'election.candidate_nominated', targetType: 'governance', targetId: String(e.id) })
+      await audit(req, account, {
+        action: 'election.candidate_nominated',
+        targetType: 'governance',
+        targetId: String(e.id),
+      })
       return json({ candidate: candidateView(candidate) }, { status: 201 })
     }),
   },
@@ -244,7 +236,9 @@ export const electionEndpoints: Endpoint[] = [
           id: Number(req.routeParams!.cid),
           overrideAccess: true,
         })
-        .catch(() => { throw fail.notFound('Candidate not found.') })
+        .catch(() => {
+          throw fail.notFound('Candidate not found.')
+        })
       const updated = await req.payload.update({
         collection: 'election-candidates',
         id: candidate.id,
@@ -254,7 +248,11 @@ export const electionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: `election.candidate_${b.status}`, targetType: 'governance', targetId: String(e.id) })
+      await audit(req, account, {
+        action: `election.candidate_${b.status}`,
+        targetType: 'governance',
+        targetId: String(e.id),
+      })
       return json({ candidate: candidateView(updated) })
     }),
   },
@@ -270,18 +268,14 @@ export const electionEndpoints: Endpoint[] = [
       const existing = await req.payload.find({
         collection: 'election-voters',
         where: {
-          and: [
-            { election: { equals: e.id } },
-            { account: { equals: account.id } },
-          ],
+          and: [{ election: { equals: e.id } }, { account: { equals: account.id } }],
         },
         limit: 1,
         overrideAccess: true,
       })
       if (existing.totalDocs)
         throw fail.conflict('already_issued', 'A voter credential was already issued to you.')
-      const kind =
-        account.entityType === 'organization' ? 'organisation' : 'individual'
+      const kind = account.entityType === 'organization' ? 'organisation' : 'individual'
       const token = crypto.randomBytes(24).toString('base64url')
       await req.payload.create({
         collection: 'election-voters',
@@ -294,7 +288,11 @@ export const electionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'election.credential_issued', targetType: 'governance', targetId: String(e.id) })
+      await audit(req, account, {
+        action: 'election.credential_issued',
+        targetType: 'governance',
+        targetId: String(e.id),
+      })
       // The token is returned once and never stored in raw form.
       return json({ token, kind }, { status: 201 })
     }),
@@ -311,22 +309,19 @@ export const electionEndpoints: Endpoint[] = [
       const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
       if (!b.token?.trim()) fields.token = 'Required.'
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
-      if (!Array.isArray(b.ranks)) fields.ranks = 'Must be an array of candidate ids (empty for a blank ballot).'
+      if (!Array.isArray(b.ranks))
+        fields.ranks = 'Must be an array of candidate ids (empty for a blank ballot).'
       if (Object.keys(fields).length) throw fail.validation(fields)
       const hash = tokenHash(e.id, String(b.token).trim())
       const { docs: voters } = await req.payload.find({
         collection: 'election-voters',
         where: {
-          and: [
-            { election: { equals: e.id } },
-            { tokenHash: { equals: hash } },
-          ],
+          and: [{ election: { equals: e.id } }, { tokenHash: { equals: hash } }],
         },
         limit: 1,
         overrideAccess: true,
       })
-      if (!voters.length)
-        throw fail.forbidden('Invalid voter credential.')
+      if (!voters.length) throw fail.forbidden('Invalid voter credential.')
       const voter = voters[0] as any
       const { totalDocs: cast } = await req.payload.find({
         collection: 'election-ballots',
@@ -430,9 +425,7 @@ export const electionEndpoints: Endpoint[] = [
       )
       const ind = indSet.size
       const org = orgSet.size
-      const quorumOk =
-        ind >= (e.quorumIndividuals ?? 100) &&
-        org >= (e.quorumOrganisations ?? 25)
+      const quorumOk = ind >= (e.quorumIndividuals ?? 100) && org >= (e.quorumOrganisations ?? 25)
       const result: any = {
         talliedAt: new Date().toISOString(),
         ballotsCast: { individuals: ind, organisations: org },
@@ -482,7 +475,11 @@ export const electionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: `election.${e.status}`, targetType: 'governance', targetId: String(e.id) })
+      await audit(req, account, {
+        action: `election.${e.status}`,
+        targetType: 'governance',
+        targetId: String(e.id),
+      })
       return json({ election: electionView(e) })
     }),
   },

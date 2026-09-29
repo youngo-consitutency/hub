@@ -108,8 +108,6 @@ function Select({
 function localDate(value: string | null) {
   if (!value) return ''
   const d = new Date(value)
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 export { Field, Text, Select, localDate }

@@ -9,10 +9,7 @@ import {
   putFollow,
   deleteFollow,
 } from '../modules/negotiation/tracking'
-import {
-  reviewDocumentExtraction,
-  SourceIngestionError,
-} from '../modules/negotiation/sources'
+import { reviewDocumentExtraction, SourceIngestionError } from '../modules/negotiation/sources'
 import {
   createSubmissionProject,
   appendSubmissionVersion,
@@ -40,10 +37,7 @@ function ingestionError(error: unknown) {
       version_not_found: 404,
       revision_conflict: 409,
     }[error.code] || 422
-  return json(
-    { error: { code: error.code, message: error.message } },
-    { status },
-  )
+  return json({ error: { code: error.code, message: error.message } }, { status })
 }
 
 // Negotiation endpoints exclude service principals — agent actions go

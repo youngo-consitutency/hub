@@ -1,16 +1,11 @@
 import type { Endpoint } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import {
-  accountView,
-  requireAdmin,
-  requireVerifiedMember,
-} from '../lib/accounts'
+import { accountView, requireAdmin, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
 import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol.js'
-
 
 function publicSlot(s: any) {
   return {
@@ -60,10 +55,7 @@ export const contactPointEndpoints: Endpoint[] = [
             rules_ok: d.rulesOk,
             unlocked_at: d.unlockedAt,
           },
-          account:
-            d.account && typeof d.account === 'object'
-              ? accountView(d.account)
-              : null,
+          account: d.account && typeof d.account === 'object' ? accountView(d.account) : null,
         })),
       })
     }),
@@ -131,13 +123,12 @@ export const contactPointEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
-      const title = String(b.title || '').trim().slice(0, 200)
-      if (!title || !b.kind)
-        throw fail.validation({ title: 'title and kind are required.' })
+      const title = String(b.title || '')
+        .trim()
+        .slice(0, 200)
+      if (!title || !b.kind) throw fail.validation({ title: 'title and kind are required.' })
       const options = await getDocument(req, 'content-options')
-      const kinds = (options?.body?.wgActivityKinds || []).map((k: any) =>
-        String(k.value),
-      )
+      const kinds = (options?.body?.wgActivityKinds || []).map((k: any) => String(k.value))
       if (!kinds.includes(String(b.kind)))
         throw new ApiError(400, 'validation', 'Invalid activity kind.')
       if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))
@@ -217,7 +208,9 @@ export const contactPointEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const { docs } = await req.payload.find({
         collection: 'cp-call-slots',
-        where: { startsAt: { greater_than: new Date(Date.now() - 24 * 3600 * 1000).toISOString() } },
+        where: {
+          startsAt: { greater_than: new Date(Date.now() - 24 * 3600 * 1000).toISOString() },
+        },
         sort: 'startsAt',
         limit: 100,
         overrideAccess: true,
@@ -226,7 +219,9 @@ export const contactPointEndpoints: Endpoint[] = [
       const slots = docs as any[]
       return json({
         slots: slots
-          .filter((s) => !s.bookedBy || typeof s.bookedBy !== 'object' || s.bookedBy.id !== account.id)
+          .filter(
+            (s) => !s.bookedBy || typeof s.bookedBy !== 'object' || s.bookedBy.id !== account.id,
+          )
           .map(publicSlot),
         mine: slots
           .filter(
@@ -252,8 +247,7 @@ export const contactPointEndpoints: Endpoint[] = [
         req,
       })) as any
       if (!slot) throw fail.notFound()
-      if (slot.bookedBy)
-        throw new ApiError(409, 'conflict', 'This slot was already booked.')
+      if (slot.bookedBy) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       if (Date.parse(slot.startsAt) < Date.now())
         throw fail.validation({ startsAt: 'This slot is in the past.' })
       const updated = await req.payload.update({
@@ -280,8 +274,7 @@ export const contactPointEndpoints: Endpoint[] = [
         req,
       })) as any
       if (!slot) throw fail.notFound()
-      const bookedById =
-        typeof slot.bookedBy === 'object' ? slot.bookedBy.id : slot.bookedBy
+      const bookedById = typeof slot.bookedBy === 'object' ? slot.bookedBy.id : slot.bookedBy
       if (String(bookedById) !== String(account.id)) throw fail.forbidden()
       const released = await req.payload.update({
         collection: 'cp-call-slots',

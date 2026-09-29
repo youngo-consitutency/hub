@@ -16,9 +16,5 @@ export const OPPORTUNITY_FORMATS = Object.freeze([
   { value: 'hybrid', label: 'Hybrid' },
 ])
 
-export const OPPORTUNITY_KIND_VALUES = OPPORTUNITY_KINDS.map(
-  (item) => item.value,
-)
-export const OPPORTUNITY_FORMAT_VALUES = OPPORTUNITY_FORMATS.map(
-  (item) => item.value,
-)
+export const OPPORTUNITY_KIND_VALUES = OPPORTUNITY_KINDS.map((item) => item.value)
+export const OPPORTUNITY_FORMAT_VALUES = OPPORTUNITY_FORMATS.map((item) => item.value)

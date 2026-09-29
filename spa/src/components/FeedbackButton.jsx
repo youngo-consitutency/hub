@@ -3,10 +3,7 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { usePath } from '../lib/router.js'
 import { Button } from './ui.jsx'
-import {
-  TbMessagePlus as MessageSquarePlus,
-  TbCheck as Check,
-} from 'react-icons/tb'
+import { TbMessagePlus as MessageSquarePlus, TbCheck as Check } from 'react-icons/tb'
 
 const FALLBACK_KINDS = [
   { value: 'bug', label: 'Something is broken' },
@@ -31,8 +28,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }) {
   const [error, setError] = useState(null)
   const [sending, setSending] = useState(false)
 
-  const set = (key) => (event) =>
-    setForm((current) => ({ ...current, [key]: event.target.value }))
+  const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
   const submit = async (event) => {
     event.preventDefault()
@@ -67,11 +63,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }) {
       </label>
       <label className="field">
         <span>How much is it holding you up?</span>
-        <select
-          className="input"
-          value={form.severity}
-          onChange={set('severity')}
-        >
+        <select className="input" value={form.severity} onChange={set('severity')}>
           {severities.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
@@ -102,8 +94,8 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }) {
         />
       </label>
       <p className="metaMuted">
-        We attach the page you are on ({pagePath}), your screen size, and your
-        browser so the team can reproduce it.
+        We attach the page you are on ({pagePath}), your screen size, and your browser so the team
+        can reproduce it.
       </p>
       {error && (
         <p className="meta" role="alert" style={{ color: 'var(--danger)' }}>
@@ -159,8 +151,7 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
       {open && (
         <SidePanel title="Send feedback" onClose={close}>
           <p className="meta">
-            Bugs, design problems, blockers and ideas all go to the YOUNGO Hub
-            team.
+            Bugs, design problems, blockers and ideas all go to the YOUNGO Hub team.
           </p>
           {sent ? (
             <div className="feedbackSent" role="status">
@@ -169,8 +160,8 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }) {
               </div>
               <h3>Thank you — the team has it</h3>
               <p className="meta">
-                Your report is in the triage queue. We may follow up on the
-                email attached to your account.
+                Your report is in the triage queue. We may follow up on the email attached to your
+                account.
               </p>
               <Button variant="primary" onClick={close}>
                 Done

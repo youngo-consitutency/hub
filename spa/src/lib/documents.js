@@ -5,9 +5,7 @@ import { useApi } from './api.js'
 // Each body preserves the shape of the former spa/src/content module.
 
 export function useDocument(slug) {
-  const { data, error, loading, retry } = useApi(
-    slug ? `/documents/${slug}` : null,
-  )
+  const { data, error, loading, retry } = useApi(slug ? `/documents/${slug}` : null)
   return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
 }
 
@@ -32,8 +30,7 @@ export function useContentOptions() {
 // {value,label} lists become lookup maps: labels.teamLabels['membership_team'].
 export function useContentOptionLabels() {
   const options = useContentOptions()
-  const toMap = (items) =>
-    Object.fromEntries((items || []).map((item) => [item.value, item.label]))
+  const toMap = (items) => Object.fromEntries((items || []).map((item) => [item.value, item.label]))
   return {
     teamLabels: toMap(options.teamLabels),
     assignmentLabels: toMap(options.assignmentLabels),

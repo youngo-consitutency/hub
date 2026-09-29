@@ -56,7 +56,9 @@ export const publicEndpoints: Endpoint[] = [
         req,
       })
       // Deliberately project only public fields, even for signed-in requests.
-      const res = json({ events: docs.map(({ slug, title, startsAt }) => ({ slug, title, startsAt })) })
+      const res = json({
+        events: docs.map(({ slug, title, startsAt }) => ({ slug, title, startsAt })),
+      })
       res.headers.set('Cache-Control', PUBLIC_CACHE)
       return res
     }),
@@ -187,10 +189,7 @@ export const publicEndpoints: Endpoint[] = [
       if (!group) throw fail.notFound('Unknown working group')
       const progress = opts.account ? await wgProgressFor(req, slug) : null
       const includeWorkspace = Boolean(progress?.presentationOk && progress?.rulesOk)
-      return viewCache(
-        json(groupView(group, { ...opts, includeWorkspace })),
-        opts.includePrivate,
-      )
+      return viewCache(json(groupView(group, { ...opts, includeWorkspace })), opts.includePrivate)
     }),
   },
   {

@@ -20,10 +20,7 @@ import {
   TbTool as Tool,
   TbWorld as World,
 } from 'react-icons/tb'
-import {
-  optionLabel as resourceLabel,
-  useContentOptions,
-} from '../lib/documents.js'
+import { optionLabel as resourceLabel, useContentOptions } from '../lib/documents.js'
 import { apiPatch, apiPost, useApi } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { FieldError } from './FormControls.jsx'
@@ -440,9 +437,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }) {
     resourceLanguages: RESOURCE_LANGUAGES,
   } = vocab
   const [payload, setPayload] = useState(
-    initialResource
-      ? { ...EMPTY_RESOURCE(vocab), ...initialResource }
-      : EMPTY_RESOURCE(vocab),
+    initialResource ? { ...EMPTY_RESOURCE(vocab), ...initialResource } : EMPTY_RESOURCE(vocab),
   )
   const [editingId, setEditingId] = useState(null)
   const [open, setOpen] = useState(Boolean(initialResource))
@@ -769,7 +764,11 @@ function ResourceReport({ resource, onClose, onSaved }) {
       {error && <ErrorCard message={error} />}
       <label>
         Issue type
-        <select className="input" value={selectedKind} onChange={(event) => setKind(event.target.value)}>
+        <select
+          className="input"
+          value={selectedKind}
+          onChange={(event) => setKind(event.target.value)}
+        >
           {resourceIssueKinds.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}

@@ -36,12 +36,9 @@ function scrubValue(value: any, depth = 0): any {
 
 export function scrubSentryEvent(event: ErrorEvent): ErrorEvent {
   if (event.request) {
-    if (event.request.headers)
-      event.request.headers = scrubValue(event.request.headers)
-    if (event.request.cookies)
-      event.request.cookies = scrubValue(event.request.cookies)
-    if (event.request.data != null)
-      event.request.data = scrubValue(event.request.data)
+    if (event.request.headers) event.request.headers = scrubValue(event.request.headers)
+    if (event.request.cookies) event.request.cookies = scrubValue(event.request.cookies)
+    if (event.request.data != null) event.request.data = scrubValue(event.request.data)
     if (event.request.query_string)
       event.request.query_string = scrubQuery(event.request.query_string) as string
   }
@@ -50,7 +47,6 @@ export function scrubSentryEvent(event: ErrorEvent): ErrorEvent {
   if (event.extra) event.extra = scrubValue(event.extra)
   if (event.contexts) event.contexts = scrubValue(event.contexts)
   if (event.breadcrumbs)
-    for (const crumb of event.breadcrumbs)
-      if (crumb.data) crumb.data = scrubValue(crumb.data)
+    for (const crumb of event.breadcrumbs) if (crumb.data) crumb.data = scrubValue(crumb.data)
   return event
 }

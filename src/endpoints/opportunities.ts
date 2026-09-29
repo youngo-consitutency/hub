@@ -25,7 +25,6 @@ const OPPORTUNITY_FORMATS = [
 const KIND_VALUES = new Set(OPPORTUNITY_KINDS.map((k) => k.value))
 const FORMAT_VALUES = new Set(OPPORTUNITY_FORMATS.map((f) => f.value))
 
-
 function safeUrl(value: unknown) {
   const raw = trimmed(value, 500)
   if (!raw) return null
@@ -39,7 +38,6 @@ function safeUrl(value: unknown) {
     throw fail.validation({ linkUrl: 'The link must be a full http(s) URL.' })
   return url.toString()
 }
-
 
 async function orgPostingTrust(req: PayloadRequest, orgAccountId: any) {
   const org = (await req.payload.findByID({
@@ -60,7 +58,6 @@ async function orgPostingTrust(req: PayloadRequest, orgAccountId: any) {
   })
   return published.totalDocs > 0
 }
-
 
 export const opportunityEndpoints: Endpoint[] = [
   // ── Opportunities board (member read) ─────────────────────────────
@@ -135,8 +132,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const organisations = orgRows.map((row: any) => {
         const override = row.override_state || null
         const trusted =
-          override === 'trusted' ||
-          (override !== 'review_required' && Boolean(row.has_published))
+          override === 'trusted' || (override !== 'review_required' && Boolean(row.has_published))
         return {
           orgAccountId: row.org_account_id,
           organizationName: row.organization_name || null,
@@ -184,17 +180,14 @@ export const opportunityEndpoints: Endpoint[] = [
       const title = trimmed(b.title, 200)
       if (title.length < 6)
         throw fail.validation({ title: 'Give the posting a title of at least 6 characters.' })
-      if (!KIND_VALUES.has(b.kind))
-        throw fail.validation({ kind: 'Choose a posting type.' })
+      if (!KIND_VALUES.has(b.kind)) throw fail.validation({ kind: 'Choose a posting type.' })
       const format = FORMAT_VALUES.has(b.format) ? b.format : null
       if (!format) throw fail.validation({ format: 'Choose a format.' })
       const startsAt = b.startsAt ? Date.parse(b.startsAt) : null
       const endsAt = b.endsAt ? Date.parse(b.endsAt) : null
       if (startsAt && endsAt && endsAt < startsAt)
         throw fail.validation({ endsAt: 'The end time cannot be before the start time.' })
-      const status = (await orgPostingTrust(req, ctx.orgAccountId))
-        ? 'published'
-        : 'pending_review'
+      const status = (await orgPostingTrust(req, ctx.orgAccountId)) ? 'published' : 'pending_review'
       const org = (await req.payload.findByID({
         collection: 'accounts',
         id: ctx.orgAccountId,
@@ -255,11 +248,8 @@ export const opportunityEndpoints: Endpoint[] = [
       if (
         !item ||
         !['published', 'pending_review'].includes(item.status) ||
-        String(
-          typeof item.orgAccount === 'object'
-            ? item.orgAccount.id
-            : item.orgAccount,
-        ) !== ctx.orgAccountId
+        String(typeof item.orgAccount === 'object' ? item.orgAccount.id : item.orgAccount) !==
+          ctx.orgAccountId
       )
         throw new ApiError(404, 'not_found', 'That posting is not live.')
       const updated = await req.payload.update({
@@ -299,11 +289,7 @@ export const opportunityEndpoints: Endpoint[] = [
         req,
       })) as any
       if (!item || item.status !== 'pending_review')
-        throw new ApiError(
-          404,
-          'not_found',
-          'That posting is no longer awaiting review.',
-        )
+        throw new ApiError(404, 'not_found', 'That posting is no longer awaiting review.')
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
@@ -316,9 +302,7 @@ export const opportunityEndpoints: Endpoint[] = [
         req,
       })
       await audit(req, account, {
-        action: approve
-          ? 'ngo.opportunity_approved'
-          : 'ngo.opportunity_rejected',
+        action: approve ? 'ngo.opportunity_approved' : 'ngo.opportunity_rejected',
         targetType: 'ngo_opportunity',
         targetId: String(item.id),
         after: { status: updated.status },
@@ -380,8 +364,7 @@ export const opportunityEndpoints: Endpoint[] = [
         throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const reviewNote = trimmed(b.note, 1000) || null
-      if (!reviewNote)
-        throw fail.validation({ note: 'Give a reason for unpublishing.' })
+      if (!reviewNote) throw fail.validation({ note: 'Give a reason for unpublishing.' })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
         id: String(req.routeParams?.id),

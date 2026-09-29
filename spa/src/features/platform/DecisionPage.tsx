@@ -2,13 +2,7 @@ import { SidePanel } from '../../components/SidePanel.tsx'
 import { TbGavel as DecisionIcon } from 'react-icons/tb'
 import { Feedback } from './Feedback.tsx'
 import { useState, type FormEvent } from 'react'
-import {
-  BackLink,
-  Empty,
-  ErrorCard,
-  PageHeader,
-  Skeletons,
-} from '../../components/ui.jsx'
+import { BackLink, Empty, ErrorCard, PageHeader, Skeletons } from '../../components/ui.jsx'
 import type { DecisionDetail, DecisionState } from '../../../shared/platform.ts'
 import { usePlatform, post, patch, values, formatDate } from './api.ts'
 import { Field, Text, Select } from './fields.tsx'
@@ -22,16 +16,12 @@ const NEXT: Partial<Record<DecisionState, DecisionState[]>> = {
 }
 export function DecisionPage({ slug }: { slug: string }) {
   const [panel, setPanel] = useState<string | null>(null)
-  const { data, error, loading, reload } = usePlatform<DecisionDetail>(
-    `/decisions/${slug}`,
-  )
+  const { data, error, loading, reload } = usePlatform<DecisionDetail>(`/decisions/${slug}`)
   const [failure, setFailure] = useState(''),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [kind, setKind] = useState('comment')
-  function submit(
-    action: (input: Record<string, unknown>) => Promise<unknown>,
-  ) {
+  function submit(action: (input: Record<string, unknown>) => Promise<unknown>) {
     return async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
       const form = event.currentTarget
@@ -66,13 +56,9 @@ export function DecisionPage({ slug }: { slug: string }) {
             description={`${d.bodyName} · ${d.process === 'snap' ? 'Snap' : 'Standard'} process · Version ${d.version}`}
           >
             <div className="rowGap">
-              <span className="chip chip-neutral">
-                {d.stage.replaceAll('_', ' ')}
-              </span>
+              <span className="chip chip-neutral">{d.stage.replaceAll('_', ' ')}</span>
               {d.deadlineAt && (
-                <span className="meta">
-                  Current period ends {formatDate(d.deadlineAt)}
-                </span>
+                <span className="meta">Current period ends {formatDate(d.deadlineAt)}</span>
               )}
             </div>
             <p className="meta">{d.policyVersion}</p>
@@ -91,8 +77,8 @@ export function DecisionPage({ slug }: { slug: string }) {
                 )}
                 {d.electorateSize !== null && (
                   <p>
-                    External vote: {d.votesFor} for, {d.votesAgainst} against,{' '}
-                    {d.electorateSize} eligible seats.
+                    External vote: {d.votesFor} for, {d.votesAgainst} against, {d.electorateSize}{' '}
+                    eligible seats.
                   </p>
                 )}
                 <a href="/work">Assign follow-up work</a>
@@ -112,24 +98,14 @@ export function DecisionPage({ slug }: { slug: string }) {
                   Revise proposal
                 </button>
                 {panel === 'revise' && (
-                  <SidePanel
-                    title="Revise proposal"
-                    onClose={() => setPanel(null)}
-                  >
+                  <SidePanel title="Revise proposal" onClose={() => setPanel(null)}>
                     <Feedback error={failure} message="" />
                     <form
                       className="platformForm"
                       key={d.version}
-                      onSubmit={submit((input) =>
-                        patch(`/decisions/${d.id}`, { ...d, ...input }),
-                      )}
+                      onSubmit={submit((input) => patch(`/decisions/${d.id}`, { ...d, ...input }))}
                     >
-                      <Field
-                        label="Title"
-                        name="title"
-                        defaultValue={d.title}
-                        required
-                      />
+                      <Field label="Title" name="title" defaultValue={d.title} required />
                       <Text
                         label="Proposal"
                         name="proposal"
@@ -147,14 +123,11 @@ export function DecisionPage({ slug }: { slug: string }) {
             )}
           <section className="stack">
             <h2>Comments and formal flags</h2>
-            {data.contributions.length === 0 && (
-              <Empty body="No contributions yet." />
-            )}
+            {data.contributions.length === 0 && <Empty body="No contributions yet." />}
             {data.contributions.map((c) => (
               <article className="card stackSm" key={c.id}>
                 <h3>
-                  {c.kind === 'comment' ? 'Comment' : `${c.kind} flag`} ·{' '}
-                  {c.authorName}
+                  {c.kind === 'comment' ? 'Comment' : `${c.kind} flag`} · {c.authorName}
                 </h3>
                 <p className="platformProse">{c.text}</p>
                 {c.grounds && (
@@ -177,9 +150,7 @@ export function DecisionPage({ slug }: { slug: string }) {
                   NEXT[d.stage] && (
                     <form
                       className="platformForm"
-                      onSubmit={submit((input) =>
-                        post(`/contributions/${c.id}/resolve`, input),
-                      )}
+                      onSubmit={submit((input) => post(`/contributions/${c.id}/resolve`, input))}
                     >
                       <Text
                         label="Why your concern is now resolved or withdrawn"
@@ -208,16 +179,11 @@ export function DecisionPage({ slug }: { slug: string }) {
                 Add a comment or flag
               </button>
               {panel === 'comment' && (
-                <SidePanel
-                  title="Add a comment or flag"
-                  onClose={() => setPanel(null)}
-                >
+                <SidePanel title="Add a comment or flag" onClose={() => setPanel(null)}>
                   <Feedback error={failure} message="" />
                   <form
                     className="platformForm"
-                    onSubmit={submit((input) =>
-                      post(`/decisions/${d.id}/contributions`, input),
-                    )}
+                    onSubmit={submit((input) => post(`/decisions/${d.id}/contributions`, input))}
                   >
                     <Select
                       label="Contribution"
@@ -226,9 +192,7 @@ export function DecisionPage({ slug }: { slug: string }) {
                       onChange={(event) => setKind(event.target.value)}
                     >
                       <option value="comment">Comment / response</option>
-                      <option value="grey">
-                        Grey flag: concern or clarification
-                      </option>
+                      <option value="grey">Grey flag: concern or clarification</option>
                       <option value="red">Red flag: formal objection</option>
                     </Select>
                     <Text label="Comment or concern" name="text" required />
@@ -241,11 +205,7 @@ export function DecisionPage({ slug }: { slug: string }) {
                       />
                     )}
                     {kind === 'red' && (
-                      <Text
-                        label="Alternative proposal"
-                        name="alternative"
-                        required
-                      />
+                      <Text label="Alternative proposal" name="alternative" required />
                     )}
                     <button disabled={busy} className="btn btn-primary">
                       Submit contribution
@@ -267,16 +227,12 @@ export function DecisionPage({ slug }: { slug: string }) {
                 Confirm the next process step
               </button>
               {panel === 'transition' && (
-                <SidePanel
-                  title="Confirm the next process step"
-                  onClose={() => setPanel(null)}
-                >
+                <SidePanel title="Confirm the next process step" onClose={() => setPanel(null)}>
                   <Feedback error={failure} message="" />
                   <p className="meta">
-                    Review the current proposal, relevant body, flags and policy
-                    before confirming. Periods cannot be shortened. Voting
-                    outcomes refer to an externally conducted vote and its
-                    eligible seats.
+                    Review the current proposal, relevant body, flags and policy before confirming.
+                    Periods cannot be shortened. Voting outcomes refer to an externally conducted
+                    vote and its eligible seats.
                   </p>
                   <form
                     className="platformForm"
@@ -313,12 +269,8 @@ export function DecisionPage({ slug }: { slug: string }) {
                     {d.stage === 'voting' && (
                       <>
                         <Select label="Outcome basis" name="outcomeBasis">
-                          <option value="process">
-                            Recorded process / vote
-                          </option>
-                          <option value="formal_veto">
-                            Formal veto: withdraw the proposal
-                          </option>
+                          <option value="process">Recorded process / vote</option>
+                          <option value="formal_veto">Formal veto: withdraw the proposal</option>
                         </Select>
                         <Field
                           label="Organisations requesting a veto"
@@ -343,16 +295,8 @@ export function DecisionPage({ slug }: { slug: string }) {
                           name="electorateSize"
                           type="number"
                         />
-                        <Field
-                          label="Votes for"
-                          name="votesFor"
-                          type="number"
-                        />
-                        <Field
-                          label="Votes against"
-                          name="votesAgainst"
-                          type="number"
-                        />
+                        <Field label="Votes for" name="votesFor" type="number" />
+                        <Field label="Votes against" name="votesAgainst" type="number" />
                       </>
                     )}
                     <button disabled={busy} className="btn btn-primary">
@@ -380,10 +324,8 @@ export function DecisionPage({ slug }: { slug: string }) {
             <ol>
               {data.history.map((h, i) => (
                 <li key={i}>
-                  <strong>
-                    {h.action.replace('decision.', '').replaceAll('_', ' ')}
-                  </strong>{' '}
-                  · {formatDate(h.createdAt)}
+                  <strong>{h.action.replace('decision.', '').replaceAll('_', ' ')}</strong> ·{' '}
+                  {formatDate(h.createdAt)}
                   <p>{h.reason}</p>
                 </li>
               ))}

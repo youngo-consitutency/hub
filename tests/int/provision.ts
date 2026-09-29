@@ -6,10 +6,7 @@
 import crypto from 'node:crypto'
 import { getPayload, Payload } from 'payload'
 import config from '@/payload.config'
-import {
-  applyAccountSpec,
-  type AccountSpec,
-} from '../../scripts/lib/accountSpec'
+import { applyAccountSpec, type AccountSpec } from '../../scripts/lib/accountSpec'
 
 let payload: Payload
 

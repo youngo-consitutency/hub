@@ -19,11 +19,7 @@ function scrollAfterNavigate(to, scroll) {
 }
 
 export function navigate(to, { state = {}, scroll = true } = {}) {
-  if (
-    to ===
-    window.location.pathname + window.location.search + window.location.hash
-  )
-    return
+  if (to === window.location.pathname + window.location.search + window.location.hash) return
   wouterNavigate(to, { state })
   scrollAfterNavigate(to, scroll)
 }

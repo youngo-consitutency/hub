@@ -2,11 +2,7 @@ import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import { CardSchedule } from '../components/cards.jsx'
-import {
-  activeFilterCount,
-  matchesFilters,
-  toggleFilter,
-} from '../lib/filterState.js'
+import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState.js'
 import {
   Async,
   Empty,
@@ -104,16 +100,10 @@ function OpportunityCard({
       )}
       <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
-        {item.organizationName && (
-          <p className="metaMuted">{item.organizationName}</p>
-        )}
+        {item.organizationName && <p className="metaMuted">{item.organizationName}</p>}
       </div>
       <div className="entityCardTags">
-        <FilterChip
-          tone="accent"
-          state={kindFilterState}
-          onClick={onKindFilter}
-        >
+        <FilterChip tone="accent" state={kindFilterState} onClick={onKindFilter}>
           {KIND_LABEL[item.kind] || item.kind}
         </FilterChip>
         <FilterChip state={formatFilterState} onClick={onFormatFilter}>
@@ -135,9 +125,7 @@ function OpportunityCard({
       {(item.startsAt || item.deadlineAt) && (
         <div className="entityCardFooter">
           {item.startsAt && <CardSchedule iso={item.startsAt} label="Starts" />}
-          {item.deadlineAt && (
-            <LifecycleTiming iso={item.deadlineAt} label="Apply by" />
-          )}
+          {item.deadlineAt && <LifecycleTiming iso={item.deadlineAt} label="Apply by" />}
         </div>
       )}
     </article>
@@ -176,9 +164,7 @@ export function Opportunities() {
             ...item,
             region: regionKey(item.region),
           }))
-          const regions = [
-            ...new Set(normalizedItems.map((item) => item.region)),
-          ]
+          const regions = [...new Set(normalizedItems.map((item) => item.region))]
             .filter(Boolean)
             .sort((a, b) => regionLabel(a).localeCompare(regionLabel(b)))
           const needle = search.trim().toLocaleLowerCase()
@@ -219,20 +205,13 @@ export function Opportunities() {
                 kindFilterState={kindFilters[item.kind] || 'neutral'}
                 formatFilterState={formatFilters[item.format] || 'neutral'}
                 regionFilterState={regionFilters[item.region] || 'neutral'}
-                onKindFilter={() =>
-                  setKindFilters((current) => toggleFilter(current, item.kind))
-                }
+                onKindFilter={() => setKindFilters((current) => toggleFilter(current, item.kind))}
                 onFormatFilter={() =>
-                  setFormatFilters((current) =>
-                    toggleFilter(current, item.format),
-                  )
+                  setFormatFilters((current) => toggleFilter(current, item.format))
                 }
                 onRegionFilter={
                   item.region
-                    ? () =>
-                        setRegionFilters((current) =>
-                          toggleFilter(current, item.region),
-                        )
+                    ? () => setRegionFilters((current) => toggleFilter(current, item.region))
                     : undefined
                 }
               />
@@ -290,22 +269,15 @@ export function Opportunities() {
                         {KINDS.map((item) => (
                           <FilterPill
                             key={item.key}
-                            active={
-                              item.key === 'all' &&
-                              activeFilterCount(kindFilters) === 0
-                            }
+                            active={item.key === 'all' && activeFilterCount(kindFilters) === 0}
                             state={
-                              item.key === 'all'
-                                ? undefined
-                                : kindFilters[item.key] || 'neutral'
+                              item.key === 'all' ? undefined : kindFilters[item.key] || 'neutral'
                             }
                             icon={item.icon}
                             onClick={() => {
                               if (item.key === 'all') setKindFilters({})
                               else {
-                                setKindFilters((current) =>
-                                  toggleFilter(current, item.key),
-                                )
+                                setKindFilters((current) => toggleFilter(current, item.key))
                               }
                             }}
                           >
@@ -320,22 +292,15 @@ export function Opportunities() {
                         {FORMATS.map((item) => (
                           <FilterPill
                             key={item.key}
-                            active={
-                              item.key === 'all' &&
-                              activeFilterCount(formatFilters) === 0
-                            }
+                            active={item.key === 'all' && activeFilterCount(formatFilters) === 0}
                             state={
-                              item.key === 'all'
-                                ? undefined
-                                : formatFilters[item.key] || 'neutral'
+                              item.key === 'all' ? undefined : formatFilters[item.key] || 'neutral'
                             }
                             icon={item.icon}
                             onClick={() => {
                               if (item.key === 'all') setFormatFilters({})
                               else {
-                                setFormatFilters((current) =>
-                                  toggleFilter(current, item.key),
-                                )
+                                setFormatFilters((current) => toggleFilter(current, item.key))
                               }
                             }}
                           >
@@ -359,14 +324,9 @@ export function Opportunities() {
                             <FilterPill
                               key={region}
                               state={regionFilters[region] || 'neutral'}
-                              prefix={regionFilterPrefix(
-                                region,
-                                regionLabel(region),
-                              )}
+                              prefix={regionFilterPrefix(region, regionLabel(region))}
                               onClick={() =>
-                                setRegionFilters((current) =>
-                                  toggleFilter(current, region),
-                                )
+                                setRegionFilters((current) => toggleFilter(current, region))
                               }
                             >
                               {regionLabel(region)}
@@ -387,23 +347,17 @@ export function Opportunities() {
                         groupedItems.open.length === 1 ? 'posting' : 'postings'
                       }`}
                     >
-                      <div className="cardGrid">
-                        {renderCards(groupedItems.open)}
-                      </div>
+                      <div className="cardGrid">{renderCards(groupedItems.open)}</div>
                     </Section>
                   )}
                   {groupedItems.closed.length > 0 && (
                     <Section
                       label="Closed"
                       meta={`${groupedItems.closed.length} ${
-                        groupedItems.closed.length === 1
-                          ? 'posting'
-                          : 'postings'
+                        groupedItems.closed.length === 1 ? 'posting' : 'postings'
                       }`}
                     >
-                      <div className="cardGrid">
-                        {renderCards(groupedItems.closed)}
-                      </div>
+                      <div className="cardGrid">{renderCards(groupedItems.closed)}</div>
                     </Section>
                   )}
                 </div>
