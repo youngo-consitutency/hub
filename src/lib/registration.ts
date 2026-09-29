@@ -1,7 +1,9 @@
 // Port of the registration validator from server/lib/accounts.js — kept
 // behaviour-identical so the SPA's registration form validates exactly as
-// before. Option lists (regions, genders, nationalities, …) live in the
-// `registration-options` content document, edited via the console.
+// before. Field shape checks are zod schemas; option lists (regions, genders,
+// nationalities, …) live in the `registration-options` content document,
+// edited via the database/console, so dynamic membership stays imperative.
+import { z } from 'zod'
 import { getDocument } from './documents'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -64,20 +66,82 @@ function parseYesNo(value: unknown): boolean | null {
   return null
 }
 
-function requirePassword(
-  password: string,
-  passwordConfirm: string,
-  fields: Fields,
-) {
-  if (password.length < 10)
-    fields.password =
-      'Password must be at least 10 characters (for YOUNGO Hub access).'
-  if (password.length > 200) fields.password = 'Password is too long.'
-  if (password !== passwordConfirm)
-    fields.passwordConfirm = 'Passwords do not match.'
+// Normalising primitives — coerce the raw request body so constraint checks
+// and output mapping both see clean values.
+const str = <T extends z.ZodTypeAny>(inner: T) =>
+  z.preprocess((v) => String(v ?? ''), inner)
+const strTrim = <T extends z.ZodTypeAny>(inner: T) =>
+  z.preprocess((v) => String(v ?? '').trim(), inner)
+const strOpt = () =>
+  z.preprocess((v) => String(v ?? '').trim() || null, z.string().nullable())
+const strEmailOpt = () =>
+  z.preprocess(
+    (v) =>
+      String(v ?? '')
+        .trim()
+        .toLowerCase() || null,
+    z.string().nullable(),
+  )
+const yesNo = () => z.preprocess(parseYesNo, z.boolean().nullable())
+const strList = () => z.preprocess(asStringArray, z.array(z.string()))
+
+// Zod issues → the field-error map the SPA renders. Last write wins, matching
+// the previous sequential `fields[k] = …` assignments.
+function addIssues(error: z.ZodError, fields: Fields) {
+  for (const issue of error.issues) {
+    const key = String(issue.path[0] || '')
+    if (key) fields[key] = issue.message
+  }
 }
 
-function requireAgreements(b: Body, fields: Fields) {
+const issue = (ctx: z.RefinementCtx, path: string, message: string) =>
+  ctx.addIssue({ code: 'custom', path: [path], message })
+
+// Shared shape: entity/track/policy/password are validated regardless of
+// which entity branch runs.
+const baseSchema = z
+  .object({
+    entityType: z.preprocess(
+      (v) => String(v ?? '').trim(),
+      z.enum(['individual', 'organization'], {
+        error: 'Choose Individual or Organisation / NGO.',
+      }),
+    ),
+    membershipTrack: z.preprocess(
+      (v) => String(v ?? '').trim() || 'network',
+      z.enum(['network', 'constituency_work'], {
+        error: 'Choose a membership track.',
+      }),
+    ),
+    membershipPolicyVersion: strTrim(
+      z.string().min(1, 'You must read the Membership Policy first.'),
+    ),
+    password: str(
+      z
+        .string()
+        .min(10, 'Password must be at least 10 characters (for YOUNGO Hub access).')
+        .max(200, 'Password is too long.'),
+    ),
+    passwordConfirm: str(z.string()),
+  })
+  .superRefine((v, ctx) => {
+    if (v.password !== v.passwordConfirm) {
+      issue(ctx, 'passwordConfirm', 'Passwords do not match.')
+    }
+  })
+
+function wordCount(text: string): number {
+  return String(text || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
+}
+
+function sanitizeWgInterests(value: unknown): string[] {
+  return asStringArray(value).slice(0, 30)
+}
+
+function agreementFields(b: Body, fields: Fields) {
   const combined = Boolean(b.acceptAllOrgPolicies)
   const acceptCodeOfConduct = Boolean(b.acceptCodeOfConduct) || combined
   const acceptDataProtection = Boolean(b.acceptDataProtection) || combined
@@ -93,10 +157,6 @@ function requireAgreements(b: Body, fields: Fields) {
   if (!acceptCoiPolicy)
     fields.acceptCoiPolicy =
       'You must agree to the YOUNGO Conflict of Interest Policy.'
-  if (combined && !acceptCodeOfConduct) {
-    fields.acceptAllOrgPolicies =
-      'The organisation must agree to YOUNGO’s policies and principles.'
-  }
   return {
     acceptCodeOfConduct,
     acceptDataProtection,
@@ -105,46 +165,34 @@ function requireAgreements(b: Body, fields: Fields) {
   }
 }
 
-function requirePrivacyConsent(
+function privacyConsentError(
   b: Body,
-  fields: Fields,
   notice: { PRIVACY_VERSION?: string; CONSENT_STATEMENT?: string } | null,
-) {
-  const consented = Boolean(b.privacyConsent)
-  if (!consented) {
-    fields.privacyConsent =
-      'Please read the YOUNGO Hub Privacy Notice and confirm you consent to your data being used as it describes.'
-    return null
+): string | null {
+  if (!b.privacyConsent) {
+    return 'Please read the YOUNGO Hub Privacy Notice and confirm you consent to your data being used as it describes.'
   }
   const version = notice?.PRIVACY_VERSION
   if (!version || !notice?.CONSENT_STATEMENT) {
-    fields.privacyConsent =
-      'The Privacy Notice is unavailable right now. Please try again shortly.'
-    return null
+    return 'The Privacy Notice is unavailable right now. Please try again shortly.'
   }
   const claimed = String(b.privacyNoticeVersion || '').trim()
   if (claimed && claimed !== version) {
-    fields.privacyConsent =
-      'The Privacy Notice has been updated since this page was opened. Please reload, read the current notice, and consent again.'
-    return null
+    return 'The Privacy Notice has been updated since this page was opened. Please reload, read the current notice, and consent again.'
   }
+  return null
+}
+
+function privacyConsentFragment(notice: {
+  PRIVACY_VERSION?: string
+  CONSENT_STATEMENT?: string
+}) {
   return {
     privacyConsent: true,
-    privacyNoticeVersion: version,
+    privacyNoticeVersion: notice.PRIVACY_VERSION,
     privacyConsentAt: new Date().toISOString(),
     privacyConsentStatement: notice.CONSENT_STATEMENT,
   }
-}
-
-function wordCount(text: string): number {
-  return String(text || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length
-}
-
-function sanitizeWgInterests(value: unknown): string[] {
-  return asStringArray(value).slice(0, 30)
 }
 
 export async function validateRegistration(req: any, body: Body) {
@@ -167,149 +215,206 @@ export async function validateRegistration(req: any, body: Body) {
     if (!b.firstName && !b.phone) return { honeypot: true }
   }
 
+  const baseResult = baseSchema.safeParse(b)
+  if (!baseResult.success) addIssues(baseResult.error, fields)
+
   const entityType = String(b.entityType || '').trim()
   const membershipTrack =
     String(b.membershipTrack || 'network').trim() || 'network'
   const membershipPolicyVersion = String(b.membershipPolicyVersion || '').trim()
   const password = String(b.password || '')
-  const passwordConfirm = String(b.passwordConfirm || '')
 
-  if (!['individual', 'organization'].includes(entityType)) {
-    fields.entityType = 'Choose Individual or Organisation / NGO.'
-  }
-  if (!['network', 'constituency_work'].includes(membershipTrack)) {
-    fields.membershipTrack = 'Choose a membership track.'
-  }
-  if (!membershipPolicyVersion) {
-    fields.membershipPolicyVersion =
-      'You must read the Membership Policy first.'
-  }
-  requirePassword(password, passwordConfirm, fields)
+  // Agreements and privacy consent are validated in both entity branches —
+  // any non-'organization' entity falls through to the individual path.
+  const agreements = agreementFields(b, fields)
+  let privacy: ReturnType<typeof privacyConsentFragment> | null = null
+  const privacyError = privacyConsentError(b, notice)
+  if (privacyError) fields.privacyConsent = privacyError
+  else privacy = privacyConsentFragment(notice!)
 
   if (entityType === 'organization') {
-    const email = String(b.email || '')
-      .trim()
-      .toLowerCase()
-    const organizationName = String(b.organizationName || '').trim()
-    const isUnfcccAdmitted = parseYesNo(b.isUnfcccAdmitted)
-    const orgOperateIn = String(b.orgOperateIn || '').trim()
-    const orgWebsite = String(b.orgWebsite || '').trim() || null
-    const orgSocial = String(b.orgSocial || '').trim() || null
-    const orgMission = String(b.orgMission || '').trim() || null
-    const dcpName = String(b.dcpName || '').trim() || null
-    const dcpEmail =
-      String(b.dcpEmail || '')
-        .trim()
-        .toLowerCase() || null
-    const dcpPhone = String(b.dcpPhone || '').trim() || null
-    const ycpName = String(b.ycpName || '').trim() || null
-    const ycpEmail =
-      String(b.ycpEmail || '')
-        .trim()
-        .toLowerCase() || null
-    const ycpPhone = String(b.ycpPhone || '').trim() || null
-    const youthAffiliation = String(b.youthAffiliation || '').trim() || null
-    const region = String(b.region || b.orgRegion || '').trim()
-    const country = String(b.orgCountry || b.country || '').trim()
+    const orgSchema = z
+      .object({
+        email: strTrim(
+          z
+            .string()
+            .toLowerCase()
+            .regex(EMAIL_RE, 'Please enter a valid email.'),
+        ),
+        organizationName: strTrim(
+          z
+            .string()
+            .min(1, 'Full legal name of the organisation is required.')
+            .max(200, 'Organisation name is too long.'),
+        ),
+        isUnfcccAdmitted: yesNo().refine(
+          (v) => v !== null,
+          'Indicate whether this organisation is an admitted UNFCCC observer NGO.',
+        ),
+        orgMission: str(
+          z
+            .string()
+            .trim()
+            .refine(
+              (v) => !v || wordCount(v) <= WORD_LIMIT,
+              `Please keep the summary to ${WORD_LIMIT} words or fewer.`,
+            ),
+        ),
+        orgOperateIn: strTrim(z.string()),
+        orgWebsite: strOpt(),
+        orgSocial: strOpt(),
+        youthAffiliation: strOpt(),
+        dcpName: strOpt(),
+        dcpEmail: strEmailOpt(),
+        dcpPhone: strOpt(),
+        ycpName: strOpt(),
+        ycpEmail: strEmailOpt(),
+        ycpPhone: strOpt(),
+        region: z.preprocess(
+          () => String(b.region || b.orgRegion || '').trim(),
+          z.string(),
+        ),
+        country: z.preprocess(
+          () => String(b.orgCountry || b.country || '').trim(),
+          z.string(),
+        ),
+      })
+      .superRefine((v, ctx) => {
+        if (v.isUnfcccAdmitted === true) {
+          if (!allowed(opts.affiliations, v.youthAffiliation || '')) {
+            issue(
+              ctx,
+              'youthAffiliation',
+              'Indicate affiliation with “youth” within the UNFCCC.',
+            )
+          }
+          if (!allowed(opts.regions, v.region)) {
+            issue(
+              ctx,
+              'region',
+              'Select the UN region where the organisation is legally established.',
+            )
+          }
+          if (!v.country) {
+            issue(ctx, 'country', 'Country of legal establishment is required.')
+          }
+          if (!v.dcpName) {
+            issue(ctx, 'dcpName', "UNFCCC DCP's full name is required.")
+          }
+          if (!EMAIL_RE.test(v.dcpEmail || '')) {
+            issue(ctx, 'dcpEmail', "UNFCCC DCP's official email is required.")
+          }
+          if (!v.dcpPhone || !PHONE_RE.test(v.dcpPhone)) {
+            issue(
+              ctx,
+              'dcpPhone',
+              "UNFCCC DCP's phone (with country code) is required.",
+            )
+          }
+          const ycpPartial = v.ycpName || v.ycpEmail || v.ycpPhone
+          if (ycpPartial) {
+            if (!v.ycpName) {
+              issue(
+                ctx,
+                'ycpName',
+                'YOUNGO Contact Point name is required if providing a contact point.',
+              )
+            }
+            if (!EMAIL_RE.test(v.ycpEmail || '')) {
+              issue(
+                ctx,
+                'ycpEmail',
+                'YOUNGO Contact Point email is required if providing a contact point.',
+              )
+            }
+            if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
+              issue(
+                ctx,
+                'ycpPhone',
+                'YOUNGO Contact Point phone is required if providing a contact point.',
+              )
+            }
+          }
+        } else if (v.isUnfcccAdmitted === false) {
+          if (!v.orgOperateIn) {
+            issue(
+              ctx,
+              'orgOperateIn',
+              'Please describe regions/countries of operation.',
+            )
+          }
+          if (!v.ycpName) {
+            issue(
+              ctx,
+              'ycpName',
+              "YOUNGO Contact Point's full name is required.",
+            )
+          }
+          if (!EMAIL_RE.test(v.ycpEmail || '')) {
+            issue(
+              ctx,
+              'ycpEmail',
+              "YOUNGO Contact Point's email is required.",
+            )
+          }
+          if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
+            issue(
+              ctx,
+              'ycpPhone',
+              "YOUNGO Contact Point's phone is required if providing a contact point.",
+            )
+          }
+        }
+      })
 
-    if (!EMAIL_RE.test(email)) fields.email = 'Please enter a valid email.'
-    if (!organizationName)
-      fields.organizationName =
-        'Full legal name of the organisation is required.'
-    if (organizationName.length > 200)
-      fields.organizationName = 'Organisation name is too long.'
-    if (isUnfcccAdmitted === null) {
-      fields.isUnfcccAdmitted =
-        'Indicate whether this organisation is an admitted UNFCCC observer NGO.'
-    }
-    if (orgMission && wordCount(orgMission) > WORD_LIMIT) {
-      fields.orgMission = `Please keep the summary to ${WORD_LIMIT} words or fewer.`
-    }
-
-    const agreements = requireAgreements(b, fields)
-    const privacy = requirePrivacyConsent(b, fields, notice)
-
-    if (isUnfcccAdmitted === true) {
-      if (!allowed(opts.affiliations, youthAffiliation || '')) {
-        fields.youthAffiliation =
-          'Indicate affiliation with “youth” within the UNFCCC.'
-      }
-      if (!allowed(opts.regions, region))
-        fields.region =
-          'Select the UN region where the organisation is legally established.'
-      if (!country)
-        fields.country = 'Country of legal establishment is required.'
-      if (!dcpName) fields.dcpName = "UNFCCC DCP's full name is required."
-      if (!EMAIL_RE.test(dcpEmail || ''))
-        fields.dcpEmail = "UNFCCC DCP's official email is required."
-      if (!dcpPhone || !PHONE_RE.test(dcpPhone))
-        fields.dcpPhone = "UNFCCC DCP's phone (with country code) is required."
-      const ycpPartial = ycpName || ycpEmail || ycpPhone
-      if (ycpPartial) {
-        if (!ycpName)
-          fields.ycpName =
-            'YOUNGO Contact Point name is required if providing a contact point.'
-        if (!EMAIL_RE.test(ycpEmail || ''))
-          fields.ycpEmail =
-            'YOUNGO Contact Point email is required if providing a contact point.'
-        if (!ycpPhone || !PHONE_RE.test(ycpPhone))
-          fields.ycpPhone =
-            'YOUNGO Contact Point phone is required if providing a contact point.'
-      }
-    } else if (isUnfcccAdmitted === false) {
-      if (!orgOperateIn)
-        fields.orgOperateIn = 'Please describe regions/countries of operation.'
-      if (!ycpName)
-        fields.ycpName = "YOUNGO Contact Point's full name is required."
-      if (!EMAIL_RE.test(ycpEmail || ''))
-        fields.ycpEmail = "YOUNGO Contact Point's email is required."
-      if (!ycpPhone || !PHONE_RE.test(ycpPhone))
-        fields.ycpPhone =
-          "YOUNGO Contact Point's phone is required if providing a contact point."
-    }
-
+    const parsed = orgSchema.safeParse(b)
+    if (parsed.error) addIssues(parsed.error, fields)
     if (Object.keys(fields).length) return { fields }
+    const v = parsed.data!
 
-    const accountName = ycpName || dcpName || organizationName
+    const accountName = v.ycpName || v.dcpName || v.organizationName
     const nameParts = accountName.split(/\s+/)
-    const firstName = nameParts[0] || organizationName
+    const firstName = nameParts[0] || v.organizationName
     const lastName =
-      nameParts.slice(1).join(' ') || (isUnfcccAdmitted ? 'DCP' : 'Contact')
+      nameParts.slice(1).join(' ') ||
+      (v.isUnfcccAdmitted ? 'DCP' : 'Contact')
 
     return {
       data: {
-        email,
+        email: v.email,
         password,
         firstName,
         lastName,
         name: accountName,
         entityType: 'organization',
         membershipTrack,
-        phone: ycpPhone || dcpPhone || '',
+        phone: v.ycpPhone || v.dcpPhone || '',
         gender: null,
         genderOther: null,
         ageBand: null,
         dateOfBirth: null,
         minorityGroups: [],
         minorityOther: null,
-        region: region || null,
+        region: v.region || null,
         nationality: null,
-        country: country || '—',
+        country: v.country || '—',
         motivation: null,
-        organizationName,
-        organizationType: isUnfcccAdmitted ? 'unfccc_admitted' : 'non_admitted',
-        isUnfcccAdmitted: Boolean(isUnfcccAdmitted),
-        youthAffiliation: isUnfcccAdmitted ? youthAffiliation : null,
-        orgOperateIn: orgOperateIn || null,
-        orgWebsite,
-        orgSocial,
-        orgMission,
-        dcpName: isUnfcccAdmitted ? dcpName : null,
-        dcpEmail: isUnfcccAdmitted ? dcpEmail : null,
-        dcpPhone: isUnfcccAdmitted ? dcpPhone : null,
-        ycpName,
-        ycpEmail,
-        ycpPhone,
+        organizationName: v.organizationName,
+        organizationType: v.isUnfcccAdmitted
+          ? 'unfccc_admitted'
+          : 'non_admitted',
+        isUnfcccAdmitted: Boolean(v.isUnfcccAdmitted),
+        youthAffiliation: v.isUnfcccAdmitted ? v.youthAffiliation : null,
+        orgOperateIn: v.orgOperateIn || null,
+        orgWebsite: v.orgWebsite,
+        orgSocial: v.orgSocial,
+        orgMission: v.orgMission || null,
+        dcpName: v.isUnfcccAdmitted ? v.dcpName : null,
+        dcpEmail: v.isUnfcccAdmitted ? v.dcpEmail : null,
+        dcpPhone: v.isUnfcccAdmitted ? v.dcpPhone : null,
+        ycpName: v.ycpName,
+        ycpEmail: v.ycpEmail,
+        ycpPhone: v.ycpPhone,
         under18: false,
         guardianName: null,
         guardianEmail: null,
@@ -319,7 +424,7 @@ export async function validateRegistration(req: any, body: Body) {
         coiDeclared: agreements.acceptCoiPolicy,
         coiDetails: null,
         policiesAccepted: true,
-        memberOfAccreditedNgo: Boolean(isUnfcccAdmitted),
+        memberOfAccreditedNgo: Boolean(v.isUnfcccAdmitted),
         membershipPolicyVersion,
         constituencyWorkStatus: 'pending_onboarding',
         memberStatus: 'pending_course',
@@ -330,122 +435,187 @@ export async function validateRegistration(req: any, body: Body) {
   }
 
   // Individual registration
-  const email = String(b.email || '')
-    .trim()
-    .toLowerCase()
-  const firstName = String(b.firstName || '').trim()
-  const lastName = String(b.lastName || '').trim()
-  const name = `${firstName} ${lastName}`.trim() || String(b.name || '').trim()
-  const phone = String(b.phone || '').trim()
-  const gender = String(b.gender || '').trim()
-  const genderOther = String(b.genderOther || '').trim() || null
-  const ageBand = String(b.ageBand || '').trim()
-  const dateOfBirth = String(b.dateOfBirth || '').trim() || null
-  const minorityIdentity = parseYesNo(b.minorityIdentity)
-  let minorityGroups = asStringArray(b.minorityGroups)
-  const minorityOther = String(b.minorityOther || '').trim() || null
-  const region = String(b.region || '').trim()
-  const nationality = String(b.nationality || '').trim()
-  const country = String(b.countryOfResidence || b.country || '').trim()
-  const motivation = String(b.motivation || '').trim() || null
-  const guardianName = String(b.guardianName || '').trim() || null
-  const guardianEmail =
-    String(b.guardianEmail || '')
-      .trim()
-      .toLowerCase() || null
-  const guardianConsent = Boolean(b.guardianConsent)
-  const memberOfAccreditedNgo = parseYesNo(b.memberOfAccreditedNgo)
-  const wgInterests = sanitizeWgInterests(b.wgInterests)
+  const indSchema = z
+    .object({
+      email: strTrim(
+        z
+          .string()
+          .toLowerCase()
+          .regex(EMAIL_RE, 'Please enter a valid email.')
+          .max(160, 'Email is too long.'),
+      ),
+      firstName: strTrim(
+        z
+          .string()
+          .min(1, 'First name is required.')
+          .max(80, 'First name is too long.'),
+      ),
+      lastName: strTrim(
+        z
+          .string()
+          .min(1, 'Last name is required.')
+          .max(80, 'Last name is too long.'),
+      ),
+      phone: strTrim(
+        z
+          .string()
+          .regex(
+            PHONE_RE,
+            'Enter a phone number with country code (e.g. +123 456 7890).',
+          ),
+      ),
+      gender: strTrim(
+        z
+          .string()
+          .refine((v) => allowed(opts.genders, v), 'Please select your gender.'),
+      ),
+      genderOther: strOpt(),
+      ageBand: strTrim(
+        z
+          .string()
+          .refine(
+            (v) => allowed(opts.ageBands, v),
+            'Please select your age group.',
+          )
+          .refine(
+            (v) => v !== '35_plus',
+            'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.',
+          ),
+      ),
+      dateOfBirth: strOpt().refine(
+        (v) => v !== null,
+        'Date of birth is required.',
+      ),
+      minorityIdentity: yesNo().refine(
+        (v) => v !== null,
+        'Please answer yes or no.',
+      ),
+      minorityGroups: strList(),
+      minorityOther: strOpt(),
+      region: strTrim(
+        z
+          .string()
+          .refine((v) => allowed(opts.regions, v), 'Please select your UN region.'),
+      ),
+      nationality: strTrim(
+        z
+          .string()
+          .refine(
+            (v) => allowed(opts.nationalities, v),
+            'Please select a nationality from the list.',
+          ),
+      ),
+      country: z.preprocess(
+        () => String(b.countryOfResidence || b.country || '').trim(),
+        z.string().min(1, 'Country of residence is required.'),
+      ),
+      motivation: strTrim(
+        z.string().max(2000, 'Please keep this under 2000 characters.'),
+      ),
+      memberOfAccreditedNgo: yesNo().refine(
+        (v) => v !== null,
+        'Please answer for statistics.',
+      ),
+      guardianName: strOpt(),
+      guardianEmail: strEmailOpt(),
+      guardianConsent: z.preprocess((v) => Boolean(v), z.boolean()),
+    })
+    .superRefine((v, ctx) => {
+      if (v.gender === 'Other' && !v.genderOther) {
+        issue(ctx, 'genderOther', 'Please specify.')
+      }
+      let under18 = v.ageBand === 'under_18'
+      if (v.dateOfBirth) {
+        const age = ageFromDob(v.dateOfBirth)
+        if (age === null) {
+          issue(ctx, 'dateOfBirth', 'Enter a valid date of birth.')
+        } else if (age >= 35) {
+          issue(
+            ctx,
+            'dateOfBirth',
+            'Individual membership expires at age 35.',
+          )
+        } else if (age < 18) under18 = true
+      }
+      if (opts.minorities.size) {
+        if (v.minorityGroups.some((g) => !opts.minorities.has(g))) {
+          issue(ctx, 'minorityGroups', 'Invalid minority group selection.')
+        }
+      }
+      if (v.minorityIdentity === true && v.minorityGroups.length === 0) {
+        issue(ctx, 'minorityGroups', 'Select at least one option.')
+      }
+      if (
+        (v.minorityIdentity === false ? [] : v.minorityGroups).includes(
+          'Other',
+        ) &&
+        !v.minorityOther
+      ) {
+        issue(ctx, 'minorityOther', 'Please specify.')
+      }
+      if (under18) {
+        if (!v.guardianName) {
+          issue(
+            ctx,
+            'guardianName',
+            'Guardian name is required for members under 18.',
+          )
+        }
+        if (!EMAIL_RE.test(v.guardianEmail || '')) {
+          issue(
+            ctx,
+            'guardianEmail',
+            'Guardian email is required for members under 18.',
+          )
+        }
+        if (!v.guardianConsent) {
+          issue(
+            ctx,
+            'guardianConsent',
+            'Guardian permission is required for members under 18.',
+          )
+        }
+      }
+    })
 
-  if (!firstName) fields.firstName = 'First name is required.'
-  if (firstName.length > 80) fields.firstName = 'First name is too long.'
-  if (!lastName) fields.lastName = 'Last name is required.'
-  if (lastName.length > 80) fields.lastName = 'Last name is too long.'
-  if (!EMAIL_RE.test(email)) fields.email = 'Please enter a valid email.'
-  if (email.length > 160) fields.email = 'Email is too long.'
-  if (!phone || !PHONE_RE.test(phone)) {
-    fields.phone =
-      'Enter a phone number with country code (e.g. +123 456 7890).'
+  const parsed = indSchema.safeParse(b)
+  if (!parsed.success) {
+    addIssues(parsed.error, fields)
+    return { fields }
   }
-  if (!allowed(opts.genders, gender))
-    fields.gender = 'Please select your gender.'
-  if (gender === 'Other' && !genderOther) fields.genderOther = 'Please specify.'
-  if (!allowed(opts.ageBands, ageBand))
-    fields.ageBand = 'Please select your age group.'
-  if (ageBand === '35_plus') {
-    fields.ageBand =
-      'YOUNGO membership is for children and youth up to 35. Individual membership ends at 35.'
-  }
-  if (!dateOfBirth) fields.dateOfBirth = 'Date of birth is required.'
-  if (!allowed(opts.regions, region))
-    fields.region = 'Please select your UN region.'
-  if (!allowed(opts.nationalities, nationality))
-    fields.nationality = 'Please select a nationality from the list.'
-  if (!country) fields.country = 'Country of residence is required.'
-  if (motivation && motivation.length > 2000)
-    fields.motivation = 'Please keep this under 2000 characters.'
-
-  const agreements = requireAgreements(b, fields)
-  const privacy = requirePrivacyConsent(b, fields, notice)
-  if (memberOfAccreditedNgo === null) {
-    fields.memberOfAccreditedNgo = 'Please answer for statistics.'
-  }
-
-  const invalidMinority = opts.minorities.size
-    ? minorityGroups.filter((g) => !opts.minorities.has(g))
-    : []
-  if (minorityIdentity === null)
-    fields.minorityIdentity = 'Please answer yes or no.'
-  if (minorityIdentity === true && minorityGroups.length === 0) {
-    fields.minorityGroups = 'Select at least one option.'
-  }
-  if (minorityIdentity === false) minorityGroups = []
-  if (invalidMinority.length)
-    fields.minorityGroups = 'Invalid minority group selection.'
-  if (minorityGroups.includes('Other') && !minorityOther) {
-    fields.minorityOther = 'Please specify.'
-  }
-
-  let under18 = ageBand === 'under_18'
-  if (dateOfBirth) {
-    const age = ageFromDob(dateOfBirth)
-    if (age === null) fields.dateOfBirth = 'Enter a valid date of birth.'
-    else if (age >= 35)
-      fields.dateOfBirth = 'Individual membership expires at age 35.'
-    else if (age < 18) under18 = true
-  }
-  if (under18) {
-    if (!guardianName)
-      fields.guardianName = 'Guardian name is required for members under 18.'
-    if (!EMAIL_RE.test(guardianEmail || ''))
-      fields.guardianEmail = 'Guardian email is required for members under 18.'
-    if (!guardianConsent)
-      fields.guardianConsent =
-        'Guardian permission is required for members under 18.'
-  }
-
   if (Object.keys(fields).length) return { fields }
+  const v = parsed.data
+
+  const name =
+    `${v.firstName} ${v.lastName}`.trim() || String(b.name || '').trim()
+  const minorityGroups =
+    v.minorityIdentity === false ? [] : v.minorityGroups
+  let under18 = v.ageBand === 'under_18'
+  if (v.dateOfBirth) {
+    const age = ageFromDob(v.dateOfBirth)
+    if (age !== null && age < 18) under18 = true
+  }
 
   return {
     data: {
-      email,
+      email: v.email,
       password,
-      firstName,
-      lastName,
+      firstName: v.firstName,
+      lastName: v.lastName,
       name,
       entityType: 'individual',
       membershipTrack,
-      phone,
-      gender,
-      genderOther: gender === 'Other' ? genderOther : null,
+      phone: v.phone,
+      gender: v.gender,
+      genderOther: v.gender === 'Other' ? v.genderOther : null,
       ageBand: under18 ? 'under_18' : '18_35',
-      dateOfBirth,
+      dateOfBirth: v.dateOfBirth,
       minorityGroups,
-      minorityOther: minorityGroups.includes('Other') ? minorityOther : null,
-      region,
-      nationality,
-      country,
-      motivation,
+      minorityOther: minorityGroups.includes('Other') ? v.minorityOther : null,
+      region: v.region,
+      nationality: v.nationality,
+      country: v.country,
+      motivation: v.motivation || null,
       organizationName: null,
       organizationType: null,
       isUnfcccAdmitted: false,
@@ -461,20 +631,20 @@ export async function validateRegistration(req: any, body: Body) {
       ycpEmail: null,
       ycpPhone: null,
       under18,
-      guardianName: under18 ? guardianName : null,
-      guardianEmail: under18 ? guardianEmail : null,
-      guardianConsent: under18 ? guardianConsent : false,
+      guardianName: under18 ? v.guardianName : null,
+      guardianEmail: under18 ? v.guardianEmail : null,
+      guardianConsent: under18 ? v.guardianConsent : false,
       ...agreements,
       ...privacy,
       coiDeclared: agreements.acceptCoiPolicy,
       coiDetails: null,
       policiesAccepted: true,
-      memberOfAccreditedNgo,
+      memberOfAccreditedNgo: v.memberOfAccreditedNgo,
       membershipPolicyVersion,
       constituencyWorkStatus: 'pending_onboarding',
       memberStatus: 'pending_course',
       role: 'member',
-      wgInterests,
+      wgInterests: sanitizeWgInterests(b.wgInterests),
     },
   }
 }
