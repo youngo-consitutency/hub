@@ -21,10 +21,7 @@ export const MEMBERSHIP_STATUSES = [
   'rejected',
 ]
 export const CLOSED_MEMBERSHIP_STATUSES = ['expired', 'terminated']
-export const ENDED_MEMBERSHIP_STATUSES = [
-  ...CLOSED_MEMBERSHIP_STATUSES,
-  'rejected',
-]
+export const ENDED_MEMBERSHIP_STATUSES = [...CLOSED_MEMBERSHIP_STATUSES, 'rejected']
 
 const ACCOUNT_FIELD_COLUMNS = new Set([
   'member_status',
@@ -46,20 +43,13 @@ const ACCOUNT_FIELD_COLUMNS = new Set([
 
 export async function findAccountRowById(id: number | string) {
   const pool = requirePgPool()
-  const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [
-    Number(id),
-  ])
+  const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [Number(id)])
   return rows[0] || null
 }
 
-export async function setAccountFields(
-  id: number | string,
-  fields: Record<string, any>,
-) {
+export async function setAccountFields(id: number | string, fields: Record<string, any>) {
   const pool = requirePgPool()
-  const keys = Object.keys(fields).filter((key) =>
-    ACCOUNT_FIELD_COLUMNS.has(key),
-  )
+  const keys = Object.keys(fields).filter((key) => ACCOUNT_FIELD_COLUMNS.has(key))
   if (!keys.length) return findAccountRowById(id)
   const sets = keys.map((key, i) => `${key}=$${i + 2}`).join(', ')
   const { rows } = await pool.query(
@@ -71,9 +61,7 @@ export async function setAccountFields(
 
 export async function destroyAllSessions(accountId: number | string) {
   const pool = requirePgPool()
-  await pool.query(`DELETE FROM accounts_sessions WHERE _parent_id=$1`, [
-    Number(accountId),
-  ])
+  await pool.query(`DELETE FROM accounts_sessions WHERE _parent_id=$1`, [Number(accountId)])
 }
 
 export async function sendMembershipActivatedEmail(account: any) {
@@ -111,17 +99,9 @@ export async function updateMembershipLifecycle({
   if (!beforeRow) throw new ApiError(404, 'not_found', 'Account not found.')
   const before = accountView(beforeRow)!
   if (actor.role !== 'admin' && ['admin', 'focal_point'].includes(before.role))
-    throw new ApiError(
-      403,
-      'forbidden',
-      'Only an admin can change platform staff membership.',
-    )
+    throw new ApiError(403, 'forbidden', 'Only an admin can change platform staff membership.')
   if (actor.id === before.id && ENDED_MEMBERSHIP_STATUSES.includes(status))
-    throw new ApiError(
-      400,
-      'self_suspend',
-      'You cannot suspend your own admin account.',
-    )
+    throw new ApiError(400, 'self_suspend', 'You cannot suspend your own admin account.')
   if (
     status === 'active' &&
     !before.coursePassedAt &&
@@ -134,17 +114,9 @@ export async function updateMembershipLifecycle({
     )
   const reason = String(body?.reason || '').trim()
   if (status === 'terminated' && !reason)
-    throw new ApiError(
-      400,
-      'validation',
-      'A reason is required when terminating membership.',
-    )
+    throw new ApiError(400, 'validation', 'A reason is required when terminating membership.')
   if (status === 'rejected' && !reason)
-    throw new ApiError(
-      400,
-      'validation',
-      'A reason is required when rejecting an application.',
-    )
+    throw new ApiError(400, 'validation', 'A reason is required when rejecting an application.')
   if (body?.renewalDueAt && Number.isNaN(Date.parse(body.renewalDueAt)))
     throw new ApiError(400, 'validation', 'Invalid renewal date.')
 
@@ -155,24 +127,17 @@ export async function updateMembershipLifecycle({
     ? 'suspended'
     : status === 'rejected'
       ? 'pending_course'
-      : [
-            'course_passed',
-            'awaiting_onboarding',
-            'active',
-            'renewal_due',
-          ].includes(status)
+      : ['course_passed', 'awaiting_onboarding', 'active', 'renewal_due'].includes(status)
         ? 'active'
         : 'pending_course'
-  const becameActive =
-    status === 'active' && before.membershipStatus !== 'active'
+  const becameActive = status === 'active' && before.membershipStatus !== 'active'
   const updatedRow = await setAccountFields(targetId, {
     membership_status: status,
     hub_access_status: accessStatus,
     ...(status === 'active'
       ? { member_status: 'verified', verified_at: before.verifiedAt || now }
       : {}),
-    onboarding_cohort:
-      body?.onboardingCohort || before.onboardingCohort || null,
+    onboarding_cohort: body?.onboardingCohort || before.onboardingCohort || null,
     renewal_due_at: body?.renewalDueAt || before.renewalDueAt || null,
     membership_ended_at: ended ? now : null,
     membership_end_reason: ended ? reason.slice(0, 500) || null : null,
@@ -184,8 +149,7 @@ export async function updateMembershipLifecycle({
           : before.constituencyWorkStatus,
   })
   const updated = accountView(updatedRow)
-  if (accessStatus === 'suspended' || status === 'rejected')
-    await destroyAllSessions(targetId)
+  if (accessStatus === 'suspended' || status === 'rejected') await destroyAllSessions(targetId)
   let emailSent: boolean | null = null
   if (becameActive) {
     const mail = await sendMembershipActivatedEmail(updated)

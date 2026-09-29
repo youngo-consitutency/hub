@@ -1,15 +1,8 @@
-import {
-  AsYouType,
-  getCountries,
-  parsePhoneNumberFromString,
-} from 'libphonenumber-js/min'
+import { AsYouType, getCountries, parsePhoneNumberFromString } from 'libphonenumber-js/min'
 
 function displayNameForCountry(countryCode) {
   try {
-    return (
-      new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) ||
-      countryCode
-    )
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode
   } catch {
     return countryCode
   }
@@ -29,12 +22,8 @@ export function formatPhoneWhileTyping(value, countryCode) {
   if (!supplied.replaceAll('+', '').trim()) return '+ '
 
   const international = supplied.trimStart().startsWith('+')
-  const raw = international
-    ? `+${supplied.replaceAll('+', '').trimStart()}`
-    : supplied
-  const formatted = new AsYouType(
-    international ? undefined : countryCode || undefined,
-  ).input(raw)
+  const raw = international ? `+${supplied.replaceAll('+', '').trimStart()}` : supplied
+  const formatted = new AsYouType(international ? undefined : countryCode || undefined).input(raw)
   return international ? `+ ${formatted.slice(1).trimStart()}` : formatted
 }
 

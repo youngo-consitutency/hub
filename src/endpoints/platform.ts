@@ -85,12 +85,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/bodies/:id/withdraw-publication',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.withdrawPublication(
-        await actor(req),
-        'body',
-        p(req, 'id'),
-        await body(req),
-      )
+      await platform.withdrawPublication(await actor(req), 'body', p(req, 'id'), await body(req))
       return json({ ok: true })
     }),
   },
@@ -107,11 +102,7 @@ export const platformEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const b = await body(req)
-      await platform.revoke(
-        await actor(req),
-        p(req, 'id'),
-        platform.text(b, 'reason', 2000),
-      )
+      await platform.revoke(await actor(req), p(req, 'id'), platform.text(b, 'reason', 2000))
       return json({ ok: true })
     }),
   },
@@ -151,9 +142,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id',
     method: 'patch',
     handler: endpoint(async (req) =>
-      json(
-        await bridge.saveDecision(req, await actor(req), await body(req), p(req, 'id')),
-      ),
+      json(await bridge.saveDecision(req, await actor(req), await body(req), p(req, 'id'))),
     ),
   },
   {
@@ -193,12 +182,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/withdraw-publication',
     method: 'post',
     handler: endpoint(async (req) => {
-      await bridge.withdrawDecisionPublication(
-        req,
-        await actor(req),
-        p(req, 'id'),
-        await body(req),
-      )
+      await bridge.withdrawDecisionPublication(req, await actor(req), p(req, 'id'), await body(req))
       return json({ ok: true })
     }),
   },

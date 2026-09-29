@@ -2,22 +2,9 @@ import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions.js'
 import { useState } from 'react'
-import {
-  optionLabel as resourceLabel,
-  useContentOptions,
-} from '../lib/documents.js'
-import {
-  ResourceCard,
-  ResourceSubmissionPanel,
-} from '../components/ResourceHub.jsx'
-import {
-  A,
-  Async,
-  Button,
-  Empty,
-  ErrorCard,
-  PageHeader,
-} from '../components/ui.jsx'
+import { optionLabel as resourceLabel, useContentOptions } from '../lib/documents.js'
+import { ResourceCard, ResourceSubmissionPanel } from '../components/ResourceHub.jsx'
+import { A, Async, Button, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import { apiPost, useApi } from '../lib/api.js'
 
@@ -43,17 +30,15 @@ function ResourceQueue({ account }) {
   const [message, setMessage] = useState('')
   const data = query.data
   const items =
-    (filter === 'submissions' ? data?.submissions : data?.items)?.filter(
-      (item) => {
-        const title = item.title || item.payload.title
-        return (
-          title.toLowerCase().includes(search.toLowerCase()) &&
-          (filter === 'submissions' || filter === 'reported'
-            ? filter === 'submissions' || item.verification.openIssues > 0
-            : item.verification.status === filter)
-        )
-      },
-    ) || []
+    (filter === 'submissions' ? data?.submissions : data?.items)?.filter((item) => {
+      const title = item.title || item.payload.title
+      return (
+        title.toLowerCase().includes(search.toLowerCase()) &&
+        (filter === 'submissions' || filter === 'reported'
+          ? filter === 'submissions' || item.verification.openIssues > 0
+          : item.verification.status === filter)
+      )
+    }) || []
   function saved(text) {
     setSelected(null)
     setMessage(text)
@@ -90,14 +75,11 @@ function ResourceQueue({ account }) {
           >
             <option value="needs_verification">
               Needs verification (
-              {data?.items.filter(
-                (i) => i.verification.status === 'needs_verification',
-              ).length || 0}
+              {data?.items.filter((i) => i.verification.status === 'needs_verification').length ||
+                0}
               )
             </option>
-            <option value="reported">
-              Reported issues ({data?.issues.length || 0})
-            </option>
+            <option value="reported">Reported issues ({data?.issues.length || 0})</option>
             <option value="submissions">
               New submissions & edits ({data?.submissions.length || 0})
             </option>
@@ -121,10 +103,7 @@ function ResourceQueue({ account }) {
         </label>
       </div>
       {selected && filter === 'submissions' && (
-        <SidePanel
-          title="Review resource submission"
-          onClose={() => setSelected(null)}
-        >
+        <SidePanel title="Review resource submission" onClose={() => setSelected(null)}>
           <SubmissionReview
             key={selected.id}
             item={selected}
@@ -139,12 +118,8 @@ function ResourceQueue({ account }) {
           <LinkReview
             key={selected.slug + selected.fingerprint}
             item={selected}
-            issues={(data?.issues || []).filter(
-              (i) => i.resourceSlug === selected.slug,
-            )}
-            previous={data?.reviews.find(
-              (i) => i.resourceSlug === selected.slug,
-            )}
+            issues={(data?.issues || []).filter((i) => i.resourceSlug === selected.slug)}
+            previous={data?.reviews.find((i) => i.resourceSlug === selected.slug)}
             onClose={() => setSelected(null)}
             onSaved={saved}
             onCorrect={() => {
@@ -185,20 +160,14 @@ function ResourceQueue({ account }) {
               </div>
               {items.length > limit && (
                 <div className="resourceLoadMore">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setLimit((value) => value + 12)}
-                  >
+                  <Button variant="secondary" onClick={() => setLimit((value) => value + 12)}>
                     Show more
                   </Button>
                 </div>
               )}
             </>
           ) : (
-            <Empty
-              title="Queue clear"
-              body="There are no matching resources in this queue."
-            />
+            <Empty title="Queue clear" body="There are no matching resources in this queue." />
           )
         }
       </Async>
@@ -246,10 +215,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
     }
   }
   return (
-    <form
-      className="card resourceSubmissionForm resourceReview"
-      onSubmit={submit}
-    >
+    <form className="card resourceSubmissionForm resourceReview" onSubmit={submit}>
       <h2>{item.title}</h2>
       <a
         className="inlineLink resourceDestination"
@@ -276,8 +242,8 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
           >
             Resources
           </a>
-          . Original group: {item.source.category} / {item.source.subcategory}.
-          The source listing date is not a verification date.
+          . Original group: {item.source.category} / {item.source.subcategory}. The source listing
+          date is not a verification date.
         </p>
       )}
       {previous && (
@@ -303,13 +269,8 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
                 }
               />
               <span>
-                <strong>
-                  {
-                    RESOURCE_ISSUE_KINDS.find((k) => k.value === issue.kind)
-                      ?.label
-                  }
-                </strong>{' '}
-                — {issue.detail}
+                <strong>{RESOURCE_ISSUE_KINDS.find((k) => k.value === issue.kind)?.label}</strong> —{' '}
+                {issue.detail}
                 <small className="metaMuted">
                   {' '}
                   Select only if your review resolves this report.
@@ -322,18 +283,12 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
       <fieldset className="resourceTopicPicker">
         <legend>Human verification</legend>
         {[
-          [
-            'link',
-            'I opened the destination and it is accessible and appropriate.',
-          ],
+          ['link', 'I opened the destination and it is accessible and appropriate.'],
           [
             'description',
             'The title and description accurately explain a useful climate resource.',
           ],
-          [
-            'tags',
-            'The pathway, topic tags, type, region, and language are appropriate.',
-          ],
+          ['tags', 'The pathway, topic tags, type, region, and language are appropriate.'],
         ].map(([key, label]) => (
           <label className="resourceCheck" key={key}>
             <input
@@ -358,9 +313,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
           onChange={(event) => setStatus(event.target.value)}
         >
           <option value="verified">Verified</option>
-          <option value="needs_changes">
-            Needs attention — keep visible with warning
-          </option>
+          <option value="needs_changes">Needs attention — keep visible with warning</option>
           <option value="retired">Retire — hide from public catalogue</option>
         </select>
       </label>
@@ -378,8 +331,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }) {
         />
       </label>
       <p className="metaMuted">
-        Edits need independent publication. Saving “needs attention” keeps
-        reports open.
+        Edits need independent publication. Saving “needs attention” keeps reports open.
       </p>
       {error && <ErrorCard message={error} />}
       <div className="resourceCardActions">
@@ -443,13 +395,9 @@ function SubmissionReview({ item, account, onClose, onSaved }) {
       </p>
       <p className="metaMuted">
         Submitted by {item.creatorName || 'a member'} ·{' '}
-        {item.status === 'approved'
-          ? 'Approved, awaiting publication'
-          : 'Awaiting review'}
+        {item.status === 'approved' ? 'Approved, awaiting publication' : 'Awaiting review'}
       </p>
-      {item.reviewNote && (
-        <p className="contentReviewNote">{item.reviewNote}</p>
-      )}
+      {item.reviewNote && <p className="contentReviewNote">{item.reviewNote}</p>}
       {own ? (
         <p className="noticeBanner">
           Another Content Publisher must review and publish your submission.
@@ -476,11 +424,7 @@ function SubmissionReview({ item, account, onClose, onSaved }) {
           </label>
           <div className="resourceCardActions">
             {item.status === 'approved' ? (
-              <Button
-                variant="primary"
-                disabled={busy || !checked}
-                onClick={() => act('publish')}
-              >
+              <Button variant="primary" disabled={busy || !checked} onClick={() => act('publish')}>
                 Publish resource
               </Button>
             ) : (

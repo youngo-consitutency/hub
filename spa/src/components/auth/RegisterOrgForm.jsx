@@ -1,11 +1,6 @@
 import { useDocument } from '../../lib/documents.js'
 import { FieldError, SearchableSelect } from '../FormControls.jsx'
-import {
-  asOptions,
-  fieldClass,
-  checkClass,
-  loadPhoneSupport,
-} from './helpers.js'
+import { asOptions, fieldClass, checkClass, loadPhoneSupport } from './helpers.js'
 import { PhoneField, PolicyLink, WgInterestsSection } from './shared.jsx'
 
 export function RegisterOrgForm({
@@ -35,18 +30,13 @@ export function RegisterOrgForm({
       <section className="card authSection authIntro">
         <h2 className="authSectionTitle">Organisation registration</h2>
         <ul className="authBullet meta">
-          <li>
-            YOUNGO is a platform/network — not a single NGO. No membership fees.
-          </li>
+          <li>YOUNGO is a platform/network — not a single NGO. No membership fees.</li>
           <li>Admitted and non-admitted youth-led groups can register.</li>
           <li>Membership Team usually replies within a few weeks.</li>
         </ul>
         <p className="metaMuted">
           Help:{' '}
-          <a
-            className="mandateExtLink"
-            href={`mailto:${membershipEmail}`}
-          >
+          <a className="mandateExtLink" href={`mailto:${membershipEmail}`}>
             {membershipEmail}
           </a>
         </p>
@@ -79,41 +69,28 @@ export function RegisterOrgForm({
           <FieldError msg={fields.organizationName} />
         </label>
         <p className="meta authSectionPrompt">
-          Is this organisation an <strong>admitted observer NGO</strong> of the
-          UNFCCC? *
+          Is this organisation an <strong>admitted observer NGO</strong> of the UNFCCC? *
         </p>
         <div className="authChoiceGrid">
-          <label
-            className={`authChoice ${form.isUnfcccAdmitted === 'yes' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.isUnfcccAdmitted === 'yes' ? 'active' : ''}`}>
             <input
               type="radio"
               name="admitted"
               checked={form.isUnfcccAdmitted === 'yes'}
-              onChange={() =>
-                setForm((f) => ({ ...f, isUnfcccAdmitted: 'yes' }))
-              }
+              onChange={() => setForm((f) => ({ ...f, isUnfcccAdmitted: 'yes' }))}
             />
             <strong>Yes — admitted</strong>
-            <span className="meta">
-              UNFCCC observer NGO path (DCP + youth affiliation).
-            </span>
+            <span className="meta">UNFCCC observer NGO path (DCP + youth affiliation).</span>
           </label>
-          <label
-            className={`authChoice ${form.isUnfcccAdmitted === 'no' ? 'active' : ''}`}
-          >
+          <label className={`authChoice ${form.isUnfcccAdmitted === 'no' ? 'active' : ''}`}>
             <input
               type="radio"
               name="admitted"
               checked={form.isUnfcccAdmitted === 'no'}
-              onChange={() =>
-                setForm((f) => ({ ...f, isUnfcccAdmitted: 'no' }))
-              }
+              onChange={() => setForm((f) => ({ ...f, isUnfcccAdmitted: 'no' }))}
             />
             <strong>No — not admitted</strong>
-            <span className="meta">
-              Groups, movements, networks, non-admitted NGOs.
-            </span>
+            <span className="meta">Groups, movements, networks, non-admitted NGOs.</span>
           </label>
         </div>
         <FieldError msg={fields.isUnfcccAdmitted} />
@@ -224,19 +201,13 @@ export function RegisterOrgForm({
               </label>
               <label className="field">
                 <span>Social media link(s)</span>
-                <input
-                  className="input"
-                  value={form.orgSocial}
-                  onChange={setReg('orgSocial')}
-                />
+                <input className="input" value={form.orgSocial} onChange={setReg('orgSocial')} />
               </label>
             </div>
             <label className="field">
               <span>
                 Mission and activities{' '}
-                <span className="metaMuted">
-                  (max 250 words · {missionWords}/250)
-                </span>
+                <span className="metaMuted">(max 250 words · {missionWords}/250)</span>
               </span>
               <textarea
                 className="input textarea"
@@ -249,16 +220,10 @@ export function RegisterOrgForm({
           </section>
 
           <section className="card authSection">
-            <h2 className="authSectionTitle">
-              UNFCCC Designated Contact Point *
-            </h2>
+            <h2 className="authSectionTitle">UNFCCC Designated Contact Point *</h2>
             <label className="field">
               <span>DCP full name *</span>
-              <input
-                className="input"
-                value={form.dcpName}
-                onChange={setReg('dcpName')}
-              />
+              <input className="input" value={form.dcpName} onChange={setReg('dcpName')} />
               <FieldError msg={fields.dcpName} />
             </label>
             <div className="formRow">
@@ -286,21 +251,15 @@ export function RegisterOrgForm({
           <section className="card authSection">
             <h2 className="authSectionTitle">
               YOUNGO Contact Point{' '}
-              <span className="metaMuted">
-                (if DCP is over 35 / not eligible)
-              </span>
+              <span className="metaMuted">(if DCP is over 35 / not eligible)</span>
             </h2>
             <p className="meta">
-              Facilitates communication with YOUNGO when the official UNFCCC DCP
-              does not meet YOUNGO age criteria (no older than 35).
+              Facilitates communication with YOUNGO when the official UNFCCC DCP does not meet
+              YOUNGO age criteria (no older than 35).
             </p>
             <label className="field">
               <span>YOUNGO Contact Point full name</span>
-              <input
-                className="input"
-                value={form.ycpName}
-                onChange={setReg('ycpName')}
-              />
+              <input className="input" value={form.ycpName} onChange={setReg('ycpName')} />
               <FieldError msg={fields.ycpName} />
             </label>
             <div className="formRow">
@@ -328,9 +287,7 @@ export function RegisterOrgForm({
 
       {nonAdmitted && (
         <section className="card authSection">
-          <h2 className="authSectionTitle">
-            Non-admitted NGO / group / movement / network
-          </h2>
+          <h2 className="authSectionTitle">Non-admitted NGO / group / movement / network</h2>
           <label className="field">
             <span>Regions and/or countries of operation *</span>
             <textarea
@@ -360,9 +317,7 @@ export function RegisterOrgForm({
           <label className="field">
             <span>
               Mission and activities{' '}
-              <span className="metaMuted">
-                (max 250 words · {missionWords}/250)
-              </span>
+              <span className="metaMuted">(max 250 words · {missionWords}/250)</span>
             </span>
             <textarea
               className="input textarea"
@@ -373,16 +328,10 @@ export function RegisterOrgForm({
             <FieldError msg={fields.orgMission} />
           </label>
           <h3 className="authSectionSubheading">YOUNGO Contact Point *</h3>
-          <p className="meta">
-            Facilitates communication with YOUNGO and receives update emails.
-          </p>
+          <p className="meta">Facilitates communication with YOUNGO and receives update emails.</p>
           <label className="field">
             <span>Contact Point full name *</span>
-            <input
-              className="input"
-              value={form.ycpName}
-              onChange={setReg('ycpName')}
-            />
+            <input className="input" value={form.ycpName} onChange={setReg('ycpName')} />
             <FieldError msg={fields.ycpName} />
           </label>
           <div className="formRow">
@@ -416,14 +365,11 @@ export function RegisterOrgForm({
         <section className="card authSection">
           <h2 className="authSectionTitle">Policies *</h2>
           <p className="meta">
-            Open each policy to read it, then confirm. Official texts open in a
-            new tab.
+            Open each policy to read it, then confirm. Official texts open in a new tab.
           </p>
           <label
             className={checkClass(
-              fields.acceptAllOrgPolicies ||
-                fields.acceptCodeOfConduct ||
-                fields.acceptCoiPolicy,
+              fields.acceptAllOrgPolicies || fields.acceptCodeOfConduct || fields.acceptCoiPolicy,
             )}
           >
             <input
@@ -433,10 +379,7 @@ export function RegisterOrgForm({
             />
             <span>
               The organisation agrees to YOUNGO’s{' '}
-              <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>
-                Code of Conduct
-              </PolicyLink>
-              ,{' '}
+              <PolicyLink href={POLICY_BY_SLUG.codeOfConduct?.href}>Code of Conduct</PolicyLink>,{' '}
               <PolicyLink href={POLICY_BY_SLUG.conflictOfInterest?.href}>
                 Conflict of Interest Policy
               </PolicyLink>
@@ -444,25 +387,17 @@ export function RegisterOrgForm({
               <PolicyLink href={POLICY_BY_SLUG.dataProtection?.href}>
                 Data Protection Policy
               </PolicyLink>
-              , and{' '}
-              <PolicyLink href={POLICY_BY_SLUG.principles?.href}>
-                Principles
-              </PolicyLink>
-              . *
+              , and <PolicyLink href={POLICY_BY_SLUG.principles?.href}>Principles</PolicyLink>. *
             </span>
           </label>
           <FieldError
             msg={
-              fields.acceptAllOrgPolicies ||
-              fields.acceptCodeOfConduct ||
-              fields.acceptCoiPolicy
+              fields.acceptAllOrgPolicies || fields.acceptCodeOfConduct || fields.acceptCoiPolicy
             }
           />
           {policiesDoc?.browseAllUrl ? (
             <p className="metaMuted">
-              <PolicyLink href={policiesDoc.browseAllUrl}>
-                All policies folder
-              </PolicyLink>
+              <PolicyLink href={policiesDoc.browseAllUrl}>All policies folder</PolicyLink>
             </p>
           ) : null}
         </section>

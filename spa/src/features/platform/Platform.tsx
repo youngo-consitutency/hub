@@ -51,43 +51,30 @@ const TASK_ICONS = { active: ProgressIcon, completed: DoneIcon, all: ListIcon }
 
 type Tab = 'bodies' | 'work' | 'decisions' | 'partnerships'
 
-const SECTIONS: Record<
-  Tab,
-  { href: string; label: string; description: string }
-> = {
+const SECTIONS: Record<Tab, { href: string; label: string; description: string }> = {
   bodies: {
     href: '/platform',
     label: 'Bodies & mandates',
-    description:
-      'Working groups, operational teams and the people responsible for them.',
+    description: 'Working groups, operational teams and the people responsible for them.',
   },
   work: {
     href: '/work',
     label: 'Work & follow-up',
-    description:
-      'Keep tasks, owners and deadlines connected to your bodies and decisions.',
+    description: 'Keep tasks, owners and deadlines connected to your bodies and decisions.',
   },
   decisions: {
     href: '/council',
     label: 'Decisions',
-    description:
-      'Draft proposals, contribute to consultations and follow agreed outcomes.',
+    description: 'Draft proposals, contribute to consultations and follow agreed outcomes.',
   },
   partnerships: {
     href: '/platform/partnerships',
     label: 'Partnerships',
-    description:
-      'Review enquiries, organise follow-up and maintain approved partnerships.',
+    description: 'Review enquiries, organise follow-up and maintain approved partnerships.',
   },
 }
 
-export function Platform({
-  initialTab = 'bodies',
-  slug,
-}: {
-  initialTab?: Tab
-  slug?: string
-}) {
+export function Platform({ initialTab = 'bodies', slug }: { initialTab?: Tab; slug?: string }) {
   const tab: Tab = slug === 'partnerships' ? slug : initialTab
   return <Workspace key={tab} tab={tab} />
 }
@@ -143,15 +130,12 @@ function Workspace({ tab }: { tab: Tab }) {
       const form = event.currentTarget
       void run(() => action(values(form)), form)
     }
-  const bodyName = (id: string) =>
-    data?.bodies.find((b) => b.id === id)?.name || id
+  const bodyName = (id: string) => data?.bodies.find((b) => b.id === id)?.name || id
   const visibleTasks =
     data?.tasks.filter(
       (task) =>
         workFilter === 'all' ||
-        (workFilter === 'completed'
-          ? task.status === 'done'
-          : task.status !== 'done'),
+        (workFilter === 'completed' ? task.status === 'done' : task.status !== 'done'),
     ) || []
   const bodyOptions = data?.bodies
     .filter((b) => b.canParticipate)
@@ -169,8 +153,7 @@ function Workspace({ tab }: { tab: Tab }) {
         action={
           data &&
           ((tab === 'bodies' && data.canAdminister) ||
-            ((tab === 'work' || tab === 'decisions') &&
-              Boolean(bodyOptions?.length))) ? (
+            ((tab === 'work' || tab === 'decisions') && Boolean(bodyOptions?.length))) ? (
             <button className="btn btn-primary" onClick={openEditor}>
               <Plus size={17} aria-hidden />
               {tab === 'bodies'
@@ -190,10 +173,7 @@ function Workspace({ tab }: { tab: Tab }) {
       </PageHeader>
       {loading && !data && <Skeletons n={4} />}
       {error && <ErrorCard message={error} onRetry={reload} />}
-      <Feedback
-        error={editorOpen || assignmentOpen ? '' : failure}
-        message={message}
-      />
+      <Feedback error={editorOpen || assignmentOpen ? '' : failure} message={message} />
       {data && (
         <>
           {tab === 'work' && data.notices.length > 0 && (
@@ -203,29 +183,20 @@ function Workspace({ tab }: { tab: Tab }) {
                   <DueIcon size={20} aria-hidden /> Upcoming & overdue
                 </h2>
                 <p className="meta">
-                  {
-                    data.notices.filter((n) => Date.parse(n.dueAt) < Date.now())
-                      .length
-                  }{' '}
-                  overdue · {data.notices.length} items to review
+                  {data.notices.filter((n) => Date.parse(n.dueAt) < Date.now()).length} overdue ·{' '}
+                  {data.notices.length} items to review
                 </p>
               </div>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setAttentionOpen(true)}
-              >
+              <button className="btn btn-secondary" onClick={() => setAttentionOpen(true)}>
                 Review deadlines
               </button>
             </div>
           )}
           {attentionOpen && (
-            <SidePanel
-              title="Upcoming & overdue"
-              onClose={() => setAttentionOpen(false)}
-            >
+            <SidePanel title="Upcoming & overdue" onClose={() => setAttentionOpen(false)}>
               <p className="meta">
-                Review deadlines and arrange follow-up. Decisions and mandates
-                still require their agreed processes.
+                Review deadlines and arrange follow-up. Decisions and mandates still require their
+                agreed processes.
               </p>
               {Object.entries({
                 task: 'Tasks',
@@ -249,15 +220,11 @@ function Workspace({ tab }: { tab: Tab }) {
                             <time
                               dateTime={n.dueAt}
                               className={
-                                Date.parse(n.dueAt) < Date.now()
-                                  ? 'attentionOverdue'
-                                  : 'meta'
+                                Date.parse(n.dueAt) < Date.now() ? 'attentionOverdue' : 'meta'
                               }
                             >
                               {formatDate(n.dueAt)}
-                              {Date.parse(n.dueAt) < Date.now()
-                                ? ' · Overdue'
-                                : ''}
+                              {Date.parse(n.dueAt) < Date.now() ? ' · Overdue' : ''}
                             </time>
                           </li>
                         ))}
@@ -337,39 +304,33 @@ function Workspace({ tab }: { tab: Tab }) {
                           <button
                             disabled={busy}
                             className="btn"
-                            onClick={() =>
-                              void run(() => post(`/bodies/${b.id}/join`))
-                            }
+                            onClick={() => void run(() => post(`/bodies/${b.id}/join`))}
                           >
                             Join working group
                           </button>
                         )}
-                        {data.canPublish &&
-                          b.publishedVersion !== b.version && (
-                            <button
-                              disabled={busy}
-                              className="btn"
-                              onClick={() =>
-                                void run(() =>
-                                  post(`/bodies/${b.id}/publish`, {
-                                    version: b.version,
-                                  }),
-                                )
-                              }
-                            >
-                              Publish reviewed information
-                            </button>
-                          )}
+                        {data.canPublish && b.publishedVersion !== b.version && (
+                          <button
+                            disabled={busy}
+                            className="btn"
+                            onClick={() =>
+                              void run(() =>
+                                post(`/bodies/${b.id}/publish`, {
+                                  version: b.version,
+                                }),
+                              )
+                            }
+                          >
+                            Publish reviewed information
+                          </button>
+                        )}
                       </div>
                     </article>
                   ))}
                 </div>
               </section>
               {editorOpen && (data.canAdminister || body) && (
-                <SidePanel
-                  title={body ? `Edit ${body.name}` : 'Add a body'}
-                  onClose={closeEditor}
-                >
+                <SidePanel title={body ? `Edit ${body.name}` : 'Add a body'} onClose={closeEditor}>
                   <Feedback error={failure} message="" />
                   <form
                     className="platformForm"
@@ -383,24 +344,11 @@ function Workspace({ tab }: { tab: Tab }) {
                         : post('/bodies', input),
                     )}
                   >
-                    <Field
-                      label="Name"
-                      name="name"
-                      defaultValue={body?.name}
-                      required
-                    />
+                    <Field label="Name" name="name" defaultValue={body?.name} required />
                     {!body && (
-                      <Field
-                        label="Identifier (for example adaptation-wg)"
-                        name="id"
-                        required
-                      />
+                      <Field label="Identifier (for example adaptation-wg)" name="id" required />
                     )}
-                    <Select
-                      label="Type"
-                      name="kind"
-                      defaultValue={body?.kind || 'working_group'}
-                    >
+                    <Select label="Type" name="kind" defaultValue={body?.kind || 'working_group'}>
                       {BODY_KINDS.map((k) => (
                         <option key={k} value={k}>
                           {k.replaceAll('_', ' ')}
@@ -428,11 +376,7 @@ function Workspace({ tab }: { tab: Tab }) {
                       Save draft information
                     </button>
                     {body && (
-                      <button
-                        type="button"
-                        className="btn"
-                        onClick={closeEditor}
-                      >
+                      <button type="button" className="btn" onClick={closeEditor}>
                         Cancel edit
                       </button>
                     )}
@@ -442,26 +386,23 @@ function Workspace({ tab }: { tab: Tab }) {
               <section className="stack">
                 <h2>Assignments and mandates</h2>
                 <p className="meta">
-                  Assignments have a scope, term and appointment evidence. A
-                  coordination role does not itself authorise a policy decision.
+                  Assignments have a scope, term and appointment evidence. A coordination role does
+                  not itself authorise a policy decision.
                 </p>
                 <div className="cardGrid">
                   {data.assignments.map((a) => (
                     <article className="card entityCard" key={a.id}>
                       <h3>
-                        {a.name} ·{' '}
-                        {assignmentLabels[a.role] || a.role}
+                        {a.name} · {assignmentLabels[a.role] || a.role}
                       </h3>
                       <p>
                         {a.scopeType.replaceAll('_', ' ')} /{' '}
                         {a.scopeType === 'body'
                           ? bodyName(a.scopeId)
-                          : teamLabels[a.scopeId] ||
-                            a.scopeId.replaceAll('_', ' ')}
+                          : teamLabels[a.scopeId] || a.scopeId.replaceAll('_', ' ')}
                       </p>
                       <p className="meta">
-                        {formatDate(a.startsAt)} → {formatDate(a.endsAt)} ·{' '}
-                        {a.status}
+                        {formatDate(a.startsAt)} → {formatDate(a.endsAt)} · {a.status}
                       </p>
                       {a.evidence && <p>{a.evidence}</p>}
                       {data.canAdminister && a.status === 'active' && (
@@ -469,19 +410,10 @@ function Workspace({ tab }: { tab: Tab }) {
                           <summary>End this assignment</summary>
                           <form
                             className="platformForm"
-                            onSubmit={submit((input) =>
-                              post(`/assignments/${a.id}/revoke`, input),
-                            )}
+                            onSubmit={submit((input) => post(`/assignments/${a.id}/revoke`, input))}
                           >
-                            <Field
-                              label="Reason for ending assignment"
-                              name="reason"
-                              required
-                            />
-                            <button
-                              disabled={busy}
-                              className="btn btn-secondary"
-                            >
+                            <Field label="Reason for ending assignment" name="reason" required />
+                            <button disabled={busy} className="btn btn-secondary">
                               End assignment
                             </button>
                           </form>
@@ -503,16 +435,11 @@ function Workspace({ tab }: { tab: Tab }) {
                     <Plus size={17} aria-hidden /> Record an assignment
                   </button>
                   {assignmentOpen && (
-                    <SidePanel
-                      title="Record an assignment"
-                      onClose={closeEditor}
-                    >
+                    <SidePanel title="Record an assignment" onClose={closeEditor}>
                       <Feedback error={failure} message="" />
                       <form
                         className="platformForm"
-                        onSubmit={submit((input) =>
-                          post('/assignments', input),
-                        )}
+                        onSubmit={submit((input) => post('/assignments', input))}
                       >
                         <Select label="Person" name="accountId">
                           {data.people
@@ -533,12 +460,8 @@ function Workspace({ tab }: { tab: Tab }) {
                             onChange={(e) => setScope(e.target.value)}
                           >
                             <option value="body">Body</option>
-                            <option value="team">
-                              Responsibility or website access
-                            </option>
-                            <option value="working_group">
-                              Existing working group
-                            </option>
+                            <option value="team">Responsibility or website access</option>
+                            <option value="working_group">Existing working group</option>
                           </select>
                         </label>
                         {scope === 'body' ? (
@@ -548,9 +471,7 @@ function Workspace({ tab }: { tab: Tab }) {
                               className="input"
                               name="scopeId"
                               value={assignmentBody || data.bodies[0]?.id || ''}
-                              onChange={(e) =>
-                                setAssignmentBody(e.target.value)
-                              }
+                              onChange={(e) => setAssignmentBody(e.target.value)}
                             >
                               {data.bodies.map((b) => (
                                 <option value={b.id} key={b.id}>
@@ -588,9 +509,7 @@ function Workspace({ tab }: { tab: Tab }) {
                           {(scope === 'body'
                             ? bodyRoles(
                                 data.bodies.find(
-                                  (b) =>
-                                    b.id ===
-                                    (assignmentBody || data.bodies[0]?.id),
+                                  (b) => b.id === (assignmentBody || data.bodies[0]?.id),
                                 )?.kind,
                               )
                             : scope === 'team'
@@ -603,22 +522,11 @@ function Workspace({ tab }: { tab: Tab }) {
                           ))}
                         </Select>
                         <p className="meta">
-                          Record an existing appointment and its evidence.
-                          Website drafting and publishing permissions do not
-                          create YOUNGO roles.
+                          Record an existing appointment and its evidence. Website drafting and
+                          publishing permissions do not create YOUNGO roles.
                         </p>
-                        <Field
-                          label="Starts"
-                          name="startsAt"
-                          type="datetime-local"
-                          required
-                        />
-                        <Field
-                          label="Ends"
-                          name="endsAt"
-                          type="datetime-local"
-                          required
-                        />
+                        <Field label="Starts" name="startsAt" type="datetime-local" required />
+                        <Field label="Ends" name="endsAt" type="datetime-local" required />
                         <Text
                           label="Appointment or selection evidence"
                           name="evidence"
@@ -638,11 +546,7 @@ function Workspace({ tab }: { tab: Tab }) {
           {tab === 'work' && (
             <>
               <section className="stack">
-                <div
-                  className="pillRow platformTaskFilters"
-                  role="group"
-                  aria-label="Task status"
-                >
+                <div className="pillRow platformTaskFilters" role="group" aria-label="Task status">
                   {(['active', 'completed', 'all'] as const).map((filter) => (
                     <FilterPill
                       type="button"
@@ -696,9 +600,7 @@ function Workspace({ tab }: { tab: Tab }) {
                       >
                         {TASK_LABELS[t.status]}
                       </FilterChip>
-                      {t.decisionId && (
-                        <A href={`/council/${t.decisionId}`}>Linked decision</A>
-                      )}
+                      {t.decisionId && <A href={`/council/${t.decisionId}`}>Linked decision</A>}
                       {t.canEdit && (
                         <button
                           className="btn btn-secondary"
@@ -715,10 +617,7 @@ function Workspace({ tab }: { tab: Tab }) {
                 </div>
               </section>
               {editorOpen && bodyOptions?.length !== 0 && (
-                <SidePanel
-                  title={task ? 'Update task' : 'Add a task'}
-                  onClose={closeEditor}
-                >
+                <SidePanel title={task ? 'Update task' : 'Add a task'} onClose={closeEditor}>
                   <Feedback error={failure} message="" />
                   <form
                     className="platformForm"
@@ -732,29 +631,16 @@ function Workspace({ tab }: { tab: Tab }) {
                         : post('/tasks', input),
                     )}
                   >
-                    <Select
-                      label="Body"
-                      name="bodyId"
-                      defaultValue={task?.bodyId}
-                    >
+                    <Select label="Body" name="bodyId" defaultValue={task?.bodyId}>
                       {bodyOptions}
                     </Select>
-                    <Field
-                      label="Title"
-                      name="title"
-                      defaultValue={task?.title}
-                      required
-                    />
+                    <Field label="Title" name="title" defaultValue={task?.title} required />
                     <Text
                       label="Description and document links"
                       name="description"
                       defaultValue={task?.description}
                     />
-                    <Select
-                      label="Owner"
-                      name="ownerId"
-                      defaultValue={task?.ownerId || ''}
-                    >
+                    <Select label="Owner" name="ownerId" defaultValue={task?.ownerId || ''}>
                       <option value="">Unassigned</option>
                       {data.people.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -768,11 +654,7 @@ function Workspace({ tab }: { tab: Tab }) {
                       type="datetime-local"
                       defaultValue={localDate(task?.dueAt || null)}
                     />
-                    <Select
-                      label="Status"
-                      name="status"
-                      defaultValue={task?.status || 'open'}
-                    >
+                    <Select label="Status" name="status" defaultValue={task?.status || 'open'}>
                       {['open', 'in_progress', 'done'].map((s) => (
                         <option key={s} value={s}>
                           {s.replaceAll('_', ' ')}
@@ -797,11 +679,7 @@ function Workspace({ tab }: { tab: Tab }) {
                       Save task
                     </button>
                     {task && (
-                      <button
-                        type="button"
-                        className="btn"
-                        onClick={closeEditor}
-                      >
+                      <button type="button" className="btn" onClick={closeEditor}>
                         Cancel edit
                       </button>
                     )}
@@ -814,8 +692,8 @@ function Workspace({ tab }: { tab: Tab }) {
             <>
               <section className="stack">
                 <p className="meta">
-                  Only processes belonging to your current body assignments are
-                  shown. Adopted decisions can be reviewed for publication.
+                  Only processes belonging to your current body assignments are shown. Adopted
+                  decisions can be reviewed for publication.
                 </p>
                 {!data.decisions.length && (
                   <Empty
@@ -831,9 +709,7 @@ function Workspace({ tab }: { tab: Tab }) {
                         <A href={`/council/${d.id}`}>{d.title}</A>
                       </h3>
                       <span className="chip chip-neutral">
-                        {d.stage
-                          .replaceAll('_', ' ')
-                          .replace(/^./, (c) => c.toUpperCase())}
+                        {d.stage.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase())}
                       </span>
                       <div className="meta platformCardMeta">
                         <span>
@@ -870,23 +746,21 @@ function Workspace({ tab }: { tab: Tab }) {
                           </form>
                         </details>
                       )}
-                      {data.canPublish &&
-                        d.stage === 'adopted' &&
-                        !d.isPublic && (
-                          <button
-                            disabled={busy}
-                            className="btn"
-                            onClick={() =>
-                              void run(() =>
-                                post(`/decisions/${d.id}/publish`, {
-                                  version: d.version,
-                                }),
-                              )
-                            }
-                          >
-                            Publish reviewed outcome
-                          </button>
-                        )}
+                      {data.canPublish && d.stage === 'adopted' && !d.isPublic && (
+                        <button
+                          disabled={busy}
+                          className="btn"
+                          onClick={() =>
+                            void run(() =>
+                              post(`/decisions/${d.id}/publish`, {
+                                version: d.version,
+                              }),
+                            )
+                          }
+                        >
+                          Publish reviewed outcome
+                        </button>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -902,12 +776,7 @@ function Workspace({ tab }: { tab: Tab }) {
                       {bodyOptions}
                     </Select>
                     <Field label="Title" name="title" required />
-                    <Text
-                      label="Proposal text"
-                      name="proposal"
-                      required
-                      maxLength={20000}
-                    />
+                    <Text label="Proposal text" name="proposal" required maxLength={20000} />
                     <Field
                       label="Policy version or document reference"
                       name="policyVersion"
@@ -920,12 +789,8 @@ function Workspace({ tab }: { tab: Tab }) {
                       value={process}
                       onChange={(event) => setProcess(event.target.value)}
                     >
-                      <option value="standard">
-                        Standard: 5 days + 24 hours + 24 hours
-                      </option>
-                      <option value="snap">
-                        Snap: half, quarter, quarter of available time
-                      </option>
+                      <option value="standard">Standard: 5 days + 24 hours + 24 hours</option>
+                      <option value="snap">Snap: half, quarter, quarter of available time</option>
                     </Select>
                     {process === 'snap' && (
                       <>
@@ -962,9 +827,8 @@ function Workspace({ tab }: { tab: Tab }) {
               <section className="stack">
                 <h2>Partner enquiries</h2>
                 <p className="meta">
-                  Contact details and messages stay in this restricted queue. A
-                  public partnership requires a published approving decision and
-                  a reviewed summary.
+                  Contact details and messages stay in this restricted queue. A public partnership
+                  requires a published approving decision and a reviewed summary.
                 </p>
                 {!data.enquiries.length && (
                   <Empty
@@ -1009,22 +873,14 @@ function Workspace({ tab }: { tab: Tab }) {
                       }),
                     )}
                   >
-                    <Select
-                      label="Status"
-                      name="status"
-                      defaultValue={enquiry.status}
-                    >
+                    <Select label="Status" name="status" defaultValue={enquiry.status}>
                       {['new', 'in_progress', 'closed', 'approved'].map((s) => (
                         <option key={s} value={s}>
                           {s.replaceAll('_', ' ')}
                         </option>
                       ))}
                     </Select>
-                    <Select
-                      label="Owner"
-                      name="ownerId"
-                      defaultValue={enquiry.ownerId || ''}
-                    >
+                    <Select label="Owner" name="ownerId" defaultValue={enquiry.ownerId || ''}>
                       <option value="">Unassigned</option>
                       {data.people.map((p) => (
                         <option key={p.id} value={p.id}>

@@ -160,8 +160,7 @@ export default buildConfig({
         })
       : emailConfigured()
         ? nodemailerAdapter({
-            defaultFromAddress:
-              process.env.EMAIL_FROM || defaultEmailFrom(),
+            defaultFromAddress: process.env.EMAIL_FROM || defaultEmailFrom(),
             defaultFromName: 'YOUNGO Hub',
             transport: getEmailTransport()!,
           })

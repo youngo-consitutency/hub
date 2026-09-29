@@ -8,10 +8,7 @@ import {
   Section,
 } from '../components/ui.jsx'
 import { fmtDateRange } from '../lib/time.js'
-import {
-  coyApplicationsAreOpen,
-  resolveCoyStatus,
-} from '../../shared/coyStatus.js'
+import { coyApplicationsAreOpen, resolveCoyStatus } from '../../shared/coyStatus.js'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
 import {
   TbBuilding as Building2,
@@ -48,11 +45,7 @@ export function CoyDetail({ slug }) {
               <div className="coyDetailHeader">
                 <PageHeader
                   title={coy.title}
-                  description={
-                    REGION_LABEL[coy.region] ||
-                    coy.region ||
-                    'Conference of Youth'
-                  }
+                  description={REGION_LABEL[coy.region] || coy.region || 'Conference of Youth'}
                 />
 
                 <section
@@ -134,9 +127,7 @@ export function CoyDetail({ slug }) {
                     </span>
                     <div className="coyOrganiserCopy">
                       {coy.organizerName && <h3>{coy.organizerName}</h3>}
-                      {coy.organizerOrg && (
-                        <p className="meta">{coy.organizerOrg}</p>
-                      )}
+                      {coy.organizerOrg && <p className="meta">{coy.organizerOrg}</p>}
                     </div>
                   </div>
                 </Section>

@@ -1,7 +1,6 @@
 import { apiGet } from '../../lib/api.js'
 
-export const asOptions = (values) =>
-  values.map((value) => ({ value, label: value }))
+export const asOptions = (values) => values.map((value) => ({ value, label: value }))
 
 // Registration option lists (regions, genders, nationalities, …) are
 // staff-editable content in the `registration-options` document.

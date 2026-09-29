@@ -6,8 +6,7 @@ import { scrubSentryEvent } from './lib/sentry'
 Sentry.init({
   enabled: Boolean(process.env.SENTRY_DSN),
   dsn: process.env.SENTRY_DSN,
-  environment:
-    process.env.SENTRY_ENVIRONMENT || process.env.VERCEL_ENV || 'development',
+  environment: process.env.SENTRY_ENVIRONMENT || process.env.VERCEL_ENV || 'development',
   sendDefaultPii: false,
   tracesSampleRate: 0,
   beforeSend: scrubSentryEvent,

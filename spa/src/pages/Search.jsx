@@ -23,16 +23,14 @@ const GROUPS = [
     label: 'Events',
     to: (event) => `/calendar/${event.slug}`,
     line: (event) => fmtDual(event.startsAt),
-    icon: (event) =>
-      event.wg?.slug ? workingGroupIcon(event.wg.slug) : CalendarDays,
+    icon: (event) => (event.wg?.slug ? workingGroupIcon(event.wg.slug) : CalendarDays),
   },
   {
     key: 'submissions',
     label: 'Submissions',
     to: (submission) => `/submissions/${submission.slug}`,
     line: (submission) => submission.wg?.name || submission.status,
-    icon: (submission) =>
-      submission.wg?.slug ? workingGroupIcon(submission.wg.slug) : FileText,
+    icon: (submission) => (submission.wg?.slug ? workingGroupIcon(submission.wg.slug) : FileText),
   },
   {
     key: 'decisions',
@@ -71,10 +69,7 @@ function confidenceLabel(value) {
 }
 
 function DirectMatches({ query, data }) {
-  const total = GROUPS.reduce(
-    (count, group) => count + (data[group.key]?.length || 0),
-    0,
-  )
+  const total = GROUPS.reduce((count, group) => count + (data[group.key]?.length || 0), 0)
   if (!total)
     return (
       <Empty
@@ -97,9 +92,7 @@ function DirectMatches({ query, data }) {
                   className="card cardTight searchResult"
                 >
                   <div className="searchResultCopy">
-                    <p className="searchResultTitle">
-                      {item.title || item.name || item.roleTitle}
-                    </p>
+                    <p className="searchResultTitle">{item.title || item.name || item.roleTitle}</p>
                     <p className="metaMuted">{group.line(item)}</p>
                   </div>
                   <ResultIcon
@@ -120,8 +113,7 @@ function DirectMatches({ query, data }) {
 
 export function Search() {
   const { account } = useAccount()
-  const initialQuery =
-    new URLSearchParams(window.location.search).get('q') || ''
+  const initialQuery = new URLSearchParams(window.location.search).get('q') || ''
   const [query, setQuery] = useState(initialQuery)
   const direct = useApi(`/search?q=${encodeURIComponent(query)}`, [query])
   const [result, setResult] = useState(null)
@@ -156,15 +148,9 @@ export function Search() {
     setLoading(true)
     setError('')
     setProposal({ status: 'idle', message: '' })
-    window.history.replaceState(
-      {},
-      '',
-      `/search?q=${encodeURIComponent(clean)}`,
-    )
+    window.history.replaceState({}, '', `/search?q=${encodeURIComponent(clean)}`)
     try {
-      setResult(
-        await apiPost('/intelligence/query', { query: clean, limit: 10 }),
-      )
+      setResult(await apiPost('/intelligence/query', { query: clean, limit: 10 }))
     } catch (requestError) {
       setError(requestError.message)
       setResult(null)
@@ -195,8 +181,7 @@ export function Search() {
       )
       setProposal({
         status: 'saved',
-        message:
-          'Proposed for independent admin review. No source record was changed.',
+        message: 'Proposed for independent admin review. No source record was changed.',
       })
     } catch (requestError) {
       setProposal({ status: 'error', message: requestError.message })
@@ -253,17 +238,13 @@ export function Search() {
               setResult(null)
             }}
           />
-          <button
-            className="btn btn-primary"
-            disabled={loading || query.trim().length < 3}
-          >
+          <button className="btn btn-primary" disabled={loading || query.trim().length < 3}>
             <SearchIcon size={17} aria-hidden />
             {loading ? 'Searching…' : 'Search Hub'}
           </button>
         </div>
         <p className="metaMuted">
-          Direct matches update as you type. Submit to get a cited, role-scoped
-          answer.
+          Direct matches update as you type. Submit to get a cited, role-scoped answer.
         </p>
       </form>
 
@@ -281,9 +262,7 @@ export function Search() {
                 <p className="metaMuted">Answer · {result.audience} scope</p>
                 <h2>{result.synthesis.answer}</h2>
               </div>
-              <span
-                className={`evidenceConfidence confidence-${result.synthesis.confidence}`}
-              >
+              <span className={`evidenceConfidence confidence-${result.synthesis.confidence}`}>
                 {confidenceLabel(result.synthesis.confidence)}
               </span>
             </div>
@@ -293,11 +272,7 @@ export function Search() {
                   <li key={index}>
                     {item.text}{' '}
                     {item.citationIndexes.map((citation) => (
-                      <a
-                        key={citation}
-                        className="citationChip"
-                        href={`#evidence-${citation}`}
-                      >
+                      <a key={citation} className="citationChip" href={`#evidence-${citation}`}>
                         [{citation}]
                       </a>
                     ))}
@@ -306,8 +281,7 @@ export function Search() {
               </ol>
             ) : (
               <p className="meta">
-                Try a more specific title, working group, deadline, location or
-                decision.
+                Try a more specific title, working group, deadline, location or decision.
               </p>
             )}
             <p className="intelligenceCaveat">{result.synthesis.caveat}</p>
@@ -319,16 +293,12 @@ export function Search() {
                   disabled={proposal.status === 'saving'}
                 >
                   <FilePlus2 size={15} aria-hidden />
-                  {proposal.status === 'saving'
-                    ? 'Proposing…'
-                    : 'Propose research note'}
+                  {proposal.status === 'saving' ? 'Proposing…' : 'Propose research note'}
                 </button>
                 <span
                   className={`meta ${proposal.status === 'error' ? 'intelligenceErrorText' : ''}`}
                 >
-                  {proposal.status === 'saved' && (
-                    <CheckCircle2 size={14} aria-hidden />
-                  )}{' '}
+                  {proposal.status === 'saved' && <CheckCircle2 size={14} aria-hidden />}{' '}
                   {proposal.message}
                 </span>
               </div>
@@ -355,9 +325,7 @@ export function Search() {
                   <h3>{item.title}</h3>
                   <p className="meta">{item.snippet}</p>
                   <div className="intelligenceEvidenceFoot">
-                    <span className="metaMuted">
-                      Score {item.score.toFixed(4)}
-                    </span>
+                    <span className="metaMuted">Score {item.score.toFixed(4)}</span>
                     <a className="btn btn-ghost btn-sm" href={item.url}>
                       Open <ExternalLink size={13} aria-hidden />
                     </a>
@@ -389,23 +357,17 @@ export function Search() {
           action={
             review.metrics && (
               <span>
-                {review.metrics.queries.total} questions ·{' '}
-                {review.metrics.queries.last_24h} today
+                {review.metrics.queries.total} questions · {review.metrics.queries.last_24h} today
               </span>
             )
           }
         >
           <p className="meta">
-            A different administrator must approve a cited note before it can be
-            applied.
+            A different administrator must approve a cited note before it can be applied.
           </p>
-          {review.error && (
-            <p className="intelligenceErrorText meta">{review.error}</p>
-          )}
+          {review.error && <p className="intelligenceErrorText meta">{review.error}</p>}
           <div className="stackSm searchReviewQueue">
-            {review.items.length === 0 && (
-              <p className="metaMuted">No research-note proposals.</p>
-            )}
+            {review.items.length === 0 && <p className="metaMuted">No research-note proposals.</p>}
             {review.items.map((item) => {
               const proposedBy = item.proposed_by || item.proposedBy
               const payload = item.payload || {}
@@ -414,8 +376,7 @@ export function Search() {
                   <div>
                     <strong>{payload.title || item.action}</strong>
                     <p className="metaMuted">
-                      {item.status} · proposed by{' '}
-                      {proposedBy === account.id ? 'you' : proposedBy}
+                      {item.status} · proposed by {proposedBy === account.id ? 'you' : proposedBy}
                     </p>
                   </div>
                   {item.status === 'proposed' && proposedBy !== account.id && (
@@ -436,8 +397,7 @@ export function Search() {
                       <button
                         className="btn btn-secondary btn-sm"
                         disabled={
-                          proposedBy === account.id ||
-                          (reasons[item.id] || '').trim().length < 8
+                          proposedBy === account.id || (reasons[item.id] || '').trim().length < 8
                         }
                         onClick={() => reviewWriteback(item, 'approve')}
                       >

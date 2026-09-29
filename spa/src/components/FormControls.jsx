@@ -13,9 +13,7 @@ export function FieldError({ msg }) {
 function matchingOptions(options, query) {
   const normalized = query.trim().toLocaleLowerCase()
   return normalized
-    ? options.filter((option) =>
-        option.label.toLocaleLowerCase().includes(normalized),
-      )
+    ? options.filter((option) => option.label.toLocaleLowerCase().includes(normalized))
     : options
 }
 
@@ -56,25 +54,22 @@ export function SearchableSelect({
   const selected = options.find((option) => option.value === value) || null
   const visibleOptions = matchingOptions(options, query)
 
-  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } =
-    useCombobox({
-      items: visibleOptions,
-      itemToString: (item) => item?.label || '',
-      selectedItem: selected,
-      onSelectedItemChange: ({ selectedItem }) => {
-        setQuery('')
-        if (selectedItem) onChange(selectedItem.value)
-      },
-      onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
-      onIsOpenChange: ({ isOpen }) => {
-        if (isOpen) onOpen?.()
-      },
-    })
+  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
+    items: visibleOptions,
+    itemToString: (item) => item?.label || '',
+    selectedItem: selected,
+    onSelectedItemChange: ({ selectedItem }) => {
+      setQuery('')
+      if (selectedItem) onChange(selectedItem.value)
+    },
+    onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
+    onIsOpenChange: ({ isOpen }) => {
+      if (isOpen) onOpen?.()
+    },
+  })
 
   return (
-    <div
-      className={`field${error ? ' hasError' : ''} comboField ${className}`.trim()}
-    >
+    <div className={`field${error ? ' hasError' : ''} comboField ${className}`.trim()}>
       <span {...getLabelProps()} className={hideLabel ? 'srOnly' : undefined}>
         {label}
       </span>
@@ -87,12 +82,7 @@ export function SearchableSelect({
           placeholder: isOpen ? searchPlaceholder : placeholder,
         })}
       />
-      <div
-        {...getMenuProps()}
-        className="comboMenu"
-        role="listbox"
-        hidden={!isOpen}
-      >
+      <div {...getMenuProps()} className="comboMenu" role="listbox" hidden={!isOpen}>
         {visibleOptions.length ? (
           visibleOptions.map((option, index) => (
             <button
@@ -108,9 +98,7 @@ export function SearchableSelect({
             </button>
           ))
         ) : (
-          <span className="metaMuted comboEmpty">
-            {options.length ? 'No matches' : 'Loading…'}
-          </span>
+          <span className="metaMuted comboEmpty">{options.length ? 'No matches' : 'Loading…'}</span>
         )}
       </div>
       <FieldError msg={error} />
@@ -133,22 +121,21 @@ export function MultiSelectDropdown({
     .map((option) => option.label)
   const visibleOptions = matchingOptions(options, query)
 
-  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } =
-    useCombobox({
-      items: visibleOptions,
-      itemToString: () => '',
-      selectedItem: null,
-      inputValue: query,
-      stateReducer: (state, { type, changes }) =>
-        type === useCombobox.stateChangeTypes.ItemClick
-          ? { ...changes, isOpen: true, inputValue: '' }
-          : changes,
-      onSelectedItemChange: ({ selectedItem }) => {
-        setQuery('')
-        if (selectedItem) onToggle(selectedItem.value)
-      },
-      onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
-    })
+  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
+    items: visibleOptions,
+    itemToString: () => '',
+    selectedItem: null,
+    inputValue: query,
+    stateReducer: (state, { type, changes }) =>
+      type === useCombobox.stateChangeTypes.ItemClick
+        ? { ...changes, isOpen: true, inputValue: '' }
+        : changes,
+    onSelectedItemChange: ({ selectedItem }) => {
+      setQuery('')
+      if (selectedItem) onToggle(selectedItem.value)
+    },
+    onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
+  })
 
   return (
     <div className={`field${error ? ' hasError' : ''} comboField`}>
@@ -165,12 +152,7 @@ export function MultiSelectDropdown({
             : 'Type to search…',
         })}
       />
-      <div
-        {...getMenuProps()}
-        className="comboMenu"
-        aria-multiselectable="true"
-        hidden={!isOpen}
-      >
+      <div {...getMenuProps()} className="comboMenu" aria-multiselectable="true" hidden={!isOpen}>
         {visibleOptions.length ? (
           visibleOptions.map((option, index) => (
             <div

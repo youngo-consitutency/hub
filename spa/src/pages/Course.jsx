@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
-import {
-  A,
-  Button,
-  Skeletons,
-  ErrorCard,
-  PageHeader,
-} from '../components/ui.jsx'
+import { A, Button, Skeletons, ErrorCard, PageHeader } from '../components/ui.jsx'
 import { navigate } from '../lib/router.js'
 import {
   TbArrowLeft as ArrowLeft,
@@ -70,15 +64,13 @@ export function Course() {
           <div>
             <h1>You’re verified</h1>
             <p className="meta" style={{ marginTop: 4 }}>
-              Score {result.score}/{result.total}. Your account can use the full
-              hub.
+              Score {result.score}/{result.total}. Your account can use the full hub.
             </p>
           </div>
         </div>
         <p className="meta mandatePara">
-          Next, browse Working groups and complete the introduction for any
-          group you want to join. Use Calendar for meetings and Submissions for
-          current drafting processes.
+          Next, browse Working groups and complete the introduction for any group you want to join.
+          Use Calendar for meetings and Submissions for current drafting processes.
         </p>
         <div className="detailActions">
           <Button variant="primary" glow onClick={() => navigate('/')}>
@@ -108,15 +100,11 @@ export function Course() {
             <div className="courseModuleHeader">
               <div>
                 <p className="metaMuted">
-                  Module {moduleIdx + 1} of {data.modules.length} · ~
-                  {mod.minutes} min
+                  Module {moduleIdx + 1} of {data.modules.length} · ~{mod.minutes} min
                 </p>
                 <h2>{mod.title}</h2>
               </div>
-              <div
-                className="courseModuleNavigation"
-                aria-label="Course modules"
-              >
+              <div className="courseModuleNavigation" aria-label="Course modules">
                 <button
                   type="button"
                   className="iconButton"
@@ -173,9 +161,7 @@ export function Course() {
                       type="radio"
                       name={q.id}
                       checked={answers[q.id] === c.id}
-                      onChange={() =>
-                        setAnswers((a) => ({ ...a, [q.id]: c.id }))
-                      }
+                      onChange={() => setAnswers((a) => ({ ...a, [q.id]: c.id }))}
                     />
                     <span className="meta">{c.text}</span>
                   </label>
@@ -189,11 +175,7 @@ export function Course() {
             </p>
           )}
           <div className="courseQuizActions">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setStep('modules')}
-            >
+            <Button type="button" variant="secondary" onClick={() => setStep('modules')}>
               <ArrowLeft size={18} strokeWidth={2} aria-hidden />
               Back to modules
             </Button>

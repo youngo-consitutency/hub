@@ -1,10 +1,6 @@
 import type { Endpoint } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import {
-  accountView,
-  adminReason,
-  requireAdmin,
-} from '../lib/accounts'
+import { accountView, adminReason, requireAdmin } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { rateLimit } from '../lib/rateLimit'
 import {
@@ -30,13 +26,7 @@ const adminLimit = rateLimit({
   scope: 'admin',
 })
 
-const ROLE_OPTIONS = [
-  'member',
-  'admin',
-  'focal_point',
-  'wg_contact',
-  'ngo_admin',
-]
+const ROLE_OPTIONS = ['member', 'admin', 'focal_point', 'wg_contact', 'ngo_admin']
 
 export const adminEndpoints: Endpoint[] = [
   // ── Admin: accounts ───────────────────────────────────────────────
@@ -144,17 +134,13 @@ export const adminEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       const reason = adminReason(b)
       const role = String(b.role || 'member')
-      if (!ROLE_OPTIONS.includes(role))
-        throw fail.validation({ role: 'Invalid role.' })
+      if (!ROLE_OPTIONS.includes(role)) throw fail.validation({ role: 'Invalid role.' })
       const items = await listAccountsForAdmin()
       const target = items.find((item: any) => String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       if (target.id === admin.id && role !== 'admin')
         throw new ApiError(400, 'self_demote', 'You cannot remove your own admin access.')
-      if (
-        role === 'ngo_admin' &&
-        (target.entityType !== 'organization' || !target.isVerified)
-      )
+      if (role === 'ngo_admin' && (target.entityType !== 'organization' || !target.isVerified))
         throw fail.validation({
           role: 'Only a verified organisation account can become an NGO administrator.',
         })
@@ -183,12 +169,9 @@ export const adminEndpoints: Endpoint[] = [
       const reason = adminReason(b)
       const teamRole = String(b.teamRole || '')
       if (
-        ![
-          'membership_team',
-          'gys_policy_team',
-          'content_editor',
-          'content_publisher',
-        ].includes(teamRole)
+        !['membership_team', 'gys_policy_team', 'content_editor', 'content_publisher'].includes(
+          teamRole,
+        )
       )
         throw fail.validation({ teamRole: 'Invalid team role.' })
       const items = await listAccountsForAdmin()
@@ -225,7 +208,11 @@ export const adminEndpoints: Endpoint[] = [
       const b = ((await req.json?.()) || {}) as any
       const reason = adminReason(b)
       if (!emailConfigured())
-        throw new ApiError(503, 'email_not_configured', 'Email delivery must be configured before issuing a reset.')
+        throw new ApiError(
+          503,
+          'email_not_configured',
+          'Email delivery must be configured before issuing a reset.',
+        )
       const targetRow = await findAccountRowById(id)
       if (!targetRow) throw fail.notFound('Account not found.')
       const target = accountView(targetRow)!
@@ -257,7 +244,11 @@ export const adminEndpoints: Endpoint[] = [
           overrideAccess: true,
           req,
         })
-        throw new ApiError(502, 'email_delivery_failed', 'The email provider did not accept the reset message.')
+        throw new ApiError(
+          502,
+          'email_delivery_failed',
+          'The email provider did not accept the reset message.',
+        )
       }
       await audit(req, admin, {
         action: 'account.password_reset_issued',

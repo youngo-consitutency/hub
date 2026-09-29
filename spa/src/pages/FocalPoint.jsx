@@ -26,18 +26,8 @@ export function FocalPoint() {
             <div className="metricGrid">
               {[
                 [Calendar, data.events.length, 'upcoming calls', '/calendar'],
-                [
-                  FileText,
-                  data.submissions.length,
-                  'open submissions',
-                  '/submissions',
-                ],
-                [
-                  Gavel,
-                  data.decisions.length,
-                  'active decisions in your bodies',
-                  '/council',
-                ],
+                [FileText, data.submissions.length, 'open submissions', '/submissions'],
+                [Gavel, data.decisions.length, 'active decisions in your bodies', '/council'],
               ].map(([Icon, count, label, href]) => (
                 <A key={href} href={href} className="metricCard">
                   <Icon size={20} aria-hidden />
@@ -57,25 +47,17 @@ export function FocalPoint() {
               >
                 <div className="stackSm">
                   {data.events.slice(0, 4).map((event) => (
-                    <A
-                      key={event.slug}
-                      href={`/calendar/${event.slug}`}
-                      className="card recordRow"
-                    >
+                    <A key={event.slug} href={`/calendar/${event.slug}`} className="card recordRow">
                       <Calendar size={20} aria-hidden />
                       <div>
                         <strong>{event.title}</strong>
                         <p className="meta">{formatDate(event.startsAt)}</p>
-                        <p className="meta">
-                          {event.wg?.name || 'Constituency'}
-                        </p>
+                        <p className="meta">{event.wg?.name || 'Constituency'}</p>
                       </div>
                       <Arrow size={17} aria-hidden />
                     </A>
                   ))}
-                  {!data.events.length && (
-                    <Empty icon={Calendar} title="No upcoming calls" />
-                  )}
+                  {!data.events.length && <Empty icon={Calendar} title="No upcoming calls" />}
                 </div>
               </Section>
               <Section
@@ -88,29 +70,20 @@ export function FocalPoint() {
               >
                 <div className="stackSm">
                   {data.decisions.slice(0, 4).map((item) => (
-                    <A
-                      key={item.id}
-                      href={`/council/${item.id}`}
-                      className="card recordRow"
-                    >
+                    <A key={item.id} href={`/council/${item.id}`} className="card recordRow">
                       <Gavel size={20} aria-hidden />
                       <div>
                         <strong>{item.title}</strong>
                         <p className="meta">{item.bodyName}</p>
                         <span className="chip chip-neutral">
-                          {item.stage
-                            .replaceAll('_', ' ')
-                            .replace(/^./, (c) => c.toUpperCase())}
+                          {item.stage.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase())}
                         </span>
                       </div>
                       <Arrow size={17} aria-hidden />
                     </A>
                   ))}
                   {!data.decisions.length && (
-                    <Empty
-                      icon={Gavel}
-                      title="No active decisions in your bodies"
-                    />
+                    <Empty icon={Gavel} title="No active decisions in your bodies" />
                   )}
                 </div>
               </Section>
@@ -125,23 +98,15 @@ export function FocalPoint() {
             >
               <div className="cardGrid">
                 {data.submissions.slice(0, 3).map((item) => (
-                  <A
-                    key={item.slug}
-                    href={`/submissions/${item.slug}`}
-                    className="card entityCard"
-                  >
+                  <A key={item.slug} href={`/submissions/${item.slug}`} className="card entityCard">
                     <FileText size={22} aria-hidden />
                     <h3>{item.title}</h3>
-                    <p className="meta">
-                      {item.wg?.name || 'Cross-constituency'}
-                    </p>
+                    <p className="meta">{item.wg?.name || 'Cross-constituency'}</p>
                     <span className="chip chip-neutral">Open</span>
                   </A>
                 ))}
               </div>
-              {!data.submissions.length && (
-                <Empty icon={FileText} title="No open submissions" />
-              )}
+              {!data.submissions.length && <Empty icon={FileText} title="No open submissions" />}
             </Section>
             <Section
               label="Mandate-holder contacts"
@@ -170,11 +135,7 @@ export function FocalPoint() {
             >
               <div className="cardGrid">
                 {data.groups.map((group) => (
-                  <A
-                    key={group.slug}
-                    href={`/groups/${group.slug}`}
-                    className="card entityCard"
-                  >
+                  <A key={group.slug} href={`/groups/${group.slug}`} className="card entityCard">
                     <Users size={22} aria-hidden />
                     <h3>{group.name}</h3>
                     <p className="meta">{group.focusLine}</p>

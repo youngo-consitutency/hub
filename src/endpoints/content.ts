@@ -8,18 +8,11 @@ import { audit } from '../lib/audit'
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
   if (!isVerifiedAccount(account))
-    throw new ApiError(
-      403,
-      'not_verified',
-      'Complete the membership course to use this feature.',
-    )
+    throw new ApiError(403, 'not_verified', 'Complete the membership course to use this feature.')
   const access = await getAccessProfile(req, account)
-  const canDraft =
-    hasCapability(access, 'content.draft') || account.role === 'admin'
-  const canReview =
-    hasCapability(access, 'content.review') || account.role === 'admin'
-  const canPublish =
-    hasCapability(access, 'content.publish') || account.role === 'admin'
+  const canDraft = hasCapability(access, 'content.draft') || account.role === 'admin'
+  const canReview = hasCapability(access, 'content.review') || account.role === 'admin'
+  const canPublish = hasCapability(access, 'content.publish') || account.role === 'admin'
   return { account, access, canDraft, canReview, canPublish }
 }
 
@@ -29,20 +22,13 @@ const draftView = (d: any) => ({
   contentKey: d.contentKey,
   payload: d.payload,
   status: d.status,
-  createdBy:
-    typeof d.author === 'object' ? d.author?.id : d.author,
+  createdBy: typeof d.author === 'object' ? d.author?.id : d.author,
   creatorName:
-    typeof d.author === 'object'
-      ? d.author?.name || d.author?.displayName || null
-      : null,
-  creatorEmail:
-    typeof d.author === 'object' ? d.author?.email : null,
-  reviewedBy:
-    typeof d.reviewer === 'object' ? d.reviewer?.id : d.reviewer,
+    typeof d.author === 'object' ? d.author?.name || d.author?.displayName || null : null,
+  creatorEmail: typeof d.author === 'object' ? d.author?.email : null,
+  reviewedBy: typeof d.reviewer === 'object' ? d.reviewer?.id : d.reviewer,
   reviewerName:
-    typeof d.reviewer === 'object'
-      ? d.reviewer?.name || d.reviewer?.displayName || null
-      : null,
+    typeof d.reviewer === 'object' ? d.reviewer?.name || d.reviewer?.displayName || null : null,
   reviewNote: d.reviewNote || null,
   createdAt: d.createdAt,
   updatedAt: d.updatedAt,
@@ -97,14 +83,16 @@ async function applyToLive(
       endsAt: payload.endsAt || payload.startsAt,
       description: payload.description || '',
       workingGroup: payload.wgSlug
-        ? ((
-            await req.payload.find({
-              collection: 'working-groups',
-              where: { slug: { equals: payload.wgSlug } },
-              limit: 1,
-              overrideAccess: true,
-            })
-          ).docs[0] as any)?.id
+        ? (
+            (
+              await req.payload.find({
+                collection: 'working-groups',
+                where: { slug: { equals: payload.wgSlug } },
+                limit: 1,
+                overrideAccess: true,
+              })
+            ).docs[0] as any
+          )?.id
         : null,
       meetingUrl: payload.meetingUrl || null,
       recordingUrl: payload.recordingUrl || null,
@@ -199,19 +187,16 @@ export const contentEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const { account, canDraft, canReview, canPublish } = await draftAccess(req)
-      if (!canDraft && !canReview)
-        throw fail.forbidden('Content workspace access is not assigned.')
+      if (!canDraft && !canReview) throw fail.forbidden('Content workspace access is not assigned.')
       const { docs } = await req.payload.find({
         collection: 'content-drafts',
-        where: canReview
-          ? { status: { not_equals: 'draft' } }
-          : { author: { equals: account.id } },
+        where: canReview ? { status: { not_equals: 'draft' } } : { author: { equals: account.id } },
         sort: '-updatedAt',
         limit: 300,
         overrideAccess: true,
         depth: 1,
       })
-      const groups = (await (await store.listGroups(req))).map((g) => ({
+      const groups = (await await store.listGroups(req)).map((g) => ({
         slug: g.slug,
         name: g.name,
       }))
@@ -319,9 +304,7 @@ export const contentEndpoints: Endpoint[] = [
       if (String(draft.author?.id ?? draft.author) === String(account.id))
         throw fail.forbidden('Authors cannot review their own draft.')
       const b = ((await req.json?.()) || {}) as any
-      const decision = ['approve', 'decline', 'request_changes'].includes(
-        b.decision,
-      )
+      const decision = ['approve', 'decline', 'request_changes'].includes(b.decision)
         ? b.decision
         : null
       if (!decision)
@@ -382,12 +365,9 @@ export const contentEndpoints: Endpoint[] = [
       const slug = String(req.routeParams?.slug)
       let item: any = null
       if (contentType === 'event') item = await store.getEvent(req, slug)
-      else if (contentType === 'announcement')
-        item = await store.getAnnouncement(req, slug)
+      else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
       else if (contentType === 'resource')
-        item = (
-          await store.listResources(req)
-        ).find((r: any) => r.slug === slug)
+        item = (await store.listResources(req)).find((r: any) => r.slug === slug)
       if (!item) throw fail.notFound()
       return json({ item })
     }),
@@ -425,15 +405,11 @@ export const contentEndpoints: Endpoint[] = [
         throw fail.validation({
           contentType: 'contentType must be event or announcement.',
         })
-      const collection =
-        contentType === 'event' ? 'content-events' : 'content-announcements'
+      const collection = contentType === 'event' ? 'content-events' : 'content-announcements'
       const { docs } = await req.payload.find({
         collection,
         where: {
-          and: [
-            { slug: { equals: slug } },
-            { state: { not_equals: 'unpublished' } },
-          ],
+          and: [{ slug: { equals: slug } }, { state: { not_equals: 'unpublished' } }],
         },
         limit: 1,
         overrideAccess: true,
@@ -466,7 +442,10 @@ export const contentEndpoints: Endpoint[] = [
               ctaDeadlineAt: live.ctaDeadlineAt || '',
             }
       const b = ((await req.json?.()) || {}) as any
-      const cleanReason = String(b.reason || '').trim().slice(0, 500) || null
+      const cleanReason =
+        String(b.reason || '')
+          .trim()
+          .slice(0, 500) || null
       const now = new Date().toISOString()
       await req.payload.update({
         collection,

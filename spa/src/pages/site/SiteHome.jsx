@@ -131,10 +131,7 @@ export function SiteHome() {
           </div>
         </section>
 
-        <section
-          className="siteSection siteValuesSection"
-          aria-labelledby="values-heading"
-        >
+        <section className="siteSection siteValuesSection" aria-labelledby="values-heading">
           <p className="pageEyebrow">{principles.eyebrow}</p>
           <h2 id="values-heading">{principles.title}</h2>
           <p className="siteSectionLead">{principles.lead}</p>

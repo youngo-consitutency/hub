@@ -16,9 +16,7 @@ export function normalizeProjectInput(input: any = {}) {
     callId,
     title: requiredText(input.title, 'title', 180),
     purpose: requiredText(input.purpose, 'purpose', 4000),
-    workingGroupSlug: input.workingGroupSlug
-      ? String(input.workingGroupSlug).slice(0, 120)
-      : null,
+    workingGroupSlug: input.workingGroupSlug ? String(input.workingGroupSlug).slice(0, 120) : null,
     intendedSubmittingEntity: input.intendedSubmittingEntity
       ? String(input.intendedSubmittingEntity).slice(0, 240)
       : null,
@@ -32,19 +30,12 @@ export function normalizeProjectInput(input: any = {}) {
 export function normalizeDraftVersionInput(input: any = {}) {
   const expectedVersion = Number(input.expectedVersion)
   if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
-    throw new ContributionError(
-      422,
-      'validation',
-      'expectedVersion must be a positive integer.',
-    )
+    throw new ContributionError(422, 'validation', 'expectedVersion must be a positive integer.')
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedVersion,
     contentText: requiredText(input.contentText, 'contentText', 500_000),
-    externalSnapshotUrl: optionalUrl(
-      input.externalSnapshotUrl,
-      'externalSnapshotUrl',
-    ),
+    externalSnapshotUrl: optionalUrl(input.externalSnapshotUrl, 'externalSnapshotUrl'),
     citations: citations(input.citations),
   }
 }
@@ -55,40 +46,22 @@ export function normalizeAmendmentInput(input: any = {}) {
     throw new ContributionError(422, 'validation', 'Invalid amendment target.')
   const operation = String(input.operation || '')
   if (!['insert', 'replace', 'delete'].includes(operation))
-    throw new ContributionError(
-      422,
-      'validation',
-      'Invalid amendment operation.',
-    )
+    throw new ContributionError(422, 'validation', 'Invalid amendment operation.')
   const proposedText =
-    operation === 'delete'
-      ? null
-      : requiredText(input.proposedText, 'proposedText', 100_000)
+    operation === 'delete' ? null : requiredText(input.proposedText, 'proposedText', 100_000)
   if (!input.stableAnchor || typeof input.stableAnchor !== 'object')
-    throw new ContributionError(
-      422,
-      'validation',
-      'A stable paragraph anchor is required.',
-    )
+    throw new ContributionError(422, 'validation', 'A stable paragraph anchor is required.')
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     projectId: input.projectId ? String(input.projectId) : null,
     targetType,
     targetDocumentVersionId:
       targetType === 'official_document'
-        ? requiredText(
-            input.targetDocumentVersionId,
-            'targetDocumentVersionId',
-            100,
-          )
+        ? requiredText(input.targetDocumentVersionId, 'targetDocumentVersionId', 100)
         : null,
     targetProjectVersionId:
       targetType === 'internal_draft'
-        ? requiredText(
-            input.targetProjectVersionId,
-            'targetProjectVersionId',
-            100,
-          )
+        ? requiredText(input.targetProjectVersionId, 'targetProjectVersionId', 100)
         : null,
     stableAnchor: input.stableAnchor,
     operation,
@@ -102,24 +75,12 @@ export function normalizeAmendmentInput(input: any = {}) {
 export function normalizeAmendmentRevisionInput(input: any = {}) {
   const expectedVersion = Number(input.expectedVersion)
   if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
-    throw new ContributionError(
-      422,
-      'validation',
-      'expectedVersion must be a positive integer.',
-    )
+    throw new ContributionError(422, 'validation', 'expectedVersion must be a positive integer.')
   const operation = String(input.operation || '')
   if (!['insert', 'replace', 'delete'].includes(operation))
-    throw new ContributionError(
-      422,
-      'validation',
-      'Invalid amendment operation.',
-    )
+    throw new ContributionError(422, 'validation', 'Invalid amendment operation.')
   if (!input.stableAnchor || typeof input.stableAnchor !== 'object')
-    throw new ContributionError(
-      422,
-      'validation',
-      'A stable paragraph anchor is required.',
-    )
+    throw new ContributionError(422, 'validation', 'A stable paragraph anchor is required.')
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedVersion,
@@ -127,9 +88,7 @@ export function normalizeAmendmentRevisionInput(input: any = {}) {
     operation,
     originalText: requiredText(input.originalText, 'originalText', 100_000),
     proposedText:
-      operation === 'delete'
-        ? null
-        : requiredText(input.proposedText, 'proposedText', 100_000),
+      operation === 'delete' ? null : requiredText(input.proposedText, 'proposedText', 100_000),
     rationale: requiredText(input.rationale, 'rationale', 20_000),
     citations: citations(input.citations),
   }
@@ -138,33 +97,14 @@ export function normalizeAmendmentRevisionInput(input: any = {}) {
 export function normalizeReconciliationSuggestionInput(input: any = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
   const confidence = Number(input.confidence)
-  if (
-    !Number.isInteger(expectedAmendmentVersion) ||
-    expectedAmendmentVersion < 1
-  )
-    throw new ContributionError(
-      422,
-      'validation',
-      'Expected amendment version is required.',
-    )
+  if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
+    throw new ContributionError(422, 'validation', 'Expected amendment version is required.')
   if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1)
-    throw new ContributionError(
-      422,
-      'validation',
-      'Mapping confidence must be between 0 and 1.',
-    )
+    throw new ContributionError(422, 'validation', 'Mapping confidence must be between 0 and 1.')
   if (!input.suggestedAnchor || typeof input.suggestedAnchor !== 'object')
-    throw new ContributionError(
-      422,
-      'validation',
-      'A suggested anchor is required.',
-    )
+    throw new ContributionError(422, 'validation', 'A suggested anchor is required.')
   if (!input.mappingEvidence || typeof input.mappingEvidence !== 'object')
-    throw new ContributionError(
-      422,
-      'validation',
-      'Mapping evidence is required.',
-    )
+    throw new ContributionError(422, 'validation', 'Mapping evidence is required.')
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedAmendmentVersion,
@@ -181,15 +121,8 @@ export function normalizeReconciliationSuggestionInput(input: any = {}) {
 
 export function normalizeReconciliationConfirmationInput(input: any = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
-  if (
-    !Number.isInteger(expectedAmendmentVersion) ||
-    expectedAmendmentVersion < 1
-  )
-    throw new ContributionError(
-      422,
-      'validation',
-      'Expected amendment version is required.',
-    )
+  if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
+    throw new ContributionError(422, 'validation', 'Expected amendment version is required.')
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
     expectedAmendmentVersion,

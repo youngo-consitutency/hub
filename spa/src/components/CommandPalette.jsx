@@ -164,20 +164,13 @@ function PaletteBody({ onClose }) {
   }
 
   useEffect(() => {
-    listRef.current
-      ?.querySelector('.paletteItem.active')
-      ?.scrollIntoView({ block: 'nearest' })
+    listRef.current?.querySelector('.paletteItem.active')?.scrollIntoView({ block: 'nearest' })
   }, [active])
 
   return (
     <>
       <div className="paletteInputRow">
-        <Search
-          size={18}
-          strokeWidth={1.75}
-          aria-hidden
-          style={{ color: 'var(--text-3)' }}
-        />
+        <Search size={18} strokeWidth={1.75} aria-hidden style={{ color: 'var(--text-3)' }} />
         <input
           className="paletteInput"
           autoFocus
@@ -186,9 +179,7 @@ function PaletteBody({ onClose }) {
           aria-controls="command-palette-results"
           aria-expanded="true"
           aria-autocomplete="list"
-          aria-activedescendant={
-            flat[active] ? `command-palette-result-${active}` : undefined
-          }
+          aria-activedescendant={flat[active] ? `command-palette-result-${active}` : undefined}
           placeholder="Search meetings, opportunities, decisions, groups…"
           value={q}
           onChange={(e) => setQ(e.target.value)}

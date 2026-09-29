@@ -19,9 +19,7 @@ console.log('')
 console.log('Subject (add to .env as VAPID_SUBJECT):')
 console.log(
   process.env.VAPID_SUBJECT ||
-    (process.env.EMAIL_FROM
-      ? `mailto:${process.env.EMAIL_FROM}`
-      : 'mailto:<your-hub-admin-email>'),
+    (process.env.EMAIL_FROM ? `mailto:${process.env.EMAIL_FROM}` : 'mailto:<your-hub-admin-email>'),
 )
 console.log('')
 console.log('Add these to your deployment environment variables.')

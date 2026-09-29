@@ -96,13 +96,9 @@ export function GysPolicyTeam() {
     try {
       setActionError(null)
       await apiPost('/member/team/gys/contributions', {
-        title: bullet.theme
-          ? `${bullet.theme} — synthesis demand`
-          : 'Synthesis demand',
+        title: bullet.theme ? `${bullet.theme} — synthesis demand` : 'Synthesis demand',
         theme: bullet.theme || '',
-        body: `${bullet.text}\n\nCited inputs: ${bullet.citations
-          .map((c) => c.title)
-          .join('; ')}`,
+        body: `${bullet.text}\n\nCited inputs: ${bullet.citations.map((c) => c.title).join('; ')}`,
       })
       query.retry()
     } catch (error) {
@@ -191,9 +187,7 @@ export function GysPolicyTeam() {
             <div className="cycleBanner card">
               <div>
                 <span className="taskState taskState-review">Active cycle</span>
-                <h2 style={{ marginTop: 8 }}>
-                  {data.current?.title || 'Global Youth Statement'}
-                </h2>
+                <h2 style={{ marginTop: 8 }}>{data.current?.title || 'Global Youth Statement'}</h2>
                 <p className="meta" style={{ marginTop: 4 }}>
                   {data.current?.tagline || data.current?.status}
                 </p>
@@ -234,17 +228,13 @@ export function GysPolicyTeam() {
             </div>
 
             {panel === 'import' && (
-              <SidePanel
-                title="Import Google Form responses"
-                onClose={() => setPanel(null)}
-              >
+              <SidePanel title="Import Google Form responses" onClose={() => setPanel(null)}>
                 {actionError && <ErrorCard message={actionError} />}
                 {importMessage && <p className="meta">{importMessage}</p>}
                 <div className="stack">
                   <p className="meta">
-                    Export responses from the official GYS 2026 form as CSV,
-                    paste them below, preview the column mapping, then import
-                    into the contribution queue.
+                    Export responses from the official GYS 2026 form as CSV, paste them below,
+                    preview the column mapping, then import into the contribution queue.
                   </p>
                   <label className="field">
                     CSV export
@@ -313,18 +303,9 @@ export function GysPolicyTeam() {
                     <strong>{data.synthesis.answer}</strong>
                   </div>
                   <div className="gysCountGrid">
-                    <CountList
-                      title="By theme"
-                      items={data.synthesis.counts?.byTheme}
-                    />
-                    <CountList
-                      title="By region"
-                      items={data.synthesis.counts?.byRegion}
-                    />
-                    <CountList
-                      title="By country"
-                      items={data.synthesis.counts?.byCountry}
-                    />
+                    <CountList title="By theme" items={data.synthesis.counts?.byTheme} />
+                    <CountList title="By region" items={data.synthesis.counts?.byRegion} />
+                    <CountList title="By country" items={data.synthesis.counts?.byCountry} />
                     <CountList
                       title="By submitter type"
                       items={data.synthesis.counts?.bySubmitterType}
@@ -333,14 +314,11 @@ export function GysPolicyTeam() {
                   {data.synthesis.bullets?.length > 0 && (
                     <ul className="gysSynthesisBullets">
                       {data.synthesis.bullets.map((bullet, index) => (
-                        <li
-                          key={`${bullet.citations[0]?.contributionId}-${index}`}
-                        >
+                        <li key={`${bullet.citations[0]?.contributionId}-${index}`}>
                           <div>
                             <p>{bullet.text}</p>
                             <p className="meta">
-                              Cited:{' '}
-                              {bullet.citations.map((c) => c.title).join(', ')}
+                              Cited: {bullet.citations.map((c) => c.title).join(', ')}
                             </p>
                           </div>
                           <Button
@@ -355,9 +333,7 @@ export function GysPolicyTeam() {
                       ))}
                     </ul>
                   )}
-                  <p className="meta intelligenceCaveat">
-                    {data.synthesis.caveat}
-                  </p>
+                  <p className="meta intelligenceCaveat">{data.synthesis.caveat}</p>
                 </div>
               )}
             </Section>
@@ -378,10 +354,7 @@ export function GysPolicyTeam() {
             <Section label="Contribution workflow">
               {actionError && !panel && <ErrorCard message={actionError} />}
               {panel === 'contribution' && (
-                <SidePanel
-                  title="Add contribution"
-                  onClose={() => setPanel(null)}
-                >
+                <SidePanel title="Add contribution" onClose={() => setPanel(null)}>
                   {actionError && <ErrorCard message={actionError} />}
                   <form className="stack" onSubmit={create}>
                     <div className="formGrid">
@@ -391,9 +364,7 @@ export function GysPolicyTeam() {
                           className="input"
                           required
                           value={draft.title}
-                          onChange={(event) =>
-                            setDraft({ ...draft, title: event.target.value })
-                          }
+                          onChange={(event) => setDraft({ ...draft, title: event.target.value })}
                         />
                       </label>
                       <label className="field">
@@ -401,9 +372,7 @@ export function GysPolicyTeam() {
                         <input
                           className="input"
                           value={draft.theme}
-                          onChange={(event) =>
-                            setDraft({ ...draft, theme: event.target.value })
-                          }
+                          onChange={(event) => setDraft({ ...draft, theme: event.target.value })}
                         />
                       </label>
                     </div>
@@ -414,18 +383,11 @@ export function GysPolicyTeam() {
                         required
                         rows="3"
                         value={draft.body}
-                        onChange={(event) =>
-                          setDraft({ ...draft, body: event.target.value })
-                        }
+                        onChange={(event) => setDraft({ ...draft, body: event.target.value })}
                       />
                     </label>
                     <div>
-                      <Button
-                        type="submit"
-                        sm
-                        variant="primary"
-                        disabled={busy}
-                      >
+                      <Button type="submit" sm variant="primary" disabled={busy}>
                         Add contribution
                       </Button>
                     </div>
@@ -487,9 +449,7 @@ export function GysPolicyTeam() {
                     >
                       <div>
                         <strong>{item.title}</strong>
-                        <p className="meta">
-                          {item.wg?.name || 'Cross-constituency input'}
-                        </p>
+                        <p className="meta">{item.wg?.name || 'Cross-constituency input'}</p>
                       </div>
                       <StatusChip status={item.status} />
                     </A>
@@ -503,9 +463,9 @@ export function GysPolicyTeam() {
                 <div>
                   <strong>Authorship and review are traceable</strong>
                   <p className="meta">
-                    Each contribution records author, reviewer, version, status
-                    changes, and approval decisions. Imported form rows keep
-                    source metadata for the policy team only.
+                    Each contribution records author, reviewer, version, status changes, and
+                    approval decisions. Imported form rows keep source metadata for the policy team
+                    only.
                   </p>
                 </div>
               </div>

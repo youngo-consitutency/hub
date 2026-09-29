@@ -18,9 +18,7 @@ export function A({
   children,
   onClick,
   target,
-  peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(
-    href || '',
-  ),
+  peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(href || ''),
   ...rest
 }) {
   return (
@@ -48,9 +46,7 @@ export function A({
           peek
             ? {
                 state: {
-                  peekBackground:
-                    background ||
-                    window.location.pathname + window.location.search,
+                  peekBackground: background || window.location.pathname + window.location.search,
                 },
                 scroll: false,
               }
@@ -65,20 +61,8 @@ export function A({
   )
 }
 
-export function Button({
-  variant = 'secondary',
-  sm,
-  glow,
-  className = '',
-  ...rest
-}) {
-  const cls = [
-    'btn',
-    `btn-${variant}`,
-    sm && 'btn-sm',
-    glow && 'btn-glow',
-    className,
-  ]
+export function Button({ variant = 'secondary', sm, glow, className = '', ...rest }) {
+  const cls = ['btn', `btn-${variant}`, sm && 'btn-sm', glow && 'btn-glow', className]
     .filter(Boolean)
     .join(' ')
   return <button type="button" className={cls} {...rest} />
@@ -195,12 +179,7 @@ export function SortButton({ active, icon: Icon, children, ...rest }) {
   )
 }
 
-export function FilterMenu({
-  children,
-  activeCount = 0,
-  label = 'Filters',
-  onClear,
-}) {
+export function FilterMenu({ children, activeCount = 0, label = 'Filters', onClear }) {
   return (
     <section className="filterMenu" aria-label={label}>
       <div className="filterSummary">
@@ -233,13 +212,7 @@ export function FilterMenu({
 }
 
 /** @param {{ title: import("react").ReactNode, description?: import("react").ReactNode, action?: import("react").ReactNode, icon?: import("react").ElementType, children?: import("react").ReactNode }} props */
-export function PageHeader({
-  title,
-  description,
-  action,
-  children,
-  icon: Icon,
-}) {
+export function PageHeader({ title, description, action, children, icon: Icon }) {
   return (
     <header className="pageHeader">
       <div className="pageHeaderRow">
@@ -341,11 +314,7 @@ export function LifecycleTiming({
   return (
     <div className={`lifecycleTiming ${className}`.trim()} aria-label={label}>
       {status && (
-        <StatusChip
-          status={status}
-          filterState={statusFilterState}
-          onClick={onStatusFilter}
-        />
+        <StatusChip status={status} filterState={statusFilterState} onClick={onStatusFilter} />
       )}
       {moment && (
         <div className="lifecycleTimingDate">
@@ -359,13 +328,9 @@ export function LifecycleTiming({
         </div>
       )}
       {remaining && (
-        <span
-          className={`lifecycleTimingRemaining lifecycleTimingRemaining-${remaining.tone}`}
-        >
+        <span className={`lifecycleTimingRemaining lifecycleTimingRemaining-${remaining.tone}`}>
           <AlarmClock size={13} strokeWidth={1.75} aria-hidden />
-          {remaining.label === 'closed'
-            ? 'Closed'
-            : `${remaining.label} remaining`}
+          {remaining.label === 'closed' ? 'Closed' : `${remaining.label} remaining`}
         </span>
       )}
     </div>
@@ -425,9 +390,7 @@ export function Empty({ icon: Icon, title, body, cta }) {
 export function ErrorCard({ message, onRetry }) {
   return (
     <div className="card rowBetween errorCard" role="alert">
-      <span className="meta">
-        {message || 'Couldn’t load this — try again.'}
-      </span>
+      <span className="meta">{message || 'Couldn’t load this — try again.'}</span>
       {onRetry && (
         <Button sm variant="ghost" onClick={onRetry}>
           <RefreshCw size={16} strokeWidth={1.75} aria-hidden /> Retry
@@ -469,8 +432,7 @@ export function Timeline({ steps, currentIndex }) {
 // Wrap an async section: shows skeletons, error-retry, or children(data).
 export function Async({ query, skeletons = 3, children, empty }) {
   if (query.loading) return <Skeletons n={skeletons} />
-  if (query.error)
-    return <ErrorCard message={query.error} onRetry={query.retry} />
+  if (query.error) return <ErrorCard message={query.error} onRetry={query.retry} />
   if (empty && empty(query.data)) return empty(query.data)
   return children(query.data)
 }

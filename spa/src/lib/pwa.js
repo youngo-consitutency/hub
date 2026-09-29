@@ -3,14 +3,9 @@ const HUB_CACHE_PREFIX = 'youngo-hub-'
 
 export async function disablePWAInDevelopment() {
   try {
-    if (
-      'serviceWorker' in navigator &&
-      navigator.serviceWorker.getRegistrations
-    ) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
       const registrations = await navigator.serviceWorker.getRegistrations()
-      await Promise.all(
-        registrations.map((registration) => registration.unregister()),
-      )
+      await Promise.all(registrations.map((registration) => registration.unregister()))
     }
     if ('caches' in window) {
       const names = await window.caches.keys()
@@ -40,15 +35,8 @@ export async function registerServiceWorker() {
       const newWorker = registration.installing
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
-          if (
-            newWorker.state === 'installed' &&
-            navigator.serviceWorker.controller
-          ) {
-            if (
-              confirm(
-                'A new version of YOUNGO Hub is available. Reload to update?',
-              )
-            ) {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (confirm('A new version of YOUNGO Hub is available. Reload to update?')) {
               window.location.reload()
             }
           }
@@ -84,10 +72,7 @@ export function isPushSupported() {
 export function isIOS() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent || ''
-  return (
-    /iPad|iPhone|iPod/.test(ua) ||
-    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
-  )
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
 }
 
 /**
@@ -139,8 +124,7 @@ export async function subscribeToPush(vapidPublicKey) {
   }
 
   try {
-    const registration =
-      (await getPushRegistration()) || (await registerServiceWorker())
+    const registration = (await getPushRegistration()) || (await registerServiceWorker())
     if (!registration) {
       return {
         success: false,
@@ -276,8 +260,7 @@ export async function requestNotificationPermission() {
  */
 export function isPWA() {
   return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true
+    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
   )
 }
 
@@ -298,8 +281,7 @@ export function setupInstallPrompt(onPrompt) {
 }
 
 export async function promptInstall() {
-  if (!deferredInstallPrompt)
-    return { success: false, error: 'No install prompt available' }
+  if (!deferredInstallPrompt) return { success: false, error: 'No install prompt available' }
   deferredInstallPrompt.prompt()
   const { outcome } = await deferredInstallPrompt.userChoice
   deferredInstallPrompt = null
@@ -312,9 +294,7 @@ export function isInstallPromptAvailable() {
 
 export async function initPWA() {
   setupInstallPrompt((available) => {
-    window.dispatchEvent(
-      new CustomEvent('pwa-install-available', { detail: { available } }),
-    )
+    window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }))
   })
   const registration = await registerServiceWorker()
   return { registration, isStandalone: isPWA() }

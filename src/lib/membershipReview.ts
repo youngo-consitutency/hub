@@ -3,7 +3,6 @@ import { requirePgPool, getPgPool, pickField } from './pg'
 
 // Shapes consumed by the membership-team review queue.
 
-
 const REVIEW_COLUMNS = `
   id, email, name, first_name, last_name, phone, gender, gender_other,
   entity_type, membership_track, country, date_of_birth, nationality, region, age_band,
@@ -24,8 +23,7 @@ const REVIEW_COLUMNS = `
 `
 
 function textList(value: any): string[] {
-  if (Array.isArray(value))
-    return value.map((item) => String(item || '').trim()).filter(Boolean)
+  if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean)
   if (typeof value === 'string' && value.trim()) return [value.trim()]
   return []
 }
@@ -116,11 +114,7 @@ export function membershipReviewAccount(row: any) {
       minorityIdentity: minorityGroups.length || minorityOther ? true : false,
       minorityGroups,
       minorityOther,
-      memberOfAccreditedNgo: pickBool(
-        row,
-        'member_of_accredited_ngo',
-        'memberOfAccreditedNgo',
-      ),
+      memberOfAccreditedNgo: pickBool(row, 'member_of_accredited_ngo', 'memberOfAccreditedNgo'),
       organizationName: account.organizationName,
       organizationType: account.organizationType,
       isUnfcccAdmitted: account.isUnfcccAdmitted,
@@ -131,28 +125,16 @@ export function membershipReviewAccount(row: any) {
       orgOperateIn: pickField(row, 'org_operate_in', 'orgOperateIn'),
       under18,
       guardianName: under18 ? pickField(row, 'guardian_name', 'guardianName') : null,
-      guardianEmail: under18
-        ? pickField(row, 'guardian_email', 'guardianEmail')
-        : null,
-      guardianConsent: under18
-        ? pickBool(row, 'guardian_consent', 'guardianConsent')
-        : null,
+      guardianEmail: under18 ? pickField(row, 'guardian_email', 'guardianEmail') : null,
+      guardianConsent: under18 ? pickBool(row, 'guardian_consent', 'guardianConsent') : null,
       dcpName: pickField(row, 'dcp_name', 'dcpName'),
       dcpEmail: pickField(row, 'dcp_email', 'dcpEmail'),
       dcpPhone: pickField(row, 'dcp_phone', 'dcpPhone'),
       ycpName: pickField(row, 'ycp_name', 'ycpName'),
       ycpEmail: pickField(row, 'ycp_email', 'ycpEmail'),
       ycpPhone: pickField(row, 'ycp_phone', 'ycpPhone'),
-      acceptCodeOfConduct: pickBool(
-        row,
-        'accept_code_of_conduct',
-        'acceptCodeOfConduct',
-      ),
-      acceptDataProtection: pickBool(
-        row,
-        'accept_data_protection',
-        'acceptDataProtection',
-      ),
+      acceptCodeOfConduct: pickBool(row, 'accept_code_of_conduct', 'acceptCodeOfConduct'),
+      acceptDataProtection: pickBool(row, 'accept_data_protection', 'acceptDataProtection'),
       acceptPrinciples: pickBool(row, 'accept_principles', 'acceptPrinciples'),
       acceptCoiPolicy: pickBool(row, 'accept_coi_policy', 'acceptCoiPolicy'),
       policiesAccepted: pickBool(row, 'policies_accepted', 'policiesAccepted'),
@@ -183,18 +165,15 @@ function profileShape(row: any, account: any) {
   const photoUpdatedAt = row?.photo_updated_at ?? row?.photoUpdatedAt ?? null
   return {
     accountId: account.id,
-    displayName:
-      row?.display_name ?? row?.displayName ?? account.name ?? 'YOUNGO member',
+    displayName: row?.display_name ?? row?.displayName ?? account.name ?? 'YOUNGO member',
     headline: row?.headline || '',
     bio: row?.bio || '',
     pronouns: row?.pronouns || '',
     expertiseTags: row?.expertise_tags ?? row?.expertiseTags ?? [],
-    directoryVisibility:
-      row?.directory_visibility ?? row?.directoryVisibility ?? 'private',
+    directoryVisibility: row?.directory_visibility ?? row?.directoryVisibility ?? 'private',
     showCountry: Boolean(row?.show_country ?? row?.showCountry),
     showOrganization: Boolean(row?.show_organization ?? row?.showOrganization),
-    showWorkingGroups:
-      row?.show_working_groups ?? row?.showWorkingGroups ?? true,
+    showWorkingGroups: row?.show_working_groups ?? row?.showWorkingGroups ?? true,
     showRoles: row?.show_roles ?? row?.showRoles ?? true,
     roleTitle: row?.role_title ?? row?.roleTitle ?? '',
     revision: row?.revision || 1,

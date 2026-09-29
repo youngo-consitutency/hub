@@ -1,14 +1,7 @@
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import {
-  Async,
-  Empty,
-  FilterMenu,
-  FilterPill,
-  PageHeader,
-  SortButton,
-} from '../components/ui.jsx'
+import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui.jsx'
 import { CoyCard } from '../components/cards.jsx'
 import { regionFilterPrefix, regionLabel } from '../lib/regions.js'
 import {
@@ -19,11 +12,7 @@ import {
   TbMapPin as MapPin,
   TbSearch as Search,
 } from 'react-icons/tb'
-import {
-  activeFilterCount,
-  matchesFilters,
-  toggleFilter,
-} from '../lib/filterState.js'
+import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState.js'
 
 const TYPES = [
   { key: 'all', label: 'All', icon: Layers3 },
@@ -83,16 +72,9 @@ export function Coys() {
             )
             .sort((a, b) => {
               if (sort === 'region') {
-                const regionOrder = REGIONS.findIndex(
-                  (region) => region.key === a.region,
-                )
-                const otherRegionOrder = REGIONS.findIndex(
-                  (region) => region.key === b.region,
-                )
-                return (
-                  regionOrder - otherRegionOrder ||
-                  a.title.localeCompare(b.title)
-                )
+                const regionOrder = REGIONS.findIndex((region) => region.key === a.region)
+                const otherRegionOrder = REGIONS.findIndex((region) => region.key === b.region)
+                return regionOrder - otherRegionOrder || a.title.localeCompare(b.title)
               }
               return a.title.localeCompare(b.title)
             })
@@ -135,10 +117,7 @@ export function Coys() {
                       setRegionFilters({})
                     }}
                     label="Filter conferences"
-                    activeCount={
-                      activeFilterCount(typeFilters) +
-                      activeFilterCount(regionFilters)
-                    }
+                    activeCount={activeFilterCount(typeFilters) + activeFilterCount(regionFilters)}
                   >
                     <fieldset className="filterLevel">
                       <legend>Conference type</legend>
@@ -146,22 +125,15 @@ export function Coys() {
                         {TYPES.map((item) => (
                           <FilterPill
                             key={item.key}
-                            active={
-                              item.key === 'all' &&
-                              activeFilterCount(typeFilters) === 0
-                            }
+                            active={item.key === 'all' && activeFilterCount(typeFilters) === 0}
                             state={
-                              item.key === 'all'
-                                ? undefined
-                                : typeFilters[item.key] || 'neutral'
+                              item.key === 'all' ? undefined : typeFilters[item.key] || 'neutral'
                             }
                             icon={item.icon}
                             onClick={() => {
                               if (item.key === 'all') setTypeFilters({})
                               else {
-                                setTypeFilters((current) =>
-                                  toggleFilter(current, item.key),
-                                )
+                                setTypeFilters((current) => toggleFilter(current, item.key))
                               }
                             }}
                           >
@@ -176,14 +148,9 @@ export function Coys() {
                         {REGIONS.map((item) => (
                           <FilterPill
                             key={item.key}
-                            active={
-                              item.key === 'all' &&
-                              activeFilterCount(regionFilters) === 0
-                            }
+                            active={item.key === 'all' && activeFilterCount(regionFilters) === 0}
                             state={
-                              item.key === 'all'
-                                ? undefined
-                                : regionFilters[item.key] || 'neutral'
+                              item.key === 'all' ? undefined : regionFilters[item.key] || 'neutral'
                             }
                             icon={item.key === 'all' ? Map : undefined}
                             prefix={
@@ -194,9 +161,7 @@ export function Coys() {
                             onClick={() => {
                               if (item.key === 'all') setRegionFilters({})
                               else {
-                                setRegionFilters((current) =>
-                                  toggleFilter(current, item.key),
-                                )
+                                setRegionFilters((current) => toggleFilter(current, item.key))
                               }
                             }}
                           >
@@ -217,14 +182,10 @@ export function Coys() {
                       typeFilterState={typeFilters[c.type] || 'neutral'}
                       regionFilterState={regionFilters[c.region] || 'neutral'}
                       onTypeFilter={() =>
-                        setTypeFilters((current) =>
-                          toggleFilter(current, c.type),
-                        )
+                        setTypeFilters((current) => toggleFilter(current, c.type))
                       }
                       onRegionFilter={() =>
-                        setRegionFilters((current) =>
-                          toggleFilter(current, c.region),
-                        )
+                        setRegionFilters((current) => toggleFilter(current, c.region))
                       }
                     />
                   ))}

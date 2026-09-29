@@ -21,9 +21,7 @@ import { audit } from './audit'
 // helpers so there is exactly one state machine.
 
 export const ids = (rel: any): number[] =>
-  (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) =>
-    typeof x === 'object' ? x.id : x,
-  )
+  (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) => (typeof x === 'object' ? x.id : x))
 
 // Resolve by numeric id, or by the imported legacy platform uuid.
 export async function loadProposal(req: PayloadRequest, id: string | number) {
@@ -82,9 +80,11 @@ export async function recordEvent(
 
 export function isContactPerson(account: any, proposal: any): boolean {
   if (account.role === 'admin') return true
-  return ids(proposal.contactPersons).includes(account.id) ||
+  return (
+    ids(proposal.contactPersons).includes(account.id) ||
     proposal.proposedBy === account.id ||
     (proposal.proposedBy as any)?.id === account.id
+  )
 }
 
 // Who may raise flags / vote in a body (S13 §1: council members; WG/OT members
@@ -96,9 +96,7 @@ export async function isBodyMember(
 ): Promise<boolean> {
   if (VERIFIED_PLATFORM_ROLES.has(account.role)) return true
   const access = await getAccessProfile(req, account)
-  const scopeIds = new Set(
-    access.wgAssignments.map((w) => `working_group:${w.wgSlug}`),
-  )
+  const scopeIds = new Set(access.wgAssignments.map((w) => `working_group:${w.wgSlug}`))
   const teamIds = new Set(access.teamRoles)
   switch (proposal.body) {
     case 'council':
@@ -139,10 +137,7 @@ export async function isBodyMember(
   }
 }
 
-export async function countEligible(
-  req: PayloadRequest,
-  proposal: any,
-): Promise<number> {
+export async function countEligible(req: PayloadRequest, proposal: any): Promise<number> {
   // Eligible-voter registry snapshot for the 5% quorum (S09 §2 step 6).
   const where: any = {
     and: [
@@ -161,12 +156,10 @@ export async function countEligible(
     limit: 0,
     overrideAccess: true,
   })
-  if (proposal.body === 'constituency' || proposal.body === 'council')
-    return Math.max(totalDocs, 1)
+  if (proposal.body === 'constituency' || proposal.body === 'council') return Math.max(totalDocs, 1)
   // Scoped bodies: count their active assignments' accounts. Platform-bridged
   // bodies also count 'body'-scope rows.
-  const scopeTypes =
-    proposal.body === 'working_group' ? ['working_group', 'body'] : ['team']
+  const scopeTypes = proposal.body === 'working_group' ? ['working_group', 'body'] : ['team']
   const { totalDocs: members } = await req.payload.find({
     collection: 'assignments',
     where: {
@@ -237,7 +230,10 @@ export async function advanceIfDue(req: PayloadRequest, proposal: any) {
     })
     const cast = ballots.length
     const votesFor = (ballots as any[]).filter((b) => b.choice === 'for').length
-    if (requiresQuorum(proposal.decisionType) && !quorumMet(cast, proposal.eligibleVoterCount ?? 0)) {
+    if (
+      requiresQuorum(proposal.decisionType) &&
+      !quorumMet(cast, proposal.eligibleVoterCount ?? 0)
+    ) {
       // Quorum not met → the original proposal must be withdrawn (S09 §2).
       await update(
         { status: 'failed_quorum', decidedAt: new Date().toISOString() },
@@ -276,18 +272,12 @@ export async function checkVeto(req: PayloadRequest, proposal: any) {
   const { docs } = await req.payload.find({
     collection: 'decision-vetoes',
     where: {
-      and: [
-        { proposal: { equals: proposal.id } },
-        { status: { equals: 'confirmed' } },
-      ],
+      and: [{ proposal: { equals: proposal.id } }, { status: { equals: 'confirmed' } }],
     },
     limit: 500,
     overrideAccess: true,
   })
-  if (
-    proposal.status === 'voting' &&
-    vetoThresholdMet(docs as any[])
-  ) {
+  if (proposal.status === 'voting' && vetoThresholdMet(docs as any[])) {
     proposal = await req.payload.update({
       collection: 'decision-proposals',
       id: proposal.id,

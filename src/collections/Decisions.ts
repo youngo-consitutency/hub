@@ -28,13 +28,7 @@ export const DecisionProposals: CollectionConfig = {
       name: 'body',
       type: 'select',
       required: true,
-      options: [
-        'council',
-        'working_group',
-        'operational_team',
-        'gct',
-        'constituency',
-      ],
+      options: ['council', 'working_group', 'operational_team', 'gct', 'constituency'],
       index: true,
     },
     {

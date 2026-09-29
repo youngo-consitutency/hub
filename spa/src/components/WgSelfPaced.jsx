@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { deckStyle, useDocument } from '../lib/documents.js'
-import {
-  TbChevronLeft as ChevronLeft,
-  TbChevronRight as ChevronRight,
-} from 'react-icons/tb'
+import { TbChevronLeft as ChevronLeft, TbChevronRight as ChevronRight } from 'react-icons/tb'
 
 const ACCENTS = ['#e8943a', '#1f8a3b', '#2f6fed']
 const DeckBrand = createContext({})
@@ -54,10 +51,7 @@ function Points({ points, variant }) {
   return (
     <ul className={`jtPoints jtPoints--${variant}`}>
       {points.map((point, index) => (
-        <li
-          key={point.label}
-          style={{ '--jt-bar': ACCENTS[index % ACCENTS.length] }}
-        >
+        <li key={point.label} style={{ '--jt-bar': ACCENTS[index % ACCENTS.length] }}>
           {variant === 'people' ? (
             <span className="jtAvatar" aria-hidden>
               {initials(point.label)}
@@ -136,23 +130,16 @@ function SlideFace({ slide }) {
         ) : null}
         {layout === 'cards' || layout === 'people' ? (
           <>
-            {layout === 'cards' && lead ? (
-              <p className="jtBanner">{lead}</p>
-            ) : null}
+            {layout === 'cards' && lead ? <p className="jtBanner">{lead}</p> : null}
             {layout === 'people' && slide.body?.length ? (
               <p className="jtQuiet">{slide.body.join(' ')}</p>
             ) : null}
-            <Points
-              points={slide.points}
-              variant={layout === 'people' ? 'people' : 'cards'}
-            />
+            <Points points={slide.points} variant={layout === 'people' ? 'people' : 'cards'} />
           </>
         ) : null}
         {layout === 'rows' ? (
           <>
-            {lead && (slide.points?.length || 0) <= 4 ? (
-              <p className="jtBanner">{lead}</p>
-            ) : null}
+            {lead && (slide.points?.length || 0) <= 4 ? <p className="jtBanner">{lead}</p> : null}
             <Points points={slide.points} variant="rows" />
             {slide.links?.length ? (
               <ul className="jtLinks">
@@ -172,10 +159,7 @@ function SlideFace({ slide }) {
             {lead ? <p className="jtBanner">{lead}</p> : null}
             <ol className="jtMonths">
               {slide.months?.map((month) => (
-                <li
-                  key={month.name}
-                  className={month.ahead ? 'is-ahead' : undefined}
-                >
+                <li key={month.name} className={month.ahead ? 'is-ahead' : undefined}>
                   <time>
                     {month.name}
                     {month.ahead ? ' · ahead' : ''}
@@ -212,9 +196,7 @@ export function WgSelfPaced({ course, storageKey, onReachEnd }) {
   const { doc: deckBrandDoc } = useDocument('wg-deck-brand')
   const WG_DECK_BRAND = deckBrandDoc?.WG_DECK_BRAND || {}
   const slides = course.slides
-  const [index, setIndex] = useState(() =>
-    readStoredIndex(storageKey, slides.length),
-  )
+  const [index, setIndex] = useState(() => readStoredIndex(storageKey, slides.length))
   const slide = slides[index]
   const last = index >= slides.length - 1
 
@@ -259,8 +241,7 @@ export function WgSelfPaced({ course, storageKey, onReachEnd }) {
           >
             <SlideFace key={slide.id} slide={slide} />
             <p className="jtPageNum" id="wg-course-progress">
-              {String(index + 1).padStart(2, '0')} /{' '}
-              {String(slides.length).padStart(2, '0')}
+              {String(index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
             </p>
           </div>
           <button

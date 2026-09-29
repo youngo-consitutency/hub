@@ -1,17 +1,9 @@
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useApi } from '../lib/api.js'
-import {
-  Async,
-  LifecycleTiming,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
+import { Async, LifecycleTiming, PageHeader, Section } from '../components/ui.jsx'
 import { GysSignup } from '../components/GysSignup.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
-import {
-  TbArrowRight as ArrowRight,
-  TbArrowUpRight as ArrowUpRight,
-} from 'react-icons/tb'
+import { TbArrowRight as ArrowRight, TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
 
 const PRIORITY_GROUP_ORDER = [
   'Climate ambition',
@@ -22,12 +14,9 @@ const PRIORITY_GROUP_ORDER = [
 const PROCESS_COPY = {
   'Collection of inputs':
     'Collect submissions from young people, working groups, and regional COYs.',
-  'Regional & thematic synthesis':
-    'Combine regional outputs and working-group policy drafts.',
-  'Editing & endorsement':
-    'Edit a balanced draft and seek endorsement at COY21.',
-  'Advocacy & handover':
-    'Present the final statement at COP31 and use it in YOUNGO advocacy.',
+  'Regional & thematic synthesis': 'Combine regional outputs and working-group policy drafts.',
+  'Editing & endorsement': 'Edit a balanced draft and seek endorsement at COY21.',
+  'Advocacy & handover': 'Present the final statement at COP31 and use it in YOUNGO advocacy.',
 }
 
 function groupPriorities(priorities) {
@@ -73,10 +62,7 @@ export function Statement() {
                 <PageSectionNav section="policy" />
               </PageHeader>
 
-              <section
-                className="card gysOverview"
-                aria-label="Current edition"
-              >
+              <section className="card gysOverview" aria-label="Current edition">
                 <div className="gysFacts">
                   <div>
                     <p className="metaMuted">Edition</p>
@@ -94,10 +80,7 @@ export function Statement() {
                 <p className="meta">{current.note}</p>
                 <div className="gysResources" aria-label="Available resources">
                   {current.inputsDeadlineAt && (
-                    <LifecycleTiming
-                      iso={current.inputsDeadlineAt}
-                      label="Inputs close"
-                    />
+                    <LifecycleTiming iso={current.inputsDeadlineAt} label="Inputs close" />
                   )}
                   {current.inputsUrl && (
                     <a
@@ -155,14 +138,9 @@ export function Statement() {
                         </span>
                         <h3>{item.step}</h3>
                       </div>
-                      <p className="meta">
-                        {PROCESS_COPY[item.step] || item.body}
-                      </p>
+                      <p className="meta">{PROCESS_COPY[item.step] || item.body}</p>
                       {index < gys.process.length - 1 && (
-                        <span
-                          className="gysStepArrow gysStepArrowRight"
-                          aria-hidden
-                        >
+                        <span className="gysStepArrow gysStepArrowRight" aria-hidden>
                           <ArrowRight size={18} strokeWidth={1.75} />
                         </span>
                       )}
@@ -176,10 +154,7 @@ export function Statement() {
                   {[...gys.archive]
                     .sort((a, b) => Number(a.year) - Number(b.year))
                     .map((archive) => (
-                      <article
-                        key={archive.edition}
-                        className="card cardTight gysArchiveItem"
-                      >
+                      <article key={archive.edition} className="card cardTight gysArchiveItem">
                         <div>
                           <h3>{archive.edition}</h3>
                           <p className="metaMuted">
@@ -201,11 +176,7 @@ export function Statement() {
                                 className="gysArchiveLinkIcon"
                               />
                               <span>{link.label}</span>
-                              <ArrowUpRight
-                                size={16}
-                                strokeWidth={1.75}
-                                aria-hidden
-                              />
+                              <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
                             </a>
                           ))}
                         </div>

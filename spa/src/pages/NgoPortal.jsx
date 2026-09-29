@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../lib/api.js'
 import { useAccount } from '../lib/accountContext.jsx'
 import { usePath } from '../lib/router.js'
-import {
-  A,
-  Button,
-  Section,
-  Empty,
-  ErrorCard,
-  PageHeader,
-} from '../components/ui.jsx'
+import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui.jsx'
 import { DatePicker, SearchableSelect } from '../components/FormControls.jsx'
 import { NgoOpportunities } from '../components/NgoOpportunities.jsx'
 import {
@@ -87,9 +80,7 @@ export function NgoPortal() {
     try {
       await apiPost('/member/ngo/requests', {
         ...form,
-        deadlineAt: form.deadlineAt
-          ? new Date(form.deadlineAt).toISOString()
-          : null,
+        deadlineAt: form.deadlineAt ? new Date(form.deadlineAt).toISOString() : null,
       })
       setForm({ kind: 'endorse', title: '', body: '', deadlineAt: '' })
       setPanel(null)
@@ -190,8 +181,7 @@ export function NgoPortal() {
         <div className="card stack" style={{ marginTop: 16 }}>
           <h2>Join {invitePreview.organizationName || 'organisation team'}?</h2>
           <p className="meta">
-            This invitation is for {invitePreview.email} with the{' '}
-            {invitePreview.seatRole} role.
+            This invitation is for {invitePreview.email} with the {invitePreview.seatRole} role.
           </p>
           <Button variant="primary" onClick={acceptInvite}>
             Accept invitation
@@ -242,16 +232,11 @@ export function NgoPortal() {
                         : ''}
                     </p>
                   </div>
-                  {data.permissions?.canWriteRequests &&
-                    r.status === 'open' && (
-                      <Button
-                        sm
-                        variant="secondary"
-                        onClick={() => markDone(r.id)}
-                      >
-                        Mark done
-                      </Button>
-                    )}
+                  {data.permissions?.canWriteRequests && r.status === 'open' && (
+                    <Button sm variant="secondary" onClick={() => markDone(r.id)}>
+                      Mark done
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -293,9 +278,7 @@ export function NgoPortal() {
                 className="input"
                 required
                 value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               />
             </label>
             <label className="field">
@@ -304,17 +287,13 @@ export function NgoPortal() {
                 className="input textarea"
                 rows={3}
                 value={form.body}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, body: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
               />
             </label>
             <DatePicker
               label="Deadline"
               value={form.deadlineAt}
-              onChange={(deadlineAt) =>
-                setForm((current) => ({ ...current, deadlineAt }))
-              }
+              onChange={(deadlineAt) => setForm((current) => ({ ...current, deadlineAt }))}
             />
             <Button type="submit" variant="primary">
               Save request
@@ -337,8 +316,7 @@ export function NgoPortal() {
                       <div>
                         <strong>{s.memberName || s.name || s.email}</strong>
                         <p className="meta">
-                          {s.email} — asked to be listed as part of this
-                          organisation.
+                          {s.email} — asked to be listed as part of this organisation.
                         </p>
                       </div>
                       {data.permissions?.canManageSeats ? (
@@ -382,9 +360,7 @@ export function NgoPortal() {
                           </div>
                         </div>
                       ) : (
-                        <p className="metaMuted">
-                          An owner of this organisation can decide.
-                        </p>
+                        <p className="metaMuted">An owner of this organisation can decide.</p>
                       )}
                     </div>
                   ))}
@@ -422,17 +398,10 @@ export function NgoPortal() {
             </div>
 
             {data.permissions?.canManageSeats && panel === 'invite' && (
-              <SidePanel
-                title="Invite representative"
-                onClose={() => setPanel(null)}
-              >
+              <SidePanel title="Invite representative" onClose={() => setPanel(null)}>
                 {error && <ErrorCard message={error} />}
                 {inviteResult && <p role="status">{inviteResult.note}</p>}
-                <form
-                  className="stack"
-                  style={{ marginTop: 12 }}
-                  onSubmit={sendInvite}
-                >
+                <form className="stack" style={{ marginTop: 12 }} onSubmit={sendInvite}>
                   <div className="formRow">
                     <label className="field">
                       <span>Email *</span>
@@ -441,9 +410,7 @@ export function NgoPortal() {
                         type="email"
                         required
                         value={invite.email}
-                        onChange={(e) =>
-                          setInvite((f) => ({ ...f, email: e.target.value }))
-                        }
+                        onChange={(e) => setInvite((f) => ({ ...f, email: e.target.value }))}
                       />
                     </label>
                     <label className="field">
@@ -451,9 +418,7 @@ export function NgoPortal() {
                       <input
                         className="input"
                         value={invite.name}
-                        onChange={(e) =>
-                          setInvite((f) => ({ ...f, name: e.target.value }))
-                        }
+                        onChange={(e) => setInvite((f) => ({ ...f, name: e.target.value }))}
                       />
                     </label>
                   </div>
@@ -464,9 +429,7 @@ export function NgoPortal() {
                       { value: 'viewer', label: 'Viewer' },
                     ]}
                     value={invite.seatRole}
-                    onChange={(seatRole) =>
-                      setInvite((current) => ({ ...current, seatRole }))
-                    }
+                    onChange={(seatRole) => setInvite((current) => ({ ...current, seatRole }))}
                     searchPlaceholder="Search seat roles…"
                   />
                   <Button type="submit" variant="primary">

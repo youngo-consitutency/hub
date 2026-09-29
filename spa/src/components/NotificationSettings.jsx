@@ -56,9 +56,7 @@ export function NotificationSettings() {
       ) : (
         <>
           <div className="notificationStatusActions">
-            <span
-              className={`chip ${state.subscribed ? 'chip-accent' : 'chip-neutral'}`}
-            >
+            <span className={`chip ${state.subscribed ? 'chip-accent' : 'chip-neutral'}`}>
               {state.subscribed ? 'On' : 'Off'}
             </span>
             <button
@@ -78,26 +76,20 @@ export function NotificationSettings() {
             <div className="notificationHeadingCopy">
               <h2>Alerts on this device</h2>
               <p className="meta">
-                Deadlines, calls starting, and announcements the team pins —
-                delivered even when the Hub is closed.
+                Deadlines, calls starting, and announcements the team pins — delivered even when the
+                Hub is closed.
               </p>
             </div>
           </div>
 
           {message && (
-            <p
-              className="notificationNotice notificationNoticeOk"
-              role="status"
-            >
+            <p className="notificationNotice notificationNoticeOk" role="status">
               <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden />
               {message}
             </p>
           )}
           {error && (
-            <p
-              className="notificationNotice notificationNoticeWarn"
-              role="alert"
-            >
+            <p className="notificationNotice notificationNoticeWarn" role="alert">
               <TriangleAlert size={16} strokeWidth={1.75} aria-hidden />
               {error}
             </p>
@@ -108,26 +100,24 @@ export function NotificationSettings() {
                 something on their phone that was never the problem. */}
           {!supported ? (
             <p className="meta notificationHint">
-              This browser cannot show web notifications. Chrome, Edge, Firefox,
-              and Safari 16.4 or later all can.
+              This browser cannot show web notifications. Chrome, Edge, Firefox, and Safari 16.4 or
+              later all can.
             </p>
           ) : !state.configured ? (
             <p className="meta notificationHint">
-              Notifications are not switched on for this Hub deployment yet. The
-              admin team enables them once the server keys are in place.
+              Notifications are not switched on for this Hub deployment yet. The admin team enables
+              them once the server keys are in place.
             </p>
           ) : installFirst ? (
             <div className="notificationInstall">
               <p className="meta notificationHint">
-                iPhone and iPad only deliver alerts from the Home Screen app,
-                not from a Safari tab. Follow these taps:
+                iPhone and iPad only deliver alerts from the Home Screen app, not from a Safari tab.
+                Follow these taps:
               </p>
               <ol className="notificationInstallSteps">
                 {DEVICE_GUIDES.ios.steps.map((step, index) => (
                   <li key={step}>
-                    {index === 0 && (
-                      <Share size={16} strokeWidth={1.75} aria-hidden />
-                    )}
+                    {index === 0 && <Share size={16} strokeWidth={1.75} aria-hidden />}
                     {step}
                   </li>
                 ))}
@@ -141,46 +131,30 @@ export function NotificationSettings() {
             </div>
           ) : blocked ? (
             <p className="meta notificationHint">
-              Notifications are blocked in this device’s settings. Use the help
-              button above to allow them again.
+              Notifications are blocked in this device’s settings. Use the help button above to
+              allow them again.
             </p>
           ) : (
             <div className="rowGap notificationActions">
               {state.subscribed ? (
                 <>
-                  <Button
-                    variant="secondary"
-                    onClick={setup.disable}
-                    disabled={busy}
-                  >
+                  <Button variant="secondary" onClick={setup.disable} disabled={busy}>
                     <BellOff size={16} strokeWidth={1.75} aria-hidden />
                     Turn off
                   </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={setup.sendTest}
-                    disabled={busy}
-                  >
+                  <Button variant="ghost" onClick={setup.sendTest} disabled={busy}>
                     Send a test
                   </Button>
                 </>
               ) : (
                 <>
                   {setup.installAvailable && (
-                    <Button
-                      variant="secondary"
-                      onClick={setup.install}
-                      disabled={busy}
-                    >
+                    <Button variant="secondary" onClick={setup.install} disabled={busy}>
                       <Plus size={16} strokeWidth={1.75} aria-hidden />
                       Install app
                     </Button>
                   )}
-                  <Button
-                    variant="primary"
-                    onClick={setup.enable}
-                    disabled={busy}
-                  >
+                  <Button variant="primary" onClick={setup.enable} disabled={busy}>
                     <Bell size={16} strokeWidth={1.75} aria-hidden />
                     Turn on alerts
                   </Button>
@@ -191,9 +165,7 @@ export function NotificationSettings() {
         </>
       )}
 
-      {helpDevice && (
-        <NotificationGuide device={helpDevice} onClose={closeHelp} />
-      )}
+      {helpDevice && <NotificationGuide device={helpDevice} onClose={closeHelp} />}
     </section>
   )
 }

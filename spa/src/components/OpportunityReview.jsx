@@ -18,13 +18,9 @@ function PostingMeta({ item }) {
   return (
     <>
       <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-        <span className="chip chip-info">
-          {KIND_LABEL[item.kind] || item.kind}
-        </span>
+        <span className="chip chip-info">{KIND_LABEL[item.kind] || item.kind}</span>
         <span className="chip chip-neutral">{item.format}</span>
-        {item.region && (
-          <span className="chip chip-neutral">{regionLabel(item.region)}</span>
-        )}
+        {item.region && <span className="chip chip-neutral">{regionLabel(item.region)}</span>}
       </div>
       <h3>{item.title}</h3>
       <p className="meta">
@@ -35,12 +31,7 @@ function PostingMeta({ item }) {
       {item.summary && <p className="meta">{item.summary}</p>}
       {item.body && <p className="metaMuted">{item.body}</p>}
       {item.linkUrl && (
-        <a
-          className="metaMuted"
-          href={item.linkUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
+        <a className="metaMuted" href={item.linkUrl} target="_blank" rel="noreferrer noopener">
           {item.linkUrl}
         </a>
       )}
@@ -82,8 +73,7 @@ export function OpportunityReview() {
     load()
   }, [])
 
-  const setNote = (id, value) =>
-    setNotes((current) => ({ ...current, [id]: value }))
+  const setNote = (id, value) => setNotes((current) => ({ ...current, [id]: value }))
 
   const run = async (key, work) => {
     setBusy(key)
@@ -170,10 +160,7 @@ export function OpportunityReview() {
       </Section>
 
       {state.published && (
-        <Section
-          label="Live NGO postings"
-          action={<span>Staff can take a posting down</span>}
-        >
+        <Section label="Live NGO postings" action={<span>Staff can take a posting down</span>}>
           {state.published.length === 0 ? (
             <Empty
               icon={Megaphone}
@@ -216,27 +203,18 @@ export function OpportunityReview() {
           <div className="stackSm">
             {state.organisations.map((org) => (
               <div key={org.orgAccountId} className="card cardTight stackSm">
-                <div
-                  className="rowBetween"
-                  style={{ flexWrap: 'wrap', gap: 8 }}
-                >
+                <div className="rowBetween" style={{ flexWrap: 'wrap', gap: 8 }}>
                   <div>
                     <h3>{org.organizationName || 'Organisation'}</h3>
                     <p className="metaMuted">
-                      {org.trusted
-                        ? 'Posts publish directly'
-                        : 'Next posting needs review'}
+                      {org.trusted ? 'Posts publish directly' : 'Next posting needs review'}
                       {org.override
                         ? ` · override: ${org.override.replace('_', ' ')}`
                         : ' · earned from published postings'}
                     </p>
-                    {org.overrideNote && (
-                      <p className="metaMuted">{org.overrideNote}</p>
-                    )}
+                    {org.overrideNote && <p className="metaMuted">{org.overrideNote}</p>}
                   </div>
-                  <span
-                    className={`chip ${org.trusted ? 'chip-accent' : 'chip-warn'}`}
-                  >
+                  <span className={`chip ${org.trusted ? 'chip-accent' : 'chip-warn'}`}>
                     {org.trusted ? 'Trusted' : 'Review required'}
                   </span>
                 </div>
@@ -245,9 +223,7 @@ export function OpportunityReview() {
                   <input
                     className="input"
                     value={notes[`trust:${org.orgAccountId}`] || ''}
-                    onChange={(event) =>
-                      setNote(`trust:${org.orgAccountId}`, event.target.value)
-                    }
+                    onChange={(event) => setNote(`trust:${org.orgAccountId}`, event.target.value)}
                   />
                 </label>
                 <div className="rowGap">
@@ -266,9 +242,7 @@ export function OpportunityReview() {
                       sm
                       variant="ghost"
                       disabled={busy === `trust:${org.orgAccountId}`}
-                      onClick={() =>
-                        setTrust(org.orgAccountId, 'review_required')
-                      }
+                      onClick={() => setTrust(org.orgAccountId, 'review_required')}
                     >
                       Require review again
                     </Button>

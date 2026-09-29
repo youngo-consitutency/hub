@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
-import {
-  Async,
-  BackLink,
-  Empty,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
+import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui.jsx'
 import { TbCircleCheck as CheckCircle } from 'react-icons/tb'
 
 const initialForm = {
@@ -49,8 +43,7 @@ export function SubmissionProposal() {
         const firstDocument = detail.documents[0]
         setForm((current) => ({
           ...current,
-          sourceVersionId:
-            current.sourceVersionId || firstDocument?.latestVersion.id || '',
+          sourceVersionId: current.sourceVersionId || firstDocument?.latestVersion.id || '',
         }))
       })
       .catch((requestError) => active && setError(requestError.message))
@@ -82,9 +75,7 @@ export function SubmissionProposal() {
             sourceVersionId: form.sourceVersionId,
             location: {
               ...(form.citationPage ? { page: form.citationPage } : {}),
-              ...(form.citationParagraph
-                ? { paragraph: form.citationParagraph }
-                : {}),
+              ...(form.citationParagraph ? { paragraph: form.citationParagraph } : {}),
             },
             quote: form.citationQuote || null,
           },
@@ -111,10 +102,7 @@ export function SubmissionProposal() {
               : 'The first immutable draft is saved. This does not represent constituency endorsement or external transmission.'
           }
           cta={
-            <a
-              className="btn btn-primary btn-sm"
-              href={`/submissions/workspace/${created.id}`}
-            >
+            <a className="btn btn-primary btn-sm" href={`/submissions/workspace/${created.id}`}>
               Open private proposal
             </a>
           }
@@ -136,12 +124,7 @@ export function SubmissionProposal() {
               <div className="card detailPanel formGrid">
                 <label className="field">
                   <span>Negotiation track</span>
-                  <select
-                    className="input"
-                    required
-                    value={form.trackId}
-                    onChange={set('trackId')}
-                  >
+                  <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
                     {data.items.map((track) => (
                       <option value={track.id} key={track.id}>
@@ -199,9 +182,7 @@ export function SubmissionProposal() {
                   />
                 </label>
                 <label className="field">
-                  <span>
-                    Intended submitting entity (unverified until reviewed)
-                  </span>
+                  <span>Intended submitting entity (unverified until reviewed)</span>
                   <input
                     className="input"
                     maxLength={240}
@@ -250,10 +231,7 @@ export function SubmissionProposal() {
                   >
                     <option value="">Select evidence</option>
                     {(trackDetail?.documents || []).map((document) => (
-                      <option
-                        value={document.latestVersion.id}
-                        key={document.latestVersion.id}
-                      >
+                      <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>
                     ))}
@@ -293,11 +271,7 @@ export function SubmissionProposal() {
               </p>
             )}
             <div className="detailActions detailPageActions">
-              <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={saving}
-              >
+              <button className="btn btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save proposal'}
               </button>
             </div>

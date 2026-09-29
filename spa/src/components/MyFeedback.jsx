@@ -49,9 +49,7 @@ export function MyFeedback() {
         {(state.items || []).map((ticket) => (
           <div key={ticket.id} className="card cardTight">
             <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-              <span className="chip chip-info">
-                {KIND_LABEL[ticket.kind] || ticket.kind}
-              </span>
+              <span className="chip chip-info">{KIND_LABEL[ticket.kind] || ticket.kind}</span>
               <span className="chip chip-neutral">
                 {STATUS_LABEL[ticket.status] || ticket.status}
               </span>

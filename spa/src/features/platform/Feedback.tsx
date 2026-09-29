@@ -1,12 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-export function Feedback({
-  error,
-  message,
-}: {
-  error: string
-  message: string
-}) {
+export function Feedback({ error, message }: { error: string; message: string }) {
   const errorRef = useRef<HTMLParagraphElement>(null)
   useEffect(() => {
     if (error) errorRef.current?.focus()

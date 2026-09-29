@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
-import {
-  Async,
-  BackLink,
-  StatusChip,
-  A,
-  PageHeader,
-} from '../components/ui.jsx'
+import { Async, BackLink, StatusChip, A, PageHeader } from '../components/ui.jsx'
 import { AddToCalendar } from '../components/AddToCalendar.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
 import { fmtDual } from '../lib/time.js'
@@ -43,8 +37,7 @@ function CopyLinkButton() {
 // live → concluded → upcoming, so a past event drops the Join button per spec §2.
 function phaseOf(event) {
   const now = Date.now()
-  if (now >= new Date(event.startsAt) && now <= new Date(event.endsAt))
-    return 'live'
+  if (now >= new Date(event.startsAt) && now <= new Date(event.endsAt)) return 'live'
   if (now > new Date(event.endsAt)) return 'concluded'
   return 'upcoming'
 }
@@ -67,29 +60,21 @@ export function EventDetail({ slug }) {
             <>
               <PageHeader title={event.title} description={description} />
 
-              <section
-                className="card detailSummary detailOverviewCard"
-                aria-label="Event details"
-              >
+              <section className="card detailSummary detailOverviewCard" aria-label="Event details">
                 <div className="detailOverviewFacts">
                   {live ? (
                     <StatusChip status="live_now" />
                   ) : concluded ? (
                     <span className="chip chip-neutral">Concluded</span>
                   ) : null}
-                  <span
-                    className={`detailOverviewFact mono ${live ? 'detailLiveTime' : ''}`}
-                  >
+                  <span className={`detailOverviewFact mono ${live ? 'detailLiveTime' : ''}`}>
                     <CalendarDays size={17} strokeWidth={1.75} aria-hidden />
                     {fmtDual(event.startsAt)}
                   </span>
                   {event.wg && (
                     <span className="detailOverviewFact meta">
                       Hosted by{' '}
-                      <A
-                        href={`/groups/${event.wg.slug}`}
-                        className="inlineLink"
-                      >
+                      <A href={`/groups/${event.wg.slug}`} className="inlineLink">
                         {event.wg.name} WG
                       </A>
                     </span>

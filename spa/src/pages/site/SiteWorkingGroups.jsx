@@ -1,7 +1,4 @@
-import {
-  TbChevronRight as ChevronRight,
-  TbUsers as Users,
-} from 'react-icons/tb'
+import { TbChevronRight as ChevronRight, TbUsers as Users } from 'react-icons/tb'
 import { A, Async, Empty, Skeletons } from '../../components/ui.jsx'
 import { useApi } from '../../lib/api.js'
 import { useDocument } from '../../lib/documents.js'
@@ -38,9 +35,7 @@ export function SiteWorkingGroups() {
           return (
             <>
               {topics.map((topic) => {
-                const groups = data.items.filter(
-                  (g) => g.topic === topic.key,
-                )
+                const groups = data.items.filter((g) => g.topic === topic.key)
                 if (!groups.length) return null
                 return (
                   <section
@@ -59,14 +54,9 @@ export function SiteWorkingGroups() {
                             </span>
                             <div>
                               <h3>{group.name}</h3>
-                              {group.focusLine && (
-                                <p className="meta">{group.focusLine}</p>
-                              )}
+                              {group.focusLine && <p className="meta">{group.focusLine}</p>}
                               {group.tags?.length > 0 && (
-                                <ul
-                                  className="siteWgTags"
-                                  aria-label={`${group.name} topics`}
-                                >
+                                <ul className="siteWgTags" aria-label={`${group.name} topics`}>
                                   {group.tags.slice(0, 3).map((tag) => (
                                     <li key={tag} className="chip chip-neutral">
                                       {tag}

@@ -1,8 +1,5 @@
 const TERMINAL = new Set(['cancelled', 'concluded'])
-const CLOSED_APPLICATIONS = new Set([
-  'applications_closed',
-  'registration_closed',
-])
+const CLOSED_APPLICATIONS = new Set(['applications_closed', 'registration_closed'])
 const OPEN_APPLICATIONS = new Set(['applications_open', 'registration_open'])
 
 function endOfUtcDay(isoDate) {
@@ -29,17 +26,9 @@ export function resolveCoyStatus(coy, now = new Date()) {
   const nowMs = now.getTime()
   const ended = endOfUtcDay(coy.endsOn)
   if (ended != null && ended < nowMs) return 'concluded'
-  const closeAt = coy.applicationsCloseAt
-    ? Date.parse(coy.applicationsCloseAt)
-    : NaN
-  if (
-    OPEN_APPLICATIONS.has(coy.status) &&
-    Number.isFinite(closeAt) &&
-    closeAt <= nowMs
-  ) {
-    return coy.status === 'registration_open'
-      ? 'registration_closed'
-      : 'applications_closed'
+  const closeAt = coy.applicationsCloseAt ? Date.parse(coy.applicationsCloseAt) : NaN
+  if (OPEN_APPLICATIONS.has(coy.status) && Number.isFinite(closeAt) && closeAt <= nowMs) {
+    return coy.status === 'registration_open' ? 'registration_closed' : 'applications_closed'
   }
   return coy.status
 }

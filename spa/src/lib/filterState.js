@@ -14,12 +14,8 @@ export function toggleFilter(filters, key) {
 
 export function matchesFilters(value, filters) {
   const entries = Object.entries(filters)
-  const included = entries
-    .filter(([, state]) => state === 'include')
-    .map(([key]) => key)
-  const excluded = entries
-    .filter(([, state]) => state === 'exclude')
-    .map(([key]) => key)
+  const included = entries.filter(([, state]) => state === 'include').map(([key]) => key)
+  const excluded = entries.filter(([, state]) => state === 'exclude').map(([key]) => key)
 
   if (excluded.includes(value)) return false
   return included.length === 0 || included.includes(value)

@@ -1,0 +1,20 @@
+# generated / build output
+.next/
+dist/
+build/
+coverage/
+.vercel/
+.turbo/
+src/payload-types.ts
+package-lock.json
+**/package-lock.json
+**/*.min.js
+**/*.min.css
+
+# vendored / crafted static assets — formatted deliberately by hand
+public/
+
+# local agent state
+.agent-vault/
+.codex-vault/
+.local-demo/

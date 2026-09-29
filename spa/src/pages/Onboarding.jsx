@@ -36,12 +36,7 @@ export function Onboarding() {
       <div className="stack">
         <div className="card actionCard">
           {verified ? (
-            <CheckCircle2
-              className="actionCardIcon"
-              size={22}
-              strokeWidth={1.75}
-              aria-hidden
-            />
+            <CheckCircle2 className="actionCardIcon" size={22} strokeWidth={1.75} aria-hidden />
           ) : (
             <GraduationCap
               className="actionCardIcon actionCardIconWarning"
@@ -54,8 +49,7 @@ export function Onboarding() {
             <h3>Status: {verified ? 'Verified member' : 'Pending course'}</h3>
             <p className="meta">
               {account?.name} · {account?.email}
-              {account?.courseScore != null &&
-                ` · Course score ${account.courseScore}`}
+              {account?.courseScore != null && ` · Course score ${account.courseScore}`}
             </p>
           </div>
           {!verified && (
@@ -71,12 +65,7 @@ export function Onboarding() {
         </div>
 
         <div className="card actionCard">
-          <ShieldCheck
-            className="actionCardIcon"
-            size={22}
-            strokeWidth={1.75}
-            aria-hidden
-          />
+          <ShieldCheck className="actionCardIcon" size={22} strokeWidth={1.75} aria-hidden />
           <div className="actionCardCopy">
             <h3>Your data</h3>
             <p className="meta">
@@ -95,22 +84,12 @@ export function Onboarding() {
           <div className="onboardingPathGrid">
             <div className="card cardTight onboardingPathCard">
               <div className="rowGap onboardingPathTitle">
-                <BookOpen
-                  size={18}
-                  strokeWidth={1.75}
-                  color="var(--accent)"
-                  aria-hidden
-                />
+                <BookOpen size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
                 <h3>Membership course</h3>
               </div>
-              <p className="meta">
-                History, structure, engagement mechanisms, then a short test.
-              </p>
+              <p className="meta">History, structure, engagement mechanisms, then a short test.</p>
               <div className="onboardingPathAction">
-                <A
-                  href="/onboarding/course"
-                  className="btn btn-secondary btn-sm"
-                >
+                <A href="/onboarding/course" className="btn btn-secondary btn-sm">
                   Open course
                 </A>
               </div>
@@ -123,17 +102,10 @@ export function Onboarding() {
             />
             <div className="card cardTight onboardingPathCard">
               <div className="rowGap onboardingPathTitle">
-                <Library
-                  size={18}
-                  strokeWidth={1.75}
-                  color="var(--accent)"
-                  aria-hidden
-                />
+                <Library size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
                 <h3>Capacity Building library</h3>
               </div>
-              <p className="meta">
-                Practical guides, policies, and course material.
-              </p>
+              <p className="meta">Practical guides, policies, and course material.</p>
               <div className="onboardingPathAction">
                 <A href="/library" className="btn btn-secondary btn-sm">
                   Open library
@@ -148,12 +120,7 @@ export function Onboarding() {
             />
             <div className="card cardTight onboardingPathCard">
               <div className="rowGap onboardingPathTitle">
-                <Users
-                  size={18}
-                  strokeWidth={1.75}
-                  color="var(--accent)"
-                  aria-hidden
-                />
+                <Users size={18} strokeWidth={1.75} color="var(--accent)" aria-hidden />
                 <h3>Working Group workspaces</h3>
               </div>
               <p className="meta">
@@ -176,9 +143,8 @@ export function Onboarding() {
         {verified && (
           <div className="card cardTight">
             <p className="meta">
-              Your account is verified. Use Home, Calendar, Submissions, and
-              Working groups to get started. Role-specific workspaces appear in
-              the sidebar when they are assigned to you.
+              Your account is verified. Use Home, Calendar, Submissions, and Working groups to get
+              started. Role-specific workspaces appear in the sidebar when they are assigned to you.
             </p>
             <div className="detailActions" style={{ marginTop: 10 }}>
               <A href="/" className="btn btn-primary">

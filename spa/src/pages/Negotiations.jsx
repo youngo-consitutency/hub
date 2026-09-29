@@ -10,9 +10,7 @@ import {
 export function Negotiations() {
   const [search, setSearch] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
-  const query = useApi(`/negotiations${openOnly ? '?openCalls=true' : ''}`, [
-    openOnly,
-  ])
+  const query = useApi(`/negotiations${openOnly ? '?openCalls=true' : ''}`, [openOnly])
 
   return (
     <div>
@@ -43,9 +41,7 @@ export function Negotiations() {
           </button>
         </div>
       </div>
-      <Async query={query}>
-        {(data) => <TrackResults data={data} search={search} />}
-      </Async>
+      <Async query={query}>{(data) => <TrackResults data={data} search={search} />}</Async>
     </div>
   )
 }
@@ -74,11 +70,7 @@ function TrackResults({ data, search }) {
   return (
     <div className="cardGrid">
       {items.map((track) => (
-        <A
-          className="card entityCard"
-          href={`/negotiations/${track.slug}`}
-          key={track.id}
-        >
+        <A className="card entityCard" href={`/negotiations/${track.slug}`} key={track.id}>
           <div className="cardBody">
             <div className="eyebrow">{track.activityStatus}</div>
             <h2>{track.topic}</h2>
@@ -90,8 +82,7 @@ function TrackResults({ data, search }) {
                 </span>
               ))}
               <span className="chip chip-neutral">
-                {track.openCalls} open{' '}
-                {track.openCalls === 1 ? 'call' : 'calls'}
+                {track.openCalls} open {track.openCalls === 1 ? 'call' : 'calls'}
               </span>
             </div>
           </div>

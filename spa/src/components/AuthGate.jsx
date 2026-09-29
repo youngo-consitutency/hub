@@ -1,9 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-  TbCheck as Check,
-  TbKey as KeyRound,
-  TbUserPlus as UserPlus,
-} from 'react-icons/tb'
+import { TbCheck as Check, TbKey as KeyRound, TbUserPlus as UserPlus } from 'react-icons/tb'
 import { apiPost } from '../lib/api.js'
 import { setSession } from '../lib/session.js'
 import { useDocument } from '../lib/documents.js'
@@ -44,8 +40,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
   const [forgotMsg, setForgotMsg] = useState(null)
 
   const age = useMemo(() => ageFromDob(form.dateOfBirth), [form.dateOfBirth])
-  const under18 =
-    form.ageBand === 'under_18' || (age !== null && age < 18 && age >= 0)
+  const under18 = form.ageBand === 'under_18' || (age !== null && age < 18 && age >= 0)
   const isOrg = form.entityType === 'organization'
   const admitted = form.isUnfcccAdmitted === 'yes'
   const nonAdmitted = form.isUnfcccAdmitted === 'no'
@@ -81,8 +76,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
       }
       const next = { ...prev }
       delete next[k]
-      if (k === 'password' || k === 'passwordConfirm')
-        delete next.passwordConfirm
+      if (k === 'password' || k === 'passwordConfirm') delete next.passwordConfirm
       return next
     })
     if (error) setError(null)
@@ -90,9 +84,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
 
   const ensureCountryOptions = async () => {
     const support = await loadPhoneSupport()
-    setCountryOptions((current) =>
-      current.length ? current : support.getCountryOptions(),
-    )
+    setCountryOptions((current) => (current.length ? current : support.getCountryOptions()))
   }
 
   const ensureNationalityOptions = async () => {
@@ -108,10 +100,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
     void loadPhoneSupport().then(({ formatPhoneWhileTyping }) => {
       setForm((current) => ({
         ...current,
-        [phoneKey]: formatPhoneWhileTyping(
-          current[phoneKey],
-          current[countryKey],
-        ),
+        [phoneKey]: formatPhoneWhileTyping(current[phoneKey], current[countryKey]),
       }))
     })
   }
@@ -168,9 +157,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
       const has = f.wgInterests.includes(slug)
       return {
         ...f,
-        wgInterests: has
-          ? f.wgInterests.filter((x) => x !== slug)
-          : [...f.wgInterests, slug],
+        wgInterests: has ? f.wgInterests.filter((x) => x !== slug) : [...f.wgInterests, slug],
       }
     })
   }
@@ -219,9 +206,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
         website: login.website,
       })
       setStatus('idle')
-      setForgotMsg(
-        data.message || 'If an account exists, a reset link was issued.',
-      )
+      setForgotMsg(data.message || 'If an account exists, a reset link was issued.')
     } catch (err) {
       applyErrors(err)
     }
@@ -235,11 +220,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
 
     // Report password errors before sending the form.
     const local = {}
-    if (
-      form.password &&
-      form.passwordConfirm &&
-      form.password !== form.passwordConfirm
-    ) {
+    if (form.password && form.passwordConfirm && form.password !== form.passwordConfirm) {
       local.passwordConfirm = 'Passwords do not match.'
     }
     if (form.password && form.password.length < 10) {
@@ -386,14 +367,10 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
                       type="radio"
                       name="entity"
                       checked={form.entityType === 'individual'}
-                      onChange={() =>
-                        setForm((f) => ({ ...f, entityType: 'individual' }))
-                      }
+                      onChange={() => setForm((f) => ({ ...f, entityType: 'individual' }))}
                     />
                     <strong>Individual</strong>
-                    <span className="meta">
-                      Child or young person joining YOUNGO personally.
-                    </span>
+                    <span className="meta">Child or young person joining YOUNGO personally.</span>
                   </label>
                   <label
                     className={`authChoice ${form.entityType === 'organization' ? 'active' : ''}`}
@@ -402,9 +379,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
                       type="radio"
                       name="entity"
                       checked={form.entityType === 'organization'}
-                      onChange={() =>
-                        setForm((f) => ({ ...f, entityType: 'organization' }))
-                      }
+                      onChange={() => setForm((f) => ({ ...f, entityType: 'organization' }))}
                     />
                     <strong>Organisation / NGO</strong>
                     <span className="meta">
@@ -483,9 +458,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }) {
                   }
                 >
                   <Check size={18} strokeWidth={1.75} aria-hidden />
-                  {status === 'submitting'
-                    ? 'Submitting…'
-                    : 'Submit & open hub'}
+                  {status === 'submitting' ? 'Submitting…' : 'Submit & open hub'}
                 </Button>
               </div>
             </form>

@@ -34,32 +34,28 @@ async function relationshipMaps(accounts: any[]) {
   if (!ids.length) return { progressByAccount, orgByAccount }
   const pool = getPgPool()
   if (!pool) return { progressByAccount, orgByAccount }
-  const [progressResult, seatsResult, wgResult, optionsResult] =
-    await Promise.all([
-      pool.query(
-        `SELECT account_id, wg_slug, role_in_wg, status
+  const [progressResult, seatsResult, wgResult, optionsResult] = await Promise.all([
+    pool.query(
+      `SELECT account_id, wg_slug, role_in_wg, status
          FROM wg_progress
          WHERE account_id=ANY($1::int[])
            AND status IN ('interested','pending_approval','active')
          ORDER BY joined_at ASC`,
-        [ids],
-      ),
-      pool.query(
-        `SELECT s.member_account_id, s.seat_role,
+      [ids],
+    ),
+    pool.query(
+      `SELECT s.member_account_id, s.seat_role,
                 COALESCE(o.organization_name, o.name) AS organization_name
          FROM ngo_seats s
          JOIN accounts o ON o.id=s.org_account_id
          WHERE s.member_account_id=ANY($1::int[]) AND s.status='active'`,
-        [ids],
-      ),
-      // Working-group names and staff labels live in the database.
-      pool.query(`SELECT slug, name FROM working_groups`),
-      pool.query(
-        `SELECT body FROM content_documents WHERE slug='content-options'`,
-      ),
-    ])
-  for (const row of progressResult.rows)
-    progressByAccount.get(row.account_id)?.push(row)
+      [ids],
+    ),
+    // Working-group names and staff labels live in the database.
+    pool.query(`SELECT slug, name FROM working_groups`),
+    pool.query(`SELECT body FROM content_documents WHERE slug='content-options'`),
+  ])
+  for (const row of progressResult.rows) progressByAccount.get(row.account_id)?.push(row)
   for (const row of seatsResult.rows)
     orgByAccount.set(row.member_account_id, {
       name: row.organization_name,
@@ -69,17 +65,13 @@ async function relationshipMaps(accounts: any[]) {
     (wgResult.rows || []).map((g: any) => [g.slug, g.name]),
   )
   const teamLabels = Object.fromEntries(
-    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: any) => [
-      t.value,
-      t.label,
-    ]),
+    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: any) => [t.value, t.label]),
   )
   return { progressByAccount, orgByAccount, workingGroupNames, teamLabels }
 }
 
 function relationshipsFor(account: any, maps: any) {
-  const wgName = (slug: string) =>
-    maps.workingGroupNames?.[slug] || slug
+  const wgName = (slug: string) => maps.workingGroupNames?.[slug] || slug
   const progress = maps.progressByAccount.get(account.id) || []
   const bySlug = new Map<string, any>()
   for (const item of progress)
@@ -106,8 +98,7 @@ function relationshipsFor(account: any, maps: any) {
         name: maps.teamLabels?.[slug] || slug.replaceAll('_', ' '),
       })),
     organization: maps.orgByAccount.get(account.id) || null,
-    platformRole:
-      account.role && account.role !== 'member' ? account.role : null,
+    platformRole: account.role && account.role !== 'member' ? account.role : null,
   }
 }
 
@@ -134,10 +125,8 @@ function safePerson(
     region: showLocation ? account.region || null : null,
     roleTitle: profile.roleTitle || contactRole,
     contactRole,
-    organization:
-      duty || profile.showOrganization ? relationships.organization : null,
-    workingGroups:
-      duty || profile.showWorkingGroups ? relationships.workingGroups : [],
+    organization: duty || profile.showOrganization ? relationships.organization : null,
+    workingGroups: duty || profile.showWorkingGroups ? relationships.workingGroups : [],
     teams: duty || profile.showRoles ? relationships.teams : [],
     platformRole: duty || profile.showRoles ? relationships.platformRole : null,
     photoUrl: profile.photoUrl,
@@ -161,9 +150,7 @@ export async function listMemberPeople({
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanTag = String(tag).trim().slice(0, 32)
   const cleanWg = String(workingGroup).trim().slice(0, 80)
-  const cleanWgRole = ['manager', 'participant'].includes(workingGroupRole)
-    ? workingGroupRole
-    : ''
+  const cleanWgRole = ['manager', 'participant'].includes(workingGroupRole) ? workingGroupRole : ''
   const cleanPage = Number.parseInt(page, 10) || 1
   const cleanPageSize = cleanPageNumber(pageSize)
   const dutyManagers = cleanWgRole === 'manager' && Boolean(cleanWg)
@@ -190,10 +177,7 @@ export async function listMemberPeople({
       `%${cleanSearch}%`,
     )
   if (cleanTag)
-    add(
-      `EXISTS (SELECT 1 FROM unnest(p.expertise_tags) t WHERE lower(t)=lower(?))`,
-      cleanTag,
-    )
+    add(`EXISTS (SELECT 1 FROM unnest(p.expertise_tags) t WHERE lower(t)=lower(?))`, cleanTag)
   if (cleanWg) {
     values.push(cleanWg)
     const slot = `$${values.length}`
@@ -230,10 +214,7 @@ export async function listMemberPeople({
        LEFT JOIN member_profiles p ON p.account_id=a.id`
     : `member_profiles p JOIN accounts a ON a.id=p.account_id`
   const clause = `WHERE ${where.join(' AND ')}`
-  const count = await pool.query(
-    `SELECT count(*)::int AS total FROM ${fromSql} ${clause}`,
-    values,
-  )
+  const count = await pool.query(`SELECT count(*)::int AS total FROM ${fromSql} ${clause}`, values)
   total = count.rows[0]?.total || 0
   const pages = Math.max(1, Math.ceil(total / cleanPageSize))
   currentPage = Math.min(Math.max(1, cleanPage), pages)
@@ -271,12 +252,9 @@ export async function listMemberPeople({
 
 export async function getMemberPerson(viewer: any, accountId: any) {
   const pool = requirePgPool()
-  const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [
-    Number(accountId),
-  ])
+  const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [Number(accountId)])
   const account = accountView(rows[0])
-  if (!account || !account.isVerified || account.entityType !== 'individual')
-    return null
+  if (!account || !account.isVerified || account.entityType !== 'individual') return null
   const row = await profileRow(account.id)
   const profile = profileShape(row, account)
   const canOverride =

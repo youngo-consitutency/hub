@@ -20,13 +20,7 @@ const FIELD_PATTERNS = {
     /are\s*you\s*submitting/i,
     /submitting\s*as/i,
   ],
-  theme: [
-    /^theme$/i,
-    /^topic$/i,
-    /thematic\s*area/i,
-    /policy\s*area/i,
-    /working\s*group/i,
-  ],
+  theme: [/^theme$/i, /^topic$/i, /thematic\s*area/i, /policy\s*area/i, /working\s*group/i],
   body: [
     /policy\s*recommend/i,
     /demand/i,
@@ -71,9 +65,7 @@ export function detectColumnMap(headers, overrides = {}) {
     theme: null,
     body: null,
     title: null,
-    ...Object.fromEntries(
-      Object.entries(overrides || {}).filter(([, value]) => value != null),
-    ),
+    ...Object.fromEntries(Object.entries(overrides || {}).filter(([, value]) => value != null)),
   }
 
   for (const header of headers) {
@@ -88,9 +80,7 @@ export function detectColumnMap(headers, overrides = {}) {
     const used = new Set(Object.values(map).filter(Boolean))
     const candidates = headers.filter((header) => !used.has(header))
     map.body =
-      candidates.sort((a, b) => b.length - a.length)[0] ||
-      headers[headers.length - 1] ||
-      null
+      candidates.sort((a, b) => b.length - a.length)[0] || headers[headers.length - 1] || null
   }
 
   return map
@@ -232,9 +222,7 @@ function firstSentence(text, max = 220) {
 }
 
 export function synthesizeGysContributions(contributions = []) {
-  const active = contributions.filter(
-    (item) => item && item.status !== 'rejected',
-  )
+  const active = contributions.filter((item) => item && item.status !== 'rejected')
   const byTheme = countBy(active, (item) => item.theme)
   const byRegion = countBy(active, (item) => item.region)
   const byCountry = countBy(active, (item) => item.country)

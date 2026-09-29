@@ -13,7 +13,6 @@ const intelligenceLimit = rateLimit({
   scope: 'intelligence',
 })
 
-
 type Evidence = {
   evidenceId: string
   sourceType: string
@@ -31,17 +30,10 @@ async function evidenceForQuery(
   const needle = query.toLowerCase()
   const terms = needle.split(/[^a-z0-9]+/).filter((t) => t.length >= 3)
   const evidence: Evidence[] = []
-  const push = (
-    sourceType: string,
-    title: string,
-    snippet: string,
-    url: string,
-  ) => {
+  const push = (sourceType: string, title: string, snippet: string, url: string) => {
     const score = terms.reduce(
       (n, t) =>
-        n +
-        (title.toLowerCase().includes(t) ? 3 : 0) +
-        (snippet.toLowerCase().includes(t) ? 1 : 0),
+        n + (title.toLowerCase().includes(t) ? 3 : 0) + (snippet.toLowerCase().includes(t) ? 1 : 0),
       0,
     )
     if (score > 0) {
@@ -56,16 +48,14 @@ async function evidenceForQuery(
     }
   }
 
-  const [events, announcements, groups, submissions, decisions] =
-    await Promise.all([
-      store.listEvents(req),
-      store.listAnnouncements(req),
-      store.listGroups(req),
-      store.listSubmissions(req, 'all'),
-      store.listDecisions(req, 'all', true),
-    ])
-  for (const e of events)
-    push('event', e.title, e.description || '', `/events/${e.slug}`)
+  const [events, announcements, groups, submissions, decisions] = await Promise.all([
+    store.listEvents(req),
+    store.listAnnouncements(req),
+    store.listGroups(req),
+    store.listSubmissions(req, 'all'),
+    store.listDecisions(req, 'all', true),
+  ])
+  for (const e of events) push('event', e.title, e.description || '', `/events/${e.slug}`)
   for (const a of announcements)
     push('announcement', a.title, a.body || '', `/announcements/${a.slug}`)
   for (const g of groups)
@@ -99,15 +89,11 @@ const writebackView = (row: any) => ({
   note: row.note,
   citations: row.citations,
   status: row.status,
-  accountId:
-    typeof row.account === 'object' ? row.account?.id : row.account,
-  accountEmail:
-    typeof row.account === 'object' ? row.account?.email : null,
+  accountId: typeof row.account === 'object' ? row.account?.id : row.account,
+  accountEmail: typeof row.account === 'object' ? row.account?.email : null,
   idempotencyKey: row.idempotencyKey || null,
-  approvedBy:
-    typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy,
-  appliedBy:
-    typeof row.appliedBy === 'object' ? row.appliedBy?.id : row.appliedBy,
+  approvedBy: typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy,
+  appliedBy: typeof row.appliedBy === 'object' ? row.appliedBy?.id : row.appliedBy,
   appliedAt: row.appliedAt || null,
   reviewedAt: row.reviewedAt || null,
   createdAt: row.createdAt,
@@ -203,8 +189,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           limit: 1,
           overrideAccess: true,
         })
-        if (dup.docs[0])
-          return json({ item: writebackView(dup.docs[0]) }, { status: 200 })
+        if (dup.docs[0]) return json({ item: writebackView(dup.docs[0]) }, { status: 200 })
       }
       const item = await req.payload.create({
         collection: 'research-notes',
@@ -242,7 +227,10 @@ export const intelligenceEndpoints: Endpoint[] = [
         req,
       })) as any
       if (!row) throw fail.notFound()
-      if (String(typeof row.account === 'object' ? row.account.id : row.account) === String(account.id))
+      if (
+        String(typeof row.account === 'object' ? row.account.id : row.account) ===
+        String(account.id)
+      )
         throw new ApiError(
           409,
           'separation_of_duties',
@@ -286,8 +274,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       if (!row) throw fail.notFound()
       if (row.status !== 'approved')
         throw new ApiError(409, 'conflict', 'Only approved notes can be applied.')
-      const approverId =
-        typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy
+      const approverId = typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy
       if (String(approverId) === String(account.id))
         throw new ApiError(
           409,
@@ -326,13 +313,10 @@ export const intelligenceEndpoints: Endpoint[] = [
         limit: 500,
         overrideAccess: true,
       })
-      const byStatus = (notes.docs as any[]).reduce<Record<string, number>>(
-        (acc, n) => {
-          acc[n.status] = (acc[n.status] || 0) + 1
-          return acc
-        },
-        {},
-      )
+      const byStatus = (notes.docs as any[]).reduce<Record<string, number>>((acc, n) => {
+        acc[n.status] = (acc[n.status] || 0) + 1
+        return acc
+      }, {})
       return json({
         notesTotal: notes.totalDocs,
         byStatus,

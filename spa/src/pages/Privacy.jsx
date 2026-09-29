@@ -1,26 +1,13 @@
-import {
-  TbArrowLeft as ArrowLeft,
-  TbExternalLink as ExternalLink,
-} from 'react-icons/tb'
+import { TbArrowLeft as ArrowLeft, TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { useDocument } from '../lib/documents.js'
 import { Brand } from '../components/Brand.jsx'
 
 function ExtLink({ href, children }) {
   if (!href) return <span>{children}</span>
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mandateExtLink"
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" className="mandateExtLink">
       {children}
-      <ExternalLink
-        className="policyInlineIcon"
-        size={12}
-        strokeWidth={1.75}
-        aria-hidden
-      />
+      <ExternalLink className="policyInlineIcon" size={12} strokeWidth={1.75} aria-hidden />
     </a>
   )
 }
@@ -57,9 +44,9 @@ function Body({ notice, policies }) {
       <section className="mandateAnalysis card privacySummary">
         <h2>What this platform collects about you</h2>
         <p className="meta mandateAnalysisLead">
-          Every field the registration form asks for is listed below, with what
-          it is used for and who can see it. If a new field is ever added to the
-          form, it is added here in the same change.
+          Every field the registration form asks for is listed below, with what it is used for and
+          who can see it. If a new field is ever added to the form, it is added here in the same
+          change.
         </p>
         <div className="mandatePoints privacyDataList">
           {DATA_CATEGORIES.map((category) => (
@@ -103,15 +90,13 @@ function Body({ notice, policies }) {
       <section className="mandateSection card privacySection">
         <h2>Related YOUNGO policies</h2>
         <p className="meta mandatePara">
-          This notice explains what the Hub platform does. It sits under the
-          policies the constituency has adopted, and does not replace them.
+          This notice explains what the Hub platform does. It sits under the policies the
+          constituency has adopted, and does not replace them.
         </p>
         <ul className="mandateBulletGroup privacyBulletList">
           {PRIVACY_META.relatedPolicies.map((related) => (
             <li key={related.slug} className="meta">
-              <ExtLink href={POLICY_BY_SLUG[related.slug]?.href}>
-                {related.label}
-              </ExtLink>
+              <ExtLink href={POLICY_BY_SLUG[related.slug]?.href}>{related.label}</ExtLink>
             </li>
           ))}
         </ul>
@@ -119,20 +104,15 @@ function Body({ notice, policies }) {
         <ul className="mandateBulletGroup privacyBulletList">
           {PRIVACY_META.processors.map((processor) => (
             <li key={processor.name} className="meta">
-              <ExtLink href={processor.href}>{processor.name}</ExtLink> —{' '}
-              {processor.role}
+              <ExtLink href={processor.href}>{processor.name}</ExtLink> — {processor.role}
             </li>
           ))}
         </ul>
       </section>
 
       <p className="metaMuted mandateEndMark">
-        End of notice · version {PRIVACY_VERSION} · effective{' '}
-        {PRIVACY_META.effectiveFrom} · contact{' '}
-        <a
-          href={`mailto:${PRIVACY_META.contactEmail}`}
-          className="mandateExtLink"
-        >
+        End of notice · version {PRIVACY_VERSION} · effective {PRIVACY_META.effectiveFrom} · contact{' '}
+        <a href={`mailto:${PRIVACY_META.contactEmail}`} className="mandateExtLink">
           {PRIVACY_META.contactEmail}
         </a>
       </p>
@@ -150,8 +130,8 @@ function Header({ notice }) {
       </p>
       <h1>{PRIVACY_META.name}</h1>
       <p className="meta privacyNoticeLead">
-        What the YOUNGO Hub collects, why it is needed, who can see it, how long
-        it is kept, and how to ask for a copy or deletion.
+        What the YOUNGO Hub collects, why it is needed, who can see it, how long it is kept, and how
+        to ask for a copy or deletion.
       </p>
       <p className="metaMuted">{PRIVACY_META.status}</p>
     </div>
@@ -169,7 +149,9 @@ export function Privacy({ standalone = false }) {
     return (
       <main className="mandateGate" aria-busy="true">
         <div className="mandateShell">
-          <p className="meta" role="status">Loading the Privacy Notice…</p>
+          <p className="meta" role="status">
+            Loading the Privacy Notice…
+          </p>
         </div>
       </main>
     )
@@ -208,10 +190,7 @@ export function Privacy({ standalone = false }) {
             <div className="privacyFooterRow">
               <p className="metaMuted privacyFooterCopy">
                 Questions or deletion requests:{' '}
-                <a
-                  className="mandateExtLink"
-                  href={`mailto:${PRIVACY_META.contactEmail}`}
-                >
+                <a className="mandateExtLink" href={`mailto:${PRIVACY_META.contactEmail}`}>
                   {PRIVACY_META.contactEmail}
                 </a>
               </p>
