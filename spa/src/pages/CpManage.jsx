@@ -1,6 +1,6 @@
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
-import { useContentOptionLabels } from '../lib/documents.js'
+import { useContentOptionLabels, useContentOptions } from '../lib/documents.js'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api.js'
 import {
@@ -15,7 +15,8 @@ import {
 import { SearchableSelect } from '../components/FormControls.jsx'
 
 export function CpManage({ slug }) {
-  const { assignmentLabels, wgActivityKinds } = useContentOptionLabels()
+  const { assignmentLabels } = useContentOptionLabels()
+  const { wgActivityKinds } = useContentOptions()
   const [activityBusy, setActivityBusy] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [filter, setFilter] = useState('pending')
