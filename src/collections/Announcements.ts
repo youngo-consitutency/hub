@@ -3,11 +3,6 @@ import { staffWrites } from '../lib/collectionAccess'
 
 export const Announcements: CollectionConfig = {
   slug: 'content-announcements',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'pinned', 'publishedAt'],
-  },
   access: {
     read: () => true,
     ...staffWrites,
@@ -20,7 +15,7 @@ export const Announcements: CollectionConfig = {
     { name: 'ctaUrl', type: 'text' },
     { name: 'ctaLabel', type: 'text' },
     { name: 'ctaDeadlineAt', type: 'date' },
-    { name: 'publishedAt', type: 'date', admin: { position: 'sidebar' } },
+    { name: 'publishedAt', type: 'date' },
     { name: 'state', type: 'select', required: true, defaultValue: 'published', index: true, options: ['published', 'unpublished'] },
   ],
 }

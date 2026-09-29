@@ -3,9 +3,6 @@ import { isStaff } from '../lib/collectionAccess'
 
 export const Users: CollectionConfig = {
   slug: 'users',
-  admin: {
-    useAsTitle: 'email',
-  },
   auth: true,
   access: {
     read: isStaff,

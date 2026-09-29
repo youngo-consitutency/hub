@@ -9,11 +9,6 @@ import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
 export const DecisionProposals: CollectionConfig = {
   slug: 'decision-proposals',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Governance',
-    defaultColumns: ['title', 'body', 'status', 'decisionType'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -135,11 +130,6 @@ export const DecisionProposals: CollectionConfig = {
 
 export const DecisionFlags: CollectionConfig = {
   slug: 'decision-flags',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['proposal', 'kind', 'status', 'raisedBy'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -203,11 +193,6 @@ export const DecisionFlags: CollectionConfig = {
 
 export const DecisionComments: CollectionConfig = {
   slug: 'decision-comments',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['proposal', 'account'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -234,11 +219,6 @@ export const DecisionComments: CollectionConfig = {
 
 export const DecisionBallots: CollectionConfig = {
   slug: 'decision-ballots',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['proposal', 'account', 'choice'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -268,11 +248,6 @@ export const DecisionBallots: CollectionConfig = {
 
 export const DecisionVetoes: CollectionConfig = {
   slug: 'decision-vetoes',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['proposal', 'requesterKind', 'groupKey', 'status'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -318,11 +293,6 @@ export const DecisionVetoes: CollectionConfig = {
 
 export const DecisionEvents: CollectionConfig = {
   slug: 'decision-events',
-  admin: {
-    useAsTitle: 'type',
-    group: 'Governance',
-    defaultColumns: ['proposal', 'type', 'actor', 'createdAt'],
-  },
   access: {
     read: isStaffOrMember,
     create: isStaff,

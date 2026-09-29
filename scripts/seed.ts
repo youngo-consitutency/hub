@@ -2,7 +2,7 @@
 /**
  * Bootstrap a freshly migrated database. The repository carries no content
  * or account data — working groups, events, documents, resources and demo
- * accounts all live in the database (the console, the member flows, or
+ * accounts all live in the database (the member flows or
  * direct provisioning for deployments). This script only creates the
  * Payload console login when credentials are supplied:
  *
@@ -44,7 +44,7 @@ async function main() {
     } else {
       await payload.create({ collection: 'users', data, overrideAccess: true })
     }
-    console.log('console user: provisioned')
+    console.log('staff user: provisioned')
   }
 
   console.log('Bootstrap complete.')

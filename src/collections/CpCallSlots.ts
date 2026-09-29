@@ -4,11 +4,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // CP office-hours slots members book (replaces cp_call_slots + bookings).
 export const CpCallSlots: CollectionConfig = {
   slug: 'cp-call-slots',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Membership',
-    defaultColumns: ['startsAt', 'hostAccount', 'bookedByAccount', 'status'],
-  },
   access: {
     read: ({ req }) => Boolean(req.user),
     ...staffWrites,

@@ -9,11 +9,6 @@ import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
 export const Elections: CollectionConfig = {
   slug: 'elections',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Governance',
-    defaultColumns: ['title', 'status'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -72,11 +67,6 @@ export const Elections: CollectionConfig = {
 
 export const ElectionCandidates: CollectionConfig = {
   slug: 'election-candidates',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['election', 'race', 'status'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -117,11 +107,6 @@ export const ElectionCandidates: CollectionConfig = {
 // once at issuance and never persisted.
 export const ElectionVoters: CollectionConfig = {
   slug: 'election-voters',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['election', 'kind', 'votedAt'],
-  },
   access: {
     read: isStaff,
     ...staffWrites,
@@ -156,11 +141,6 @@ export const ElectionVoters: CollectionConfig = {
 // Secret ballot: keyed by election + race + token hash. No account column.
 export const ElectionBallots: CollectionConfig = {
   slug: 'election-ballots',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['election', 'race'],
-  },
   access: {
     read: isStaff,
     ...staffWrites,
@@ -191,11 +171,6 @@ export const ElectionBallots: CollectionConfig = {
 
 export const Selections: CollectionConfig = {
   slug: 'selections',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Governance',
-    defaultColumns: ['title', 'status', 'method'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -257,11 +232,6 @@ export const Selections: CollectionConfig = {
 
 export const SelectionCommittee: CollectionConfig = {
   slug: 'selection-committee',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['selection', 'account'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -291,11 +261,6 @@ export const SelectionCommittee: CollectionConfig = {
 
 export const SelectionApplications: CollectionConfig = {
   slug: 'selection-applications',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['selection', 'account', 'status'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -333,11 +298,6 @@ export const SelectionApplications: CollectionConfig = {
 
 export const SelectionEvaluations: CollectionConfig = {
   slug: 'selection-evaluations',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Governance',
-    defaultColumns: ['selection', 'application', 'evaluator'],
-  },
   access: {
     // Evaluations stay confidential to the committee + staff.
     read: isStaff,

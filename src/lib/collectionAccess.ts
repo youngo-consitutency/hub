@@ -7,7 +7,7 @@ import type { Access, FieldAccess } from 'payload'
 // after establishing the actor. Collection-level access therefore exists to
 // prevent the generated APIs from becoming a second, unchecked write path:
 // reads stay scoped to the record's visibility, and writes are restricted to
-// console staff (the `users` collection) or disabled outright so they must
+// staff users (the `users` collection) or disabled outright so they must
 // flow through a domain endpoint that performs authorisation.
 
 export const isStaff: Access = ({ req }) => req.user?.collection === 'users'

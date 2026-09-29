@@ -7,13 +7,13 @@ A shared space for YOUNGO members to find groups, attend events, share resources
 - Public information about YOUNGO, its working groups, youth conferences and resources.
 - Member accounts, induction, group workspaces, opportunities and policy contributions.
 - Decision-making processes, voting, elections and operational requests, with access based on membership and assigned responsibilities.
-- Review tools for membership and content teams, plus a separate staff console at `/console`.
+- Review tools for membership and content teams. There is no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access.
 
 The resource collection is part of the Hub. Existing source credits and review records remain attached to imported material.
 
 ## How it is built
 
-React draws the member interface in `spa/`. Next.js runs the website and server. Payload manages accounts, content and the staff console. PostgreSQL stores the records. Server code and access checks are in `src/`.
+React draws the member interface in `spa/`. Next.js runs the website and server. Payload manages accounts, content and access checks — deliberately without its admin panel; staff work happens through terminal scripts (`payload` local API) or the database. PostgreSQL stores the records. Server code and access checks are in `src/`.
 
 The separate [content service](https://github.com/youngo-consitutency/hub/wiki/Agent-tools) lets authorised assistant tools use the Hub’s API. It does not receive database credentials.
 

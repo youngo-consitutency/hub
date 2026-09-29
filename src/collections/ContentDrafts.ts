@@ -6,11 +6,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // record in the matching collection keyed by contentKey (slug).
 export const ContentDrafts: CollectionConfig = {
   slug: 'content-drafts',
-  admin: {
-    useAsTitle: 'contentKey',
-    group: 'Content',
-    defaultColumns: ['contentType', 'contentKey', 'status', 'author'],
-  },
   access: {
     read: ({ req }) => Boolean(req.user),
     ...staffWrites,

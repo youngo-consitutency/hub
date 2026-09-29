@@ -4,7 +4,6 @@ import type { CollectionConfig } from 'payload'
 // tokenHash stores sha256(token) so the raw token only ever appears in email.
 export const PasswordResets: CollectionConfig = {
   slug: 'password-resets',
-  admin: { hidden: true },
   access: {
     read: () => false,
     create: () => false,

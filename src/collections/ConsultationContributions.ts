@@ -5,10 +5,6 @@ import { isStaff } from '../lib/collectionAccess'
 // staff-only read.
 export const ConsultationContributions: CollectionConfig = {
   slug: 'consultation-contributions',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Content',
-  },
   access: {
     read: ({ req }) => req.user?.collection === 'users',
     create: () => true,

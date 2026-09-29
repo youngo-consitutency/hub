@@ -3,11 +3,6 @@ import { isStaff, staffWrites } from '../lib/collectionAccess'
 
 export const Resources: CollectionConfig = {
   slug: 'catalogue-resources',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'pathway', 'type', 'verificationStatus'],
-  },
   access: {
     read: () => true,
     ...staffWrites,
@@ -39,7 +34,6 @@ export const Resources: CollectionConfig = {
 
 export const ResourceIssues: CollectionConfig = {
   slug: 'resource-issues',
-  admin: { group: 'Content', defaultColumns: ['resourceSlug', 'kind', 'createdAt'] },
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req, data }) => {
@@ -62,7 +56,6 @@ export const ResourceIssues: CollectionConfig = {
 
 export const ResourceReviews: CollectionConfig = {
   slug: 'resource-reviews',
-  admin: { group: 'Content' },
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req, data }) => {
