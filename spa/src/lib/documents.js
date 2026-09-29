@@ -1,6 +1,6 @@
 import { useApi } from './api.js'
 
-// Content documents are console-editable records (collection
+// Content documents are staff-editable records (collection
 // `content-documents`) fetched through GET /api/documents/:slug.
 // Each body preserves the shape of the former spa/src/content module.
 

@@ -6,11 +6,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // `body` is JSON so documents keep the shape their consumers expect.
 export const ContentDocuments: CollectionConfig = {
   slug: 'content-documents',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['slug', 'title', 'updatedAt'],
-  },
   access: {
     read: () => true,
     ...staffWrites,

@@ -3,7 +3,6 @@ import { staffWrites } from '../lib/collectionAccess'
 
 export const ResearchNotes: CollectionConfig = {
   slug: 'research-notes',
-  admin: { group: 'Intelligence' },
   access: {
     read: ({ req }) => Boolean(req.user),
     ...staffWrites,

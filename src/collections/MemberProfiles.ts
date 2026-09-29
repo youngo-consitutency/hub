@@ -3,10 +3,6 @@ import { staffWrites } from '../lib/collectionAccess'
 
 export const MemberProfiles: CollectionConfig = {
   slug: 'member-profiles',
-  admin: {
-    useAsTitle: 'displayName',
-    group: 'Membership',
-  },
   access: {
     read: ({ req }) => Boolean(req.user),
     ...staffWrites,

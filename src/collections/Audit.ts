@@ -2,10 +2,6 @@ import type { CollectionConfig } from 'payload'
 
 export const AuditLog: CollectionConfig = {
   slug: 'audit-log',
-  admin: {
-    group: 'Admin',
-    defaultColumns: ['action', 'actor', 'targetType', 'targetId', 'createdAt'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

@@ -2,7 +2,6 @@ import type { CollectionConfig } from 'payload'
 
 export const MembershipAppeals: CollectionConfig = {
   slug: 'membership-appeals',
-  admin: { group: 'Membership' },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

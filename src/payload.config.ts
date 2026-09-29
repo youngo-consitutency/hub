@@ -81,15 +81,10 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  admin: {
-    user: Users.slug,
-    importMap: {
-      baseDir: path.resolve(dirname),
-    },
-  },
-  routes: {
-    admin: '/console',
-  },
+  // No admin UI: the generated page routes are deleted, so the console does
+  // not exist. Staff operations run through the Payload local API (scripts,
+  // terminal sessions) and direct database access; `users` stays only as the
+  // auth collection that backs isStaff access checks.
   collections: [
     Users,
     Media,
@@ -151,7 +146,7 @@ export default buildConfig({
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
-  // Payload's own emails (console password resets, verifications) share the
+  // Payload's own emails (staff password resets, verifications) share the
   // app's SMTP settings via the nodemailer adapter. Demo mode keeps a no-op
   // adapter so nothing leaves the environment; without SMTP config the
   // default adapter logs messages, which suits local development.
@@ -171,7 +166,7 @@ export default buildConfig({
             transport: getEmailTransport()!,
           })
         : undefined,
-  // Canonical origin for generated links (emails, admin). Cross-site cookie
+  // Canonical origin for generated links (emails). Cross-site cookie
   // requests are already blocked by SameSite=Lax on the session cookie.
   serverURL: process.env.APP_BASE_URL || undefined,
   secret: process.env.PAYLOAD_SECRET || '',

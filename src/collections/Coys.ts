@@ -3,11 +3,6 @@ import { staffWrites } from '../lib/collectionAccess'
 
 export const Coys: CollectionConfig = {
   slug: 'content-coys',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'type', 'status', 'startsOn'],
-  },
   access: {
     read: () => true,
     ...staffWrites,
@@ -37,7 +32,6 @@ export const Coys: CollectionConfig = {
       defaultValue: 'pending',
       options: ['pending', 'approved', 'rejected'],
       index: true,
-      admin: { position: 'sidebar' },
     },
     { name: 'organizerName', type: 'text', label: 'Organiser name' },
     { name: 'organizerOrg', type: 'text', label: 'Organiser organisation' },

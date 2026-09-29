@@ -2,7 +2,7 @@
 /**
  * Bootstrap a freshly migrated database. The repository carries no content
  * or account data — working groups, events, documents, resources and demo
- * accounts all live in the database (the console, the member flows, or
+ * accounts all live in the database (the member flows or
  * direct provisioning for deployments). This script only creates the
  * Payload console login when credentials are supplied:
  *
@@ -18,6 +18,10 @@ loadEnv({ path: '.env.local' })
 loadEnv()
 const { default: config } = await import('../src/payload.config')
 
+/**
+ * Initialise Payload, upsert a staff user by email when CONSOLE_EMAIL and
+ * CONSOLE_PASSWORD are supplied, then exit after bootstrap completes.
+ */
 async function main() {
   const payload = await getPayload({ config })
 
@@ -44,7 +48,7 @@ async function main() {
     } else {
       await payload.create({ collection: 'users', data, overrideAccess: true })
     }
-    console.log('console user: provisioned')
+    console.log('staff user: provisioned')
   }
 
   console.log('Bootstrap complete.')

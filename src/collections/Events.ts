@@ -3,11 +3,6 @@ import { isStaffField, staffWrites } from '../lib/collectionAccess'
 
 export const Events: CollectionConfig = {
   slug: 'content-events',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'type', 'startsAt', 'wg'],
-  },
   access: {
     read: () => true,
     ...staffWrites,
@@ -29,7 +24,6 @@ export const Events: CollectionConfig = {
       name: 'meetingUrl',
       type: 'text',
       access: { read: isStaffField },
-      admin: { description: 'Join link — members only, never published anonymously' },
     },
     { name: 'recordingUrl', type: 'text' },
     {
@@ -40,6 +34,6 @@ export const Events: CollectionConfig = {
       index: true,
       options: ['published', 'unpublished'],
     },
-    { name: 'legacySource', type: 'text', admin: { readOnly: true } },
+    { name: 'legacySource', type: 'text' },
   ],
 }

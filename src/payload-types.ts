@@ -320,13 +320,7 @@ export interface Account {
   country: string;
   motivation?: string | null;
   entityType: 'individual' | 'organization';
-  /**
-   * Organisation posting trust override; empty derives trust from a published posting.
-   */
   postingTrust?: ('trusted' | 'review_required') | null;
-  /**
-   * Staff note recorded with the posting-trust override.
-   */
   postingTrustNote?: string | null;
   membershipTrack: 'network' | 'constituency_work';
   organizationName?: string | null;
@@ -573,9 +567,6 @@ export interface ContentEvent {
   endsAt?: string | null;
   description?: string | null;
   wg?: (number | null) | WorkingGroup;
-  /**
-   * Join link — members only, never published anonymously
-   */
   meetingUrl?: string | null;
   recordingUrl?: string | null;
   state: 'published' | 'unpublished';
@@ -675,13 +666,7 @@ export interface DirectoryContact {
   description?: string | null;
   publicEmail?: string | null;
   wg?: (number | null) | WorkingGroup;
-  /**
-   * Members only
-   */
   personName?: string | null;
-  /**
-   * Members only
-   */
   channelValue?: string | null;
   sortOrder?: number | null;
   updatedAt: string;

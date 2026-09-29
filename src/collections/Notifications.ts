@@ -2,7 +2,6 @@ import type { CollectionConfig } from 'payload'
 
 export const NotificationPrefs: CollectionConfig = {
   slug: 'notification-prefs',
-  admin: { hidden: true },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -32,7 +31,6 @@ export const NotificationPrefs: CollectionConfig = {
 
 export const EmailVerificationTokens: CollectionConfig = {
   slug: 'email-verification-tokens',
-  admin: { hidden: true },
   access: {
     read: () => false,
     create: () => false,
@@ -49,7 +47,6 @@ export const EmailVerificationTokens: CollectionConfig = {
 
 export const PushSubscriptions: CollectionConfig = {
   slug: 'push-subscriptions',
-  admin: { hidden: true },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -82,7 +79,6 @@ export const PushSubscriptions: CollectionConfig = {
 
 export const NotificationOutbox: CollectionConfig = {
   slug: 'notification-outbox',
-  admin: { hidden: true },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

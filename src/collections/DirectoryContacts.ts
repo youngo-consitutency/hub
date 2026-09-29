@@ -5,11 +5,6 @@ import { isStaffOrMember, isStaffOrMemberField, staffWrites } from '../lib/colle
 // the /api/directory view strips them for anonymous callers.
 export const DirectoryContacts: CollectionConfig = {
   slug: 'directory-contacts',
-  admin: {
-    useAsTitle: 'roleTitle',
-    group: 'Content',
-    defaultColumns: ['group', 'roleTitle', 'publicEmail'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -24,8 +19,8 @@ export const DirectoryContacts: CollectionConfig = {
       type: 'relationship',
       relationTo: 'working-groups',
     },
-    { name: 'personName', type: 'text', admin: { description: 'Members only' } },
-    { name: 'channelValue', type: 'text', admin: { description: 'Members only' } },
+    { name: 'personName', type: 'text' },
+    { name: 'channelValue', type: 'text' },
     { name: 'sortOrder', type: 'number' },
   ],
 }

@@ -5,11 +5,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // contact/lead, negotiation scopes, platform bodies) with an active window.
 export const Assignments: CollectionConfig = {
   slug: 'assignments',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Membership',
-    defaultColumns: ['account', 'scopeType', 'scopeId', 'role', 'status'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
