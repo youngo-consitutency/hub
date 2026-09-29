@@ -54,11 +54,9 @@ export function SidePanel({
     if (!closing) return
     let cancelled = false
     const animations = dialogRef.current?.getAnimations() || []
-    Promise.allSettled(animations.map((animation) => animation.finished)).then(
-      () => {
-        if (!cancelled) closeCallback.current()
-      },
-    )
+    Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+      if (!cancelled) closeCallback.current()
+    })
     return () => {
       cancelled = true
     }

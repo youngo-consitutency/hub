@@ -10,8 +10,7 @@ export function WgInterestsSection({ selected, onToggle }) {
     <section className="card authSection">
       <h2 className="authSectionTitle">Working groups you’re interested in</h2>
       <p className="meta">
-        Optional. You’ll complete each group’s onboarding before its member
-        channels open.
+        Optional. You’ll complete each group’s onboarding before its member channels open.
       </p>
       <MultiSelectDropdown
         label="Working groups"
@@ -24,14 +23,7 @@ export function WgInterestsSection({ selected, onToggle }) {
   )
 }
 
-export function PhoneField({
-  label,
-  value,
-  onValueChange,
-  onLoad,
-  error,
-  required = false,
-}) {
+export function PhoneField({ label, value, onValueChange, onLoad, error, required = false }) {
   return (
     <label className={fieldClass(error)}>
       <span>
@@ -57,12 +49,8 @@ export function PhoneField({
         onKeyDown={(event) => {
           const input = event.currentTarget
           if (
-            (event.key === 'Backspace' &&
-              input.selectionStart <= 2 &&
-              input.selectionEnd <= 2) ||
-            (event.key === 'Delete' &&
-              input.selectionStart === 0 &&
-              input.selectionEnd <= 2)
+            (event.key === 'Backspace' && input.selectionStart <= 2 && input.selectionEnd <= 2) ||
+            (event.key === 'Delete' && input.selectionStart === 0 && input.selectionEnd <= 2)
           ) {
             event.preventDefault()
           }
@@ -87,12 +75,7 @@ export function PolicyLink({ href, children }) {
       onClick={(e) => e.stopPropagation()}
     >
       {children}
-      <ExternalLink
-        size={12}
-        strokeWidth={1.75}
-        aria-hidden
-        className="policyInlineIcon"
-      />
+      <ExternalLink size={12} strokeWidth={1.75} aria-hidden className="policyInlineIcon" />
     </a>
   )
 }
@@ -131,14 +114,10 @@ export function PrivacyConsentSection({ checked, onChange, error, isOrg, notice 
       <FieldError msg={error} />
       <p className="metaMuted">
         You can withdraw this consent at any time by emailing{' '}
-        <a
-          className="mandateExtLink"
-          href={`mailto:${PRIVACY_META.contactEmail}`}
-        >
+        <a className="mandateExtLink" href={`mailto:${PRIVACY_META.contactEmail}`}>
           {PRIVACY_META.contactEmail}
         </a>
-        . Withdrawing closes the Hub account; it does not by itself end YOUNGO
-        membership.
+        . Withdrawing closes the Hub account; it does not by itself end YOUNGO membership.
       </p>
     </section>
   )

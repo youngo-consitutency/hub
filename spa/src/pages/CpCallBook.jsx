@@ -1,14 +1,7 @@
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
 import { apiPost } from '../lib/api.js'
-import {
-  Async,
-  Button,
-  Empty,
-  ErrorCard,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
+import { Async, Button, Empty, ErrorCard, PageHeader, Section } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { fmtDual } from '../lib/time.js'
 import { useWorkingGroups } from '../lib/workingGroups.js'
@@ -39,9 +32,7 @@ export function CpCallBook() {
   }))
   const query = useApi('/member/cp-calls/slots')
   const [wgSlug, setWgSlug] = useState(
-    account?.access?.wgAssignments?.[0]?.wgSlug ||
-      account?.wgInterests?.[0] ||
-      '',
+    account?.access?.wgAssignments?.[0]?.wgSlug || account?.wgInterests?.[0] || '',
   )
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -89,14 +80,9 @@ export function CpCallBook() {
                   {fmtDual(data.mine.startsAt)} with {data.mine.hostLabel}
                 </p>
                 <p className="meta">
-                  We’ll send the Meet link closer to the time. Change the slot
-                  if you need to.
+                  We’ll send the Meet link closer to the time. Change the slot if you need to.
                 </p>
-                <Button
-                  variant="secondary"
-                  onClick={cancel}
-                  disabled={busy === 'cancel'}
-                >
+                <Button variant="secondary" onClick={cancel} disabled={busy === 'cancel'}>
                   {busy === 'cancel' ? 'Releasing…' : 'Pick a different time'}
                 </Button>
               </div>
@@ -114,11 +100,7 @@ export function CpCallBook() {
               <Section label="Open times">
                 {data.slots.length ? (
                   groupByDay(data.slots).map(([day, slots]) => (
-                    <div
-                      key={day}
-                      className="stackSm"
-                      style={{ marginBottom: 16 }}
-                    >
+                    <div key={day} className="stackSm" style={{ marginBottom: 16 }}>
                       <h3>{day}</h3>
                       <div className="dashboardCardGrid">
                         {slots.map((slot) => (

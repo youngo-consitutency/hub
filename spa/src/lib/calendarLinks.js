@@ -10,9 +10,7 @@ const toCalEvent = (event) => ({
   title: event.title || 'YOUNGO event',
   start: new Date(event.startsAt).toISOString(),
   end: new Date(event.endsAt).toISOString(),
-  description: [event.description, event.meetingUrl]
-    .filter(Boolean)
-    .join('\n\n'),
+  description: [event.description, event.meetingUrl].filter(Boolean).join('\n\n'),
   location: event.meetingUrl || '',
 })
 
@@ -60,4 +58,3 @@ export function googleSubscribeUrl(path, origin) {
   const abs = new URL(path, base).toString()
   return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(abs)}`
 }
-

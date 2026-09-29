@@ -84,8 +84,7 @@ export function computeWindows(
     case 'og_snap':
       return span(6 * H, 0, 6 * H)
     case 'snap': {
-      if (!snapDeadline || snapDeadline.getTime() <= t)
-        throw new Error('snap_deadline_required')
+      if (!snapDeadline || snapDeadline.getTime() <= t) throw new Error('snap_deadline_required')
       const avail = snapDeadline.getTime() - t
       return span(avail / 2, avail / 4, avail / 4)
     }
@@ -121,9 +120,7 @@ export function consensusOutcome(
   greyStatuses: string[],
 ): 'vote' | 'consensus' | 'consensus_with_reservations' {
   if (unresolvedRed(redStatuses) > 0) return 'vote'
-  return unresolvedRed(greyStatuses) > 0
-    ? 'consensus_with_reservations'
-    : 'consensus'
+  return unresolvedRed(greyStatuses) > 0 ? 'consensus_with_reservations' : 'consensus'
 }
 
 // Adoption needs ≥⅔ of votes cast (S09 §2 step 6). Blank/spoiled ballots are
@@ -179,9 +176,7 @@ export function tallyIrv(ballots: IrvBallot[], candidates: string[]): IrvResult 
   let remaining = [...candidates]
   const rounds: IrvResult['rounds'] = []
   while (remaining.length > 1) {
-    const tallies: Record<string, number> = Object.fromEntries(
-      remaining.map((c) => [c, 0]),
-    )
+    const tallies: Record<string, number> = Object.fromEntries(remaining.map((c) => [c, 0]))
     for (const ranks of live) {
       const top = ranks.find((r) => remaining.includes(r))
       if (top) tallies[top] += 1

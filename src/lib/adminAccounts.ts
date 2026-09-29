@@ -41,25 +41,14 @@ export async function queryAccountsForAdmin({
   pageSize = 12,
 }: any = {}) {
   const cleanSearch = String(search).trim().slice(0, 120)
-  const cleanEntityType = ['individual', 'organization'].includes(entityType)
-    ? entityType
-    : ''
+  const cleanEntityType = ['individual', 'organization'].includes(entityType) ? entityType : ''
   const cleanStatus = MEMBERSHIP_STATUSES.includes(status) ? status : ''
-  const cleanRole = [
-    'member',
-    'focal_point',
-    'wg_contact',
-    'ngo_admin',
-    'admin',
-  ].includes(role)
+  const cleanRole = ['member', 'focal_point', 'wg_contact', 'ngo_admin', 'admin'].includes(role)
     ? role
     : ''
   const cleanSort = ACCOUNT_SORTS[sort] ? sort : 'newest'
   const cleanPage = Math.min(100_000, Math.max(1, Number.parseInt(page, 10) || 1))
-  const cleanPageSize = Math.min(
-    50,
-    Math.max(1, Number.parseInt(pageSize, 10) || 12),
-  )
+  const cleanPageSize = Math.min(50, Math.max(1, Number.parseInt(pageSize, 10) || 12))
   const pool = requirePgPool()
   const values: any[] = []
   const where: string[] = []
@@ -68,18 +57,12 @@ export async function queryAccountsForAdmin({
     where.push(clause.replace('?', `$${values.length}`))
   }
   if (cleanSearch)
-    add(
-      `concat_ws(' ', name, email, organization_name, country) ILIKE ?`,
-      `%${cleanSearch}%`,
-    )
+    add(`concat_ws(' ', name, email, organization_name, country) ILIKE ?`, `%${cleanSearch}%`)
   if (cleanEntityType) add('entity_type = ?', cleanEntityType)
   if (cleanStatus) add('membership_status = ?', cleanStatus)
   if (cleanRole) add('role = ?', cleanRole)
   const filter = where.length ? `WHERE ${where.join(' AND ')}` : ''
-  const count = await pool.query(
-    `SELECT count(*)::int AS total FROM accounts ${filter}`,
-    values,
-  )
+  const count = await pool.query(`SELECT count(*)::int AS total FROM accounts ${filter}`, values)
   const total = count.rows[0]?.total || 0
   const pages = Math.max(1, Math.ceil(total / cleanPageSize))
   const currentPage = Math.min(cleanPage, pages)

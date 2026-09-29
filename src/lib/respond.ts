@@ -8,12 +8,7 @@ export class ApiError extends Error {
   status: number
   fields?: Record<string, string>
 
-  constructor(
-    status: number,
-    code: string,
-    message: string,
-    fields?: Record<string, string>,
-  ) {
+  constructor(status: number, code: string, message: string, fields?: Record<string, string>) {
     super(message)
     this.status = status
     this.code = code
@@ -25,8 +20,7 @@ export const fail = {
   validation: (fields: Record<string, string>, message = 'Please check the form.') =>
     new ApiError(400, 'validation', message, fields),
   notFound: (message = 'Not found.') => new ApiError(404, 'not_found', message),
-  unauthorized: (message = 'Sign in to continue.') =>
-    new ApiError(401, 'unauthorized', message),
+  unauthorized: (message = 'Sign in to continue.') => new ApiError(401, 'unauthorized', message),
   forbidden: (message = 'You do not have access to this.') =>
     new ApiError(403, 'forbidden', message),
   conflict: (code: string, message: string, fields?: Record<string, string>) =>
@@ -63,7 +57,15 @@ export function endpoint(handler: Handler): Handler {
       if (anyErr?.status) {
         const code =
           anyErr.code ||
-          ({ 400: 'validation', 401: 'unauthorized', 403: 'forbidden', 404: 'not_found', 409: 'conflict' } as Record<number, string>)[anyErr.status] ||
+          (
+            {
+              400: 'validation',
+              401: 'unauthorized',
+              403: 'forbidden',
+              404: 'not_found',
+              409: 'conflict',
+            } as Record<number, string>
+          )[anyErr.status] ||
           'error'
         return Response.json(
           { error: { code, message: anyErr.message } },
@@ -81,10 +83,7 @@ export function endpoint(handler: Handler): Handler {
           { status: 400 },
         )
       }
-      req.payload.logger.error(
-        { err, path: req.routeParams?.slug ?? req.url },
-        'endpoint failed',
-      )
+      req.payload.logger.error({ err, path: req.routeParams?.slug ?? req.url }, 'endpoint failed')
       // Unhandled exception → error tracking. ApiError/status-coded branches
       // above are expected responses and stay out of Sentry on purpose.
       Sentry.captureException(err, {
@@ -107,8 +106,7 @@ export const json = (data: unknown, init?: ResponseInit) => Response.json(data, 
 
 // Shared-cache policy for anonymous-safe public reads — CDN/edge caches (and
 // SWR's client cache) hold them briefly; member data never takes this path.
-export const PUBLIC_CACHE =
-  'public, s-maxage=60, stale-while-revalidate=300'
+export const PUBLIC_CACHE = 'public, s-maxage=60, stale-while-revalidate=300'
 export const NO_STORE = 'no-store'
 
 /** Cache policy for views that differ between anonymous and verified members. */

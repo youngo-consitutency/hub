@@ -43,10 +43,10 @@ export function CpManage({ slug }) {
 
   const setRole = async (accountId, role, status) => {
     try {
-      await apiPost(
-        `/member/cp/${encodeURIComponent(slug)}/members/${accountId}/role`,
-        { role, status },
-      )
+      await apiPost(`/member/cp/${encodeURIComponent(slug)}/members/${accountId}/role`, {
+        role,
+        status,
+      })
       load()
     } catch (e) {
       setError(e.message)
@@ -74,16 +74,10 @@ export function CpManage({ slug }) {
   }
 
   const pending = useMemo(
-    () =>
-      members.filter(
-        (m) => m.status === 'pending_approval' || m.status === 'interested',
-      ),
+    () => members.filter((m) => m.status === 'pending_approval' || m.status === 'interested'),
     [members],
   )
-  const active = useMemo(
-    () => members.filter((m) => m.status === 'active'),
-    [members],
-  )
+  const active = useMemo(() => members.filter((m) => m.status === 'active'), [members])
 
   return (
     <div className="stack">
@@ -111,44 +105,27 @@ export function CpManage({ slug }) {
                 }
               />
               <div className="filterRow" aria-label="Membership requests">
-                <FilterPill
-                  active={filter === 'pending'}
-                  onClick={() => setFilter('pending')}
-                >
+                <FilterPill active={filter === 'pending'} onClick={() => setFilter('pending')}>
                   Awaiting review ({pending.length})
                 </FilterPill>
-                <FilterPill
-                  active={filter === 'active'}
-                  onClick={() => setFilter('active')}
-                >
+                <FilterPill active={filter === 'active'} onClick={() => setFilter('active')}>
                   Active members ({active.length})
                 </FilterPill>
-                <FilterPill
-                  active={filter === 'all'}
-                  onClick={() => setFilter('all')}
-                >
+                <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
                   All ({members.length})
                 </FilterPill>
               </div>
-              {error && !activityOpen && (
-                <ErrorCard message={error} onRetry={load} />
-              )}
+              {error && !activityOpen && <ErrorCard message={error} onRetry={load} />}
               {msg && <p className="mcFlash">{msg}</p>}
 
               <div>
                 <section className="card">
                   <div className="mcSectionHead">
                     <h2>Group membership</h2>
-                    <span className="mcSectionHint mono">
-                      {members.length} records
-                    </span>
+                    <span className="mcSectionHint mono">{members.length} records</span>
                   </div>
-                  {(filter === 'pending'
-                    ? pending
-                    : filter === 'active'
-                      ? active
-                      : members
-                  ).length === 0 ? (
+                  {(filter === 'pending' ? pending : filter === 'active' ? active : members)
+                    .length === 0 ? (
                     <Empty
                       title="No members in this view"
                       body="When members unlock this workspace they appear here."
@@ -162,8 +139,7 @@ export function CpManage({ slug }) {
                           : members
                       ).map((m) => {
                         const needsReview =
-                          m.status === 'pending_approval' ||
-                          m.status === 'interested'
+                          m.status === 'pending_approval' || m.status === 'interested'
                         return (
                           <div
                             key={`${m.account_id}-${m.wg_slug}`}
@@ -176,8 +152,7 @@ export function CpManage({ slug }) {
                                 <span aria-hidden> · </span>
                                 {m.status.replaceAll('_', ' ')}
                                 <span aria-hidden> · </span>
-                                {assignmentLabels[m.role_in_wg] ||
-                                  m.role_in_wg}
+                                {assignmentLabels[m.role_in_wg] || m.role_in_wg}
                               </p>
                             </div>
                             {needsReview && (
@@ -185,18 +160,14 @@ export function CpManage({ slug }) {
                                 <Button
                                   sm
                                   variant="secondary"
-                                  onClick={() =>
-                                    setRole(m.account_id, 'member', 'active')
-                                  }
+                                  onClick={() => setRole(m.account_id, 'member', 'active')}
                                 >
                                   Approve
                                 </Button>
                                 <Button
                                   sm
                                   variant="ghost"
-                                  onClick={() =>
-                                    setRole(m.account_id, 'member', 'rejected')
-                                  }
+                                  onClick={() => setRole(m.account_id, 'member', 'rejected')}
                                 >
                                   Reject
                                 </Button>
@@ -210,19 +181,14 @@ export function CpManage({ slug }) {
                 </section>
 
                 {activityOpen && (
-                  <SidePanel
-                    title="Add activity"
-                    onClose={() => setActivityOpen(false)}
-                  >
+                  <SidePanel title="Add activity" onClose={() => setActivityOpen(false)}>
                     {error && <ErrorCard message={error} />}
                     <form className="stack" onSubmit={addActivity}>
                       <SearchableSelect
                         label="Kind"
                         options={wgActivityKinds}
                         value={form.kind}
-                        onChange={(kind) =>
-                          setForm((current) => ({ ...current, kind }))
-                        }
+                        onChange={(kind) => setForm((current) => ({ ...current, kind }))}
                         searchPlaceholder="Search activity types…"
                       />
                       <label className="field">
@@ -230,9 +196,7 @@ export function CpManage({ slug }) {
                         <input
                           className="input"
                           value={form.title}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, title: e.target.value }))
-                          }
+                          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                           required
                         />
                       </label>
@@ -242,9 +206,7 @@ export function CpManage({ slug }) {
                           className="input textarea"
                           rows={3}
                           value={form.body}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, body: e.target.value }))
-                          }
+                          onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
                         />
                       </label>
                       <label className="field">
@@ -253,16 +215,10 @@ export function CpManage({ slug }) {
                           className="input"
                           type="datetime-local"
                           value={form.startsAt}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, startsAt: e.target.value }))
-                          }
+                          onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
                         />
                       </label>
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        disabled={activityBusy}
-                      >
+                      <Button type="submit" variant="primary" disabled={activityBusy}>
                         {activityBusy ? 'Saving…' : 'Add activity'}
                       </Button>
                     </form>

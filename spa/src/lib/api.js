@@ -17,9 +17,7 @@ async function request(path, { method = 'GET', ...options } = {}) {
     if (res.status === 401 && method === 'GET' && path === '/auth/me') {
       clearSession()
     }
-    const error = new Error(
-      data?.error?.message || `Request failed (${res.status})`,
-    )
+    const error = new Error(data?.error?.message || `Request failed (${res.status})`)
     error.status = res.status
     error.code = data?.error?.code
     error.fields = data?.error?.fields
@@ -79,9 +77,8 @@ export function apiDelete(path) {
 // Fetch state for independently rendered sections, backed by SWR (request
 // dedup, revalidation, retry). Keyed by [path, ...deps] so dep changes refetch.
 export function useApi(path, deps = []) {
-  const { data, error, isLoading, mutate } = useSWR(
-    path ? [path, ...deps] : null,
-    ([p]) => apiGet(p),
+  const { data, error, isLoading, mutate } = useSWR(path ? [path, ...deps] : null, ([p]) =>
+    apiGet(p),
   )
   return {
     data: data ?? null,

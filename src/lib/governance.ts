@@ -12,9 +12,7 @@ import { getAccessProfile } from './access'
 export async function isFacilitator(req: PayloadRequest, account: any) {
   if (account.role === 'admin') return true
   const access = await getAccessProfile(req, account)
-  return access.teamRoles.some((r) =>
-    ['election_facilitation', 'bottomlining', 'blt'].includes(r),
-  )
+  return access.teamRoles.some((r) => ['election_facilitation', 'bottomlining', 'blt'].includes(r))
 }
 
 export async function isSelector(req: PayloadRequest, account: any) {
@@ -40,11 +38,15 @@ export const tokenHash = (electionId: number | string, token: string) =>
 export async function loadElection(req: PayloadRequest, id: string | number) {
   return req.payload
     .findByID({ collection: 'elections', id: Number(id), overrideAccess: true })
-    .catch(() => { throw fail.notFound('Election not found.') })
+    .catch(() => {
+      throw fail.notFound('Election not found.')
+    })
 }
 
 export async function loadSelection(req: PayloadRequest, id: string | number) {
   return req.payload
     .findByID({ collection: 'selections', id: Number(id), overrideAccess: true })
-    .catch(() => { throw fail.notFound('Selection not found.') })
+    .catch(() => {
+      throw fail.notFound('Selection not found.')
+    })
 }

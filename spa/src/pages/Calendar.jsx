@@ -2,20 +2,10 @@ import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api.js'
 import { useContentOptions } from '../lib/documents.js'
-import {
-  Async,
-  Empty,
-  FilterMenu,
-  FilterPill,
-  PageHeader,
-} from '../components/ui.jsx'
+import { Async, Empty, FilterMenu, FilterPill, PageHeader } from '../components/ui.jsx'
 import { EventCard } from '../components/cards.jsx'
 import { CalendarSubscribe } from '../components/Subscribe.jsx'
-import {
-  activeFilterCount,
-  matchesFilters,
-  toggleFilter,
-} from '../lib/filterState.js'
+import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState.js'
 import {
   buildCalendarDays,
   calendarMonth,
@@ -74,9 +64,7 @@ function CalendarEventIcon({ type }) {
 
 export function Calendar() {
   const { eventTypes } = useContentOptions()
-  const EVENT_TYPES = Object.fromEntries(
-    eventTypes.map((t) => [t.value, t.short || t.label]),
-  )
+  const EVENT_TYPES = Object.fromEntries(eventTypes.map((t) => [t.value, t.short || t.label]))
   const [typeFilters, setTypeFilters] = useState({})
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState(null)
@@ -135,11 +123,7 @@ export function Calendar() {
           onClear={() => {
             setTypeFilters({})
           }}
-          label={
-            activeFilterCount(typeFilters) === 0
-              ? 'Filter events'
-              : 'Event filters'
-          }
+          label={activeFilterCount(typeFilters) === 0 ? 'Filter events' : 'Event filters'}
           activeCount={activeFilterCount(typeFilters)}
         >
           <fieldset className="filterLevel">
@@ -148,14 +132,8 @@ export function Calendar() {
               {FILTERS.map((f) => (
                 <FilterPill
                   key={f.key}
-                  active={
-                    f.key === 'all' && activeFilterCount(typeFilters) === 0
-                  }
-                  state={
-                    f.key === 'all'
-                      ? undefined
-                      : typeFilters[f.key] || 'neutral'
-                  }
+                  active={f.key === 'all' && activeFilterCount(typeFilters) === 0}
+                  state={f.key === 'all' ? undefined : typeFilters[f.key] || 'neutral'}
                   icon={f.icon}
                   onClick={() => changeType(f.key)}
                 >
@@ -179,14 +157,11 @@ export function Calendar() {
         }
       >
         {(data) => {
-          const events = data.items.filter((event) =>
-            matchesFilters(event.type, typeFilters),
-          )
+          const events = data.items.filter((event) => matchesFilters(event.type, typeFilters))
           const grouped = groupEventsByDate(events)
           const days = buildCalendarDays(month, grouped)
           const monthEvents = eventsInCalendarMonth(events, month)
-          const activeDay =
-            selectedDay && grouped.has(selectedDay) ? selectedDay : null
+          const activeDay = selectedDay && grouped.has(selectedDay) ? selectedDay : null
           const agendaEvents = activeDay
             ? eventsOnCalendarDay(events, activeDay)
             : agendaScope === 'today'
@@ -196,9 +171,7 @@ export function Calendar() {
                 : monthEvents
           const agendaGroups = [
             ...groupEventsByDate(
-              [...agendaEvents].sort((a, b) =>
-                a.startsAt.localeCompare(b.startsAt),
-              ),
+              [...agendaEvents].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
             ),
           ].sort(([a], [b]) => a.localeCompare(b))
           const agendaTitle = activeDay
@@ -208,9 +181,7 @@ export function Calendar() {
               : agendaScope === 'week'
                 ? 'This week'
                 : formatCalendarMonth(month)
-          const visibleTypes = [
-            ...new Set(monthEvents.map((event) => event.type)),
-          ]
+          const visibleTypes = [...new Set(monthEvents.map((event) => event.type))]
 
           return (
             <div className="calendarLayout">
@@ -274,10 +245,7 @@ export function Calendar() {
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
                             {dots.map((event) => (
-                              <CalendarEventIcon
-                                key={event.slug}
-                                type={event.type}
-                              />
+                              <CalendarEventIcon key={event.slug} type={event.type} />
                             ))}
                             {date.events.length > dots.length && (
                               <span className="calendarMore">
@@ -332,9 +300,7 @@ export function Calendar() {
               <aside
                 className="calendarAgenda"
                 aria-labelledby="calendar-agenda-title"
-                style={
-                  calendarHeight ? { height: `${calendarHeight}px` } : undefined
-                }
+                style={calendarHeight ? { height: `${calendarHeight}px` } : undefined}
               >
                 <div className="calendarAgendaHeader">
                   <p className="eyebrow">Agenda</p>
@@ -404,8 +370,7 @@ export function Calendar() {
                                 : formatCalendarDay(dateKey)}
                             </h3>
                             <span>
-                              {dateEvents.length}{' '}
-                              {dateEvents.length === 1 ? 'event' : 'events'}
+                              {dateEvents.length} {dateEvents.length === 1 ? 'event' : 'events'}
                             </span>
                           </div>
                         )}

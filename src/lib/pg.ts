@@ -35,11 +35,7 @@ export function requirePgPool(): pg.Pool {
 // converted ValidationError (data.collection = collection slug). The field
 // errors carry tableName when the constraint maps to a column, or only a
 // 'must be unique' message when it does not — accept both.
-export function isUniqueViolation(
-  error: any,
-  collection: string,
-  table: string,
-): boolean {
+export function isUniqueViolation(error: any, collection: string, table: string): boolean {
   let current: any = error
   while (current) {
     if (current?.code === '23505') return true
@@ -58,12 +54,7 @@ export function isUniqueViolation(
 
 // Dual-shape row access: Payload docs expose camelCase while raw pg rows
 // return snake_case.
-export function pickField(
-  row: any,
-  snake: string,
-  camel: string,
-  fallback: any = null,
-) {
+export function pickField(row: any, snake: string, camel: string, fallback: any = null) {
   const value = row?.[snake] ?? row?.[camel]
   return value == null ? fallback : value
 }

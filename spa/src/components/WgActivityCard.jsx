@@ -1,10 +1,7 @@
 import { AddToCalendar } from './AddToCalendar.jsx'
 import { DestinationIcon } from './DestinationLink.jsx'
 import { fmtMoment } from '../lib/time.js'
-import {
-  TbCalendar as CalendarDays,
-  TbArrowUpRight as ArrowUpRight,
-} from 'react-icons/tb'
+import { TbCalendar as CalendarDays, TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
 
 function activityFields(activity) {
   return {
@@ -43,9 +40,7 @@ export function WgActivityCard({ activity }) {
 
   return (
     <article
-      className={`card cardTight workspaceActivityCard${
-        interactive ? ' linkedEntityCard' : ''
-      }`}
+      className={`card cardTight workspaceActivityCard${interactive ? ' linkedEntityCard' : ''}`}
     >
       {item.url && (
         <a
@@ -56,12 +51,8 @@ export function WgActivityCard({ activity }) {
           aria-label={`Open ${item.title}`}
         />
       )}
-      <span className="chip chip-neutral">
-        {item.kind.replaceAll('_', ' ')}
-      </span>
-      {item.taskForceSlug && (
-        <span className="chip chip-info">{item.taskForceSlug}</span>
-      )}
+      <span className="chip chip-neutral">{item.kind.replaceAll('_', ' ')}</span>
+      {item.taskForceSlug && <span className="chip chip-info">{item.taskForceSlug}</span>}
       <h3>
         {item.title}
         {item.url && <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />}
@@ -77,19 +68,12 @@ export function WgActivityCard({ activity }) {
       )}
       <div className="workspaceActivityActions">
         {item.url && (
-          <a
-            className="btn btn-secondary btn-sm"
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a className="btn btn-secondary btn-sm" href={item.url} target="_blank" rel="noreferrer">
             <DestinationIcon url={item.url} size={16} />
             Open
           </a>
         )}
-        {event && (
-          <AddToCalendar event={event} className="btn btn-ghost btn-sm" />
-        )}
+        {event && <AddToCalendar event={event} className="btn btn-ghost btn-sm" />}
       </div>
     </article>
   )

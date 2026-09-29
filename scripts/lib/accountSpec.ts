@@ -47,11 +47,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     hubAccessStatus: verified ? 'active' : 'pending_course',
     membershipStatus: verified ? 'active' : 'registered',
     constituencyWorkStatus:
-      track === 'constituency_work'
-        ? verified
-          ? 'active'
-          : 'pending_onboarding'
-        : null,
+      track === 'constituency_work' ? (verified ? 'active' : 'pending_onboarding') : null,
     role: spec.role ?? 'member',
     teamRoles: spec.teams ?? [],
     policiesAccepted: true,
@@ -72,11 +68,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
       })
     : await payload.create({ collection: 'accounts', data, overrideAccess: true })
 
-  const upsertAssignment = async (
-    scopeType: string,
-    scopeId: string,
-    role: string,
-  ) => {
+  const upsertAssignment = async (scopeType: string, scopeId: string, role: string) => {
     const existing = await payload.find({
       collection: 'assignments',
       where: {
@@ -124,10 +116,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     const progress = await payload.find({
       collection: 'wg-progress',
       where: {
-        and: [
-          { account: { equals: account.id } },
-          { wgSlug: { equals: spec.wg.slug } },
-        ],
+        and: [{ account: { equals: account.id } }, { wgSlug: { equals: spec.wg.slug } }],
       },
       limit: 1,
       overrideAccess: true,

@@ -28,9 +28,8 @@ export function PublicPlatform() {
         <p className="pageEyebrow">YOUNGO in practice</p>
         <h1>Our organisation and partnerships</h1>
         <p className="siteSectionLead">
-          Learn about YOUNGO’s bodies, published decisions and approved
-          partnerships. These records are maintained in the member workspace and
-          reviewed for public sharing.
+          Learn about YOUNGO’s bodies, published decisions and approved partnerships. These records
+          are maintained in the member workspace and reviewed for public sharing.
         </p>
       </header>
       {loading && <Skeletons n={3} />}
@@ -54,10 +53,7 @@ export function PublicPlatform() {
               ))}
             </div>
             {!data.bodies.length && (
-              <p>
-                Reviewed body profiles will appear here as the constituency
-                publishes them.
-              </p>
+              <p>Reviewed body profiles will appear here as the constituency publishes them.</p>
             )}
           </section>
           <section className="siteSection">
@@ -75,9 +71,7 @@ export function PublicPlatform() {
               ))}
             </div>
             {!data.decisions.length && (
-              <p>
-                No decisions have been approved for this public register yet.
-              </p>
+              <p>No decisions have been approved for this public register yet.</p>
             )}
           </section>
           <section className="siteSection">
@@ -88,28 +82,22 @@ export function PublicPlatform() {
                   <h3>{p.organisation}</h3>
                   <p>{p.summary}</p>
                   {p.website && (
-                    <a
-                      href={p.website}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                    >
+                    <a href={p.website} rel="noreferrer noopener" target="_blank">
                       Organisation website
                     </a>
                   )}
                 </article>
               ))}
             </div>
-            {!data.partners.length && (
-              <p>Reviewed partnerships will be listed here.</p>
-            )}
+            {!data.partners.length && <p>Reviewed partnerships will be listed here.</p>}
           </section>
         </>
       )}
       <section className="siteSection">
         <h2>Work with YOUNGO</h2>
         <p>
-          Propose a collaboration, explain the opportunity, and the partnerships
-          team can follow up. An enquiry does not constitute YOUNGO endorsement.
+          Propose a collaboration, explain the opportunity, and the partnerships team can follow up.
+          An enquiry does not constitute YOUNGO endorsement.
         </p>
         <PartnerEnquiry />
       </section>
@@ -132,11 +120,7 @@ export function PartnerEnquiry() {
       form.reset()
       setMessage('Your enquiry has been recorded for the partnerships team.')
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Could not submit your enquiry.',
-      )
+      setError(error instanceof Error ? error.message : 'Could not submit your enquiry.')
     } finally {
       setBusy(false)
     }
@@ -146,18 +130,8 @@ export function PartnerEnquiry() {
       <form className="platformForm" onSubmit={submit}>
         <Field label="Organisation" name="organisation" required />
         <Field label="Your name" name="contactName" required />
-        <Field
-          label="Contact email"
-          name="email"
-          type="email"
-          required
-          maxLength={254}
-        />
-        <Text
-          label="How would you like to collaborate?"
-          name="message"
-          required
-        />
+        <Field label="Contact email" name="email" type="email" required maxLength={254} />
+        <Text label="How would you like to collaborate?" name="message" required />
         <div hidden>
           <label>
             Leave empty
@@ -167,10 +141,9 @@ export function PartnerEnquiry() {
         <label className="platformConsent">
           <input type="checkbox" name="consent" required />{' '}
           <span>
-            I agree that YOUNGO may use these details to respond to this
-            enquiry. My contact name, email and message are visible only to the
-            responsible team. An approved partnership may have a reviewed public
-            organisation listing. <a href="/privacy">Privacy notice</a>.
+            I agree that YOUNGO may use these details to respond to this enquiry. My contact name,
+            email and message are visible only to the responsible team. An approved partnership may
+            have a reviewed public organisation listing. <a href="/privacy">Privacy notice</a>.
           </span>
         </label>
         <button className="btn btn-primary" disabled={busy}>

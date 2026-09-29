@@ -114,8 +114,6 @@ export function isPublicGroupResource(resource) {
 export function groupResourcesByCategory(resources = []) {
   return RESOURCE_CATEGORIES.map((category) => ({
     ...category,
-    resources: resources.filter(
-      (resource) => resourceCategory(resource) === category.key,
-    ),
+    resources: resources.filter((resource) => resourceCategory(resource) === category.key),
   })).filter((category) => category.resources.length > 0)
 }

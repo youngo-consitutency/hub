@@ -8,10 +8,7 @@ import {
   sendMembershipActivatedEmail,
   findAccountRowById,
 } from '../lib/membership'
-import {
-  listMembershipReviewItems,
-  listMemberProfileSummaries,
-} from '../lib/membershipReview'
+import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
 import {
   listLatestAppealsForAccounts,
   readAppealProof,
@@ -19,7 +16,6 @@ import {
 } from '../lib/membershipAppeals'
 
 export const membershipTeamEndpoints: Endpoint[] = [
-
   // ── Membership team ───────────────────────────────────────────────
   {
     path: '/member/team/membership/overview',
@@ -28,9 +24,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
       await requireTeam(req, 'membership_team')
       const items = await listMembershipReviewItems()
       const profiles = await listMemberProfileSummaries(items)
-      const appeals = await listLatestAppealsForAccounts(
-        items.map((item: any) => item.id),
-      )
+      const appeals = await listLatestAppealsForAccounts(items.map((item: any) => item.id))
       return json({
         items: items.map((item: any) => ({
           ...item,
@@ -143,9 +137,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
       }
       await audit(req, staff, {
         action:
-          appeal.status === 'granted'
-            ? 'membership.appeal_granted'
-            : 'membership.appeal_upheld',
+          appeal.status === 'granted' ? 'membership.appeal_granted' : 'membership.appeal_upheld',
         targetType: 'membership_appeal',
         targetId: String(appeal.id),
         after: { status: appeal.status, accountId: appeal.accountId },

@@ -5,11 +5,7 @@ import { Button, ErrorCard } from '../components/ui.jsx'
 import { Brand } from '../components/Brand.jsx'
 import { signOut } from '../lib/session.js'
 import { useAccount } from '../lib/accountContext.jsx'
-import {
-  TbLogout as LogOut,
-  TbScale as Scale,
-  TbShieldCheck as ShieldCheck,
-} from 'react-icons/tb'
+import { TbLogout as LogOut, TbScale as Scale, TbShieldCheck as ShieldCheck } from 'react-icons/tb'
 
 const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 
@@ -36,16 +32,13 @@ export function MembershipAppeal() {
   const [error, setError] = useState('')
   const fileRef = useRef(null)
   const appeal = query.data?.appeal
-  const reason =
-    query.data?.membershipEndReason || account?.membershipEndReason || null
+  const reason = query.data?.membershipEndReason || account?.membershipEndReason || null
 
   const submit = async (event) => {
     event.preventDefault()
     setError('')
     if (!consent) {
-      setError(
-        'Confirm that the Membership Team may use this document for the appeal.',
-      )
+      setError('Confirm that the Membership Team may use this document for the appeal.')
       return
     }
     if (!file) {
@@ -81,17 +74,12 @@ export function MembershipAppeal() {
         <p className="eyebrow">Membership decision</p>
         <h1>This application was not accepted</h1>
         <p className="lede">
-          You can appeal directly from here by sending proof of who you are — a
-          passport, national ID, or an organisation letter. Only the Membership
-          Team can open the file.
+          You can appeal directly from here by sending proof of who you are — a passport, national
+          ID, or an organisation letter. Only the Membership Team can open the file.
         </p>
-        {reason && (
-          <p className="meta membershipAppealReason">Reason given: {reason}</p>
-        )}
+        {reason && <p className="meta membershipAppealReason">Reason given: {reason}</p>}
 
-        {query.error && (
-          <ErrorCard message={query.error} onRetry={query.retry} />
-        )}
+        {query.error && <ErrorCard message={query.error} onRetry={query.retry} />}
 
         {appeal?.status === 'submitted' && (
           <section className="card authSection">
@@ -100,9 +88,8 @@ export function MembershipAppeal() {
               <strong>Appeal received</strong>
             </p>
             <p className="meta">
-              The Membership Team has your statement and identity document. Stay
-              signed in with this email; they will write back through the Hub
-              when they decide.
+              The Membership Team has your statement and identity document. Stay signed in with this
+              email; they will write back through the Hub when they decide.
             </p>
           </section>
         )}
@@ -111,8 +98,8 @@ export function MembershipAppeal() {
           <section className="card authSection">
             <p className="meta">
               The previous appeal was not accepted
-              {appeal.reviewerNote ? `: ${appeal.reviewerNote}` : '.'} You can
-              send one more identity appeal if you have clearer proof.
+              {appeal.reviewerNote ? `: ${appeal.reviewerNote}` : '.'} You can send one more
+              identity appeal if you have clearer proof.
             </p>
           </section>
         )}
@@ -148,9 +135,7 @@ export function MembershipAppeal() {
               />
             </label>
             <label className="field">
-              <span>
-                Identity document (JPEG, PNG, WebP, or PDF · max 2 MB) *
-              </span>
+              <span>Identity document (JPEG, PNG, WebP, or PDF · max 2 MB) *</span>
               <input
                 ref={fileRef}
                 className="input"
@@ -167,8 +152,8 @@ export function MembershipAppeal() {
                 onChange={(event) => setConsent(event.target.checked)}
               />
               <span>
-                This document is mine or my organisation’s. The Membership Team
-                may use it only to review this appeal.
+                This document is mine or my organisation’s. The Membership Team may use it only to
+                review this appeal.
               </span>
             </label>
             {error && <ErrorCard message={error} />}
@@ -181,10 +166,7 @@ export function MembershipAppeal() {
 
         <p className="metaMuted">
           Signed in as {account?.email}. Help:{' '}
-          <a
-            className="mandateExtLink"
-            href={`mailto:${membershipEmail}`}
-          >
+          <a className="mandateExtLink" href={`mailto:${membershipEmail}`}>
             {membershipEmail}
           </a>
         </p>

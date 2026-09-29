@@ -38,12 +38,13 @@ async function loadDoc(
 ) {
   return req.payload
     .findByID({ collection: collection as any, id: Number(id), overrideAccess: true })
-    .catch(() => { throw fail.notFound(notFound) })
+    .catch(() => {
+      throw fail.notFound(notFound)
+    })
 }
 
 function ownOr404(doc: any, account: any) {
-  if (own(doc) !== account.id)
-    throw fail.notFound('Record not found.') // don't leak existence
+  if (own(doc) !== account.id) throw fail.notFound('Record not found.') // don't leak existence
 }
 
 const fundingView = (f: any, staff = false) => ({
@@ -118,7 +119,11 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'funding.submitted', targetType: 'funding_request', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'funding.submitted',
+        targetType: 'funding_request',
+        targetId: String(rec.id),
+      })
       return json({ request: fundingView(rec) }, { status: 201 })
     }),
   },
@@ -148,7 +153,11 @@ export const operationEndpoints: Endpoint[] = [
         data: { status: 'cancelled' },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'funding.withdrawn', targetType: 'funding_request', targetId: String(f.id) })
+      await audit(req, account, {
+        action: 'funding.withdrawn',
+        targetType: 'funding_request',
+        targetId: String(f.id),
+      })
       return json({ request: fundingView(updated) })
     }),
   },
@@ -175,7 +184,11 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'funding.reported', targetType: 'funding_request', targetId: String(f.id) })
+      await audit(req, account, {
+        action: 'funding.reported',
+        targetType: 'funding_request',
+        targetId: String(f.id),
+      })
       return json({ request: fundingView(updated) })
     }),
   },
@@ -199,10 +212,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/funding/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'finance_team',
-        'gct',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['finance_team', 'gct'])
       const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const next = String(b.status || '')
@@ -225,7 +235,11 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `funding.${next}`, targetType: 'funding_request', targetId: String(f.id) })
+      await audit(req, staff, {
+        action: `funding.${next}`,
+        targetType: 'funding_request',
+        targetId: String(f.id),
+      })
       return json({ request: fundingView(updated, true) })
     }),
   },
@@ -243,7 +257,11 @@ export const operationEndpoints: Endpoint[] = [
         data: { status: 'disbursed', disbursedAt: new Date().toISOString() },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: 'funding.disbursed', targetType: 'funding_request', targetId: String(f.id) })
+      await audit(req, staff, {
+        action: 'funding.disbursed',
+        targetType: 'funding_request',
+        targetId: String(f.id),
+      })
       return json({ request: fundingView(updated, true) })
     }),
   },
@@ -279,12 +297,13 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'safeguarding.reported', targetType: 'safeguarding_case', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'safeguarding.reported',
+        targetType: 'safeguarding_case',
+        targetId: String(rec.id),
+      })
       // Reporters get the reference and status — never team internals.
-      return json(
-        { caseRef: `SG-${rec.id}`, status: 'received' },
-        { status: 201 },
-      )
+      return json({ caseRef: `SG-${rec.id}`, status: 'received' }, { status: 201 })
     }),
   },
   {
@@ -346,10 +365,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/safeguarding/:id/update',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'safeguarding_team',
-        'awareness_team',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['safeguarding_team', 'awareness_team'])
       const c = await loadDoc(req, 'safeguarding-cases', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const next = String(b.status || '')
@@ -362,8 +378,7 @@ export const operationEndpoints: Endpoint[] = [
       if (!flow[c.status]?.includes(next))
         throw fail.conflict('invalid_phase', `Cannot move ${c.status} → ${next}.`)
       const note = String(b.note || '').trim()
-      if (!note)
-        throw fail.validation({ note: 'Record a case update note.' })
+      if (!note) throw fail.validation({ note: 'Record a case update note.' })
       const updates = [
         ...(c.updates ?? []),
         {
@@ -385,7 +400,11 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `safeguarding.${next}`, targetType: 'safeguarding_case', targetId: String(c.id) })
+      await audit(req, staff, {
+        action: `safeguarding.${next}`,
+        targetType: 'safeguarding_case',
+        targetId: String(c.id),
+      })
       return json({ case: { id: (updated as any).id, status: (updated as any).status } })
     }),
   },
@@ -428,7 +447,11 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'coi.declared', targetType: 'coi_declaration', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'coi.declared',
+        targetType: 'coi_declaration',
+        targetId: String(rec.id),
+      })
       return json({ declaration: rec }, { status: 201 })
     }),
   },
@@ -451,10 +474,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/membership/coi/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'membership_team',
-        'safeguarding_team',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['membership_team', 'safeguarding_team'])
       const d = await loadDoc(req, 'coi-declarations', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       if (!['under_review', 'resolved', 'dismissed'].includes(b.status))
@@ -470,7 +490,11 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `coi.${b.status}`, targetType: 'coi_declaration', targetId: String(d.id) })
+      await audit(req, staff, {
+        action: `coi.${b.status}`,
+        targetType: 'coi_declaration',
+        targetId: String(d.id),
+      })
       return json({ declaration: updated })
     }),
   },
@@ -514,7 +538,11 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'recognition.requested', targetType: 'recognition_request', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'recognition.requested',
+        targetType: 'recognition_request',
+        targetId: String(rec.id),
+      })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -537,11 +565,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/recognition/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'comms_team',
-        'gct',
-        'membership_team',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['comms_team', 'gct', 'membership_team'])
       const r = await loadDoc(req, 'recognition-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {
@@ -557,13 +581,15 @@ export const operationEndpoints: Endpoint[] = [
           status: b.status,
           reviewNote: b.reviewNote?.trim() || null,
           reviewedBy: staff.id,
-          ...(b.status === 'issued'
-            ? { issuedAt: new Date().toISOString() }
-            : {}),
+          ...(b.status === 'issued' ? { issuedAt: new Date().toISOString() } : {}),
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `recognition.${b.status}`, targetType: 'recognition_request', targetId: String(r.id) })
+      await audit(req, staff, {
+        action: `recognition.${b.status}`,
+        targetType: 'recognition_request',
+        targetId: String(r.id),
+      })
       return json({ request: updated })
     }),
   },
@@ -595,7 +621,11 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'partnership.proposed', targetType: 'partnership_request', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'partnership.proposed',
+        targetType: 'partnership_request',
+        targetId: String(rec.id),
+      })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -618,10 +648,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/partnerships/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'partnerships_team',
-        'gct',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['partnerships_team', 'gct'])
       const p = await loadDoc(req, 'partnership-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {
@@ -655,7 +682,11 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `partnership.${b.status}`, targetType: 'partnership_request', targetId: String(p.id) })
+      await audit(req, staff, {
+        action: `partnership.${b.status}`,
+        targetType: 'partnership_request',
+        targetId: String(p.id),
+      })
       return json({ request: updated })
     }),
   },
@@ -699,7 +730,11 @@ export const operationEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'privacy.requested', targetType: 'privacy_request', targetId: String(rec.id) })
+      await audit(req, account, {
+        action: 'privacy.requested',
+        targetType: 'privacy_request',
+        targetId: String(rec.id),
+      })
       return json({ request: rec }, { status: 201 })
     }),
   },
@@ -722,10 +757,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/privacy/:id/respond',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, [
-        'data_controller',
-        'membership_team',
-      ])
+      const { account: staff } = await requireOpsTeam(req, ['data_controller', 'membership_team'])
       const p = await loadDoc(req, 'privacy-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {
@@ -743,13 +775,15 @@ export const operationEndpoints: Endpoint[] = [
           status: b.status,
           responseNote: b.responseNote?.trim() || p.responseNote,
           handledBy: staff.id,
-          ...(b.status === 'fulfilled'
-            ? { fulfilledAt: new Date().toISOString() }
-            : {}),
+          ...(b.status === 'fulfilled' ? { fulfilledAt: new Date().toISOString() } : {}),
         },
         overrideAccess: true,
       })
-      await audit(req, staff, { action: `privacy.${b.status}`, targetType: 'privacy_request', targetId: String(p.id) })
+      await audit(req, staff, {
+        action: `privacy.${b.status}`,
+        targetType: 'privacy_request',
+        targetId: String(p.id),
+      })
       return json({ request: updated })
     }),
   },

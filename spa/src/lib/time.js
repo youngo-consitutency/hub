@@ -62,10 +62,7 @@ export function fmtDateRange(startsOn, endsOn, datesTbc) {
       timeZone: 'UTC',
     }).format(new Date(d + 'T00:00:00Z'))
   const year = startsOn.slice(0, 4)
-  const range =
-    endsOn && endsOn !== startsOn
-      ? `${fmt(startsOn)}–${fmt(endsOn)}`
-      : fmt(startsOn)
+  const range = endsOn && endsOn !== startsOn ? `${fmt(startsOn)}–${fmt(endsOn)}` : fmt(startsOn)
   return `${range} ${year}${datesTbc ? ' · TBC' : ''}`
 }
 

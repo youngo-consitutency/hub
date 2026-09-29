@@ -2,11 +2,7 @@ import type { Endpoint } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import {
-  AFFILIATION_ROLES,
-  requireOrgScope,
-  seatView,
-} from '../lib/ngo'
+import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
 
 export const organisationEndpoints: Endpoint[] = [
   {
@@ -14,7 +10,9 @@ export const organisationEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const term = String(req.query?.search || '').trim().toLowerCase()
+      const term = String(req.query?.search || '')
+        .trim()
+        .toLowerCase()
       const { docs } = await req.payload.find({
         collection: 'accounts',
         where: { entityType: { equals: 'organization' } },
@@ -30,9 +28,7 @@ export const organisationEndpoints: Endpoint[] = [
           isUnfcccAdmitted: Boolean(a.isUnfcccAdmitted),
         }))
         .filter((o) =>
-          term
-            ? `${o.name || ''} ${o.country || ''}`.toLowerCase().includes(term)
-            : true,
+          term ? `${o.name || ''} ${o.country || ''}`.toLowerCase().includes(term) : true,
         )
       return json({ items })
     }),
@@ -53,8 +49,7 @@ export const organisationEndpoints: Endpoint[] = [
       return json({
         items: (docs as any[]).map((s) => ({
           ...seatView(s),
-          organizationName:
-            s.orgAccount?.organizationName || s.orgAccount?.name || null,
+          organizationName: s.orgAccount?.organizationName || s.orgAccount?.name || null,
         })),
       })
     }),
@@ -66,8 +61,7 @@ export const organisationEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const b = ((await req.json?.()) || {}) as any
       const orgAccountId = String(b.orgAccountId || '').trim()
-      if (!orgAccountId)
-        throw fail.validation({ orgAccountId: 'Choose an organisation.' })
+      if (!orgAccountId) throw fail.validation({ orgAccountId: 'Choose an organisation.' })
       const org = (await req.payload.findByID({
         collection: 'accounts',
         id: orgAccountId,
@@ -87,7 +81,11 @@ export const organisationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       if (dup.docs[0])
-        throw new ApiError(409, 'duplicate', 'You already have a seat or open request with this organisation.')
+        throw new ApiError(
+          409,
+          'duplicate',
+          'You already have a seat or open request with this organisation.',
+        )
       const seat = await req.payload.create({
         collection: 'ngo-seats',
         data: {
@@ -117,9 +115,7 @@ export const organisationEndpoints: Endpoint[] = [
       const { account, ctx } = await requireOrgScope(req, 'seats')
       const b = ((await req.json?.()) || {}) as any
       const approve = b.decision === 'approve'
-      const seatRole = AFFILIATION_ROLES.includes(b.seatRole)
-        ? b.seatRole
-        : 'affiliate'
+      const seatRole = AFFILIATION_ROLES.includes(b.seatRole) ? b.seatRole : 'affiliate'
       const seat = (await req.payload.findByID({
         collection: 'ngo-seats',
         id: String(req.routeParams?.id),
@@ -128,11 +124,8 @@ export const organisationEndpoints: Endpoint[] = [
       })) as any
       if (!seat) throw fail.notFound('Seat request not found.')
       if (
-        String(
-          typeof seat.orgAccount === 'object'
-            ? seat.orgAccount.id
-            : seat.orgAccount,
-        ) !== ctx.orgAccountId
+        String(typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount) !==
+        ctx.orgAccountId
       )
         throw fail.notFound('Seat request not found.')
       if (seat.status !== 'requested')
@@ -158,5 +151,4 @@ export const organisationEndpoints: Endpoint[] = [
       return json({ seat: seatView(updated) })
     }),
   },
-
 ]

@@ -13,10 +13,7 @@ import {
   saveIdempotency,
   writeAudit,
 } from './contributionShared'
-import {
-  normalizeAmendmentInput,
-  normalizeAmendmentRevisionInput,
-} from './contributionInputs'
+import { normalizeAmendmentInput, normalizeAmendmentRevisionInput } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
 
 export async function createAmendment({
@@ -44,8 +41,7 @@ export async function createAmendment({
       await client.query('COMMIT')
       return idempotency.response
     }
-    if (data.projectId)
-      await assertProjectWrite(client, data.projectId, account.id)
+    if (data.projectId) await assertProjectWrite(client, data.projectId, account.id)
     if (data.targetType === 'official_document') {
       const target = await client.query(
         `SELECT 1 FROM negotiation_document_versions v
@@ -55,11 +51,7 @@ export async function createAmendment({
         [data.targetDocumentVersionId],
       )
       if (!target.rows[0])
-        throw new ContributionError(
-          404,
-          'not_found',
-          'Target version not found.',
-        )
+        throw new ContributionError(404, 'not_found', 'Target version not found.')
     } else {
       const target = await client.query(
         `SELECT 1 FROM negotiation_submission_versions v
@@ -68,11 +60,7 @@ export async function createAmendment({
         [data.targetProjectVersionId, account.id],
       )
       if (!target.rows[0])
-        throw new ContributionError(
-          404,
-          'not_found',
-          'Target version not found.',
-        )
+        throw new ContributionError(404, 'not_found', 'Target version not found.')
     }
     await assertCitations(client, data.citations)
     const amendment = await client.query(
@@ -176,11 +164,7 @@ export async function appendAmendmentVersion({
       await client.query('COMMIT')
       return idempotency.response
     }
-    const amendment = await assertAmendmentWrite(
-      client,
-      amendmentId,
-      account.id,
-    )
+    const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
     assertExpectedVersion(amendment.current_version, data.expectedVersion)
     await assertCitations(client, data.citations)
     const nextVersion = data.expectedVersion + 1

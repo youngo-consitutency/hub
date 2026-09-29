@@ -58,11 +58,7 @@ export const pushEndpoints: Endpoint[] = [
           subscription: { id: saved.id, endpoint: saved.endpoint },
         })
       } catch (error: any) {
-        if (
-          ['invalid_push_endpoint', 'push_subscription_limit'].includes(
-            error.code,
-          )
-        )
+        if (['invalid_push_endpoint', 'push_subscription_limit'].includes(error.code))
           throw new ApiError(400, error.code, error.message)
         throw error
       }
@@ -126,8 +122,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Admin access required.')
+      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
       await pushSendLimit(req)
       if (!pushConfigured) throw pushUnavailable()
       const b = ((await req.json?.()) || {}) as any
@@ -135,17 +130,12 @@ export const pushEndpoints: Endpoint[] = [
       const targetAll = userIds === 'all'
       if (!targetAll && (!Array.isArray(userIds) || !userIds.length))
         throw fail.validation({ userIds: 'Provide userIds as an array, or "all".' })
-      if (!title || !body)
-        throw fail.validation({ title: 'A title and body are required.' })
+      if (!title || !body) throw fail.validation({ title: 'A title and body are required.' })
       const rows = targetAll
         ? await listAllSubscriptions()
         : await listSubscriptionsForAccounts(userIds)
       if (!rows.length)
-        throw new ApiError(
-          404,
-          'no_subscriptions',
-          'No active subscriptions for those members.',
-        )
+        throw new ApiError(404, 'no_subscriptions', 'No active subscriptions for those members.')
       const payload = JSON.stringify({
         title,
         body,
@@ -160,8 +150,9 @@ export const pushEndpoints: Endpoint[] = [
       // never inside this request.
       const accountIds = [...new Set(rows.map((row: any) => row.accountId))]
       const campaignId =
-        String(req.headers.get('x-idempotency-key') || '').trim().slice(0, 120) ||
-        randomUUID()
+        String(req.headers.get('x-idempotency-key') || '')
+          .trim()
+          .slice(0, 120) || randomUUID()
       let queued = 0
       for (const accountId of accountIds) {
         const { created } = await enqueueNotification({
@@ -186,10 +177,7 @@ export const pushEndpoints: Endpoint[] = [
           req.payload.logger.error({ err: error }, 'notification drain failed'),
         ),
       )
-      return json(
-        { ok: true, campaignId, targeted: accountIds.length, queued },
-        { status: 202 },
-      )
+      return json({ ok: true, campaignId, targeted: accountIds.length, queued }, { status: 202 })
     }),
   },
   {
@@ -197,8 +185,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Admin access required.')
+      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
       const subscribers = await listSubscriberAccounts()
       return json({
         configured: pushConfigured,
@@ -212,8 +199,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Admin access required.')
+      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
       return json({
         configured: pushConfigured,
         items: await listSubscriberAccounts(),

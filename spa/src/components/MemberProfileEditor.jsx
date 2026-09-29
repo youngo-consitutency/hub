@@ -133,10 +133,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
   }
 
   return (
-    <section
-      className="card memberProfileEditor"
-      aria-labelledby="crm-profile-title"
-    >
+    <section className="card memberProfileEditor" aria-labelledby="crm-profile-title">
       <Async query={query} skeletons={2}>
         {(data) => {
           const current = data.profile
@@ -166,18 +163,13 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                       )}
                     </h2>
                     {account?.email && (
-                      <a
-                        className="profileEmail"
-                        href={`mailto:${account.email}`}
-                      >
+                      <a className="profileEmail" href={`mailto:${account.email}`}>
                         <Mail size={15} aria-hidden />
                         {account.email}
                       </a>
                     )}
                     {!account?.isVerified && (
-                      <span className="chip chip-warn profileStatus">
-                        Onboarding in progress
-                      </span>
+                      <span className="chip chip-warn profileStatus">Onboarding in progress</span>
                     )}
                   </div>
                 </div>
@@ -190,11 +182,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                       accept="image/jpeg,image/png,image/webp"
                       onChange={uploadPhoto}
                     />
-                    <Button
-                      sm
-                      disabled={photoBusy}
-                      onClick={() => fileRef.current?.click()}
-                    >
+                    <Button sm disabled={photoBusy} onClick={() => fileRef.current?.click()}>
                       {current.hasPhoto ? (
                         <PhotoEdit size={16} aria-hidden />
                       ) : (
@@ -203,22 +191,12 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                       {current.hasPhoto ? 'Change photo' : 'Add photo'}
                     </Button>
                     {current.hasPhoto && (
-                      <Button
-                        sm
-                        variant="ghost"
-                        disabled={photoBusy}
-                        onClick={removePhoto}
-                      >
+                      <Button sm variant="ghost" disabled={photoBusy} onClick={removePhoto}>
                         <Trash size={16} aria-hidden />
                         Remove
                       </Button>
                     )}
-                    <Button
-                      sm
-                      variant="secondary"
-                      className="profileSignOut"
-                      onClick={signOut}
-                    >
+                    <Button sm variant="secondary" className="profileSignOut" onClick={signOut}>
                       <LogOut size={16} strokeWidth={1.75} aria-hidden />
                       Sign out
                     </Button>
@@ -232,8 +210,8 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                   <p className="pageEyebrow">Member directory</p>
                   <h3>Profile information</h3>
                   <p className="meta">
-                    Your Hub roles and group connections update automatically.
-                    You control the profile fields shared with verified members.
+                    Your Hub roles and group connections update automatically. You control the
+                    profile fields shared with verified members.
                   </p>
                 </div>
                 <div className="profileMembershipBlock">
@@ -241,9 +219,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                   <dl className="profileDetails">
                     <Detail term="Role">{roleLabel}</Detail>
                     <Detail term="Country">{account?.country}</Detail>
-                    <Detail term="Region">
-                      {regionLabel(account?.region)}
-                    </Detail>
+                    <Detail term="Region">{regionLabel(account?.region)}</Detail>
                     <Detail term="Course score">
                       {account?.courseScore == null
                         ? null
@@ -252,10 +228,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                   </dl>
                   <p className="metaMuted profileHelp">
                     Need a correction?{' '}
-                    <a
-                      className="inlineLink"
-                      href={`mailto:${privacyContactEmail}`}
-                    >
+                    <a className="inlineLink" href={`mailto:${privacyContactEmail}`}>
                       Contact the Membership Team
                     </a>
                     .
@@ -281,9 +254,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                     aria-invalid={Boolean(fieldErrors.displayName)}
                   />
                   {fieldErrors.displayName && (
-                    <small className="fieldError">
-                      {fieldErrors.displayName}
-                    </small>
+                    <small className="fieldError">{fieldErrors.displayName}</small>
                   )}
                 </label>
                 <label className="field">
@@ -331,8 +302,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                     aria-invalid={Boolean(fieldErrors.expertiseTags)}
                   />
                   <small className="fieldHint">
-                    Up to 8 tags, separated by commas. Tags become directory
-                    filters.
+                    Up to 8 tags, separated by commas. Tags become directory filters.
                   </small>
                 </label>
               </div>
@@ -361,12 +331,7 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
                     ['showRoles', 'Show my Hub roles'],
                   ].map(([name, label]) => (
                     <label key={name} className="authCheck">
-                      <input
-                        type="checkbox"
-                        name={name}
-                        checked={form[name]}
-                        onChange={change}
-                      />
+                      <input type="checkbox" name={name} checked={form[name]} onChange={change} />
                       <span>{label}</span>
                     </label>
                   ))}
@@ -376,15 +341,11 @@ export function MemberProfileEditor({ query, account, roleLabel }) {
               <footer className="memberProfileEditorFooter">
                 <div className="memberProfileEditorFooterCopy">
                   <p className="metaMuted">
-                    Email, phone, age, minority and guardian data are never
-                    shown in the member directory.
+                    Email, phone, age, minority and guardian data are never shown in the member
+                    directory.
                   </p>
                 </div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={saving || photoBusy}
-                >
+                <Button type="submit" variant="primary" disabled={saving || photoBusy}>
                   {saving ? 'Saving…' : 'Save profile'}
                 </Button>
               </footer>

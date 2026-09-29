@@ -45,7 +45,12 @@ export const ResourceIssues: CollectionConfig = {
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
-    { name: 'kind', type: 'select', required: true, options: ['broken', 'outdated', 'tags', 'duplicate', 'other'] },
+    {
+      name: 'kind',
+      type: 'select',
+      required: true,
+      options: ['broken', 'outdated', 'tags', 'duplicate', 'other'],
+    },
     { name: 'detail', type: 'textarea', required: true },
     { name: 'reportedBy', type: 'relationship', relationTo: 'accounts' },
     { name: 'resolvedAt', type: 'date' },
@@ -68,7 +73,12 @@ export const ResourceReviews: CollectionConfig = {
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
     { name: 'fingerprint', type: 'text' },
-    { name: 'status', type: 'select', required: true, options: ['verified', 'needs_changes', 'retired'] },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      options: ['verified', 'needs_changes', 'retired'],
+    },
     { name: 'note', type: 'textarea' },
     { name: 'checks', type: 'json' },
     { name: 'reviewedBy', type: 'relationship', relationTo: 'accounts' },

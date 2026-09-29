@@ -139,9 +139,7 @@ describe('mcp http transport', () => {
     ]) {
       const res = await listTools(mcp.port, opts)
       expect(res.status).toBe(200)
-      const names = res.body?.result?.tools?.map(
-        (tool: { name: string }) => tool.name,
-      )
+      const names = res.body?.result?.tools?.map((tool: { name: string }) => tool.name)
       expect(names).toContain('whoami')
       expect(names).toContain('create_content_draft')
     }
@@ -166,15 +164,12 @@ describe('mcp http transport', () => {
       expect(res.status).toBe(200)
       expect(res.body?.result?.tools?.length).toBeGreaterThan(0)
 
-      const call = await rpc(
-        open.port,
-        {
-          jsonrpc: '2.0',
-          id: 2,
-          method: 'tools/call',
-          params: { name: 'whoami', arguments: {} },
-        },
-      )
+      const call = await rpc(open.port, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'whoami', arguments: {} },
+      })
       expect(call.status).toBe(200)
       expect(call.body?.result?.isError).toBe(true)
       expect(call.body?.result?.content?.[0]?.text).toMatch(/HUB_EMAIL/)
@@ -187,29 +182,23 @@ describe('mcp http transport', () => {
 describe('hub api client', () => {
   it('validates HUB_ORIGIN', () => {
     expect(resolveHubOrigin({})).toBe('http://localhost:3000')
-    expect(resolveHubOrigin({ HUB_ORIGIN: 'https://hub.example/' })).toBe(
-      'https://hub.example',
-    )
+    expect(resolveHubOrigin({ HUB_ORIGIN: 'https://hub.example/' })).toBe('https://hub.example')
     expect(() => resolveHubOrigin({ HUB_ORIGIN: 'hub.example' })).toThrow(/http/)
   })
 
   it('signs in once and reuses the session token', async () => {
     const calls: { url: string; auth?: string }[] = []
     const fetchImpl: typeof fetch = async (input, init) => {
-      const url =
-        typeof input === 'string' || input instanceof URL
-          ? String(input)
-          : input.url
+      const url = typeof input === 'string' || input instanceof URL ? String(input) : input.url
       calls.push({
         url,
         auth: new Headers(init?.headers).get('Authorization') ?? undefined,
       })
       const path = new URL(url).pathname
       if (path === '/api/auth/login') {
-        return new Response(
-          JSON.stringify({ token: 'sess-1', account: { id: 'a1' } }),
-          { status: 200 },
-        )
+        return new Response(JSON.stringify({ token: 'sess-1', account: { id: 'a1' } }), {
+          status: 200,
+        })
       }
       return new Response(JSON.stringify({ account: { id: 'a1' } }), {
         status: 200,
@@ -227,9 +216,7 @@ describe('hub api client', () => {
 
     const logins = calls.filter((c) => c.url.endsWith('/api/auth/login'))
     expect(logins).toHaveLength(1)
-    const memberCalls = calls.filter((c) =>
-      c.url.includes('/api/member/opportunities'),
-    )
+    const memberCalls = calls.filter((c) => c.url.includes('/api/member/opportunities'))
     expect(memberCalls).toHaveLength(2)
     expect(memberCalls.every((c) => c.auth === 'Bearer sess-1')).toBe(true)
   })
@@ -251,9 +238,7 @@ describe('hub api client', () => {
       token: 'sess-1',
       fetchImpl,
     })
-    const error = await client
-      .memberGet('/api/member/opportunities')
-      .catch((e: unknown) => e)
+    const error = await client.memberGet('/api/member/opportunities').catch((e: unknown) => e)
     expect(error).toMatchObject({
       status: 403,
       code: 'forbidden',
@@ -282,9 +267,7 @@ describe('hub api client', () => {
       token: 'sess-1',
       fetchImpl: async () => new Response('{}', { status: 200 }),
     })
-    await expect(callHubContentTool('nope', {}, client)).rejects.toThrow(
-      /Unknown tool/,
-    )
+    await expect(callHubContentTool('nope', {}, client)).rejects.toThrow(/Unknown tool/)
   })
 })
 

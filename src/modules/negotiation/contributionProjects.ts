@@ -12,10 +12,7 @@ import {
   saveIdempotency,
   writeAudit,
 } from './contributionShared'
-import {
-  normalizeDraftVersionInput,
-  normalizeProjectInput,
-} from './contributionInputs'
+import { normalizeDraftVersionInput, normalizeProjectInput } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
 
 export async function createSubmissionProject({
@@ -47,8 +44,7 @@ export async function createSubmissionProject({
       "SELECT id FROM negotiation_tracks WHERE id=$1 AND publication_status='published'",
       [data.trackId],
     )
-    if (!track.rows[0])
-      throw new ContributionError(404, 'not_found', 'Track not found.')
+    if (!track.rows[0]) throw new ContributionError(404, 'not_found', 'Track not found.')
     if (data.callId) {
       const call = await client.query(
         `SELECT 1 FROM negotiation_calls c JOIN negotiation_track_calls tc ON tc.call_id=c.id
@@ -94,13 +90,7 @@ export async function createSubmissionProject({
       `INSERT INTO negotiation_submission_versions(
         project_id,version,content_text,content_hash,external_snapshot_url,authored_by
        ) VALUES($1,1,$2,$3,$4,$5) RETURNING id,version,content_hash,created_at`,
-      [
-        project.rows[0].id,
-        data.contentText,
-        hash,
-        data.externalDraftUrl,
-        account.id,
-      ],
+      [project.rows[0].id, data.contentText, hash, data.externalDraftUrl, account.id],
     )
     await insertEvidence(
       client,
@@ -306,8 +296,7 @@ export async function getAccessibleProject({
     [account.id, projectId],
   )
   const project = projectResult.rows[0]
-  if (!project)
-    throw new ContributionError(404, 'not_found', 'Project not found.')
+  if (!project) throw new ContributionError(404, 'not_found', 'Project not found.')
   const [versions, amendments] = await Promise.all([
     db.query(
       `SELECT v.id,v.version,v.base_version_id,v.content_text,v.content_hash,
@@ -345,9 +334,7 @@ export async function getAccessibleProject({
       slug: project.track_slug,
       topic: project.track_topic,
     },
-    call: project.call_id
-      ? { id: project.call_id, title: project.call_title }
-      : null,
+    call: project.call_id ? { id: project.call_id, title: project.call_title } : null,
     versions: versions.rows.map((row: any) => ({
       id: row.id,
       version: row.version,

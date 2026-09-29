@@ -2,11 +2,7 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import {
-  accountRef,
-  isSelector,
-  loadSelection,
-} from '../lib/governance'
+import { accountRef, isSelector, loadSelection } from '../lib/governance'
 
 // S24 selections.
 
@@ -30,10 +26,7 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
   const { docs } = await req.payload.find({
     collection: 'selection-committee',
     where: {
-      and: [
-        { selection: { equals: selectionId } },
-        { account: { equals: accountId } },
-      ],
+      and: [{ selection: { equals: selectionId } }, { account: { equals: accountId } }],
     },
     limit: 1,
     overrideAccess: true,
@@ -42,7 +35,11 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
 }
 
 const COLOUR_SCORES: Record<string, number> = {
-  black: -500, red: -100, orange: -10, yellow: 5, green: 10,
+  black: -500,
+  red: -100,
+  orange: -10,
+  yellow: 5,
+  green: 10,
 }
 
 export const selectionEndpoints: Endpoint[] = [
@@ -71,7 +68,8 @@ export const selectionEndpoints: Endpoint[] = [
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!b.opportunityNote?.trim()) fields.opportunityNote = 'Required.'
-      if (!['colour', 'numerical'].includes(b.method)) fields.method = 'Must be colour or numerical.'
+      if (!['colour', 'numerical'].includes(b.method))
+        fields.method = 'Must be colour or numerical.'
       if (Object.keys(fields).length) throw fail.validation(fields)
       const sel = await req.payload.create({
         collection: 'selections',
@@ -92,7 +90,11 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.created', targetType: 'governance', targetId: String(sel.id) })
+      await audit(req, account, {
+        action: 'selection.created',
+        targetType: 'governance',
+        targetId: String(sel.id),
+      })
       return json({ selection: selectionView(sel) }, { status: 201 })
     }),
   },
@@ -140,7 +142,11 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.committee_joined', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.committee_joined',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ member }, { status: 201 })
     }),
   },
@@ -153,8 +159,7 @@ export const selectionEndpoints: Endpoint[] = [
       const creator = (s.createdBy as any)?.id ?? s.createdBy
       if (account.role !== 'admin' && creator !== account.id)
         throw fail.forbidden('Only the creator may open applications.')
-      if (s.status !== 'committee_forming')
-        throw fail.conflict('invalid_phase', 'Already opened.')
+      if (s.status !== 'committee_forming') throw fail.conflict('invalid_phase', 'Already opened.')
       // S24 §2.2.1: committee needs a minimum of 3 members.
       const { totalDocs: committeeCount } = await req.payload.find({
         collection: 'selection-committee',
@@ -172,12 +177,15 @@ export const selectionEndpoints: Endpoint[] = [
         id: s.id,
         data: {
           status: 'open',
-          deadlineAt:
-            s.deadlineAt ?? new Date(Date.now() + 7 * 86400000).toISOString(),
+          deadlineAt: s.deadlineAt ?? new Date(Date.now() + 7 * 86400000).toISOString(),
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.opened', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.opened',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -187,24 +195,19 @@ export const selectionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
       const s = await loadSelection(req, req.routeParams!.id as string)
-      if (s.status !== 'open')
-        throw fail.conflict('invalid_phase', 'Applications are not open.')
+      if (s.status !== 'open') throw fail.conflict('invalid_phase', 'Applications are not open.')
       const b = (await req.json?.()) ?? ({} as any)
       if (!b.answers || typeof b.answers !== 'object')
         throw fail.validation({ answers: 'Required.' })
       const { totalDocs: existing } = await req.payload.find({
         collection: 'selection-applications',
         where: {
-          and: [
-            { selection: { equals: s.id } },
-            { account: { equals: account.id } },
-          ],
+          and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }],
         },
         limit: 0,
         overrideAccess: true,
       })
-      if (existing > 0)
-        throw fail.conflict('already_applied', 'One application per member.')
+      if (existing > 0) throw fail.conflict('already_applied', 'One application per member.')
       const app = await req.payload.create({
         collection: 'selection-applications',
         data: {
@@ -219,7 +222,11 @@ export const selectionEndpoints: Endpoint[] = [
         } as any,
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.applied', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.applied',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ application: { id: app.id, status: app.status } }, { status: 201 })
     }),
   },
@@ -243,7 +250,11 @@ export const selectionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.recusal_declared', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.recusal_declared',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ member: updated })
     }),
   },
@@ -264,7 +275,11 @@ export const selectionEndpoints: Endpoint[] = [
         data: { status: 'evaluating' },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.closed', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.closed',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -333,7 +348,11 @@ export const selectionEndpoints: Endpoint[] = [
             data,
             overrideAccess: true,
           })
-      await audit(req, account, { action: 'selection.evaluated', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.evaluated',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ evaluation: evalRecord })
     }),
   },
@@ -352,7 +371,9 @@ export const selectionEndpoints: Endpoint[] = [
       if (!Array.isArray(b.selectedApplicationIds))
         throw fail.validation({ selectedApplicationIds: 'Required.' })
       if (b.selectedApplicationIds.length > (s.spotsAvailable ?? 1))
-        throw fail.validation({ selectedApplicationIds: `Only ${s.spotsAvailable} spot(s) available.` })
+        throw fail.validation({
+          selectedApplicationIds: `Only ${s.spotsAvailable} spot(s) available.`,
+        })
       // mark selected/not_selected
       const { docs: apps } = await req.payload.find({
         collection: 'selection-applications',
@@ -378,7 +399,11 @@ export const selectionEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.decided', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.decided',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({ selection: selectionView(updated) })
     }),
   },
@@ -391,15 +416,11 @@ export const selectionEndpoints: Endpoint[] = [
       const creator = (s.createdBy as any)?.id ?? s.createdBy
       if (account.role !== 'admin' && creator !== account.id)
         throw fail.forbidden('Only the creator may announce the outcome.')
-      if (s.status !== 'decided')
-        throw fail.conflict('invalid_phase', 'Record the decision first.')
+      if (s.status !== 'decided') throw fail.conflict('invalid_phase', 'Record the decision first.')
       const { docs: apps } = await req.payload.find({
         collection: 'selection-applications',
         where: {
-          and: [
-            { selection: { equals: s.id } },
-            { status: { equals: 'selected' } },
-          ],
+          and: [{ selection: { equals: s.id } }, { status: { equals: 'selected' } }],
         },
         limit: 50,
         overrideAccess: true,
@@ -410,7 +431,11 @@ export const selectionEndpoints: Endpoint[] = [
         data: { status: 'announced' },
         overrideAccess: true,
       })
-      await audit(req, account, { action: 'selection.announced', targetType: 'governance', targetId: String(s.id) })
+      await audit(req, account, {
+        action: 'selection.announced',
+        targetType: 'governance',
+        targetId: String(s.id),
+      })
       return json({
         selection: selectionView(updated),
         selected: (apps as any[]).map((a) => ({

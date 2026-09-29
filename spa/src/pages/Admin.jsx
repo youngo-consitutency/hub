@@ -1,9 +1,6 @@
 import { formatDateTime } from '../lib/time.js'
 import { WEBSITE_PERMISSIONS } from '../../shared/protocol.js'
-import {
-  optionLabel as labelFor,
-  useContentOptionLabels,
-} from '../lib/documents.js'
+import { optionLabel as labelFor, useContentOptionLabels } from '../lib/documents.js'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbSettings as AdminIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
@@ -18,15 +15,7 @@ import {
   TbShieldCheck as ShieldCheck,
 } from 'react-icons/tb'
 import { apiGet, apiPatch, apiPost } from '../lib/api.js'
-import {
-  A,
-  Button,
-  Empty,
-  ErrorCard,
-  PageHeader,
-  Section,
-  Skeletons,
-} from '../components/ui.jsx'
+import { A, Button, Empty, ErrorCard, PageHeader, Section, Skeletons } from '../components/ui.jsx'
 import { SearchableSelect } from '../components/FormControls.jsx'
 import { AdminEmailBroadcast } from '../components/AdminEmailBroadcast.jsx'
 import { PushBroadcast } from '../components/PushBroadcast.jsx'
@@ -61,11 +50,7 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Name A–Z' },
   { value: 'recent_login', label: 'Recently signed in' },
 ]
-const TEAM_ROLES = [
-  'membership_team',
-  'gys_policy_team',
-  ...WEBSITE_PERMISSIONS,
-]
+const TEAM_ROLES = ['membership_team', 'gys_policy_team', ...WEBSITE_PERMISSIONS]
 
 function AdminDialog({ title, children, onClose }) {
   return (
@@ -108,9 +93,7 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
     )
 
   const updateRole = () =>
-    run('role', () =>
-      apiPost(`/member/admin/accounts/${account.id}/role`, { role, reason }),
-    )
+    run('role', () => apiPost(`/member/admin/accounts/${account.id}/role`, { role, reason }))
 
   const toggleTeamRole = (teamRole) => {
     const enabled = !account.teamRoles?.includes(teamRole)
@@ -150,9 +133,7 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
           placeholder="Required for every admin action"
           autoFocus
         />
-        <small className="metaMuted">
-          At least 8 characters; kept in audit.
-        </small>
+        <small className="metaMuted">At least 8 characters; kept in audit.</small>
       </label>
 
       {error && <ErrorCard message={error} />}
@@ -206,27 +187,20 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
                 disabled={!reasonReady || busy}
                 onClick={() => toggleTeamRole(teamRole)}
               >
-                {busy === teamRole
-                  ? 'Updating…'
-                  : `${assigned ? 'Remove' : 'Assign'} ${label}`}
+                {busy === teamRole ? 'Updating…' : `${assigned ? 'Remove' : 'Assign'} ${label}`}
               </Button>
             )
           })}
         </div>
         <p className="metaMuted">
-          Record appointments from the agreed YOUNGO process. Drafting and
-          publishing are website permissions; they do not confer a mandate.
-          Contact Point appointments are recorded with evidence in Bodies &
-          mandates.
+          Record appointments from the agreed YOUNGO process. Drafting and publishing are website
+          permissions; they do not confer a mandate. Contact Point appointments are recorded with
+          evidence in Bodies & mandates.
         </p>
       </div>
 
       <div className="adminDialogFooter">
-        <Button
-          variant="ghost"
-          disabled={!reasonReady || busy}
-          onClick={issueReset}
-        >
+        <Button variant="ghost" disabled={!reasonReady || busy} onClick={issueReset}>
           <KeyRound size={16} aria-hidden />
           {busy === 'reset' ? 'Issuing…' : 'Issue password reset'}
         </Button>
@@ -244,8 +218,8 @@ function ResetHandoff({ reset, onClose }) {
   return (
     <AdminDialog title="Password reset sent" onClose={onClose}>
       <p className="meta">
-        The Hub sent password-reset instructions to the account address. The
-        link expires {formatDateTime(reset.expiresAt)} and can be used once.
+        The Hub sent password-reset instructions to the account address. The link expires{' '}
+        {formatDateTime(reset.expiresAt)} and can be used once.
       </p>
       <div className="adminDialogFooter">
         <Button variant="primary" onClick={onClose}>
@@ -253,8 +227,8 @@ function ResetHandoff({ reset, onClose }) {
         </Button>
       </div>
       <p className="metaMuted">
-        The reset credential is not shown here and is not stored in the audit
-        trail or notification outbox.
+        The reset credential is not shown here and is not stored in the audit trail or notification
+        outbox.
       </p>
     </AdminDialog>
   )
@@ -322,8 +296,7 @@ export function Admin() {
     setNonce((value) => value + 1)
   }
 
-  if (error && !data)
-    return <ErrorCard message={error} onRetry={() => reload()} />
+  if (error && !data) return <ErrorCard message={error} onRetry={() => reload()} />
   if (!data) return <Skeletons n={5} />
 
   return (
@@ -415,22 +388,14 @@ export function Admin() {
                   <span className="chip chip-neutral">
                     {labelFor(STATUS_OPTIONS, account.membershipStatus)}
                   </span>
-                  <span className="chip chip-neutral">
-                    {labelFor(ROLE_OPTIONS, account.role)}
-                  </span>
+                  <span className="chip chip-neutral">{labelFor(ROLE_OPTIONS, account.role)}</span>
                 </div>
                 <p className="metaMuted">
-                  {[account.country, account.region]
-                    .filter(Boolean)
-                    .join(' · ')}
+                  {[account.country, account.region].filter(Boolean).join(' · ')}
                   {!account.country && !account.region && 'Location not set'}
                 </p>
                 <div className="adminAccountFooter">
-                  <Button
-                    sm
-                    variant="secondary"
-                    onClick={() => setSelected(account)}
-                  >
+                  <Button sm variant="secondary" onClick={() => setSelected(account)}>
                     <Settings2 size={16} aria-hidden />
                     Manage
                   </Button>
@@ -447,11 +412,7 @@ export function Admin() {
             ))}
           </div>
         ) : (
-          <Empty
-            icon={Search}
-            title="No matching accounts"
-            body="Change or clear a filter."
-          />
+          <Empty icon={Search} title="No matching accounts" body="Change or clear a filter." />
         )}
 
         <nav className="pagination" aria-label="Account pages">
@@ -508,9 +469,7 @@ export function Admin() {
               </time>
             </div>
           ))}
-          {!audit.length && (
-            <p className="metaMuted">No audited governance changes yet.</p>
-          )}
+          {!audit.length && <p className="metaMuted">No audited governance changes yet.</p>}
         </div>
       </Section>
 

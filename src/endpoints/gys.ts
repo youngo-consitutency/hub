@@ -3,12 +3,7 @@ import { endpoint, fail, json } from '../lib/respond'
 import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
-import {
-  contributionsFromCsv,
-  previewCsvImport,
-  synthesizeGysContributions,
-} from '../lib/gys.js'
-
+import { contributionsFromCsv, previewCsvImport, synthesizeGysContributions } from '../lib/gys.js'
 
 const GYS_STATUSES = [
   'submitted',
@@ -57,8 +52,7 @@ const publicContributionView = (row: any) => ({
   source: row.source || 'manual',
   externalId: row.externalId || null,
   authorId: typeof row.author === 'object' ? row.author?.id : row.author,
-  reviewerId:
-    typeof row.reviewer === 'object' ? row.reviewer?.id : row.reviewer,
+  reviewerId: typeof row.reviewer === 'object' ? row.reviewer?.id : row.reviewer,
   status: row.status,
   version: row.version,
   createdAt: row.createdAt,
@@ -139,8 +133,7 @@ export const gysEndpoints: Endpoint[] = [
       await requireTeam(req, 'gys_policy_team')
       const b = ((await req.json?.()) || {}) as any
       const preview = previewCsvImport(b.csvText, b.columnMap)
-      if (!preview.ok)
-        throw fail.validation({ csvText: preview.error || 'Invalid CSV.' })
+      if (!preview.ok) throw fail.validation({ csvText: preview.error || 'Invalid CSV.' })
       return json(preview)
     }),
   },
@@ -226,8 +219,7 @@ export const gysEndpoints: Endpoint[] = [
         'published',
         'archived',
       ]
-      if (!allowed.includes(b.status))
-        throw fail.validation({ status: 'Invalid cycle status.' })
+      if (!allowed.includes(b.status)) throw fail.validation({ status: 'Invalid cycle status.' })
       const workflow = await getGysWorkflow(req)
       const updated = await req.payload.update({
         collection: 'gys-workflow-cycles',
@@ -262,11 +254,26 @@ export const gysEndpoints: Endpoint[] = [
           cycle: workflow.cycle.id,
           title: String(b.title).trim().slice(0, 240),
           body: String(b.body).trim().slice(0, 20000),
-          theme: String(b.theme || '').trim().slice(0, 160) || null,
-          region: String(b.region || '').trim().slice(0, 120) || null,
-          country: String(b.country || '').trim().slice(0, 120) || null,
-          submitterType: String(b.submitterType || '').trim().slice(0, 60) || null,
-          organization: String(b.organization || '').trim().slice(0, 200) || null,
+          theme:
+            String(b.theme || '')
+              .trim()
+              .slice(0, 160) || null,
+          region:
+            String(b.region || '')
+              .trim()
+              .slice(0, 120) || null,
+          country:
+            String(b.country || '')
+              .trim()
+              .slice(0, 120) || null,
+          submitterType:
+            String(b.submitterType || '')
+              .trim()
+              .slice(0, 60) || null,
+          organization:
+            String(b.organization || '')
+              .trim()
+              .slice(0, 200) || null,
           source: String(b.source || 'manual').slice(0, 60),
           externalId: b.externalId ? String(b.externalId).slice(0, 200) : null,
           rawAnswers: b.rawAnswers || null,
@@ -301,10 +308,7 @@ export const gysEndpoints: Endpoint[] = [
       const status = String(b.status || '')
       if (!GYS_STATUSES.includes(status))
         throw fail.validation({ status: 'Invalid contribution status.' })
-      if (
-        status !== row.status &&
-        !(GYS_TRANSITIONS[row.status] || []).includes(status)
-      )
+      if (status !== row.status && !(GYS_TRANSITIONS[row.status] || []).includes(status))
         throw fail.validation({
           status: `Cannot move from ${row.status} to ${status}.`,
         })

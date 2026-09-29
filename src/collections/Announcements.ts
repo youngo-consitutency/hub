@@ -16,6 +16,13 @@ export const Announcements: CollectionConfig = {
     { name: 'ctaLabel', type: 'text' },
     { name: 'ctaDeadlineAt', type: 'date' },
     { name: 'publishedAt', type: 'date' },
-    { name: 'state', type: 'select', required: true, defaultValue: 'published', index: true, options: ['published', 'unpublished'] },
+    {
+      name: 'state',
+      type: 'select',
+      required: true,
+      defaultValue: 'published',
+      index: true,
+      options: ['published', 'unpublished'],
+    },
   ],
 }

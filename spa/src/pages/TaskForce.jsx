@@ -1,22 +1,12 @@
 import { useApi } from '../lib/api.js'
-import {
-  A,
-  Async,
-  BackLink,
-  Empty,
-  PageHeader,
-  Section,
-} from '../components/ui.jsx'
+import { A, Async, BackLink, Empty, PageHeader, Section } from '../components/ui.jsx'
 import { WgActivityCard } from '../components/WgActivityCard.jsx'
 import { taskForceBySlug } from '../../shared/protocol.js'
 import { TbFlag as Flag, TbLock as Lock } from 'react-icons/tb'
 
 export function TaskForce({ slug, extra }) {
   const groupQuery = useApi(`/groups/${encodeURIComponent(slug || '')}`, [slug])
-  const workspaceQuery = useApi(
-    `/member/workspace/${encodeURIComponent(slug || '')}`,
-    [slug],
-  )
+  const workspaceQuery = useApi(`/member/workspace/${encodeURIComponent(slug || '')}`, [slug])
 
   return (
     <div className="detailPage">
@@ -40,16 +30,11 @@ export function TaskForce({ slug, extra }) {
             workspaceQuery.data?.progress?.rules_ok,
           )
           const activities = (workspaceQuery.data?.activities || []).filter(
-            (activity) =>
-              (activity.taskForceSlug || activity.task_force_slug) ===
-              force.slug,
+            (activity) => (activity.taskForceSlug || activity.task_force_slug) === force.slug,
           )
           return (
             <>
-              <PageHeader
-                title={force.name}
-                description={force.purpose || group.focusLine}
-              />
+              <PageHeader title={force.name} description={force.purpose || group.focusLine} />
               <p className="metaMuted">
                 A task force of{' '}
                 <A href={`/groups/${group.slug}`} className="inlineLink">
@@ -65,10 +50,7 @@ export function TaskForce({ slug, extra }) {
                     title="Unlock the group workspace"
                     body="Task-force calls and files open after the group introduction."
                     cta={
-                      <A
-                        href={`/workspace/${group.slug}`}
-                        className="btn btn-secondary btn-sm"
-                      >
+                      <A href={`/workspace/${group.slug}`} className="btn btn-secondary btn-sm">
                         Open workspace
                       </A>
                     }

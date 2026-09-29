@@ -5,13 +5,7 @@ import { requirePgPool, getPgPool, pickField } from './pg'
 // Identity appeals: members submit a statement + proof document; the
 // membership team reviews them. Proofs are bytea, access-scoped.
 
-
-export const APPEAL_IDENTITY_KINDS = [
-  'passport',
-  'national_id',
-  'organisational_letter',
-  'other',
-]
+export const APPEAL_IDENTITY_KINDS = ['passport', 'national_id', 'organisational_letter', 'other']
 export const APPEAL_PROOF_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -21,10 +15,7 @@ export const APPEAL_PROOF_TYPES = new Set([
 export const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 export const APPEAL_MAX_PER_ACCOUNT = 3
 
-export function publicAppeal(
-  row: any,
-  { includeStatement = true } = {},
-): any {
+export function publicAppeal(row: any, { includeStatement = true } = {}): any {
   if (!row) return null
   return {
     id: row.id,
@@ -41,7 +32,10 @@ export function publicAppeal(
 }
 
 export function validateAppealProof(bytes: Buffer, contentType: string) {
-  const type = String(contentType || '').split(';')[0].trim().toLowerCase()
+  const type = String(contentType || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase()
   if (!APPEAL_PROOF_TYPES.has(type))
     throw new ApiError(
       400,
@@ -51,31 +45,17 @@ export function validateAppealProof(bytes: Buffer, contentType: string) {
   if (!Buffer.isBuffer(bytes) || bytes.length === 0)
     throw new ApiError(400, 'validation', 'Choose a document to upload.')
   if (bytes.length > APPEAL_PROOF_MAX_BYTES)
-    throw new ApiError(
-      413,
-      'payload_too_large',
-      'Identity documents must be 2 MB or smaller.',
-    )
+    throw new ApiError(413, 'payload_too_large', 'Identity documents must be 2 MB or smaller.')
   const signatureOk =
-    (type === 'image/jpeg' &&
-      bytes[0] === 0xff &&
-      bytes[1] === 0xd8 &&
-      bytes[2] === 0xff) ||
+    (type === 'image/jpeg' && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) ||
     (type === 'image/png' &&
-      bytes
-        .subarray(0, 8)
-        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) ||
+      bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) ||
     (type === 'image/webp' &&
       bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
       bytes.subarray(8, 12).toString('ascii') === 'WEBP') ||
-    (type === 'application/pdf' &&
-      bytes.subarray(0, 4).toString('ascii') === '%PDF')
+    (type === 'application/pdf' && bytes.subarray(0, 4).toString('ascii') === '%PDF')
   if (!signatureOk)
-    throw new ApiError(
-      400,
-      'validation',
-      'The uploaded file does not match its document type.',
-    )
+    throw new ApiError(400, 'validation', 'The uploaded file does not match its document type.')
   return type
 }
 
@@ -93,31 +73,15 @@ function validateAppealInput({
   contentType: string
 }) {
   if (account?.membershipStatus !== 'rejected')
-    throw new ApiError(
-      403,
-      'forbidden',
-      'Only a rejected application can send an identity appeal.',
-    )
+    throw new ApiError(403, 'forbidden', 'Only a rejected application can send an identity appeal.')
   const kind = String(identityKind || '').trim()
   if (!APPEAL_IDENTITY_KINDS.includes(kind))
-    throw new ApiError(
-      400,
-      'validation',
-      'Choose what kind of identity proof this is.',
-    )
+    throw new ApiError(400, 'validation', 'Choose what kind of identity proof this is.')
   const text = String(statement || '').trim()
   if (text.length < 40)
-    throw new ApiError(
-      400,
-      'validation',
-      'Explain who you are in at least 40 characters.',
-    )
+    throw new ApiError(400, 'validation', 'Explain who you are in at least 40 characters.')
   if (text.length > 2000)
-    throw new ApiError(
-      400,
-      'validation',
-      'Keep the appeal under 2000 characters.',
-    )
+    throw new ApiError(400, 'validation', 'Keep the appeal under 2000 characters.')
   const type = validateAppealProof(bytes, contentType)
   return { kind, text, type }
 }
@@ -230,10 +194,9 @@ export async function readAppealProof(id: string | number, pool?: Pool | null) {
 export async function findAppealById(id: string | number, pool?: Pool | null) {
   const db = pool || getPgPool()
   if (!db) return null
-  const { rows } = await db.query(
-    `SELECT ${APPEAL_COLUMNS} FROM membership_appeals WHERE id=$1`,
-    [id],
-  )
+  const { rows } = await db.query(`SELECT ${APPEAL_COLUMNS} FROM membership_appeals WHERE id=$1`, [
+    id,
+  ])
   return rows[0] || null
 }
 
@@ -248,25 +211,15 @@ export async function reviewAppeal({
   note: string
   reviewerId: number
 }) {
-  const next =
-    decision === 'grant' ? 'granted' : decision === 'uphold' ? 'upheld' : null
-  if (!next)
-    throw new ApiError(400, 'validation', 'Choose grant or uphold.')
+  const next = decision === 'grant' ? 'granted' : decision === 'uphold' ? 'upheld' : null
+  if (!next) throw new ApiError(400, 'validation', 'Choose grant or uphold.')
   const reason = String(note || '').trim()
   if (reason.length < 8)
-    throw new ApiError(
-      400,
-      'validation',
-      'Give a review note of at least 8 characters.',
-    )
+    throw new ApiError(400, 'validation', 'Give a review note of at least 8 characters.')
   const existing = await findAppealById(id)
   if (!existing) return null
   if (existing.status !== 'submitted')
-    throw new ApiError(
-      409,
-      'already_reviewed',
-      'This appeal has already been reviewed.',
-    )
+    throw new ApiError(409, 'already_reviewed', 'This appeal has already been reviewed.')
   const pool = requirePgPool()
   const { rows } = await pool.query(
     `UPDATE membership_appeals

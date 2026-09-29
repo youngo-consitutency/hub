@@ -9,11 +9,7 @@ import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { trimmed } from '../lib/text'
-import {
-  AFFILIATION_ROLES,
-  requireOrgScope,
-  seatView,
-} from '../lib/ngo'
+import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
 
 const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-invite' })
 
@@ -22,11 +18,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/ngo/points',
     method: 'get',
     handler: endpoint(async () => {
-      throw new ApiError(
-        410,
-        'retired',
-        'Contribution points have been retired.',
-      )
+      throw new ApiError(410, 'retired', 'Contribution points have been retired.')
     }),
   },
   {
@@ -66,8 +58,7 @@ export const ngoEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'requests')
       const b = ((await req.json?.()) || {}) as any
-      if (!b.title || !b.kind)
-        throw fail.validation({ title: 'title and kind required.' })
+      if (!b.title || !b.kind) throw fail.validation({ title: 'title and kind required.' })
       const pool = requirePgPool()
       const { rows } = await pool.query(
         `INSERT INTO ngo_requests (org_account_id, kind, title, body, deadline_at, created_by_id)
@@ -146,9 +137,7 @@ export const ngoEndpoints: Endpoint[] = [
       const email = trimmed(b.email, 200).toLowerCase()
       if (!email || !email.includes('@'))
         throw fail.validation({ email: 'A valid email address is required.' })
-      const seatRole = AFFILIATION_ROLES.includes(b.seatRole)
-        ? b.seatRole
-        : 'representative'
+      const seatRole = AFFILIATION_ROLES.includes(b.seatRole) ? b.seatRole : 'representative'
       const dup = await req.payload.find({
         collection: 'ngo-seats',
         where: {
@@ -160,7 +149,11 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       if (dup.docs[0])
-        throw new ApiError(409, 'duplicate', 'This person already holds a seat or an open invitation.')
+        throw new ApiError(
+          409,
+          'duplicate',
+          'This person already holds a seat or an open invitation.',
+        )
       if (!emailConfigured())
         throw new ApiError(
           503,
@@ -231,11 +224,8 @@ export const ngoEndpoints: Endpoint[] = [
       })) as any
       if (!seat) throw fail.notFound('Seat not found.')
       if (
-        String(
-          typeof seat.orgAccount === 'object'
-            ? seat.orgAccount.id
-            : seat.orgAccount,
-        ) !== ctx.orgAccountId
+        String(typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount) !==
+        ctx.orgAccountId
       )
         throw fail.notFound('Seat not found.')
       const updated = await req.payload.update({
@@ -300,10 +290,7 @@ export const ngoEndpoints: Endpoint[] = [
         (seat.inviteExpiresAt && Date.parse(seat.inviteExpiresAt) < Date.now())
       )
         throw fail.notFound('This invitation is no longer valid.')
-      if (
-        seat.email &&
-        String(seat.email).toLowerCase() !== String(account.email).toLowerCase()
-      )
+      if (seat.email && String(seat.email).toLowerCase() !== String(account.email).toLowerCase())
         throw fail.forbidden('This invitation was sent to a different email address.')
       const updated = await req.payload.update({
         collection: 'ngo-seats',

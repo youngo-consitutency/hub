@@ -5,11 +5,7 @@ import { FormAlert } from './auth/shared.jsx'
 import { fieldClass } from './auth/helpers.js'
 import { FieldError } from './FormControls.jsx'
 
-export function ChangePasswordForm({
-  onChanged,
-  submitLabel = 'Save new password',
-  intro,
-}) {
+export function ChangePasswordForm({ onChanged, submitLabel = 'Save new password', intro }) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')

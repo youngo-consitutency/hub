@@ -5,12 +5,7 @@ import { useWorkingGroups } from '../lib/workingGroups.js'
 import { apiPost } from '../lib/api.js'
 import { Button, ErrorCard } from './ui.jsx'
 
-const TEAM_ROLES = [
-  'membership_team',
-  'gys_policy_team',
-  'content_editor',
-  'content_publisher',
-]
+const TEAM_ROLES = ['membership_team', 'gys_policy_team', 'content_editor', 'content_publisher']
 
 export function AdminEmailBroadcast() {
   const { teamLabels } = useContentOptionLabels()
@@ -28,8 +23,7 @@ export function AdminEmailBroadcast() {
   const [result, setResult] = useState(null)
   const [preview, setPreview] = useState(null)
 
-  const change = ({ target }) =>
-    setForm((current) => ({ ...current, [target.name]: target.value }))
+  const change = ({ target }) => setForm((current) => ({ ...current, [target.name]: target.value }))
 
   const payload = () => ({
     title: form.title,
@@ -52,8 +46,7 @@ export function AdminEmailBroadcast() {
         payload(),
         mode === 'send'
           ? {
-              'x-idempotency-key':
-                globalThis.crypto?.randomUUID?.() || String(Date.now()),
+              'x-idempotency-key': globalThis.crypto?.randomUUID?.() || String(Date.now()),
             }
           : {},
       )
@@ -78,10 +71,7 @@ export function AdminEmailBroadcast() {
 
   const scopeReady = form.scopeType === 'all_active' || Boolean(form.scopeValue)
   const ready =
-    form.title.trim() &&
-    form.message.trim() &&
-    form.reason.trim().length >= 8 &&
-    scopeReady
+    form.title.trim() && form.message.trim() && form.reason.trim().length >= 8 && scopeReady
 
   return (
     <>
@@ -91,8 +81,7 @@ export function AdminEmailBroadcast() {
             <Mail size={20} />
           </span>
           <p className="meta">
-            Only active, verified members who opted in to Hub announcements will
-            receive this email.
+            Only active, verified members who opted in to Hub announcements will receive this email.
           </p>
         </div>
         <div className="stack">
@@ -115,12 +104,7 @@ export function AdminEmailBroadcast() {
           {form.scopeType === 'working_group' && (
             <label className="field">
               <span>Working group</span>
-              <select
-                className="input"
-                name="scopeValue"
-                value={form.scopeValue}
-                onChange={change}
-              >
+              <select className="input" name="scopeValue" value={form.scopeValue} onChange={change}>
                 <option value="">Choose a working group</option>
                 {wg.groups.map((group) => (
                   <option key={group.slug} value={group.slug}>
@@ -133,18 +117,15 @@ export function AdminEmailBroadcast() {
           {form.scopeType === 'team' && (
             <label className="field">
               <span>Responsibility or permission</span>
-              <select
-                className="input"
-                name="scopeValue"
-                value={form.scopeValue}
-                onChange={change}
-              >
+              <select className="input" name="scopeValue" value={form.scopeValue} onChange={change}>
                 <option value="">Choose a team</option>
-                {TEAM_ROLES.map((value) => [value, teamLabels[value] || value]).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
+                {TEAM_ROLES.map((value) => [value, teamLabels[value] || value]).map(
+                  ([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ),
+                )}
               </select>
             </label>
           )}
@@ -191,8 +172,8 @@ export function AdminEmailBroadcast() {
             onChange={change}
           />
           <small className="metaMuted">
-            At least 8 characters; stored in the governance audit. The message
-            body is not copied there.
+            At least 8 characters; stored in the governance audit. The message body is not copied
+            there.
           </small>
         </label>
         {error && <ErrorCard message={error} />}
@@ -208,18 +189,10 @@ export function AdminEmailBroadcast() {
           </p>
         )}
         <div className="rowGap">
-          <Button
-            variant="secondary"
-            disabled={!ready || busy}
-            onClick={() => run('preview')}
-          >
+          <Button variant="secondary" disabled={!ready || busy} onClick={() => run('preview')}>
             Preview
           </Button>
-          <Button
-            variant="primary"
-            disabled={!ready || busy}
-            onClick={() => run('send')}
-          >
+          <Button variant="primary" disabled={!ready || busy} onClick={() => run('send')}>
             <Send size={17} aria-hidden />
             Queue announcement
           </Button>

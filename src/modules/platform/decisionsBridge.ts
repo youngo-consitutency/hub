@@ -1,17 +1,6 @@
 import type { PayloadRequest } from 'payload'
-import {
-  db,
-  fail,
-  permissions,
-  text,
-  type Actor,
-  type Input,
-} from './service'
-import {
-  BODY_ID_SQL,
-  DECISION_VIEW_SELECT,
-  transitionDeadline,
-} from './platformShared'
+import { db, fail, permissions, text, type Actor, type Input } from './service'
+import { BODY_ID_SQL, DECISION_VIEW_SELECT, transitionDeadline } from './platformShared'
 import {
   advanceIfDue,
   checkVeto,
@@ -21,11 +10,7 @@ import {
   proposalFlags,
   recordEvent,
 } from '../../lib/decisionRuntime'
-import {
-  requireCwMember,
-  requireVerifiedMember,
-  VERIFIED_PLATFORM_ROLES,
-} from '../../lib/accounts'
+import { requireCwMember, requireVerifiedMember, VERIFIED_PLATFORM_ROLES } from '../../lib/accounts'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
 // S09 decision engine. decision_proposals is the single store; the legacy
@@ -90,8 +75,7 @@ async function resolveProposal(req: PayloadRequest, raw: string) {
     'SELECT s09_proposal_id FROM platform_decisions WHERE id = $1',
     [id],
   )
-  if (rows[0]?.s09_proposal_id)
-    return loadProposal(req, rows[0].s09_proposal_id)
+  if (rows[0]?.s09_proposal_id) return loadProposal(req, rows[0].s09_proposal_id)
   return loadProposal(req, id) // legacy_ref fallback inside loadProposal
 }
 
@@ -132,10 +116,7 @@ async function syncProjection(p: any) {
 
 // platform body slug → S09 body scope.
 async function s09Body(bodySlug: string) {
-  const { rows } = await db().query(
-    'SELECT kind FROM platform_bodies WHERE id = $1',
-    [bodySlug],
-  )
+  const { rows } = await db().query('SELECT kind FROM platform_bodies WHERE id = $1', [bodySlug])
   const kind = rows[0]?.kind
   if (kind === 'council') return { body: 'council', bodyRef: null }
   if (kind === 'operational_team' || kind === 'coordination')
@@ -144,25 +125,16 @@ async function s09Body(bodySlug: string) {
 }
 
 async function bodyView(req: PayloadRequest, p: any) {
-  const { rows } = await db().query(
-    `${DECISION_VIEW_SELECT} WHERE dp.id = $1`,
-    [p.id],
-  )
+  const { rows } = await db().query(`${DECISION_VIEW_SELECT} WHERE dp.id = $1`, [p.id])
   return rows[0]
 }
 
-export async function saveDecision(
-  req: PayloadRequest,
-  actor: Actor,
-  input: Input,
-  id?: string,
-) {
+export async function saveDecision(req: PayloadRequest, actor: Actor, input: Input, id?: string) {
   const p = await permissions(actor)
   if (id) {
     const proposal = await resolveProposal(req, id)
     const bodyId = platformBodyId(proposal)
-    if (!p.participates(bodyId))
-      fail(403, 'Only members of this body can edit the proposal.')
+    if (!p.participates(bodyId)) fail(403, 'Only members of this body can edit the proposal.')
     if (Number(proposal.version) !== Number(input.version))
       fail(409, 'The proposal changed. Review its current version.')
     if (!['draft', 'revision'].includes(proposal.status))
@@ -196,8 +168,7 @@ export async function saveDecision(
   }
 
   const bodyId = text(input, 'bodyId')
-  if (!p.participates(bodyId))
-    fail(403, 'Only members of this body can propose a decision.')
+  if (!p.participates(bodyId)) fail(403, 'Only members of this body can propose a decision.')
   const title = text(input, 'title')
   const proposalText = text(input, 'proposal', 20000)
   const process = text(input, 'process')
@@ -227,9 +198,7 @@ export async function saveDecision(
       snapHours,
       snapJustification: urgency || null,
       snapDeadline:
-        process === 'snap'
-          ? new Date(Date.now() + snapHours * 3600000).toISOString()
-          : null,
+        process === 'snap' ? new Date(Date.now() + snapHours * 3600000).toISOString() : null,
       status: 'draft',
       proposedBy: actor.id,
       contactPersons: [actor.id],
@@ -266,11 +235,7 @@ export async function saveDecision(
   return { id: rows[0].id }
 }
 
-export async function decisionDetail(
-  req: PayloadRequest,
-  actor: Actor,
-  id: string,
-) {
+export async function decisionDetail(req: PayloadRequest, actor: Actor, id: string) {
   const account = requireVerifiedMember(req)
   let proposal = await resolveProposal(req, id)
   proposal = await advanceIfDue(req, proposal)
@@ -345,12 +310,7 @@ export async function decisionDetail(
   }
 }
 
-export async function contribute(
-  req: PayloadRequest,
-  actor: Actor,
-  id: string,
-  input: Input,
-) {
+export async function contribute(req: PayloadRequest, actor: Actor, id: string, input: Input) {
   const account = requireCwMember(req)
   let proposal = await resolveProposal(req, id)
   proposal = await advanceIfDue(req, proposal)
@@ -359,16 +319,14 @@ export async function contribute(
     fail(403, 'Only members of this body may participate.')
   if (
     !['consultation', 'decision'].includes(proposal.status) ||
-    (deadlineFor(proposal) &&
-      new Date(deadlineFor(proposal) as string).getTime() <= Date.now())
+    (deadlineFor(proposal) && new Date(deadlineFor(proposal) as string).getTime() <= Date.now())
   )
     fail(409, 'The response period is closed.')
   const kind = text(input, 'kind')
   const message = text(input, 'text', 5000)
   const grounds = text(input, 'grounds', 3000, false)
   const alternative = text(input, 'alternative', 5000, false)
-  if (!['comment', 'red', 'grey'].includes(kind))
-    fail(400, 'Choose comment, red or grey flag.')
+  if (!['comment', 'red', 'grey'].includes(kind)) fail(400, 'Choose comment, red or grey flag.')
   if (kind === 'comment') {
     await req.payload.create({
       collection: 'decision-comments',
@@ -385,8 +343,7 @@ export async function contribute(
   }
   if (kind === 'red' && (!grounds || !alternative))
     fail(400, 'A red flag needs grounds and an alternative proposal.')
-  if (kind === 'grey' && !grounds)
-    fail(400, 'Explain the concern behind a grey flag.')
+  if (kind === 'grey' && !grounds) fail(400, 'Explain the concern behind a grey flag.')
   const flag = await req.payload.create({
     collection: 'decision-flags',
     data: {
@@ -414,10 +371,8 @@ export async function resolveContribution(
 ) {
   const account = requireVerifiedMember(req)
   const [kind, rawId] = String(contributionId).split(':')
-  if (kind === 'c')
-    fail(400, 'Comments are not flags.')
-  if (kind !== 'f' || !/^\d+$/.test(rawId ?? ''))
-    fail(404, 'Contribution not found.')
+  if (kind === 'c') fail(400, 'Comments are not flags.')
+  if (kind !== 'f' || !/^\d+$/.test(rawId ?? '')) fail(404, 'Contribution not found.')
   const flag = await req.payload
     .findByID({
       collection: 'decision-flags',
@@ -428,15 +383,11 @@ export async function resolveContribution(
     .catch(() => fail(404, 'Contribution not found.'))
   const proposalId = (flag as any).proposal?.id ?? (flag as any).proposal
   const proposal = await loadProposal(req, proposalId)
-  if (CLOSED.includes(proposal.status))
-    fail(409, 'The decision is already closed.')
+  if (CLOSED.includes(proposal.status)) fail(409, 'The decision is already closed.')
   const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
   // A coordinator may answer a flag, but its author must confirm withdrawal.
   if (raiser !== actor.id && account.role !== 'admin')
-    fail(
-      403,
-      'Only the flag author can confirm that their concern is resolved.',
-    )
+    fail(403, 'Only the flag author can confirm that their concern is resolved.')
   const reason = text(input, 'resolution', 3000)
   await req.payload.update({
     collection: 'decision-flags',
@@ -473,12 +424,7 @@ const S09_TARGET: Record<string, string> = {
   withdrawn: 'withdrawn',
 }
 
-export async function transition(
-  req: PayloadRequest,
-  actor: Actor,
-  id: string,
-  input: Input,
-) {
+export async function transition(req: PayloadRequest, actor: Actor, id: string, input: Input) {
   let proposal = await resolveProposal(req, id)
   proposal = await advanceIfDue(req, proposal)
   const p = await permissions(actor)
@@ -488,14 +434,9 @@ export async function transition(
   if (Number(proposal.version) !== Number(input.version))
     fail(409, 'The proposal changed. Review its current version.')
   const next = text(input, 'stage')
-  if (!NEXT_STAGE[proposal.status]?.includes(next))
-    fail(409, 'This transition is not allowed.')
+  if (!NEXT_STAGE[proposal.status]?.includes(next)) fail(409, 'This transition is not allowed.')
   const currentDeadline = deadlineFor(proposal)
-  if (
-    next !== 'withdrawn' &&
-    currentDeadline &&
-    new Date(currentDeadline).getTime() > Date.now()
-  )
+  if (next !== 'withdrawn' && currentDeadline && new Date(currentDeadline).getTime() > Date.now())
     fail(409, 'Wait for the current response period to end.')
 
   let reason = text(input, 'reason', 3000)
@@ -546,11 +487,7 @@ export async function transition(
       {
         status: 'voting',
         eligibleVoterCount: eligible,
-        votingEndsAt: transitionDeadline(
-          'standard',
-          'voting',
-          new Date(),
-        ),
+        votingEndsAt: transitionDeadline('standard', 'voting', new Date()),
         ballotOptions: [{ option: 'for' }, { option: 'against' }],
       },
       'vote_opened',
@@ -603,21 +540,11 @@ export async function transition(
   if (!evidence) fail(400, 'Record the outcome evidence.')
   if (proposal.status === 'decision') {
     const flags = await proposalFlags(req, proposal.id)
-    const openRed = flags.filter(
-      (f) => f.kind === 'red' && f.status === 'open',
-    ).length
-    if (openRed)
-      fail(
-        409,
-        'Resolve the outstanding red flags or use the voting process.',
-      )
-    const openGrey = flags.filter(
-      (f) => f.kind === 'grey' && f.status === 'open',
-    ).length
-    if (openGrey)
-      reason += `\nReservations considered: ${text(input, 'reservations', 3000)}`
-    if (next !== 'adopted')
-      fail(409, 'A consensus process may only adopt or move to a vote.')
+    const openRed = flags.filter((f) => f.kind === 'red' && f.status === 'open').length
+    if (openRed) fail(409, 'Resolve the outstanding red flags or use the voting process.')
+    const openGrey = flags.filter((f) => f.kind === 'grey' && f.status === 'open').length
+    if (openGrey) reason += `\nReservations considered: ${text(input, 'reservations', 3000)}`
+    if (next !== 'adopted') fail(409, 'A consensus process may only adopt or move to a vote.')
     await bump(
       {
         status: 'adopted',
@@ -649,10 +576,7 @@ export async function transition(
       )
     const passed = forVotes * 3 >= (forVotes + against) * 2
     if ((next === 'adopted') !== passed)
-      fail(
-        409,
-        'The recorded vote does not support this outcome (5% quorum, two-thirds approval).',
-      )
+      fail(409, 'The recorded vote does not support this outcome (5% quorum, two-thirds approval).')
     await bump(
       {
         status: passed ? 'adopted' : 'rejected',
@@ -679,10 +603,9 @@ export async function transition(
         'Update the constituency decision tracker and communicate through the main channel. Record the communication link here when complete.',
         actor.id,
         (
-          await db().query(
-            'SELECT id FROM platform_decisions WHERE s09_proposal_id=$1',
-            [proposal.id],
-          )
+          await db().query('SELECT id FROM platform_decisions WHERE s09_proposal_id=$1', [
+            proposal.id,
+          ])
         ).rows[0]?.id ?? null,
       ],
     )
@@ -696,39 +619,28 @@ export async function publishDecision(
   version: unknown,
 ) {
   const p = await permissions(actor)
-  if (!p.publisher)
-    fail(403, 'A content publisher must approve public disclosure.')
+  if (!p.publisher) fail(403, 'A content publisher must approve public disclosure.')
   const proposal = await resolveProposal(req, id)
   const bodyId = platformBodyId(proposal)
   if (!p.participates(bodyId))
     fail(403, 'The publisher must belong to this body to review its decision.')
   if (proposal.status !== 'adopted' || Number(proposal.version) !== Number(version))
-    fail(
-      409,
-      'Only an adopted, current proposal can be published by a different person.',
-    )
+    fail(409, 'Only an adopted, current proposal can be published by a different person.')
   // Editorial independence: neither the author nor the last reviser may
   // approve publication of their own text.
   const { docs: lastRevised } = await req.payload.find({
     collection: 'decision-events',
     where: {
-      and: [
-        { proposal: { equals: proposal.id } },
-        { type: { equals: 'revised' } },
-      ],
+      and: [{ proposal: { equals: proposal.id } }, { type: { equals: 'revised' } }],
     },
     sort: '-createdAt',
     limit: 1,
     overrideAccess: true,
   })
-  const lastEditor =
-    (lastRevised[0] as any)?.actor?.id ?? (lastRevised[0] as any)?.actor
+  const lastEditor = (lastRevised[0] as any)?.actor?.id ?? (lastRevised[0] as any)?.actor
   const author = proposal.proposedBy?.id ?? proposal.proposedBy
   if (author === actor.id || (lastEditor ?? author) === actor.id)
-    fail(
-      409,
-      'Only an adopted, current proposal can be published by a different person.',
-    )
+    fail(409, 'Only an adopted, current proposal can be published by a different person.')
   const updated = await req.payload.update({
     collection: 'decision-proposals',
     id: proposal.id,

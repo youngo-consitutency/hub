@@ -21,8 +21,7 @@ export const isStaffOrMember: Access = ({ req }) =>
 
 // Field-level equivalents of the predicates above — field access functions
 // receive a different args shape than collection access.
-export const isStaffField: FieldAccess = ({ req }) =>
-  req.user?.collection === 'users'
+export const isStaffField: FieldAccess = ({ req }) => req.user?.collection === 'users'
 
 export const isStaffOrMemberField: FieldAccess = ({ req }) =>
   req.user?.collection === 'users' || req.user?.collection === 'accounts'

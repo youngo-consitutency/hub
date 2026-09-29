@@ -45,8 +45,7 @@ export function useAlertSetup() {
   }, [refresh])
 
   useEffect(() => {
-    const onPrompt = (event) =>
-      setInstallAvailable(Boolean(event.detail?.available))
+    const onPrompt = (event) => setInstallAvailable(Boolean(event.detail?.available))
     window.addEventListener('pwa-install-available', onPrompt)
     return () => window.removeEventListener('pwa-install-available', onPrompt)
   }, [])
@@ -161,11 +160,7 @@ export function useAlertSetup() {
   const installFirst = !state.loading && needsHomeScreenInstall()
   const blocked = state.permission === 'denied'
   const needsAction =
-    !state.loading &&
-    supported &&
-    state.configured &&
-    !state.subscribed &&
-    !blocked
+    !state.loading && supported && state.configured && !state.subscribed && !blocked
 
   return {
     state,

@@ -2,11 +2,7 @@
 // A conferencing *join* link is a credential: join links are stripped from
 // anonymous payloads while deliberate registration pages survive.
 
-const JOIN_LINK_PATTERNS = [
-  /^meet\.google\.com$/,
-  /^meet\.jit\.si$/,
-  /^(www\.)?whereby\.com$/,
-]
+const JOIN_LINK_PATTERNS = [/^meet\.google\.com$/, /^meet\.jit\.si$/, /^(www\.)?whereby\.com$/]
 
 export function isMeetingJoinLink(value: string): boolean {
   let url: URL
@@ -57,12 +53,8 @@ function resourceViews(
 ) {
   if (!Array.isArray(resources)) return resources
   return resources
-    .filter(
-      (resource) => includeWorkspace || isPublicGroupResource(resource),
-    )
-    .filter(
-      (resource) => includeWorkspace || !isMeetingJoinLink(resource?.url || ''),
-    )
+    .filter((resource) => includeWorkspace || isPublicGroupResource(resource))
+    .filter((resource) => includeWorkspace || !isMeetingJoinLink(resource?.url || ''))
     .map((resource) =>
       includePrivate
         ? { ...resource }
@@ -175,22 +167,19 @@ export function searchView(
   if (!results) return results
   return {
     ...results,
-    events: ((results.events as Record<string, unknown>[]) || []).map(
-      (event) => eventView(event, { includePrivate }),
+    events: ((results.events as Record<string, unknown>[]) || []).map((event) =>
+      eventView(event, { includePrivate }),
     ),
-    groups: ((results.groups as Record<string, unknown>[]) || []).map(
-      (group) => groupView(group, { includePrivate }),
+    groups: ((results.groups as Record<string, unknown>[]) || []).map((group) =>
+      groupView(group, { includePrivate }),
     ),
-    contacts: ((results.contacts as Record<string, unknown>[]) || []).map(
-      (contact) => contactView(contact, { includePrivate }),
+    contacts: ((results.contacts as Record<string, unknown>[]) || []).map((contact) =>
+      contactView(contact, { includePrivate }),
     ),
   }
 }
 
-export function directoryView(
-  items: Record<string, unknown>[],
-  { includePrivate = false } = {},
-) {
+export function directoryView(items: Record<string, unknown>[], { includePrivate = false } = {}) {
   return (items || []).map((contact) => contactView(contact, { includePrivate }))
 }
 

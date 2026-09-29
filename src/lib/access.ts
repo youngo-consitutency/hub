@@ -16,17 +16,9 @@ export interface AccessProfile {
 
 // Only coordination responsibilities carry wg.manage. Ordinary group
 // membership is an affiliation, not a management mandate [S25].
-export const WG_COORDINATION_ROLES = new Set([
-  'contact',
-  'lead',
-  'coordinator',
-  'contact_point',
-])
+export const WG_COORDINATION_ROLES = new Set(['contact', 'lead', 'coordinator', 'contact_point'])
 
-export async function getAccessProfile(
-  req: PayloadRequest,
-  account: any,
-): Promise<AccessProfile> {
+export async function getAccessProfile(req: PayloadRequest, account: any): Promise<AccessProfile> {
   if (!account) {
     return {
       teamRoles: [],
@@ -76,11 +68,7 @@ export async function getAccessProfile(
     teamRoles.add('gys_policy_team')
   }
 
-  const capabilities = new Set([
-    'hub.read',
-    'intelligence.query',
-    'intelligence.writeback.propose',
-  ])
+  const capabilities = new Set(['hub.read', 'intelligence.query', 'intelligence.writeback.propose'])
   if (account.role === 'admin')
     [
       'platform.manage',
@@ -113,17 +101,14 @@ export async function getAccessProfile(
     capabilities.add('content.publish')
   }
   if (
-    ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(
-      account.role,
-    ) ||
+    ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(account.role) ||
     wgAssignments.length ||
     teamRoles.has('membership_team') ||
     teamRoles.has('gys_policy_team')
   )
     capabilities.add('intelligence.contacts.read')
   for (const item of wgAssignments)
-    if (WG_COORDINATION_ROLES.has(item.role))
-      capabilities.add(`wg.manage:${item.wgSlug}`)
+    if (WG_COORDINATION_ROLES.has(item.role)) capabilities.add(`wg.manage:${item.wgSlug}`)
   for (const item of negotiationAssignments) {
     const scope = `${item.scopeType}:${item.scopeId}`
     capabilities.add(`negotiations.read:${scope}`)
@@ -131,14 +116,11 @@ export async function getAccessProfile(
       capabilities.add(`negotiations.evidence.review:${scope}`)
       capabilities.add(`negotiations.candidates.review:${scope}`)
     }
-    if (item.role === 'applier')
-      capabilities.add(`negotiations.candidates.apply:${scope}`)
-    if (item.role === 'grant_manager')
-      capabilities.add(`negotiations.grants.manage:${scope}`)
+    if (item.role === 'applier') capabilities.add(`negotiations.candidates.apply:${scope}`)
+    if (item.role === 'grant_manager') capabilities.add(`negotiations.grants.manage:${scope}`)
     if (item.role === 'process_facilitator')
       capabilities.add(`negotiations.process.record:${scope}`)
-    if (item.role === 'transmitter')
-      capabilities.add(`negotiations.transmission.record:${scope}`)
+    if (item.role === 'transmitter') capabilities.add(`negotiations.transmission.record:${scope}`)
   }
   return {
     teamRoles: [...teamRoles],

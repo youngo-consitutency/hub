@@ -76,11 +76,7 @@ async function loginResponse(req: any, email: string, password: string) {
   }
 
   if (!logged?.user && doc?.legacyPasswordHash && doc?.legacyPasswordSalt) {
-    const ok = await verifyLegacyPassword(
-      password,
-      doc.legacyPasswordSalt,
-      doc.legacyPasswordHash,
-    )
+    const ok = await verifyLegacyPassword(password, doc.legacyPasswordSalt, doc.legacyPasswordHash)
     if (ok) {
       await payload.update({
         collection: 'accounts',
@@ -143,8 +139,7 @@ export const authEndpoints: Endpoint[] = [
           'email_taken',
           'An account with this email already exists. Sign in instead.',
           {
-            email:
-              'An account with this email already exists. Sign in instead.',
+            email: 'An account with this email already exists. Sign in instead.',
           },
         )
       }
@@ -307,12 +302,7 @@ export const authEndpoints: Endpoint[] = [
       } catch {
         // Cookie clear below is the effective logout.
       }
-      return noStore(
-        json(
-          { ok: true },
-          { headers: { 'Set-Cookie': clearSessionCookieHeader() } },
-        ),
-      )
+      return noStore(json({ ok: true }, { headers: { 'Set-Cookie': clearSessionCookieHeader() } }))
     }),
   },
   {
@@ -326,12 +316,9 @@ export const authEndpoints: Endpoint[] = [
       const password = String(b.password || '')
       const passwordConfirm = String(b.passwordConfirm || '')
       const fields: Record<string, string> = {}
-      if (!currentPassword)
-        fields.currentPassword = 'Enter your current password.'
-      if (password.length < 10)
-        fields.password = 'Password must be at least 10 characters.'
-      if (password !== passwordConfirm)
-        fields.passwordConfirm = 'Passwords do not match.'
+      if (!currentPassword) fields.currentPassword = 'Enter your current password.'
+      if (password.length < 10) fields.password = 'Password must be at least 10 characters.'
+      if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
       const verified = await req.payload
@@ -432,12 +419,9 @@ export const authEndpoints: Endpoint[] = [
       const passwordConfirm = String(b.passwordConfirm || '')
       const fields: Record<string, string> = {}
       if (!token)
-        fields.token =
-          'Reset token is missing. Open the full link from your email or admin.'
-      if (password.length < 10)
-        fields.password = 'Password must be at least 10 characters.'
-      if (password !== passwordConfirm)
-        fields.passwordConfirm = 'Passwords do not match.'
+        fields.token = 'Reset token is missing. Open the full link from your email or admin.'
+      if (password.length < 10) fields.password = 'Password must be at least 10 characters.'
+      if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
       const tokenHash = sha256Hex(token)

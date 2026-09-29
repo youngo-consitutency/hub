@@ -54,18 +54,13 @@ export function AddToCalendar({ event, className = 'btn btn-secondary' }) {
       >
         <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
         Add to calendar
-        <ChevronDown
-          size={14}
-          strokeWidth={1.75}
-          aria-hidden
-          style={{ opacity: 0.7 }}
-        />
+        <ChevronDown size={14} strokeWidth={1.75} aria-hidden style={{ opacity: 0.7 }} />
       </button>
       {open && (
         <div className="addCalPanel card" id={panelId}>
           <p className="metaMuted" style={{ marginBottom: 4 }}>
-            Adds this call to your calendar. The Hub does not ask for Google
-            account access. For every Hub call, use Subscribe on Calendar.
+            Adds this call to your calendar. The Hub does not ask for Google account access. For
+            every Hub call, use Subscribe on Calendar.
           </p>
           <a
             className="addCalItem"

@@ -6,17 +6,12 @@ const MAX_PAGE_SIZE = 50
 
 export function pagination(query: Record<string, any> = {}) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1)
-  const pageSize = Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, Number.parseInt(query.pageSize, 10) || 20),
-  )
+  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(query.pageSize, 10) || 20))
   return { page, pageSize, offset: (page - 1) * pageSize }
 }
 
 export function normalizeFollowPreferences(input: any = {}) {
-  const digestFrequency = ['none', 'daily', 'weekly'].includes(
-    input.digestFrequency,
-  )
+  const digestFrequency = ['none', 'daily', 'weekly'].includes(input.digestFrequency)
     ? input.digestFrequency
     : 'weekly'
   return {
@@ -210,20 +205,13 @@ export async function getPublicTrack(slug: string) {
 
 export async function listPublicCalls(filters: Record<string, any> = {}) {
   const tracks = await listPublicTracks({ ...filters, pageSize: MAX_PAGE_SIZE })
-  const details = await Promise.all(
-    tracks.items.map((item: any) => getPublicTrack(item.slug)),
-  )
+  const details = await Promise.all(tracks.items.map((item: any) => getPublicTrack(item.slug)))
   const byId = new Map()
-  details
-    .flatMap((item: any) => item.calls)
-    .forEach((call: any) => byId.set(call.id, call))
+  details.flatMap((item: any) => item.calls).forEach((call: any) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 
-export async function getPublicDocumentVersion(
-  documentId: string,
-  versionId: string,
-) {
+export async function getPublicDocumentVersion(documentId: string, versionId: string) {
   const pool = getPgPool()
   if (!pool) return null
   const { rows } = await pool.query(
@@ -321,13 +309,7 @@ export async function getFollow(accountId: number, slug: string) {
     : null
 }
 
-export async function deleteFollow({
-  accountId,
-  slug,
-}: {
-  accountId: number
-  slug: string
-}) {
+export async function deleteFollow({ accountId, slug }: { accountId: number; slug: string }) {
   const pool = getPgPool()
   if (!pool) return { unavailable: true }
   await pool.query(
