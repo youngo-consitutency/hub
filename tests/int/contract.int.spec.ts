@@ -36,8 +36,8 @@ describe('payload', () => {
 })
 
 describe('API contract (requires dev server on :3000)', () => {
-  let member: { cookie: string }
-  let admin: { cookie: string }
+  let member: { cookie: string; account: any }
+  let admin: { cookie: string; account: any }
 
   beforeAll(async () => {
     member = await session({})
