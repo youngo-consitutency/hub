@@ -23,10 +23,12 @@ import { createHubMcpServer, SERVER_INFO } from './lib/mcpServer.mjs'
 
 const MAX_BODY_BYTES = 256 * 1024
 
+/** @param {Partial<NodeJS.ProcessEnv>} [env] */
 function mcpToken(env = process.env) {
   return String(env.MCP_TOKEN || env.HUB_MCP_TOKEN || '').trim()
 }
 
+/** @param {Partial<NodeJS.ProcessEnv>} [env] */
 function allowAnonymous(env = process.env) {
   const raw = String(env.MCP_ALLOW_ANONYMOUS || '')
     .trim()
@@ -108,6 +110,7 @@ function readBody(req) {
   })
 }
 
+/** @param {{ env?: Partial<NodeJS.ProcessEnv> }} [options] */
 export function createMcpHttpServer({ env = process.env } = {}) {
   const token = mcpToken(env)
   const anonymous = allowAnonymous(env)

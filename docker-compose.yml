@@ -32,6 +32,30 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/youngo_dev
 
+  # Hosted content MCP for remote clients (stateless POST /mcp on :8080).
+  # It signs in to the Hub as a normal account — never give it DATABASE_URL.
+  # Set MCP_TOKEN (or MCP_ALLOW_ANONYMOUS=1) and HUB_EMAIL/HUB_PASSWORD
+  # (or HUB_TOKEN) in .env.local.
+  mcp:
+    profiles: ['container-dev']
+    image: node:22-alpine
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/home/node/app
+      - mcp_node_modules:/home/node/app/mcp-content/node_modules
+    working_dir: /home/node/app/mcp-content
+    command: sh -c "npm install && node server.mjs"
+    depends_on:
+      - payload
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      PORT: '8080'
+      HUB_ORIGIN: http://payload:3000
+
 volumes:
   pgdata:
   node_modules:
+  mcp_node_modules:

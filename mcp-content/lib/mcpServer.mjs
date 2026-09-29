@@ -38,6 +38,7 @@ export function toolErrorText(error) {
   return String(error?.message || error)
 }
 
+/** @param {Partial<NodeJS.ProcessEnv>} [env] */
 export function createHubMcpServer(env = process.env) {
   let client
   const getClient = () => {

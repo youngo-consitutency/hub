@@ -165,6 +165,9 @@ export const ElectionBallots: CollectionConfig = {
     read: isStaff,
     ...staffWrites,
   },
+  // One ballot per credential per race — enforced at the database so
+  // concurrent submissions cannot double-count.
+  indexes: [{ unique: true, fields: ['election', 'race', 'voterTokenHash'] }],
   fields: [
     {
       name: 'election',
