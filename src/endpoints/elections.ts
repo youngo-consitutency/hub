@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
 import {
@@ -360,18 +361,40 @@ export const electionEndpoints: Endpoint[] = [
         throw fail.validation({ ranks: 'Contains an unknown or unscreened candidate id.' })
       if (new Set(ranks).size !== ranks.length)
         throw fail.validation({ ranks: 'Duplicate candidate in ranking.' })
-      await req.payload.create({
-        collection: 'election-ballots',
-        data: {
-          election: e.id,
-          race: b.race,
-          voterTokenHash: hash,
-          kind: voter.kind,
-          ranks: ranks.map(Number),
-          castAt: new Date().toISOString(),
-        } as any,
-        overrideAccess: true,
-      })
+      try {
+        await req.payload.create({
+          collection: 'election-ballots',
+          data: {
+            election: e.id,
+            race: b.race,
+            voterTokenHash: hash,
+            kind: voter.kind,
+            ranks: ranks.map(Number),
+            castAt: new Date().toISOString(),
+          } as any,
+          overrideAccess: true,
+        })
+      } catch (error) {
+        // The count check above races; the (election, race, voterTokenHash)
+        // unique index is the real guard. Converted error shapes vary, so
+        // also re-confirm against the table — a row for this credential
+        // after a failed insert means the race was lost.
+        const { totalDocs } = await req.payload.find({
+          collection: 'election-ballots',
+          where: {
+            and: [
+              { election: { equals: e.id } },
+              { race: { equals: b.race } },
+              { voterTokenHash: { equals: hash } },
+            ],
+          },
+          limit: 0,
+          overrideAccess: true,
+        })
+        if (isUniqueViolation(error, 'election-ballots', 'election_ballots') || totalDocs > 0)
+          throw fail.conflict('already_voted', 'This credential has already voted in that race.')
+        throw error
+      }
       await req.payload.update({
         collection: 'election-voters',
         id: voter.id,
