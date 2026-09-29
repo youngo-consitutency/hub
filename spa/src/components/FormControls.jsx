@@ -11,10 +11,11 @@ export function FieldError({ msg }) {
 }
 
 function matchingOptions(options, query) {
+  const list = Array.isArray(options) ? options : []
   const normalized = query.trim().toLocaleLowerCase()
   return normalized
-    ? options.filter((option) => option.label.toLocaleLowerCase().includes(normalized))
-    : options
+    ? list.filter((option) => option.label.toLocaleLowerCase().includes(normalized))
+    : list
 }
 
 /** Native date field with the same field chrome as other form controls. */
@@ -51,8 +52,9 @@ export function SearchableSelect({
   children,
 }) {
   const [query, setQuery] = useState('')
-  const selected = options.find((option) => option.value === value) || null
-  const visibleOptions = matchingOptions(options, query)
+  const list = Array.isArray(options) ? options : []
+  const selected = list.find((option) => option.value === value) || null
+  const visibleOptions = matchingOptions(list, query)
 
   const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
     items: visibleOptions,
@@ -98,7 +100,7 @@ export function SearchableSelect({
             </button>
           ))
         ) : (
-          <span className="metaMuted comboEmpty">{options.length ? 'No matches' : 'Loading…'}</span>
+          <span className="metaMuted comboEmpty">{list.length ? 'No matches' : 'Loading…'}</span>
         )}
       </div>
       <FieldError msg={error} />
@@ -116,10 +118,11 @@ export function MultiSelectDropdown({
   hideLabel = false,
 }) {
   const [query, setQuery] = useState('')
-  const selectedLabels = options
+  const list = Array.isArray(options) ? options : []
+  const selectedLabels = list
     .filter((option) => selected.includes(option.value))
     .map((option) => option.label)
-  const visibleOptions = matchingOptions(options, query)
+  const visibleOptions = matchingOptions(list, query)
 
   const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
     items: visibleOptions,
