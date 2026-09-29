@@ -9,11 +9,6 @@ import { isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
 // disbursement → spend report.
 export const FundingRequests: CollectionConfig = {
   slug: 'funding-requests',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Operations',
-    defaultColumns: ['title', 'account', 'status', 'amountNumeric'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -79,11 +74,6 @@ export const FundingRequests: CollectionConfig = {
 // never leave the team.
 export const SafeguardingCases: CollectionConfig = {
   slug: 'safeguarding-cases',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Operations',
-    defaultColumns: ['kind', 'severity', 'status'],
-  },
   access: {
     read: isStaff,
     ...staffWrites,
@@ -149,11 +139,6 @@ export const SafeguardingCases: CollectionConfig = {
 // S07 conflict-of-interest declarations.
 export const CoiDeclarations: CollectionConfig = {
   slug: 'coi-declarations',
-  admin: {
-    useAsTitle: 'interest',
-    group: 'Operations',
-    defaultColumns: ['account', 'status'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -196,11 +181,6 @@ export const CoiDeclarations: CollectionConfig = {
 // S20 recognition certificates and letters.
 export const RecognitionRequests: CollectionConfig = {
   slug: 'recognition-requests',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Operations',
-    defaultColumns: ['account', 'kind', 'status'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -250,11 +230,6 @@ export const RecognitionRequests: CollectionConfig = {
 // them where required.
 export const PartnershipRequests: CollectionConfig = {
   slug: 'partnership-requests',
-  admin: {
-    useAsTitle: 'organisationName',
-    group: 'Operations',
-    defaultColumns: ['organisationName', 'kind', 'status'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -317,11 +292,6 @@ export const PartnershipRequests: CollectionConfig = {
 // Statutory deadline is tracked on the record.
 export const PrivacyRequests: CollectionConfig = {
   slug: 'privacy-requests',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Operations',
-    defaultColumns: ['account', 'kind', 'status', 'dueAt'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

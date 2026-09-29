@@ -8,11 +8,6 @@ import {
 // Shared opportunity board + NGO-posted opportunities.
 export const Opportunities: CollectionConfig = {
   slug: 'opportunities',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'kind', 'status', 'deadlineAt'],
-  },
   access: {
     read: ({ req }) => Boolean(req.user) || { status: { equals: 'published' } },
     ...staffWrites,
@@ -59,6 +54,6 @@ export const Opportunities: CollectionConfig = {
     },
     { name: 'reviewNote', type: 'textarea', access: { read: isStaffOrMemberField } },
     { name: 'reviewedAt', type: 'date' },
-    { name: 'source', type: 'text', admin: { readOnly: true } },
+    { name: 'source', type: 'text' },
   ],
 }

@@ -3,7 +3,6 @@ import { staffWrites } from '../lib/collectionAccess'
 
 export const NgoSeats: CollectionConfig = {
   slug: 'ngo-seats',
-  admin: { group: 'Membership', defaultColumns: ['orgAccount', 'memberAccount', 'seatRole', 'status'] },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -35,7 +34,6 @@ export const NgoSeats: CollectionConfig = {
 
 export const NgoRequests: CollectionConfig = {
   slug: 'ngo-requests',
-  admin: { group: 'Membership' },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

@@ -3,11 +3,6 @@ import { isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
 
 export const Submissions: CollectionConfig = {
   slug: 'content-submissions',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-    defaultColumns: ['title', 'status', 'deadlineAt'],
-  },
   access: {
     read: () => true,
     ...staffWrites,

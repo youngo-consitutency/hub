@@ -3,11 +3,6 @@ import { isStaff, isStaffField, isStaffOrMember, staffWrites } from '../lib/coll
 
 export const WorkingGroups: CollectionConfig = {
   slug: 'working-groups',
-  admin: {
-    useAsTitle: 'name',
-    group: 'Content',
-    defaultColumns: ['name', 'slug', 'publicSpace', 'isActive'],
-  },
   access: {
     read: isStaffOrMember,
     ...staffWrites,
@@ -46,13 +41,11 @@ export const WorkingGroups: CollectionConfig = {
       name: 'publicSpace',
       type: 'checkbox',
       defaultValue: false,
-      admin: { position: 'sidebar' },
     },
     {
       name: 'isActive',
       type: 'checkbox',
       defaultValue: true,
-      admin: { position: 'sidebar' },
     },
     { name: 'sortOrder', type: 'number' },
   ],

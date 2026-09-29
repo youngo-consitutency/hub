@@ -1,6 +1,6 @@
 # YOUNGO Hub agent guidance
 
-YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `spa/`, the staff content console is at `/console`, and PostgreSQL holds the data. `YMC-v2` is superseded historical context; do not add new features there.
+YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `spa/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
 
 ## Hub Intelligence invariants
 
@@ -43,7 +43,7 @@ The former OpenSpec handoff and contracts are not included in this public checko
 
 ## Verification
 
-Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through the console. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.
+Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through provisioning scripts or direct database access. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.
 
 The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 

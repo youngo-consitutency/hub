@@ -4,10 +4,6 @@ import type { CollectionConfig } from 'payload'
 // priorities, process, archive) + incoming contribution records.
 export const GysCycles: CollectionConfig = {
   slug: 'gys-cycles',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Content',
-  },
   access: {
     read: () => true,
   },
@@ -34,7 +30,6 @@ export const GysCycles: CollectionConfig = {
 // the GYS policy team tracks toward the statement.
 export const GysWorkflowCycles: CollectionConfig = {
   slug: 'gys-workflow-cycles',
-  admin: { useAsTitle: 'title', group: 'GYS workflow' },
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req }) => req.user?.collection === 'users',
@@ -59,7 +54,6 @@ export const GysWorkflowCycles: CollectionConfig = {
 
 export const GysTrackedContributions: CollectionConfig = {
   slug: 'gys-tracked-contributions',
-  admin: { useAsTitle: 'title', group: 'GYS workflow' },
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req }) => Boolean(req.user),
@@ -93,11 +87,6 @@ export const GysTrackedContributions: CollectionConfig = {
 
 export const GysContributions: CollectionConfig = {
   slug: 'gys-contributions',
-  admin: {
-    useAsTitle: 'name',
-    group: 'Content',
-    defaultColumns: ['name', 'email', 'country', 'cycle'],
-  },
   access: {
     read: ({ req }) => req.user?.collection === 'users',
     create: () => true, // public signup form

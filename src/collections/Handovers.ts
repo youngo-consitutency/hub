@@ -7,11 +7,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // membership team confirms.
 export const Handovers: CollectionConfig = {
   slug: 'handovers',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Membership',
-    defaultColumns: ['account', 'reason', 'status', 'dueAt'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

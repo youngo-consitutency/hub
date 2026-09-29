@@ -5,10 +5,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // Fields mirror the legacy snake_case contract; responses shape them back.
 export const WgActivities: CollectionConfig = {
   slug: 'wg-activities',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Membership',
-  },
   access: {
     read: ({ req }) => Boolean(req.user),
     ...staffWrites,

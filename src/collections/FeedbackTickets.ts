@@ -3,11 +3,6 @@ import { isStaff, isStaffField } from '../lib/collectionAccess'
 
 export const FeedbackTickets: CollectionConfig = {
   slug: 'feedback-tickets',
-  admin: {
-    useAsTitle: 'title',
-    group: 'Support',
-    defaultColumns: ['title', 'kind', 'severity', 'status'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false

@@ -19,18 +19,12 @@ export const Accounts: CollectionConfig = {
       domain: undefined,
     },
   },
-  admin: {
-    useAsTitle: 'email',
-    group: 'Membership',
-    defaultColumns: ['email', 'name', 'memberStatus', 'role', 'membershipTrack'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
       return { id: { equals: req.user.id } }
     },
-    admin: () => false, // members never enter the console
     unlock: ({ req }) => req.user?.collection === 'users',
     // Member writes go through domain endpoints (registration, profile,
     // lifecycle review) which authorise the actor and use overrideAccess.
@@ -71,20 +65,11 @@ export const Accounts: CollectionConfig = {
         { label: 'Trusted — postings go live immediately', value: 'trusted' },
         { label: 'Review required', value: 'review_required' },
       ],
-      admin: {
-        description:
-          'Organisation posting trust override; empty derives trust from a published posting.',
-        condition: (data: any) => data?.entityType === 'organization',
-      },
     },
     {
       name: 'postingTrustNote',
       access: { update: isStaffField },
       type: 'textarea',
-      admin: {
-        description: 'Staff note recorded with the posting-trust override.',
-        condition: (data: any) => data?.entityType === 'organization',
-      },
     },
     {
       name: 'membershipTrack',
@@ -186,7 +171,6 @@ export const Accounts: CollectionConfig = {
         { label: 'WG Contact Point', value: 'wg_contact' },
         { label: 'Organisation admin', value: 'ngo_admin' },
       ],
-      admin: { position: 'sidebar' },
     },
     { name: 'teamRoles', access: { update: isStaffField }, type: 'json' },
     { name: 'wgInterests', type: 'json' },
@@ -207,9 +191,9 @@ export const Accounts: CollectionConfig = {
     { name: 'mustChangePassword', access: { update: isStaffField }, type: 'checkbox', defaultValue: false },
     // Legacy credential support: on first login the legacy scrypt hash is
     // verified, the Payload password is set, and these are cleared.
-    { name: 'legacyPasswordHash', access: { update: isStaffField }, type: 'text', admin: { readOnly: true } },
-    { name: 'legacyPasswordSalt', access: { update: isStaffField }, type: 'text', admin: { readOnly: true } },
-    { name: 'lastLoginAt', access: { update: isStaffField }, type: 'date', admin: { readOnly: true } },
-    { name: 'legacyId', access: { update: isStaffField }, type: 'text', index: true, admin: { readOnly: true } },
+    { name: 'legacyPasswordHash', access: { update: isStaffField }, type: 'text' },
+    { name: 'legacyPasswordSalt', access: { update: isStaffField }, type: 'text' },
+    { name: 'lastLoginAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'legacyId', access: { update: isStaffField }, type: 'text', index: true },
   ],
 }

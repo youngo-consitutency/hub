@@ -6,11 +6,6 @@ import { staffWrites } from '../lib/collectionAccess'
 // sees a WG's workspace material (join links, drive, internal resources).
 export const WgProgress: CollectionConfig = {
   slug: 'wg-progress',
-  admin: {
-    useAsTitle: 'id',
-    group: 'Membership',
-    defaultColumns: ['account', 'wgSlug', 'status', 'roleInWg'],
-  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
