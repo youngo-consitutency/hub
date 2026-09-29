@@ -6,7 +6,6 @@ playwright-report/
 .local-demo/
 .codex-vault/
 docs/
-mcp-content/
 .agent-vault/
 .agents/
 .local/

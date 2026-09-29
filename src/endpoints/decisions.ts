@@ -1,6 +1,7 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
 import {
   accountRef,
@@ -25,27 +26,12 @@ import {
 // The state machine itself lives in src/lib/decisionRuntime.ts so the
 // platform bridge (src/modules/platform/decisionsBridge.ts) shares it.
 
-// A duplicate (proposal, account) insert can surface two ways: the raw
-// PostgreSQL 23505, or the ValidationError the drizzle adapter converts it
-// into (data.collection = collection slug, errors[].tableName = table). The
+// A duplicate (proposal, account) insert can surface as the raw PostgreSQL
+// 23505 or the ValidationError the drizzle adapter converts it into. The
 // ballots table's only unique constraint is this pair — the serial primary
 // key cannot collide — so either shape is unambiguous here.
-function isDuplicateBallot(error: any): boolean {
-  let current: any = error
-  while (current) {
-    if (current?.code === '23505') return true
-    if (
-      current?.name === 'ValidationError' &&
-      current?.data?.collection === 'decision-ballots' &&
-      (current.data.errors || []).some(
-        (e: any) => e.tableName === 'decision_ballots',
-      )
-    )
-      return true
-    current = current.cause === current ? null : current.cause
-  }
-  return false
-}
+const isDuplicateBallot = (error: unknown) =>
+  isUniqueViolation(error, 'decision-ballots', 'decision_ballots')
 
 export const decisionEndpoints: Endpoint[] = [
   {
@@ -362,15 +348,21 @@ export const decisionEndpoints: Endpoint[] = [
       const options = (p.ballotOptions ?? []).map((o: any) => o.option)
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
-      const { totalDocs: existing } = await req.payload.find({
-        collection: 'decision-ballots',
-        where: {
-          and: [{ proposal: { equals: p.id } }, { account: { equals: account.id } }],
-        },
-        limit: 0,
-        overrideAccess: true,
-      })
-      if (existing > 0) throw fail.conflict('already_voted', 'Each member may vote once.')
+      const hasBallot = async () => {
+        const { totalDocs } = await req.payload.find({
+          collection: 'decision-ballots',
+          where: {
+            and: [
+              { proposal: { equals: p.id } },
+              { account: { equals: account.id } },
+            ],
+          },
+          limit: 0,
+          overrideAccess: true,
+        })
+        return totalDocs > 0
+      }
+      if (await hasBallot()) throw fail.conflict('already_voted', 'Each member may vote once.')
       let ballot
       try {
         ballot = await req.payload.create({
@@ -384,10 +376,12 @@ export const decisionEndpoints: Endpoint[] = [
           overrideAccess: true,
         })
       } catch (error: any) {
-        // The pre-check above is only a fast path: two concurrent submissions
-        // can both see zero ballots, so the unique (proposal, account) index
-        // is the real guard. Its violation is the same already_voted case.
-        if (isDuplicateBallot(error))
+        // The pre-check is only a fast path: concurrent submissions can both
+        // see zero ballots, so the unique (proposal, account) index is the
+        // real guard. Converted error shapes vary between drizzle paths, so
+        // also re-confirm against the table — a row for this pair after a
+        // failed insert means the race was lost, whatever the error was.
+        if (isDuplicateBallot(error) || (await hasBallot()))
           throw fail.conflict('already_voted', 'Each member may vote once.')
         throw error
       }

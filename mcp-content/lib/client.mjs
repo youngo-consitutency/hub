@@ -314,6 +314,7 @@ export async function catalogOptions(client) {
 // the MCP fallback when a title normalises to nothing.
 const contentSlug = (title) => slugify(title) || 'item'
 
+/** @param {Partial<NodeJS.ProcessEnv>} [env] */
 export function resolveHubOrigin(env = process.env) {
   const raw = String(env.HUB_ORIGIN || 'http://localhost:3000').trim()
   const origin = raw.replace(/\/+$/, '')
@@ -336,6 +337,15 @@ function apiError(status, body) {
   return error
 }
 
+/**
+ * @param {{
+ *   origin: string,
+ *   email?: string,
+ *   password?: string,
+ *   token?: string,
+ *   fetchImpl?: typeof fetch,
+ * }} [options]
+ */
 export function createHubClient({
   origin,
   email,
