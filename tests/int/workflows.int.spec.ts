@@ -143,11 +143,12 @@ describe('operational workflows', () => {
     })
     expect(priv.status).toBe(201)
     const privId = (await priv.json()).request.id
-    await api(`/member/team/privacy/${privId}/respond`, {
+    const progress = await api(`/member/team/privacy/${privId}/respond`, {
       method: 'POST',
       cookie: dpo.cookie,
       body: JSON.stringify({ status: 'in_progress' }),
     })
+    expect(progress.status).toBe(200)
     const fulfilled = await api(`/member/team/privacy/${privId}/respond`, {
       method: 'POST',
       cookie: dpo.cookie,
@@ -171,11 +172,12 @@ describe('operational workflows', () => {
     expect(p.status).toBe(201)
     const pid = (await p.json()).request.id
     const partnerships = await session({ teams: ['partnerships_team'] })
-    await api(`/member/team/partnerships/${pid}/review`, {
+    const underReview = await api(`/member/team/partnerships/${pid}/review`, {
       method: 'POST',
       cookie: partnerships.cookie,
       body: JSON.stringify({ status: 'under_review' }),
     })
+    expect(underReview.status).toBe(200)
     const blocked = await api(`/member/team/partnerships/${pid}/review`, {
       method: 'POST',
       cookie: partnerships.cookie,

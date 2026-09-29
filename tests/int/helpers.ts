@@ -26,13 +26,10 @@ export async function session(spec: TestSpec) {
   return { ...(await login(email, password)), account }
 }
 
-export const api = (path: string, { cookie, ...init }: { cookie?: string } & RequestInit = {}) =>
-  fetch(`${BASE}/api${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Origin: BASE,
-      ...(cookie ? { Cookie: cookie } : {}),
-      ...(init.headers || {}),
-    },
-  })
+export const api = (path: string, { cookie, ...init }: { cookie?: string } & RequestInit = {}) => {
+  const headers = new Headers(init.headers)
+  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+  if (!headers.has('Origin')) headers.set('Origin', BASE)
+  if (cookie && !headers.has('Cookie')) headers.set('Cookie', cookie)
+  return fetch(`${BASE}/api${path}`, { ...init, headers })
+}
