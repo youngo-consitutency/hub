@@ -18,5 +18,14 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createHubMcpServer } from '../../mcp-content/lib/mcpServer.mjs'
 
+// Fall back to .env.local/.env for HUB_* credentials when the agent config
+// does not inject them. dotenv never overrides existing env vars.
+try {
+  const { config: loadEnv } = await import('dotenv')
+  loadEnv({ path: ['.env.local', '.env'] })
+} catch {
+  /* running outside the repo checkout */
+}
+
 const server = createHubMcpServer()
 await server.connect(new StdioServerTransport())
