@@ -18,6 +18,10 @@ loadEnv({ path: '.env.local' })
 loadEnv()
 const { default: config } = await import('../src/payload.config')
 
+/**
+ * Initialise Payload, upsert a staff user by email when CONSOLE_EMAIL and
+ * CONSOLE_PASSWORD are supplied, then exit after bootstrap completes.
+ */
 async function main() {
   const payload = await getPayload({ config })
 
