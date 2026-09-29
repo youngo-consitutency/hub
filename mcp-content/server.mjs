@@ -21,6 +21,16 @@ import { pathToFileURL } from 'node:url'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createHubMcpServer, SERVER_INFO } from './lib/mcpServer.mjs'
 
+// Load .env.local/.env when running from the repo checkout (dotenv is a root
+// dependency). Hosted deployments inject real env vars, which always win —
+// dotenv never overrides existing values.
+try {
+  const { config: loadEnv } = await import('dotenv')
+  loadEnv({ path: ['.env.local', '.env'] })
+} catch {
+  /* standalone deployment without the repo's node_modules */
+}
+
 const MAX_BODY_BYTES = 256 * 1024
 
 /** @param {Partial<NodeJS.ProcessEnv>} [env] */
