@@ -560,6 +560,107 @@ describe('migration backfill', () => {
     expect((after as any).evidence).toBe('Council decision 2026-01')
     expect((after as any).status).toBe('active')
   })
+
+  it('re-reads the source in the write transaction — a revoked source never comes back live', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+    expect(plan.creates[0].status).toBe('active')
+
+    // A human revokes the source row AFTER the plan was built.
+    await payload.update({
+      collection: 'assignments',
+      id: src.id,
+      data: { status: 'revoked' },
+      overrideAccess: true,
+    })
+    const result = await writeMigration(payload, plan)
+    // The stale plan must not restore the grant: the write re-reads the
+    // source, so the migrated row carries the live 'revoked' status — the
+    // mandate is recorded as ended, not resurrected.
+    expect(result.created).toBe(1)
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(docs).toHaveLength(1)
+    expect((docs[0] as any).status).toBe('revoked')
+    expect((await accessFor(account)).capabilities).not.toContain('finance.review')
+  })
+
+  it('does not bypass an independently created and revoked canonical appointment', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const payload = await testPayload()
+    await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'partnerships_team',
+      role: 'member',
+    })
+    // Plan BEFORE the human acts — this is the stale-plan window.
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+    expect(plan.creates).toHaveLength(1)
+
+    // A human records the same mandate directly, then revokes it.
+    const { grantAppointment } = await import('@/lib/appointmentService')
+    const req = { payload, headers: new Headers() } as any
+    const human = await grantAppointment(req, {
+      account: account.id,
+      appointmentRole: 'team.partnerships',
+      scopeType: 'team',
+      scopeId: 'partnerships_team',
+      evidence: 'Recorded directly by Council.',
+    } as any)
+    await payload.update({
+      collection: 'appointments',
+      id: human.id,
+      data: { status: 'revoked' },
+      overrideAccess: true,
+    })
+
+    // The stale run must respect the revoked canonical row — any
+    // provenance, any status — not mint a fresh live one beside it.
+    const result = await writeMigration(payload, plan)
+    expect(result.created).toBe(0)
+    expect(await appointmentCount(account)).toBe(1)
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect((docs[0] as any).status).toBe('revoked')
+    expect((docs[0] as any).evidence).toBe('Recorded directly by Council.')
+    expect((await accessFor(account)).capabilities).not.toContain('partnership.review')
+  })
+
+  it('serialises concurrent writes — two overlapping runs create one row', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'comms_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const planA = await planMigration(payload, { accountIds: [account.id] })
+    const planB = await planMigration(payload, { accountIds: [account.id] })
+    const [a, b] = await Promise.all([
+      writeMigration(payload, planA),
+      writeMigration(payload, planB),
+    ])
+    // Exactly one write wins; the loser is stopped by the in-transaction
+    // re-check or the source-unique index — never both creating a row.
+    expect(a.created + b.created).toBe(1)
+    expect(await appointmentCount(account)).toBe(1)
+    expect((await accessFor(account)).capabilities).toContain('content.review')
+  })
 })
 
 describe('focal point authority', () => {

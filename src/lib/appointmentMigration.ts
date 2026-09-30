@@ -12,9 +12,12 @@
 //   `appointedVia` ({ source, assignmentId }) and a database unique index
 //   enforces one appointment per source assignment across ALL statuses —
 //   overlapping or stale runs cannot duplicate or resurrect a migrated row
-// - writes are transactional: every create re-checks the source identity
-//   inside its own transaction, so a plan built before a concurrent write
-//   (or a human revocation) is a no-op, not a second record
+// - writes are transactional: every create runs in its own transaction,
+//   re-reads the SOURCE assignment (a revoked source writes only a revoked
+//   record, never a live grant) and checks ALL canonical appointments
+//   matching the resolved tuple — any provenance, any status — so a stale
+//   plan can neither resurrect a revoked source nor bypass an independently
+//   created and revoked appointment
 // - historical status preserved: an inactive/expired/revoked source never
 //   becomes a live appointment
 // - never overwrites: a canonical row that was NOT produced by this
@@ -307,7 +310,7 @@ export async function writeMigration(
     }
   }
 
-  const migratedSources = async (req: any, accountId: number) => {
+  const accountAppointments = async (req: any, accountId: number) => {
     const { docs } = await payload.find({
       collection: 'appointments',
       where: { account: { equals: accountId } },
@@ -318,18 +321,58 @@ export async function writeMigration(
     return docs as any[]
   }
 
-  for (const { row, appointmentRole, status } of plan.creates) {
+  for (const { row } of plan.creates) {
     const accountId = accountIdOf(row)
     try {
       await inTransaction(async (req) => {
-        const existing = (await migratedSources(req, accountId)).find(
-          (d) =>
-            d.appointedVia?.source === 'assignments_migration' &&
-            String(d.appointedVia?.assignmentId) === String(row.id),
+        // Re-read the SOURCE assignment inside the transaction. The plan
+        // snapshot may be stale — a human may have revoked, expired or
+        // edited the ledger row since. Everything written here derives
+        // from live state, so a revoked source can never be restored as a
+        // live appointment.
+        const source = await payload
+          .findByID({ collection: 'assignments', id: row.id, overrideAccess: true, req })
+          .catch(() => null)
+        if (!source) {
+          result.staleSkipped += 1
+          return
+        }
+        const live = classifyAssignment(source as any as LegacyRow)
+        if (live.kind !== 'mandate') {
+          // The source was reclassified since planning (role edited to
+          // participation or an unmapped value) — do not mint authority it
+          // no longer represents.
+          result.staleSkipped += 1
+          return
+        }
+        const liveStatus = migratedStatus(source as any as LegacyRow)
+        const liveKey = appointmentKey(
+          live.appointmentRole!,
+          (source as any).scopeType,
+          (source as any).scopeId,
         )
-        if (existing) {
+
+        const existing = await accountAppointments(req, accountId)
+        if (
+          existing.some(
+            (d) =>
+              d.appointedVia?.source === 'assignments_migration' &&
+              String(d.appointedVia?.assignmentId) === String(row.id),
+          )
+        ) {
           // Source already migrated — including a row a human has since
           // revoked or edited. Never touch it.
+          result.staleSkipped += 1
+          return
+        }
+        // Protect every canonical appointment matching the resolved tuple,
+        // regardless of provenance or status: an independently created and
+        // revoked grant is a human decision a stale plan must not bypass.
+        if (
+          existing.some(
+            (d) => appointmentKey(d.appointmentRole, d.scopeType, d.scopeId) === liveKey,
+          )
+        ) {
           result.staleSkipped += 1
           return
         }
@@ -337,20 +380,20 @@ export async function writeMigration(
           collection: 'appointments',
           data: {
             account: accountId,
-            appointmentRole,
-            scopeType: normaliseScopeType(row.scopeType),
-            scopeId: row.scopeId,
-            councilSeat: councilSeatFor(appointmentRole, row as any),
-            status,
-            startsAt: row.startsAt ?? new Date().toISOString(),
-            endsAt: row.endsAt ?? null,
-            evidence: row.appointmentEvidence ?? null,
+            appointmentRole: live.appointmentRole,
+            scopeType: normaliseScopeType((source as any).scopeType),
+            scopeId: (source as any).scopeId,
+            councilSeat: councilSeatFor(live.appointmentRole!, source as any),
+            status: liveStatus,
+            startsAt: (source as any).startsAt ?? new Date().toISOString(),
+            endsAt: (source as any).endsAt ?? null,
+            evidence: (source as any).appointmentEvidence ?? null,
             appointedVia: {
               source: 'assignments_migration',
               assignmentId: row.id,
-              assignmentStatus: row.status,
-              assignmentRole: row.role,
-              assignmentScope: `${row.scopeType}:${row.scopeId}`,
+              assignmentStatus: (source as any).status,
+              assignmentRole: (source as any).role,
+              assignmentScope: `${(source as any).scopeType}:${(source as any).scopeId}`,
             },
           } as any,
           overrideAccess: true,
@@ -403,12 +446,14 @@ export async function writeMigration(
     }
     try {
       await inTransaction(async (req) => {
-        // Never create a second migration-sourced focal row for an account,
-        // whatever state the first one is in.
-        const existing = (await migratedSources(req, account.id)).find(
+        // Any existing focal_point appointment — whatever its provenance or
+        // status, including a human-created and revoked one — blocks a
+        // migration write. Migration never overrides recorded decisions.
+        const existing = (await accountAppointments(req, account.id)).find(
           (d) =>
             d.appointmentRole === 'focal_point' &&
-            ['election', 'external_record'].includes(d.appointedVia?.source ?? ''),
+            d.scopeType === 'platform' &&
+            d.scopeId === 'platform',
         )
         if (existing) {
           result.staleSkipped += 1
