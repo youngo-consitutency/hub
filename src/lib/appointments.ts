@@ -51,18 +51,18 @@ export const APPOINTMENT_ROLES: Record<string, AppointmentSpec> = {
   // ── Organisations ─────────────────────────────────────────────────
   'org.representative': {
     label: 'Organisation Council representative',
-    scopeTypes: ['organization'],
+    scopeTypes: ['organisation'],
     councilSeat: 'org:{scope}',
     capabilities: ['council.vote', 'intelligence.contacts.read'],
     requiresCw: true,
   },
   'org.member': {
     label: 'Organisation member',
-    scopeTypes: ['organization'],
+    scopeTypes: ['organisation'],
   },
   'org.admin': {
     label: 'Organisation administrator',
-    scopeTypes: ['organization'],
+    scopeTypes: ['organisation'],
   },
 
   // ── Working groups ────────────────────────────────────────────────
@@ -338,6 +338,18 @@ export const APPOINTMENT_ROLES: Record<string, AppointmentSpec> = {
 
 export const APPOINTMENT_ROLE_KEYS = Object.keys(APPOINTMENT_ROLES)
 
+// ── Scope-type normalisation ────────────────────────────────────────
+// Persisted vocabularies differ between tables: `assignments` stores
+// 'organization'/'platform_body', `appointments` stores the canonical
+// 'organisation'/'body'. Every comparison runs on the canonical form.
+const SCOPE_TYPE_ALIASES: Record<string, string> = {
+  organization: 'organisation',
+  platform_body: 'body',
+}
+export function normaliseScopeType(scopeType: string): string {
+  return SCOPE_TYPE_ALIASES[scopeType] ?? scopeType
+}
+
 // ── Legacy normalisation ────────────────────────────────────────────
 // Explicit mapping from historical (scopeType, scopeId, role) tuples to
 // appointment roles. Records that match no rule are *unmapped*: they are
@@ -370,6 +382,20 @@ const GCT_AREAS: Record<string, string> = {
   internal: 'gct.internal',
   coordination: 'gct.coordination',
 }
+
+// Explicit (scopeId='gct', role) tuples. A generic area-agnostic membership
+// maps to the coordinator appointment; anything else is unmapped — never
+// defaulted into authority by a fallback.
+const GCT_LEGACY_ROLES: Record<string, string> = {
+  ...GCT_AREAS,
+  member: 'gct.coordinator',
+  coordinator: 'gct.coordinator',
+  lead: 'gct.coordinator',
+}
+
+// Role values accepted on scope-keyed team/COY rows — the scopeId is the
+// authority tuple element, but only ordinary membership wordings.
+const TEAM_MEMBER_ROLES = new Set(['member', 'coordinator', 'lead', ''])
 
 const WG_LEGACY_ROLES: Record<string, string> = {
   member: 'wg.member',
@@ -411,34 +437,34 @@ const COY_LIAISON_TEAMS: Record<string, string> = {
 }
 
 // Resolve a legacy row to an appointment role, or null when unmapped.
+// Every accepted tuple is explicit — unknown roles are reported as
+// unmapped and denied, never defaulted into a broader role.
 export function legacyAppointmentRole(
   scopeType: string,
   scopeId: string,
   role: string,
 ): string | null {
-  switch (scopeType) {
+  switch (normaliseScopeType(scopeType)) {
     case 'team': {
-      if (scopeId === 'gct') return GCT_AREAS[role] ?? 'gct.coordinator'
-      if (TEAM_LEGACY[scopeId]) return TEAM_LEGACY[scopeId]
-      if (COY_LIAISON_TEAMS[scopeId]) return COY_LIAISON_TEAMS[scopeId]
-      return null
+      if (scopeId === 'gct') return GCT_LEGACY_ROLES[role] ?? null
+      if (!TEAM_MEMBER_ROLES.has(role)) return null
+      return TEAM_LEGACY[scopeId] ?? COY_LIAISON_TEAMS[scopeId] ?? null
     }
     case 'working_group':
       return WG_LEGACY_ROLES[role] ?? null
     case 'operational_team':
       return role === 'liaison' ? 'ot.liaison' : role === 'member' ? 'ot.member' : null
-    case 'body':
-    case 'platform_body': {
+    case 'body': {
       if (COY_LIAISON_TEAMS[role]) return COY_LIAISON_TEAMS[role]
       return BODY_LEGACY_ROLES[role] ?? null
     }
-    case 'organization':
+    case 'organisation':
       return ORG_LEGACY_ROLES[role] ?? null
     case 'negotiation_track':
     case 'negotiation_project':
-      return NEGOTIATION_LEGACY_ROLES[role] ?? 'negotiation.member'
+      return NEGOTIATION_LEGACY_ROLES[role] ?? null
     case 'event':
-      return role === 'coordinator' ? 'cct.coordinator' : 'cct.member'
+      return role === 'coordinator' ? 'cct.coordinator' : role === 'member' ? 'cct.member' : null
     default:
       return null
   }
@@ -510,5 +536,139 @@ export function wgLegacyRoleFor(roleKey: string): string {
       return 'safeguarding_officer'
     default:
       return 'member'
+  }
+}
+
+// ── Shared authority derivation ─────────────────────────────────────
+// ONE engine for both endpoint families: the Payload access layer and the
+// platform service feed rows from their own stores into `deriveAuthority`
+// and consume the same capabilities/team keys/seats — no parallel
+// scope-identifier logic.
+
+// Raw authority record: canonical `appointments` row or legacy
+// `assignments` row (Payload doc or aliased SQL result).
+export interface AuthorityRow {
+  id: number
+  appointmentRole?: string | null
+  scopeType: string
+  scopeId: string
+  role?: string
+  councilSeat?: string | null
+  status: string
+  startsAt?: any
+  endsAt?: any
+}
+
+// Identity of a mandate record — the tuple supersession and duplicate
+// detection key on. Scope type is canonicalised so a migrated
+// 'organization' ledger row and its 'organisation' appointment coincide.
+export function appointmentKey(roleKey: string, scopeType: string, scopeId: string) {
+  return `${roleKey}:${normaliseScopeType(scopeType)}:${scopeId}`
+}
+
+// Keys of every canonical appointment on an account — ALL statuses and
+// windows. A canonical row supersedes its legacy source permanently: once a
+// mandate moves into `appointments`, revoking or expiring the appointment
+// must not resurrect the untouched legacy row.
+export function supersessionKeys(appointmentRows: AuthorityRow[]): Set<string> {
+  const keys = new Set<string>()
+  for (const row of appointmentRows) {
+    const roleKey =
+      row.appointmentRole && APPOINTMENT_ROLES[row.appointmentRole] ? row.appointmentRole : null
+    if (roleKey) keys.add(appointmentKey(roleKey, row.scopeType, row.scopeId))
+  }
+  return keys
+}
+
+export interface AuthorityDerivation {
+  teamRoles: string[]
+  capabilities: string[]
+  councilSeats: string[]
+  bodyScopes: string[]
+  wgAssignments: { wgSlug: string; role: string }[]
+  negotiationAssignments: { scopeType: string; scopeId: string; role: string }[]
+  appointments: {
+    id: number
+    role: string
+    scopeType: string
+    scopeId: string
+    councilSeat: string | null
+    endsAt: string | null
+    substitute: boolean
+  }[]
+  unmapped: number
+}
+
+// Derive authority from a merged row set (canonical appointments + eligible
+// legacy rows). Supersession filtering happens at the caller's boundary so
+// the same function serves both Payload docs and raw SQL results.
+export function deriveAuthority(
+  rows: AuthorityRow[],
+  opts: { cw: boolean; now?: Date; baseCapabilities?: Iterable<string> },
+): AuthorityDerivation {
+  const { cw, now = new Date() } = opts
+  const teamRoles = new Set<string>()
+  const capabilities = new Set(opts.baseCapabilities ?? [])
+  const councilSeats = new Set<string>()
+  const bodyScopes = new Set<string>()
+  const wgAssignments: AuthorityDerivation['wgAssignments'] = []
+  const negotiationAssignments: AuthorityDerivation['negotiationAssignments'] = []
+  const appointments: AuthorityDerivation['appointments'] = []
+  let unmapped = 0
+
+  for (const row of rows) {
+    if (!appointmentCurrent(row, now)) continue
+    const roleKey = resolveAppointmentRole(row)
+    if (!roleKey || !APPOINTMENT_ROLES[roleKey]) {
+      // Unmapped records are reported, never widened.
+      unmapped += 1
+      continue
+    }
+    const scopeType = normaliseScopeType(row.scopeType)
+    const seat = councilSeatFor(roleKey, { scopeId: row.scopeId, councilSeat: row.councilSeat })
+    appointments.push({
+      id: row.id,
+      role: roleKey,
+      scopeType,
+      scopeId: row.scopeId,
+      councilSeat: seat,
+      endsAt: row.endsAt ?? null,
+      substitute: roleKey === 'council.substitute',
+    })
+    // Appointments that require Constituency Work membership grant nothing
+    // while that membership is inactive — they still show for the member.
+    if (APPOINTMENT_ROLES[roleKey].requiresCw && !cw) continue
+    for (const key of teamKeysFor(roleKey)) teamRoles.add(key)
+    for (const cap of capabilitiesFor(roleKey, row.scopeId)) capabilities.add(cap)
+    if (seat) councilSeats.add(seat)
+    if (scopeType === 'body') bodyScopes.add(row.scopeId)
+    if (scopeType === 'working_group')
+      wgAssignments.push({ wgSlug: row.scopeId, role: wgLegacyRoleFor(roleKey) })
+    if (['negotiation_track', 'negotiation_project'].includes(scopeType)) {
+      const negRole = roleKey.replace('negotiation.', '')
+      negotiationAssignments.push({ scopeType, scopeId: row.scopeId, role: negRole })
+      const scope = `${scopeType}:${row.scopeId}`
+      capabilities.add(`negotiations.read:${scope}`)
+      if (negRole === 'reviewer') {
+        capabilities.add(`negotiations.evidence.review:${scope}`)
+        capabilities.add(`negotiations.candidates.review:${scope}`)
+      }
+      if (negRole === 'applier') capabilities.add(`negotiations.candidates.apply:${scope}`)
+      if (negRole === 'grant_manager') capabilities.add(`negotiations.grants.manage:${scope}`)
+      if (negRole === 'process_facilitator')
+        capabilities.add(`negotiations.process.record:${scope}`)
+      if (negRole === 'transmitter') capabilities.add(`negotiations.transmission.record:${scope}`)
+    }
+  }
+
+  return {
+    teamRoles: [...teamRoles],
+    capabilities: [...capabilities],
+    councilSeats: [...councilSeats],
+    bodyScopes: [...bodyScopes],
+    wgAssignments,
+    negotiationAssignments,
+    appointments,
+    unmapped,
   }
 }

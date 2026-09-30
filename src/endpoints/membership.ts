@@ -5,6 +5,7 @@ import { audit } from '../lib/audit'
 import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib/membership'
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
+import { normaliseScopeType } from '../lib/appointments'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -58,12 +59,9 @@ async function openHandover(
   })
 }
 
-// Legacy/appointment scope vocabularies differ slightly; map when limiting
-// which scopes a membership change closes.
-const APPOINTMENT_SCOPE_EQUIV: Record<string, string> = {
-  platform_body: 'body',
-  organization: 'organisation',
-}
+// Legacy/appointment scope vocabularies differ slightly; the shared
+// normaliser (lib/appointments) maps ledger spellings to canonical ones
+// when limiting which scopes a membership change closes.
 
 // End active participation rows *and* the mandates they fed — an appointment
 // must not outlive the membership exit that ends it (S17). `scopeTypes`
@@ -96,7 +94,7 @@ async function endAssignments(
   ]
   if (scopeTypes?.length) {
     appointmentAnd.push({
-      scopeType: { in: scopeTypes.map((t) => APPOINTMENT_SCOPE_EQUIV[t] ?? t) },
+      scopeType: { in: scopeTypes.map((t) => normaliseScopeType(t)) },
     })
   }
   const { docs: appointments } = await req.payload.find({

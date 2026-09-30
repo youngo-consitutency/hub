@@ -1,7 +1,16 @@
 import { bodyRoles } from '../../../spa/shared/protocol.js'
 import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
-import { legacyAppointmentRole, councilSeatFor } from '../../lib/appointments'
+import {
+  appointmentKey,
+  councilSeatFor,
+  deriveAuthority,
+  legacyAppointmentRole,
+  normaliseScopeType,
+  resolveAppointmentRole,
+  supersessionKeys,
+  type AuthorityRow,
+} from '../../lib/appointments'
 
 import {
   BODY_ID_SQL,
@@ -103,56 +112,48 @@ export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'
   )
     fail(403, 'This membership is no longer active.')
   // Mandates live in `appointments`; `assignments` remains the participation
-  // ledger. Both resolve to the same (scope_type, scope_id, role) shape here
-  // so participation/manage checks read a unified view. FOR SHARE cannot
-  // apply to a UNION, so the two stores are locked and read separately.
+  // ledger. Both stores feed the SAME derivation the Payload access layer
+  // uses (lib/appointments.deriveAuthority) — one permission engine, no
+  // parallel scope-identifier logic. FOR SHARE cannot apply to a UNION, so
+  // the two stores are locked and read separately. Appointments are read in
+  // every status: a canonical record supersedes its legacy source
+  // permanently — revocation/expiry must not resurrect the untouched row.
   const [assigned, appointed] = await Promise.all([
-    client.query<{ scope_type: string; scope_id: string; role: string }>(
-      `SELECT scope_type::text AS scope_type,scope_id,role FROM assignments WHERE account_id=$1 AND status='active' AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now()) FOR SHARE`,
+    client.query(
+      `SELECT id,scope_type::text AS "scopeType",scope_id AS "scopeId",role,status,starts_at AS "startsAt",ends_at AS "endsAt" FROM assignments WHERE account_id=$1 AND status='active' AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now()) FOR SHARE`,
       [actor.id],
     ),
-    client.query<{ scope_type: string; scope_id: string; role: string }>(
-      `SELECT scope_type::text,
-         CASE WHEN appointment_role='team.partnerships' THEN 'partnerships' ELSE scope_id END AS scope_id,
-         CASE appointment_role
-           WHEN 'body.coordinator' THEN 'coordinator'
-           WHEN 'body.contact_point' THEN 'contact_point'
-           WHEN 'body.liaison' THEN 'liaison'
-           WHEN 'body.council_representative' THEN 'council_representative'
-           WHEN 'wg.contact_point' THEN 'contact_point'
-           WHEN 'ot.liaison' THEN 'liaison'
-           ELSE 'member' END AS role
-       FROM appointments WHERE account_id=$1 AND status='active' AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now()) FOR SHARE`,
+    client.query(
+      `SELECT id,appointment_role AS "appointmentRole",scope_type::text AS "scopeType",scope_id AS "scopeId",council_seat AS "councilSeat",status,starts_at AS "startsAt",ends_at AS "endsAt" FROM appointments WHERE account_id=$1 FOR SHARE`,
       [actor.id],
     ),
   ])
-  const rows = [...assigned.rows, ...appointed.rows]
   const cw =
     current.membership_track === 'constituency_work' &&
     current.constituency_work_status === 'active' &&
     ['active', 'renewal_due'].includes(current.membership_status) &&
     current.hub_access_status === 'active'
-  const team = (name: string) =>
-    cw && rows.some((r) => r.scope_type === 'team' && r.scope_id === name)
-  const participates = (id: string) =>
-    cw && rows.some((r) => r.scope_type === 'body' && r.scope_id === id)
-  const manages = (id: string) =>
-    cw &&
-    rows.some(
-      (r) =>
-        r.scope_type === 'body' &&
-        r.scope_id === id &&
-        ['coordinator', 'contact_point', 'liaison'].includes(r.role),
-    )
+  const apptRows = appointed.rows as AuthorityRow[]
+  const superseded = supersessionKeys(apptRows)
+  const rows: AuthorityRow[] = [
+    ...apptRows,
+    ...(assigned.rows as AuthorityRow[]).filter((r) => {
+      const roleKey = resolveAppointmentRole(r)
+      return !roleKey || !superseded.has(appointmentKey(roleKey, r.scopeType, r.scopeId))
+    }),
+  ]
+  const derived = deriveAuthority(rows, { cw })
+  const caps = new Set(derived.capabilities)
   return {
-    rows,
+    bodyScopes: derived.bodyScopes,
+    teamRoles: derived.teamRoles,
     cw,
     admin: current.role === 'admin',
-    membership: team('membership_team'),
-    partnerships: team('partnerships'),
-    publisher: team('content_publisher'),
-    participates,
-    manages,
+    membership: caps.has('membership.review'),
+    partnerships: caps.has('partnership.review'),
+    publisher: caps.has('content.publish'),
+    participates: (id: string) => derived.bodyScopes.includes(id),
+    manages: (id: string) => caps.has(`body.manage:${id}`),
   }
 }
 const bodySelect = `SELECT id,name,kind,description,public_summary AS "publicSummary",review_due_at AS "reviewDueAt",version,published_version AS "publishedVersion" FROM platform_bodies`
@@ -161,15 +162,15 @@ const enquirySelect = `SELECT id,organisation,contact_name AS "contactName",emai
 
 export async function overview(actor: Actor) {
   const p = await permissions(actor)
-  const bodyIds = p.rows.filter((r) => r.scope_type === 'body').map((r) => r.scope_id)
+  const bodyIds = p.bodyScopes
   const [bodies, people, assignments, tasks, decisions, enquiries] = await Promise.all([
     db().query(bodySelect + ' WHERE $1::boolean ORDER BY name', [p.cw || p.admin]),
     db().query(
-      `SELECT id,name,entity_type AS "entityType",membership_track AS "membershipTrack",membership_status AS "membershipStatus" FROM accounts WHERE $1::boolean OR id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM assignments s WHERE s.account_id=accounts.id AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND ((s.scope_type='body' AND s.scope_id=ANY($4::text[])) OR ($5::boolean AND s.scope_type='team' AND s.scope_id='partnerships'))) OR EXISTS(SELECT 1 FROM appointments ap WHERE ap.account_id=accounts.id AND ap.status='active' AND ap.starts_at<=now() AND (ap.ends_at IS NULL OR ap.ends_at>now()) AND ((ap.scope_type='body' AND ap.scope_id=ANY($4::text[])) OR ($5::boolean AND ap.scope_type='team' AND ap.appointment_role='team.partnerships')))) ORDER BY name LIMIT 1000`,
+      `SELECT id,name,entity_type AS "entityType",membership_track AS "membershipTrack",membership_status AS "membershipStatus" FROM accounts WHERE $1::boolean OR id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM assignments s WHERE s.account_id=accounts.id AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND ((s.scope_type IN ('body','platform_body') AND s.scope_id=ANY($4::text[])) OR ($5::boolean AND s.scope_type='team' AND s.scope_id='partnerships'))) OR EXISTS(SELECT 1 FROM appointments ap WHERE ap.account_id=accounts.id AND ap.status='active' AND ap.starts_at<=now() AND (ap.ends_at IS NULL OR ap.ends_at>now()) AND ((ap.scope_type='body' AND ap.scope_id=ANY($4::text[])) OR ($5::boolean AND ap.scope_type='team' AND ap.appointment_role='team.partnerships')))) ORDER BY name LIMIT 1000`,
       [p.membership || p.admin, actor.id, p.cw, bodyIds, p.partnerships],
     ),
     db().query(
-      `SELECT s.id,s.account_id AS "accountId",a.name,s.scope_type AS "scopeType",s.scope_id AS "scopeId",s.role,s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.appointment_evidence AS evidence FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE $1::boolean OR s.account_id=$2 OR ($3::boolean AND s.scope_type='body' AND s.scope_id=ANY($4::text[])) ORDER BY s.created_at DESC LIMIT 1000`,
+      `SELECT s.id,s.account_id AS "accountId",a.name,s.scope_type AS "scopeType",s.scope_id AS "scopeId",s.role,s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.appointment_evidence AS evidence FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE $1::boolean OR s.account_id=$2 OR ($3::boolean AND s.scope_type IN ('body','platform_body') AND s.scope_id=ANY($4::text[])) ORDER BY s.created_at DESC LIMIT 1000`,
       [p.admin || p.membership, actor.id, p.cw, bodyIds],
     ),
     db().query(
@@ -313,7 +314,7 @@ export async function publishBody(actor: Actor, id: string, version: unknown) {
 const PARTICIPATION_SCOPES = new Set([
   'body',
   'working_group',
-  'organization',
+  'organisation',
   'operational_team',
   'negotiation_track',
   'negotiation_project',
@@ -353,12 +354,14 @@ export async function assign(actor: Actor, input: Input) {
     const p = await permissions(actor, client)
     if (!p.admin) fail(403, 'Only platform administrators can record an evidenced assignment.')
     const accountId = intId(input.accountId),
-      scopeType = text(input, 'scopeType'),
+      // Accept both spellings; canonicalise to 'organisation' — the
+      // appointments enum and registry vocabulary.
+      scopeType = normaliseScopeType(text(input, 'scopeType')),
       scopeId = text(input, 'scopeId'),
       role = text(input, 'role'),
       evidence = text(input, 'evidence', 2000)
     if (
-      !['body', 'team', 'working_group', 'organization', 'operational_team', 'event'].includes(
+      !['body', 'team', 'working_group', 'organisation', 'operational_team', 'event'].includes(
         scopeType,
       )
     )
@@ -374,7 +377,7 @@ export async function assign(actor: Actor, input: Input) {
               : ['member']
             : scopeType === 'operational_team'
               ? ['member', 'liaison']
-              : scopeType === 'organization'
+              : scopeType === 'organisation'
                 ? ['member', 'representative', 'admin']
                 : ['member', 'coordinator'] // event → cct
     if (!valid.includes(role)) fail(400, 'Invalid role for this scope.')
@@ -411,9 +414,12 @@ export async function assign(actor: Actor, input: Input) {
       appointmentRole !== null && !(role === 'member' && PARTICIPATION_SCOPES.has(scopeType))
 
     if (!mandated) {
+      // The participation ledger keeps its own enum spelling
+      // ('organization'); mandates store the canonical 'organisation'.
+      const ledgerScopeType = scopeType === 'organisation' ? 'organization' : scopeType
       const { rows } = await client.query(
         `INSERT INTO assignments(account_id,scope_type,scope_id,role,starts_at,ends_at,appointment_evidence,assigned_by_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(account_id,scope_type,scope_id,role) DO UPDATE SET status='active',starts_at=$5,ends_at=$6,appointment_evidence=$7,assigned_by_id=$8,updated_at=now() RETURNING id`,
-        [accountId, scopeType, scopeId, role, startsAt, endsAt, evidence, actor.id],
+        [accountId, ledgerScopeType, scopeId, role, startsAt, endsAt, evidence, actor.id],
       )
       await audit(client, actor, 'assignment.recorded', rows[0].id, evidence, {
         accountId,
@@ -429,7 +435,6 @@ export async function assign(actor: Actor, input: Input) {
     // Mandated responsibility → appointments table. The partial unique index
     // keeps a single active row per (account, role, scope); re-granting an
     // active mandate refreshes term and evidence.
-    const appointmentScopeType = scopeType === 'organization' ? 'organisation' : scopeType
     const councilSeat = councilSeatFor(appointmentRole, { scopeId, councilSeat: null })
     const { rows } = await client.query(
       `INSERT INTO appointments(account_id,appointment_role,scope_type,scope_id,council_seat,starts_at,ends_at,evidence,appointed_by_id)
@@ -440,7 +445,7 @@ export async function assign(actor: Actor, input: Input) {
       [
         accountId,
         appointmentRole,
-        appointmentScopeType,
+        scopeType,
         scopeId,
         councilSeat,
         startsAt,
@@ -452,7 +457,7 @@ export async function assign(actor: Actor, input: Input) {
     await audit(client, actor, 'appointment.recorded', String(rows[0].id), evidence, {
       accountId,
       appointmentRole,
-      scopeType: appointmentScopeType,
+      scopeType,
       scopeId,
       startsAt,
       endsAt,
@@ -517,7 +522,7 @@ export async function saveTask(actor: Actor, input: Input, id?: string) {
       ownerId &&
       !(
         await client.query(
-          `SELECT 1 FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE s.account_id=$1 AND s.scope_type='body' AND s.scope_id=$2 AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND a.membership_track='constituency_work' AND a.constituency_work_status='active' AND a.hub_access_status='active' AND a.membership_status IN ('active','renewal_due')`,
+          `SELECT 1 FROM assignments s JOIN accounts a ON a.id=s.account_id WHERE s.account_id=$1 AND s.scope_type IN ('body','platform_body') AND s.scope_id=$2 AND s.status='active' AND s.starts_at<=now() AND (s.ends_at IS NULL OR s.ends_at>now()) AND a.membership_track='constituency_work' AND a.constituency_work_status='active' AND a.hub_access_status='active' AND a.membership_status IN ('active','renewal_due')`,
           [ownerId, bodyId],
         )
       ).rowCount

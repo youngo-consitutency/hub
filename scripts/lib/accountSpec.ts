@@ -8,7 +8,7 @@
  * ('member' rows) stays in `assignments`, matching the runtime split in
  * src/lib/appointments.ts.
  */
-import { legacyAppointmentRole } from '../../src/lib/appointments'
+import { legacyAppointmentRole, normaliseScopeType } from '../../src/lib/appointments'
 
 export interface AccountSpec {
   email: string
@@ -157,13 +157,20 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
   const recordScope = async (scopeType: string, scopeId: string, role: string) => {
     const appointmentRole = legacyAppointmentRole(scopeType, scopeId, role)
     if (!appointmentRole) throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
+    const canonical = normaliseScopeType(scopeType)
     const participation =
       role === 'member' &&
-      ['body', 'working_group', 'organization', 'operational_team'].includes(scopeType)
+      ['body', 'working_group', 'organisation', 'operational_team'].includes(canonical)
     if (participation) {
-      return upsertAssignment(scopeType, scopeId, role)
+      // The ledger stores its own enum spelling ('organization').
+      return upsertAssignment(
+        canonical === 'organisation' ? 'organization' : scopeType,
+        scopeId,
+        role,
+      )
     }
-    return upsertAppointment(appointmentRole, scopeType, scopeId)
+    // Appointments store the canonical scope spelling ('organisation').
+    return upsertAppointment(appointmentRole, normaliseScopeType(scopeType), scopeId)
   }
 
   for (const team of spec.teams ?? []) {
@@ -173,7 +180,11 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     await recordScope('body', spec.body.slug, spec.body.role)
   }
   for (const a of spec.appointments ?? []) {
-    await upsertAppointment(a.role, a.scopeType ?? 'platform', a.scopeId ?? 'platform')
+    await upsertAppointment(
+      a.role,
+      normaliseScopeType(a.scopeType ?? 'platform'),
+      a.scopeId ?? 'platform',
+    )
   }
   if (spec.wg) {
     await recordScope('working_group', spec.wg.slug, spec.wg.role)

@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { isCwActive } from './accounts'
-import { APPOINTMENT_ROLES, councilSeatFor } from './appointments'
+import { APPOINTMENT_ROLES, councilSeatFor, normaliseScopeType } from './appointments'
 import { audit } from './audit'
 
 // Writes to the `appointments` collection. Every grant is validated against
@@ -25,7 +25,9 @@ export interface GrantInput {
 export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
   const spec = APPOINTMENT_ROLES[input.appointmentRole]
   if (!spec) throw fail.validation({ appointmentRole: 'Unknown appointment role.' })
-  const scopeType = input.scopeType ?? spec.scopeTypes[0]
+  // Input accepts either spelling; the stored value is canonical
+  // ('organisation'), matching the collection enum.
+  const scopeType = normaliseScopeType(input.scopeType ?? spec.scopeTypes[0])
   if (!spec.scopeTypes.includes(scopeType))
     throw fail.validation({
       scopeType: `${input.appointmentRole} cannot be scoped to ${scopeType}.`,
