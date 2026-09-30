@@ -30,9 +30,8 @@ const WRITE = process.argv.includes('--write')
 
 const { default: config } = await import('../src/payload.config')
 const { getPayload } = await import('payload')
-const { legacyAppointmentRole, appointmentState, councilSeatFor } = await import(
-  '../src/lib/appointments'
-)
+const { legacyAppointmentRole, appointmentState, councilSeatFor } =
+  await import('../src/lib/appointments')
 
 const PARTICIPATION_SCOPES = new Set([
   'body',

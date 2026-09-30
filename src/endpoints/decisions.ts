@@ -292,8 +292,7 @@ export const decisionEndpoints: Endpoint[] = [
       const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
       // S09: a flag is withdrawn by its raiser or through the documented
       // nullification/escalation process — never by administrator override.
-      if (raiser !== account.id)
-        throw fail.forbidden('Only the flag raiser may withdraw it.')
+      if (raiser !== account.id) throw fail.forbidden('Only the flag raiser may withdraw it.')
       const updated = await req.payload.update({
         collection: 'decision-flags',
         id: flag.id,

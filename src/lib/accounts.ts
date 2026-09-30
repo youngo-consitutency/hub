@@ -9,8 +9,7 @@ export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
 // Account rows arrive from Payload docs (camelCase) and raw SQL
 // (snake_case) — normalise once, then read the canonical field names.
-const accountRow = (account: any): Record<string, any> =>
-  account ? toCamelCase(account) : {}
+const accountRow = (account: any): Record<string, any> => (account ? toCamelCase(account) : {})
 
 // Single source for "may use member features". Every endpoint must go through
 // requireVerifiedMember/requireCwMember below — do not re-implement the check.
@@ -91,8 +90,7 @@ export function accountView(row: any) {
     emailVerifiedAt: r.emailVerifiedAt ?? null,
     memberStatus,
     hubAccessStatus,
-    membershipStatus:
-      r.membershipStatus ?? (r.coursePassedAt ? 'course_passed' : 'registered'),
+    membershipStatus: r.membershipStatus ?? (r.coursePassedAt ? 'course_passed' : 'registered'),
     onboardingCohort: r.onboardingCohort ?? null,
     renewalDueAt: r.renewalDueAt ?? null,
     membershipEndedAt: r.membershipEndedAt ?? null,

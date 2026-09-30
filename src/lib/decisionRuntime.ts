@@ -215,8 +215,7 @@ export async function countEligible(req: PayloadRequest, proposal: any): Promise
       : proposal.body === 'gct'
         ? ['team']
         : ['operational_team', 'team', 'body']
-  const scopeId =
-    proposal.body === 'gct' ? 'gct' : String(proposal.bodyRef ?? '')
+  const scopeId = proposal.body === 'gct' ? 'gct' : String(proposal.bodyRef ?? '')
   const [assigned, appointed] = await Promise.all([
     req.payload.find({
       collection: 'assignments',

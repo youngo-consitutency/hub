@@ -116,10 +116,7 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
       text.includes('appointments_active_scope_unique') ||
       text.includes('duplicate key')
     )
-      throw fail.conflict(
-        'duplicate_appointment',
-        'This account already holds that appointment.',
-      )
+      throw fail.conflict('duplicate_appointment', 'This account already holds that appointment.')
     throw error
   } finally {
     delete req.transactionID
