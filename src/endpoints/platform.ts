@@ -107,6 +107,19 @@ export const platformEndpoints: Endpoint[] = [
     }),
   },
   {
+    path: '/platform/appointments/:id/revoke',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const b = await body(req)
+      await platform.revokeAppointment(
+        await actor(req),
+        p(req, 'id'),
+        platform.text(b, 'reason', 2000),
+      )
+      return json({ ok: true })
+    }),
+  },
+  {
     path: '/platform/tasks',
     method: 'post',
     handler: endpoint(async (req) =>

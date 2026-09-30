@@ -1,9 +1,15 @@
 /**
  * Shared account-provisioning primitive for the demo-accounts script and
  * the integration-test fixture helpers. Applies a declarative account spec
- * to the database (account row + team/WG assignment rows). Contains no
+ * to the database (account row + participation/mandate rows). Contains no
  * identities or credentials — callers supply those.
+ *
+ * Mandated responsibilities are written to `appointments`; participation
+ * ('member' rows) stays in `assignments`, matching the runtime split in
+ * src/lib/appointments.ts.
  */
+import { legacyAppointmentRole } from '../../src/lib/appointments'
+
 export interface AccountSpec {
   email: string
   password: string
@@ -13,12 +19,14 @@ export interface AccountSpec {
   membershipTrack?: 'network' | 'constituency_work'
   /** Completed onboarding + verification (memberStatus/hubAccessStatus). */
   verified?: boolean
-  /** Team scopes, e.g. 'election_facilitation', 'membership_team'. */
+  /** Team mandates, e.g. 'election_facilitation', 'membership_team'. */
   teams?: string[]
-  /** Working-group assignment. */
+  /** Working-group scope: 'member' = participation, 'contact' = mandate. */
   wg?: { slug: string; role: string }
-  /** Operational body assignment (platform bodies). */
+  /** Operational body scope (platform bodies). */
   body?: { slug: string; role: string }
+  /** Explicit appointment grants (canonical appointmentRole values). */
+  appointments?: { role: string; scopeType?: string; scopeId?: string }[]
   /** Required by the accounts collection; callers may override. */
   country?: string
 }
@@ -105,14 +113,71 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     })
   }
 
+  const upsertAppointment = async (role: string, scopeType: string, scopeId: string) => {
+    const existing = await payload.find({
+      collection: 'appointments',
+      where: {
+        and: [
+          { account: { equals: account.id } },
+          { appointmentRole: { equals: role } },
+          { scopeType: { equals: scopeType } },
+          { scopeId: { equals: scopeId } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    const row = {
+      account: account.id,
+      appointmentRole: role,
+      scopeType,
+      scopeId,
+      status: 'active',
+      startsAt: NOW(),
+      appointedBy: account.id,
+    }
+    if (existing.docs[0]) {
+      return payload.update({
+        collection: 'appointments',
+        id: existing.docs[0].id,
+        data: row,
+        overrideAccess: true,
+      })
+    }
+    return payload.create({
+      collection: 'appointments',
+      data: row,
+      overrideAccess: true,
+    })
+  }
+
+  // Route a (scopeType, scopeId, role) tuple to the right store, exactly as
+  // the platform assign() flow does: mandates → appointments, participation
+  // → assignments. Unknown tuples are an error, never silently widened.
+  const recordScope = async (scopeType: string, scopeId: string, role: string) => {
+    const appointmentRole = legacyAppointmentRole(scopeType, scopeId, role)
+    if (!appointmentRole)
+      throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
+    const participation =
+      role === 'member' &&
+      ['body', 'working_group', 'organization', 'operational_team'].includes(scopeType)
+    if (participation) {
+      return upsertAssignment(scopeType, scopeId, role)
+    }
+    return upsertAppointment(appointmentRole, scopeType, scopeId)
+  }
+
   for (const team of spec.teams ?? []) {
-    await upsertAssignment('team', team, 'member')
+    await recordScope('team', team, 'member')
   }
   if (spec.body) {
-    await upsertAssignment('body', spec.body.slug, spec.body.role)
+    await recordScope('body', spec.body.slug, spec.body.role)
+  }
+  for (const a of spec.appointments ?? []) {
+    await upsertAppointment(a.role, a.scopeType ?? 'platform', a.scopeId ?? 'platform')
   }
   if (spec.wg) {
-    await upsertAssignment('working_group', spec.wg.slug, spec.wg.role)
+    await recordScope('working_group', spec.wg.slug, spec.wg.role)
     const progress = await payload.find({
       collection: 'wg-progress',
       where: {

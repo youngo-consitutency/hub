@@ -58,7 +58,16 @@ async function openHandover(
   })
 }
 
-// End active assignments; `scopeTypes` limits which scopes are closed.
+// Legacy/appointment scope vocabularies differ slightly; map when limiting
+// which scopes a membership change closes.
+const APPOINTMENT_SCOPE_EQUIV: Record<string, string> = {
+  platform_body: 'body',
+  organization: 'organisation',
+}
+
+// End active participation rows *and* the mandates they fed — an appointment
+// must not outlive the membership exit that ends it (S17). `scopeTypes`
+// limits which scopes are closed. Returns the number of rows ended.
 async function endAssignments(
   req: PayloadRequest,
   accountId: number,
@@ -81,7 +90,30 @@ async function endAssignments(
       overrideAccess: true,
     })
   }
-  return docs.length
+  const appointmentAnd: any[] = [
+    { account: { equals: accountId } },
+    { status: { equals: 'active' } },
+  ]
+  if (scopeTypes?.length) {
+    appointmentAnd.push({
+      scopeType: { in: scopeTypes.map((t) => APPOINTMENT_SCOPE_EQUIV[t] ?? t) },
+    })
+  }
+  const { docs: appointments } = await req.payload.find({
+    collection: 'appointments',
+    where: { and: appointmentAnd },
+    limit: 1000,
+    overrideAccess: true,
+  })
+  for (const doc of appointments as any[]) {
+    await req.payload.update({
+      collection: 'appointments',
+      id: doc.id,
+      data: { status: 'expired', endsAt: ended },
+      overrideAccess: true,
+    })
+  }
+  return docs.length + appointments.length
 }
 
 const handoverView = (h: any) => ({
@@ -120,25 +152,45 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 20,
         overrideAccess: true,
       })
-      const { docs: assignments } = await req.payload.find({
-        collection: 'assignments',
-        where: {
-          and: [{ account: { equals: account.id } }, { status: { equals: 'active' } }],
-        },
-        limit: 200,
-        overrideAccess: true,
-      })
+      const [assignmentRes, appointmentRes] = await Promise.all([
+        req.payload.find({
+          collection: 'assignments',
+          where: {
+            and: [{ account: { equals: account.id } }, { status: { equals: 'active' } }],
+          },
+          limit: 200,
+          overrideAccess: true,
+        }),
+        req.payload.find({
+          collection: 'appointments',
+          where: { account: { equals: account.id } },
+          limit: 200,
+          overrideAccess: true,
+        }),
+      ])
       return json({
         membershipStatus: account.membershipStatus,
         membershipTrack: account.membershipTrack,
         constituencyWorkStatus: account.constituencyWorkStatus,
         renewalDueAt: account.renewalDueAt,
         membershipEndedAt: account.membershipEndedAt,
-        assignments: (assignments as any[]).map((a) => ({
+        assignments: (assignmentRes.docs as any[]).map((a) => ({
           id: a.id,
           scopeType: a.scopeType,
           scopeId: a.scopeId,
           role: a.role,
+          startsAt: a.startsAt,
+          endsAt: a.endsAt,
+        })),
+        // Mandated responsibilities (WG Contact Points, team roles, Council
+        // seats) live in appointments — surfaced with their term and seat.
+        appointments: (appointmentRes.docs as any[]).map((a) => ({
+          id: a.id,
+          appointmentRole: a.appointmentRole,
+          scopeType: a.scopeType,
+          scopeId: a.scopeId,
+          councilSeat: a.councilSeat ?? null,
+          status: a.status,
           startsAt: a.startsAt,
           endsAt: a.endsAt,
         })),

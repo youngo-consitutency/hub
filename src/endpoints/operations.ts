@@ -9,11 +9,11 @@ import { getAccessProfile } from '../lib/access'
 // file and track their own records; the responsible teams review through
 // scoped endpoints. Generated REST writes stay staff-only throughout.
 
-// Review authority: an admin, or a member holding one of the named team
-// scopes (e.g. 'finance_team', 'safeguarding_team').
+// Review authority: a member holding one of the named team appointments
+// (e.g. 'finance_team', 'safeguarding_team'). The admin role carries no
+// team authority — technical administration is not constituency authority.
 async function requireOpsTeam(req: PayloadRequest, teams: string[]) {
   const account = requireVerifiedMember(req)
-  if (account.role === 'admin') return { account }
   const access = await getAccessProfile(req, account)
   if (!teams.some((t) => access.teamRoles.includes(t)))
     throw fail.forbidden('This workspace is not assigned to your account.')

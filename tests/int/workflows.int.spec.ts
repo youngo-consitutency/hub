@@ -10,9 +10,9 @@ describe('operational workflows', () => {
 
   beforeAll(async () => {
     member = await session({ membershipTrack: 'constituency_work' })
-    finance = await session({ teams: ['finance_team'] })
-    safeguarding = await session({ teams: ['safeguarding_team'] })
-    dpo = await session({ teams: ['data_controller'] })
+    finance = await session({ membershipTrack: 'constituency_work', teams: ['finance_team'] })
+    safeguarding = await session({ membershipTrack: 'constituency_work', teams: ['safeguarding_team'] })
+    dpo = await session({ membershipTrack: 'constituency_work', teams: ['data_controller'] })
   })
 
   it('funding: member submits, finance reviews, disburses, member reports', async () => {
@@ -127,7 +127,7 @@ describe('operational workflows', () => {
     })
     expect(coi.status).toBe(201)
     const coiId = (await coi.json()).declaration.id
-    const membership = await session({ teams: ['membership_team'] })
+    const membership = await session({ membershipTrack: 'constituency_work', teams: ['membership_team'] })
     const resolved = await api(`/member/team/membership/coi/${coiId}/review`, {
       method: 'POST',
       cookie: membership.cookie,
@@ -171,7 +171,7 @@ describe('operational workflows', () => {
     })
     expect(p.status).toBe(201)
     const pid = (await p.json()).request.id
-    const partnerships = await session({ teams: ['partnerships_team'] })
+    const partnerships = await session({ membershipTrack: 'constituency_work', teams: ['partnerships_team'] })
     const underReview = await api(`/member/team/partnerships/${pid}/review`, {
       method: 'POST',
       cookie: partnerships.cookie,

@@ -390,7 +390,10 @@ export const memberEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'focal_point' && account.role !== 'admin') throw fail.forbidden()
+      const access = await getAccessProfile(req, account)
+      // The focal overview belongs to the elected Focal Points — an
+      // administrator has no mandate and gets no view.
+      if (!access.isFocalPoint) throw fail.forbidden()
       const [feed, events, submissions, decisions, groups, directory] = await Promise.all([
         store.getFeed(req, new Date(), true),
         store.listEvents(req),

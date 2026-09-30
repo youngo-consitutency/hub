@@ -1,6 +1,7 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { getAccessProfile } from '../lib/access'
 import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
 import {
@@ -289,7 +290,9 @@ export const decisionEndpoints: Endpoint[] = [
           throw fail.notFound('Flag not found.')
         })
       const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
-      if (raiser !== account.id && account.role !== 'admin')
+      // S09: a flag is withdrawn by its raiser or through the documented
+      // nullification/escalation process — never by administrator override.
+      if (raiser !== account.id)
         throw fail.forbidden('Only the flag raiser may withdraw it.')
       const updated = await req.payload.update({
         collection: 'decision-flags',
@@ -423,7 +426,10 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      if (account.role !== 'admin')
+      const access = await getAccessProfile(req, account)
+      // Verifying a veto request against eligible representation is a
+      // coordination duty (GCT), not a technical-administration function.
+      if (!access.capabilities.includes('gct.coordinate'))
         throw fail.forbidden('Veto requests are confirmed by the coordination team.')
       let p = await loadProposal(req, req.routeParams!.id as string)
       const veto = await req.payload

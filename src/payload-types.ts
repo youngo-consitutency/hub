@@ -71,6 +71,7 @@ export interface Config {
     users: User;
     media: Media;
     accounts: Account;
+    appointments: Appointment;
     assignments: Assignment;
     'member-profiles': MemberProfile;
     'working-groups': WorkingGroup;
@@ -135,6 +136,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     accounts: AccountsSelect<false> | AccountsSelect<true>;
+    appointments: AppointmentsSelect<false> | AppointmentsSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'member-profiles': MemberProfilesSelect<false> | MemberProfilesSelect<true>;
     'working-groups': WorkingGroupsSelect<false> | WorkingGroupsSelect<true>;
@@ -434,6 +436,89 @@ export interface Account {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "appointments".
+ */
+export interface Appointment {
+  id: number;
+  account: number | Account;
+  appointmentRole:
+    | 'focal_point'
+    | 'council.substitute'
+    | 'org.representative'
+    | 'org.member'
+    | 'org.admin'
+    | 'wg.member'
+    | 'wg.contact_point'
+    | 'wg.safeguarding_officer'
+    | 'ot.member'
+    | 'ot.liaison'
+    | 'body.member'
+    | 'body.coordinator'
+    | 'body.contact_point'
+    | 'body.liaison'
+    | 'body.council_representative'
+    | 'gct.coordinator'
+    | 'gct.partnerships'
+    | 'gct.membership'
+    | 'gct.finance'
+    | 'gct.internal'
+    | 'gct.coordination'
+    | 'team.membership'
+    | 'team.selections'
+    | 'team.election_facilitation'
+    | 'team.awareness'
+    | 'team.safeguarding'
+    | 'team.finance'
+    | 'team.partnerships'
+    | 'team.comms'
+    | 'team.reforms'
+    | 'team.data_controller'
+    | 'team.gys_policy'
+    | 'content.editor'
+    | 'content.publisher'
+    | 'coy.lcoy_liaison'
+    | 'coy.rcoy_liaison'
+    | 'coy.gcoy_liaison'
+    | 'cct.member'
+    | 'cct.coordinator'
+    | 'negotiation.member'
+    | 'negotiation.reviewer'
+    | 'negotiation.applier'
+    | 'negotiation.grant_manager'
+    | 'negotiation.process_facilitator'
+    | 'negotiation.transmitter';
+  scopeType:
+    | 'platform'
+    | 'organisation'
+    | 'working_group'
+    | 'operational_team'
+    | 'body'
+    | 'team'
+    | 'event'
+    | 'negotiation_track'
+    | 'negotiation_project';
+  scopeId: string;
+  councilSeat?: string | null;
+  substituteFor?: (number | null) | Appointment;
+  status: 'active' | 'inactive' | 'expired' | 'revoked';
+  startsAt: string;
+  endsAt?: string | null;
+  appointedVia?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  appointedBy?: (number | null) | Account;
+  evidence?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "assignments".
  */
 export interface Assignment {
@@ -451,7 +536,7 @@ export interface Assignment {
   scopeId: string;
   role: string;
   appointmentEvidence?: string | null;
-  status: 'active' | 'inactive' | 'expired';
+  status: 'active' | 'inactive' | 'expired' | 'revoked';
   startsAt?: string | null;
   endsAt?: string | null;
   assignedBy?: (number | null) | Account;
@@ -1750,6 +1835,10 @@ export interface PayloadLockedDocument {
         value: number | Account;
       } | null)
     | ({
+        relationTo: 'appointments';
+        value: number | Appointment;
+      } | null)
+    | ({
         relationTo: 'assignments';
         value: number | Assignment;
       } | null)
@@ -2152,6 +2241,26 @@ export interface AccountsSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "appointments_select".
+ */
+export interface AppointmentsSelect<T extends boolean = true> {
+  account?: T;
+  appointmentRole?: T;
+  scopeType?: T;
+  scopeId?: T;
+  councilSeat?: T;
+  substituteFor?: T;
+  status?: T;
+  startsAt?: T;
+  endsAt?: T;
+  appointedVia?: T;
+  appointedBy?: T;
+  evidence?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

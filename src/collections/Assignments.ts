@@ -1,8 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { staffWrites } from '../lib/collectionAccess'
 
-// Replaces account_assignments: scoped responsibilities (team roles, WG
-// contact/lead, negotiation scopes, platform bodies) with an active window.
+// Participation ledger: working-group/body membership and negotiation
+// scopes. Mandated responsibilities live in `appointments` — rows here that
+// predate that split still resolve through the explicit map in
+// lib/appointments.ts.
 export const Assignments: CollectionConfig = {
   slug: 'assignments',
   access: {
@@ -46,7 +48,7 @@ export const Assignments: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'active',
-      options: ['active', 'inactive', 'expired'],
+      options: ['active', 'inactive', 'expired', 'revoked'],
       index: true,
     },
     { name: 'startsAt', type: 'date' },

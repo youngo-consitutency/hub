@@ -94,8 +94,8 @@ export const opportunityEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const access = await getAccessProfile(req, account)
-      if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
-        throw fail.forbidden('Posting review is for admins and the Membership Team.')
+      if (!access.teamRoles.includes('membership_team'))
+        throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const [pending, published] = await Promise.all([
         req.payload.find({
           collection: 'opportunities',
@@ -273,8 +273,8 @@ export const opportunityEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
-        throw fail.forbidden('Posting review is for admins and the Membership Team.')
+      if (!access.teamRoles.includes('membership_team'))
+        throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const b = ((await req.json?.()) || {}) as any
       const approve = b.decision === 'approve'
       const reviewNote = trimmed(b.note, 1000) || null
@@ -318,8 +318,8 @@ export const opportunityEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
-        throw fail.forbidden('Posting review is for admins and the Membership Team.')
+      if (!access.teamRoles.includes('membership_team'))
+        throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const orgAccountId = String(req.routeParams?.orgAccountId)
       const b = ((await req.json?.()) || {}) as any
       const state = String(b.state || '')
@@ -360,7 +360,7 @@ export const opportunityEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      if (!(account.role === 'admin' || access.teamRoles.includes('membership_team')))
+      if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const reviewNote = trimmed(b.note, 1000) || null

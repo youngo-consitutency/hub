@@ -23,6 +23,8 @@ export const MEMBERSHIP_STATUSES = [
 export const CLOSED_MEMBERSHIP_STATUSES = ['expired', 'terminated']
 export const ENDED_MEMBERSHIP_STATUSES = [...CLOSED_MEMBERSHIP_STATUSES, 'rejected']
 
+export { isCwActive } from './accounts'
+
 const ACCOUNT_FIELD_COLUMNS = new Set([
   'member_status',
   'hub_access_status',

@@ -47,6 +47,8 @@ data/
 *.local
 .local/
 .local-demo/
+*.seed.sql
+.demo-seed.sql
 .wwebjs_cache/
 .claude/
 .codex-vault/
