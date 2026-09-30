@@ -339,7 +339,14 @@ const TEAM_SCOPE_IDS = [
   'rcoy_liaison',
   'gcoy_liaison',
 ]
-const GCT_AREAS = ['coordinator', 'partnerships', 'membership', 'finance', 'internal', 'coordination']
+const GCT_AREAS = [
+  'coordinator',
+  'partnerships',
+  'membership',
+  'finance',
+  'internal',
+  'coordination',
+]
 
 export async function assign(actor: Actor, input: Input) {
   return transaction(async (client) => {
@@ -430,7 +437,17 @@ export async function assign(actor: Actor, input: Input) {
        ON CONFLICT (account_id,appointment_role,scope_type,scope_id) WHERE status='active'
        DO UPDATE SET starts_at=$6,ends_at=$7,evidence=$8,appointed_by_id=$9,updated_at=now()
        RETURNING id`,
-      [accountId, appointmentRole, appointmentScopeType, scopeId, councilSeat, startsAt, endsAt, evidence, actor.id],
+      [
+        accountId,
+        appointmentRole,
+        appointmentScopeType,
+        scopeId,
+        councilSeat,
+        startsAt,
+        endsAt,
+        evidence,
+        actor.id,
+      ],
     )
     await audit(client, actor, 'appointment.recorded', String(rows[0].id), evidence, {
       accountId,

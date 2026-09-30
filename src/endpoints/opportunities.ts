@@ -360,8 +360,7 @@ export const opportunityEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      if (!access.teamRoles.includes('membership_team'))
-        throw fail.forbidden()
+      if (!access.teamRoles.includes('membership_team')) throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const reviewNote = trimmed(b.note, 1000) || null
       if (!reviewNote) throw fail.validation({ note: 'Give a reason for unpublishing.' })

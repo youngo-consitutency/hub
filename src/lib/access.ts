@@ -136,8 +136,7 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
   const rows: RawRow[] = [
     ...(appts.docs as any[]),
     ...(legacyRows.docs as any[]).filter(
-      (r: RawRow) =>
-        !canonical.has(`${resolveAppointmentRole(r)}:${r.scopeType}:${r.scopeId}`),
+      (r: RawRow) => !canonical.has(`${resolveAppointmentRole(r)}:${r.scopeType}:${r.scopeId}`),
     ),
   ]
 

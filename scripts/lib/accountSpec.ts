@@ -156,8 +156,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
   // → assignments. Unknown tuples are an error, never silently widened.
   const recordScope = async (scopeType: string, scopeId: string, role: string) => {
     const appointmentRole = legacyAppointmentRole(scopeType, scopeId, role)
-    if (!appointmentRole)
-      throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
+    if (!appointmentRole) throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
     const participation =
       role === 'member' &&
       ['body', 'working_group', 'organization', 'operational_team'].includes(scopeType)

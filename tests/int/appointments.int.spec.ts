@@ -284,8 +284,8 @@ describe('appointments collection access', () => {
     }
     const theirs = await api('/appointments?limit=100', { cookie: other.cookie })
     const otherBody = await theirs.json()
-    expect(
-      (otherBody.docs ?? []).every((d: any) => d.appointmentRole !== 'coy.lcoy_liaison'),
-    ).toBe(true)
+    expect((otherBody.docs ?? []).every((d: any) => d.appointmentRole !== 'coy.lcoy_liaison')).toBe(
+      true,
+    )
   })
 })
