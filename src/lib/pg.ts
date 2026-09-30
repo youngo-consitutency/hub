@@ -51,10 +51,6 @@ export function isUniqueViolation(error: any, collection: string, table: string)
   }
   return false
 }
-
-// Dual-shape row access: Payload docs expose camelCase while raw pg rows
-// return snake_case.
-export function pickField(row: any, snake: string, camel: string, fallback: any = null) {
-  const value = row?.[snake] ?? row?.[camel]
-  return value == null ? fallback : value
-}
+// Dual-shape rows (snake_case from raw SQL, camelCase from Payload docs) are
+// normalised once at the boundary via src/lib/case.ts — read canonical
+// camelCase fields after `toCamelCase(row)`.

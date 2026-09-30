@@ -1,6 +1,7 @@
 import { type Pool } from 'pg'
 import { ApiError } from './respond'
-import { requirePgPool, getPgPool, pickField } from './pg'
+import { requirePgPool, getPgPool } from './pg'
+import { toCamelCase } from './case'
 
 // Identity appeals: members submit a statement + proof document; the
 // membership team reviews them. Proofs are bytea, access-scoped.
@@ -17,17 +18,18 @@ export const APPEAL_MAX_PER_ACCOUNT = 3
 
 export function publicAppeal(row: any, { includeStatement = true } = {}): any {
   if (!row) return null
+  const r = toCamelCase<Record<string, any>>(row)
   return {
-    id: row.id,
-    accountId: pickField(row, 'account_id', 'accountId'),
-    status: row.status,
-    identityKind: pickField(row, 'identity_kind', 'identityKind'),
-    statement: includeStatement ? pickField(row, 'statement', 'statement') : null,
-    proofContentType: pickField(row, 'proof_content_type', 'proofContentType'),
-    proofByteSize: Number(pickField(row, 'proof_byte_size', 'proofByteSize') || 0),
-    submittedAt: pickField(row, 'created_at', 'createdAt'),
-    reviewedAt: pickField(row, 'reviewed_at', 'reviewedAt'),
-    reviewerNote: pickField(row, 'review_note', 'reviewerNote'),
+    id: r.id,
+    accountId: r.accountId ?? null,
+    status: r.status,
+    identityKind: r.identityKind ?? null,
+    statement: includeStatement ? (r.statement ?? null) : null,
+    proofContentType: r.proofContentType ?? null,
+    proofByteSize: Number(r.proofByteSize || 0),
+    submittedAt: r.createdAt,
+    reviewedAt: r.reviewedAt ?? null,
+    reviewerNote: r.reviewerNote ?? r.reviewNote ?? null,
   }
 }
 

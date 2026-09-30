@@ -1,0 +1,27 @@
+// Key-case normalisation. Rows reach the codebase in two key styles —
+// snake_case from raw SQL and camelCase from Payload documents — and views
+// should not hand-maintain a `row.foo_bar ?? row.fooBar` fallback for every
+// field. Normalise once at the boundary, then read canonical camelCase.
+//
+// Shallow by design: database rows are flat, and nested structures (json
+// columns, Payload revision internals) are application data, not key-shape
+// noise. Keys that already start with '_' (e.g. `_order`, `_parent_id`)
+// are internal Payload bookkeeping and are left untouched.
+
+export function toCamelCase<T extends Record<string, unknown>>(
+  obj: Record<string, unknown> | null | undefined,
+): T {
+  const result: Record<string, unknown> = {}
+  if (!obj) return result as T
+  for (const [key, value] of Object.entries(obj)) {
+    const camelKey = key.startsWith('_')
+      ? key
+      : key.replace(/_([a-z0-9])/g, (_, char) => char.toUpperCase())
+    result[camelKey] = value
+  }
+  return result as T
+}
+
+export const toCamelCaseRows = <T extends Record<string, unknown>>(
+  rows: Record<string, unknown>[],
+): T[] => rows.map((row) => toCamelCase<T>(row))

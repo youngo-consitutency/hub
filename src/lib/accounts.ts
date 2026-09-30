@@ -1,34 +1,36 @@
 import type { PayloadRequest } from 'payload'
 import { ApiError, fail } from './respond'
 import { getAccessProfile } from './access'
+import { toCamelCase } from './case'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
 export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
+// Account rows arrive from Payload docs (camelCase) and raw SQL
+// (snake_case) — normalise once, then read the canonical field names.
+const accountRow = (account: any): Record<string, any> =>
+  account ? toCamelCase(account) : {}
+
 // Single source for "may use member features". Every endpoint must go through
 // requireVerifiedMember/requireCwMember below — do not re-implement the check.
 export function isVerifiedAccount(account: any): boolean {
+  const r = accountRow(account)
   return (
-    account?.hubAccessStatus === 'active' &&
-    (account?.memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(account?.role))
+    r.hubAccessStatus === 'active' &&
+    (r.memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(r.role))
   )
 }
 
 // Active Constituency Work membership (S17): decision rights and mandate
 // eligibility. Same predicate the platform bridge uses — keep them aligned.
-// Accepts Payload docs (camelCase) and raw SQL rows (snake_case).
 export function isCwActive(account: any): boolean {
-  if (!account) return false
-  const track = account.membershipTrack ?? account.membership_track
-  const cwStatus = account.constituencyWorkStatus ?? account.constituency_work_status
-  const membership = account.membershipStatus ?? account.membership_status
-  const hub = account.hubAccessStatus ?? account.hub_access_status
+  const r = accountRow(account)
   return (
-    track === 'constituency_work' &&
-    cwStatus === 'active' &&
-    ['active', 'renewal_due'].includes(membership ?? '') &&
-    hub === 'active'
+    r.membershipTrack === 'constituency_work' &&
+    r.constituencyWorkStatus === 'active' &&
+    ['active', 'renewal_due'].includes(r.membershipStatus ?? '') &&
+    r.hubAccessStatus === 'active'
   )
 }
 
@@ -53,59 +55,54 @@ export function requireCwMember(req: PayloadRequest) {
   return account
 }
 
-// Accepts both Payload docs (camelCase) and raw SQL rows (snake_case).
+// Normalises a Payload doc or raw SQL row into the SPA's account shape.
 export function accountView(row: any) {
+  const r = accountRow(row)
   if (!row) return null
-  const first = row.first_name ?? row.firstName
-  const last = row.last_name ?? row.lastName
-  const name = row.name || [first, last].filter(Boolean).join(' ')
-  const memberStatus = row.member_status ?? row.memberStatus ?? 'pending_course'
-  const role = row.role || 'member'
+  const name = r.name || [r.firstName, r.lastName].filter(Boolean).join(' ')
+  const memberStatus = r.memberStatus ?? 'pending_course'
+  const role = r.role || 'member'
   const hubAccessStatus =
-    row.hub_access_status ??
-    row.hubAccessStatus ??
-    (memberStatus === 'verified' ? 'active' : 'pending_course')
+    r.hubAccessStatus ?? (memberStatus === 'verified' ? 'active' : 'pending_course')
   return {
-    id: row.id,
-    email: row.email,
+    id: r.id,
+    email: r.email,
     name,
-    firstName: first || null,
-    lastName: last || null,
-    phone: row.phone || null,
-    gender: row.gender || null,
-    entityType: row.entity_type ?? row.entityType,
-    membershipTrack: row.membership_track ?? row.membershipTrack,
-    country: row.country,
-    nationality: row.nationality || null,
-    region: row.region || null,
-    ageBand: row.age_band ?? row.ageBand ?? null,
-    organizationName: row.organization_name ?? row.organizationName ?? null,
-    organizationType: row.organization_type ?? row.organizationType ?? null,
-    isUnfcccAdmitted: Boolean(row.is_unfccc_admitted ?? row.isUnfcccAdmitted),
-    youthAffiliation: row.youth_affiliation ?? row.youthAffiliation ?? null,
-    under18: Boolean(row.under_18 ?? row.under18),
-    constituencyWorkStatus: row.constituency_work_status ?? row.constituencyWorkStatus ?? null,
-    membershipPolicyVersion: row.membership_policy_version ?? row.membershipPolicyVersion,
-    privacyConsent: Boolean(row.privacy_consent ?? row.privacyConsent),
-    privacyNoticeVersion: row.privacy_notice_version ?? row.privacyNoticeVersion ?? null,
-    privacyConsentAt: row.privacy_consent_at ?? row.privacyConsentAt ?? null,
-    emailVerifiedAt: row.email_verified_at ?? row.emailVerifiedAt ?? null,
+    firstName: r.firstName || null,
+    lastName: r.lastName || null,
+    phone: r.phone || null,
+    gender: r.gender || null,
+    entityType: r.entityType,
+    membershipTrack: r.membershipTrack,
+    country: r.country,
+    nationality: r.nationality || null,
+    region: r.region || null,
+    ageBand: r.ageBand ?? null,
+    organizationName: r.organizationName ?? null,
+    organizationType: r.organizationType ?? null,
+    isUnfcccAdmitted: Boolean(r.isUnfcccAdmitted),
+    youthAffiliation: r.youthAffiliation ?? null,
+    under18: Boolean(r.under18),
+    constituencyWorkStatus: r.constituencyWorkStatus ?? null,
+    membershipPolicyVersion: r.membershipPolicyVersion,
+    privacyConsent: Boolean(r.privacyConsent),
+    privacyNoticeVersion: r.privacyNoticeVersion ?? null,
+    privacyConsentAt: r.privacyConsentAt ?? null,
+    emailVerifiedAt: r.emailVerifiedAt ?? null,
     memberStatus,
     hubAccessStatus,
     membershipStatus:
-      row.membership_status ??
-      row.membershipStatus ??
-      (row.course_passed_at || row.coursePassedAt ? 'course_passed' : 'registered'),
-    onboardingCohort: row.onboarding_cohort ?? row.onboardingCohort ?? null,
-    renewalDueAt: row.renewal_due_at ?? row.renewalDueAt ?? null,
-    membershipEndedAt: row.membership_ended_at ?? row.membershipEndedAt ?? null,
-    membershipEndReason: row.membership_end_reason ?? row.membershipEndReason ?? null,
+      r.membershipStatus ?? (r.coursePassedAt ? 'course_passed' : 'registered'),
+    onboardingCohort: r.onboardingCohort ?? null,
+    renewalDueAt: r.renewalDueAt ?? null,
+    membershipEndedAt: r.membershipEndedAt ?? null,
+    membershipEndReason: r.membershipEndReason ?? null,
     role,
-    teamRoles: row.team_roles ?? row.teamRoles ?? [],
-    wgInterests: row.wg_interests ?? row.wgInterests ?? [],
-    coursePassedAt: row.course_passed_at ?? row.coursePassedAt ?? null,
-    courseScore: row.course_score ?? row.courseScore ?? null,
-    verifiedAt: row.verified_at ?? row.verifiedAt ?? null,
+    teamRoles: r.teamRoles ?? [],
+    wgInterests: r.wgInterests ?? [],
+    coursePassedAt: r.coursePassedAt ?? null,
+    courseScore: r.courseScore ?? null,
+    verifiedAt: r.verifiedAt ?? null,
     isVerified: isVerifiedAccount({
       hubAccessStatus,
       memberStatus,
@@ -115,11 +112,11 @@ export function accountView(row: any) {
     isFocalPoint: role === 'focal_point',
     isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
     isWgContact: role === 'wg_contact' || role === 'admin',
-    isNgo: (row.entity_type ?? row.entityType) === 'organization',
+    isNgo: r.entityType === 'organization',
     isNgoAdmin: role === 'ngo_admin' || role === 'admin',
-    createdAt: row.created_at ?? row.createdAt,
-    lastLoginAt: row.last_login_at ?? row.lastLoginAt ?? null,
-    mustChangePassword: Boolean(row.must_change_password ?? row.mustChangePassword),
+    createdAt: r.createdAt,
+    lastLoginAt: r.lastLoginAt ?? null,
+    mustChangePassword: Boolean(r.mustChangePassword),
   }
 }
 
