@@ -75,9 +75,18 @@ export const Appointments: CollectionConfig = {
     { name: 'endsAt', type: 'date' },
     {
       // How the appointment was made — e.g. the adopted decision, completed
-      // selection or election it records.
+      // selection or election it records. For migrated rows it also carries
+      // the immutable supersession link to the source `assignments` row
+      // (source: 'assignments_migration', assignmentId), which is why the
+      // value is write-once: provenance must never be edited.
       name: 'appointedVia',
       type: 'json',
+      hooks: {
+        beforeChange: [
+          ({ originalDoc, value }) =>
+            originalDoc ? ((originalDoc as any).appointedVia ?? value) : value,
+        ],
+      },
     },
     {
       name: 'appointedBy',

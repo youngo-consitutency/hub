@@ -557,6 +557,7 @@ export interface AuthorityRow {
   status: string
   startsAt?: any
   endsAt?: any
+  appointedVia?: { source?: string; assignmentId?: number | string } | null
 }
 
 // Identity of a mandate record — the tuple supersession and duplicate
@@ -578,6 +579,22 @@ export function supersessionKeys(appointmentRows: AuthorityRow[]): Set<string> {
     if (roleKey) keys.add(appointmentKey(roleKey, row.scopeType, row.scopeId))
   }
   return keys
+}
+
+// The immutable migration link: an appointment created from a legacy
+// `assignments` row permanently supersedes THAT source record — not merely
+// the authority tuple it happens to carry today. Editing the appointment's
+// role/scope changes the tuple but must never release the source row back
+// into force once the appointment ends. `appointedVia.assignmentId` is
+// write-once (enforced by the collection hook).
+export function supersededAssignmentIds(appointmentRows: AuthorityRow[]): Set<string> {
+  const ids = new Set<string>()
+  for (const row of appointmentRows) {
+    const via = row.appointedVia
+    if (via?.source === 'assignments_migration' && via.assignmentId != null)
+      ids.add(String(via.assignmentId))
+  }
+  return ids
 }
 
 export interface AuthorityDerivation {

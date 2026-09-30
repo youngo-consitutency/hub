@@ -433,6 +433,133 @@ describe('migration backfill', () => {
     expect((docs[0] as any).appointmentRole).toBe('org.representative')
     expect((await accessFor(legacy)).councilSeats).toContain('org:org-beta')
   })
+
+  it('keeps the source superseded when a migrated appointment is edited then revoked', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    await migrate(account)
+    const payload = await testPayload()
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    // Edit the migrated appointment to a different role and scope — the
+    // supersession link is the source identity, not the current tuple.
+    await payload.update({
+      collection: 'appointments',
+      id: docs[0].id,
+      data: { appointmentRole: 'team.partnerships', scopeId: 'partnerships_team' },
+      overrideAccess: true,
+    })
+    await payload.update({
+      collection: 'appointments',
+      id: docs[0].id,
+      data: { status: 'revoked' },
+      overrideAccess: true,
+    })
+    const access = await accessFor(account)
+    // The revoked appointment grants nothing AND the edited tuple must not
+    // release the original finance ledger row back into force.
+    expect(access.capabilities).not.toContain('finance.review')
+    expect(access.capabilities).not.toContain('partnership.review')
+    // The provenance link survives the edits — it is write-once.
+    const after = await payload.findByID({
+      collection: 'appointments',
+      id: docs[0].id,
+      overrideAccess: true,
+    })
+    expect((after as any).appointedVia.source).toBe('assignments_migration')
+    expect(String((after as any).appointedVia.assignmentId)).toBe(String(src.id))
+  })
+
+  it('never duplicates or resurrects under overlapping and stale plans', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'safeguarding_team',
+      role: 'member',
+      status: 'inactive',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    // Two plans built before either writes — the overlap window.
+    const planA = await planMigration(payload, { accountIds: [account.id] })
+    const planB = await planMigration(payload, { accountIds: [account.id] })
+    expect(planA.creates).toHaveLength(1)
+    const a = await writeMigration(payload, planA)
+    expect(a.created).toBe(1)
+    // The second run's plan still says "create", but the write-time source
+    // check must make it a no-op — even for an inactive historical row.
+    const b = await writeMigration(payload, planB)
+    expect(b.created).toBe(0)
+    expect(b.staleSkipped + b.conflicts).toBe(1)
+    expect(await appointmentCount(account)).toBe(1)
+
+    // A human then revokes the migrated appointment, and the stale plan
+    // runs again: the revoked row must never be recreated or reactivated.
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    await payload.update({
+      collection: 'appointments',
+      id: docs[0].id,
+      data: { status: 'revoked' },
+      overrideAccess: true,
+    })
+    const rerun = await writeMigration(payload, planA)
+    expect(rerun.created).toBe(0)
+    expect(rerun.staleSkipped + rerun.conflicts).toBe(1)
+    expect(await appointmentCount(account)).toBe(1)
+    const { docs: after } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect((after[0] as any).status).toBe('revoked')
+    expect((await accessFor(account)).capabilities).not.toContain('safeguarding.case')
+  })
+
+  it('preserves human edits to a migrated appointment across reruns', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'reforms_team',
+      role: 'member',
+    })
+    await migrate(account)
+    const payload = await testPayload()
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    // A human corrects the evidence and term after migration.
+    await payload.update({
+      collection: 'appointments',
+      id: docs[0].id,
+      data: { evidence: 'Council decision 2026-01', endsAt: iso(86400000 * 30) },
+      overrideAccess: true,
+    })
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+    expect(plan.alreadyMigrated).toBe(1)
+    const result = await writeMigration(payload, plan)
+    expect(result.created).toBe(0)
+    const after = await payload.findByID({
+      collection: 'appointments',
+      id: docs[0].id,
+      overrideAccess: true,
+    })
+    expect((after as any).evidence).toBe('Council decision 2026-01')
+    expect((after as any).status).toBe('active')
+  })
 })
 
 describe('focal point authority', () => {
@@ -448,7 +575,7 @@ describe('focal point authority', () => {
     expect(access.isFocalPoint).toBeFalsy()
   })
 
-  it('migrates the title into an evidenced appointment and revokes cleanly', async () => {
+  it('reports an unverified title for review and never grants it', async () => {
     const { account } = await provisionAccount({
       role: 'focal_point',
       membershipTrack: 'constituency_work',
@@ -456,8 +583,72 @@ describe('focal point authority', () => {
     const payload = await testPayload()
     const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
     const plan = await planMigration(payload, { accountIds: [account.id] })
-    expect(plan.focalAccounts).toHaveLength(1)
-    await writeMigration(payload, plan)
+    // The title alone is not election evidence: review-only, no appointment.
+    expect(plan.focalVerified).toHaveLength(0)
+    expect(plan.focalUnverified.map((a: any) => a.id)).toContain(account.id)
+    const result = await writeMigration(payload, plan)
+    expect(result.focalCreated).toBe(0)
+
+    const { totalDocs } = await payload.count({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(totalDocs).toBe(0)
+    const access = await accessFor(account)
+    expect(access.councilSeats).toEqual([])
+    expect(access.capabilities).not.toContain('council.vote')
+  })
+
+  it('rejects focal evidence without real term dates or a reference', async () => {
+    const { account } = await provisionAccount({
+      role: 'focal_point',
+      membershipTrack: 'constituency_work',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+
+    // Open-ended: no endsAt → rejected.
+    let result = await writeMigration(payload, plan, {
+      focalEvidence: new Map([[account.id, { startsAt: iso(-86400000) } as any]]),
+    })
+    expect(result.focalCreated).toBe(0)
+    expect(result.focalRejected[0].reason).toContain('term dates')
+
+    // No verifiable reference → rejected.
+    result = await writeMigration(payload, plan, {
+      focalEvidence: new Map([
+        [account.id, { startsAt: iso(-86400000), endsAt: iso(86400000) } as any],
+      ]),
+    })
+    expect(result.focalCreated).toBe(0)
+    expect(result.focalRejected[0].reason).toContain('reference')
+    expect((await accessFor(account)).capabilities).not.toContain('council.vote')
+  })
+
+  it('migrates an externally evidenced mandate and revokes cleanly', async () => {
+    const { account } = await provisionAccount({
+      role: 'focal_point',
+      membershipTrack: 'constituency_work',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+    const result = await writeMigration(payload, plan, {
+      focalEvidence: new Map([
+        [
+          account.id,
+          {
+            reference: 'Council minutes 2025-01 recording the Focal Point appointment',
+            startsAt: iso(-86400000),
+            endsAt: iso(86400000 * 365),
+          },
+        ],
+      ]),
+    })
+    expect(result.focalCreated).toBe(1)
+    expect(result.focalRejected).toHaveLength(0)
 
     const granted = await accessFor(account)
     expect(granted.councilSeats).toContain('focal_point')
@@ -479,6 +670,78 @@ describe('focal point authority', () => {
     const after = await accessFor(account)
     expect(after.councilSeats).toEqual([])
     expect(after.capabilities).not.toContain('council.vote')
+  })
+
+  it('verifies an election reference against a completed focal_point election', async () => {
+    const { account } = await provisionAccount({
+      role: 'focal_point',
+      membershipTrack: 'constituency_work',
+    })
+    const payload = await testPayload()
+    const election = await payload.create({
+      collection: 'elections',
+      data: {
+        title: 'Focal Point election',
+        kind: 'focal_point',
+        status: 'completed',
+        races: [{ slug: 'global', label: 'Global Focal Point' }],
+      } as any,
+      overrideAccess: true,
+    })
+    const candidate = await payload.create({
+      collection: 'election-candidates',
+      data: {
+        election: election.id,
+        race: 'global',
+        account: account.id,
+        statement: 'Fictional test candidacy statement.',
+        status: 'screened_in',
+        nominatedAt: iso(-86400000),
+      } as any,
+      overrideAccess: true,
+    })
+    await payload.update({
+      collection: 'elections',
+      id: election.id,
+      data: { result: { races: { global: { winner: candidate.id } } } } as any,
+      overrideAccess: true,
+    })
+
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+    // The election verifies the mandate; the evidence file supplies terms.
+    expect(plan.focalVerified.map((v: any) => v.account.id)).toContain(account.id)
+    expect(plan.focalUnverified.map((a: any) => a.id)).not.toContain(account.id)
+
+    // A different election id (or none) must not satisfy verification —
+    // and the verified election without dates is still refused.
+    let result = await writeMigration(payload, plan, {
+      focalEvidence: new Map([
+        [account.id, { electionId: election.id, startsAt: iso(-86400000) } as any],
+      ]),
+    })
+    expect(result.focalCreated).toBe(0)
+
+    result = await writeMigration(payload, plan, {
+      focalEvidence: new Map([
+        [
+          account.id,
+          { electionId: election.id, startsAt: iso(-86400000), endsAt: iso(86400000 * 365) },
+        ],
+      ]),
+    })
+    expect(result.focalCreated).toBe(1)
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect((docs[0] as any).appointedVia).toMatchObject({
+      source: 'election',
+      electionId: election.id,
+      race: 'global',
+    })
+    expect((await accessFor(account)).councilSeats).toContain('focal_point')
   })
 })
 

@@ -3,6 +3,7 @@ import {
   appointmentKey,
   deriveAuthority,
   resolveAppointmentRole,
+  supersededAssignmentIds,
   supersessionKeys,
   type AuthorityRow,
 } from './appointments'
@@ -100,10 +101,16 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
 
   // Supersession is persistent: once a mandate lives in `appointments`,
   // revoking or expiring it cannot resurrect the untouched legacy row.
+  // Two links apply — the immutable migration-source identity (a legacy row
+  // stays superseded even after its appointment's role/scope was edited)
+  // and the current authority tuple (a fresh grant covers the same-scope
+  // legacy row while any canonical record exists for it).
   const superseded = supersessionKeys(appts.docs as any[] as AuthorityRow[])
+  const supersededSources = supersededAssignmentIds(appts.docs as any[] as AuthorityRow[])
   const rows: AuthorityRow[] = [
     ...(appts.docs as any[] as AuthorityRow[]),
     ...(legacyRows.docs as any[] as AuthorityRow[]).filter((r) => {
+      if (supersededSources.has(String(r.id))) return false
       const roleKey = resolveAppointmentRole(r)
       return !roleKey || !superseded.has(appointmentKey(roleKey, r.scopeType, r.scopeId))
     }),

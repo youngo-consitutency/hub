@@ -8,6 +8,7 @@ import {
   legacyAppointmentRole,
   normaliseScopeType,
   resolveAppointmentRole,
+  supersededAssignmentIds,
   supersessionKeys,
   type AuthorityRow,
 } from '../../lib/appointments'
@@ -124,7 +125,7 @@ export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'
       [actor.id],
     ),
     client.query(
-      `SELECT id,appointment_role AS "appointmentRole",scope_type::text AS "scopeType",scope_id AS "scopeId",council_seat AS "councilSeat",status,starts_at AS "startsAt",ends_at AS "endsAt" FROM appointments WHERE account_id=$1 FOR SHARE`,
+      `SELECT id,appointment_role AS "appointmentRole",scope_type::text AS "scopeType",scope_id AS "scopeId",council_seat AS "councilSeat",status,starts_at AS "startsAt",ends_at AS "endsAt",appointed_via AS "appointedVia" FROM appointments WHERE account_id=$1 FOR SHARE`,
       [actor.id],
     ),
   ])
@@ -135,9 +136,11 @@ export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'
     current.hub_access_status === 'active'
   const apptRows = appointed.rows as AuthorityRow[]
   const superseded = supersessionKeys(apptRows)
+  const supersededSources = supersededAssignmentIds(apptRows)
   const rows: AuthorityRow[] = [
     ...apptRows,
     ...(assigned.rows as AuthorityRow[]).filter((r) => {
+      if (supersededSources.has(String(r.id))) return false
       const roleKey = resolveAppointmentRole(r)
       return !roleKey || !superseded.has(appointmentKey(roleKey, r.scopeType, r.scopeId))
     }),
