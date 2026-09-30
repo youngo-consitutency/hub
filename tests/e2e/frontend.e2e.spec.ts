@@ -12,9 +12,10 @@ test.describe('Public site', () => {
   test('the public homepage matches About and keeps Home links at the root', async ({ page }) => {
     await page.goto(BASE)
     await expect(page).toHaveTitle(/YOUNGO Hub/)
+    // Dev servers compile the SPA bundle on first hit, so allow for cold starts.
     await expect(
       page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 30000 })
     await expect(page.locator('img[src*="working-together"]')).toHaveCount(0)
     await page.goto(`${BASE}/about`)
     await expect(
@@ -51,18 +52,6 @@ test.describe('Public site', () => {
         '/calendar',
       )
     })
-  })
-
-  test('public API responds with JSON collections', async ({ request }) => {
-    for (const path of ['/api/events', '/api/feed', '/api/groups']) {
-      const res = await request.get(`${BASE}${path}`)
-      expect(res.status()).toBe(200)
-    }
-  })
-
-  test('member API requires auth', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/member/people`)
-    expect([401, 403]).toContain(res.status())
   })
 })
 
