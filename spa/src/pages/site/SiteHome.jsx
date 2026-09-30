@@ -11,7 +11,7 @@ import {
   TbScript as ScrollText,
   TbUsers as Users,
 } from 'react-icons/tb'
-import { A, Skeletons } from '../../components/ui.jsx'
+import { A, Skeletons, ErrorCard, Empty } from '../../components/ui.jsx'
 import { useDocument } from '../../lib/documents.js'
 import { UpcomingEvents } from './UpcomingEvents.jsx'
 
@@ -31,9 +31,26 @@ const ICONS = {
 const iconFor = (name) => ICONS[name] || Users
 
 export function SiteHome() {
-  const { doc: site, loading } = useDocument('site')
+  const { doc: site, loading, error, retry } = useDocument('site')
   const home = site?.home
-  if (!home) return loading ? <Skeletons n={5} /> : null
+  if (loading)
+    return (
+      <div className="siteMain">
+        <Skeletons n={5} />
+      </div>
+    )
+  if (error)
+    return (
+      <div className="siteMain">
+        <ErrorCard message={error} onRetry={retry} />
+      </div>
+    )
+  if (!home)
+    return (
+      <div className="siteMain">
+        <Empty title="About YOUNGO" body="This page has not been published yet." />
+      </div>
+    )
   const {
     hero = {},
     mission = {},
@@ -71,10 +88,12 @@ export function SiteHome() {
       </section>
 
       <div className="siteMain">
-        <section className="siteSection" aria-labelledby="mission-heading">
-          <p className="pageEyebrow">{mission.eyebrow}</p>
-          <h2 id="mission-heading">{mission.title}</h2>
-          <p className="siteSectionLead">{mission.lead}</p>
+        <section className="siteSection siteEditorialSection" aria-labelledby="mission-heading">
+          <div className="siteSectionIntro">
+            <p className="pageEyebrow">{mission.eyebrow}</p>
+            <h2 id="mission-heading">{mission.title}</h2>
+            <p className="siteSectionLead">{mission.lead}</p>
+          </div>
           <div className="siteMissionGrid">
             {(mission.items || []).map(({ icon, title, body }) => {
               const Icon = iconFor(icon)
@@ -91,10 +110,12 @@ export function SiteHome() {
           </div>
         </section>
 
-        <section className="siteSection" aria-labelledby="organised-heading">
-          <p className="pageEyebrow">{organisation.eyebrow}</p>
-          <h2 id="organised-heading">{organisation.title}</h2>
-          <p className="siteSectionLead">{organisation.lead}</p>
+        <section className="siteSection siteEditorialSection" aria-labelledby="organised-heading">
+          <div className="siteSectionIntro">
+            <p className="pageEyebrow">{organisation.eyebrow}</p>
+            <h2 id="organised-heading">{organisation.title}</h2>
+            <p className="siteSectionLead">{organisation.lead}</p>
+          </div>
           <div className="siteOrganisationGrid">
             {(organisation.stats || []).map(({ value, label }) => (
               <article key={value} className="card siteOrgCard">
@@ -106,9 +127,11 @@ export function SiteHome() {
           <p className="meta siteOrgNote">{organisation.note}</p>
         </section>
 
-        <section className="siteSection" aria-labelledby="what-heading">
-          <p className="pageEyebrow">{takePart.eyebrow}</p>
-          <h2 id="what-heading">{takePart.title}</h2>
+        <section className="siteSection siteEditorialSection" aria-labelledby="what-heading">
+          <div className="siteSectionIntro">
+            <p className="pageEyebrow">{takePart.eyebrow}</p>
+            <h2 id="what-heading">{takePart.title}</h2>
+          </div>
           <div className="siteActivityGrid">
             {(takePart.items || []).map(({ icon, title, body, href, link }) => {
               const Icon = iconFor(icon)
@@ -131,22 +154,27 @@ export function SiteHome() {
           </div>
         </section>
 
-        <section className="siteSection siteValuesSection" aria-labelledby="values-heading">
-          <p className="pageEyebrow">{principles.eyebrow}</p>
-          <h2 id="values-heading">{principles.title}</h2>
-          <p className="siteSectionLead">{principles.lead}</p>
-          <ul className="sitePrincipleChips" aria-label="YOUNGO principles">
+        <section
+          className="siteSection siteValuesSection siteEditorialSection"
+          aria-labelledby="values-heading"
+        >
+          <div className="siteSectionIntro">
+            <p className="pageEyebrow">{principles.eyebrow}</p>
+            <h2 id="values-heading">{principles.title}</h2>
+            <p className="siteSectionLead">{principles.lead}</p>
+          </div>
+          <ul className="sitePrincipleList" aria-label="YOUNGO principles">
             {(principles.items || []).map((principle) => (
-              <li key={principle} className="chip chip-neutral">
-                {principle}
-              </li>
+              <li key={principle}>{principle}</li>
             ))}
           </ul>
         </section>
 
-        <section className="siteSection" aria-labelledby="history-heading">
-          <p className="pageEyebrow">{history.eyebrow}</p>
-          <h2 id="history-heading">{history.title}</h2>
+        <section className="siteSection siteEditorialSection" aria-labelledby="history-heading">
+          <div className="siteSectionIntro">
+            <p className="pageEyebrow">{history.eyebrow}</p>
+            <h2 id="history-heading">{history.title}</h2>
+          </div>
           <div className="siteTimeline">
             {(history.items || []).map(({ year, title, body }) => (
               <article key={year} className="siteTimelineItem">

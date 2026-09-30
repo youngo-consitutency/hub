@@ -1,3 +1,4 @@
+import { CatalogueResults } from '../components/CatalogueResults.jsx'
 import { TbFileText as PolicyIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
@@ -223,35 +224,37 @@ export function Submissions() {
                   </FilterMenu>
                 </div>
               </div>
-              {submissions.length ? (
-                <div className="cardGrid">
-                  {submissions.map((submission) => (
-                    <SubmissionCard
-                      key={submission.slug}
-                      sub={submission}
-                      statusFilterState={statusFilters[submission.status] || 'neutral'}
-                      groupFilterState={groupFilters[submission.wg?.slug] || 'neutral'}
-                      onStatusFilter={() =>
-                        setStatusFilters((current) => toggleFilter(current, submission.status))
-                      }
-                      onGroupFilter={
-                        submission.wg
-                          ? () =>
-                              setGroupFilters((current) =>
-                                toggleFilter(current, submission.wg.slug),
-                              )
-                          : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  icon={Search}
-                  title="No submissions match"
-                  body="Try a different stage, working group, or search term."
-                />
-              )}
+              <CatalogueResults count={submissions.length}>
+                {submissions.length ? (
+                  <div className="cardGrid">
+                    {submissions.map((submission) => (
+                      <SubmissionCard
+                        key={submission.slug}
+                        sub={submission}
+                        statusFilterState={statusFilters[submission.status] || 'neutral'}
+                        groupFilterState={groupFilters[submission.wg?.slug] || 'neutral'}
+                        onStatusFilter={() =>
+                          setStatusFilters((current) => toggleFilter(current, submission.status))
+                        }
+                        onGroupFilter={
+                          submission.wg
+                            ? () =>
+                                setGroupFilters((current) =>
+                                  toggleFilter(current, submission.wg.slug),
+                                )
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Empty
+                    icon={Search}
+                    title="No submissions match"
+                    body="Try a different stage, working group, or search term."
+                  />
+                )}
+              </CatalogueResults>
             </>
           )
         }}

@@ -1,3 +1,4 @@
+import { CatalogueResults } from '../components/CatalogueResults.jsx'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
@@ -338,36 +339,38 @@ export function Opportunities() {
                   </FilterMenu>
                 </div>
               </div>
-              {items.length ? (
-                <div className="opportunityGroups">
-                  {groupedItems.open.length > 0 && (
-                    <Section
-                      label="Open"
-                      meta={`${groupedItems.open.length} ${
-                        groupedItems.open.length === 1 ? 'posting' : 'postings'
-                      }`}
-                    >
-                      <div className="cardGrid">{renderCards(groupedItems.open)}</div>
-                    </Section>
-                  )}
-                  {groupedItems.closed.length > 0 && (
-                    <Section
-                      label="Closed"
-                      meta={`${groupedItems.closed.length} ${
-                        groupedItems.closed.length === 1 ? 'posting' : 'postings'
-                      }`}
-                    >
-                      <div className="cardGrid">{renderCards(groupedItems.closed)}</div>
-                    </Section>
-                  )}
-                </div>
-              ) : (
-                <Empty
-                  icon={Search}
-                  title="No opportunities match"
-                  body="Try clearing a filter or changing the search."
-                />
-              )}
+              <CatalogueResults count={items.length}>
+                {items.length ? (
+                  <div className="opportunityGroups">
+                    {groupedItems.open.length > 0 && (
+                      <Section
+                        label="Open"
+                        meta={`${groupedItems.open.length} ${
+                          groupedItems.open.length === 1 ? 'posting' : 'postings'
+                        }`}
+                      >
+                        <div className="cardGrid">{renderCards(groupedItems.open)}</div>
+                      </Section>
+                    )}
+                    {groupedItems.closed.length > 0 && (
+                      <Section
+                        label="Closed"
+                        meta={`${groupedItems.closed.length} ${
+                          groupedItems.closed.length === 1 ? 'posting' : 'postings'
+                        }`}
+                      >
+                        <div className="cardGrid">{renderCards(groupedItems.closed)}</div>
+                      </Section>
+                    )}
+                  </div>
+                ) : (
+                  <Empty
+                    icon={Search}
+                    title="No opportunities match"
+                    body="Try clearing a filter or changing the search."
+                  />
+                )}
+              </CatalogueResults>
             </>
           )
         }}

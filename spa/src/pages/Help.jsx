@@ -1,15 +1,8 @@
 import { TbHelpCircle as HelpIcon } from 'react-icons/tb'
 import {
-  TbArrowRight as ArrowRight,
-  TbBell as Bell,
-  TbCalendar as CalendarDays,
-  TbClipboardCheck as ClipboardCheck,
-  TbFileText as FileText,
   TbHome as Home,
   TbLifebuoy as LifeBuoy,
   TbSpeakerphone as Megaphone,
-  TbSchool as GraduationCap,
-  TbSearch as Search,
   TbShieldLock as ShieldLock,
   TbUserCircle as UserCircle,
   TbUsers as Users,
@@ -17,77 +10,6 @@ import {
 import { A, PageHeader, Section } from '../components/ui.jsx'
 import { FeedbackButton } from '../components/FeedbackButton.jsx'
 import { useDocument } from '../lib/documents.js'
-
-const HUB_DESTINATIONS = [
-  {
-    icon: GraduationCap,
-    title: 'Start and unlock the Hub',
-    body: 'Complete the short membership introduction.',
-    href: '/onboarding',
-  },
-  {
-    icon: Bell,
-    title: 'Install the app and turn on alerts',
-    body: 'Add the Hub to your phone, then allow banners for meetings and announcements.',
-    href: '/profile#alerts',
-  },
-  {
-    icon: UserCircle,
-    title: 'Your account and profile',
-    body: 'Update your photo, directory details, and privacy.',
-    href: '/profile',
-  },
-  {
-    icon: CalendarDays,
-    title: 'Calendar and calls',
-    body: 'Find meetings and add them to your calendar.',
-    href: '/calendar',
-  },
-  {
-    icon: Megaphone,
-    title: 'Opportunities',
-    body: 'Browse open calls, fellowships, and events.',
-    href: '/opportunities',
-  },
-  {
-    icon: Users,
-    title: 'Working groups',
-    body: 'Open a group, meet its Contact Points, and enter its workspace.',
-    href: '/groups',
-  },
-  {
-    icon: FileText,
-    title: 'Submissions',
-    body: 'See drafts, deadlines, and ways to contribute.',
-    href: '/submissions',
-  },
-  {
-    icon: ClipboardCheck,
-    title: 'Youth Statement',
-    body: 'Follow inputs, drafting, and the objection process.',
-    href: '/gys',
-  },
-  {
-    icon: Search,
-    title: 'Search the Hub',
-    body: 'Find Hub content and source-backed constituency evidence.',
-    href: '/search',
-  },
-]
-
-function HubDestination({ item }) {
-  const Icon = item.icon
-  return (
-    <A href={item.href} className="helpDestinationRow">
-      <Icon size={19} strokeWidth={1.75} aria-hidden />
-      <span className="helpDestinationCopy">
-        <strong>{item.title}</strong>
-        <span className="meta">{item.body}</span>
-      </span>
-      <ArrowRight className="helpDestinationArrow" size={17} strokeWidth={1.75} aria-hidden />
-    </A>
-  )
-}
 
 function PersonBehindHub({ person }) {
   const initials = person.name
@@ -117,7 +39,7 @@ export function Help() {
       <PageHeader
         icon={HelpIcon}
         title="Help &amp; support"
-        description="Find the right Hub page, get help with access, or report a problem."
+        description="Get help with your account or report a problem."
       />
 
       <Section label="Get help">
@@ -180,24 +102,15 @@ export function Help() {
         </div>
       </Section>
 
-      <Section label="Use the Hub">
-        <nav className="card helpDestinationGrid" aria-label="Hub help links">
-          {HUB_DESTINATIONS.map((item) => (
-            <HubDestination key={item.href} item={item} />
-          ))}
-        </nav>
-      </Section>
-
-      <Section label="People behind the Hub">
-        <p className="meta helpPeopleIntro">
-          The Hub is designed, maintained, and governed by the two people below inside YOUNGO.
-        </p>
-        <div className="helpPeopleGrid">
-          {HUB_LAUNCHERS.map((person) => (
-            <PersonBehindHub key={person.name} person={person} />
-          ))}
-        </div>
-      </Section>
+      {HUB_LAUNCHERS.length > 0 && (
+        <Section label="People behind the Hub">
+          <div className="helpPeopleGrid">
+            {HUB_LAUNCHERS.map((person) => (
+              <PersonBehindHub key={person.name} person={person} />
+            ))}
+          </div>
+        </Section>
+      )}
 
       <section className="card helpAboutStrip" aria-labelledby="help-about-title">
         <span className="iconTile" aria-hidden>
@@ -206,8 +119,7 @@ export function Help() {
         <div>
           <h2 id="help-about-title">About the Hub</h2>
           <p className="meta">
-            The Hub is volunteer-maintained, runs at cost, and limits member data to what its
-            services need. Read the{' '}
+            Read the{' '}
             <A href="/privacy" className="inlineLink">
               Privacy Notice
             </A>{' '}

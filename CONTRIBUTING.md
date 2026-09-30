@@ -26,6 +26,8 @@ Use British English for documentation, interface copy, and comments. Keep API na
 
 Keep each pull request focused on one problem. Follow the existing components and styles, and avoid adding a dependency for a small task. Keep access checks on the server. Use made-up accounts and public sample data when testing.
 
+Use the shared components in `spa/src/components/` and spacing and colour tokens in `spa/src/styles/tokens.css`. Keep records and public-page copy in the database; do not add sample listings to components. Catalogue views should show the same records and actions in either layout.
+
 For a bug fix, add a test when it helps show the bug stays fixed. For a visual change, check a narrow phone screen, a desktop screen, keyboard use, and readable labels. Attach screenshots without member information.
 
 AI-assisted work is welcome. You are responsible for understanding it, checking its sources, and testing it. Never send private member data or credentials to an assistant.
