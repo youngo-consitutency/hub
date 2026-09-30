@@ -6,6 +6,7 @@ import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 import { normaliseScopeType } from '../lib/appointments'
+import { advisoryAuthorityLock } from '../lib/authorityLock'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -65,53 +66,76 @@ async function openHandover(
 
 // End active participation rows *and* the mandates they fed — an appointment
 // must not outlive the membership exit that ends it (S17). `scopeTypes`
-// limits which scopes are closed. Returns the number of rows ended.
+// limits which scopes are closed. The sweep runs in one transaction under
+// the shared authority lock so a concurrent grant or migration write cannot
+// slip a mandate past the exit. Returns the number of rows ended.
 async function endAssignments(
   req: PayloadRequest,
   accountId: number,
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
-  const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
-  if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
-  const { docs } = await req.payload.find({
-    collection: 'assignments',
-    where: { and },
-    limit: 1000,
-    overrideAccess: true,
-  })
-  const ended = new Date().toISOString()
-  for (const doc of docs as any[]) {
-    await req.payload.update({
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  const outerTransaction = req.transactionID
+  req.transactionID = transactionID
+  try {
+    // Advisory FIRST, per the shared lock order (lib/authorityLock.ts) —
+    // then the reads and writes below serialise with every other authority
+    // writer on this account.
+    await advisoryAuthorityLock(req.payload, transactionID, accountId)
+    const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
+    if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
+    const { docs } = await req.payload.find({
       collection: 'assignments',
-      id: doc.id,
-      data: { status: 'expired', endsAt: ended },
+      where: { and },
+      limit: 1000,
       overrideAccess: true,
+      req,
     })
-  }
-  const appointmentAnd: any[] = [
-    { account: { equals: accountId } },
-    { status: { equals: 'active' } },
-  ]
-  if (scopeTypes?.length) {
-    appointmentAnd.push({
-      scopeType: { in: scopeTypes.map((t) => normaliseScopeType(t)) },
-    })
-  }
-  const { docs: appointments } = await req.payload.find({
-    collection: 'appointments',
-    where: { and: appointmentAnd },
-    limit: 1000,
-    overrideAccess: true,
-  })
-  for (const doc of appointments as any[]) {
-    await req.payload.update({
+    const ended = new Date().toISOString()
+    for (const doc of docs as any[]) {
+      await req.payload.update({
+        collection: 'assignments',
+        id: doc.id,
+        data: { status: 'expired', endsAt: ended },
+        overrideAccess: true,
+        req,
+      })
+    }
+    const appointmentAnd: any[] = [
+      { account: { equals: accountId } },
+      { status: { equals: 'active' } },
+    ]
+    if (scopeTypes?.length) {
+      appointmentAnd.push({
+        scopeType: { in: scopeTypes.map((t) => normaliseScopeType(t)) },
+      })
+    }
+    const { docs: appointments } = await req.payload.find({
       collection: 'appointments',
-      id: doc.id,
-      data: { status: 'expired', endsAt: ended },
+      where: { and: appointmentAnd },
+      limit: 1000,
       overrideAccess: true,
+      req,
     })
+    for (const doc of appointments as any[]) {
+      await req.payload.update({
+        collection: 'appointments',
+        id: doc.id,
+        data: { status: 'expired', endsAt: ended },
+        overrideAccess: true,
+        req,
+      })
+    }
+    await req.payload.db.commitTransaction(transactionID)
+    return docs.length + appointments.length
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    if (outerTransaction) req.transactionID = outerTransaction
+    else delete req.transactionID
   }
-  return docs.length + appointments.length
 }
 
 const handoverView = (h: any) => ({

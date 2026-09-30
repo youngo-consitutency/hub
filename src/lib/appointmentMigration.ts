@@ -330,103 +330,132 @@ export async function writeMigration(
     return docs as any[]
   }
 
+  const HOLDER_CHANGED = Symbol('holder_changed')
   for (const { row } of plan.creates) {
-    try {
-      await inTransaction(async (req) => {
-        // 1. Lock the source row FOR UPDATE — any concurrent human edit or
-        //    revocation of this ledger row serialises with us (Postgres row
-        //    locks need no cooperation from the other writer).
-        await lockAssignmentRow(payload, req.transactionID, row.id)
-        // 2. Re-read the SOURCE assignment: the plan snapshot may be stale
-        //    in every field — status, role, scope, even the holder. Only
-        //    live state is used below.
-        const source = await payload
-          .findByID({ collection: 'assignments', id: row.id, overrideAccess: true, req })
-          .catch(() => null)
-        if (!source) {
-          result.staleSkipped += 1
-          return
-        }
-        const liveAccountId =
-          typeof (source as any).account === 'object'
-            ? (source as any).account.id
-            : (source as any).account
-        // 3. Serialise against concurrent authority writes on the holder —
-        //    grants, revocations and edits take the same advisory lock.
-        await advisoryAuthorityLock(payload, req.transactionID, liveAccountId)
-        const live = classifyAssignment(source as any as LegacyRow)
-        if (live.kind !== 'mandate') {
-          // The source was reclassified since planning (role edited to
-          // participation or an unmapped value) — do not mint authority it
-          // no longer represents.
-          result.staleSkipped += 1
-          return
-        }
-        const liveStatus = migratedStatus(source as any as LegacyRow)
-        const liveKey = appointmentKey(
-          live.appointmentRole!,
-          (source as any).scopeType,
-          (source as any).scopeId,
-        )
+    let attempts = 0
+    for (;;) {
+      try {
+        await inTransaction(async (req) => {
+          // 1. The advisory account lock comes FIRST in the shared lock
+          //    order — before any row lock — so no coordinated writer ever
+          //    waits on a row while holding an account's authority lock.
+          //    The unlocked read only chooses the lock key; the locked
+          //    re-read below is authoritative.
+          const guess = await payload
+            .findByID({ collection: 'assignments', id: row.id, overrideAccess: true, req })
+            .catch(() => null)
+          if (!guess) {
+            result.staleSkipped += 1
+            return
+          }
+          const guessedHolder =
+            typeof (guess as any).account === 'object'
+              ? (guess as any).account.id
+              : (guess as any).account
+          await advisoryAuthorityLock(payload, req.transactionID, guessedHolder)
+          // 2. Row-lock the source and re-read it — the plan snapshot may
+          //    be stale in every field: status, role, scope, even the
+          //    holder.
+          await lockAssignmentRow(payload, req.transactionID, row.id)
+          const source = await payload
+            .findByID({ collection: 'assignments', id: row.id, overrideAccess: true, req })
+            .catch(() => null)
+          if (!source) {
+            result.staleSkipped += 1
+            return
+          }
+          const liveAccountId =
+            typeof (source as any).account === 'object'
+              ? (source as any).account.id
+              : (source as any).account
+          // The holder moved between the unlocked read and the row lock —
+          // we hold the wrong account's lock. Roll back and retry so the
+          // appointment always writes under the live holder's lock.
+          if (liveAccountId !== guessedHolder) throw HOLDER_CHANGED
+          const live = classifyAssignment(source as any as LegacyRow)
+          if (live.kind !== 'mandate') {
+            // The source was reclassified since planning (role edited to
+            // participation or an unmapped value) — do not mint authority
+            // it no longer represents.
+            result.staleSkipped += 1
+            return
+          }
+          const liveStatus = migratedStatus(source as any as LegacyRow)
+          const liveKey = appointmentKey(
+            live.appointmentRole!,
+            (source as any).scopeType,
+            (source as any).scopeId,
+          )
 
-        const existing = await accountAppointments(req, liveAccountId)
-        if (
-          existing.some(
-            (d) =>
-              d.appointedVia?.source === 'assignments_migration' &&
-              String(d.appointedVia?.assignmentId) === String(row.id),
-          )
-        ) {
-          // Source already migrated — including a row a human has since
-          // revoked or edited. Never touch it.
-          result.staleSkipped += 1
-          return
-        }
-        // Protect every canonical appointment matching the resolved tuple,
-        // regardless of provenance or status: an independently created and
-        // revoked grant is a human decision a stale plan must not bypass.
-        if (
-          existing.some(
-            (d) => appointmentKey(d.appointmentRole, d.scopeType, d.scopeId) === liveKey,
-          )
-        ) {
-          result.staleSkipped += 1
-          return
-        }
-        await opts.hooks?.beforeCreate?.({ req, accountId: liveAccountId, sourceId: row.id })
-        await payload.create({
-          collection: 'appointments',
-          data: {
-            account: liveAccountId,
-            appointmentRole: live.appointmentRole,
-            scopeType: normaliseScopeType((source as any).scopeType),
-            scopeId: (source as any).scopeId,
-            councilSeat: councilSeatFor(live.appointmentRole!, source as any),
-            status: liveStatus,
-            startsAt: (source as any).startsAt ?? new Date().toISOString(),
-            endsAt: (source as any).endsAt ?? null,
-            evidence: (source as any).appointmentEvidence ?? null,
-            appointedVia: {
-              source: 'assignments_migration',
-              assignmentId: row.id,
-              assignmentStatus: (source as any).status,
-              assignmentRole: (source as any).role,
-              assignmentScope: `${(source as any).scopeType}:${(source as any).scopeId}`,
-            },
-          } as any,
-          overrideAccess: true,
-          req,
+          const existing = await accountAppointments(req, liveAccountId)
+          if (
+            existing.some(
+              (d) =>
+                d.appointedVia?.source === 'assignments_migration' &&
+                String(d.appointedVia?.assignmentId) === String(row.id),
+            )
+          ) {
+            // Source already migrated — including a row a human has since
+            // revoked or edited. Never touch it.
+            result.staleSkipped += 1
+            return
+          }
+          // Protect every canonical appointment matching the resolved
+          // tuple, regardless of provenance or status: an independently
+          // created and revoked grant is a human decision a stale plan
+          // must not bypass.
+          if (
+            existing.some(
+              (d) => appointmentKey(d.appointmentRole, d.scopeType, d.scopeId) === liveKey,
+            )
+          ) {
+            result.staleSkipped += 1
+            return
+          }
+          await opts.hooks?.beforeCreate?.({ req, accountId: liveAccountId, sourceId: row.id })
+          await payload.create({
+            collection: 'appointments',
+            data: {
+              account: liveAccountId,
+              appointmentRole: live.appointmentRole,
+              scopeType: normaliseScopeType((source as any).scopeType),
+              scopeId: (source as any).scopeId,
+              councilSeat: councilSeatFor(live.appointmentRole!, source as any),
+              status: liveStatus,
+              startsAt: (source as any).startsAt ?? new Date().toISOString(),
+              endsAt: (source as any).endsAt ?? null,
+              evidence: (source as any).appointmentEvidence ?? null,
+              appointedVia: {
+                source: 'assignments_migration',
+                assignmentId: row.id,
+                assignmentStatus: (source as any).status,
+                assignmentRole: (source as any).role,
+                assignmentScope: `${(source as any).scopeType}:${(source as any).scopeId}`,
+              },
+            } as any,
+            overrideAccess: true,
+            req,
+          })
+          result.created += 1
         })
-        result.created += 1
-      })
-    } catch (error: any) {
-      // The plan was stale in a way the re-check could not see (a true
-      // write race): the database rejected the duplicate. Skip it.
-      if (isUniqueViolation(error)) {
-        result.conflicts += 1
-        continue
+        break
+      } catch (error: any) {
+        // Holder changed between the unlocked read and the row lock —
+        // roll back and retry so the row is written under the live
+        // holder's authority lock. Bounded: repeated churn stops retrying.
+        if (error === HOLDER_CHANGED && ++attempts < 3) continue
+        // A true write race that the in-transaction re-check could not
+        // see: the database rejected the duplicate. Skip it.
+        if (error !== HOLDER_CHANGED && isUniqueViolation(error)) {
+          result.conflicts += 1
+          break
+        }
+        if (error === HOLDER_CHANGED) {
+          result.staleSkipped += 1
+          break
+        }
+        throw error
       }
-      throw error
     }
   }
 

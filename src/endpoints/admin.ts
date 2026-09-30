@@ -9,12 +9,9 @@ import {
   sendMembershipActivatedEmail,
   findAccountRowById,
 } from '../lib/membership'
-import {
-  setTeamAssignment,
-  ensureOwnerSeat,
-  listAccountsForAdmin,
-  queryAccountsForAdmin,
-} from '../lib/adminAccounts'
+import { ensureOwnerSeat, listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
+import { legacyAppointmentRole } from '../lib/appointments'
+import { grantAppointment, revokeAppointment } from '../lib/appointmentService'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
@@ -178,14 +175,52 @@ export const adminEndpoints: Endpoint[] = [
       const target = items.find((item: any) => String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
-      if (b.enabled === false) roles.delete(teamRole)
-      else roles.add(teamRole)
-      const updatedRow = await setAccountFields(id, { team_roles: [...roles] })
-      await setTeamAssignment({
-        accountId: id,
-        teamRole,
-        enabled: b.enabled !== false,
-        assignedBy: admin.id,
+      // Team roles are canonical mandates: write them as `appointments`
+      // (with the shared lock and audit trail), not as legacy ledger rows.
+      const appointmentRole = legacyAppointmentRole('team', teamRole, 'member')
+      if (!appointmentRole) throw fail.validation({ teamRole: 'Invalid team role.' })
+      if (b.enabled === false) {
+        roles.delete(teamRole)
+        // Revoke the appointment for this tuple whatever its provenance —
+        // migrated or directly granted alike.
+        const { docs: active } = await req.payload.find({
+          collection: 'appointments',
+          where: {
+            and: [
+              { account: { equals: target.id } },
+              { appointmentRole: { equals: appointmentRole } },
+              { scopeType: { equals: 'team' } },
+              { scopeId: { equals: teamRole } },
+              { status: { equals: 'active' } },
+            ],
+          },
+          limit: 50,
+          overrideAccess: true,
+        })
+        for (const appt of active as any[]) {
+          await revokeAppointment(req, appt.id, admin, reason)
+        }
+      } else {
+        roles.add(teamRole)
+        try {
+          await grantAppointment(req, {
+            account: target.id,
+            appointmentRole,
+            scopeType: 'team',
+            scopeId: teamRole,
+            evidence: reason,
+            appointedBy: admin.id,
+            appointedVia: { source: 'admin_console' },
+          })
+        } catch (error: any) {
+          // Already holds the mandate — enabling twice is a no-op.
+          if (error?.code !== 'duplicate_appointment') throw error
+        }
+      }
+      // team_roles is jsonb — bind a JSON document, not a JS array (pg would
+      // encode it as a Postgres array literal).
+      const updatedRow = await setAccountFields(id, {
+        team_roles: JSON.stringify([...roles]),
       })
       await audit(req, admin, {
         action: 'account.team_assignment_changed',

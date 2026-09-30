@@ -100,6 +100,17 @@ async function audit(
     [actor.id, action, target, reason, after],
   )
 }
+// Lock every account this transaction may write, in ascending id order,
+// BEFORE permissions()' FOR SHARE reads. permissions() shares-locks the
+// actor's own rows while writes target another account's rows — locking
+// only the target would let a cross pair (A writes B while B writes A)
+// deadlock on each other's FOR SHARE. Locking {actor, target} in a fixed
+// order closes that cycle; see lib/authorityLock.ts for the contract.
+async function lockAuthority(client: Pick<PoolClient, 'query'>, ...accountIds: number[]) {
+  for (const id of [...new Set(accountIds)].sort((a, b) => a - b))
+    await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, id])
+}
+
 export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'> = db()) {
   const current = (
     await client.query(
@@ -355,12 +366,17 @@ const GCT_AREAS = [
 
 export async function assign(actor: Actor, input: Input) {
   return transaction(async (client) => {
+    const accountId = intId(input.accountId)
+    // The shared advisory locks come FIRST in the lock order — before
+    // permissions()' FOR SHARE reads on the actor's own rows — so no
+    // writer ever waits on a row lock while holding an authority lock.
+    // Self-targeting (actor === target) collapses to a single key.
+    await lockAuthority(client, intId(actor.id), accountId)
     const p = await permissions(actor, client)
     if (!p.admin) fail(403, 'Only platform administrators can record an evidenced assignment.')
-    const accountId = intId(input.accountId),
-      // Accept both spellings; canonicalise to 'organisation' — the
-      // appointments enum and registry vocabulary.
-      scopeType = normaliseScopeType(text(input, 'scopeType')),
+    // Accept both spellings; canonicalise to 'organisation' — the
+    // appointments enum and registry vocabulary.
+    const scopeType = normaliseScopeType(text(input, 'scopeType')),
       scopeId = text(input, 'scopeId'),
       role = text(input, 'role'),
       evidence = text(input, 'evidence', 2000)
@@ -438,10 +454,9 @@ export async function assign(actor: Actor, input: Input) {
 
     // Mandated responsibility → appointments table. The partial unique index
     // keeps a single active row per (account, role, scope); re-granting an
-    // active mandate refreshes term and evidence. The shared advisory lock
-    // serialises this insert against the migration backfill and every other
-    // authority write on the account (see lib/authorityLock.ts).
-    await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, accountId])
+    // active mandate refreshes term and evidence. The advisory lock taken at
+    // the top of this transaction serialises the insert against the
+    // migration backfill and every other authority write on the account.
     const councilSeat = councilSeatFor(appointmentRole, { scopeId, councilSeat: null })
     const { rows } = await client.query(
       `INSERT INTO appointments(account_id,appointment_role,scope_type,scope_id,council_seat,starts_at,ends_at,evidence,appointed_by_id)
@@ -473,9 +488,16 @@ export async function assign(actor: Actor, input: Input) {
 }
 export async function revoke(actor: Actor, id: string, reason: string) {
   return transaction(async (client) => {
+    if (reason.length < 8) fail(400, 'Give a reason for ending this assignment.')
+    // Resolve the target account and take the shared advisory locks BEFORE
+    // permissions()' FOR SHARE reads — the lock order (advisory → row
+    // locks → writes) is what keeps concurrent migration writes and
+    // self-targeting revocations deadlock-free.
+    const target = await client.query('SELECT account_id FROM assignments WHERE id=$1', [intId(id)])
+    if (!target.rowCount) fail(404, 'Assignment not found.')
+    await lockAuthority(client, intId(actor.id), intId(target.rows[0].account_id))
     if (!(await permissions(actor, client)).admin)
       fail(403, 'Platform administrator access required.')
-    if (reason.length < 8) fail(400, 'Give a reason for ending this assignment.')
     const result = await client.query(
       `UPDATE assignments SET status='revoked',ends_at=now(),updated_at=now() WHERE id=$1 RETURNING account_id`,
       [intId(id)],
@@ -483,12 +505,7 @@ export async function revoke(actor: Actor, id: string, reason: string) {
     if (!result.rowCount) fail(404, 'Assignment not found.')
     // Revoking a ledger row ends the mandate it carried: cascade to the
     // migration-linked appointment so either ordering of revoke vs
-    // backfill converges on "ended". The advisory lock serialises with
-    // grants running on the holder account.
-    await client.query('SELECT pg_advisory_xact_lock($1,$2)', [
-      AUTHORITY_LOCK_NS,
-      result.rows[0].account_id,
-    ])
+    // backfill converges on "ended".
     await client.query(
       `UPDATE appointments SET status='revoked',ends_at=now(),updated_at=now()
        WHERE appointed_via->>'source'='assignments_migration'
@@ -503,9 +520,14 @@ export async function revoke(actor: Actor, id: string, reason: string) {
 // participation ledger.
 export async function revokeAppointment(actor: Actor, id: string, reason: string) {
   return transaction(async (client) => {
+    if (reason.length < 8) fail(400, 'Give a reason for ending this appointment.')
+    const target = await client.query('SELECT account_id FROM appointments WHERE id=$1', [
+      intId(id),
+    ])
+    if (!target.rowCount) fail(404, 'Appointment not found.')
+    await lockAuthority(client, intId(actor.id), intId(target.rows[0].account_id))
     if (!(await permissions(actor, client)).admin)
       fail(403, 'Platform administrator access required.')
-    if (reason.length < 8) fail(400, 'Give a reason for ending this appointment.')
     const result = await client.query(
       `UPDATE appointments SET status='revoked',ends_at=now(),updated_at=now() WHERE id=$1 AND status='active' RETURNING account_id`,
       [intId(id)],
@@ -687,6 +709,11 @@ export async function publicPlatform() {
 
 export async function membershipAction(actor: Actor, id: string, input: Input) {
   return transaction(async (client) => {
+    // Lifecycle writes touch the TARGET account's rows; permissions()
+    // FOR SHAREs the actor's. Lock both accounts first, per the shared
+    // lock order — an expiry racing a grant on the same account must
+    // serialise, never deadlock.
+    await lockAuthority(client, intId(actor.id), intId(id))
     if (!(await permissions(actor, client)).membership)
       fail(403, 'An active Membership Team assignment is required.')
     const action = text(input, 'action'),

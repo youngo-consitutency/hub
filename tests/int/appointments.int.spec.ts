@@ -300,6 +300,28 @@ describe('migration backfill', () => {
     return { plan, result }
   }
 
+  // Waits until Postgres registers a writer QUEUED on the account's shared
+  // advisory lock — real database evidence of blocking, not a timeout guess.
+  async function waitForAdvisoryWaiter(accountId: number, timeoutMs = 10000) {
+    const { requirePgPool } = await import('@/lib/pg')
+    const { AUTHORITY_LOCK_NS } = await import('@/lib/authorityLock')
+    const pool = requirePgPool()
+    const deadline = Date.now() + timeoutMs
+    for (;;) {
+      const { rows } = await pool.query(
+        `SELECT l.pid, a.query
+         FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
+        WHERE l.locktype = 'advisory' AND NOT l.granted
+          AND l.classid = $1 AND l.objid = $2`,
+        [AUTHORITY_LOCK_NS, accountId],
+      )
+      if (rows.length) return rows
+      if (Date.now() > deadline)
+        throw new Error(`No advisory-lock waiter appeared for account ${accountId}`)
+      await new Promise((r) => setTimeout(r, 50))
+    }
+  }
+
   async function appointmentCount(account: any) {
     const payload = await testPayload()
     const { totalDocs } = await payload.count({
@@ -666,7 +688,9 @@ describe('migration backfill', () => {
     })
     await atPause
 
-    // A human grant for the same tuple must block on the shared lock.
+    // A human grant for the same tuple must block on the shared lock —
+    // verified at the database: pg_locks shows the writer queued on the
+    // account's advisory key before we release the pause.
     const { grantAppointment } = await import('@/lib/appointmentService')
     const req = { payload, headers: new Headers() } as any
     let humanSettled = false
@@ -679,7 +703,7 @@ describe('migration backfill', () => {
     } as any).finally(() => {
       humanSettled = true
     })
-    await new Promise((r) => setTimeout(r, 400))
+    await waitForAdvisoryWaiter(account.id)
     expect(humanSettled).toBe(false)
 
     release()
@@ -717,8 +741,9 @@ describe('migration backfill', () => {
     })
     await atPause
 
-    // A human revokes the source ledger row mid-write — it must block on
-    // the row lock until the migration transaction commits.
+    // A human revokes the source ledger row mid-write — under the shared
+    // lock order it queues on the account's advisory lock (before its own
+    // FOR SHARE reads), verified in pg_locks.
     const { revoke } = await import('@/modules/platform/service')
     let humanSettled = false
     const humanP = revoke(
@@ -728,7 +753,7 @@ describe('migration backfill', () => {
     ).finally(() => {
       humanSettled = true
     })
-    await new Promise((r) => setTimeout(r, 400))
+    await waitForAdvisoryWaiter(account.id)
     expect(humanSettled).toBe(false)
 
     release()
@@ -788,6 +813,136 @@ describe('migration backfill', () => {
     expect((docs[0] as any).appointmentRole).toBe('team.finance')
   })
 
+  it('serialises a self-targeting revocation — permissions() FOR SHARE cannot deadlock', async () => {
+    // The admin revokes their OWN source row mid-migration: permissions()
+    // takes FOR SHARE on the actor's rows — the very row the migration
+    // holds FOR UPDATE. Under the shared lock order (advisory first) this
+    // serialises instead of deadlocking on the row-lock queue.
+    const { account: admin } = await provisionAccount({
+      role: 'admin',
+      membershipTrack: 'constituency_work',
+    })
+    const src = await createAssignment(admin, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [admin.id] })
+
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const writeP = writeMigration(payload, plan, {
+      hooks: {
+        beforeCreate: async () => {
+          pauseReached()
+          await resumeGate
+        },
+      },
+    })
+    await atPause
+
+    const { revoke } = await import('@/modules/platform/service')
+    let humanSettled = false
+    const humanP = revoke(
+      { id: String(admin.id), role: 'admin' },
+      String(src.id),
+      'Withdrawing my own mandate for rotation.',
+    ).finally(() => {
+      humanSettled = true
+    })
+    // The self-revoke waits on the advisory lock before its FOR SHARE
+    // reads can touch the locked row — no lock-order cycle.
+    await waitForAdvisoryWaiter(admin.id)
+    expect(humanSettled).toBe(false)
+
+    release()
+    await writeP
+    await humanP
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: admin.id } },
+      overrideAccess: true,
+    })
+    expect(docs).toHaveLength(1)
+    expect((docs[0] as any).status).toBe('revoked')
+    expect((await accessFor(admin)).capabilities).not.toContain('finance.review')
+  })
+
+  it('serialises a self-targeting assignment — actor and target share one lock key', async () => {
+    // The admin records a mandate on their OWN account while the migration
+    // holds that account's advisory lock and a FOR UPDATE on their ledger
+    // row. assign() locks {actor, target} (deduplicated to one key) before
+    // permissions()' FOR SHARE on the actor's rows — so it queues on the
+    // advisory lock instead of forming a row-lock cycle.
+    const { account: admin } = await provisionAccount({
+      role: 'admin',
+      membershipTrack: 'constituency_work',
+    })
+    await createAssignment(admin, {
+      scopeType: 'team',
+      scopeId: 'partnerships_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [admin.id] })
+
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const writeP = writeMigration(payload, plan, {
+      hooks: {
+        beforeCreate: async () => {
+          pauseReached()
+          await resumeGate
+        },
+      },
+    })
+    await atPause
+
+    const { assign } = await import('@/modules/platform/service')
+    let humanSettled = false
+    const humanP = assign(
+      { id: String(admin.id), role: 'admin' },
+      {
+        accountId: String(admin.id),
+        scopeType: 'team',
+        scopeId: 'membership_team',
+        role: 'member',
+        startsAt: iso(-86400000),
+        endsAt: iso(86400000),
+        evidence: 'Recording my own team mandate per the committee minutes.',
+      },
+    ).finally(() => {
+      humanSettled = true
+    })
+    // Queued on the same advisory key — verified in pg_locks, not timing.
+    await waitForAdvisoryWaiter(admin.id)
+    expect(humanSettled).toBe(false)
+
+    release()
+    await writeP
+    await humanP
+    // Both mandates exist: the migrated partnerships row and the direct
+    // membership assignment — serialised, not interleaved or deadlocked.
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: admin.id }, status: { equals: 'active' } },
+      overrideAccess: true,
+    })
+    expect(docs).toHaveLength(2)
+    const roles = docs.map((d: any) => d.appointmentRole).sort()
+    expect(roles).toEqual(['team.membership', 'team.partnerships'])
+    const access = await accessFor(admin)
+    expect(access.capabilities).toContain('partnership.review')
+    expect(access.capabilities).toContain('membership.review')
+  })
+
   it('serialises concurrent writes — two overlapping runs create one row', async () => {
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     await createAssignment(account, {
@@ -808,6 +963,102 @@ describe('migration backfill', () => {
     expect(a.created + b.created).toBe(1)
     expect(await appointmentCount(account)).toBe(1)
     expect((await accessFor(account)).capabilities).toContain('content.review')
+  })
+})
+
+describe('admin team-role endpoint', () => {
+  async function setTeamRole(
+    cookie: string,
+    accountId: number,
+    teamRole: string,
+    enabled: boolean,
+  ) {
+    return api(`/member/admin/accounts/${accountId}/team-role`, {
+      method: 'POST',
+      cookie,
+      body: JSON.stringify({
+        teamRole,
+        enabled,
+        reason: 'Mandate rotation recorded in committee minutes.',
+      }),
+    })
+  }
+
+  it('grants and removes team authority through canonical appointments', async () => {
+    const admin = await session({ role: 'admin' })
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+
+    // Enable → a canonical appointment is created, not a ledger row.
+    const on = await setTeamRole(admin.cookie, account.id, 'membership_team', true)
+    expect(on.status).toBe(200)
+    const payload = await testPayload()
+    const { docs: appts } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(appts).toHaveLength(1)
+    expect((appts[0] as any).appointmentRole).toBe('team.membership')
+    expect((await accessFor(account)).capabilities).toContain('membership.review')
+
+    // Disable → the appointment is revoked, authority gone.
+    const off = await setTeamRole(admin.cookie, account.id, 'membership_team', false)
+    expect(off.status).toBe(200)
+    expect((await accessFor(account)).capabilities).not.toContain('membership.review')
+    const { docs: after } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect((after[0] as any).status).toBe('revoked')
+  })
+
+  it('removes authority created by migration and by direct grant alike', async () => {
+    const admin = await session({ role: 'admin' })
+    const payload = await testPayload()
+
+    // Source 1: legacy row migrated into an appointment.
+    const { account: migrated } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+    })
+    await createAssignment(migrated, {
+      scopeType: 'team',
+      scopeId: 'membership_team',
+      role: 'member',
+    })
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    await writeMigration(payload, await planMigration(payload, { accountIds: [migrated.id] }))
+    expect((await accessFor(migrated)).capabilities).toContain('membership.review')
+
+    // Source 2: a direct canonical grant, no ledger history.
+    const { account: direct } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+    })
+    const { grantAppointment } = await import('@/lib/appointmentService')
+    await grantAppointment(
+      { payload, headers: new Headers() } as any,
+      {
+        account: direct.id,
+        appointmentRole: 'team.membership',
+        scopeType: 'team',
+        scopeId: 'membership_team',
+        evidence: 'Recorded directly by Council.',
+      } as any,
+    )
+    expect((await accessFor(direct)).capabilities).toContain('membership.review')
+
+    // The same endpoint removes both.
+    for (const account of [migrated, direct]) {
+      const res = await setTeamRole(admin.cookie, account.id, 'membership_team', false)
+      expect(res.status).toBe(200)
+      expect((await accessFor(account)).capabilities).not.toContain('membership.review')
+      const { docs } = await payload.find({
+        collection: 'appointments',
+        where: { account: { equals: account.id } },
+        overrideAccess: true,
+      })
+      expect(docs.every((d: any) => d.status === 'revoked')).toBe(true)
+    }
   })
 })
 

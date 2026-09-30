@@ -36,17 +36,6 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
   const scopeId = String(input.scopeId ?? 'platform').trim()
   if (!scopeId) throw fail.validation({ scopeId: 'Required.' })
 
-  const holder = await req.payload
-    .findByID({ collection: 'accounts', id: input.account, overrideAccess: true })
-    .catch(() => {
-      throw fail.notFound('Account not found.')
-    })
-  if (spec.requiresCw && !isCwActive(holder))
-    throw fail.conflict(
-      'not_constituency_work',
-      'This appointment requires active Constituency Work membership.',
-    )
-
   const startsAt = new Date(input.startsAt ?? Date.now())
   const endsAt = input.endsAt ? new Date(input.endsAt) : null
   if (endsAt && endsAt.getTime() <= startsAt.getTime())
@@ -93,6 +82,19 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
     // the migration backfill — so a grant can never interleave with another
     // writer's check→insert.
     await advisoryAuthorityLock(req.payload, transactionID, input.account)
+    // Eligibility is verified UNDER the lock: a concurrent resignation or
+    // termination takes the same lock, so the account state checked here is
+    // the state the grant commits against.
+    const holder = await req.payload
+      .findByID({ collection: 'accounts', id: input.account, overrideAccess: true, req })
+      .catch(() => {
+        throw fail.notFound('Account not found.')
+      })
+    if (spec.requiresCw && !isCwActive(holder))
+      throw fail.conflict(
+        'not_constituency_work',
+        'This appointment requires active Constituency Work membership.',
+      )
     const created = await req.payload.create({
       collection: 'appointments',
       data: row,
