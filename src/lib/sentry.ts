@@ -2,8 +2,26 @@ import type { ErrorEvent } from '@sentry/core'
 
 // Shared beforeSend scrubbing for server, edge and browser runtimes.
 // Credentials and member-identifying fields never leave the process —
-// sendDefaultPii stays off everywhere and this strips anything that still
-// arrives via request payloads, headers, breadcrumbs or extras.
+// dataCollection stays at the restrictive baseline everywhere and this
+// strips anything that still arrives via request payloads, headers,
+// breadcrumbs or extras.
+
+// v11 replacement for `sendDefaultPii: false` — leaving dataCollection
+// unset would collect more than the old restrictive default.
+export const sentryDataCollection = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: {
+    request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+    response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+  },
+  httpBodies: [],
+  urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+  genAI: { inputs: false, outputs: false },
+  databaseQueryData: false,
+  queues: false,
+  graphQL: { document: false, variables: false },
+}
 const SENSITIVE_FIELD =
   /pass(word)?|pwd|token|secret|authorization|cookie|session|api[-_]?key|bearer|credential|email|phone|first[_-]?name|last[_-]?name/i
 

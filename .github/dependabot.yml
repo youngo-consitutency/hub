@@ -14,6 +14,11 @@ updates:
       # @payloadcms/db-postgres); the updater otherwise fails on every run.
       # Remove once a fixed esbuild is reachable from the dependency chain.
       - dependency-name: esbuild
+      # typescript-eslint does not support TS 7 yet; revisit major bumps
+      # manually once the toolchain catches up.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     groups:
       production-minor-and-patch:
         dependency-type: production

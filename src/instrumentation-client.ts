@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
-import { scrubSentryEvent } from './lib/sentry'
+import { scrubSentryEvent, sentryDataCollection } from './lib/sentry'
 
 // Browser runtime — covers the member SPA (it mounts inside this bundle).
 Sentry.init({
@@ -9,7 +9,7 @@ Sentry.init({
     process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ||
     process.env.NEXT_PUBLIC_VERCEL_ENV ||
     'development',
-  sendDefaultPii: false,
+  dataCollection: sentryDataCollection,
   tracesSampleRate: 0,
   beforeSend: scrubSentryEvent,
 })

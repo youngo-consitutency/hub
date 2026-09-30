@@ -31,13 +31,12 @@
     "@payloadcms/next": "3.90.2",
     "@payloadcms/richtext-lexical": "3.90.2",
     "@payloadcms/ui": "3.90.2",
-    "@sentry/nextjs": "^10.75.0",
+    "@sentry/nextjs": "^11.0.0",
     "calendar-link": "^2.11.6",
     "cross-env": "^10.1.0",
-    "dotenv": "16.4.7",
+    "dotenv": "^18.0.4",
     "downshift": "^9.4.0",
     "file-type": "^21.3.2",
-    "graphql": "^16.8.1",
     "ical-generator": "^11.1.1",
     "libphonenumber-js": "^1.13.14",
     "next": "16.3.6",
@@ -52,7 +51,7 @@
     "sharp": "0.35.4",
     "swr": "^2.5.1",
     "web-push": "3.6.7",
-    "wouter": "^3.11.0",
+    "wouter": "^3.11.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -79,6 +78,9 @@
     "undici": "7.29.1",
     "@payloadcms/email-nodemailer": {
       "nodemailer": "10.0.12"
+    },
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
     }
   }
 }
