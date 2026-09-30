@@ -31,6 +31,7 @@ import {
   legacyAppointmentRole,
   normaliseScopeType,
 } from './appointments'
+import { advisoryAuthorityLock, lockAssignmentRow } from './authorityLock'
 
 const PARTICIPATION_SCOPES = new Set([
   'body',
@@ -278,10 +279,18 @@ async function verifyElectionReference(
   return null
 }
 
+export interface WriteHooks {
+  /** Fired inside the write transaction after all reads and checks pass,
+   *  immediately before the appointment row is created — while the source
+   *  row lock and the account authority lock are held. Used by tests to
+   *  prove concurrent human writes are serialised. */
+  beforeCreate?: (ctx: { req: any; accountId: number; sourceId: number }) => void | Promise<void>
+}
+
 export async function writeMigration(
   payload: any,
   plan: MigrationPlan,
-  opts: { focalEvidence?: Map<number, FocalEvidence> } = {},
+  opts: { focalEvidence?: Map<number, FocalEvidence>; hooks?: WriteHooks } = {},
 ): Promise<MigrationResult> {
   const result: MigrationResult = {
     created: 0,
@@ -322,14 +331,15 @@ export async function writeMigration(
   }
 
   for (const { row } of plan.creates) {
-    const accountId = accountIdOf(row)
     try {
       await inTransaction(async (req) => {
-        // Re-read the SOURCE assignment inside the transaction. The plan
-        // snapshot may be stale — a human may have revoked, expired or
-        // edited the ledger row since. Everything written here derives
-        // from live state, so a revoked source can never be restored as a
-        // live appointment.
+        // 1. Lock the source row FOR UPDATE — any concurrent human edit or
+        //    revocation of this ledger row serialises with us (Postgres row
+        //    locks need no cooperation from the other writer).
+        await lockAssignmentRow(payload, req.transactionID, row.id)
+        // 2. Re-read the SOURCE assignment: the plan snapshot may be stale
+        //    in every field — status, role, scope, even the holder. Only
+        //    live state is used below.
         const source = await payload
           .findByID({ collection: 'assignments', id: row.id, overrideAccess: true, req })
           .catch(() => null)
@@ -337,6 +347,13 @@ export async function writeMigration(
           result.staleSkipped += 1
           return
         }
+        const liveAccountId =
+          typeof (source as any).account === 'object'
+            ? (source as any).account.id
+            : (source as any).account
+        // 3. Serialise against concurrent authority writes on the holder —
+        //    grants, revocations and edits take the same advisory lock.
+        await advisoryAuthorityLock(payload, req.transactionID, liveAccountId)
         const live = classifyAssignment(source as any as LegacyRow)
         if (live.kind !== 'mandate') {
           // The source was reclassified since planning (role edited to
@@ -352,7 +369,7 @@ export async function writeMigration(
           (source as any).scopeId,
         )
 
-        const existing = await accountAppointments(req, accountId)
+        const existing = await accountAppointments(req, liveAccountId)
         if (
           existing.some(
             (d) =>
@@ -376,10 +393,11 @@ export async function writeMigration(
           result.staleSkipped += 1
           return
         }
+        await opts.hooks?.beforeCreate?.({ req, accountId: liveAccountId, sourceId: row.id })
         await payload.create({
           collection: 'appointments',
           data: {
-            account: accountId,
+            account: liveAccountId,
             appointmentRole: live.appointmentRole,
             scopeType: normaliseScopeType((source as any).scopeType),
             scopeId: (source as any).scopeId,
@@ -446,6 +464,7 @@ export async function writeMigration(
     }
     try {
       await inTransaction(async (req) => {
+        await advisoryAuthorityLock(payload, req.transactionID, account.id)
         // Any existing focal_point appointment — whatever its provenance or
         // status, including a human-created and revoked one — blocks a
         // migration write. Migration never overrides recorded decisions.

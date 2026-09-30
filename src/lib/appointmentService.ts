@@ -2,6 +2,7 @@ import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { isCwActive } from './accounts'
 import { APPOINTMENT_ROLES, councilSeatFor, normaliseScopeType } from './appointments'
+import { advisoryAuthorityLock } from './authorityLock'
 import { audit } from './audit'
 
 // Writes to the `appointments` collection. Every grant is validated against
@@ -88,6 +89,10 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
   if (transactionID == null) throw new Error('Database transactions are unavailable.')
   req.transactionID = transactionID
   try {
+    // Serialise with every other authority write on this account — including
+    // the migration backfill — so a grant can never interleave with another
+    // writer's check→insert.
+    await advisoryAuthorityLock(req.payload, transactionID, input.account)
     const created = await req.payload.create({
       collection: 'appointments',
       data: row,
@@ -144,8 +149,12 @@ export async function revokeAppointment(
   if (transactionID == null) throw new Error('Database transactions are unavailable.')
   req.transactionID = transactionID
   try {
-    // Re-check inside the transaction: two concurrent revocations (or a
-    // revoke racing a re-grant) must not both succeed.
+    // Serialise with every other authority write on this account before
+    // re-checking: two concurrent revocations (or a revoke racing a
+    // re-grant or a migration write) must not both succeed.
+    const lockAccount =
+      typeof (row as any).account === 'object' ? (row as any).account.id : (row as any).account
+    await advisoryAuthorityLock(req.payload, transactionID, lockAccount)
     const fresh = await req.payload.findByID({
       collection: 'appointments',
       id: appointmentId,

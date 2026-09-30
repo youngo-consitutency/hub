@@ -640,6 +640,154 @@ describe('migration backfill', () => {
     expect((await accessFor(account)).capabilities).not.toContain('partnership.review')
   })
 
+  it('serialises a concurrent human grant — the write lock is provably held', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+
+    // Pause migration inside the write transaction — reads done, locks held.
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const writeP = writeMigration(payload, plan, {
+      hooks: {
+        beforeCreate: async () => {
+          pauseReached()
+          await resumeGate
+        },
+      },
+    })
+    await atPause
+
+    // A human grant for the same tuple must block on the shared lock.
+    const { grantAppointment } = await import('@/lib/appointmentService')
+    const req = { payload, headers: new Headers() } as any
+    let humanSettled = false
+    const humanP = grantAppointment(req, {
+      account: account.id,
+      appointmentRole: 'team.finance',
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      evidence: 'Direct Council grant.',
+    } as any).finally(() => {
+      humanSettled = true
+    })
+    await new Promise((r) => setTimeout(r, 400))
+    expect(humanSettled).toBe(false)
+
+    release()
+    const result = await writeP
+    expect(result.created).toBe(1)
+    // The grant then runs — and the active-unique index rejects the
+    // duplicate rather than interleaving a second row.
+    await expect(humanP).rejects.toThrow(/already holds|duplicate/i)
+    expect(await appointmentCount(account)).toBe(1)
+  })
+
+  it('serialises a concurrent source revocation — the cascade converges on ended', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    const { account: admin } = await provisionAccount({ role: 'admin' })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const writeP = writeMigration(payload, plan, {
+      hooks: {
+        beforeCreate: async () => {
+          pauseReached()
+          await resumeGate
+        },
+      },
+    })
+    await atPause
+
+    // A human revokes the source ledger row mid-write — it must block on
+    // the row lock until the migration transaction commits.
+    const { revoke } = await import('@/modules/platform/service')
+    let humanSettled = false
+    const humanP = revoke(
+      { id: String(admin.id), role: 'admin' },
+      String(src.id),
+      'Mandate withdrawn by the responsible committee.',
+    ).finally(() => {
+      humanSettled = true
+    })
+    await new Promise((r) => setTimeout(r, 400))
+    expect(humanSettled).toBe(false)
+
+    release()
+    await writeP
+    await humanP
+    // Both orders converge on "ended": the revoke cascade ends the
+    // migration-linked appointment even though it committed first.
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(docs).toHaveLength(1)
+    expect((docs[0] as any).status).toBe('revoked')
+    const { docs: ledger } = await payload.find({
+      collection: 'assignments',
+      where: { id: { equals: src.id } },
+      overrideAccess: true,
+    })
+    expect((ledger[0] as any).status).toBe('revoked')
+    expect((await accessFor(account)).capabilities).not.toContain('finance.review')
+  })
+
+  it('writes under the live holder when the source account was re-pointed', async () => {
+    const { account: stale } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+    })
+    const { account: live } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+    })
+    const src = await createAssignment(stale, {
+      scopeType: 'team',
+      scopeId: 'finance_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [stale.id] })
+
+    // The holder changes after planning: the write must follow the live
+    // source row, not the planned account id.
+    await payload.update({
+      collection: 'assignments',
+      id: src.id,
+      data: { account: live.id },
+      overrideAccess: true,
+    })
+    const result = await writeMigration(payload, plan)
+    expect(result.created).toBe(1)
+    expect(await appointmentCount(stale)).toBe(0)
+    const { docs } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: live.id } },
+      overrideAccess: true,
+    })
+    expect(docs).toHaveLength(1)
+    expect((docs[0] as any).appointmentRole).toBe('team.finance')
+  })
+
   it('serialises concurrent writes — two overlapping runs create one row', async () => {
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     await createAssignment(account, {

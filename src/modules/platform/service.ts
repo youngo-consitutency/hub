@@ -1,6 +1,7 @@
 import { bodyRoles } from '../../../spa/shared/protocol.js'
 import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
+import { AUTHORITY_LOCK_NS } from '../../lib/authorityLock'
 import {
   appointmentKey,
   councilSeatFor,
@@ -437,7 +438,10 @@ export async function assign(actor: Actor, input: Input) {
 
     // Mandated responsibility → appointments table. The partial unique index
     // keeps a single active row per (account, role, scope); re-granting an
-    // active mandate refreshes term and evidence.
+    // active mandate refreshes term and evidence. The shared advisory lock
+    // serialises this insert against the migration backfill and every other
+    // authority write on the account (see lib/authorityLock.ts).
+    await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, accountId])
     const councilSeat = councilSeatFor(appointmentRole, { scopeId, councilSeat: null })
     const { rows } = await client.query(
       `INSERT INTO appointments(account_id,appointment_role,scope_type,scope_id,council_seat,starts_at,ends_at,evidence,appointed_by_id)
@@ -477,6 +481,21 @@ export async function revoke(actor: Actor, id: string, reason: string) {
       [intId(id)],
     )
     if (!result.rowCount) fail(404, 'Assignment not found.')
+    // Revoking a ledger row ends the mandate it carried: cascade to the
+    // migration-linked appointment so either ordering of revoke vs
+    // backfill converges on "ended". The advisory lock serialises with
+    // grants running on the holder account.
+    await client.query('SELECT pg_advisory_xact_lock($1,$2)', [
+      AUTHORITY_LOCK_NS,
+      result.rows[0].account_id,
+    ])
+    await client.query(
+      `UPDATE appointments SET status='revoked',ends_at=now(),updated_at=now()
+       WHERE appointed_via->>'source'='assignments_migration'
+         AND appointed_via->>'assignmentId'=$1
+         AND status<>'revoked'`,
+      [String(intId(id))],
+    )
     await audit(client, actor, 'assignment.revoked', id, reason)
   })
 }
