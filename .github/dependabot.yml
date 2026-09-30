@@ -9,6 +9,11 @@ updates:
       time: '05:00'
       timezone: Etc/UTC
     open-pull-requests-limit: 5
+    ignore:
+      # No patched release exists in drizzle-kit's pinned range (via
+      # @payloadcms/db-postgres); the updater otherwise fails on every run.
+      # Remove once a fixed esbuild is reachable from the dependency chain.
+      - dependency-name: esbuild
     groups:
       production-minor-and-patch:
         dependency-type: production
