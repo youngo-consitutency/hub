@@ -17,26 +17,23 @@ async function passMandateGate(page: Page) {
   await expect(page.getByRole('heading', { name: /individual registration/i })).toBeVisible()
 }
 
-test('register: SearchableSelect option tap registers selection', async ({ page }) => {
+test('register: touch taps register option selections', async ({ page }) => {
   await page.goto(BASE + '/join')
   await passMandateGate(page)
 
+  // SearchableSelect
   const gender = page.getByRole('combobox', { name: /gender/i })
   await gender.tap()
-  const option = page.getByRole('option').first()
-  const label = (await option.innerText()).trim()
-  await option.tap()
-  await expect(gender).toHaveValue(label)
-})
+  const genderOption = page.getByRole('option').first()
+  const genderLabel = (await genderOption.innerText()).trim()
+  await genderOption.tap()
+  await expect(gender).toHaveValue(genderLabel)
 
-test('register: MultiSelectDropdown option tap registers selection', async ({ page }) => {
-  await page.goto(BASE + '/join')
-  await passMandateGate(page)
-
+  // MultiSelectDropdown
   const wg = page.getByRole('combobox', { name: /working groups/i })
   await wg.tap()
-  const option = page.getByRole('option').first()
-  const label = await option.locator('span').innerText()
-  await option.tap()
-  await expect(wg).toHaveAttribute('placeholder', new RegExp(label))
+  const wgOption = page.getByRole('option').first()
+  const wgLabel = await wgOption.locator('span').innerText()
+  await wgOption.tap()
+  await expect(wg).toHaveAttribute('placeholder', new RegExp(wgLabel))
 })
