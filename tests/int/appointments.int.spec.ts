@@ -32,6 +32,28 @@ async function createAppointment(account: any, data: Record<string, any>) {
   })
 }
 
+// Waits until Postgres registers a writer QUEUED on the account's shared
+// advisory lock — real database evidence of blocking, not a timeout guess.
+async function waitForAdvisoryWaiter(accountId: number, timeoutMs = 10000) {
+  const { requirePgPool } = await import('@/lib/pg')
+  const { AUTHORITY_LOCK_NS } = await import('@/lib/authorityLock')
+  const pool = requirePgPool()
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const { rows } = await pool.query(
+      `SELECT l.pid, a.query
+       FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
+       WHERE l.locktype = 'advisory' AND NOT l.granted
+         AND l.classid = $1 AND l.objid = $2`,
+      [AUTHORITY_LOCK_NS, accountId],
+    )
+    if (rows.length) return rows
+    if (Date.now() > deadline)
+      throw new Error(`No advisory-lock waiter appeared for account ${accountId}`)
+    await new Promise((r) => setTimeout(r, 50))
+  }
+}
+
 async function createAssignment(account: any, data: Record<string, any>) {
   const payload = await testPayload()
   return payload.create({
@@ -298,28 +320,6 @@ describe('migration backfill', () => {
     const plan = await planMigration(payload, { accountIds: [account.id] })
     const result = await writeMigration(payload, plan)
     return { plan, result }
-  }
-
-  // Waits until Postgres registers a writer QUEUED on the account's shared
-  // advisory lock — real database evidence of blocking, not a timeout guess.
-  async function waitForAdvisoryWaiter(accountId: number, timeoutMs = 10000) {
-    const { requirePgPool } = await import('@/lib/pg')
-    const { AUTHORITY_LOCK_NS } = await import('@/lib/authorityLock')
-    const pool = requirePgPool()
-    const deadline = Date.now() + timeoutMs
-    for (;;) {
-      const { rows } = await pool.query(
-        `SELECT l.pid, a.query
-         FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
-        WHERE l.locktype = 'advisory' AND NOT l.granted
-          AND l.classid = $1 AND l.objid = $2`,
-        [AUTHORITY_LOCK_NS, accountId],
-      )
-      if (rows.length) return rows
-      if (Date.now() > deadline)
-        throw new Error(`No advisory-lock waiter appeared for account ${accountId}`)
-      await new Promise((r) => setTimeout(r, 50))
-    }
   }
 
   async function appointmentCount(account: any) {
@@ -1059,6 +1059,184 @@ describe('admin team-role endpoint', () => {
       })
       expect(docs.every((d: any) => d.status === 'revoked')).toBe(true)
     }
+  })
+
+  it('removes legacy-only authority that was never migrated', async () => {
+    const admin = await session({ role: 'admin' })
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'membership_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+
+    // The unmigrated ledger row still grants authority today.
+    expect((await accessFor(account)).capabilities).toContain('membership.review')
+
+    const res = await setTeamRole(admin.cookie, account.id, 'membership_team', false)
+    expect(res.status).toBe(200)
+    // No appointment exists to revoke — the legacy row itself must end.
+    expect((await accessFor(account)).capabilities).not.toContain('membership.review')
+    const { docs: appts } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(appts).toHaveLength(0)
+    const { docs: ledger } = await payload.find({
+      collection: 'assignments',
+      where: { id: { equals: src.id } },
+      overrideAccess: true,
+    })
+    expect((ledger[0] as any).status).toBe('revoked')
+  })
+
+  it('removal racing a migration waits on the shared lock and still ends both rows', async () => {
+    const admin = await session({ role: 'admin' })
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'membership_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { planMigration, writeMigration } = await import('@/lib/appointmentMigration')
+    const plan = await planMigration(payload, { accountIds: [account.id] })
+
+    // Pause the migration inside its write transaction — the account's
+    // advisory lock and the source row lock are held.
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const writeP = writeMigration(payload, plan, {
+      hooks: {
+        beforeCreate: async () => {
+          pauseReached()
+          await resumeGate
+        },
+      },
+    })
+    await atPause
+
+    // The removal must queue on the advisory lock BEFORE reading state —
+    // verified as a real not-granted waiter in pg_locks.
+    let settled = false
+    const removeP = setTeamRole(admin.cookie, account.id, 'membership_team', false).finally(() => {
+      settled = true
+    })
+    await waitForAdvisoryWaiter(account.id)
+    expect(settled).toBe(false)
+
+    release()
+    await writeP
+    const res = await removeP
+    expect(res.status).toBe(200)
+    // The removal ran after the migration commit: it revokes the fresh
+    // appointment AND ends the source row — nothing grants afterwards.
+    const { docs: appts } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(appts).toHaveLength(1)
+    expect((appts[0] as any).status).toBe('revoked')
+    const { docs: ledger } = await payload.find({
+      collection: 'assignments',
+      where: { id: { equals: src.id } },
+      overrideAccess: true,
+    })
+    expect((ledger[0] as any).status).toBe('revoked')
+    expect((await accessFor(account)).capabilities).not.toContain('membership.review')
+  })
+})
+
+describe('membership exit atomicity', () => {
+  it('a grant arriving between the exit sweep and the status change cannot slip through', async () => {
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const src = await createAssignment(account, {
+      scopeType: 'team',
+      scopeId: 'safeguarding_team',
+      role: 'member',
+    })
+    const payload = await testPayload()
+    const { applyMembershipTransition } = await import('@/endpoints/membership')
+
+    // Pause inside the transition transaction: the sweep has run, the
+    // status change has NOT yet committed — the window a racing grant
+    // would previously have slipped through.
+    let pauseReached!: () => void
+    const atPause = new Promise<void>((r) => (pauseReached = r))
+    let release!: () => void
+    const resumeGate = new Promise<void>((r) => (release = r))
+    const transitionP = applyMembershipTransition(
+      { payload, headers: new Headers() } as any,
+      account.id,
+      {
+        accountFields: {
+          membershipStatus: 'expired',
+          membershipEndedAt: iso(0),
+          membershipEndReason: 'resigned',
+          constituencyWorkStatus: '',
+        },
+        handover: { reason: 'resignation', scopeLabel: 'Membership' },
+        actor: account,
+        auditEntry: () => ({
+          action: 'membership.resigned',
+          targetType: 'account',
+          targetId: String(account.id),
+        }),
+      },
+      {
+        afterSweep: () => {
+          pauseReached()
+          return resumeGate
+        },
+      },
+    )
+    await atPause
+
+    // The grant queues on the account's advisory lock — pg_locks proves it —
+    // then re-verifies eligibility against the committed post-exit state.
+    const { grantAppointment } = await import('@/lib/appointmentService')
+    const grantP = grantAppointment(
+      { payload, headers: new Headers() } as any,
+      {
+        account: account.id,
+        appointmentRole: 'team.safeguarding',
+        scopeType: 'team',
+        scopeId: 'safeguarding_team',
+        evidence: 'Committee mandate recorded during the exit window.',
+      } as any,
+    )
+    await waitForAdvisoryWaiter(account.id)
+
+    release()
+    await transitionP
+    await expect(grantP).rejects.toThrow(/constituency work/i)
+
+    // The whole transition committed atomically: swept rows and the status
+    // change landed together, and the grant left nothing behind.
+    const { docs: appts } = await payload.find({
+      collection: 'appointments',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(appts).toHaveLength(0)
+    const { docs: ledger } = await payload.find({
+      collection: 'assignments',
+      where: { id: { equals: src.id } },
+      overrideAccess: true,
+    })
+    expect((ledger[0] as any).status).toBe('expired')
+    const holder = await payload.findByID({
+      collection: 'accounts',
+      id: account.id,
+      overrideAccess: true,
+    })
+    expect((holder as any).membershipStatus).toBe('expired')
+    expect((await accessFor(account)).capabilities).not.toContain('safeguarding.case')
   })
 })
 

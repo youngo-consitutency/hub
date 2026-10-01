@@ -2,7 +2,7 @@ import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { isCwActive } from './accounts'
 import { APPOINTMENT_ROLES, councilSeatFor, normaliseScopeType } from './appointments'
-import { advisoryAuthorityLock } from './authorityLock'
+import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
 
 // Writes to the `appointments` collection. Every grant is validated against
@@ -72,46 +72,41 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
     row.councilSeat = councilSeatFor(input.appointmentRole, { scopeId, councilSeat: null })
   }
 
-  // Create + audit commit together: a grant without its audit record (or
-  // vice versa) must never persist.
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
+  // Create + audit commit together under the shared authority lock: a
+  // grant without its audit record (or vice versa) must never persist,
+  // and the check→insert sequence serialises with every other authority
+  // writer on the account.
   try {
-    // Serialise with every other authority write on this account — including
-    // the migration backfill — so a grant can never interleave with another
-    // writer's check→insert.
-    await advisoryAuthorityLock(req.payload, transactionID, input.account)
-    // Eligibility is verified UNDER the lock: a concurrent resignation or
-    // termination takes the same lock, so the account state checked here is
-    // the state the grant commits against.
-    const holder = await req.payload
-      .findByID({ collection: 'accounts', id: input.account, overrideAccess: true, req })
-      .catch(() => {
-        throw fail.notFound('Account not found.')
+    return await withAuthorityLock(req, input.account, async () => {
+      // Eligibility is verified UNDER the lock: a concurrent resignation or
+      // termination takes the same lock, so the account state checked here
+      // is the state the grant commits against.
+      const holder = await req.payload
+        .findByID({ collection: 'accounts', id: input.account, overrideAccess: true, req })
+        .catch(() => {
+          throw fail.notFound('Account not found.')
+        })
+      if (spec.requiresCw && !isCwActive(holder))
+        throw fail.conflict(
+          'not_constituency_work',
+          'This appointment requires active Constituency Work membership.',
+        )
+      const created = await req.payload.create({
+        collection: 'appointments',
+        data: row,
+        overrideAccess: true,
+        req,
       })
-    if (spec.requiresCw && !isCwActive(holder))
-      throw fail.conflict(
-        'not_constituency_work',
-        'This appointment requires active Constituency Work membership.',
-      )
-    const created = await req.payload.create({
-      collection: 'appointments',
-      data: row,
-      overrideAccess: true,
-      req,
+      await audit(req, { id: input.appointedBy ?? input.account }, {
+        action: 'appointment.granted',
+        targetType: 'appointment',
+        targetId: String(created.id),
+        reason: `${input.appointmentRole} on ${scopeType}:${scopeId}`,
+        after: { account: input.account, endsAt: row.endsAt },
+      } as any)
+      return created
     })
-    await audit(req, { id: input.appointedBy ?? input.account }, {
-      action: 'appointment.granted',
-      targetType: 'appointment',
-      targetId: String(created.id),
-      reason: `${input.appointmentRole} on ${scopeType}:${scopeId}`,
-      after: { account: input.account, endsAt: row.endsAt },
-    } as any)
-    await req.payload.db.commitTransaction(transactionID)
-    return created
   } catch (error: any) {
-    await req.payload.db.rollbackTransaction(transactionID)
     // The partial unique index (account, role, scopeType, scopeId WHERE
     // status='active') is the guard for concurrent grants; Payload wraps
     // the Postgres violation in a ValidationError, so check the whole
@@ -127,9 +122,42 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
     )
       throw fail.conflict('duplicate_appointment', 'This account already holds that appointment.')
     throw error
-  } finally {
-    delete req.transactionID
   }
+}
+
+// The revocation write itself. Callers must hold the appointment account's
+// advisory lock inside an active transaction — revokeAppointment does that
+// for standalone calls; composite flows (the admin team-role endpoint,
+// membership exits) call this directly so lookup, revocation and any
+// ledger cleanup share ONE lock scope.
+export async function revokeAppointmentInTx(
+  req: PayloadRequest,
+  appointmentId: number,
+  actor: any,
+  reason: string,
+) {
+  const fresh = await req.payload.findByID({
+    collection: 'appointments',
+    id: appointmentId,
+    overrideAccess: true,
+    req,
+  })
+  if ((fresh as any).status !== 'active')
+    throw fail.conflict('invalid_phase', 'This appointment is no longer active.')
+  const updated = await req.payload.update({
+    collection: 'appointments',
+    id: appointmentId,
+    data: { status: 'revoked', endsAt: new Date().toISOString() },
+    overrideAccess: true,
+    req,
+  })
+  await audit(req, actor, {
+    action: 'appointment.revoked',
+    targetType: 'appointment',
+    targetId: String(appointmentId),
+    reason: reason.trim().slice(0, 500),
+  } as any)
+  return updated
 }
 
 export async function revokeAppointment(
@@ -147,43 +175,12 @@ export async function revokeAppointment(
     })
   if ((row as any).status !== 'active')
     throw fail.conflict('invalid_phase', 'This appointment is no longer active.')
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
-    // Serialise with every other authority write on this account before
-    // re-checking: two concurrent revocations (or a revoke racing a
-    // re-grant or a migration write) must not both succeed.
-    const lockAccount =
-      typeof (row as any).account === 'object' ? (row as any).account.id : (row as any).account
-    await advisoryAuthorityLock(req.payload, transactionID, lockAccount)
-    const fresh = await req.payload.findByID({
-      collection: 'appointments',
-      id: appointmentId,
-      overrideAccess: true,
-      req,
-    })
-    if ((fresh as any).status !== 'active')
-      throw fail.conflict('invalid_phase', 'This appointment is no longer active.')
-    const updated = await req.payload.update({
-      collection: 'appointments',
-      id: appointmentId,
-      data: { status: 'revoked', endsAt: new Date().toISOString() },
-      overrideAccess: true,
-      req,
-    })
-    await audit(req, actor, {
-      action: 'appointment.revoked',
-      targetType: 'appointment',
-      targetId: String(appointmentId),
-      reason: reason.trim().slice(0, 500),
-    } as any)
-    await req.payload.db.commitTransaction(transactionID)
-    return updated
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+  // Serialise with every other authority write on this account before
+  // re-checking: two concurrent revocations (or a revoke racing a
+  // re-grant or a migration write) must not both succeed.
+  const lockAccount =
+    typeof (row as any).account === 'object' ? (row as any).account.id : (row as any).account
+  return withAuthorityLock(req, lockAccount, () =>
+    revokeAppointmentInTx(req, appointmentId, actor, reason),
+  )
 }

@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 // Shared writer coordination for an account's authority records (S11/S13).
 //
@@ -47,6 +47,38 @@ export async function advisoryAuthorityLock(
     db: txHandle(payload, transactionID),
     raw: `SELECT pg_advisory_xact_lock(${AUTHORITY_LOCK_NS}, ${accountId})`,
   })
+}
+
+// Run `fn` inside a transaction that holds the account's advisory
+// authority lock — step 1 of the lock order for any caller that does not
+// manage its own transaction. When the request already carries a
+// transaction the lock is taken on it and `fn` joins it; the caller still
+// owns commit/rollback. Locks are transaction-scoped, so they release
+// automatically at commit/rollback and re-acquiring the same key inside
+// one transaction is a no-op.
+export async function withAuthorityLock<T>(
+  req: PayloadRequest,
+  accountId: number,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (req.transactionID != null) {
+    await advisoryAuthorityLock(req.payload, req.transactionID as any, accountId)
+    return fn()
+  }
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    await advisoryAuthorityLock(req.payload, transactionID, accountId)
+    const result = await fn()
+    await req.payload.db.commitTransaction(transactionID)
+    return result
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
 }
 
 // Lock a ledger row for the duration of the current transaction. Any

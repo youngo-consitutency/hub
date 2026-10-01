@@ -11,7 +11,8 @@ import {
 } from '../lib/membership'
 import { ensureOwnerSeat, listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
 import { legacyAppointmentRole } from '../lib/appointments'
-import { grantAppointment, revokeAppointment } from '../lib/appointmentService'
+import { grantAppointment, revokeAppointmentInTx } from '../lib/appointmentService'
+import { withAuthorityLock } from '../lib/authorityLock'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
@@ -181,25 +182,56 @@ export const adminEndpoints: Endpoint[] = [
       if (!appointmentRole) throw fail.validation({ teamRole: 'Invalid team role.' })
       if (b.enabled === false) {
         roles.delete(teamRole)
-        // Revoke the appointment for this tuple whatever its provenance —
-        // migrated or directly granted alike.
-        const { docs: active } = await req.payload.find({
-          collection: 'appointments',
-          where: {
-            and: [
-              { account: { equals: target.id } },
-              { appointmentRole: { equals: appointmentRole } },
-              { scopeType: { equals: 'team' } },
-              { scopeId: { equals: teamRole } },
-              { status: { equals: 'active' } },
-            ],
-          },
-          limit: 50,
-          overrideAccess: true,
+        // Under ONE advisory lock — including when no appointment exists —
+        // so a racing grant or migration write cannot interleave between
+        // lookup and revocation: (a) revoke every active canonical
+        // appointment for the tuple whatever its provenance, and (b) end
+        // the legacy ledger row — an unmigrated assignment would otherwise
+        // keep granting the removed authority.
+        await withAuthorityLock(req, target.id, async () => {
+          const { docs: active } = await req.payload.find({
+            collection: 'appointments',
+            where: {
+              and: [
+                { account: { equals: target.id } },
+                { appointmentRole: { equals: appointmentRole } },
+                { scopeType: { equals: 'team' } },
+                { scopeId: { equals: teamRole } },
+                { status: { equals: 'active' } },
+              ],
+            },
+            limit: 50,
+            overrideAccess: true,
+            req,
+          })
+          for (const appt of active as any[]) {
+            await revokeAppointmentInTx(req, appt.id, admin, reason)
+          }
+          const { docs: ledger } = await req.payload.find({
+            collection: 'assignments',
+            where: {
+              and: [
+                { account: { equals: target.id } },
+                { scopeType: { equals: 'team' } },
+                { scopeId: { equals: teamRole } },
+                { status: { equals: 'active' } },
+              ],
+            },
+            limit: 50,
+            overrideAccess: true,
+            req,
+          })
+          const endedAt = new Date().toISOString()
+          for (const row of ledger as any[]) {
+            await req.payload.update({
+              collection: 'assignments',
+              id: row.id,
+              data: { status: 'revoked', endsAt: endedAt },
+              overrideAccess: true,
+              req,
+            })
+          }
         })
-        for (const appt of active as any[]) {
-          await revokeAppointment(req, appt.id, admin, reason)
-        }
       } else {
         roles.add(teamRole)
         try {
