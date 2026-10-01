@@ -50,6 +50,7 @@ function LiveBanner({ event }) {
   )
 }
 
+/** Show the member feed, summary counts, workspaces, responsibilities and upcoming activities. */
 export function Home() {
   const feed = useApi('/feed')
   const groups = useApi('/groups')
@@ -286,6 +287,7 @@ function ResponsibilitySection({ account }) {
   )
 }
 
+/** Combine group and workspace queries to show joined groups and their setup status, or a join link. */
 function WorkspaceSection({ groups, workspaces }) {
   return (
     <Section

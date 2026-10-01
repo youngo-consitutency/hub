@@ -181,6 +181,7 @@ export function SortButton({ active, icon: Icon, children, ...rest }) {
   )
 }
 
+/** Render collapsible filters with an active count and an optional clear action that restores focus. */
 export function FilterMenu({ children, activeCount = 0, label = 'Filters', onClear }) {
   return (
     <details className="filterMenu">

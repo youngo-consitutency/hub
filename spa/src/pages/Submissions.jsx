@@ -41,6 +41,7 @@ const ARCHIVE_STATUSES = [
   { key: 'archived', label: 'Archived', icon: Archive },
 ]
 
+/** Browse open or archived submissions with search, stage and group filters, sorting and layouts. */
 export function Submissions() {
   const [state, setState] = useState('open')
   const [statusFilters, setStatusFilters] = useState({})

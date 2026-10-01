@@ -30,6 +30,7 @@ const TOPIC_ICONS = {
   'governance-integrity': ShieldCheck,
 }
 
+/** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
 export function Groups() {
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState({})

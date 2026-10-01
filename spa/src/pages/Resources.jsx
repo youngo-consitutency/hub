@@ -6,6 +6,7 @@ import { PageHeader, A } from '../components/ui.jsx'
 import { useAccount } from '../lib/accountContext.jsx'
 import { ResourceCatalogue, ResourceSubmissionPanel } from '../components/ResourceHub.jsx'
 
+/** Select the catalogue or guides from the URL and show contribution controls for eligible accounts. */
 export function Resources() {
   const search = useSearch()
   const guides = new URLSearchParams(search).get('view') === 'guides'

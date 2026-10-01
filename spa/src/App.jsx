@@ -179,6 +179,7 @@ function NotFound() {
   )
 }
 
+/** Redirect legacy contribution-points routes to the work page while showing a loading placeholder. */
 function RetiredPoints() {
   useEffect(() => {
     replace('/work')
@@ -186,6 +187,7 @@ function RetiredPoints() {
   return <Skeletons n={2} />
 }
 
+/** Redirect the legacy library route to the guides view of Resources. */
 function LibraryRedirect() {
   useEffect(() => {
     replace('/resources?view=guides')

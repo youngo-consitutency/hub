@@ -30,6 +30,7 @@ const ICONS = {
 }
 const iconFor = (name) => ICONS[name] || Users
 
+/** Render the public home page from the site document, with loading, retry and unpublished states. */
 export function SiteHome() {
   const { doc: site, loading, error, retry } = useDocument('site')
   const home = site?.home

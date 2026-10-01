@@ -30,6 +30,7 @@ function PersonBehindHub({ person }) {
   )
 }
 
+/** Show support actions, published Hub contributor details and privacy information. */
 export function Help() {
   const { doc: connect } = useDocument('connect')
   const HUB_LAUNCHERS = connect?.HUB_LAUNCHERS || []

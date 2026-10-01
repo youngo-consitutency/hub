@@ -32,6 +32,7 @@ const REGIONS = [
   { key: 'weog', label: regionLabel('weog') },
 ]
 
+/** Browse Conferences of Youth with search, type and region filters, sorting and catalogue layouts. */
 export function Coys() {
   const [typeFilters, setTypeFilters] = useState({})
   const [regionFilters, setRegionFilters] = useState({})

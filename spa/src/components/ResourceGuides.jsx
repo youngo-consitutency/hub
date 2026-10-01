@@ -1,6 +1,7 @@
 import { A, Section, Skeletons, Empty, ErrorCard } from './ui.jsx'
 import { useDocument } from '../lib/documents.js'
 
+/** Load published library guides, with loading, retry and empty states. */
 export function ResourceGuides() {
   const { doc: library, loading, error, retry } = useDocument('library')
   if (loading) return <Skeletons n={3} />

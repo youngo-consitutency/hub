@@ -7,6 +7,7 @@ import {
   TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
 
+/** Browse negotiation tracks with text search and an optional open-calls filter. */
 export function Negotiations() {
   const [search, setSearch] = useState('')
   const [openOnly, setOpenOnly] = useState(false)

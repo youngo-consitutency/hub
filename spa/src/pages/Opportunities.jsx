@@ -133,6 +133,7 @@ function OpportunityCard({
   )
 }
 
+/** Browse opportunities with search, filters, sorting and layouts, grouped by open or closed status. */
 export function Opportunities() {
   const [kindFilters, setKindFilters] = useState({})
   const [formatFilters, setFormatFilters] = useState({})
