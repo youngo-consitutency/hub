@@ -1,3 +1,8 @@
+interface NotificationGuideProps {
+  device?: any
+  onClose?: any
+}
+
 import { SidePanel } from './SidePanel.tsx'
 import {
   TbInfoCircle as Info,
@@ -43,7 +48,7 @@ export const DEVICE_GUIDES = {
   },
 }
 
-export function NotificationGuide({ device, onClose }: any) {
+export function NotificationGuide({ device, onClose }: NotificationGuideProps) {
   const guide = (DEVICE_GUIDES as any)[device] || DEVICE_GUIDES.desktop
   const GuideIcon = guide.Icon
 

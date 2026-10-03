@@ -1,8 +1,13 @@
+interface CatalogueResultsProps {
+  count?: number
+  children?: import('react').ReactNode
+}
+
 import { useState } from 'react'
 import { TbLayoutGrid, TbList } from 'react-icons/tb'
 
 /** Keeps the same records and actions in both catalogue layouts. */
-export function CatalogueResults({ count, children }: any) {
+export function CatalogueResults({ count, children }: CatalogueResultsProps) {
   const [view, setView] = useState('grid')
   return (
     <div className="catalogueResults" data-view={view}>

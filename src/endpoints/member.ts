@@ -16,7 +16,8 @@ import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { Account } from '../payload-types'
 
 // Course structure (modules, quiz, pass score) is staff-editable content —
 // the `membership-course` content document holds the whole definition.
@@ -65,7 +66,7 @@ async function upsertWgProgress(
   const status =
     p.status ?? (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
   const data = {
-    account: accountId,
+    account: Number(accountId),
     wgSlug,
     presentationOk,
     rulesOk,
@@ -81,14 +82,14 @@ async function upsertWgProgress(
     return req.payload.update({
       collection: 'wg-progress',
       id: existing.id,
-      data: data as DocData,
+      data: data,
       overrideAccess: true,
       req,
     })
   }
   return req.payload.create({
     collection: 'wg-progress',
-    data: data as DocData,
+    data: data,
     overrideAccess: true,
     req,
   })
@@ -199,11 +200,11 @@ export const memberEndpoints: Endpoint[] = [
         data: {
           memberStatus: 'verified',
           hubAccessStatus: 'active',
-          membershipStatus: nextStatus,
+          membershipStatus: nextStatus as Account['membershipStatus'],
           coursePassedAt: account.coursePassedAt || now,
           courseScore: score,
           verifiedAt: account.verifiedAt || now,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -372,13 +373,13 @@ export const memberEndpoints: Endpoint[] = [
         ? await req.payload.update({
             collection: 'member-profiles',
             id: existing.id,
-            data: data as DocData,
+            data: data,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'member-profiles',
-            data: data as DocData,
+            data: data,
             overrideAccess: true,
             req,
           })

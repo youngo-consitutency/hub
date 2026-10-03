@@ -1,10 +1,14 @@
+interface ReviewQueueProps {
+  slug?: string
+}
+
 import { TbInbox as ReviewIcon } from 'react-icons/tb'
 import { PageHeader } from '../components/ui'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { FeedbackQueue } from '../components/FeedbackQueue'
 import { OpportunityReview } from '../components/OpportunityReview'
 
-export function ReviewQueue({ slug }: any) {
+export function ReviewQueue({ slug }: ReviewQueueProps) {
   return (
     <div>
       <PageHeader

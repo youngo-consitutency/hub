@@ -1,4 +1,4 @@
-import type { PayloadRequest } from 'payload'
+import type { PayloadRequest, RequiredDataFromCollectionSlug } from 'payload'
 import { fail } from './respond'
 import { isCwActive } from './accounts'
 import {
@@ -10,7 +10,7 @@ import {
 } from './authority'
 import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
-import type { Doc, DocData, AccountLike } from './domain'
+import type { Doc, AccountLike } from './domain'
 
 // Writes to the `authority-records` collection. Every grant is validated
 // against the role registry (scope type, term window, CW membership where
@@ -123,17 +123,21 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
         )
       const created = await req.payload.create({
         collection: 'authority-records',
-        data: row as DocData,
+        data: row as RequiredDataFromCollectionSlug<'authority-records'>,
         overrideAccess: true,
         req,
       })
-      await audit(req, { id: input.recordedBy ?? input.account }, {
-        action: 'authority.granted',
-        targetType: 'authority_record',
-        targetId: String(created.id),
-        reason: `${input.role} on ${scopeType}:${scopeId}`,
-        after: { account: input.account, endsAt: row.endsAt },
-      } as Doc)
+      await audit(
+        req,
+        { id: input.recordedBy ?? input.account },
+        {
+          action: 'authority.granted',
+          targetType: 'authority_record',
+          targetId: String(created.id),
+          reason: `${input.role} on ${scopeType}:${scopeId}`,
+          after: { account: input.account, endsAt: row.endsAt },
+        },
+      )
       return created
     })
   } catch (error: any) {
@@ -186,7 +190,7 @@ export async function revokeAuthorityInTx(
     targetType: 'authority_record',
     targetId: String(recordId),
     reason: reason.trim().slice(0, 500),
-  } as Doc)
+  })
   return updated
 }
 

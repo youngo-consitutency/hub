@@ -6,21 +6,25 @@ import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
 import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 function publicSlot(s: any) {
   return {
     id: s.id,
     startsAt: s.startsAt,
-    durationMinutes: s.durationMinutes,
-    meetUrl: s.meetUrl || null,
+    durationMinutes: s.durationMin,
+    meetUrl: s.meetingUrl || null,
     host:
-      s.host && typeof s.host === 'object'
-        ? { id: s.host.id, name: s.host.name, email: s.host.email }
+      s.hostAccount && typeof s.hostAccount === 'object'
+        ? { id: s.hostAccount.id, name: s.hostAccount.name, email: s.hostAccount.email }
         : null,
     bookedBy:
-      s.bookedBy && typeof s.bookedBy === 'object'
-        ? { id: s.bookedBy.id, name: s.bookedBy.name, email: s.bookedBy.email }
+      s.bookedByAccount && typeof s.bookedByAccount === 'object'
+        ? {
+            id: s.bookedByAccount.id,
+            name: s.bookedByAccount.name,
+            email: s.bookedByAccount.email,
+          }
         : null,
     bookedAt: s.bookedAt || null,
   }
@@ -84,7 +88,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'wg-progress',
         id: (docs[0] as Doc).id,
-        data: { roleInWg } as DocData,
+        data: { roleInWg },
         overrideAccess: true,
         req,
       })
@@ -153,7 +157,7 @@ export const contactPointEndpoints: Endpoint[] = [
           url: b.url ? String(b.url) : null,
           taskForceSlug,
           createdBy: account.id,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -221,15 +225,18 @@ export const contactPointEndpoints: Endpoint[] = [
       return json({
         slots: slots
           .filter(
-            (s) => !s.bookedBy || typeof s.bookedBy !== 'object' || s.bookedBy.id !== account.id,
+            (s) =>
+              !s.bookedByAccount ||
+              typeof s.bookedByAccount !== 'object' ||
+              s.bookedByAccount.id !== account.id,
           )
           .map(publicSlot),
         mine: slots
           .filter(
             (s) =>
-              s.bookedBy &&
-              typeof s.bookedBy === 'object' &&
-              String(s.bookedBy.id) === String(account.id),
+              s.bookedByAccount &&
+              typeof s.bookedByAccount === 'object' &&
+              String(s.bookedByAccount.id) === String(account.id),
           )
           .map(publicSlot),
       })
@@ -248,13 +255,17 @@ export const contactPointEndpoints: Endpoint[] = [
         req,
       })) as Doc
       if (!slot) throw fail.notFound()
-      if (slot.bookedBy) throw new ApiError(409, 'conflict', 'This slot was already booked.')
+      if (slot.bookedByAccount) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       if (Date.parse(slot.startsAt) < Date.now())
         throw fail.validation({ startsAt: 'This slot is in the past.' })
       const updated = await req.payload.update({
         collection: 'cp-call-slots',
         id,
-        data: { bookedBy: account.id, bookedAt: new Date().toISOString() } as DocData,
+        data: {
+          bookedByAccount: account.id,
+          bookedAt: new Date().toISOString(),
+          status: 'booked',
+        },
         overrideAccess: true,
         req,
       })
@@ -275,12 +286,13 @@ export const contactPointEndpoints: Endpoint[] = [
         req,
       })) as Doc
       if (!slot) throw fail.notFound()
-      const bookedById = typeof slot.bookedBy === 'object' ? slot.bookedBy.id : slot.bookedBy
+      const bookedById =
+        typeof slot.bookedByAccount === 'object' ? slot.bookedByAccount.id : slot.bookedByAccount
       if (String(bookedById) !== String(account.id)) throw fail.forbidden()
       const released = await req.payload.update({
         collection: 'cp-call-slots',
         id,
-        data: { bookedBy: null, bookedAt: null } as DocData,
+        data: { bookedByAccount: null, bookedAt: null, status: 'open' },
         overrideAccess: true,
         req,
       })
@@ -309,7 +321,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const { account } = await requirePlatformOperator(req)
       const { docs } = await req.payload.find({
         collection: 'cp-call-slots',
-        where: { host: { equals: account.id } },
+        where: { hostAccount: { equals: account.id } },
         sort: 'startsAt',
         limit: 200,
         overrideAccess: true,
@@ -337,10 +349,11 @@ export const contactPointEndpoints: Endpoint[] = [
             collection: 'cp-call-slots',
             data: {
               startsAt: new Date(startsAt).toISOString(),
-              durationMinutes: duration,
-              host: account.id,
-              meetUrl: String(s.meetUrl || '').slice(0, 500) || null,
-            } as DocData,
+              durationMin: duration,
+              hostAccount: account.id,
+              meetingUrl: String(s.meetUrl || '').slice(0, 500) || null,
+              status: 'open',
+            },
             overrideAccess: true,
             req,
           }),

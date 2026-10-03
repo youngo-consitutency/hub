@@ -1,3 +1,71 @@
+interface EntityHeaderProps {
+  title?: string
+  status?: any
+  statusFilterState?: any
+  onStatusFilter?: any
+  children?: import('react').ReactNode
+}
+
+interface LinkedEntityCardProps {
+  href?: string
+  label?: string
+  className?: string
+  children?: import('react').ReactNode
+}
+
+interface CardScheduleProps {
+  iso?: string
+  label?: string
+}
+
+interface EventCardProps {
+  event?: any
+}
+
+interface SubmissionCardProps {
+  sub?: any
+  statusFilterState?: any
+  groupFilterState?: any
+  onStatusFilter?: any
+  onGroupFilter?: any
+}
+
+interface ClosingCardProps {
+  item?: any
+}
+
+interface CoyCardProps {
+  coy?: any
+  typeFilterState?: any
+  regionFilterState?: any
+  onTypeFilter?: any
+  onRegionFilter?: any
+}
+
+interface GroupCardProps {
+  group?: any
+  href?: string
+  statusLabel?: any
+  statusIcon?: any
+  topicFilterState?: any
+  onTopicFilter?: any
+}
+
+interface PersonCardProps {
+  person?: any
+  onTagClick?: any
+  onOpen?: any
+  expanded?: boolean
+}
+
+interface ContactCardProps {
+  contact?: any
+}
+
+interface WorkingGroupContactCardProps {
+  contact?: any
+}
+
 import { A, StatusChip, FilterChip, LifecycleTiming } from './ui'
 import { DateStamp } from './DateStamp'
 import { MemberAvatar } from './MemberAvatar'
@@ -48,7 +116,13 @@ const EVENT_LABEL = {
 
 const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
 
-function EntityHeader({ title, status, statusFilterState, onStatusFilter, children }: any) {
+function EntityHeader({
+  title,
+  status,
+  statusFilterState,
+  onStatusFilter,
+  children,
+}: EntityHeaderProps) {
   return (
     <div className="entityCardHeader">
       <div className="entityCardHeading">
@@ -64,7 +138,7 @@ function EntityHeader({ title, status, statusFilterState, onStatusFilter, childr
   )
 }
 
-function LinkedEntityCard({ href, label, className = '', children }: any) {
+function LinkedEntityCard({ href, label, className = '', children }: LinkedEntityCardProps) {
   return (
     <article className={`card entityCard linkedEntityCard ${className}`.trim()}>
       <A href={href} className="entityCardLinkOverlay" aria-label={label} peek />
@@ -73,7 +147,7 @@ function LinkedEntityCard({ href, label, className = '', children }: any) {
   )
 }
 
-export function CardSchedule({ iso, label }: any) {
+export function CardSchedule({ iso, label }: CardScheduleProps) {
   const moment = fmtMoment(iso)
   return (
     <div className="entityCardSchedule">
@@ -88,7 +162,7 @@ export function CardSchedule({ iso, label }: any) {
   )
 }
 
-export function EventCard({ event }: any) {
+export function EventCard({ event }: EventCardProps) {
   const TypeIcon = (EVENT_ICONS as any)[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
@@ -113,7 +187,7 @@ export function SubmissionCard({
   groupFilterState,
   onStatusFilter,
   onGroupFilter,
-}: any) {
+}: SubmissionCardProps) {
   return (
     <LinkedEntityCard href={`/submissions/${sub.slug}`} label={`Open ${sub.title}`}>
       <EntityHeader title={sub.title}>
@@ -138,7 +212,7 @@ export function SubmissionCard({
 }
 
 // Home closing-soon item: either a submission or a DMP decision.
-export function ClosingCard({ item }: any) {
+export function ClosingCard({ item }: ClosingCardProps) {
   const isDecision = item.kind === 'decision'
   const href = `${isDecision ? '/council' : '/submissions'}/${item.slug}`
   return (
@@ -157,7 +231,7 @@ export function CoyCard({
   regionFilterState,
   onTypeFilter,
   onRegionFilter,
-}: any) {
+}: CoyCardProps) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   const CoyIcon = (COY_ICONS as any)[coy.type] || Globe
   return (
@@ -197,7 +271,7 @@ export function GroupCard({
   statusIcon: StatusIcon,
   topicFilterState,
   onTopicFilter,
-}: any) {
+}: GroupCardProps) {
   const GroupIcon = workingGroupIcon(group.slug)
   const destination = href || `/groups/${group.slug}`
   const wg = useWorkingGroups()
@@ -241,7 +315,7 @@ export function GroupCard({
   )
 }
 
-export function PersonCard({ person, onTagClick, onOpen, expanded = false }: any) {
+export function PersonCard({ person, onTagClick, onOpen, expanded = false }: PersonCardProps) {
   return (
     <article className={`card cardTight personCard ${expanded ? 'personDetail' : ''}`}>
       <header className="personCardHeader">
@@ -345,7 +419,7 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: any
   )
 }
 
-export function ContactCard({ contact }: any) {
+export function ContactCard({ contact }: ContactCardProps) {
   const rawChannel = contact.channelValue?.trim()
   const channel =
     rawChannel?.replace(/^mailto:/i, '').toLowerCase() === contact.publicEmail?.trim().toLowerCase()
@@ -418,7 +492,7 @@ function workingGroupContactSummary(contact: any) {
   return 'Contact Point details and public channels are organised in the group page.'
 }
 
-export function WorkingGroupContactCard({ contact }: any) {
+export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
   const GroupIcon = workingGroupIcon(slug)

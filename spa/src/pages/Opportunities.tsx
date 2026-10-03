@@ -1,3 +1,13 @@
+interface OpportunityCardProps {
+  item?: any
+  kindFilterState?: any
+  formatFilterState?: any
+  regionFilterState?: any
+  onKindFilter?: any
+  onFormatFilter?: any
+  onRegionFilter?: any
+}
+
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -86,7 +96,7 @@ function OpportunityCard({
   onKindFilter,
   onFormatFilter,
   onRegionFilter,
-}: any) {
+}: OpportunityCardProps) {
   const where = item.format === 'online' ? null : item.location
   return (
     <article className="card entityCard opportunityCard">

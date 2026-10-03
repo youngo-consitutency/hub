@@ -1,10 +1,15 @@
+interface AccountProviderProps {
+  initialAccount?: any
+  children?: import('react').ReactNode
+}
+
 import { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
 import { setSession, getCachedAccount } from './session'
 import { apiGet } from './api'
 
 const AccountContext = createContext<any>(null)
 
-export function AccountProvider({ initialAccount, children }: any) {
+export function AccountProvider({ initialAccount, children }: AccountProviderProps) {
   const [account, setAccountState] = useState(initialAccount || getCachedAccount())
 
   useEffect(() => {

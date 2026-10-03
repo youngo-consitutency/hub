@@ -1,6 +1,10 @@
+interface RoutePeekProps {
+  children?: import('react').ReactNode
+}
+
 import { SidePanel } from './SidePanel.tsx'
 
-export function RoutePeek({ children }: any) {
+export function RoutePeek({ children }: RoutePeekProps) {
   return (
     <SidePanel title="Quick view" showTitle={false} onClose={() => window.history.back()}>
       {children}

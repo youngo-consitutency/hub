@@ -1,3 +1,119 @@
+interface AProps {
+  href?: string
+  className?: string
+  children?: import('react').ReactNode
+  onClick?: any
+  target?: any
+  peek?: any
+  [key: string]: any
+}
+
+interface ButtonProps {
+  variant?: any
+  sm?: boolean
+  glow?: boolean
+  className?: string
+  [key: string]: any
+}
+
+interface FilterPillProps {
+  active?: boolean
+  state?: any
+  icon?: import('react').ElementType
+  prefix?: any
+  children?: import('react').ReactNode
+  className?: string
+  [key: string]: any
+}
+
+interface FilterChipProps {
+  children?: import('react').ReactNode
+  state?: any
+  tone?: any
+  onClick?: any
+  icon?: import('react').ElementType
+  prefix?: any
+  className?: string
+}
+
+interface SortButtonProps {
+  active?: boolean
+  icon?: import('react').ElementType
+  children?: import('react').ReactNode
+  [key: string]: any
+}
+
+interface FilterMenuProps {
+  children?: import('react').ReactNode
+  activeCount?: any
+  label?: string
+  onClear?: any
+}
+
+interface PageHeaderProps {
+  title?: string
+  description?: string
+  action?: any
+  children?: import('react').ReactNode
+  icon?: import('react').ElementType
+}
+
+interface StatusChipProps {
+  status?: any
+  filterState?: any
+  onClick?: any
+}
+
+interface LifecycleTimingProps {
+  status?: any
+  iso?: string
+  label?: string
+  showCountdown?: boolean
+  statusFilterState?: any
+  onStatusFilter?: any
+  className?: string
+}
+
+interface SectionProps {
+  label?: string
+  meta?: string | null
+  action?: any
+  children?: import('react').ReactNode
+}
+
+interface SkeletonsProps {
+  n?: any
+}
+
+interface EmptyProps {
+  icon?: import('react').ElementType
+  title?: string
+  body?: any
+  cta?: any
+}
+
+interface ErrorCardProps {
+  message?: any
+  onRetry?: any
+}
+
+interface BackLinkProps {
+  href?: string
+  children?: import('react').ReactNode
+}
+
+interface TimelineProps {
+  steps?: any
+  currentIndex?: any
+}
+
+interface AsyncProps {
+  query?: any
+  skeletons?: any
+  children: (data: any) => import('react').ReactNode
+  empty?: any
+}
+
 import { Fragment } from 'react'
 import { navigate, replace } from '../lib/router'
 import { countdown, fmtMoment, formatCountdownLabel } from '../lib/time'
@@ -22,7 +138,7 @@ export function A({
   target,
   peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(href || ''),
   ...rest
-}: any) {
+}: AProps) {
   return (
     <a
       href={href}
@@ -63,7 +179,7 @@ export function A({
   )
 }
 
-export function Button({ variant = 'secondary', sm, glow, className = '', ...rest }: any) {
+export function Button({ variant = 'secondary', sm, glow, className = '', ...rest }: ButtonProps) {
   const cls = ['btn', `btn-${variant}`, sm && 'btn-sm', glow && 'btn-glow', className]
     .filter(Boolean)
     .join(' ')
@@ -79,7 +195,7 @@ export function FilterPill({
   children,
   className = '',
   ...rest
-}: any) {
+}: FilterPillProps) {
   const filterState = state || (active ? 'include' : 'neutral')
   const stateLabel =
     filterState === 'include'
@@ -136,7 +252,7 @@ export function FilterChip({
   icon: Icon,
   prefix,
   className = '',
-}: any) {
+}: FilterChipProps) {
   const content = (
     <>
       {Icon && <Icon size={13} strokeWidth={1.75} aria-hidden />}
@@ -167,7 +283,7 @@ export function FilterChip({
   )
 }
 
-export function SortButton({ active, icon: Icon, children, ...rest }: any) {
+export function SortButton({ active, icon: Icon, children, ...rest }: SortButtonProps) {
   return (
     <button
       type="button"
@@ -182,7 +298,12 @@ export function SortButton({ active, icon: Icon, children, ...rest }: any) {
 }
 
 /** Render collapsible filters with an active count and an optional clear action that restores focus. */
-export function FilterMenu({ children, activeCount = 0, label = 'Filters', onClear }: any) {
+export function FilterMenu({
+  children,
+  activeCount = 0,
+  label = 'Filters',
+  onClear,
+}: FilterMenuProps) {
   return (
     <details className="filterMenu">
       <summary className="filterToggle">
@@ -218,7 +339,7 @@ export function FilterMenu({ children, activeCount = 0, label = 'Filters', onCle
 }
 
 /** @param {{ title: import("react").ReactNode, description?: import("react").ReactNode, action?: import("react").ReactNode, icon?: import("react").ElementType, children?: import("react").ReactNode }} props */
-export function PageHeader({ title, description, action, children, icon: Icon }: any) {
+export function PageHeader({ title, description, action, children, icon: Icon }: PageHeaderProps) {
   return (
     <header className="pageHeader">
       <div className="pageHeaderRow">
@@ -264,7 +385,7 @@ const CHIP = {
   withdrawn: ['chip-neutral', 'Withdrawn'],
 }
 
-export function StatusChip({ status, filterState = 'neutral', onClick }: any) {
+export function StatusChip({ status, filterState = 'neutral', onClick }: StatusChipProps) {
   const [cls, label, pulse] = (CHIP as any)[status] || [
     'chip-neutral',
     String(status || '').replaceAll('_', ' '),
@@ -300,7 +421,7 @@ export function LifecycleTiming({
   statusFilterState = 'neutral',
   onStatusFilter,
   className = '',
-}: any) {
+}: LifecycleTimingProps) {
   if (!status && !iso) return null
 
   const moment = iso ? fmtMoment(iso) : null
@@ -332,7 +453,7 @@ export function LifecycleTiming({
   )
 }
 
-export function Section({ label, meta, action, children }: any) {
+export function Section({ label, meta, action, children }: SectionProps) {
   return (
     <section className="section">
       {label && (
@@ -349,7 +470,7 @@ export function Section({ label, meta, action, children }: any) {
   )
 }
 
-export function Skeletons({ n = 3 }: any) {
+export function Skeletons({ n = 3 }: SkeletonsProps) {
   return (
     <div className="stack" role="status" aria-label="Loading content">
       {Array.from({ length: n }).map((_, i) => (
@@ -367,7 +488,7 @@ export function Skeletons({ n = 3 }: any) {
  *   cta?: import('react').ReactNode,
  * }} props
  */
-export function Empty({ icon: Icon, title, body, cta }: any) {
+export function Empty({ icon: Icon, title, body, cta }: EmptyProps) {
   return (
     <div className="empty">
       {Icon && (
@@ -382,7 +503,7 @@ export function Empty({ icon: Icon, title, body, cta }: any) {
   )
 }
 
-export function ErrorCard({ message, onRetry }: any) {
+export function ErrorCard({ message, onRetry }: ErrorCardProps) {
   return (
     <div className="card rowBetween errorCard" role="alert">
       <span className="meta">{message || 'Couldn’t load this — try again.'}</span>
@@ -395,7 +516,7 @@ export function ErrorCard({ message, onRetry }: any) {
   )
 }
 
-export function BackLink({ href, children }: any) {
+export function BackLink({ href, children }: BackLinkProps) {
   return (
     <A href={href} className="backLink">
       <ArrowLeft size={18} strokeWidth={2} aria-hidden />
@@ -406,7 +527,7 @@ export function BackLink({ href, children }: any) {
 
 // Process timeline strip (submissions, decisions). Steps before currentIndex are
 // "done", the current step is highlighted, later steps are muted future states.
-export function Timeline({ steps, currentIndex }: any) {
+export function Timeline({ steps, currentIndex }: TimelineProps) {
   return (
     <div className="timelineStrip" aria-label="Process timeline">
       {steps.map((label: any, i: any) => (
@@ -425,7 +546,7 @@ export function Timeline({ steps, currentIndex }: any) {
 }
 
 // Wrap an async section: shows skeletons, error-retry, or children(data).
-export function Async({ query, skeletons = 3, children, empty }: any) {
+export function Async({ query, skeletons = 3, children, empty }: AsyncProps) {
   if (query.loading) return <Skeletons n={skeletons} />
   if (query.error) return <ErrorCard message={query.error} onRetry={query.retry} />
   if (empty && empty(query.data)) return empty(query.data)

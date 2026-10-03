@@ -1,3 +1,14 @@
+interface DetailProps {
+  term?: any
+  children?: import('react').ReactNode
+}
+
+interface MemberProfileEditorProps {
+  query?: any
+  account?: any
+  roleLabel?: any
+}
+
 import { useDocument } from '../lib/documents'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useRef, useState } from 'react'
@@ -32,7 +43,7 @@ function formFromProfile(profile: any) {
   }
 }
 
-function Detail({ term, children }: any) {
+function Detail({ term, children }: DetailProps) {
   if (!children) return null
   return (
     <div className="profileDetail">
@@ -42,7 +53,7 @@ function Detail({ term, children }: any) {
   )
 }
 
-export function MemberProfileEditor({ query, account, roleLabel }: any) {
+export function MemberProfileEditor({ query, account, roleLabel }: MemberProfileEditorProps) {
   const { doc: privacyNotice } = useDocument('privacy-notice')
   const privacyContactEmail = privacyNotice?.PRIVACY_META?.contactEmail
 

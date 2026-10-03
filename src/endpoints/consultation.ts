@@ -3,7 +3,7 @@ import { endpoint, fail, json, readBody } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { getDocument } from '../lib/documents'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 // The questionnaire structure (kinds + sections) is console-editable content
 // in the `consultation` document; the API both serves and validates with it.
@@ -84,9 +84,9 @@ export const consultationEndpoints: Endpoint[] = [
         data: {
           kind,
           body,
-          displayName: cleanText(b.name, 80) || null,
-          section,
-        } as DocData,
+          name: cleanText(b.name, 80) || null,
+          meta: { section },
+        },
         overrideAccess: true,
         req,
       })

@@ -1,3 +1,8 @@
+interface AddToCalendarProps {
+  event?: any
+  className?: string
+}
+
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   TbCalendarPlus as CalendarPlus,
@@ -15,7 +20,7 @@ import {
 /**
  * Calendar actions for Google, Outlook, Microsoft 365, and ICS downloads.
  */
-export function AddToCalendar({ event, className = 'btn btn-secondary' }: any) {
+export function AddToCalendar({ event, className = 'btn btn-secondary' }: AddToCalendarProps) {
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<any>(null)

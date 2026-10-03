@@ -1,3 +1,8 @@
+interface TicketCardProps {
+  ticket?: any
+  onUpdate?: any
+}
+
 import { formatDateTime } from '../lib/time'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api'
@@ -36,7 +41,7 @@ const SEVERITY_CHIP = {
   critical: 'chip-danger',
 }
 
-function TicketCard({ ticket, onUpdate }: any) {
+function TicketCard({ ticket, onUpdate }: TicketCardProps) {
   const [note, setNote] = useState(ticket.triageNote || '')
   const [saving, setSaving] = useState(false)
   const noteDirty = note !== (ticket.triageNote || '')

@@ -1,3 +1,7 @@
+interface PageSectionNavProps {
+  section?: any
+}
+
 import {
   TbUsers,
   TbAt,
@@ -27,7 +31,7 @@ const SECTION_ICONS = {
   '/staff/review/opportunities': TbSpeakerphone,
 }
 
-export function PageSectionNav({ section }: any) {
+export function PageSectionNav({ section }: PageSectionNavProps) {
   const path = usePath()
   const current = pageSectionFor(path)
   const { label, items } = (PAGE_SECTIONS as any)[section]

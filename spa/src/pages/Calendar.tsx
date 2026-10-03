@@ -1,3 +1,7 @@
+interface CalendarEventIconProps {
+  type: string
+}
+
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api'
@@ -53,7 +57,7 @@ const EVENT_ICONS = {
   coordination: CalendarClock,
 }
 
-function CalendarEventIcon({ type }: any) {
+function CalendarEventIcon({ type }: CalendarEventIconProps) {
   const Icon = (EVENT_ICONS as any)[type] || CalendarClock
   return (
     <span className="calendarEventIcon" data-event-type={type} aria-hidden>

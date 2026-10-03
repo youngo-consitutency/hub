@@ -1,3 +1,18 @@
+interface CopyFeedButtonProps {
+  path?: any
+  label?: string
+  className?: string
+}
+
+interface FeedRowProps {
+  label?: string
+  path?: any
+}
+
+interface CalendarSubscribeProps {
+  type?: string
+}
+
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   TbCalendarPlus as CalendarPlus,
@@ -13,7 +28,7 @@ export function CopyFeedButton({
   path,
   label = 'Copy feed URL',
   className = 'btn btn-secondary btn-sm',
-}: any) {
+}: CopyFeedButtonProps) {
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -37,7 +52,7 @@ export function CopyFeedButton({
   )
 }
 
-function FeedRow({ label, path }: any) {
+function FeedRow({ label, path }: FeedRowProps) {
   return (
     <div className="subscribeFeedRow">
       <span className="meta" style={{ minWidth: 0, flex: 1 }}>
@@ -58,7 +73,7 @@ function FeedRow({ label, path }: any) {
 }
 
 // Calendar "Subscribe" control: live feeds + one-click helper links.
-export function CalendarSubscribe({ type }: any) {
+export function CalendarSubscribe({ type }: CalendarSubscribeProps) {
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<any>(null)

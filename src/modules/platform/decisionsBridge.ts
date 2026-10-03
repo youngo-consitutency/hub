@@ -11,7 +11,8 @@ import {
   recordEvent,
 } from '../../lib/decisionRuntime'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
-import type { Doc, DocData } from '../../lib/domain'
+import type { Doc } from '../../lib/domain'
+import type { DecisionFlag, DecisionProposal } from '../../payload-types'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
 // S09 decision engine. decision_proposals is the single store; the legacy
@@ -172,7 +173,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
       context: proposalText.slice(0, 2000),
       proposalText,
       decisionType: process === 'snap' ? 'snap' : 'standard',
-      body,
+      body: body as DecisionProposal['body'],
       bodyRef,
       policyVersion,
       snapHours,
@@ -180,8 +181,8 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
       snapDeadline:
         process === 'snap' ? new Date(Date.now() + snapHours * 3600000).toISOString() : null,
       status: 'draft',
-      proposedBy: actor.id,
-      contactPersons: [actor.id],
+      proposedBy: Number(actor.id),
+      contactPersons: [Number(actor.id)],
       version: 1,
       revisions: [
         {
@@ -191,7 +192,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
           createdAt: new Date().toISOString(),
         },
       ],
-    } as DocData,
+    },
     overrideAccess: true,
   })
   const { rows } = await db().query(
@@ -315,7 +316,7 @@ export async function contribute(req: PayloadRequest, actor: Actor, id: string, 
         account: account.id,
         body: message,
         createdAt: new Date().toISOString(),
-      } as DocData,
+      },
       overrideAccess: true,
     })
     await recordEvent(req, proposal.id, 'commented', account)
@@ -328,14 +329,14 @@ export async function contribute(req: PayloadRequest, actor: Actor, id: string, 
     collection: 'decision-flags',
     data: {
       proposal: proposal.id,
-      kind,
-      rationaleCategory: input.rationaleCategory ?? null,
+      kind: kind as DecisionFlag['kind'],
+      rationaleCategory: (input.rationaleCategory ?? null) as DecisionFlag['rationaleCategory'],
       reason: grounds ? `${message}\n\n${grounds}` : message,
       alternative: alternative || null,
       raisedBy: account.id,
       status: 'open',
       raisedAt: new Date().toISOString(),
-    } as DocData,
+    },
     overrideAccess: true,
   })
   await recordEvent(req, proposal.id, `flag_${kind}_raised`, account, {
@@ -376,9 +377,9 @@ export async function resolveContribution(
     data: {
       status: 'withdrawn',
       responseNote: reason,
-      respondedBy: actor.id,
+      respondedBy: Number(actor.id),
       respondedAt: new Date().toISOString(),
-    } as DocData,
+    },
     overrideAccess: true,
   })
   await recordEvent(req, proposal.id, 'flag_withdrawn', actor, {
