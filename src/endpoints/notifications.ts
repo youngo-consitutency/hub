@@ -5,6 +5,7 @@ import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
+import { hasCapability } from '../lib/access'
 import {
   drainNotificationOutbox,
   enqueueNotification,
@@ -81,7 +82,7 @@ function broadcastInput(body: any) {
 
 const requireNotifyCapability = async (req: any) => {
   const { account, access } = await memberContext(req)
-  if (!access.capabilities.includes('notifications.send'))
+  if (!hasCapability(access, 'notifications.send'))
     throw fail.forbidden('Sending Hub email is not assigned to this account.')
   return account
 }

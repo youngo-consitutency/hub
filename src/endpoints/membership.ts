@@ -2,6 +2,7 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
+import { hasCapability } from '../lib/access'
 import {
   destroyAllSessions,
   findAccountRowById,
@@ -411,10 +412,7 @@ export const membershipEndpoints: Endpoint[] = [
       if (!target) throw fail.notFound('Account not found.')
       if (target.id === staff.id)
         throw fail.validation({ _: 'You cannot terminate your own account.' })
-      if (
-        (await hasActivePlatformMandate(target.id)) &&
-        !access.capabilities.includes('platform.manage')
-      )
+      if ((await hasActivePlatformMandate(target.id)) && !hasCapability(access, 'platform.manage'))
         throw fail.forbidden('Only a platform officer can terminate an officer\u2019s membership.')
       const { updated, handover } = await applyMembershipTransition(req, target.id, {
         accountFields: {

@@ -3,6 +3,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
+import { hasCapability } from '../lib/access'
 import {
   accountRef,
   advanceIfDue,
@@ -426,7 +427,7 @@ export const decisionEndpoints: Endpoint[] = [
       const { account, access } = await verifiedContext(req)
       // Verifying a veto request against eligible representation is a
       // coordination duty (GCT), not a technical-administration function.
-      if (!access.capabilities.includes('gct.coordinate'))
+      if (!hasCapability(access, 'gct.coordinate'))
         throw fail.forbidden('Veto requests are confirmed by the coordination team.')
       let p = await loadProposal(req, param(req, 'id'))
       const veto = await req.payload

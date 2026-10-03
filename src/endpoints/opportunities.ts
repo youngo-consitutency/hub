@@ -1,5 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
+import { hasTeamRole } from '../lib/access'
 import { requireVerifiedMember, verifiedContext, memberContext } from '../lib/accounts'
 import * as store from '../lib/content'
 import { opportunityShape } from '../lib/content'
@@ -92,7 +93,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const { access } = await memberContext(req)
-      if (!access.teamRoles.includes('membership_team'))
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const [pending, published] = await Promise.all([
         req.payload.find({
@@ -270,7 +271,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
-      if (!access.teamRoles.includes('membership_team'))
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const b = await readBody(req)
       const approve = b.decision === 'approve'
@@ -314,7 +315,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
-      if (!access.teamRoles.includes('membership_team'))
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const orgAccountId = param(req, 'orgAccountId')
       const b = await readBody(req)
@@ -355,7 +356,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
-      if (!access.teamRoles.includes('membership_team')) throw fail.forbidden()
+      if (!hasTeamRole(access, 'membership_team')) throw fail.forbidden()
       const b = await readBody(req)
       const reviewNote = trimmed(b.note, 1000) || null
       if (!reviewNote) throw fail.validation({ note: 'Give a reason for unpublishing.' })

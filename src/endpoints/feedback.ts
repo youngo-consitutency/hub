@@ -2,6 +2,7 @@ import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
+import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
 
 const feedbackLimit = rateLimit({
@@ -36,8 +37,7 @@ export const feedbackEndpoints: Endpoint[] = [
         kinds: FEEDBACK_KINDS,
         severities: FEEDBACK_SEVERITIES,
         canTriage:
-          access.capabilities.includes('accounts.manage') ||
-          access.teamRoles.includes('membership_team'),
+          hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team'),
       })
     }),
   },
@@ -101,8 +101,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { access } = await memberContext(req)
       const canTriage =
-        access.capabilities.includes('accounts.manage') ||
-        access.teamRoles.includes('membership_team')
+        hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage)
         throw fail.forbidden('Feedback triage is for platform operators and the Membership Team.')
       const where: any = {}
@@ -124,8 +123,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { access } = await memberContext(req)
       const canTriage =
-        access.capabilities.includes('accounts.manage') ||
-        access.teamRoles.includes('membership_team')
+        hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage) throw fail.forbidden()
       const b = await readBody(req)
       const data: any = {}

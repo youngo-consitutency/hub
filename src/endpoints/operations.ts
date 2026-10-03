@@ -1,6 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
@@ -16,7 +17,7 @@ import { audit } from '../lib/audit'
 // every GCT member — holds finance.review).
 async function requireOpsCapability(req: PayloadRequest, capabilities: string[]) {
   const { account, access } = await verifiedContext(req)
-  if (!capabilities.some((c) => access.capabilities.includes(c)))
+  if (!capabilities.some((c) => hasCapability(access, c)))
     throw fail.forbidden('This workspace is not assigned to your account.')
   return { account }
 }

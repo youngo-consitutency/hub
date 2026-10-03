@@ -1,5 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { hasCapability } from '../lib/access'
 import {
   accountView,
   isVerifiedAccount,
@@ -126,7 +127,7 @@ export const memberEndpoints: Endpoint[] = [
         .then((r) => r.docs[0] as any)
       return json({
         ...access,
-        canAdminister: access.capabilities.includes('accounts.manage'),
+        canAdminister: hasCapability(access, 'accounts.manage'),
         managedWgs: access.wgAssignments.map((i: any) => i.wgSlug).sort(),
         ngo: seat
           ? {

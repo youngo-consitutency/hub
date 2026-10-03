@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
-import { getAccessProfile } from './access'
+import { getAccessProfile, hasCapability } from './access'
 
 // Shared S10/S24 helpers. Secret ballots are keyed by voter credentials
 // (HMAC'd tokens) and never reference an account — server-trust secrecy.
@@ -11,12 +11,12 @@ import { getAccessProfile } from './access'
 
 export async function isFacilitator(req: PayloadRequest, account: any) {
   const access = await getAccessProfile(req, account)
-  return access.capabilities.includes('election.facilitate')
+  return hasCapability(access, 'election.facilitate')
 }
 
 export async function isSelector(req: PayloadRequest, account: any) {
   const access = await getAccessProfile(req, account)
-  return access.capabilities.includes('selection.manage')
+  return hasCapability(access, 'selection.manage')
 }
 
 export const accountRef = (a: any) =>

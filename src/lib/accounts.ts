@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 import { ApiError, fail } from './respond'
-import { getAccessProfile } from './access'
+import { getAccessProfile, hasCapability, hasTeamRole } from './access'
 import type { AccessProfile } from './access'
 import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
 import type { AccountLike, AccountView } from './domain'
@@ -121,7 +121,7 @@ export async function verifiedContext(req: PayloadRequest): Promise<MemberContex
 // Team workspaces require the corresponding authority record.
 export async function requireTeam(req: PayloadRequest, teamRole: string): Promise<MemberContext> {
   const ctx = await verifiedContext(req)
-  if (!ctx.access.teamRoles.includes(teamRole))
+  if (!hasTeamRole(ctx.access, teamRole))
     throw fail.forbidden('This team workspace is not assigned to your account.')
   return ctx
 }
@@ -131,7 +131,7 @@ export async function requireTeam(req: PayloadRequest, teamRole: string): Promis
 // an account flag.
 export async function requireAccountsManager(req: PayloadRequest): Promise<MemberContext> {
   const ctx = await verifiedContext(req)
-  if (!ctx.access.capabilities.includes('accounts.manage'))
+  if (!hasCapability(ctx.access, 'accounts.manage'))
     throw fail.forbidden('This console is for platform operators.')
   return ctx
 }
@@ -140,7 +140,7 @@ export async function requireAccountsManager(req: PayloadRequest): Promise<Membe
 // on the `platform.manage` capability — the focal point and peers.
 export async function requirePlatformOperator(req: PayloadRequest): Promise<MemberContext> {
   const ctx = await verifiedContext(req)
-  if (!ctx.access.capabilities.includes('platform.manage'))
+  if (!hasCapability(ctx.access, 'platform.manage'))
     throw fail.forbidden('This area is for platform officers.')
   return ctx
 }

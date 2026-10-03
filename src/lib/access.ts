@@ -108,6 +108,13 @@ export function hasCapability(
   return Boolean(access?.capabilities?.includes(capability))
 }
 
+export function hasTeamRole(
+  access: Pick<AccessProfile, 'teamRoles'> | null | undefined,
+  teamRole: string,
+): boolean {
+  return Boolean(access?.teamRoles?.includes(teamRole))
+}
+
 export function canManageWg(
   access: Pick<AccessProfile, 'capabilities' | 'manageAllWgs'> | null | undefined,
   wgSlug: string,
