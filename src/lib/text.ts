@@ -10,15 +10,15 @@ export const trimmed = (v: unknown, max: number) =>
 // text like "a < b" survives) and tolerates a missing `>` (so unterminated
 // tags cannot slip through). Applied to a fixpoint: a single pass can weld
 // a surviving '<' to following text ("<<x>script" → "<script"), so the
-// strip repeats until the string stops changing. Input is truncated to
-// `max` before the loop — the fixpoint is O(len²) worst case on adversarial
-// input, so the work must be bounded first; stripping can only shorten the
-// result, and a tag cut mid-way leaves inert text.
+// strip repeats until the string stops changing. The fixpoint is O(len²)
+// worst case on adversarial input, so the raw input is bounded first — but
+// to a window larger than `max`, since markup can otherwise push legitimate
+// text past the cut; the `max` limit applies to the cleaned result.
 export const cleanText = (v: unknown, max: number) => {
-  let s = String(v ?? '').slice(0, max)
+  let s = String(v ?? '').slice(0, Math.max(max * 4, 8192))
   for (let prev = ''; prev !== s;) {
     prev = s
     s = s.replace(/<\/?[a-zA-Z!][^>]*>?/g, '')
   }
-  return s.replace(/\s+/g, ' ').trim()
+  return s.replace(/\s+/g, ' ').trim().slice(0, max)
 }
