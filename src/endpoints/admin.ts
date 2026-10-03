@@ -10,8 +10,8 @@ import {
   findAccountRowById,
 } from '../lib/membership'
 import { ensureOwnerSeat, listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
-import { legacyAppointmentRole } from '../lib/appointments'
-import { grantAppointment, revokeAppointmentInTx } from '../lib/appointmentService'
+import { resolveLegacyRole } from '../lib/authority'
+import { grantAuthority, revokeAuthorityInTx } from '../lib/authorityService'
 import { withAuthorityLock } from '../lib/authorityLock'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
@@ -176,25 +176,23 @@ export const adminEndpoints: Endpoint[] = [
       const target = items.find((item: any) => String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
-      // Team roles are canonical mandates: write them as `appointments`
-      // (with the shared lock and audit trail), not as legacy ledger rows.
-      const appointmentRole = legacyAppointmentRole('team', teamRole, 'member')
-      if (!appointmentRole) throw fail.validation({ teamRole: 'Invalid team role.' })
+      // Team roles are canonical mandates written to `authority-records`
+      // (with the shared lock and audit trail).
+      const recordRole = resolveLegacyRole('team', teamRole, 'member')
+      if (!recordRole) throw fail.validation({ teamRole: 'Invalid team role.' })
       if (b.enabled === false) {
         roles.delete(teamRole)
-        // Under ONE advisory lock — including when no appointment exists —
-        // so a racing grant or migration write cannot interleave between
-        // lookup and revocation: (a) revoke every active canonical
-        // appointment for the tuple whatever its provenance, and (b) end
-        // the legacy ledger row — an unmigrated assignment would otherwise
-        // keep granting the removed authority.
+        // Under ONE advisory lock — including when no record exists — so a
+        // racing grant cannot interleave between lookup and revocation:
+        // revoke every active record for the tuple, whatever its
+        // provenance.
         await withAuthorityLock(req, target.id, async () => {
           const { docs: active } = await req.payload.find({
-            collection: 'appointments',
+            collection: 'authority-records',
             where: {
               and: [
                 { account: { equals: target.id } },
-                { appointmentRole: { equals: appointmentRole } },
+                { role: { equals: recordRole } },
                 { scopeType: { equals: 'team' } },
                 { scopeId: { equals: teamRole } },
                 { status: { equals: 'active' } },
@@ -204,65 +202,39 @@ export const adminEndpoints: Endpoint[] = [
             overrideAccess: true,
             req,
           })
-          for (const appt of active as any[]) {
-            await revokeAppointmentInTx(req, appt.id, admin, reason)
-          }
-          const { docs: ledger } = await req.payload.find({
-            collection: 'assignments',
-            where: {
-              and: [
-                { account: { equals: target.id } },
-                { scopeType: { equals: 'team' } },
-                { scopeId: { equals: teamRole } },
-                { status: { equals: 'active' } },
-              ],
-            },
-            limit: 50,
-            overrideAccess: true,
-            req,
-          })
-          const endedAt = new Date().toISOString()
-          for (const row of ledger as any[]) {
-            await req.payload.update({
-              collection: 'assignments',
-              id: row.id,
-              data: { status: 'revoked', endsAt: endedAt },
-              overrideAccess: true,
-              req,
-            })
+          for (const record of active as any[]) {
+            await revokeAuthorityInTx(req, record.id, admin, reason)
           }
         })
       } else {
         roles.add(teamRole)
         try {
-          await grantAppointment(req, {
+          await grantAuthority(req, {
             account: target.id,
-            appointmentRole,
+            role: recordRole,
             scopeType: 'team',
             scopeId: teamRole,
             evidence: reason,
-            appointedBy: admin.id,
-            appointedVia: { source: 'admin_console' },
+            recordedBy: admin.id,
+            provenance: { source: 'admin_console' },
           })
         } catch (error: any) {
           // Already holds the mandate — enabling twice is a no-op.
-          if (error?.code !== 'duplicate_appointment') throw error
+          if (error?.code !== 'duplicate_record') throw error
         }
       }
-      // team_roles is jsonb — bind a JSON document, not a JS array (pg would
-      // encode it as a Postgres array literal).
-      const updatedRow = await setAccountFields(id, {
-        team_roles: JSON.stringify([...roles]),
-      })
+      // No mirror column: the authority record IS the team assignment —
+      // the audit row captures the toggle either way.
+      const after = [...roles]
       await audit(req, admin, {
         action: 'account.team_assignment_changed',
         targetType: 'account',
         targetId: id,
         before: { teamRoles: target.teamRoles },
-        after: { teamRoles: [...roles] },
+        after: { teamRoles: after },
         reason,
       })
-      return json({ account: accountView(updatedRow) })
+      return json({ account: { ...target, teamRoles: after } })
     }),
   },
   {

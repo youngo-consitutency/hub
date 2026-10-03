@@ -21,7 +21,7 @@ describe('generated API access control', () => {
       'content-coys',
       'opportunities',
       'working-groups',
-      'assignments',
+      'authority-records',
       'feedback-tickets',
     ]) {
       const res = await api(`/${slug}`, {
@@ -33,7 +33,7 @@ describe('generated API access control', () => {
   })
 
   it('rejects member writes to staff-managed collections', async () => {
-    for (const slug of ['content-announcements', 'assignments', 'content-coys']) {
+    for (const slug of ['content-announcements', 'authority-records', 'content-coys']) {
       const res = await api(`/${slug}`, {
         method: 'POST',
         cookie: member.cookie,
@@ -109,19 +109,20 @@ describe('generated API access control', () => {
     expect(doc.taskForces).toBeUndefined()
   })
 
-  it('grants wg.manage only for coordination assignment roles', async () => {
+  it('grants wg.manage only for coordination authority records', async () => {
     const { getAccessProfile } = await import('@/lib/access')
     const payload = await testPayload()
     // WG Contact Point is a CW-gated mandate (S17/S25) — the holder needs
     // active Constituency Work membership.
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
-    const assignment = await payload.create({
-      collection: 'assignments',
+    const record = await payload.create({
+      collection: 'authority-records',
       data: {
         account: account.id,
+        kind: 'participation',
         scopeType: 'working_group',
         scopeId: 'contract-wg',
-        role: 'member',
+        role: 'wg.member',
         status: 'active',
         startsAt: new Date(Date.now() - 86400000).toISOString(),
       } as any,
@@ -132,17 +133,17 @@ describe('generated API access control', () => {
       const memberProfile = await getAccessProfile(req, account)
       expect(memberProfile.capabilities).not.toContain('wg.manage:contract-wg')
       await payload.update({
-        collection: 'assignments',
-        id: assignment.id,
-        data: { role: 'contact' },
+        collection: 'authority-records',
+        id: record.id,
+        data: { role: 'wg.contact_point' },
         overrideAccess: true,
       })
       const contactProfile = await getAccessProfile(req, account)
       expect(contactProfile.capabilities).toContain('wg.manage:contract-wg')
     } finally {
       await payload.delete({
-        collection: 'assignments',
-        id: assignment.id,
+        collection: 'authority-records',
+        id: record.id,
         overrideAccess: true,
       })
     }

@@ -12,28 +12,6 @@ export const DECISION_TYPES = [
 ] as const
 export type DecisionType = (typeof DECISION_TYPES)[number]
 
-export const DECISION_STATUSES = [
-  'draft',
-  'consultation',
-  'revision',
-  'decision',
-  'voting',
-  'adopted',
-  'vetoed',
-  'withdrawn',
-  'failed_quorum',
-  'rejected',
-] as const
-
-export const DECISION_BODIES = [
-  'council',
-  'working_group',
-  'operational_team',
-  'gct',
-  'constituency',
-] as const
-export type DecisionBody = (typeof DECISION_BODIES)[number]
-
 // Red flag rationale categories, Annex 3 of S09.
 export const RED_FLAG_CATEGORIES = [
   'principles_violation',
@@ -44,13 +22,6 @@ export const RED_FLAG_CATEGORIES = [
   'mission_misalignment',
   'inadequate_consultation',
   'grey_flag_unsatisfactory',
-] as const
-
-export const FLAG_STATUSES = [
-  'open',
-  'addressed', // contact person responded; flag still stands unless withdrawn
-  'withdrawn',
-  'nullified', // CoC violation by the flagger → automatic nullification
 ] as const
 
 const H = 3_600_000

@@ -1,32 +1,23 @@
 import type { PayloadRequest } from 'payload'
-import {
-  appointmentKey,
-  deriveAuthority,
-  resolveAppointmentRole,
-  supersededAssignmentIds,
-  supersessionKeys,
-  type AuthorityRow,
-} from './appointments'
+import { deriveAuthority, type AuthorityRow } from './authority'
 import { isCwActive } from './accounts'
 
-// Derives the capability model from *appointments*: time-bounded, scoped,
-// evidenced records in the `appointments` collection. `account.role` carries
-// only technical administration and entity kind — it never creates
-// constituency authority on its own (a title without an appointment grants
-// nothing). Legacy `assignments` rows are still honoured through the
-// explicit migration map in lib/appointments.ts until the migration runs;
-// unmapped rows are denied and reported, never widened.
+// Derives the capability model from `authority-records`: time-bounded,
+// scoped, evidenced records — mandates and participation share one store.
+// `account.role` carries only technical administration and entity kind — it
+// never creates constituency authority on its own (a title without a record
+// grants nothing). Rows whose recorded role maps to no registry role are
+// denied and reported, never widened.
 export interface AccessProfile {
   teamRoles: string[]
   wgAssignments: { wgSlug: string; role: string }[]
   negotiationAssignments: { scopeType: string; scopeId: string; role: string }[]
   /** Council seat keys currently held (e.g. 'wg:finance', 'org:12'). */
   councilSeats: string[]
-  /** Platform-body scopes the account participates in (assignments or
-   *  appointment rows with scopeType 'body'). */
+  /** Platform-body scopes the account participates in. */
   bodyScopes: string[]
-  /** Resolved current appointments, for workspace display and auditing. */
-  appointments: {
+  /** Resolved current records, for workspace display and auditing. */
+  records: {
     id: number
     role: string
     scopeType: string
@@ -35,8 +26,8 @@ export interface AccessProfile {
     endsAt: string | null
     substitute: boolean
   }[]
-  /** Active-window records that matched no appointment mapping — denied. */
-  unmappedAssignments: number
+  /** Active-window records that matched no role mapping — denied. */
+  unmappedRecords: number
   capabilities: string[]
   manageAllWgs: boolean
   isFocalPoint?: boolean
@@ -70,8 +61,8 @@ const EMPTY: AccessProfile = {
   negotiationAssignments: [],
   councilSeats: [],
   bodyScopes: [],
-  appointments: [],
-  unmappedAssignments: 0,
+  records: [],
+  unmappedRecords: 0,
   capabilities: [],
   manageAllWgs: false,
 }
@@ -81,48 +72,22 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
 
   const cw = isCwActive(account)
 
-  // Canonical appointments (ALL statuses — a canonical record supersedes its
-  // legacy source permanently, so ended appointments are needed to build the
-  // supersession set) plus the active legacy ledger rows.
-  const [appts, legacyRows] = await Promise.all([
-    req.payload.find({
-      collection: 'appointments',
-      where: { account: { equals: account.id } },
-      pagination: false,
-      overrideAccess: true,
-    }),
-    req.payload.find({
-      collection: 'assignments',
-      where: { account: { equals: account.id }, status: { equals: 'active' } },
-      limit: 1000,
-      overrideAccess: true,
-    }),
-  ])
+  const { docs } = await req.payload.find({
+    collection: 'authority-records',
+    where: {
+      and: [{ account: { equals: account.id } }, { status: { equals: 'active' } }],
+    },
+    pagination: false,
+    overrideAccess: true,
+  })
 
-  // Supersession is persistent: once a mandate lives in `appointments`,
-  // revoking or expiring it cannot resurrect the untouched legacy row.
-  // Two links apply — the immutable migration-source identity (a legacy row
-  // stays superseded even after its appointment's role/scope was edited)
-  // and the current authority tuple (a fresh grant covers the same-scope
-  // legacy row while any canonical record exists for it).
-  const superseded = supersessionKeys(appts.docs as any[] as AuthorityRow[])
-  const supersededSources = supersededAssignmentIds(appts.docs as any[] as AuthorityRow[])
-  const rows: AuthorityRow[] = [
-    ...(appts.docs as any[] as AuthorityRow[]),
-    ...(legacyRows.docs as any[] as AuthorityRow[]).filter((r) => {
-      if (supersededSources.has(String(r.id))) return false
-      const roleKey = resolveAppointmentRole(r)
-      return !roleKey || !superseded.has(appointmentKey(roleKey, r.scopeType, r.scopeId))
-    }),
-  ]
-
-  const derived = deriveAuthority(rows, {
+  const derived = deriveAuthority(docs as any[] as AuthorityRow[], {
     cw,
     baseCapabilities: ['hub.read', 'intelligence.query', 'intelligence.writeback.propose'],
   })
   if (derived.unmapped) {
     console.warn(
-      `[appointments] ${derived.unmapped} unmapped record(s) for account ${account.id} — denied until the migration map covers them`,
+      `[authority] ${derived.unmapped} unmapped record(s) for account ${account.id} — denied until the role map covers them`,
     )
   }
 
@@ -131,9 +96,9 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
     for (const cap of ADMIN_CAPABILITIES) capabilities.add(cap)
   }
   // A `focal_point` account title grants nothing by itself — Council voting
-  // and coordination require an evidenced `focal_point` appointment (S11).
-  // Legitimate mandates migrate through the evidenced backfill; revoking the
-  // appointment removes the authority even when the title remains.
+  // and coordination require an evidenced `focal_point` record (S11).
+  // Legitimate mandates carry verifiable provenance; revoking the record
+  // removes the authority even when the title remains.
 
   const councilSeats = new Set(derived.councilSeats)
   return {
@@ -142,8 +107,8 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
     negotiationAssignments: derived.negotiationAssignments,
     councilSeats: [...councilSeats],
     bodyScopes: derived.bodyScopes,
-    appointments: derived.appointments,
-    unmappedAssignments: derived.unmapped,
+    records: derived.records,
+    unmappedRecords: derived.unmapped,
     capabilities: [...capabilities],
     manageAllWgs: capabilities.has('wg.manage_all'),
     isFocalPoint: councilSeats.has('focal_point'),

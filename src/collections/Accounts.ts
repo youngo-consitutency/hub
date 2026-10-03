@@ -187,7 +187,6 @@ export const Accounts: CollectionConfig = {
         { label: 'Organisation admin', value: 'ngo_admin' },
       ],
     },
-    { name: 'teamRoles', access: { update: isStaffField }, type: 'json' },
     { name: 'wgInterests', type: 'json' },
     { name: 'appointmentEvidence', access: { update: isStaffField }, type: 'json' },
     { name: 'coursePassedAt', access: { update: isStaffField }, type: 'date' },

@@ -24,12 +24,10 @@ describe('membership lifecycle (S17)', () => {
     expect(state.status).toBe(200)
     const body = await state.json()
     expect(body.constituencyWorkStatus).toBe('active')
-    // A WG Contact Point is a mandate: it reports through `appointments`,
-    // not the participation ledger.
+    // A WG Contact Point is a mandate: it reports through `records`,
+    // the single authority store.
     expect(
-      body.appointments.some(
-        (a: any) => a.appointmentRole === 'wg.contact_point' && a.scopeId === 'finance',
-      ),
+      body.records.some((a: any) => a.role === 'wg.contact_point' && a.scopeId === 'finance'),
     ).toBe(true)
 
     const renew = await api('/member/membership/renew', {
@@ -53,7 +51,7 @@ describe('membership lifecycle (S17)', () => {
   })
 
   it(
-    'CW resignation ends WG assignments and opens a two-week handover',
+    'CW resignation ends WG authority records and opens a two-week handover',
     { timeout: 60000 },
     async () => {
       const resign = await api('/member/membership/resign', {
@@ -72,7 +70,9 @@ describe('membership lifecycle (S17)', () => {
         await api('/member/membership/state', { cookie: cwMember.cookie })
       ).json()
       expect(state.constituencyWorkStatus).toBeFalsy()
-      expect(state.assignments).toHaveLength(0)
+      // Resignation ends every record; ended rows stay visible for audit.
+      expect(state.records.length).toBeGreaterThan(0)
+      expect(state.records.every((r: any) => r.status !== 'active')).toBe(true)
 
       // member completes the checklist → handover closes
       const handoverId = body.handover.id
@@ -90,7 +90,7 @@ describe('membership lifecycle (S17)', () => {
   )
 
   it(
-    'termination ends assignments, opens a handover, and the expiry sweep clears lapsed CW members',
+    'termination ends authority records, opens a handover, and the expiry sweep clears lapsed CW members',
     { timeout: 90000 },
     async () => {
       // Termination by the membership team.
@@ -144,7 +144,7 @@ describe('membership lifecycle (S17)', () => {
       const swept = await sweep.json()
       const hit = swept.items.find((i: any) => i.accountId === lapsed.account.id)
       expect(hit).toBeTruthy()
-      expect(hit.assignmentsEnded).toBe(1)
+      expect(hit.recordsEnded).toBe(1)
 
       // membership team can see the open handovers queue
       const queue = await api('/member/team/membership/handovers', {

@@ -7,6 +7,7 @@ import {
   requireVerifiedMember,
 } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
+import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
 import { getOwnMemberProfile } from '../lib/memberDirectory'
@@ -52,15 +53,15 @@ async function upsertWgProgress(
   patch: Record<string, any>,
 ) {
   const existing = await wgProgress(req, accountId, wgSlug)
-  const presentationOk =
-    patch.presentationOk ?? patch.presentation_ok ?? existing?.presentationOk ?? false
-  const rulesOk = patch.rulesOk ?? patch.rules_ok ?? existing?.rulesOk ?? false
+  const p = toCamelCase<any>(patch)
+  const presentationOk = p.presentationOk ?? existing?.presentationOk ?? false
+  const rulesOk = p.rulesOk ?? existing?.rulesOk ?? false
   const unlocked =
     presentationOk && rulesOk
       ? existing?.unlockedAt || new Date().toISOString()
       : existing?.unlockedAt || null
   const status =
-    patch.status ?? (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
+    p.status ?? (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
   const data = {
     account: accountId,
     wgSlug,
@@ -69,10 +70,10 @@ async function upsertWgProgress(
     unlockedAt: unlocked,
     joinedAt:
       existing?.joinedAt ||
-      (patch.status ? new Date().toISOString() : existing?.joinedAt) ||
+      (p.status ? new Date().toISOString() : existing?.joinedAt) ||
       new Date().toISOString(),
     status,
-    roleInWg: patch.roleInWg ?? patch.role_in_wg ?? existing?.roleInWg ?? 'member',
+    roleInWg: p.roleInWg ?? existing?.roleInWg ?? 'member',
   }
   if (existing) {
     return req.payload.update({

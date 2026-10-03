@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 import { db, fail, permissions, text, type Actor, type Input } from './service'
-import { BODY_ID_SQL, DECISION_VIEW_SELECT, transitionDeadline } from './platformShared'
+import { DECISION_VIEW_SELECT, transitionDeadline } from './platformShared'
 import {
   advanceIfDue,
   checkVeto,
@@ -32,27 +32,6 @@ const STAGE: Record<string, string> = {
 }
 
 const CLOSED = ['adopted', 'vetoed', 'withdrawn', 'rejected', 'failed_quorum']
-
-export async function overviewDecisions(bodyIds: string[]) {
-  const { rows } = await db().query(
-    `${DECISION_VIEW_SELECT} WHERE ${BODY_ID_SQL} = ANY($1) ORDER BY dp.updated_at DESC LIMIT 500`,
-    [bodyIds],
-  )
-  return rows
-}
-
-export async function publicDecisions() {
-  const { rows } = await db().query(
-    `SELECT COALESCE(pd.id::text, dp.id::text) AS id, dp.title,
-      dp.proposal_text AS proposal, dp.result_summary AS outcome,
-      dp.policy_version AS "policyVersion", dp.decided_at AS "decidedAt"
-     FROM decision_proposals dp
-     LEFT JOIN platform_decisions pd ON pd.s09_proposal_id = dp.id
-     WHERE dp.is_public = true AND dp.status = 'adopted'
-     ORDER BY dp.decided_at DESC LIMIT 200`,
-  )
-  return rows
-}
 
 function platformBodyId(p: any): string {
   return p.body === 'council' ? 'council' : String(p.bodyRef ?? '')

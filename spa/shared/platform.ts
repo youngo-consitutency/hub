@@ -37,13 +37,15 @@ export interface Body {
   canManage: boolean
   canParticipate: boolean
 }
-export interface Assignment {
+export interface AuthorityRecord {
   id: string
   accountId: string
   name: string
+  kind: 'mandate' | 'participation'
   scopeType: string
   scopeId: string
   role: string
+  councilSeat: string | null
   startsAt: string
   endsAt: string | null
   status: string
@@ -125,7 +127,7 @@ export interface Enquiry {
 export interface Overview {
   bodies: Body[]
   people: Person[]
-  assignments: Assignment[]
+  records: AuthorityRecord[]
   tasks: Task[]
   decisions: Decision[]
   enquiries: Enquiry[]
@@ -134,22 +136,4 @@ export interface Overview {
   canManagePartnerships: boolean
   canPublish: boolean
   notices: { kind: string; title: string; dueAt: string }[]
-}
-
-export function transitionDeadline(
-  process: Decision['process'],
-  stage: DecisionState,
-  now: Date,
-  snapHours = 24,
-): string | null {
-  const hours =
-    process === 'standard'
-      ? { consultation: 120, revision: 24, decision: 24 }
-      : {
-          consultation: snapHours / 2,
-          revision: snapHours / 4,
-          decision: snapHours / 4,
-        }
-  const duration = stage === 'voting' ? 24 : hours[stage as keyof typeof hours]
-  return duration ? new Date(now.getTime() + duration * 3600000).toISOString() : null
 }

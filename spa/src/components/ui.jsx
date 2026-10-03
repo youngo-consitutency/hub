@@ -292,17 +292,6 @@ export function StatusChip({ status, filterState = 'neutral', onClick }) {
   )
 }
 
-export function CountdownChip({ iso, label }) {
-  if (!iso) return null
-  const { label: countdownLabel, tone } = countdown(iso)
-  return (
-    <span className={`chip chip-${tone} chipMono`}>
-      <AlarmClock size={12} strokeWidth={1.75} aria-hidden />
-      {formatCountdownLabel(label, countdownLabel)}
-    </span>
-  )
-}
-
 export function LifecycleTiming({
   status,
   iso,

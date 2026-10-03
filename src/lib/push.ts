@@ -1,5 +1,6 @@
 import webPush from 'web-push'
 import { getPgPool } from './pg'
+import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
@@ -17,13 +18,16 @@ if (vapidPublicKey && vapidPrivateKey) {
 export const pushConfigured =
   process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
 
-const publicRow = (row: any) => ({
-  id: row.id,
-  accountId: row.account_id ?? row.accountId,
-  endpoint: row.endpoint,
-  keys: row.keys || {},
-  createdAt: row.created_at ?? row.createdAt,
-})
+const publicRow = (row: any) => {
+  const r = toCamelCase<Record<string, any>>(row)
+  return {
+    id: r.id,
+    accountId: r.accountId,
+    endpoint: r.endpoint,
+    keys: r.keys || {},
+    createdAt: r.createdAt,
+  }
+}
 
 // Push endpoints are browser-issued capabilities, never arbitrary webhook URLs.
 export function validatedPushEndpoint(value: any) {

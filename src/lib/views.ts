@@ -4,7 +4,7 @@
 
 const JOIN_LINK_PATTERNS = [/^meet\.google\.com$/, /^meet\.jit\.si$/, /^(www\.)?whereby\.com$/]
 
-export function isMeetingJoinLink(value: string): boolean {
+function isMeetingJoinLink(value: string): boolean {
   let url: URL
   try {
     url = new URL(value)
@@ -31,7 +31,7 @@ export function isMeetingJoinLink(value: string): boolean {
 const URL_PATTERN = /https?:\/\/[^\s<>"')\]]+/gi
 
 /** Replace join links in free text with a placeholder, leaving other links. */
-export function redactMeetingLinks(text: unknown): unknown {
+function redactMeetingLinks(text: unknown): unknown {
   if (typeof text !== 'string' || !text) return text
   return text.replace(URL_PATTERN, (match) => {
     const trailing = match.match(/[.,;:]+$/)?.[0] || ''
@@ -65,7 +65,7 @@ function resourceViews(
     )
 }
 
-export function contactView(
+function contactView(
   contact: Record<string, unknown> | null | undefined,
   { includePrivate = false } = {},
 ) {

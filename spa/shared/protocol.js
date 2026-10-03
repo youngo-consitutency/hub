@@ -28,9 +28,3 @@ export function normalizeTaskForces(value) {
 export function taskForceBySlug(group, slug) {
   return normalizeTaskForces(group?.taskForces).find((item) => item.slug === slug) || null
 }
-
-export function wgDutyRoleLabel(role) {
-  if (role === 'lead') return 'Lead'
-  if (role === 'contact') return 'Contact Point'
-  return null
-}

@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
-import { emailConfigured, sendEmail } from './email'
+import { toCamelCase } from './case'
+import { sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
@@ -10,7 +11,7 @@ import { appBaseUrl } from './env'
 // live in `notification_outbox`; eligibility reads the v2 notification_prefs
 // model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
 
-export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -253,28 +254,29 @@ export async function sendTemplatedEmail({
 
 function publicOutbox(row: any) {
   if (!row) return null
+  const r = toCamelCase<Record<string, any>>(row)
   return {
-    id: row.id,
-    accountId: row.account_id ?? row.accountId,
-    channel: row.channel || 'email',
-    category: row.category,
-    templateKey: row.template_key ?? row.templateKey,
-    sourceType: row.source_type ?? row.sourceType ?? null,
-    sourceId: row.source_id ?? row.sourceId ?? null,
-    deduplicationKey: row.deduplication_key ?? row.deduplicationKey ?? null,
-    payload: row.payload || {},
-    status: row.status,
-    attempts: Number(row.attempts || 0),
-    availableAt: row.available_at ?? row.availableAt,
-    leaseUntil: row.lease_until ?? row.leaseUntil ?? null,
-    providerMessageId: row.provider_message_id ?? row.providerMessageId ?? null,
-    lastErrorCode: row.last_error_code ?? row.lastErrorCode ?? null,
-    createdAt: row.created_at ?? row.createdAt,
-    sentAt: row.sent_at ?? row.sentAt ?? null,
+    id: r.id,
+    accountId: r.accountId,
+    channel: r.channel || 'email',
+    category: r.category,
+    templateKey: r.templateKey,
+    sourceType: r.sourceType ?? null,
+    sourceId: r.sourceId ?? null,
+    deduplicationKey: r.deduplicationKey ?? null,
+    payload: r.payload || {},
+    status: r.status,
+    attempts: Number(r.attempts || 0),
+    availableAt: r.availableAt,
+    leaseUntil: r.leaseUntil ?? null,
+    providerMessageId: r.providerMessageId ?? null,
+    lastErrorCode: r.lastErrorCode ?? null,
+    createdAt: r.createdAt,
+    sentAt: r.sentAt ?? null,
   }
 }
 
-export const NOTIFICATION_CHANNELS = ['email', 'push']
+const NOTIFICATION_CHANNELS = ['email', 'push']
 
 export async function enqueueNotification({
   accountId,
@@ -475,7 +477,7 @@ export async function listEligibleNotificationAccountIds({
   const filters: Record<string, string> = {
     all_active: 'true',
     working_group: 'a.wg_interests ?| $2::text[]',
-    team: 'a.team_roles ?| $2::text[]',
+    team: `EXISTS(SELECT 1 FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.scope_id = ANY($2::text[]) AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now()))`,
     account_ids: 'a.id::text = ANY($2::text[])',
   }
   const pool = getPgPool()!
@@ -492,5 +494,3 @@ export async function listEligibleNotificationAccountIds({
   )
   return rows.map((row: any) => String(row.id))
 }
-
-export { emailConfigured }

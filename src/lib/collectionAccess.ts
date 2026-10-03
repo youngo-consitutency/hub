@@ -12,10 +12,6 @@ import type { Access, FieldAccess } from 'payload'
 
 export const isStaff: Access = ({ req }) => req.user?.collection === 'users'
 
-export const isMember: Access = ({ req }) => req.user?.collection === 'accounts'
-
-export const isAuthenticated: Access = ({ req }) => Boolean(req.user)
-
 export const isStaffOrMember: Access = ({ req }) =>
   req.user?.collection === 'users' || req.user?.collection === 'accounts'
 
@@ -33,48 +29,4 @@ export const staffWrites = {
   create: isStaff,
   update: isStaff,
   delete: isStaff,
-} as const
-
-// Members may read their own records; staff read and write everything.
-// `field` is the relationship field holding the owning account id.
-export const selfReadStaffWrite = (field: string) => ({
-  read: ({ req }: { req: any }) => {
-    if (!req.user) return false
-    if (req.user.collection === 'users') return true
-    return { [field]: { equals: req.user.id } }
-  },
-  ...staffWrites,
-})
-
-// Records that only the owning member and staff may see or change.
-export const selfReadSelfWrite = (field: string) => ({
-  read: ({ req }: { req: any }) => {
-    if (!req.user) return false
-    if (req.user.collection === 'users') return true
-    return { [field]: { equals: req.user.id } }
-  },
-  create: ({ req, data }: { req: any; data?: any }) => {
-    if (req.user?.collection === 'users') return true
-    return req.user?.collection === 'accounts' && data?.[field] === req.user.id
-  },
-  update: ({ req }: { req: any }) => {
-    if (!req.user) return false
-    if (req.user.collection === 'users') return true
-    return { [field]: { equals: req.user.id } }
-  },
-  delete: ({ req }: { req: any }) => {
-    if (!req.user) return false
-    if (req.user.collection === 'users') return true
-    return { [field]: { equals: req.user.id } }
-  },
-})
-
-// Server-managed records: nothing through generated APIs at all. The Local
-// API with overrideAccess remains the only write path (and reads must go
-// through an authorised endpoint).
-export const serverOnly = {
-  read: () => false,
-  create: () => false,
-  update: () => false,
-  delete: () => false,
 } as const
