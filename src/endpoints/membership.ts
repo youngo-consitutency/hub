@@ -5,6 +5,8 @@ import { audit } from '../lib/audit'
 import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib/membership'
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
+import { normaliseScopeType } from '../lib/appointments'
+import { withAuthorityLock } from '../lib/authorityLock'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -55,65 +57,114 @@ async function openHandover(
       openedAt: new Date().toISOString(),
     } as any,
     overrideAccess: true,
+    // Always bind to the request: inside an authority transaction an
+    // unbound create runs on another pooled connection and deadlocks on
+    // rows this transaction holds.
+    req,
   })
 }
 
-// Legacy/appointment scope vocabularies differ slightly; map when limiting
-// which scopes a membership change closes.
-const APPOINTMENT_SCOPE_EQUIV: Record<string, string> = {
-  platform_body: 'body',
-  organization: 'organisation',
-}
+// Legacy/appointment scope vocabularies differ slightly; the shared
+// normaliser (lib/appointments) maps ledger spellings to canonical ones
+// when limiting which scopes a membership change closes.
 
 // End active participation rows *and* the mandates they fed — an appointment
 // must not outlive the membership exit that ends it (S17). `scopeTypes`
-// limits which scopes are closed. Returns the number of rows ended.
+// limits which scopes are closed. The sweep runs under the shared authority
+// lock so a concurrent grant or migration write cannot slip a mandate past
+// the exit. Returns the number of rows ended.
 async function endAssignments(
   req: PayloadRequest,
   accountId: number,
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
-  const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
-  if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
-  const { docs } = await req.payload.find({
-    collection: 'assignments',
-    where: { and },
-    limit: 1000,
-    overrideAccess: true,
-  })
-  const ended = new Date().toISOString()
-  for (const doc of docs as any[]) {
-    await req.payload.update({
+  return withAuthorityLock(req, accountId, async () => {
+    const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
+    if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
+    const { docs } = await req.payload.find({
       collection: 'assignments',
-      id: doc.id,
-      data: { status: 'expired', endsAt: ended },
+      where: { and },
+      limit: 1000,
       overrideAccess: true,
+      req,
     })
-  }
-  const appointmentAnd: any[] = [
-    { account: { equals: accountId } },
-    { status: { equals: 'active' } },
-  ]
-  if (scopeTypes?.length) {
-    appointmentAnd.push({
-      scopeType: { in: scopeTypes.map((t) => APPOINTMENT_SCOPE_EQUIV[t] ?? t) },
-    })
-  }
-  const { docs: appointments } = await req.payload.find({
-    collection: 'appointments',
-    where: { and: appointmentAnd },
-    limit: 1000,
-    overrideAccess: true,
-  })
-  for (const doc of appointments as any[]) {
-    await req.payload.update({
+    const ended = new Date().toISOString()
+    for (const doc of docs as any[]) {
+      await req.payload.update({
+        collection: 'assignments',
+        id: doc.id,
+        data: { status: 'expired', endsAt: ended },
+        overrideAccess: true,
+        req,
+      })
+    }
+    const appointmentAnd: any[] = [
+      { account: { equals: accountId } },
+      { status: { equals: 'active' } },
+    ]
+    if (scopeTypes?.length) {
+      appointmentAnd.push({
+        scopeType: { in: scopeTypes.map((t) => normaliseScopeType(t)) },
+      })
+    }
+    const { docs: appointments } = await req.payload.find({
       collection: 'appointments',
-      id: doc.id,
-      data: { status: 'expired', endsAt: ended },
+      where: { and: appointmentAnd },
+      limit: 1000,
       overrideAccess: true,
+      req,
     })
-  }
-  return docs.length + appointments.length
+    for (const doc of appointments as any[]) {
+      await req.payload.update({
+        collection: 'appointments',
+        id: doc.id,
+        data: { status: 'expired', endsAt: ended },
+        overrideAccess: true,
+        req,
+      })
+    }
+    return docs.length + appointments.length
+  })
+}
+
+// One atomic membership transition: the authority sweep, the account's
+// status change, the handover record and the audit entry commit or roll
+// back together under the account's advisory lock. A grant arriving between
+// the sweep and the status write queues on the lock and then re-verifies
+// eligibility against the post-exit state — it cannot slip a mandate past
+// the exit. `hooks.afterSweep` exists for concurrency tests only.
+export async function applyMembershipTransition(
+  req: PayloadRequest,
+  accountId: number,
+  transition: {
+    scopeTypes?: string[]
+    accountFields: Record<string, any>
+    handover: { reason: string; scopeLabel: string; items?: string[] }
+    actor: any
+    auditEntry: (result: { ended: number; updated: any }) => Record<string, any>
+  },
+  hooks?: { afterSweep?: () => Promise<void> },
+) {
+  return withAuthorityLock(req, accountId, async () => {
+    const ended = await endAssignments(req, accountId, { scopeTypes: transition.scopeTypes })
+    await hooks?.afterSweep?.()
+    const updated = await req.payload.update({
+      collection: 'accounts',
+      id: accountId,
+      data: transition.accountFields,
+      overrideAccess: true,
+      req,
+    })
+    const handover = await openHandover(req, {
+      accountId,
+      reason: transition.handover.reason,
+      scopeLabel: transition.handover.scopeLabel,
+      actorId: transition.actor.id,
+      items: transition.handover.items,
+    })
+    await audit(req, transition.actor, transition.auditEntry({ ended, updated }))
+    return { ended, updated, handover }
+  })
 }
 
 const handoverView = (h: any) => ({
@@ -241,53 +292,43 @@ export const membershipEndpoints: Endpoint[] = [
       if (scope === 'constituency_work') {
         if (account.membershipTrack !== 'constituency_work')
           throw fail.validation({ scope: 'You are not on the Constituency Work track.' })
-        const ended = await endAssignments(req, account.id, {
+        const { updated, handover } = await applyMembershipTransition(req, account.id, {
           scopeTypes: CW_SCOPES,
-        })
-        const updated = await setAccountFields(account.id, {
-          constituency_work_status: '',
-          renewal_due_at: null,
-        })
-        const handover = await openHandover(req, {
-          accountId: account.id,
-          reason: 'resignation',
-          scopeLabel: 'Constituency Work roles',
-          actorId: account.id,
-        })
-        await audit(req, account, {
-          action: 'membership.cw_resigned',
-          targetType: 'account',
-          targetId: String(account.id),
-          after: { assignmentsEnded: ended },
+          accountFields: { constituencyWorkStatus: '', renewalDueAt: null },
+          handover: { reason: 'resignation', scopeLabel: 'Constituency Work roles' },
+          actor: account,
+          auditEntry: (r) => ({
+            action: 'membership.cw_resigned',
+            targetType: 'account',
+            targetId: String(account.id),
+            after: { assignmentsEnded: r.ended },
+          }),
         })
         return json({
-          membershipStatus: updated.membership_status,
-          constituencyWorkStatus: updated.constituency_work_status || null,
+          membershipStatus: updated.membershipStatus,
+          constituencyWorkStatus: updated.constituencyWorkStatus || null,
           handover: handoverView(handover),
         })
       }
       // Full resignation: membership ends entirely (S17).
-      await endAssignments(req, account.id)
-      const updated = await setAccountFields(account.id, {
-        membership_status: 'expired',
-        membership_ended_at: new Date().toISOString(),
-        membership_end_reason: 'resigned',
-        constituency_work_status: '',
+      const { updated, handover } = await applyMembershipTransition(req, account.id, {
+        accountFields: {
+          membershipStatus: 'expired',
+          membershipEndedAt: new Date().toISOString(),
+          membershipEndReason: 'resigned',
+          constituencyWorkStatus: '',
+        },
+        handover: { reason: 'resignation', scopeLabel: 'Membership' },
+        actor: account,
+        auditEntry: () => ({
+          action: 'membership.resigned',
+          targetType: 'account',
+          targetId: String(account.id),
+        }),
       })
       await destroyAllSessions(account.id)
-      const handover = await openHandover(req, {
-        accountId: account.id,
-        reason: 'resignation',
-        scopeLabel: 'Membership',
-        actorId: account.id,
-      })
-      await audit(req, account, {
-        action: 'membership.resigned',
-        targetType: 'account',
-        targetId: String(account.id),
-      })
       return json({
-        membershipStatus: updated.membership_status,
+        membershipStatus: updated.membershipStatus,
         handover: handoverView(handover),
       })
     }),
@@ -380,24 +421,17 @@ export const membershipEndpoints: Endpoint[] = [
       })
       const results: any[] = []
       for (const row of docs as any[]) {
-        const ended = await endAssignments(req, row.id, {
+        const { ended } = await applyMembershipTransition(req, row.id, {
           scopeTypes: CW_SCOPES,
-        })
-        await setAccountFields(row.id, {
-          constituency_work_status: '',
-          renewal_due_at: null,
-        })
-        await openHandover(req, {
-          accountId: row.id,
-          reason: 'cw_expiry',
-          scopeLabel: 'Constituency Work roles',
-          actorId: staff.id,
-        })
-        await audit(req, staff, {
-          action: 'membership.cw_expired',
-          targetType: 'account',
-          targetId: String(row.id),
-          after: { assignmentsEnded: ended },
+          accountFields: { constituencyWorkStatus: '', renewalDueAt: null },
+          handover: { reason: 'cw_expiry', scopeLabel: 'Constituency Work roles' },
+          actor: staff,
+          auditEntry: (r) => ({
+            action: 'membership.cw_expired',
+            targetType: 'account',
+            targetId: String(row.id),
+            after: { assignmentsEnded: r.ended },
+          }),
         })
         results.push({ accountId: row.id, assignmentsEnded: ended })
       }
@@ -420,28 +454,25 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({ _: 'You cannot terminate your own account.' })
       if (['admin', 'focal_point'].includes(target.role) && staff.role !== 'admin')
         throw fail.forbidden('Only an admin can terminate platform staff membership.')
-      await endAssignments(req, target.id)
-      const updated = await setAccountFields(id, {
-        membership_status: 'terminated',
-        membership_ended_at: new Date().toISOString(),
-        membership_end_reason: reason.slice(0, 500),
-        constituency_work_status: '',
-        hub_access_status: 'suspended',
+      const { updated, handover } = await applyMembershipTransition(req, target.id, {
+        accountFields: {
+          membershipStatus: 'terminated',
+          membershipEndedAt: new Date().toISOString(),
+          membershipEndReason: reason.slice(0, 500),
+          constituencyWorkStatus: '',
+          hubAccessStatus: 'suspended',
+        },
+        handover: { reason: 'termination', scopeLabel: 'Membership' },
+        actor: staff,
+        auditEntry: (r) => ({
+          action: 'membership.terminated',
+          targetType: 'account',
+          targetId: id,
+          reason: reason.slice(0, 500),
+          after: accountView(r.updated),
+        }),
       })
       await destroyAllSessions(target.id)
-      const handover = await openHandover(req, {
-        accountId: target.id,
-        reason: 'termination',
-        scopeLabel: 'Membership',
-        actorId: staff.id,
-      })
-      await audit(req, staff, {
-        action: 'membership.terminated',
-        targetType: 'account',
-        targetId: id,
-        reason: reason.slice(0, 500),
-        after: accountView(updated),
-      })
       return json({
         account: accountView(updated),
         handover: handoverView(handover),
@@ -472,33 +503,62 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({ id: 'Assignment does not belong to that account.' })
       if (assignment.status !== 'active')
         throw fail.conflict('invalid_phase', `Assignment is already ${assignment.status}.`)
-      const updated = await req.payload.update({
-        collection: 'assignments',
-        id: assignment.id,
-        data: { status: 'expired', endsAt: new Date().toISOString() },
-        overrideAccess: true,
-      })
-      // Coordination mandates carry a handover duty to the body they served.
-      let handover = null
-      if (['contact', 'lead', 'coordinator', 'contact_point'].includes(assignment.role)) {
-        handover = await openHandover(req, {
-          accountId: Number(owner),
-          reason: 'mandate_end',
-          scopeLabel: `${assignment.scopeId} ${assignment.scopeType} (${assignment.role})`,
-          actorId: staff.id,
+      // Under the account's shared lock: ending the ledger row also ends any
+      // mandate it fed — a migrated appointment must not outlive its source.
+      const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
+        const endsAt = new Date().toISOString()
+        const updated = await req.payload.update({
+          collection: 'assignments',
+          id: assignment.id,
+          data: { status: 'expired', endsAt },
+          overrideAccess: true,
+          req,
         })
-      }
-      await audit(req, staff, {
-        action: 'membership.assignment_ended',
-        targetType: 'assignment',
-        targetId: String(assignment.id),
-        reason: reason.slice(0, 500),
-        after: {
-          accountId: owner,
-          scopeType: assignment.scopeType,
-          scopeId: assignment.scopeId,
-          role: assignment.role,
-        },
+        const { docs: linked } = await req.payload.find({
+          collection: 'appointments',
+          where: {
+            and: [{ account: { equals: Number(owner) } }, { status: { equals: 'active' } }],
+          },
+          limit: 200,
+          overrideAccess: true,
+          req,
+        })
+        for (const appt of linked as any[]) {
+          if (
+            appt.appointedVia?.source === 'assignments_migration' &&
+            String(appt.appointedVia?.assignmentId) === String(assignment.id)
+          )
+            await req.payload.update({
+              collection: 'appointments',
+              id: appt.id,
+              data: { status: 'expired', endsAt },
+              overrideAccess: true,
+              req,
+            })
+        }
+        // Coordination mandates carry a handover duty to the body they served.
+        let handover = null
+        if (['contact', 'lead', 'coordinator', 'contact_point'].includes(assignment.role)) {
+          handover = await openHandover(req, {
+            accountId: Number(owner),
+            reason: 'mandate_end',
+            scopeLabel: `${assignment.scopeId} ${assignment.scopeType} (${assignment.role})`,
+            actorId: staff.id,
+          })
+        }
+        await audit(req, staff, {
+          action: 'membership.assignment_ended',
+          targetType: 'assignment',
+          targetId: String(assignment.id),
+          reason: reason.slice(0, 500),
+          after: {
+            accountId: owner,
+            scopeType: assignment.scopeType,
+            scopeId: assignment.scopeId,
+            role: assignment.role,
+          },
+        })
+        return { updated, handover }
       })
       return json({
         assignment: { id: updated.id, status: updated.status, endsAt: updated.endsAt },

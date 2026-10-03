@@ -145,15 +145,15 @@ main#site-main {
 }
 
 .siteHero .siteMain {
-  padding-top: clamp(36px, 6vw, 72px);
-  padding-bottom: clamp(32px, 5vw, 56px);
+  padding-top: clamp(24px, 4vw, 44px);
+  padding-bottom: clamp(24px, 4vw, 40px);
 }
 
 .siteHeroLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
   align-items: center;
-  gap: clamp(32px, 6vw, 72px);
+  gap: clamp(24px, 4vw, 48px);
 }
 
 .siteHeroCopy {
@@ -162,7 +162,7 @@ main#site-main {
 
 .siteHero h1 {
   max-width: 15ch;
-  font-size: clamp(38px, 6vw, 64px);
+  font-size: clamp(34px, 4.5vw, 52px);
   line-height: 1.02;
   letter-spacing: -0.035em;
 }
@@ -189,7 +189,7 @@ main#site-main {
 }
 
 .siteSection {
-  margin-top: clamp(40px, 6vw, 64px);
+  margin-top: clamp(28px, 4vw, 44px);
 }
 
 .siteSection > .pageEyebrow {
@@ -428,7 +428,7 @@ main#site-main {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-4);
-  margin-top: clamp(40px, 6vw, 64px);
+  margin-top: clamp(28px, 4vw, 44px);
   padding: var(--space-5);
   border-top: 3px solid var(--accent);
 }
@@ -867,7 +867,7 @@ main#site-main {
   min-width: 0;
 }
 .siteMissionCard {
-  padding: 24px;
+  padding: 18px;
   gap: 14px;
 }
 .siteMissionCard h3,
@@ -889,7 +889,7 @@ main#site-main {
   letter-spacing: -0.03em;
 }
 .siteDoCard {
-  padding: 24px;
+  padding: 18px;
 }
 .siteDoCard > div {
   display: flex;
@@ -923,7 +923,7 @@ main#site-main {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 24px;
+  padding: 18px;
   border-bottom: 1px solid var(--border);
 }
 .siteUpcomingHeading h2 {
@@ -931,7 +931,7 @@ main#site-main {
   letter-spacing: -0.025em;
 }
 .siteUpcomingBody {
-  min-height: 240px;
+  min-height: 120px;
   padding: 4px 24px;
   display: flex;
   flex-direction: column;
@@ -946,7 +946,7 @@ main#site-main {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 18px 0;
+  padding: 12px 0;
 }
 .siteEventList li + li {
   border-top: 1px solid var(--border);
@@ -1000,5 +1000,101 @@ main#site-main {
   }
   .siteUpcomingBody {
     padding-inline: 20px;
+  }
+}
+
+/* A short introduction beside each section keeps context close to its content. */
+.siteEditorialSection {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr);
+  gap: var(--space-5) var(--space-8);
+  align-items: start;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+.siteSectionIntro {
+  min-width: 0;
+}
+.siteSectionIntro h2 {
+  font-size: clamp(22px, 2.2vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+.siteSectionIntro .siteSectionLead {
+  margin-bottom: 0;
+}
+.siteEditorialSection .siteMissionGrid,
+.siteEditorialSection .siteOrganisationGrid,
+.siteEditorialSection .siteActivityGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+  padding-top: 0;
+}
+.siteEditorialSection .siteMissionCard,
+.siteEditorialSection .siteDoCard,
+.siteEditorialSection .siteOrgCard,
+.siteEditorialSection .siteTimelineItem {
+  min-height: 0;
+}
+.siteEditorialSection .siteOrgNote {
+  grid-column: 2;
+  margin-top: 0;
+}
+.siteEditorialSection .siteTimeline {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.siteEditorialSection .siteTimelineItem {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.siteEditorialSection .siteTimelineItem:first-child {
+  padding-top: 0;
+}
+.siteEditorialSection .siteTimelineItem:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 850px) {
+  .siteEditorialSection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .siteEditorialSection .siteOrgNote {
+    grid-column: auto;
+  }
+}
+@media (max-width: 520px) {
+  .siteEditorialSection .siteMissionGrid,
+  .siteEditorialSection .siteOrganisationGrid,
+  .siteEditorialSection .siteActivityGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .siteEditorialSection .siteTimelineItem {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+.sitePrincipleList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sitePrincipleList li {
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-2);
+}
+@media (max-width: 520px) {
+  .sitePrincipleList {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

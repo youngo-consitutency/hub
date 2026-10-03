@@ -57,7 +57,6 @@ const GroupDetail = lazyPage(() => import('./pages/GroupDetail.jsx'), 'GroupDeta
 const TaskForce = lazyPage(() => import('./pages/TaskForce.jsx'), 'TaskForce')
 const Onboarding = lazyPage(() => import('./pages/Onboarding.jsx'), 'Onboarding')
 const Course = lazyPage(() => import('./pages/Course.jsx'), 'Course')
-const Library = lazyPage(() => import('./pages/Library.jsx'), 'Library')
 const ResourceIssues = lazyPage(() => import('./pages/ResourceIssues.jsx'), 'ResourceIssues')
 const Resources = lazyPage(() => import('./pages/Resources.jsx'), 'Resources')
 const Workspace = lazyPage(() => import('./pages/Workspace.jsx'), 'Workspace')
@@ -93,7 +92,7 @@ const ROUTES = [
   [/^\/work$/, Work],
   [/^\/onboarding\/course$/, Course],
   [/^\/onboarding$/, Onboarding],
-  [/^\/library$/, Library],
+  [/^\/library$/, LibraryRedirect],
   [/^\/resources$/, Resources],
   [/^\/resources\/issues$/, ResourceIssues],
   [/^\/privacy$/, Privacy],
@@ -180,19 +179,20 @@ function NotFound() {
   )
 }
 
+/** Redirect legacy contribution-points routes to the work page while showing a loading placeholder. */
 function RetiredPoints() {
-  return (
-    <div className="stack">
-      <h1>Contribution points have been retired</h1>
-      <p>
-        Track responsibilities, decisions and completed work in the operational workspace. Existing
-        award records are retained for the audit trail.
-      </p>
-      <a className="btn btn-primary" href="/work">
-        Open work and follow-up
-      </a>
-    </div>
-  )
+  useEffect(() => {
+    replace('/work')
+  }, [])
+  return <Skeletons n={2} />
+}
+
+/** Redirect the legacy library route to the guides view of Resources. */
+function LibraryRedirect() {
+  useEffect(() => {
+    replace('/resources?view=guides')
+  }, [])
+  return <Skeletons n={2} />
 }
 
 function PeopleRedirect() {

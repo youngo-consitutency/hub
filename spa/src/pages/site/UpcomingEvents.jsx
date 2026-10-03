@@ -4,6 +4,7 @@ import { DateStamp } from '../../components/DateStamp.jsx'
 import { useApi } from '../../lib/api.js'
 import { fmtMoment } from '../../lib/time.js'
 
+/** Load public upcoming events with local times and full-page event links, including retry and empty states. */
 export function UpcomingEvents() {
   const { data, loading, error, retry } = useApi('/landing')
   return (
@@ -37,7 +38,11 @@ export function UpcomingEvents() {
                 <li key={event.slug}>
                   <DateStamp iso={event.startsAt} />
                   <div>
-                    <h3>{event.title}</h3>
+                    <h3>
+                      <A href={`/calendar/${event.slug}`} peek={false}>
+                        {event.title}
+                      </A>
+                    </h3>
                     <p className="meta">
                       {moment.localTime} {moment.localZone}
                     </p>

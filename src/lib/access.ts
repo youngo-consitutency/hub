@@ -1,12 +1,11 @@
 import type { PayloadRequest } from 'payload'
 import {
-  APPOINTMENT_ROLES,
-  appointmentCurrent,
-  capabilitiesFor,
-  councilSeatFor,
+  appointmentKey,
+  deriveAuthority,
   resolveAppointmentRole,
-  teamKeysFor,
-  wgLegacyRoleFor,
+  supersededAssignmentIds,
+  supersessionKeys,
+  type AuthorityRow,
 } from './appointments'
 import { isCwActive } from './accounts'
 
@@ -77,45 +76,19 @@ const EMPTY: AccessProfile = {
   manageAllWgs: false,
 }
 
-interface RawRow {
-  id: number
-  appointmentRole?: string | null
-  scopeType: string
-  scopeId: string
-  role?: string
-  councilSeat?: string | null
-  status: string
-  startsAt?: any
-  endsAt?: any
-}
-
 export async function getAccessProfile(req: PayloadRequest, account: any): Promise<AccessProfile> {
   if (!account) return EMPTY
 
-  const teamRoles = new Set<string>()
-  const wgAssignments: { wgSlug: string; role: string }[] = []
-  const negotiationAssignments: {
-    scopeType: string
-    scopeId: string
-    role: string
-  }[] = []
-  const councilSeats = new Set<string>()
-  const bodyScopes = new Set<string>()
-  const capabilities = new Set(['hub.read', 'intelligence.query', 'intelligence.writeback.propose'])
-  const appointments: AccessProfile['appointments'] = []
-  let unmapped = 0
-
-  const now = new Date()
   const cw = isCwActive(account)
 
-  // Canonical appointments plus the legacy ledger rows. Legacy assignments
-  // are superseded by a matching canonical row (same account + appointment
-  // role + scope) rather than granted twice.
+  // Canonical appointments (ALL statuses — a canonical record supersedes its
+  // legacy source permanently, so ended appointments are needed to build the
+  // supersession set) plus the active legacy ledger rows.
   const [appts, legacyRows] = await Promise.all([
     req.payload.find({
       collection: 'appointments',
-      where: { account: { equals: account.id }, status: { in: ['active'] } },
-      limit: 1000,
+      where: { account: { equals: account.id } },
+      pagination: false,
       overrideAccess: true,
     }),
     req.payload.find({
@@ -126,101 +99,51 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
     }),
   ])
 
-  const canonical = new Set<string>()
-  for (const row of appts.docs as any[] as RawRow[]) {
-    if (!appointmentCurrent(row, now)) continue
-    const roleKey = row.appointmentRole!
-    canonical.add(`${roleKey}:${row.scopeType}:${row.scopeId}`)
-  }
-
-  const rows: RawRow[] = [
-    ...(appts.docs as any[]),
-    ...(legacyRows.docs as any[]).filter(
-      (r: RawRow) => !canonical.has(`${resolveAppointmentRole(r)}:${r.scopeType}:${r.scopeId}`),
-    ),
+  // Supersession is persistent: once a mandate lives in `appointments`,
+  // revoking or expiring it cannot resurrect the untouched legacy row.
+  // Two links apply — the immutable migration-source identity (a legacy row
+  // stays superseded even after its appointment's role/scope was edited)
+  // and the current authority tuple (a fresh grant covers the same-scope
+  // legacy row while any canonical record exists for it).
+  const superseded = supersessionKeys(appts.docs as any[] as AuthorityRow[])
+  const supersededSources = supersededAssignmentIds(appts.docs as any[] as AuthorityRow[])
+  const rows: AuthorityRow[] = [
+    ...(appts.docs as any[] as AuthorityRow[]),
+    ...(legacyRows.docs as any[] as AuthorityRow[]).filter((r) => {
+      if (supersededSources.has(String(r.id))) return false
+      const roleKey = resolveAppointmentRole(r)
+      return !roleKey || !superseded.has(appointmentKey(roleKey, r.scopeType, r.scopeId))
+    }),
   ]
 
-  for (const row of rows) {
-    if (!appointmentCurrent(row, now)) continue
-    const roleKey = resolveAppointmentRole(row)
-    if (!roleKey || !APPOINTMENT_ROLES[roleKey]) {
-      // Unmapped records are reported, never widened.
-      unmapped += 1
-      console.warn(
-        `[appointments] unmapped record id=${row.id} scope=${row.scopeType}:${row.scopeId} role=${row.role} — denied until the migration map covers it`,
-      )
-      continue
-    }
-    const seat = councilSeatFor(roleKey, row)
-    const substitute = roleKey === 'council.substitute'
-    appointments.push({
-      id: row.id,
-      role: roleKey,
-      scopeType: row.scopeType,
-      scopeId: row.scopeId,
-      councilSeat: seat,
-      endsAt: row.endsAt ?? null,
-      substitute,
-    })
-    // Appointments that require Constituency Work membership grant nothing
-    // while that membership is inactive — they still show for the member.
-    if (APPOINTMENT_ROLES[roleKey].requiresCw && !cw) continue
-    for (const key of teamKeysFor(roleKey)) teamRoles.add(key)
-    for (const cap of capabilitiesFor(roleKey, row.scopeId)) capabilities.add(cap)
-    if (seat) councilSeats.add(seat)
-    if (row.scopeType === 'body') bodyScopes.add(row.scopeId)
-    if (row.scopeType === 'working_group')
-      wgAssignments.push({ wgSlug: row.scopeId, role: wgLegacyRoleFor(roleKey) })
-    if (['negotiation_track', 'negotiation_project'].includes(row.scopeType)) {
-      const negRole = roleKey.replace('negotiation.', '')
-      negotiationAssignments.push({
-        scopeType: row.scopeType,
-        scopeId: row.scopeId,
-        role: negRole,
-      })
-      const scope = `${row.scopeType}:${row.scopeId}`
-      capabilities.add(`negotiations.read:${scope}`)
-      if (negRole === 'reviewer') {
-        capabilities.add(`negotiations.evidence.review:${scope}`)
-        capabilities.add(`negotiations.candidates.review:${scope}`)
-      }
-      if (negRole === 'applier') capabilities.add(`negotiations.candidates.apply:${scope}`)
-      if (negRole === 'grant_manager') capabilities.add(`negotiations.grants.manage:${scope}`)
-      if (negRole === 'process_facilitator')
-        capabilities.add(`negotiations.process.record:${scope}`)
-      if (negRole === 'transmitter') capabilities.add(`negotiations.transmission.record:${scope}`)
-    }
+  const derived = deriveAuthority(rows, {
+    cw,
+    baseCapabilities: ['hub.read', 'intelligence.query', 'intelligence.writeback.propose'],
+  })
+  if (derived.unmapped) {
+    console.warn(
+      `[appointments] ${derived.unmapped} unmapped record(s) for account ${account.id} — denied until the migration map covers them`,
+    )
   }
 
+  const capabilities = new Set(derived.capabilities)
   if (account.role === 'admin') {
     for (const cap of ADMIN_CAPABILITIES) capabilities.add(cap)
   }
-  // A focal-point account role records the elected mandate itself (S11/S10);
-  // it acts as the council.focal_point appointment until the appointment row
-  // is recorded.
-  if (account.role === 'focal_point' && cw) {
-    for (const cap of capabilitiesFor('focal_point', 'platform')) capabilities.add(cap)
-    councilSeats.add('focal_point')
-    if (!appointments.some((a) => a.role === 'focal_point'))
-      appointments.push({
-        id: 0,
-        role: 'focal_point',
-        scopeType: 'platform',
-        scopeId: 'platform',
-        councilSeat: 'focal_point',
-        endsAt: null,
-        substitute: false,
-      })
-  }
+  // A `focal_point` account title grants nothing by itself — Council voting
+  // and coordination require an evidenced `focal_point` appointment (S11).
+  // Legitimate mandates migrate through the evidenced backfill; revoking the
+  // appointment removes the authority even when the title remains.
 
+  const councilSeats = new Set(derived.councilSeats)
   return {
-    teamRoles: [...teamRoles],
-    wgAssignments,
-    negotiationAssignments,
+    teamRoles: derived.teamRoles,
+    wgAssignments: derived.wgAssignments,
+    negotiationAssignments: derived.negotiationAssignments,
     councilSeats: [...councilSeats],
-    bodyScopes: [...bodyScopes],
-    appointments,
-    unmappedAssignments: unmapped,
+    bodyScopes: derived.bodyScopes,
+    appointments: derived.appointments,
+    unmappedAssignments: derived.unmapped,
     capabilities: [...capabilities],
     manageAllWgs: capabilities.has('wg.manage_all'),
     isFocalPoint: councilSeats.has('focal_point'),

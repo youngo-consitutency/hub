@@ -2,8 +2,9 @@
 /**
  * Appointment migration preview (PR1, S13/S14/S25 normalisation).
  *
- * Reads every `assignments` row from the target database and reports how the
- * explicit map in src/lib/appointments.ts classifies it:
+ * Reads every `assignments` row plus `focal_point`-titled accounts from the
+ * target database and reports how the explicit map in
+ * src/lib/appointments.ts classifies it:
  *
  *   mandate        → resolved to an appointment role; becomes an
  *                    `appointments` row (canonical mandate store)
@@ -11,98 +12,111 @@
  *   unmapped       → no explicit mapping; reported and denied access —
  *                    never widened by guessing
  *
- * The script embeds no records: everything comes from DATABASE_URL.
+ * Focal Point titles are NEVER migrated automatically. `--write` only
+ * creates a focal appointment for accounts listed in an evidence file:
  *
- *   DATABASE_URL=... npx tsx scripts/appointments-preview.ts          # preview
- *   DATABASE_URL=... npx tsx scripts/appointments-preview.ts --write  # backfill
+ *   DATABASE_URL=... npx tsx scripts/appointments-preview.ts --write \
+ *     --focal-evidence focal-evidence.json
  *
- * --write inserts appointment rows idempotently (matching an existing row
- * updates term/evidence) and leaves the source assignments untouched —
- * history is preserved; the access layer treats a canonical appointment as
- * superseding its legacy row. Review the preview before writing.
+ * The file is a JSON array; each entry carries the account id or email plus
+ * a verifiable reference and real term dates (both ends — open-ended
+ * mandates are refused):
+ *
+ *   [{ "accountId": 12, "electionId": 4, "startsAt": "2025-01-01",
+ *      "endsAt": "2027-01-01" },
+ *    { "email": "fp@example.org", "reference": "Council minutes 2024-11",
+ *      "startsAt": "2024-11-15", "endsAt": "2026-11-15" }]
+ *
+ * `electionId` must be a completed focal_point election whose result names
+ * the account as a race winner — it is verified against the database at
+ * write time. `reference` records an external appointment record. Titled
+ * accounts without evidence are reported for review and grant nothing.
+ *
+ * The script embeds no records: everything comes from DATABASE_URL plus the
+ * evidence file.
+ *
+ * --write is idempotent: source identity is enforced by a database unique
+ * index across ALL statuses and re-checked inside each write transaction,
+ * so overlapping or stale runs can neither duplicate a migrated row nor
+ * resurrect one a human has revoked. Historical status is preserved and
+ * canonical rows written by anything else are never overwritten.
  */
 import { config as loadEnv } from 'dotenv'
+import { readFileSync } from 'node:fs'
 
 loadEnv({ path: '.env.local' })
 loadEnv()
 
 const WRITE = process.argv.includes('--write')
+const evidenceIdx = process.argv.findIndex(
+  (a) => a === '--focal-evidence' || a.startsWith('--focal-evidence='),
+)
+const evidencePath =
+  evidenceIdx === -1
+    ? undefined
+    : process.argv[evidenceIdx].includes('=')
+      ? process.argv[evidenceIdx].slice('--focal-evidence='.length)
+      : process.argv[evidenceIdx + 1]
+if (evidenceIdx !== -1 && !evidencePath) {
+  throw new Error('--focal-evidence requires a file path.')
+}
 
 const { default: config } = await import('../src/payload.config')
 const { getPayload } = await import('payload')
-const { legacyAppointmentRole, appointmentState, councilSeatFor } =
-  await import('../src/lib/appointments')
+const { planMigration, writeMigration } = await import('../src/lib/appointmentMigration')
 
-const PARTICIPATION_SCOPES = new Set([
-  'body',
-  'working_group',
-  'organization',
-  'operational_team',
-  'negotiation_track',
-  'negotiation_project',
-])
-
-type Row = {
-  id: number
-  account: number | { id: number }
-  scopeType: string
-  scopeId: string
-  role: string
-  status: string
-  startsAt?: string | null
-  endsAt?: string | null
-}
-
-const classify = (row: Row) => {
-  const appointmentRole = legacyAppointmentRole(row.scopeType, row.scopeId, row.role)
-  if (!appointmentRole) return { kind: 'unmapped' as const }
-  if (row.role === 'member' && PARTICIPATION_SCOPES.has(row.scopeType))
-    return { kind: 'participation' as const, appointmentRole }
-  return { kind: 'mandate' as const, appointmentRole }
+async function loadFocalEvidence(payload: any) {
+  if (!evidencePath) return undefined
+  const entries = JSON.parse(readFileSync(evidencePath, 'utf8'))
+  if (!Array.isArray(entries)) throw new Error('Focal evidence file must be a JSON array.')
+  const map = new Map<number, any>()
+  for (const entry of entries) {
+    let accountId = entry.accountId
+    if (accountId == null && entry.email) {
+      const { docs } = await payload.find({
+        collection: 'accounts',
+        where: { email: { equals: entry.email } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      accountId = docs[0]?.id
+      if (accountId == null) throw new Error(`No account for evidence email ${entry.email}.`)
+    }
+    if (accountId == null) throw new Error('Every evidence entry needs accountId or email.')
+    map.set(accountId, entry)
+  }
+  return map
 }
 
 async function main() {
   const payload = await getPayload({ config })
+  const plan = await planMigration(payload)
 
-  const all: Row[] = []
-  let page = 1
-  for (;;) {
-    const { docs, hasNextPage } = await payload.find({
-      collection: 'assignments',
-      limit: 500,
-      page: page++,
-      overrideAccess: true,
-      pagination: true,
-    })
-    all.push(...(docs as any as Row[]))
-    if (!hasNextPage) break
-  }
-
-  const buckets = { mandate: 0, participation: 0, unmapped: 0 }
-  const states = new Map<string, number>()
-  const unmapped: Row[] = []
-  const mandates: { row: Row; appointmentRole: string }[] = []
-
-  for (const row of all) {
-    const state = appointmentState(row as any)
-    states.set(state, (states.get(state) ?? 0) + 1)
-    const c = classify(row)
-    buckets[c.kind] += 1
-    if (c.kind === 'unmapped') unmapped.push(row)
-    if (c.kind === 'mandate') mandates.push({ row, appointmentRole: c.appointmentRole! })
-  }
-
-  console.log(`assignments rows: ${all.length}`)
-  console.log(`  mandate → appointments: ${buckets.mandate}`)
-  console.log(`  participation → stays:  ${buckets.participation}`)
-  console.log(`  unmapped → denied:      ${buckets.unmapped}`)
+  console.log(`assignments rows: ${plan.assignments}`)
+  console.log(`  mandate → appointments: ${plan.mandate}`)
+  console.log(`  participation → stays:  ${plan.participation}`)
+  console.log(`  unmapped → denied:      ${plan.unmapped.length}`)
   console.log(
-    `  row states: ${[...states.entries()].map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`,
+    `  row states: ${[...plan.states.entries()].map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`,
+  )
+  console.log(`  new appointment rows:   ${plan.creates.length}`)
+  console.log(`  already migrated:       ${plan.alreadyMigrated}`)
+  console.log(`  canonical rows kept:    ${plan.existingCanonical}`)
+  console.log(
+    `  focal_point titles:     ${plan.focalVerified.length} election-verified, ` +
+      `${plan.focalUnverified.length} unverified (review only), ${plan.focalExisting} already appointed`,
   )
 
-  if (unmapped.length) {
+  if (plan.focalUnverified.length) {
+    console.log('\nUnverified focal_point titles (no mandate recorded — review required):')
+    for (const a of plan.focalUnverified) {
+      console.log(`  account=${a.id} ${a.name ?? ''}`)
+    }
+  }
+
+  if (plan.unmapped.length) {
     console.log('\nUnmapped rows (denied until the map covers them):')
-    for (const r of unmapped) {
+    for (const r of plan.unmapped) {
       const accountId = typeof r.account === 'object' ? r.account.id : r.account
       console.log(
         `  id=${r.id} account=${accountId} scope=${r.scopeType}:${r.scopeId} role=${r.role} status=${r.status}`,
@@ -112,52 +126,19 @@ async function main() {
 
   if (!WRITE) {
     console.log('\nDry run. Re-run with --write to create the appointment rows.')
-    process.exit(unmapped.length ? 2 : 0)
+    process.exit(plan.unmapped.length ? 2 : 0)
   }
 
-  let written = 0
-  for (const { row, appointmentRole } of mandates) {
-    const accountId = typeof row.account === 'object' ? row.account.id : row.account
-    const councilSeat = councilSeatFor(appointmentRole, row as any)
-    const existing = await payload.find({
-      collection: 'appointments',
-      where: {
-        and: [
-          { account: { equals: accountId } },
-          { appointmentRole: { equals: appointmentRole } },
-          { scopeType: { equals: row.scopeType } },
-          { scopeId: { equals: row.scopeId } },
-          { status: { equals: 'active' } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    const data: any = {
-      account: accountId,
-      appointmentRole,
-      scopeType: row.scopeType,
-      scopeId: row.scopeId,
-      councilSeat,
-      status: 'active',
-      startsAt: row.startsAt ?? new Date().toISOString(),
-      endsAt: row.endsAt ?? null,
-      appointedVia: { source: 'assignments_migration', assignmentId: row.id },
-    }
-    if (existing.docs[0]) {
-      await payload.update({
-        collection: 'appointments',
-        id: existing.docs[0].id,
-        data,
-        overrideAccess: true,
-      })
-    } else {
-      await payload.create({ collection: 'appointments', data, overrideAccess: true })
-    }
-    written += 1
+  const focalEvidence = await loadFocalEvidence(payload)
+  const result = await writeMigration(payload, plan, { focalEvidence })
+  console.log(`\nAppointments created: ${result.created}`)
+  console.log(`Focal-point appointments created: ${result.focalCreated}`)
+  console.log(`Skipped as already migrated since planning: ${result.staleSkipped}`)
+  console.log(`Conflicting duplicates skipped: ${result.conflicts}`)
+  for (const r of result.focalRejected) {
+    console.log(`Focal evidence rejected for account ${r.accountId}: ${r.reason}`)
   }
-  console.log(`\nAppointments written: ${written}`)
-  process.exit(unmapped.length ? 2 : 0)
+  process.exit(plan.unmapped.length ? 2 : 0)
 }
 
 main().catch((err) => {

@@ -1,14 +1,16 @@
-import { TbBooks as LibraryIcon } from 'react-icons/tb'
-import { A, PageHeader, Section, Skeletons } from '../components/ui.jsx'
+import { A, Section, Skeletons, Empty, ErrorCard } from './ui.jsx'
 import { useDocument } from '../lib/documents.js'
 
-export function Library() {
-  const { doc: library, loading } = useDocument('library')
-  if (!library) return loading ? <Skeletons n={3} /> : null
+/** Load published library guides, with loading, retry and empty states. */
+export function ResourceGuides() {
+  const { doc: library, loading, error, retry } = useDocument('library')
+  if (loading) return <Skeletons n={3} />
+  if (error) return <ErrorCard message={error} onRetry={retry} />
+  if (!library?.guides?.length) return <Empty title="No guides published yet" />
   return (
     <div>
-      <PageHeader icon={LibraryIcon} title={library.title} description={library.description} />
       <Section label={library.sectionLabel}>
+        {library.description && <p className="sectionIntro">{library.description}</p>}
         <div className="resourceList">
           {(library.guides || []).map((guide) => (
             <A key={guide.title} href={guide.href} className="resourceRow">
