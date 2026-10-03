@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { type Pool } from 'pg'
 import { getPgPool } from '../../lib/pg'
 import { getAccessProfile, hasCapability } from '../../lib/access'
+import type { Doc, AccountLike } from '../../lib/domain'
 
 export class SourceIngestionError extends Error {
   code: string
@@ -57,7 +58,7 @@ export async function reviewDocumentExtraction({
   requestId,
   pool = getPgPool(),
 }: {
-  account: any
+  account: AccountLike
   documentId: string
   versionId: string
   expectedRevision: number
@@ -113,7 +114,7 @@ export async function reviewDocumentExtraction({
        WHERE document_id=$1`,
       [documentId],
     )
-    const trackIds = trackResult.rows.map((row: any) => row.track_id)
+    const trackIds = trackResult.rows.map((row: Doc) => row.track_id)
     if (
       !trackIds.length ||
       trackIds.some(

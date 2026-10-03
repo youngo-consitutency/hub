@@ -1,9 +1,9 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { requireCwMember, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
+import { hasCapability } from '../lib/access'
 import {
   accountRef,
   advanceIfDue,
@@ -20,6 +20,7 @@ import {
   recordEvent,
   vetoView,
 } from '../lib/decisionRuntime'
+import type { Doc, DocData } from '../lib/domain'
 
 // S09 decision workflow endpoints. Members act through these — direct REST
 // writes on the decision collections are staff-only (see Decisions.ts), so
@@ -53,7 +54,7 @@ export const decisionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const items = []
-      for (const p of docs as any[]) {
+      for (const p of docs as Doc[]) {
         items.push(proposalView(await advanceIfDue(req, p)))
       }
       return json({ items })
@@ -64,7 +65,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!b.context?.trim()) fields.context = 'Required.'
@@ -94,7 +95,7 @@ export const decisionEndpoints: Endpoint[] = [
             Array.isArray(b.contactPersons) && b.contactPersons.length
               ? b.contactPersons
               : [account.id],
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, proposal.id, 'created', account)
@@ -106,7 +107,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      let p = await loadProposal(req, req.routeParams!.id as string)
+      let p = await loadProposal(req, param(req, 'id'))
       p = await advanceIfDue(req, p)
       p = await checkVeto(req, p)
       const flags = await proposalFlags(req, p.id)
@@ -133,10 +134,10 @@ export const decisionEndpoints: Endpoint[] = [
       })
       return json({
         proposal: proposalView(p, flags, {
-          comments: (comments as any[]).length,
+          comments: (comments as Doc[]).length,
           ballots,
         }),
-        comments: (comments as any[]).map(commentView),
+        comments: (comments as Doc[]).map(commentView),
         myBallot: mine[0] ? ballotView(mine[0]) : null,
       })
     }),
@@ -146,7 +147,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      let p = await loadProposal(req, req.routeParams!.id as string)
+      let p = await loadProposal(req, param(req, 'id'))
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only the contact person(s) may present the proposal.')
       if (p.status !== 'draft')
@@ -175,13 +176,13 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const p = await advanceIfDue(req, await loadProposal(req, req.routeParams!.id as string))
+      const p = await advanceIfDue(req, await loadProposal(req, param(req, 'id')))
       if (!['consultation', 'decision'].includes(p.status))
         throw fail.conflict(
           'invalid_phase',
           'Comments are only open during consultation or decision periods.',
         )
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       if (!b.body?.trim()) throw fail.validation({ body: 'Required.' })
       const comment = await req.payload.create({
         collection: 'decision-comments',
@@ -190,7 +191,7 @@ export const decisionEndpoints: Endpoint[] = [
           account: account.id,
           body: b.body.trim(),
           createdAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'commented', account)
@@ -202,7 +203,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const p = await advanceIfDue(req, await loadProposal(req, req.routeParams!.id as string))
+      const p = await advanceIfDue(req, await loadProposal(req, param(req, 'id')))
       if (!['consultation', 'decision'].includes(p.status))
         throw fail.conflict(
           'invalid_phase',
@@ -210,7 +211,7 @@ export const decisionEndpoints: Endpoint[] = [
         )
       if (!(await isBodyMember(req, account, p)))
         throw fail.forbidden('Only members of the decision-making body may raise flags.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!['red', 'grey'].includes(b.kind)) fields.kind = 'Must be red or grey.'
       if (!b.reason?.trim()) fields.reason = 'Required.'
@@ -232,7 +233,7 @@ export const decisionEndpoints: Endpoint[] = [
           raisedBy: account.id,
           status: 'open',
           raisedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, `flag_${b.kind}_raised`, account, { flagId: flag.id })
@@ -244,21 +245,21 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const p = await loadProposal(req, req.routeParams!.id as string)
+      const p = await loadProposal(req, param(req, 'id'))
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only contact person(s) respond to flags.')
       const flag = await req.payload
         .findByID({
           collection: 'decision-flags',
-          id: Number(req.routeParams!.flagId),
+          id: Number(param(req, 'flagId')),
           overrideAccess: true,
         })
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
-      if (!['open'].includes((flag as any).status))
+      if (!['open'].includes((flag as Doc).status))
         throw fail.conflict('invalid_phase', 'Flag is no longer open.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const updated = await req.payload.update({
         collection: 'decision-flags',
         id: flag.id,
@@ -279,17 +280,17 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const p = await loadProposal(req, req.routeParams!.id as string)
+      const p = await loadProposal(req, param(req, 'id'))
       const flag = await req.payload
         .findByID({
           collection: 'decision-flags',
-          id: Number(req.routeParams!.flagId),
+          id: Number(param(req, 'flagId')),
           overrideAccess: true,
         })
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
-      const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
+      const raiser = (flag as Doc).raisedBy?.id ?? (flag as Doc).raisedBy
       // S09: a flag is withdrawn by its raiser or through the documented
       // nullification/escalation process — never by administrator override.
       if (raiser !== account.id) throw fail.forbidden('Only the flag raiser may withdraw it.')
@@ -308,7 +309,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      let p = await loadProposal(req, req.routeParams!.id as string)
+      let p = await loadProposal(req, param(req, 'id'))
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only contact person(s) may close the decision period.')
       p = await advanceIfDue(req, p)
@@ -341,12 +342,12 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const p = await advanceIfDue(req, await loadProposal(req, req.routeParams!.id as string))
+      const p = await advanceIfDue(req, await loadProposal(req, param(req, 'id')))
       if (p.status !== 'voting')
         throw fail.conflict('invalid_phase', 'Voting is not open for this proposal.')
       if (!(await isBodyMember(req, account, p)))
         throw fail.forbidden('Only members of the decision-making body may vote.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const options = (p.ballotOptions ?? []).map((o: any) => o.option)
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
@@ -371,7 +372,7 @@ export const decisionEndpoints: Endpoint[] = [
             account: account.id,
             choice: b.choice,
             castAt: new Date().toISOString(),
-          } as any,
+          } as DocData,
           overrideAccess: true,
         })
       } catch (error: any) {
@@ -393,10 +394,10 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const p = await advanceIfDue(req, await loadProposal(req, req.routeParams!.id as string))
+      const p = await advanceIfDue(req, await loadProposal(req, param(req, 'id')))
       if (p.status !== 'voting')
         throw fail.conflict('invalid_phase', 'A veto may only stop an open vote.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!['org', 'org_global_south', 'wg_or_ot'].includes(b.requesterKind))
         fields.requesterKind = 'Must be org, org_global_south or wg_or_ot.'
@@ -413,7 +414,7 @@ export const decisionEndpoints: Endpoint[] = [
           requestedBy: account.id,
           status: 'pending',
           createdAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'veto_requested', account, { vetoId: veto.id })
@@ -424,17 +425,16 @@ export const decisionEndpoints: Endpoint[] = [
     path: '/decisions/:id/vetoes/:vetoId/confirm',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       // Verifying a veto request against eligible representation is a
       // coordination duty (GCT), not a technical-administration function.
-      if (!access.capabilities.includes('gct.coordinate'))
+      if (!hasCapability(access, 'gct.coordinate'))
         throw fail.forbidden('Veto requests are confirmed by the coordination team.')
-      let p = await loadProposal(req, req.routeParams!.id as string)
+      let p = await loadProposal(req, param(req, 'id'))
       const veto = await req.payload
         .findByID({
           collection: 'decision-vetoes',
-          id: Number(req.routeParams!.vetoId),
+          id: Number(param(req, 'vetoId')),
           overrideAccess: true,
         })
         .catch(() => {
@@ -456,7 +456,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const p = await loadProposal(req, req.routeParams!.id as string)
+      const p = await loadProposal(req, param(req, 'id'))
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only contact person(s) may withdraw the proposal.')
       if (['adopted', 'vetoed', 'rejected', 'failed_quorum', 'withdrawn'].includes(p.status))
@@ -476,7 +476,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const p = await loadProposal(req, req.routeParams!.id as string)
+      const p = await loadProposal(req, param(req, 'id'))
       const { docs } = await req.payload.find({
         collection: 'decision-events',
         where: { proposal: { equals: p.id } },
@@ -485,7 +485,7 @@ export const decisionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((e) => ({
+        items: (docs as Doc[]).map((e) => ({
           id: e.id,
           type: e.type,
           actor: accountRef(e.actor),

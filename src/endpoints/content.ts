@@ -1,9 +1,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
+import type { Doc, DocData } from '../lib/domain'
 
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -46,7 +47,7 @@ async function getDraft(req: PayloadRequest, id: string) {
       overrideAccess: true,
       depth: 1,
       req,
-    })) as any
+    })) as Doc
     if (!d) throw fail.notFound('Draft not found.')
     return d
   } catch (e: any) {
@@ -91,7 +92,7 @@ async function applyToLive(
                 limit: 1,
                 overrideAccess: true,
               })
-            ).docs[0] as any
+            ).docs[0] as Doc
           )?.id
         : null,
       meetingUrl: payload.meetingUrl || null,
@@ -101,15 +102,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'content-events',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-events',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -132,15 +133,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'content-announcements',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-announcements',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -165,15 +166,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'catalogue-resources',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'catalogue-resources',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -203,7 +204,7 @@ export const contentEndpoints: Endpoint[] = [
       return json({
         permissions: { canDraft, canReview, canPublish },
         items: docs.map(draftView),
-        publications: (docs as any[])
+        publications: (docs as Doc[])
           .filter((d) => d.status === 'published')
           .map(draftView)
           .slice(0, 100),
@@ -221,7 +222,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden('Content drafting is not assigned.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const contentType = String(b.contentType || '')
       if (!['event', 'announcement', 'resource'].includes(contentType))
         throw fail.validation({ contentType: 'Choose events, announcements, or resources.' })
@@ -236,7 +237,7 @@ export const contentEndpoints: Endpoint[] = [
           payload,
           author: account.id,
           status: 'draft',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -249,19 +250,19 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden()
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (String(draft.author?.id ?? draft.author) !== String(account.id))
         throw fail.forbidden('Only the author can edit this draft.')
       if (!['draft', 'changes_requested'].includes(draft.status))
         throw new ApiError(409, 'conflict', 'This draft is already in review.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
         data: {
           payload: b.payload ?? draft.payload,
           revision: (draft.revision || 1) + 1,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -274,7 +275,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden()
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (String(draft.author?.id ?? draft.author) !== String(account.id))
         throw fail.forbidden('Only the author can submit this draft.')
       if (!['draft', 'changes_requested'].includes(draft.status))
@@ -285,7 +286,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'in_review',
           submittedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -298,12 +299,12 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canReview } = await draftAccess(req)
       if (!canReview) throw fail.forbidden('Content review is not assigned.')
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (draft.status !== 'in_review')
         throw new ApiError(409, 'conflict', 'Only drafts in review can be decided.')
       if (String(draft.author?.id ?? draft.author) === String(account.id))
         throw fail.forbidden('Authors cannot review their own draft.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const decision = ['approve', 'decline', 'request_changes'].includes(b.decision)
         ? b.decision
         : null
@@ -323,7 +324,7 @@ export const contentEndpoints: Endpoint[] = [
           reviewer: account.id,
           reviewNote: String(b.reviewNote || '').slice(0, 2000),
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -336,7 +337,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (draft.status !== 'approved')
         throw new ApiError(409, 'conflict', 'Only approved drafts can be published.')
       if (String(draft.author?.id ?? draft.author) === String(account.id))
@@ -348,7 +349,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'published',
           publishedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -361,9 +362,9 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { canDraft, canReview } = await draftAccess(req)
       if (!canDraft && !canReview) throw fail.forbidden()
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
-      let item: any = null
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
+      let item: Doc | null | undefined = null
       if (contentType === 'event') item = await store.getEvent(req, slug)
       else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
       else if (contentType === 'resource')
@@ -378,9 +379,9 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
-      const b = ((await req.json?.()) || {}) as any
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
+      const b = await readBody(req)
       const payload = b.payload ?? b
       const item = await applyToLive(req, contentType, slug, payload)
       await audit(req, account, {
@@ -399,8 +400,8 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
       if (!['event', 'announcement'].includes(contentType))
         throw fail.validation({
           contentType: 'contentType must be event or announcement.',
@@ -414,7 +415,7 @@ export const contentEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const live = docs[0] as any
+      const live = docs[0] as Doc
       if (!live)
         throw new ApiError(404, 'not_found', `No live ${contentType} with slug "${slug}".`, {
           slug: `No live ${contentType} with slug "${slug}".`,
@@ -441,7 +442,7 @@ export const contentEndpoints: Endpoint[] = [
               ctaLabel: live.ctaLabel || '',
               ctaDeadlineAt: live.ctaDeadlineAt || '',
             }
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const cleanReason =
         String(b.reason || '')
           .trim()
@@ -450,7 +451,7 @@ export const contentEndpoints: Endpoint[] = [
       await req.payload.update({
         collection,
         id: live.id,
-        data: { state: 'unpublished' } as any,
+        data: { state: 'unpublished' } as DocData,
         overrideAccess: true,
         req,
       })

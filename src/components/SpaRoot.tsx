@@ -8,8 +8,8 @@ import { Router } from 'wouter'
 import '../../spa/src/styles/tokens.css'
 import '../../spa/src/styles/app.css'
 import App from '../../spa/src/App'
-import { disablePWAInDevelopment, initPWA } from '../../spa/src/lib/pwa.js'
-import { watchSystemTheme } from '../../spa/src/lib/theme.js'
+import { disablePWAInDevelopment, initPWA } from '../../spa/src/lib/pwa'
+import { watchSystemTheme } from '../../spa/src/lib/theme'
 
 export default function SpaRoot() {
   useEffect(() => {

@@ -1,7 +1,9 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { requireVerifiedMember } from './accounts'
+import { getAccessProfile, hasCapability } from './access'
 import { toCamelCase } from './case'
+import type { Doc, AccountLike } from './domain'
 
 // Organisation-scope helpers shared by the NGO, organisations and
 // opportunities endpoints. Access derives from the member's active
@@ -16,9 +18,13 @@ export type OrgContext = {
   canManageSeats: boolean
 }
 
-async function resolveOrgContext(req: PayloadRequest, account: any): Promise<OrgContext | null> {
-  const requestedOrgId = (req.query?.orgId as string) || (req.body as any)?.orgId || null
-  if (account.role === 'admin') {
+async function resolveOrgContext(
+  req: PayloadRequest,
+  account: AccountLike,
+): Promise<OrgContext | null> {
+  const requestedOrgId = (req.query?.orgId as string) || (req.body as Doc)?.orgId || null
+  const access = await getAccessProfile(req, account)
+  if (hasCapability(access, 'ngo.manage_all')) {
     if (!requestedOrgId) return null
     return {
       orgAccountId: String(requestedOrgId),
@@ -38,7 +44,7 @@ async function resolveOrgContext(req: PayloadRequest, account: any): Promise<Org
     limit: 1,
     overrideAccess: true,
   })
-  const seat = docs[0] as any
+  const seat = docs[0] as Doc
   if (!seat) return null
   return {
     orgAccountId: String(
@@ -64,7 +70,7 @@ export async function requireOrgScope(
   return { account, ctx }
 }
 
-export const seatView = (row: any) => {
+export const seatView = (row: Doc) => {
   const r = toCamelCase<any>(row)
   return {
     id: r.id,

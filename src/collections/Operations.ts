@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
+import { grantsCapability, isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
 
 // Operational workflow records. Members act through the domain endpoints in
 // src/endpoints/operations.ts — generated REST writes stay staff-only, and
@@ -10,10 +10,10 @@ import { isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
 export const FundingRequests: CollectionConfig = {
   slug: 'funding-requests',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,
@@ -140,10 +140,10 @@ export const SafeguardingCases: CollectionConfig = {
 export const CoiDeclarations: CollectionConfig = {
   slug: 'coi-declarations',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,
@@ -182,10 +182,10 @@ export const CoiDeclarations: CollectionConfig = {
 export const RecognitionRequests: CollectionConfig = {
   slug: 'recognition-requests',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,
@@ -231,10 +231,10 @@ export const RecognitionRequests: CollectionConfig = {
 export const PartnershipRequests: CollectionConfig = {
   slug: 'partnership-requests',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,
@@ -286,10 +286,10 @@ export const PartnershipRequests: CollectionConfig = {
 export const PrivacyRequests: CollectionConfig = {
   slug: 'privacy-requests',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,

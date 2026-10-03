@@ -1,4 +1,5 @@
 import pg from 'pg'
+import type { Doc } from './domain'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
 // binary blobs). Lazily created so builds without DATABASE_URL still work.
@@ -22,7 +23,7 @@ export function getPgPool(): pg.Pool | null {
 export function requirePgPool(): pg.Pool {
   const found = getPgPool()
   if (!found) {
-    const error = new Error('A database connection is required for this feature.') as any
+    const error = new Error('A database connection is required for this feature.') as Doc
     error.status = 503
     error.code = 'database_required'
     throw error

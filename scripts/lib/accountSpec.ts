@@ -13,7 +13,8 @@ export interface AccountSpec {
   email: string
   password: string
   name: string
-  role?: 'member' | 'admin' | 'focal_point' | 'wg_contact' | 'ngo_admin'
+  /** Technical account kind only — authority comes from `records`. */
+  role?: 'member'
   entityType?: 'individual' | 'organization'
   membershipTrack?: 'network' | 'constituency_work'
   /** Completed onboarding + verification (memberStatus/hubAccessStatus). */

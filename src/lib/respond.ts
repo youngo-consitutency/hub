@@ -104,6 +104,20 @@ export function endpoint(handler: Handler): Handler {
 
 export const json = (data: unknown, init?: ResponseInit) => Response.json(data, init)
 
+/** Parsed request body — handlers validate the fields they read. */
+export type JsonBody = Record<string, any>
+
+// One call site for the body-parsing idiom: an absent body is an empty
+// object, a malformed one throws through the endpoint wrapper as 500.
+export async function readBody<T extends JsonBody = JsonBody>(req: PayloadRequest): Promise<T> {
+  return ((await req.json?.()) || {}) as T
+}
+
+// Route params are always strings; missing params surface as '' so the
+// handler's own not-found/validation branch decides the status.
+export const param = (req: PayloadRequest, name: string): string =>
+  String(req.routeParams?.[name] ?? '')
+
 // Shared-cache policy for anonymous-safe public reads — CDN/edge caches (and
 // SWR's client cache) hold them briefly; member data never takes this path.
 export const PUBLIC_CACHE = 'public, s-maxage=60, stale-while-revalidate=300'

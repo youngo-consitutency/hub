@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
+import { grantsCapability } from '../lib/collectionAccess'
 
 export const AuditLog: CollectionConfig = {
   slug: 'audit-log',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      return (req.user as any).role === 'admin'
+      return grantsCapability(req, 'audit.read')
     },
     create: () => false,
     update: () => false,

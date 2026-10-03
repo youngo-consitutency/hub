@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
 import type { Payload, PayloadRequest } from 'payload'
 import { assembleFeed } from './feed'
-import { resolveCoyStatus } from '../../spa/shared/coyStatus.js'
-import { normalizeTaskForces } from '../../spa/shared/protocol.js'
+import { resolveCoyStatus } from '../../spa/shared/coyStatus'
+import { normalizeTaskForces } from '../../spa/shared/protocol'
+import type { Doc } from './domain'
 
 type AnyRecord = Record<string, any>
 type Req = PayloadRequest | Payload
@@ -356,7 +357,7 @@ export async function listOpportunities(
     .filter((row) => !format || format === 'all' || row.format === format)
 }
 
-export function resourceFingerprint(item: any) {
+export function resourceFingerprint(item: Doc) {
   return createHash('sha256')
     .update(
       JSON.stringify([
@@ -385,11 +386,11 @@ export async function listResources(req: Req, { includeRetired = false } = {}) {
     overrideAccess: true,
   })
   const openBySlug = new Map<string, number>()
-  for (const i of issues.docs as any[]) {
+  for (const i of issues.docs as Doc[]) {
     openBySlug.set(i.resourceSlug, (openBySlug.get(i.resourceSlug) || 0) + 1)
   }
   return rows
-    .map((item: any) => {
+    .map((item: Doc) => {
       const view = {
         slug: item.slug,
         title: item.title,
@@ -411,7 +412,7 @@ export async function listResources(req: Req, { includeRetired = false } = {}) {
       }
       return { ...view, fingerprint: resourceFingerprint(view) }
     })
-    .filter((item: any) => includeRetired || item.verification.status !== 'retired')
+    .filter((item: Doc) => includeRetired || item.verification.status !== 'retired')
 }
 
 export async function search(req: Req, q: string, verified = false) {

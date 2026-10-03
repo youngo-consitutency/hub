@@ -14,13 +14,14 @@ import {
 } from './contributionShared'
 import { normalizeDraftVersionInput, normalizeProjectInput } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
+import type { Doc, AccountLike } from '../../lib/domain'
 
 export async function createSubmissionProject({
   account,
   input,
   pool = getPgPool(),
 }: {
-  account: any
+  account: AccountLike
   input: any
   pool?: Pool | null
 }) {
@@ -144,7 +145,7 @@ export async function appendSubmissionVersion({
   input,
   pool = getPgPool(),
 }: {
-  account: any
+  account: AccountLike
   projectId: string
   input: any
   pool?: Pool | null
@@ -239,7 +240,7 @@ export async function listAccessibleProjects({
   account,
   pool = getPgPool(),
 }: {
-  account: any
+  account: AccountLike
   pool?: Pool | null
 }) {
   const db = requirePool(pool)
@@ -258,7 +259,7 @@ export async function listAccessibleProjects({
      ORDER BY p.updated_at DESC`,
     [account.id],
   )
-  return rows.map((row: any) => ({
+  return rows.map((row: Doc) => ({
     id: row.id,
     title: row.title,
     purpose: row.purpose,
@@ -275,7 +276,7 @@ export async function getAccessibleProject({
   projectId,
   pool = getPgPool(),
 }: {
-  account: any
+  account: AccountLike
   projectId: string
   pool?: Pool | null
 }) {
@@ -335,7 +336,7 @@ export async function getAccessibleProject({
       topic: project.track_topic,
     },
     call: project.call_id ? { id: project.call_id, title: project.call_title } : null,
-    versions: versions.rows.map((row: any) => ({
+    versions: versions.rows.map((row: Doc) => ({
       id: row.id,
       version: row.version,
       baseVersionId: row.base_version_id,
@@ -346,7 +347,7 @@ export async function getAccessibleProject({
       createdAt: row.created_at,
       citations: row.citations,
     })),
-    amendments: amendments.rows.map((row: any) => ({
+    amendments: amendments.rows.map((row: Doc) => ({
       id: row.id,
       targetType: row.target_type,
       targetDocumentVersionId: row.target_document_version_id,

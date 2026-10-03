@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, json } from '../lib/respond'
+import { endpoint, json, param, readBody } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import * as platform from '../modules/platform/service'
@@ -16,8 +16,6 @@ const actor = async (req: any): Promise<Actor> => {
   const account = await requireAccount(req)
   return account as unknown as Actor
 }
-const body = async (req: any) => ((await req.json?.()) || {}) as Record<string, unknown>
-const p = (req: any, key: string) => String(req.routeParams?.[key] || '')
 
 export const platformEndpoints: Endpoint[] = [
   {
@@ -30,7 +28,7 @@ export const platformEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await enquiryLimit(req)
-      return json(await platform.createEnquiry(await body(req)), {
+      return json(await platform.createEnquiry(await readBody(req)), {
         status: 201,
       })
     }),
@@ -39,7 +37,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/members/:id/membership',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.membershipAction(await actor(req), p(req, 'id'), await body(req))
+      await platform.membershipAction(await actor(req), param(req, 'id'), await readBody(req))
       return json({ ok: true })
     }),
   },
@@ -52,7 +50,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/bodies',
     method: 'post',
     handler: endpoint(async (req) =>
-      json(await platform.saveBody(await actor(req), await body(req)), {
+      json(await platform.saveBody(await actor(req), await readBody(req)), {
         status: 201,
       }),
     ),
@@ -61,15 +59,15 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/bodies/:id',
     method: 'patch',
     handler: endpoint(async (req) =>
-      json(await platform.saveBody(await actor(req), await body(req), p(req, 'id'))),
+      json(await platform.saveBody(await actor(req), await readBody(req), param(req, 'id'))),
     ),
   },
   {
     path: '/platform/bodies/:id/publish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const b = await body(req)
-      await platform.publishBody(await actor(req), p(req, 'id'), b.version)
+      const b = await readBody(req)
+      await platform.publishBody(await actor(req), param(req, 'id'), b.version)
       return json({ ok: true })
     }),
   },
@@ -77,7 +75,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/bodies/:id/join',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.joinBody(await actor(req), p(req, 'id'))
+      await platform.joinBody(await actor(req), param(req, 'id'))
       return json({ ok: true })
     }),
   },
@@ -85,7 +83,12 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/bodies/:id/withdraw-publication',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.withdrawPublication(await actor(req), 'body', p(req, 'id'), await body(req))
+      await platform.withdrawPublication(
+        await actor(req),
+        'body',
+        param(req, 'id'),
+        await readBody(req),
+      )
       return json({ ok: true })
     }),
   },
@@ -93,7 +96,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/records',
     method: 'post',
     handler: endpoint(async (req) => {
-      await platform.assign(await actor(req), await body(req))
+      await platform.assign(await actor(req), await readBody(req))
       return json({ ok: true }, { status: 201 })
     }),
   },
@@ -101,8 +104,8 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/records/:id/revoke',
     method: 'post',
     handler: endpoint(async (req) => {
-      const b = await body(req)
-      await platform.revoke(await actor(req), p(req, 'id'), platform.text(b, 'reason', 2000))
+      const b = await readBody(req)
+      await platform.revoke(await actor(req), param(req, 'id'), platform.text(b, 'reason', 2000))
       return json({ ok: true })
     }),
   },
@@ -110,7 +113,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/tasks',
     method: 'post',
     handler: endpoint(async (req) =>
-      json(await platform.saveTask(await actor(req), await body(req)), {
+      json(await platform.saveTask(await actor(req), await readBody(req)), {
         status: 201,
       }),
     ),
@@ -119,14 +122,14 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/tasks/:id',
     method: 'patch',
     handler: endpoint(async (req) =>
-      json(await platform.saveTask(await actor(req), await body(req), p(req, 'id'))),
+      json(await platform.saveTask(await actor(req), await readBody(req), param(req, 'id'))),
     ),
   },
   {
     path: '/platform/decisions',
     method: 'post',
     handler: endpoint(async (req) =>
-      json(await bridge.saveDecision(req, await actor(req), await body(req)), {
+      json(await bridge.saveDecision(req, await actor(req), await readBody(req)), {
         status: 201,
       }),
     ),
@@ -135,21 +138,21 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id',
     method: 'get',
     handler: endpoint(async (req) =>
-      json(await bridge.decisionDetail(req, await actor(req), p(req, 'id'))),
+      json(await bridge.decisionDetail(req, await actor(req), param(req, 'id'))),
     ),
   },
   {
     path: '/platform/decisions/:id',
     method: 'patch',
     handler: endpoint(async (req) =>
-      json(await bridge.saveDecision(req, await actor(req), await body(req), p(req, 'id'))),
+      json(await bridge.saveDecision(req, await actor(req), await readBody(req), param(req, 'id'))),
     ),
   },
   {
     path: '/platform/decisions/:id/transition',
     method: 'post',
     handler: endpoint(async (req) => {
-      await bridge.transition(req, await actor(req), p(req, 'id'), await body(req))
+      await bridge.transition(req, await actor(req), param(req, 'id'), await readBody(req))
       return json({ ok: true })
     }),
   },
@@ -157,7 +160,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/contributions',
     method: 'post',
     handler: endpoint(async (req) => {
-      await bridge.contribute(req, await actor(req), p(req, 'id'), await body(req))
+      await bridge.contribute(req, await actor(req), param(req, 'id'), await readBody(req))
       return json({ ok: true }, { status: 201 })
     }),
   },
@@ -165,7 +168,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/contributions/:id/resolve',
     method: 'post',
     handler: endpoint(async (req) => {
-      await bridge.resolveContribution(req, await actor(req), p(req, 'id'), await body(req))
+      await bridge.resolveContribution(req, await actor(req), param(req, 'id'), await readBody(req))
       return json({ ok: true })
     }),
   },
@@ -173,8 +176,8 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/publish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const b = await body(req)
-      await bridge.publishDecision(req, await actor(req), p(req, 'id'), b.version)
+      const b = await readBody(req)
+      await bridge.publishDecision(req, await actor(req), param(req, 'id'), b.version)
       return json({ ok: true })
     }),
   },
@@ -182,7 +185,12 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/decisions/:id/withdraw-publication',
     method: 'post',
     handler: endpoint(async (req) => {
-      await bridge.withdrawDecisionPublication(req, await actor(req), p(req, 'id'), await body(req))
+      await bridge.withdrawDecisionPublication(
+        req,
+        await actor(req),
+        param(req, 'id'),
+        await readBody(req),
+      )
       return json({ ok: true })
     }),
   },
@@ -190,7 +198,7 @@ export const platformEndpoints: Endpoint[] = [
     path: '/platform/enquiries/:id',
     method: 'patch',
     handler: endpoint(async (req) => {
-      await platform.updateEnquiry(await actor(req), p(req, 'id'), await body(req))
+      await platform.updateEnquiry(await actor(req), param(req, 'id'), await readBody(req))
       return json({ ok: true })
     }),
   },

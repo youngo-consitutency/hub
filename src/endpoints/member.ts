@@ -1,12 +1,13 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { hasCapability } from '../lib/access'
 import {
   accountView,
   isVerifiedAccount,
   requireAccount,
   requireVerifiedMember,
+  memberContext,
 } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
 import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
@@ -15,14 +16,15 @@ import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
+import type { Doc, DocData } from '../lib/domain'
 
 // Course structure (modules, quiz, pass score) is staff-editable content —
 // the `membership-course` content document holds the whole definition.
 type CourseDoc = {
   version: string
   passScore: number
-  modules: any[]
-  quiz: { id: string; prompt: string; choices: any[]; correct: string }[]
+  modules: Doc[]
+  quiz: { id: string; prompt: string; choices: Doc[]; correct: string }[]
 }
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
@@ -43,7 +45,7 @@ async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlu
     limit: 1,
     overrideAccess: true,
   })
-  return (docs[0] as any) || null
+  return (docs[0] as Doc) || null
 }
 
 async function upsertWgProgress(
@@ -79,14 +81,14 @@ async function upsertWgProgress(
     return req.payload.update({
       collection: 'wg-progress',
       id: existing.id,
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
   }
   return req.payload.create({
     collection: 'wg-progress',
-    data: data as any,
+    data: data as DocData,
     overrideAccess: true,
     req,
   })
@@ -111,8 +113,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/access',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await memberContext(req)
       const seat = await req.payload
         .find({
           collection: 'ngo-seats',
@@ -124,10 +125,10 @@ export const memberEndpoints: Endpoint[] = [
           sort: '-acceptedAt',
           overrideAccess: true,
         })
-        .then((r) => r.docs[0] as any)
+        .then((r) => r.docs[0] as Doc)
       return json({
         ...access,
-        isAdmin: account.role === 'admin',
+        canAdminister: hasCapability(access, 'accounts.manage'),
         managedWgs: access.wgAssignments.map((i: any) => i.wgSlug).sort(),
         ngo: seat
           ? {
@@ -165,7 +166,7 @@ export const memberEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const course = await getCourse(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const answers = b?.answers || {}
       let score = 0
       for (const q of course.quiz) if (answers[q.id] === q.correct) score += 1
@@ -186,7 +187,7 @@ export const memberEndpoints: Endpoint[] = [
         )
       }
       const now = new Date().toISOString()
-      const status = account.membershipStatus
+      const status = String(account.membershipStatus ?? '')
       const nextStatus = ['active', 'renewal_due', 'awaiting_onboarding'].includes(status)
         ? status
         : account.membershipTrack === 'constituency_work'
@@ -202,7 +203,7 @@ export const memberEndpoints: Endpoint[] = [
           coursePassedAt: account.coursePassedAt || now,
           courseScore: score,
           verifiedAt: account.verifiedAt || now,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -228,7 +229,7 @@ export const memberEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((d) => wgProgressView(d, account.id)),
+        items: (docs as Doc[]).map((d) => wgProgressView(d, account.id)),
       })
     }),
   },
@@ -237,10 +238,10 @@ export const memberEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
-      let activities: any[] = []
+      let activities: Doc[] = []
       if (unlocked) {
         const { docs } = await req.payload.find({
           collection: 'wg-activities',
@@ -262,8 +263,8 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
-      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+      const b = await readBody(req)
+      const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
         presentationOk: Boolean(b.presentationOk),
         rulesOk: Boolean(b.rulesOk),
         status: 'active',
@@ -276,7 +277,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+      const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
         status: 'pending_approval',
       })
       return json({ progress: wgProgressView(progress, account.id) })
@@ -295,7 +296,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const photoUpdatedAt = row?.photoUpdatedAt ?? null
       return json({
         profile: {
@@ -327,7 +328,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const displayName = trimmed(b.displayName, 120)
       if (!displayName) fields.displayName = 'Display name is required.'
@@ -351,7 +352,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const existing = docs[0] as any
+      const existing = docs[0] as Doc
       const data = {
         account: account.id,
         displayName,
@@ -371,13 +372,13 @@ export const memberEndpoints: Endpoint[] = [
         ? await req.payload.update({
             collection: 'member-profiles',
             id: existing.id,
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'member-profiles',
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
@@ -390,8 +391,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/focal/overview',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       // The focal overview belongs to the elected Focal Points — an
       // administrator has no mandate and gets no view.
       if (!access.isFocalPoint) throw fail.forbidden()
@@ -422,7 +422,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'put',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const bytes = Buffer.from(await (req as any).arrayBuffer())
+      const bytes = Buffer.from(await (req as Doc).arrayBuffer())
       const photo = await saveMemberPhoto(
         account.id,
         bytes,

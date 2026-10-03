@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { apiGet, apiPost, apiPatch } from '../../lib/api.js'
+import { apiGet, apiPost, apiPatch } from '../../lib/api'
 
 export const get = <T>(path: string): Promise<T> => apiGet(`/platform${path}`)
 export const post = (path: string, body: unknown = {}) => apiPost(`/platform${path}`, body)
@@ -54,4 +54,4 @@ export function values(form: HTMLFormElement): Record<string, unknown> {
       result[name] = new Date(result[name]).toISOString()
   return result
 }
-export { formatDateTime as formatDate } from '../../lib/time.js'
+export { formatDateTime as formatDate } from '../../lib/time'

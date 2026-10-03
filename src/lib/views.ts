@@ -22,7 +22,7 @@ function isMeetingJoinLink(value: string): boolean {
   if (host === 'teams.microsoft.com' || host === 'teams.live.com') {
     return path.includes('/l/meetup-join') || path.includes('/meet/')
   }
-  if (host.endsWith('webex.com')) {
+  if (host === 'webex.com' || host.endsWith('.webex.com')) {
     return path.includes('/meet/') || path.includes('/join/')
   }
   return false

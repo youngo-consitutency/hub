@@ -10,6 +10,7 @@ import {
 } from './authority'
 import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
+import type { Doc, DocData, AccountLike } from './domain'
 
 // Writes to the `authority-records` collection. Every grant is validated
 // against the role registry (scope type, term window, CW membership where
@@ -59,7 +60,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
     provenance: input.provenance ?? null,
     recordedBy: input.recordedBy ?? null,
     evidence: input.evidence?.trim() || null,
-  } as any
+  } as Doc
 
   const lockAccounts: number[] = [input.account]
   if (input.role === 'council.substitute') {
@@ -71,7 +72,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
         throw fail.notFound('Principal appointment not found.')
       })
     row.substituteFor = principal.id
-    const principalAccount = (principal.account as any)?.id ?? principal.account
+    const principalAccount = (principal.account as Doc)?.id ?? principal.account
     if (Number.isInteger(principalAccount)) lockAccounts.push(principalAccount)
   } else {
     row.councilSeat = councilSeatFor(input.role, { scopeId, councilSeat: null })
@@ -97,7 +98,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
           .catch(() => {
             throw fail.notFound('Principal appointment not found.')
           })
-        if (!recordCurrent(principal as any) || (principal as any).role === 'council.substitute')
+        if (!recordCurrent(principal) || principal.role === 'council.substitute')
           throw fail.conflict(
             'invalid_principal',
             'The principal record is not a current seat holder.',
@@ -122,7 +123,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
         )
       const created = await req.payload.create({
         collection: 'authority-records',
-        data: row,
+        data: row as DocData,
         overrideAccess: true,
         req,
       })
@@ -132,7 +133,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
         targetId: String(created.id),
         reason: `${input.role} on ${scopeType}:${scopeId}`,
         after: { account: input.account, endsAt: row.endsAt },
-      } as any)
+      } as Doc)
       return created
     })
   } catch (error: any) {
@@ -162,7 +163,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
 export async function revokeAuthorityInTx(
   req: PayloadRequest,
   recordId: number,
-  actor: any,
+  actor: AccountLike,
   reason: string,
 ) {
   const fresh = await req.payload.findByID({
@@ -171,7 +172,7 @@ export async function revokeAuthorityInTx(
     overrideAccess: true,
     req,
   })
-  if ((fresh as any).status !== 'active')
+  if ((fresh as Doc).status !== 'active')
     throw fail.conflict('invalid_phase', 'This record is no longer active.')
   const updated = await req.payload.update({
     collection: 'authority-records',
@@ -185,14 +186,14 @@ export async function revokeAuthorityInTx(
     targetType: 'authority_record',
     targetId: String(recordId),
     reason: reason.trim().slice(0, 500),
-  } as any)
+  } as Doc)
   return updated
 }
 
 export async function revokeAuthority(
   req: PayloadRequest,
   recordId: number,
-  actor: any,
+  actor: AccountLike,
   reason: string,
 ) {
   if (!reason || reason.trim().length < 8)
@@ -202,13 +203,13 @@ export async function revokeAuthority(
     .catch(() => {
       throw fail.notFound('Authority record not found.')
     })
-  if ((row as any).status !== 'active')
+  if ((row as Doc).status !== 'active')
     throw fail.conflict('invalid_phase', 'This record is no longer active.')
   // Serialise with every other authority write on this account before
   // re-checking: two concurrent revocations (or a revoke racing a
   // re-grant) must not both succeed.
   const lockAccount =
-    typeof (row as any).account === 'object' ? (row as any).account.id : (row as any).account
+    typeof (row as Doc).account === 'object' ? (row as Doc).account.id : (row as Doc).account
   return withAuthorityLock(req, lockAccount, () =>
     revokeAuthorityInTx(req, recordId, actor, reason),
   )
