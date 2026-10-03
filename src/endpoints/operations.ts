@@ -9,13 +9,16 @@ import { getAccessProfile } from '../lib/access'
 // file and track their own records; the responsible teams review through
 // scoped endpoints. Generated REST writes stay staff-only throughout.
 
-// Review authority: an admin, or a member holding one of the named team
-// scopes (e.g. 'finance_team', 'safeguarding_team').
-async function requireOpsTeam(req: PayloadRequest, teams: string[]) {
+// Review authority: a member holding one of the named team appointments
+// (e.g. 'finance_team', 'safeguarding_team'). The admin role carries no
+// team authority — technical administration is not constituency authority.
+// Review authority by capability: the shared registry decides which
+// appointments carry each review right (e.g. only gct.finance — not every
+// GCT member — holds finance.review).
+async function requireOpsCapability(req: PayloadRequest, capabilities: string[]) {
   const account = requireVerifiedMember(req)
-  if (account.role === 'admin') return { account }
   const access = await getAccessProfile(req, account)
-  if (!teams.some((t) => access.teamRoles.includes(t)))
+  if (!capabilities.some((c) => access.capabilities.includes(c)))
     throw fail.forbidden('This workspace is not assigned to your account.')
   return { account }
 }
@@ -196,7 +199,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/funding',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['finance_team', 'gct'])
+      await requireOpsCapability(req, ['finance.review'])
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'funding-requests',
@@ -212,7 +215,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/funding/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['finance_team', 'gct'])
+      const { account: staff } = await requireOpsCapability(req, ['finance.review'])
       const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const next = String(b.status || '')
@@ -247,7 +250,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/funding/:id/disburse',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['finance_team'])
+      const { account: staff } = await requireOpsCapability(req, ['finance.review'])
       const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
       if (f.status !== 'approved')
         throw fail.conflict('invalid_phase', 'Only an approved request can be disbursed.')
@@ -333,7 +336,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/safeguarding',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['safeguarding_team', 'awareness_team'])
+      await requireOpsCapability(req, ['safeguarding.case', 'awareness.case'])
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'safeguarding-cases',
@@ -365,7 +368,10 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/safeguarding/:id/update',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['safeguarding_team', 'awareness_team'])
+      const { account: staff } = await requireOpsCapability(req, [
+        'safeguarding.case',
+        'awareness.case',
+      ])
       const c = await loadDoc(req, 'safeguarding-cases', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const next = String(b.status || '')
@@ -459,7 +465,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/membership/coi',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['membership_team', 'safeguarding_team'])
+      await requireOpsCapability(req, ['membership.review', 'safeguarding.case'])
       const { docs } = await req.payload.find({
         collection: 'coi-declarations',
         where: { status: { in: ['declared', 'under_review'] } },
@@ -474,7 +480,10 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/membership/coi/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['membership_team', 'safeguarding_team'])
+      const { account: staff } = await requireOpsCapability(req, [
+        'membership.review',
+        'safeguarding.case',
+      ])
       const d = await loadDoc(req, 'coi-declarations', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       if (!['under_review', 'resolved', 'dismissed'].includes(b.status))
@@ -550,7 +559,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/recognition',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['comms_team', 'gct', 'membership_team'])
+      await requireOpsCapability(req, ['recognition.review'])
       const { docs } = await req.payload.find({
         collection: 'recognition-requests',
         where: { status: { in: ['requested', 'approved'] } },
@@ -565,7 +574,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/recognition/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['comms_team', 'gct', 'membership_team'])
+      const { account: staff } = await requireOpsCapability(req, ['recognition.review'])
       const r = await loadDoc(req, 'recognition-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {
@@ -633,7 +642,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/partnerships',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['partnerships_team', 'gct'])
+      await requireOpsCapability(req, ['partnership.review'])
       const { docs } = await req.payload.find({
         collection: 'partnership-requests',
         where: { status: { not_in: ['ended'] } },
@@ -648,7 +657,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/partnerships/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['partnerships_team', 'gct'])
+      const { account: staff } = await requireOpsCapability(req, ['partnership.review'])
       const p = await loadDoc(req, 'partnership-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {
@@ -742,7 +751,7 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/privacy',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireOpsTeam(req, ['data_controller', 'membership_team'])
+      await requireOpsCapability(req, ['privacy.manage', 'membership.review'])
       const { docs } = await req.payload.find({
         collection: 'privacy-requests',
         where: { status: { in: ['received', 'in_progress'] } },
@@ -757,7 +766,10 @@ export const operationEndpoints: Endpoint[] = [
     path: '/member/team/privacy/:id/respond',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireOpsTeam(req, ['data_controller', 'membership_team'])
+      const { account: staff } = await requireOpsCapability(req, [
+        'privacy.manage',
+        'membership.review',
+      ])
       const p = await loadDoc(req, 'privacy-requests', req.routeParams!.id as string)
       const b = (await req.json?.()) ?? ({} as any)
       const flow: Record<string, string[]> = {

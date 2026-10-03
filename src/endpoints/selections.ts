@@ -34,6 +34,13 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
   return docs[0] as any
 }
 
+// Recording a selection stage belongs to the Selections Team (S24) — the
+// `admin` account role grants no selection authority on its own.
+async function canAdminister(req: PayloadRequest, s: any, account: any) {
+  const creator = (s.createdBy as any)?.id ?? s.createdBy
+  return creator === account.id || (await isSelector(req, account))
+}
+
 const COLOUR_SCORES: Record<string, number> = {
   black: -500,
   red: -100,
@@ -156,9 +163,8 @@ export const selectionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const s = await loadSelection(req, req.routeParams!.id as string)
-      const creator = (s.createdBy as any)?.id ?? s.createdBy
-      if (account.role !== 'admin' && creator !== account.id)
-        throw fail.forbidden('Only the creator may open applications.')
+      if (!(await canAdminister(req, s, account)))
+        throw fail.forbidden('The Selections Team may open applications.')
       if (s.status !== 'committee_forming') throw fail.conflict('invalid_phase', 'Already opened.')
       // S24 §2.2.1: committee needs a minimum of 3 members.
       const { totalDocs: committeeCount } = await req.payload.find({
@@ -264,9 +270,8 @@ export const selectionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const s = await loadSelection(req, req.routeParams!.id as string)
-      const creator = (s.createdBy as any)?.id ?? s.createdBy
-      if (account.role !== 'admin' && creator !== account.id)
-        throw fail.forbidden('Only the creator may close applications.')
+      if (!(await canAdminister(req, s, account)))
+        throw fail.forbidden('The Selections Team may close applications.')
       if (s.status !== 'open')
         throw fail.conflict('invalid_phase', `Cannot close while status is ${s.status}.`)
       const updated = await req.payload.update({
@@ -362,9 +367,8 @@ export const selectionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const s = await loadSelection(req, req.routeParams!.id as string)
-      const creator = (s.createdBy as any)?.id ?? s.createdBy
-      if (account.role !== 'admin' && creator !== account.id)
-        throw fail.forbidden('Only the creator may record the final decision.')
+      if (!(await canAdminister(req, s, account)))
+        throw fail.forbidden('The Selections Team may record the final decision.')
       if (s.status !== 'evaluating')
         throw fail.conflict('invalid_phase', 'Evaluations must finish before deciding.')
       const b = (await req.json?.()) ?? ({} as any)
@@ -413,9 +417,8 @@ export const selectionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       const s = await loadSelection(req, req.routeParams!.id as string)
-      const creator = (s.createdBy as any)?.id ?? s.createdBy
-      if (account.role !== 'admin' && creator !== account.id)
-        throw fail.forbidden('Only the creator may announce the outcome.')
+      if (!(await canAdminister(req, s, account)))
+        throw fail.forbidden('The Selections Team may announce the outcome.')
       if (s.status !== 'decided') throw fail.conflict('invalid_phase', 'Record the decision first.')
       const { docs: apps } = await req.payload.find({
         collection: 'selection-applications',

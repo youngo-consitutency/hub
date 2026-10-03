@@ -10,7 +10,7 @@ import { audit } from '../lib/audit'
 
 const canReview = async (req: PayloadRequest, account: any) => {
   const access = await getAccessProfile(req, account)
-  return account.role === 'admin' || hasCapability(access, 'content.review')
+  return hasCapability(access, 'content.review')
 }
 
 const submissionLimit = rateLimit({

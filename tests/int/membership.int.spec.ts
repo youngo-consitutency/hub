@@ -13,7 +13,7 @@ describe('membership lifecycle (S17)', () => {
       membershipTrack: 'constituency_work',
       wg: { slug: 'finance', role: 'contact' },
     })
-    staff = await session({ teams: ['membership_team'] })
+    staff = await session({ membershipTrack: 'constituency_work', teams: ['membership_team'] })
     member = await session({})
   })
 
@@ -24,9 +24,13 @@ describe('membership lifecycle (S17)', () => {
     expect(state.status).toBe(200)
     const body = await state.json()
     expect(body.constituencyWorkStatus).toBe('active')
-    expect(body.assignments.some((a: any) => a.scopeId === 'finance' && a.role === 'contact')).toBe(
-      true,
-    )
+    // A WG Contact Point is a mandate: it reports through `appointments`,
+    // not the participation ledger.
+    expect(
+      body.appointments.some(
+        (a: any) => a.appointmentRole === 'wg.contact_point' && a.scopeId === 'finance',
+      ),
+    ).toBe(true)
 
     const renew = await api('/member/membership/renew', {
       method: 'POST',
