@@ -205,16 +205,12 @@ export function createMcpHttpServer({ env = process.env } = {}) {
       await server.connect(transport)
       await transport.handleRequest(req, res, body)
     } catch (error) {
+      console.error('mcp: request handling failed', error)
       if (!res.headersSent) {
         sendJson(
           res,
           500,
-          {
-            error: {
-              code: 'server_error',
-              message: String(error.message || error),
-            },
-          },
+          { error: { code: 'server_error', message: 'Internal server error' } },
           corsHeaders(req),
         )
       }
