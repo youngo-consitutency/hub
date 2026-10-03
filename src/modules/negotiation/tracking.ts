@@ -4,13 +4,13 @@ import { getPgPool } from '../../lib/pg'
 
 const MAX_PAGE_SIZE = 50
 
-export function pagination(query: Record<string, any> = {}) {
+function pagination(query: Record<string, any> = {}) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1)
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(query.pageSize, 10) || 20))
   return { page, pageSize, offset: (page - 1) * pageSize }
 }
 
-export function normalizeFollowPreferences(input: any = {}) {
+function normalizeFollowPreferences(input: any = {}) {
   const digestFrequency = ['none', 'daily', 'weekly'].includes(input.digestFrequency)
     ? input.digestFrequency
     : 'weekly'
@@ -288,25 +288,6 @@ export async function putFollow({
     substantiveChangeAlerts: rows[0].substantive_change_alerts,
     digestFrequency: rows[0].digest_frequency,
   }
-}
-
-export async function getFollow(accountId: number, slug: string) {
-  const pool = getPgPool()
-  if (!pool) return null
-  const { rows } = await pool.query(
-    `SELECT f.deadline_alerts,f.substantive_change_alerts,f.digest_frequency
-     FROM negotiation_follows f JOIN negotiation_tracks t ON t.id=f.track_id
-     WHERE f.account_id=$1 AND t.slug=$2`,
-    [accountId, slug],
-  )
-  const row = rows[0]
-  return row
-    ? {
-        deadlineAlerts: row.deadline_alerts,
-        substantiveChangeAlerts: row.substantive_change_alerts,
-        digestFrequency: row.digest_frequency,
-      }
-    : null
 }
 
 export async function deleteFollow({ accountId, slug }: { accountId: number; slug: string }) {

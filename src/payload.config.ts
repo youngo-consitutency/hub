@@ -11,8 +11,7 @@ import { emailConfigured, getEmailTransport } from './lib/email'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Accounts } from './collections/Accounts'
-import { Appointments } from './collections/Appointments'
-import { Assignments } from './collections/Assignments'
+import { AuthorityRecords } from './collections/AuthorityRecords'
 import { WorkingGroups } from './collections/WorkingGroups'
 import { Events } from './collections/Events'
 import { Announcements } from './collections/Announcements'
@@ -90,8 +89,7 @@ export default buildConfig({
     Users,
     Media,
     Accounts,
-    Appointments,
-    Assignments,
+    AuthorityRecords,
     MemberProfiles,
     WorkingGroups,
     WgProgress,

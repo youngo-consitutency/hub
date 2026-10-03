@@ -1,7 +1,7 @@
 {
   "name": "youngo-hub",
   "version": "1.0.0",
-  "description": "YOUNGO Hub \u2014 member platform and mission control (Next.js + Payload CMS)",
+  "description": "YOUNGO Hub — member platform and mission control (Next.js + Payload CMS)",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -56,6 +56,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@sentry/core": "11.1.0",
     "@types/node": "26.6.3",
     "@types/nodemailer": "^8.0.2",
     "@types/papaparse": "^5.5.2",

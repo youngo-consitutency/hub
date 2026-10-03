@@ -2,8 +2,8 @@ import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
 
-// Admin account surface: sortable account lists, team assignments and the
-// organisation-owner seat guarantee.
+// Admin account surface: sortable account lists, team authority records and
+// the organisation-owner seat guarantee.
 
 // Ports of server/lib/lifecycle.js queryAccountsForAdmin/listAccountsForAdmin
 // and server/lib/access.js setTeamAssignment / ensureOwnerSeat.
@@ -17,7 +17,7 @@ const ACCOUNT_SORTS: Record<string, string> = {
 
 const ADMIN_COLUMNS = `id, email, name, first_name, last_name, entity_type,
   organization_name, organization_type, is_unfccc_admitted, member_status, role,
-  team_roles, region, country, nationality, wg_interests, course_passed_at,
+  (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles, region, country, nationality, wg_interests, course_passed_at,
   course_score, verified_at, membership_track, constituency_work_status,
   hub_access_status, membership_status, onboarding_cohort, renewal_due_at,
   membership_ended_at, membership_end_reason, created_at, last_login_at, phone,

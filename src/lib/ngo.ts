@@ -16,10 +16,7 @@ export type OrgContext = {
   canManageSeats: boolean
 }
 
-export async function resolveOrgContext(
-  req: PayloadRequest,
-  account: any,
-): Promise<OrgContext | null> {
+async function resolveOrgContext(req: PayloadRequest, account: any): Promise<OrgContext | null> {
   const requestedOrgId = (req.query?.orgId as string) || (req.body as any)?.orgId || null
   if (account.role === 'admin') {
     if (!requestedOrgId) return null

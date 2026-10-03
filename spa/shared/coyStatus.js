@@ -8,11 +8,6 @@ function endOfUtcDay(isoDate) {
   return Number.isFinite(time) ? time : null
 }
 
-/** Application / registration deadline, if the conference recorded one. */
-export function coyApplicationsCloseAt(coy) {
-  return coy?.applicationsCloseAt || null
-}
-
 /**
  * Display status for a COY. Stored `applications_open` becomes
  * `applications_closed` after `applicationsCloseAt`, and a past `endsOn`

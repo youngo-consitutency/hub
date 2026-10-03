@@ -9,12 +9,12 @@ import { getAccessProfile } from '../lib/access'
 // file and track their own records; the responsible teams review through
 // scoped endpoints. Generated REST writes stay staff-only throughout.
 
-// Review authority: a member holding one of the named team appointments
+// Review authority: a member holding one of the named team roles
 // (e.g. 'finance_team', 'safeguarding_team'). The admin role carries no
 // team authority — technical administration is not constituency authority.
 // Review authority by capability: the shared registry decides which
-// appointments carry each review right (e.g. only gct.finance — not every
-// GCT member — holds finance.review).
+// authority records carry each review right (e.g. only gct.finance — not
+// every GCT member — holds finance.review).
 async function requireOpsCapability(req: PayloadRequest, capabilities: string[]) {
   const account = requireVerifiedMember(req)
   const access = await getAccessProfile(req, account)

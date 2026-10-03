@@ -1,7 +1,6 @@
 // Path-based routing via wouter — the listener/store machinery lives in the
 // library; this module adds the app's scroll-after-navigate behaviour and the
 // existing call-site API.
-import { useCallback } from 'react'
 import { useLocation } from 'wouter'
 import { navigate as wouterNavigate } from 'wouter/use-browser-location'
 
@@ -33,8 +32,4 @@ export function usePath() {
   // wouter's location includes the search; the previous router exposed only
   // the pathname, and the route table matches on it.
   return useLocation()[0].split(/[?#]/)[0]
-}
-
-export function useNavigate() {
-  return useCallback((to, options) => navigate(to, options), [])
 }

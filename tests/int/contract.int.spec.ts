@@ -50,9 +50,7 @@ describe('API contract (requires dev server on :3000)', () => {
     })
     publisher = await session({
       membershipTrack: 'constituency_work',
-      appointments: [
-        { role: 'content.publisher', scopeType: 'team', scopeId: 'content_publisher' },
-      ],
+      records: [{ role: 'content.publisher', scopeType: 'team', scopeId: 'content_publisher' }],
     })
   })
 

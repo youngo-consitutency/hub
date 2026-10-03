@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-GB
+reviews:
+  # Approve automatically once every thread is resolved and checks pass —
+  # keeps the bot's verdict in step with the human review the ruleset
+  # still requires.
+  request_changes_workflow: true
+  path_instructions:
+    - path: src/db/migrations/**
+      instructions: >-
+        Migrations carry schema only — no member data, credentials, emails or
+        literal row values may appear in them. Every destructive or renaming
+        statement needs a matching down() that restores names so up() can
+        re-run. Data transforms must be self-contained INSERT...SELECT,
+        idempotent via ON CONFLICT / IF EXISTS, and must not assume row
+        contents. The authority_records backfill is the reference pattern.
+    - path: '{src/lib/authority.ts,src/lib/access.ts,src/lib/authorityService.ts,src/lib/authorityLock.ts,src/collections/AuthorityRecords.ts}'
+      instructions: >-
+        authority_records is the single source of truth for roles and
+        mandates — never suggest reintroducing appointments, assignments or
+        accounts.team_roles. Unmapped roles must resolve to nothing, never
+        widen. Writers serialise on the AUTHORITY_LOCK_NS advisory lock in
+        ascending account-id order; flag any new check→write path that skips
+        it or takes locks in a different order.
+    - path: src/endpoints/**
+      instructions: >-
+        Endpoints authorise via src/lib/access.ts profiles and
+        src/lib/accounts.ts guards — review capability scoping, audit entries
+        on state transitions, and that no raw account or guardian/PII fields
+        leak into response views.
+    - path: spa/**
+      instructions: >-
+        Member-facing copy uses British English. No AI-generated imagery.
+        Client-side helpers may shape presentation only — authority is always
+        derived server-side.
+    - path: mcp-content/**
+      instructions: >-
+        This service must never receive DATABASE_URL or database
+        credentials — it calls the Hub HTTP API with a Hub account only, and
+        stays a separate process from the web app.
+    - path: .github/workflows/**
+      instructions: >-
+        Check permissions are scoped, secrets are never echoed, and
+        third-party actions stay SHA-pinned.
+  tools:
+    eslint:
+      enabled: true
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    gitleaks:
+      enabled: true
+    hadolint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    oxc:
+      enabled: true
+    htmlhint:
+      enabled: true
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - '**/AGENTS.md'
+      - CONTRIBUTING.md
+      - SECURITY.md
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
+  # CodeRabbit acts as an MCP client — servers connected in the dashboard
+  # (Context7, GitHub Copilot, DeepWiki, Sentry, …) feed reviews here.
+  mcp:
+    usage: enabled
+chat:
+  auto_reply: true

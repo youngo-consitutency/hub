@@ -1,14 +1,13 @@
 /**
  * Shared account-provisioning primitive for the demo-accounts script and
  * the integration-test fixture helpers. Applies a declarative account spec
- * to the database (account row + participation/mandate rows). Contains no
+ * to the database (account row + authority records). Contains no
  * identities or credentials — callers supply those.
  *
- * Mandated responsibilities are written to `appointments`; participation
- * ('member' rows) stays in `assignments`, matching the runtime split in
- * src/lib/appointments.ts.
+ * Every scope/role tuple lands in `authority-records`, matching the
+ * runtime model in src/lib/authority.ts.
  */
-import { legacyAppointmentRole, normaliseScopeType } from '../../src/lib/appointments'
+import { recordKind, resolveLegacyRole, normaliseScopeType } from '../../src/lib/authority'
 
 export interface AccountSpec {
   email: string
@@ -25,8 +24,8 @@ export interface AccountSpec {
   wg?: { slug: string; role: string }
   /** Operational body scope (platform bodies). */
   body?: { slug: string; role: string }
-  /** Explicit appointment grants (canonical appointmentRole values). */
-  appointments?: { role: string; scopeType?: string; scopeId?: string }[]
+  /** Explicit mandate grants (canonical registry role values). */
+  records?: { role: string; scopeType?: string; scopeId?: string; kind?: string }[]
   /** Required by the accounts collection; callers may override. */
   country?: string
 }
@@ -57,7 +56,6 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     constituencyWorkStatus:
       track === 'constituency_work' ? (verified ? 'active' : 'pending_onboarding') : null,
     role: spec.role ?? 'member',
-    teamRoles: spec.teams ?? [],
     policiesAccepted: true,
     membershipPolicyVersion: 'current',
     privacyConsent: true,
@@ -76,100 +74,53 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
       })
     : await payload.create({ collection: 'accounts', data, overrideAccess: true })
 
-  const upsertAssignment = async (scopeType: string, scopeId: string, role: string) => {
-    const existing = await payload.find({
-      collection: 'assignments',
-      where: {
-        and: [
-          { account: { equals: account.id } },
-          { scopeType: { equals: scopeType } },
-          { scopeId: { equals: scopeId } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    const row = {
-      account: account.id,
-      scopeType,
-      scopeId,
-      role,
-      status: 'active',
-      startsAt: NOW(),
-      assignedBy: account.id,
-    }
-    if (existing.docs[0]) {
-      return payload.update({
-        collection: 'assignments',
-        id: existing.docs[0].id,
-        data: row,
-        overrideAccess: true,
-      })
-    }
-    return payload.create({
-      collection: 'assignments',
-      data: row,
-      overrideAccess: true,
-    })
-  }
-
-  const upsertAppointment = async (role: string, scopeType: string, scopeId: string) => {
-    const existing = await payload.find({
-      collection: 'appointments',
-      where: {
-        and: [
-          { account: { equals: account.id } },
-          { appointmentRole: { equals: role } },
-          { scopeType: { equals: scopeType } },
-          { scopeId: { equals: scopeId } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    const row = {
-      account: account.id,
-      appointmentRole: role,
-      scopeType,
-      scopeId,
-      status: 'active',
-      startsAt: NOW(),
-      appointedBy: account.id,
-    }
-    if (existing.docs[0]) {
-      return payload.update({
-        collection: 'appointments',
-        id: existing.docs[0].id,
-        data: row,
-        overrideAccess: true,
-      })
-    }
-    return payload.create({
-      collection: 'appointments',
-      data: row,
-      overrideAccess: true,
-    })
-  }
-
-  // Route a (scopeType, scopeId, role) tuple to the right store, exactly as
-  // the platform assign() flow does: mandates → appointments, participation
-  // → assignments. Unknown tuples are an error, never silently widened.
-  const recordScope = async (scopeType: string, scopeId: string, role: string) => {
-    const appointmentRole = legacyAppointmentRole(scopeType, scopeId, role)
-    if (!appointmentRole) throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
+  // One upsert into the single authority store: the tuple resolves to its
+  // canonical registry role and `kind` marks mandate vs participation.
+  // Unknown tuples are an error, never silently widened.
+  const upsertRecord = async (role: string, scopeType: string, scopeId: string, kind?: string) => {
     const canonical = normaliseScopeType(scopeType)
-    const participation =
-      role === 'member' && ['body', 'working_group', 'organisation'].includes(canonical)
-    if (participation) {
-      // The ledger stores its own enum spelling ('organization').
-      return upsertAssignment(
-        canonical === 'organisation' ? 'organization' : scopeType,
-        scopeId,
-        role,
-      )
+    const existing = await payload.find({
+      collection: 'authority-records',
+      where: {
+        and: [
+          { account: { equals: account.id } },
+          { role: { equals: role } },
+          { scopeType: { equals: canonical } },
+          { scopeId: { equals: scopeId } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    const row = {
+      account: account.id,
+      kind: kind ?? recordKind(canonical, role),
+      role,
+      scopeType: canonical,
+      scopeId,
+      status: 'active',
+      startsAt: NOW(),
+      recordedBy: account.id,
     }
-    // Appointments store the canonical scope spelling ('organisation').
-    return upsertAppointment(appointmentRole, normaliseScopeType(scopeType), scopeId)
+    if (existing.docs[0]) {
+      return payload.update({
+        collection: 'authority-records',
+        id: existing.docs[0].id,
+        data: row,
+        overrideAccess: true,
+      })
+    }
+    return payload.create({
+      collection: 'authority-records',
+      data: row,
+      overrideAccess: true,
+    })
+  }
+
+  const recordScope = async (scopeType: string, scopeId: string, role: string) => {
+    const resolved = resolveLegacyRole(scopeType, scopeId, role)
+    if (!resolved) throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
+    return upsertRecord(resolved, scopeType, scopeId, recordKind(scopeType, role))
   }
 
   for (const team of spec.teams ?? []) {
@@ -178,12 +129,8 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
   if (spec.body) {
     await recordScope('body', spec.body.slug, spec.body.role)
   }
-  for (const a of spec.appointments ?? []) {
-    await upsertAppointment(
-      a.role,
-      normaliseScopeType(a.scopeType ?? 'platform'),
-      a.scopeId ?? 'platform',
-    )
+  for (const a of spec.records ?? []) {
+    await upsertRecord(a.role, a.scopeType ?? 'platform', a.scopeId ?? 'platform', a.kind)
   }
   if (spec.wg) {
     await recordScope('working_group', spec.wg.slug, spec.wg.role)

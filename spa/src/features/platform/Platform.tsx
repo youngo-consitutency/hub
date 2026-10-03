@@ -81,10 +81,10 @@ export function Platform({ initialTab = 'bodies', slug }: { initialTab?: Tab; sl
 
 function Workspace({ tab }: { tab: Tab }) {
   const { teamLabels, assignmentLabels } = useContentOptionLabels()
-  const [assignmentBody, setAssignmentBody] = useState('')
+  const [recordBody, setRecordBody] = useState('')
   const [attentionOpen, setAttentionOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
-  const [assignmentOpen, setAssignmentOpen] = useState(false)
+  const [recordOpen, setRecordOpen] = useState(false)
 
   const { data, error, loading, reload } = usePlatform<Overview>('/overview')
   const [message, setMessage] = useState(''),
@@ -105,7 +105,7 @@ function Workspace({ tab }: { tab: Tab }) {
     setTask(null)
     setEnquiry(null)
     setEditorOpen(false)
-    setAssignmentOpen(false)
+    setRecordOpen(false)
   }
   async function run(action: () => Promise<unknown>, form?: HTMLFormElement) {
     setBusy(true)
@@ -173,7 +173,7 @@ function Workspace({ tab }: { tab: Tab }) {
       </PageHeader>
       {loading && !data && <Skeletons n={4} />}
       {error && <ErrorCard message={error} onRetry={reload} />}
-      <Feedback error={editorOpen || assignmentOpen ? '' : failure} message={message} />
+      <Feedback error={editorOpen || recordOpen ? '' : failure} message={message} />
       {data && (
         <>
           {tab === 'work' && data.notices.length > 0 && (
@@ -243,7 +243,7 @@ function Workspace({ tab }: { tab: Tab }) {
                   <Empty
                     icon={BodiesIcon}
                     title="No bodies recorded yet"
-                    body="A platform administrator can add a verified working group, team or Council and record its current assignments below."
+                    body="A platform administrator can add a verified working group, team or Council and record its current authority records below."
                   />
                 )}
                 <div className="cardGrid">
@@ -384,13 +384,13 @@ function Workspace({ tab }: { tab: Tab }) {
                 </SidePanel>
               )}
               <section className="stack">
-                <h2>Assignments and mandates</h2>
+                <h2>Authority records</h2>
                 <p className="meta">
-                  Assignments have a scope, term and appointment evidence. A coordination role does
+                  Authority records carry a role, scope, term and evidence. A coordination role does
                   not itself authorise a policy decision.
                 </p>
                 <div className="cardGrid">
-                  {data.assignments.map((a) => (
+                  {data.records.map((a) => (
                     <article className="card entityCard" key={a.id}>
                       <h3>
                         {a.name} · {assignmentLabels[a.role] || a.role}
@@ -410,7 +410,7 @@ function Workspace({ tab }: { tab: Tab }) {
                           <summary>End this assignment</summary>
                           <form
                             className="platformForm"
-                            onSubmit={submit((input) => post(`/assignments/${a.id}/revoke`, input))}
+                            onSubmit={submit((input) => post(`/records/${a.id}/revoke`, input))}
                           >
                             <Field label="Reason for ending assignment" name="reason" required />
                             <button disabled={busy} className="btn btn-secondary">
@@ -429,17 +429,17 @@ function Workspace({ tab }: { tab: Tab }) {
                     className="btn btn-secondary"
                     onClick={() => {
                       setFailure('')
-                      setAssignmentOpen(true)
+                      setRecordOpen(true)
                     }}
                   >
                     <Plus size={17} aria-hidden /> Record an assignment
                   </button>
-                  {assignmentOpen && (
+                  {recordOpen && (
                     <SidePanel title="Record an assignment" onClose={closeEditor}>
                       <Feedback error={failure} message="" />
                       <form
                         className="platformForm"
-                        onSubmit={submit((input) => post('/assignments', input))}
+                        onSubmit={submit((input) => post('/records', input))}
                       >
                         <Select label="Person" name="accountId">
                           {data.people
@@ -470,8 +470,8 @@ function Workspace({ tab }: { tab: Tab }) {
                             <select
                               className="input"
                               name="scopeId"
-                              value={assignmentBody || data.bodies[0]?.id || ''}
-                              onChange={(e) => setAssignmentBody(e.target.value)}
+                              value={recordBody || data.bodies[0]?.id || ''}
+                              onChange={(e) => setRecordBody(e.target.value)}
                             >
                               {data.bodies.map((b) => (
                                 <option value={b.id} key={b.id}>
@@ -501,16 +501,11 @@ function Workspace({ tab }: { tab: Tab }) {
                             required
                           />
                         )}
-                        <Select
-                          label="Responsibility"
-                          name="role"
-                          key={`${scope}-${assignmentBody}`}
-                        >
+                        <Select label="Responsibility" name="role" key={`${scope}-${recordBody}`}>
                           {(scope === 'body'
                             ? bodyRoles(
-                                data.bodies.find(
-                                  (b) => b.id === (assignmentBody || data.bodies[0]?.id),
-                                )?.kind,
+                                data.bodies.find((b) => b.id === (recordBody || data.bodies[0]?.id))
+                                  ?.kind,
                               )
                             : scope === 'team'
                               ? ['member']
@@ -692,7 +687,7 @@ function Workspace({ tab }: { tab: Tab }) {
             <>
               <section className="stack">
                 <p className="meta">
-                  Only processes belonging to your current body assignments are shown. Adopted
+                  Only processes belonging to your current body memberships are shown. Adopted
                   decisions can be reviewed for publication.
                 </p>
                 {!data.decisions.length && (

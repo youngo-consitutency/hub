@@ -250,10 +250,10 @@ export async function listAccessibleProjects({
      JOIN negotiation_tracks t ON t.id=p.track_id
      LEFT JOIN negotiation_submission_project_members m
        ON m.project_id=p.id AND m.account_id=$1
-     LEFT JOIN assignments a
+     LEFT JOIN authority_records a
        ON a.account_id=$1 AND a.scope_type='negotiation_project'
        AND a.scope_id=p.id::text AND a.status='active'
-       AND (a.ends_at IS NULL OR a.ends_at>now())
+       AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())
      WHERE m.account_id IS NOT NULL OR a.id IS NOT NULL
      ORDER BY p.updated_at DESC`,
     [account.id],
@@ -288,10 +288,10 @@ export async function getAccessibleProject({
      WHERE p.id=$2 AND (
        EXISTS (SELECT 1 FROM negotiation_submission_project_members m
          WHERE m.project_id=p.id AND m.account_id=$1)
-       OR EXISTS (SELECT 1 FROM assignments a
+       OR EXISTS (SELECT 1 FROM authority_records a
          WHERE a.account_id=$1 AND a.scope_type='negotiation_project'
            AND a.scope_id=p.id::text AND a.status='active'
-           AND (a.ends_at IS NULL OR a.ends_at>now()))
+           AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now()))
      )`,
     [account.id, projectId],
   )

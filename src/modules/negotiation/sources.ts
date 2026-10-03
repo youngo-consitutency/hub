@@ -1,25 +1,9 @@
-// Extraction review + SSRF-guarded source fetch — ported from
-// server/lib/negotiationSources.js (review/assessment surface; the recurring
-// ingestion worker is out of scope for the rewrite).
+// Extraction review — assesses reviewed extraction text for sensitive
+// markers and records the review transactionally with an audit entry.
 import { createHash } from 'node:crypto'
-import { lookup as dnsLookup } from 'node:dns/promises'
-import { isIP } from 'node:net'
 import { type Pool } from 'pg'
 import { getPgPool } from '../../lib/pg'
 import { getAccessProfile, hasCapability } from '../../lib/access'
-
-export const SOURCE_LIMITS = Object.freeze({
-  maxBytes: 10 * 1024 * 1024,
-  maxRedirects: 4,
-  timeoutMs: 15_000,
-})
-
-const SAFE_MEDIA_TYPES = new Set([
-  'application/pdf',
-  'text/html',
-  'text/plain',
-  'application/xhtml+xml',
-])
 
 export class SourceIngestionError extends Error {
   code: string
@@ -28,164 +12,6 @@ export class SourceIngestionError extends Error {
     this.name = 'SourceIngestionError'
     this.code = code
   }
-}
-
-function privateIpv4(address: string) {
-  const [a, b, c] = address.split('.').map(Number)
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 192 && b === 0 && [0, 2].includes(c)) ||
-    (a === 198 && (b === 18 || b === 19)) ||
-    (a === 198 && b === 51 && c === 100) ||
-    (a === 203 && b === 0 && c === 113) ||
-    a >= 224
-  )
-}
-
-export function isPrivateNetworkAddress(address: string) {
-  const normalized = String(address || '')
-    .toLocaleLowerCase()
-    .split('%')[0]
-  const family = isIP(normalized)
-  if (family === 4) return privateIpv4(normalized)
-  if (family !== 6) return true
-  if (normalized === '::' || normalized === '::1') return true
-  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
-  if (/^fe[89ab]/.test(normalized)) return true
-  if (normalized.startsWith('ff') || normalized.startsWith('2001:db8:')) return true
-  const mapped = normalized.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)
-  if (mapped) return privateIpv4(mapped[1])
-  const mappedHex = normalized.match(/^::ffff:([a-f0-9]{1,4}):([a-f0-9]{1,4})$/)
-  if (mappedHex) {
-    const high = Number.parseInt(mappedHex[1], 16)
-    const low = Number.parseInt(mappedHex[2], 16)
-    return privateIpv4(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`)
-  }
-  return false
-}
-
-export async function validateSourceUrl(
-  value: string | URL,
-  { resolve = (hostname: string) => dnsLookup(hostname, { all: true }) } = {},
-) {
-  let url: URL
-  try {
-    url = new URL(value)
-  } catch {
-    throw new SourceIngestionError('invalid_url', 'Source URL is invalid.')
-  }
-  if (!['http:', 'https:'].includes(url.protocol))
-    throw new SourceIngestionError('invalid_protocol', 'Source URL must use HTTP or HTTPS.')
-  if (url.username || url.password)
-    throw new SourceIngestionError(
-      'embedded_credentials',
-      'Source URLs cannot contain credentials.',
-    )
-  const records = await resolve(url.hostname)
-  const addresses = (Array.isArray(records) ? records : [records]).map((record: any) =>
-    typeof record === 'string' ? record : record.address,
-  )
-  if (!addresses.length || addresses.some(isPrivateNetworkAddress))
-    throw new SourceIngestionError(
-      'private_network',
-      'Source destination is not publicly routable.',
-    )
-  return url
-}
-
-function mediaType(response: Response) {
-  return String(response.headers.get('content-type') || '')
-    .split(';')[0]
-    .trim()
-    .toLocaleLowerCase()
-}
-
-async function readBoundedBody(response: Response, maxBytes: number) {
-  const declared = Number(response.headers.get('content-length'))
-  if (Number.isFinite(declared) && declared > maxBytes)
-    throw new SourceIngestionError('source_too_large', 'Source exceeds size limit.')
-  if (!response.body) throw new SourceIngestionError('empty_response', 'Source returned no body.')
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-  let size = 0
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    size += value.byteLength
-    if (size > maxBytes) {
-      await reader.cancel()
-      throw new SourceIngestionError('source_too_large', 'Source exceeds size limit.')
-    }
-    chunks.push(value)
-  }
-  return Buffer.concat(
-    chunks.map((chunk) => Buffer.from(chunk)),
-    size,
-  )
-}
-
-export async function fetchPermittedSource({
-  sourceUrl,
-  allowedRedirectHosts = [],
-  fetchImpl = fetch,
-  resolve,
-  limits = SOURCE_LIMITS,
-}: {
-  sourceUrl: string
-  allowedRedirectHosts?: string[]
-  fetchImpl?: typeof fetch
-  resolve?: (hostname: string) => Promise<any>
-  limits?: typeof SOURCE_LIMITS
-}) {
-  const registered = await validateSourceUrl(sourceUrl, { resolve })
-  let current = registered
-  const allowedHosts = new Set([
-    registered.hostname.toLocaleLowerCase(),
-    ...allowedRedirectHosts.map((host) => String(host).toLocaleLowerCase()),
-  ])
-  for (let redirect = 0; redirect <= limits.maxRedirects; redirect += 1) {
-    const response = await fetchImpl(current, {
-      redirect: 'manual',
-      signal: AbortSignal.timeout(limits.timeoutMs),
-      headers: { 'user-agent': 'YOUNGO-Hub-Source-Monitor/1.0' },
-    })
-    if ([301, 302, 303, 307, 308].includes(response.status)) {
-      if (redirect === limits.maxRedirects)
-        throw new SourceIngestionError('too_many_redirects', 'Source exceeded redirect limit.')
-      const location = response.headers.get('location')
-      if (!location)
-        throw new SourceIngestionError('invalid_redirect', 'Source redirect has no destination.')
-      const next = await validateSourceUrl(new URL(location, current), {
-        resolve,
-      })
-      if (!allowedHosts.has(next.hostname.toLocaleLowerCase()))
-        throw new SourceIngestionError(
-          'redirect_host_denied',
-          'Source redirected to an unregistered host.',
-        )
-      current = next
-      continue
-    }
-    if (!response.ok)
-      throw new SourceIngestionError('upstream_failure', `Source returned HTTP ${response.status}.`)
-    const type = mediaType(response)
-    if (!SAFE_MEDIA_TYPES.has(type))
-      throw new SourceIngestionError('unsafe_media_type', 'Source media type is not permitted.')
-    const bytes = await readBoundedBody(response, limits.maxBytes)
-    return {
-      bytes,
-      mediaType: type,
-      finalSourceUrl: current.toString(),
-      contentHash: `sha256:${createHash('sha256').update(bytes).digest('hex')}`,
-    }
-  }
-  throw new SourceIngestionError('too_many_redirects', 'Source exceeded redirect limit.')
 }
 
 const EXTRACTION_MAX_CHARS = 1_000_000
@@ -198,7 +24,7 @@ const EXTRACTION_RISKS: [string, RegExp][] = [
   ['contact_phone', /(?:\+?\d[\d ()-]{7,}\d)/],
 ]
 
-export function assessExtractionText(value: any) {
+function assessExtractionText(value: any) {
   const text = String(value || '')
   if (!text.trim())
     throw new SourceIngestionError('invalid_extraction', 'Reviewed extraction text is required.')

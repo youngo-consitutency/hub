@@ -37,7 +37,6 @@ const ACCOUNT_FIELD_COLUMNS = new Set([
   'verified_at',
   'verified_by',
   'role',
-  'team_roles',
   'email_verified_at',
   'course_passed_at',
   'course_score',

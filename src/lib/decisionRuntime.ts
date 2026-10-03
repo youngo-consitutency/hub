@@ -1,7 +1,6 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { getAccessProfile } from './access'
-import { councilSeatFor, legacyAppointmentRole } from './appointments'
 import {
   computeWindows,
   consensusOutcome,
@@ -116,7 +115,7 @@ export async function isBodyMember(
       return (
         teamIds.has(String(proposal.bodyRef)) ||
         access.bodyScopes.includes(String(proposal.bodyRef)) ||
-        access.appointments.some(
+        access.records.some(
           (a) => a.scopeType === 'operational_team' && a.scopeId === String(proposal.bodyRef),
         )
       )
@@ -138,55 +137,76 @@ const currentRow = (now: string): any[] => [
 const accountIdOf = (row: any) =>
   (typeof row.account === 'object' ? row.account?.id : row.account) as number
 
-// The Council electorate (S13 §6): distinct accounts currently holding a
-// Council seat — organisation representatives, one seat per WG/OT, the two
-// Focal Points, and recorded substitutes — resolved through the same
-// appointment model as voting, so counting and validation agree.
-async function councilElectorate(req: PayloadRequest, now: string): Promise<Set<number>> {
-  const [appts, legacy, focalPoints] = await Promise.all([
-    req.payload.find({
-      collection: 'appointments',
-      where: { and: [...currentRow(now), { councilSeat: { exists: true } }] },
-      limit: 2000,
-      overrideAccess: true,
-    }),
-    req.payload.find({
-      collection: 'assignments',
-      where: { and: currentRow(now) },
-      limit: 2000,
-      overrideAccess: true,
-    }),
-    req.payload.find({
-      collection: 'accounts',
-      where: {
-        and: [
-          { role: { equals: 'focal_point' } },
-          { hubAccessStatus: { equals: 'active' } },
-          { membershipTrack: { equals: 'constituency_work' } },
-          { constituencyWorkStatus: { equals: 'active' } },
-        ],
-      },
-      limit: 10,
-      overrideAccess: true,
-    }),
-  ])
-  const accounts = new Set<number>()
-  for (const row of appts.docs as any[]) {
-    if (row.councilSeat) accounts.add(accountIdOf(row))
+// Accounts whose records still vote: every seat-carrying role requires
+// active Constituency Work membership, so a lapsed member's seat grants
+// no vote and is excluded from the electorate.
+async function eligibleAccounts(req: PayloadRequest, accountIds: Set<number>) {
+  if (!accountIds.size) return new Set<number>()
+  const { docs: accounts } = await req.payload.find({
+    collection: 'accounts',
+    where: {
+      and: [
+        { id: { in: [...accountIds] } },
+        { hubAccessStatus: { equals: 'active' } },
+        { membershipTrack: { equals: 'constituency_work' } },
+        { constituencyWorkStatus: { equals: 'active' } },
+        { membershipStatus: { in: ['active', 'renewal_due'] } },
+      ],
+    },
+    pagination: false,
+    overrideAccess: true,
+  })
+  return new Set<number>((accounts as any[]).map((a) => a.id))
+}
+
+// The Council electorate (S13 §6): distinct SEATS currently held, not
+// accounts — a substitute covers its principal's seat rather than adding
+// one, and seat holders whose CW membership lapsed do not vote. Focal
+// Point seats are personal (each of the two FPs votes), so they count
+// per holder while every other seat counts once.
+async function councilElectorate(req: PayloadRequest, now: string): Promise<number> {
+  const { docs } = await req.payload.find({
+    collection: 'authority-records',
+    where: { and: [...currentRow(now), { councilSeat: { exists: true } }] },
+    pagination: false,
+    overrideAccess: true,
+  })
+  const seats = new Map<string, Set<number>>() // seat -> holder account ids
+  const focalHolders = new Set<number>()
+  for (const row of docs) {
+    if (!row.councilSeat) continue
+    if (row.councilSeat === 'focal_point') {
+      focalHolders.add(accountIdOf(row))
+      continue
+    }
+    const holders = seats.get(row.councilSeat) ?? new Set<number>()
+    holders.add(accountIdOf(row))
+    seats.set(row.councilSeat, holders)
   }
-  for (const row of legacy.docs as any[]) {
-    const roleKey = legacyAppointmentRole(row.scopeType, row.scopeId, row.role)
-    if (roleKey && councilSeatFor(roleKey, row)) accounts.add(accountIdOf(row))
+  const holderIds = new Set<number>(focalHolders)
+  for (const holders of seats.values()) for (const id of holders) holderIds.add(id)
+  const eligible = await eligibleAccounts(req, holderIds)
+  let count = 0
+  for (const holders of seats.values()) {
+    // Several records can share one seat (multiple WG Contact Points, a
+    // substitute covering a principal): the seat votes if ANY holder is
+    // eligible, and still only counts once.
+    for (const holder of holders) {
+      if (eligible.has(holder)) {
+        count += 1
+        break
+      }
+    }
   }
-  for (const a of focalPoints.docs as any[]) accounts.add(a.id)
-  return accounts
+  for (const holder of focalHolders) if (eligible.has(holder)) count += 1
+  return count
 }
 
 export async function countEligible(req: PayloadRequest, proposal: any): Promise<number> {
   // Eligible-voter registry snapshot for the 5% quorum (S09 §2 step 6).
   const now = new Date().toISOString()
   if (proposal.body === 'council') {
-    return Math.max((await councilElectorate(req, now)).size, 1)
+    return Math.max(await councilElectorate(req, now), 1)
   }
   if (proposal.body === 'constituency') {
     // The whole Constituency Work membership is the electorate. A platform
@@ -206,9 +226,11 @@ export async function countEligible(req: PayloadRequest, proposal: any): Promise
     })
     return Math.max(totalDocs, 1)
   }
-  // Scoped bodies: distinct accounts with a current participation or
-  // appointment row for the scope. Platform-bridged bodies also count
-  // 'body'-scope rows; OTs may be recorded as team rows.
+  // Scoped bodies: distinct accounts with a current record for the scope —
+  // participation or mandate both enrol the member in that body's
+  // electorate, and the same CW eligibility applies as for Council.
+  // Platform-bridged bodies also count 'body'-scope rows; OTs may be
+  // recorded as team rows.
   const scopeTypes =
     proposal.body === 'working_group'
       ? ['working_group', 'body']
@@ -216,37 +238,21 @@ export async function countEligible(req: PayloadRequest, proposal: any): Promise
         ? ['team']
         : ['operational_team', 'team', 'body']
   const scopeId = proposal.body === 'gct' ? 'gct' : String(proposal.bodyRef ?? '')
-  const [assigned, appointed] = await Promise.all([
-    req.payload.find({
-      collection: 'assignments',
-      where: {
-        and: [
-          ...currentRow(now),
-          { scopeType: { in: scopeTypes } },
-          { scopeId: { equals: scopeId } },
-        ],
-      },
-      limit: 2000,
-      overrideAccess: true,
-    }),
-    req.payload.find({
-      collection: 'appointments',
-      where: {
-        and: [
-          ...currentRow(now),
-          { scopeType: { in: scopeTypes } },
-          { scopeId: { equals: scopeId } },
-        ],
-      },
-      limit: 2000,
-      overrideAccess: true,
-    }),
-  ])
+  const { docs: scoped } = await req.payload.find({
+    collection: 'authority-records',
+    where: {
+      and: [
+        ...currentRow(now),
+        { scopeType: { in: scopeTypes } },
+        { scopeId: { equals: scopeId } },
+      ],
+    },
+    pagination: false,
+    overrideAccess: true,
+  })
   const accounts = new Set<number>()
-  for (const row of [...assigned.docs, ...appointed.docs] as any[]) {
-    accounts.add(accountIdOf(row))
-  }
-  return Math.max(accounts.size, 1)
+  for (const row of scoped as any[]) accounts.add(accountIdOf(row))
+  return Math.max((await eligibleAccounts(req, accounts)).size, 1)
 }
 
 // Advance the proposal state machine according to wall-clock deadlines.

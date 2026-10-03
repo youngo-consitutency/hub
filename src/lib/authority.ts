@@ -1,17 +1,17 @@
-// Policy-backed appointment model.
+// Policy-backed authority model.
 //
-// An appointment is a time-bounded, scoped, evidenced responsibility recorded
-// on an `assignments` row. Constituency authority derives from appointments —
-// never from account titles. `account.role` only distinguishes technical
-// administration and account entity kind.
+// An authority record is a time-bounded, scoped, evidenced responsibility or
+// participation recorded on an `authority-records` row. Constituency authority
+// derives from these records — never from account titles. `account.role` only
+// distinguishes technical administration and account entity kind.
 //
 // Sources: S13 Governance Policy (bodies/Council), S14 Interim GCT Mandate,
 // S25 WG Contact Point Mandate, S15 Liaison Guidelines, S02 Awareness Team,
 // S23/S04 Safeguarding, S17 Membership, S24 Selections, S10 Elections.
 
-export interface AppointmentSpec {
+export interface AuthorityRoleSpec {
   label: string
-  /** scopeType values this appointment may be recorded under. */
+  /** scopeType values this role may be recorded under. */
   scopeTypes: string[]
   /** Legacy team identifiers emitted to existing consumers (teamRoles). */
   teamKeys?: string[]
@@ -19,13 +19,13 @@ export interface AppointmentSpec {
   capabilities?: string[]
   /** Council seat key template; `{scope}` interpolates scopeId (S13 §6). */
   councilSeat?: string
-  /** Appointment requires active Constituency Work membership (S17 §1.1). */
+  /** Role requires active Constituency Work membership (S17 §1.1). */
   requiresCw?: boolean
 }
 
 // The controlled vocabulary. Keep keys stable — rows persist them in
-// assignments.appointment_role.
-export const APPOINTMENT_ROLES: Record<string, AppointmentSpec> = {
+// authority_records.role.
+export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
   // ── Constituency officers ──────────────────────────────────────────
   focal_point: {
     label: 'Global Focal Point',
@@ -336,12 +336,13 @@ export const APPOINTMENT_ROLES: Record<string, AppointmentSpec> = {
   },
 }
 
-export const APPOINTMENT_ROLE_KEYS = Object.keys(APPOINTMENT_ROLES)
+export const AUTHORITY_ROLE_KEYS = Object.keys(AUTHORITY_ROLES)
 
 // ── Scope-type normalisation ────────────────────────────────────────
-// Persisted vocabularies differ between tables: `assignments` stores
-// 'organization'/'platform_body', `appointments` stores the canonical
-// 'organisation'/'body'. Every comparison runs on the canonical form.
+// Historical spellings still arrive from callers ('organization',
+// 'platform_body'); the store holds the canonical 'organisation'/'body'
+// — the migration canonicalised every copied row. Every comparison runs
+// on the canonical form.
 const SCOPE_TYPE_ALIASES: Record<string, string> = {
   organization: 'organisation',
   platform_body: 'body',
@@ -436,14 +437,11 @@ const COY_LIAISON_TEAMS: Record<string, string> = {
   gcoy_liaison: 'coy.gcoy_liaison',
 }
 
-// Resolve a legacy row to an appointment role, or null when unmapped.
-// Every accepted tuple is explicit — unknown roles are reported as
-// unmapped and denied, never defaulted into a broader role.
-export function legacyAppointmentRole(
-  scopeType: string,
-  scopeId: string,
-  role: string,
-): string | null {
+// Resolve a recorded (scopeType, scopeId, role) tuple to a registry role,
+// or null when unmapped. Every accepted tuple is explicit — unknown roles
+// are reported as unmapped and denied, never defaulted into a broader
+// role.
+export function resolveLegacyRole(scopeType: string, scopeId: string, role: string): string | null {
   switch (normaliseScopeType(scopeType)) {
     case 'team': {
       if (scopeId === 'gct') return GCT_LEGACY_ROLES[role] ?? null
@@ -470,22 +468,23 @@ export function legacyAppointmentRole(
   }
 }
 
-// Resolve an assignments row to its appointment role: the recorded
-// appointmentRole wins; legacy rows fall back to the explicit map.
-export function resolveAppointmentRole(row: {
-  appointmentRole?: string | null
+// Resolve an authority row to its registry role: a canonical stored key
+// wins — but only inside the scopes that role declares (a canonical key
+// recorded against the wrong scope grants nothing); recorded legacy
+// strings fall back to the explicit map.
+export function resolveRecordRole(row: {
+  role?: string | null
   scopeType: string
   scopeId: string
-  role?: string
 }): string | null {
-  if (row.appointmentRole && APPOINTMENT_ROLES[row.appointmentRole]) return row.appointmentRole
-  return legacyAppointmentRole(row.scopeType, row.scopeId, row.role ?? '')
+  if (row.role && AUTHORITY_ROLES[row.role]?.scopeTypes.includes(row.scopeType)) return row.role
+  return resolveLegacyRole(row.scopeType, row.scopeId, row.role ?? '')
 }
 
-// An appointment counts only while it is active and within its window.
+// A record counts only while it is active and within its window.
 // Future, expired, revoked and inactive rows grant nothing — but they are
 // still reported so members can see pending or finished mandates.
-export function appointmentCurrent(
+export function recordCurrent(
   row: { status: string; startsAt?: any; endsAt?: any },
   now = new Date(),
 ) {
@@ -495,22 +494,11 @@ export function appointmentCurrent(
   return true
 }
 
-// Why a row does not currently grant the appointment (for reporting/audit).
-export function appointmentState(
-  row: { status: string; startsAt?: any; endsAt?: any },
-  now = new Date(),
-) {
-  if (row.status !== 'active') return row.status // inactive | expired | revoked
-  if (row.startsAt && new Date(row.startsAt).getTime() > now.getTime()) return 'future'
-  if (row.endsAt && new Date(row.endsAt).getTime() <= now.getTime()) return 'lapsed'
-  return 'current'
-}
-
 export function councilSeatFor(
   roleKey: string,
   row: { scopeId: string; councilSeat?: string | null },
 ) {
-  const spec = APPOINTMENT_ROLES[roleKey]
+  const spec = AUTHORITY_ROLES[roleKey]
   if (!spec) return null
   // Substitutes cover an existing seat recorded on the row.
   if (roleKey === 'council.substitute') return row.councilSeat ?? null
@@ -519,12 +507,12 @@ export function councilSeatFor(
 }
 
 export function capabilitiesFor(roleKey: string, scopeId: string): string[] {
-  const spec = APPOINTMENT_ROLES[roleKey]
+  const spec = AUTHORITY_ROLES[roleKey]
   return (spec?.capabilities ?? []).map((c) => c.replace('{scope}', scopeId))
 }
 
 export function teamKeysFor(roleKey: string): string[] {
-  return APPOINTMENT_ROLES[roleKey]?.teamKeys ?? []
+  return AUTHORITY_ROLES[roleKey]?.teamKeys ?? []
 }
 
 // The legacy WG role label used by consumers of `wgAssignments`.
@@ -541,60 +529,22 @@ export function wgLegacyRoleFor(roleKey: string): string {
 
 // ── Shared authority derivation ─────────────────────────────────────
 // ONE engine for both endpoint families: the Payload access layer and the
-// platform service feed rows from their own stores into `deriveAuthority`
+// platform service feed rows from the single store into `deriveAuthority`
 // and consume the same capabilities/team keys/seats — no parallel
 // scope-identifier logic.
 
-// Raw authority record: canonical `appointments` row or legacy
-// `assignments` row (Payload doc or aliased SQL result).
+// Raw authority row (Payload doc or aliased SQL result).
 export interface AuthorityRow {
   id: number
-  appointmentRole?: string | null
+  kind?: string
+  role?: string | null
   scopeType: string
   scopeId: string
-  role?: string
   councilSeat?: string | null
   status: string
   startsAt?: any
   endsAt?: any
-  appointedVia?: { source?: string; assignmentId?: number | string } | null
-}
-
-// Identity of a mandate record — the tuple supersession and duplicate
-// detection key on. Scope type is canonicalised so a migrated
-// 'organization' ledger row and its 'organisation' appointment coincide.
-export function appointmentKey(roleKey: string, scopeType: string, scopeId: string) {
-  return `${roleKey}:${normaliseScopeType(scopeType)}:${scopeId}`
-}
-
-// Keys of every canonical appointment on an account — ALL statuses and
-// windows. A canonical row supersedes its legacy source permanently: once a
-// mandate moves into `appointments`, revoking or expiring the appointment
-// must not resurrect the untouched legacy row.
-export function supersessionKeys(appointmentRows: AuthorityRow[]): Set<string> {
-  const keys = new Set<string>()
-  for (const row of appointmentRows) {
-    const roleKey =
-      row.appointmentRole && APPOINTMENT_ROLES[row.appointmentRole] ? row.appointmentRole : null
-    if (roleKey) keys.add(appointmentKey(roleKey, row.scopeType, row.scopeId))
-  }
-  return keys
-}
-
-// The immutable migration link: an appointment created from a legacy
-// `assignments` row permanently supersedes THAT source record — not merely
-// the authority tuple it happens to carry today. Editing the appointment's
-// role/scope changes the tuple but must never release the source row back
-// into force once the appointment ends. `appointedVia.assignmentId` is
-// write-once (enforced by the collection hook).
-export function supersededAssignmentIds(appointmentRows: AuthorityRow[]): Set<string> {
-  const ids = new Set<string>()
-  for (const row of appointmentRows) {
-    const via = row.appointedVia
-    if (via?.source === 'assignments_migration' && via.assignmentId != null)
-      ids.add(String(via.assignmentId))
-  }
-  return ids
+  provenance?: { source?: string; assignmentId?: number | string } | null
 }
 
 export interface AuthorityDerivation {
@@ -604,7 +554,7 @@ export interface AuthorityDerivation {
   bodyScopes: string[]
   wgAssignments: { wgSlug: string; role: string }[]
   negotiationAssignments: { scopeType: string; scopeId: string; role: string }[]
-  appointments: {
+  records: {
     id: number
     role: string
     scopeType: string
@@ -616,9 +566,7 @@ export interface AuthorityDerivation {
   unmapped: number
 }
 
-// Derive authority from a merged row set (canonical appointments + eligible
-// legacy rows). Supersession filtering happens at the caller's boundary so
-// the same function serves both Payload docs and raw SQL results.
+// Derive authority from an account's authority rows.
 export function deriveAuthority(
   rows: AuthorityRow[],
   opts: { cw: boolean; now?: Date; baseCapabilities?: Iterable<string> },
@@ -630,20 +578,20 @@ export function deriveAuthority(
   const bodyScopes = new Set<string>()
   const wgAssignments: AuthorityDerivation['wgAssignments'] = []
   const negotiationAssignments: AuthorityDerivation['negotiationAssignments'] = []
-  const appointments: AuthorityDerivation['appointments'] = []
+  const records: AuthorityDerivation['records'] = []
   let unmapped = 0
 
   for (const row of rows) {
-    if (!appointmentCurrent(row, now)) continue
-    const roleKey = resolveAppointmentRole(row)
-    if (!roleKey || !APPOINTMENT_ROLES[roleKey]) {
+    if (!recordCurrent(row, now)) continue
+    const roleKey = resolveRecordRole(row)
+    if (!roleKey || !AUTHORITY_ROLES[roleKey]) {
       // Unmapped records are reported, never widened.
       unmapped += 1
       continue
     }
     const scopeType = normaliseScopeType(row.scopeType)
     const seat = councilSeatFor(roleKey, { scopeId: row.scopeId, councilSeat: row.councilSeat })
-    appointments.push({
+    records.push({
       id: row.id,
       role: roleKey,
       scopeType,
@@ -654,7 +602,7 @@ export function deriveAuthority(
     })
     // Appointments that require Constituency Work membership grant nothing
     // while that membership is inactive — they still show for the member.
-    if (APPOINTMENT_ROLES[roleKey].requiresCw && !cw) continue
+    if (AUTHORITY_ROLES[roleKey].requiresCw && !cw) continue
     for (const key of teamKeysFor(roleKey)) teamRoles.add(key)
     for (const cap of capabilitiesFor(roleKey, row.scopeId)) capabilities.add(cap)
     if (seat) councilSeats.add(seat)
@@ -685,7 +633,33 @@ export function deriveAuthority(
     bodyScopes: [...bodyScopes],
     wgAssignments,
     negotiationAssignments,
-    appointments,
+    records,
     unmapped,
   }
+}
+
+// ── Record kind ─────────────────────────────────────────────────────
+// Member-joinable scopes: a 'member' record in one of these is
+// participation (opted membership, no appointing authority needed);
+// anything else is a mandate. Writers use this to set `kind`; readers
+// never branch on it — authority resolves from the role either way.
+export const PARTICIPATION_SCOPES = new Set([
+  'body',
+  'working_group',
+  'organisation',
+  'negotiation_track',
+  'negotiation_project',
+])
+const MEMBER_KIND_ROLES = new Set([
+  'member',
+  'wg.member',
+  'body.member',
+  'org.member',
+  'negotiation.member',
+])
+
+export function recordKind(scopeType: string, role: string): 'mandate' | 'participation' {
+  return MEMBER_KIND_ROLES.has(role) && PARTICIPATION_SCOPES.has(normaliseScopeType(scopeType))
+    ? 'participation'
+    : 'mandate'
 }

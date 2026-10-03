@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
-import { emailConfigured, sendEmail } from './email'
+import { sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
@@ -11,7 +11,7 @@ import { appBaseUrl } from './env'
 // live in `notification_outbox`; eligibility reads the v2 notification_prefs
 // model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
 
-export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -276,7 +276,7 @@ function publicOutbox(row: any) {
   }
 }
 
-export const NOTIFICATION_CHANNELS = ['email', 'push']
+const NOTIFICATION_CHANNELS = ['email', 'push']
 
 export async function enqueueNotification({
   accountId,
@@ -477,7 +477,7 @@ export async function listEligibleNotificationAccountIds({
   const filters: Record<string, string> = {
     all_active: 'true',
     working_group: 'a.wg_interests ?| $2::text[]',
-    team: 'a.team_roles ?| $2::text[]',
+    team: `EXISTS(SELECT 1 FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.scope_id = ANY($2::text[]) AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now()))`,
     account_ids: 'a.id::text = ANY($2::text[])',
   }
   const pool = getPgPool()!
@@ -494,5 +494,3 @@ export async function listEligibleNotificationAccountIds({
   )
   return rows.map((row: any) => String(row.id))
 }
-
-export { emailConfigured }

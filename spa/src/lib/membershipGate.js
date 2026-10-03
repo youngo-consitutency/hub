@@ -24,9 +24,3 @@ export function acknowledgeMembershipPolicy(policyVersion) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   return payload
 }
-
-export function clearMembershipPolicyAck() {
-  localStorage.removeItem(STORAGE_KEY)
-}
-
-export { STORAGE_KEY }
