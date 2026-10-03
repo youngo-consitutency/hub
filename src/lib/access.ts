@@ -1,6 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { deriveAuthority, type AuthorityRow } from './authority'
-import { isCwActive } from './accounts'
+import { isCwActive } from './accountStatus'
+import type { AccountLike, Doc } from './domain'
 
 // Derives the capability model from `authority-records`: time-bounded,
 // scoped, evidenced records — mandates and participation share one store.
@@ -32,28 +33,13 @@ export interface AccessProfile {
   manageAllWgs: boolean
   isFocalPoint?: boolean
   isMandateHolder?: boolean
-  accountId?: string
+  accountId?: number
 }
 
 // Only coordination responsibilities carry wg.manage. Ordinary group
 // membership is an affiliation, not a management mandate [S25]. Kept for
 // callers that still look at legacy wgAssignments roles.
 export const WG_COORDINATION_ROLES = new Set(['contact', 'lead', 'coordinator', 'contact_point'])
-
-// Technical administration: system-level capabilities a platform
-// administrator holds by virtue of the `admin` account role. Deliberately
-// excludes constituency authority — no Council vote, no team review powers,
-// no confidential case access, no selector/facilitator rights.
-const ADMIN_CAPABILITIES = [
-  'platform.manage',
-  'accounts.manage',
-  'audit.read',
-  'notifications.send',
-  'ngo.manage_all',
-  'intelligence.operations.read',
-  'intelligence.writeback.approve',
-  'intelligence.writeback.apply',
-]
 
 const EMPTY: AccessProfile = {
   teamRoles: [],
@@ -67,7 +53,10 @@ const EMPTY: AccessProfile = {
   manageAllWgs: false,
 }
 
-export async function getAccessProfile(req: PayloadRequest, account: any): Promise<AccessProfile> {
+export async function getAccessProfile(
+  req: PayloadRequest,
+  account: AccountLike | null | undefined,
+): Promise<AccessProfile> {
   if (!account) return EMPTY
 
   const cw = isCwActive(account)
@@ -81,7 +70,7 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
     overrideAccess: true,
   })
 
-  const derived = deriveAuthority(docs as any[] as AuthorityRow[], {
+  const derived = deriveAuthority(docs as Doc[] as AuthorityRow[], {
     cw,
     baseCapabilities: ['hub.read', 'intelligence.query', 'intelligence.writeback.propose'],
   })
@@ -92,13 +81,8 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
   }
 
   const capabilities = new Set(derived.capabilities)
-  if (account.role === 'admin') {
-    for (const cap of ADMIN_CAPABILITIES) capabilities.add(cap)
-  }
-  // A `focal_point` account title grants nothing by itself — Council voting
-  // and coordination require an evidenced `focal_point` record (S11).
-  // Legitimate mandates carry verifiable provenance; revoking the record
-  // removes the authority even when the title remains.
+  // Every capability comes from an evidenced record — account titles grant
+  // nothing on their own.
 
   const councilSeats = new Set(derived.councilSeats)
   return {
@@ -117,10 +101,23 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
   }
 }
 
-export function hasCapability(access: any, capability: string) {
+export function hasCapability(
+  access: Pick<AccessProfile, 'capabilities'> | null | undefined,
+  capability: string,
+): boolean {
   return Boolean(access?.capabilities?.includes(capability))
 }
 
-export function canManageWg(access: any, wgSlug: string) {
-  return access?.manageAllWgs || hasCapability(access, `wg.manage:${wgSlug}`)
+export function hasTeamRole(
+  access: Pick<AccessProfile, 'teamRoles'> | null | undefined,
+  teamRole: string,
+): boolean {
+  return Boolean(access?.teamRoles?.includes(teamRole))
+}
+
+export function canManageWg(
+  access: Pick<AccessProfile, 'capabilities' | 'manageAllWgs'> | null | undefined,
+  wgSlug: string,
+): boolean {
+  return Boolean(access?.manageAllWgs) || hasCapability(access, `wg.manage:${wgSlug}`)
 }

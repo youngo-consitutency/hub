@@ -1,13 +1,14 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount, requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
+import { hasTeamRole } from '../lib/access'
+import { requireVerifiedMember, verifiedContext, memberContext } from '../lib/accounts'
 import * as store from '../lib/content'
 import { opportunityShape } from '../lib/content'
 import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
+import type { Doc, DocData } from '../lib/domain'
 
 const OPPORTUNITY_KINDS = [
   { value: 'event', label: 'Event' },
@@ -45,7 +46,7 @@ async function orgPostingTrust(req: PayloadRequest, orgAccountId: any) {
     id: orgAccountId,
     overrideAccess: true,
     req,
-  })) as any
+  })) as Doc
   if (org?.postingTrust) return org.postingTrust === 'trusted'
   const published = await req.payload.find({
     collection: 'opportunities',
@@ -92,9 +93,8 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/review',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
-      if (!access.teamRoles.includes('membership_team'))
+      const { access } = await memberContext(req)
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const [pending, published] = await Promise.all([
         req.payload.find({
@@ -129,7 +129,7 @@ export const opportunityEndpoints: Endpoint[] = [
           ORDER BY a.organization_name NULLS LAST, a.id
           LIMIT 200`,
       )
-      const organisations = orgRows.map((row: any) => {
+      const organisations = orgRows.map((row: Doc) => {
         const override = row.override_state || null
         const trusted =
           override === 'trusted' || (override !== 'review_required' && Boolean(row.has_published))
@@ -142,8 +142,8 @@ export const opportunityEndpoints: Endpoint[] = [
         }
       })
       return json({
-        items: (pending.docs as any[]).map(opportunityShape),
-        published: (published.docs as any[]).map(opportunityShape),
+        items: (pending.docs as Doc[]).map(opportunityShape),
+        published: (published.docs as Doc[]).map(opportunityShape),
         organisations,
       })
     }),
@@ -163,7 +163,7 @@ export const opportunityEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map(opportunityShape),
+        items: (docs as Doc[]).map(opportunityShape),
         trusted: await orgPostingTrust(req, ctx.orgAccountId),
         kinds: OPPORTUNITY_KINDS,
         formats: OPPORTUNITY_FORMATS,
@@ -176,7 +176,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'requests')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const title = trimmed(b.title, 200)
       if (title.length < 6)
         throw fail.validation({ title: 'Give the posting a title of at least 6 characters.' })
@@ -193,7 +193,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: ctx.orgAccountId,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       const created = await req.payload.create({
         collection: 'opportunities',
         data: {
@@ -212,7 +212,7 @@ export const opportunityEndpoints: Endpoint[] = [
           organizationName: org?.organizationName || org?.name || null,
           status,
           source: 'ngo',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -241,10 +241,10 @@ export const opportunityEndpoints: Endpoint[] = [
       const { account, ctx } = await requireOrgScope(req, 'requests')
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (
         !item ||
         !['published', 'pending_review'].includes(item.status) ||
@@ -255,7 +255,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
-        data: { status: 'withdrawn' } as any,
+        data: { status: 'withdrawn' } as DocData,
         overrideAccess: true,
         req,
       })
@@ -271,11 +271,10 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
-      if (!access.teamRoles.includes('membership_team'))
+      const { account, access } = await verifiedContext(req)
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const approve = b.decision === 'approve'
       const reviewNote = trimmed(b.note, 1000) || null
       if (!approve && !reviewNote)
@@ -284,10 +283,10 @@ export const opportunityEndpoints: Endpoint[] = [
         })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!item || item.status !== 'pending_review')
         throw new ApiError(404, 'not_found', 'That posting is no longer awaiting review.')
       const updated = await req.payload.update({
@@ -297,7 +296,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: approve ? 'published' : 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -316,12 +315,11 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/trust/:orgAccountId',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
-      if (!access.teamRoles.includes('membership_team'))
+      const { account, access } = await verifiedContext(req)
+      if (!hasTeamRole(access, 'membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
-      const orgAccountId = String(req.routeParams?.orgAccountId)
-      const b = ((await req.json?.()) || {}) as any
+      const orgAccountId = param(req, 'orgAccountId')
+      const b = await readBody(req)
       const state = String(b.state || '')
       if (!['trusted', 'review_required'].includes(state))
         throw fail.validation({ state: 'Trust state must be trusted or review_required.' })
@@ -330,7 +328,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: orgAccountId,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!org || org.entityType !== 'organization')
         throw fail.notFound('Organisation account not found.')
       await req.payload.update({
@@ -339,7 +337,7 @@ export const opportunityEndpoints: Endpoint[] = [
         data: {
           postingTrust: state,
           postingTrustNote: trimmed(b.note, 500) || null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -358,18 +356,17 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/unpublish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
-      if (!access.teamRoles.includes('membership_team')) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const { account, access } = await verifiedContext(req)
+      if (!hasTeamRole(access, 'membership_team')) throw fail.forbidden()
+      const b = await readBody(req)
       const reviewNote = trimmed(b.note, 1000) || null
       if (!reviewNote) throw fail.validation({ note: 'Give a reason for unpublishing.' })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!item || item.status !== 'published')
         throw new ApiError(404, 'not_found', 'That posting is not published.')
       const updated = await req.payload.update({
@@ -379,7 +376,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

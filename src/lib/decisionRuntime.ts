@@ -13,6 +13,8 @@ import {
   VOTING_WINDOW_MS,
 } from './decisions'
 import { audit } from './audit'
+import type { VetoRequest } from './decisions'
+import type { AccountLike, ActorLike, Doc, DocData } from './domain'
 
 // Shared runtime for the S09 decision workflow. Both the member endpoints
 // (src/endpoints/decisions.ts) and the platform bridge
@@ -38,7 +40,7 @@ export async function loadProposal(req: PayloadRequest, id: string | number) {
       overrideAccess: true,
     })
     if (!docs.length) throw fail.notFound('Decision proposal not found.')
-    return docs[0] as any
+    return docs[0] as Doc
   }
 }
 
@@ -49,14 +51,14 @@ export async function proposalFlags(req: PayloadRequest, proposalId: number) {
     limit: 500,
     overrideAccess: true,
   })
-  return docs as any[]
+  return docs as Doc[]
 }
 
 export async function recordEvent(
   req: PayloadRequest,
   proposalId: number,
   type: string,
-  actor: any,
+  actor: ActorLike | null,
   detail?: any,
 ) {
   await req.payload.create({
@@ -67,7 +69,7 @@ export async function recordEvent(
       actor: actor?.id ?? null,
       detail: detail ?? null,
       createdAt: new Date().toISOString(),
-    } as any,
+    } as DocData,
     overrideAccess: true,
   })
   await audit(req, actor, {
@@ -77,13 +79,13 @@ export async function recordEvent(
   })
 }
 
-export function isContactPerson(account: any, proposal: any): boolean {
+export function isContactPerson(account: AccountLike, proposal: Doc): boolean {
   // The contact person is a recorded role on the proposal — a technical
   // administrator does not gain constituency authority over it.
   return (
     ids(proposal.contactPersons).includes(account.id) ||
     proposal.proposedBy === account.id ||
-    (proposal.proposedBy as any)?.id === account.id
+    (proposal.proposedBy as Doc)?.id === account.id
   )
 }
 
@@ -91,11 +93,10 @@ export function isContactPerson(account: any, proposal: any): boolean {
 // for scoped bodies; CW members for constituency-wide).
 export async function isBodyMember(
   req: PayloadRequest,
-  account: any,
-  proposal: any,
+  account: AccountLike,
+  proposal: Doc,
 ): Promise<boolean> {
-  // No title grants body membership — `admin` and `focal_point` roles confer
-  // nothing here; only an appointment or participation row does.
+  // No title grants body membership — only an authority record does.
   const access = await getAccessProfile(req, account)
   const scopeIds = new Set(access.wgAssignments.map((w) => `working_group:${w.wgSlug}`))
   const teamIds = new Set(access.teamRoles)
@@ -129,12 +130,12 @@ export async function isBodyMember(
 }
 
 // Rows "current" at `now` in either store (mirrors appointmentCurrent()).
-const currentRow = (now: string): any[] => [
+const currentRow = (now: string): Doc[] => [
   { status: { equals: 'active' } },
   { or: [{ startsAt: { exists: false } }, { startsAt: { less_than_equal: now } }] },
   { or: [{ endsAt: { exists: false } }, { endsAt: { greater_than: now } }] },
 ]
-const accountIdOf = (row: any) =>
+const accountIdOf = (row: Doc) =>
   (typeof row.account === 'object' ? row.account?.id : row.account) as number
 
 // Accounts whose records still vote: every seat-carrying role requires
@@ -156,7 +157,7 @@ async function eligibleAccounts(req: PayloadRequest, accountIds: Set<number>) {
     pagination: false,
     overrideAccess: true,
   })
-  return new Set<number>((accounts as any[]).map((a) => a.id))
+  return new Set<number>((accounts as Doc[]).map((a) => a.id))
 }
 
 // The Council electorate (S13 §6): distinct SEATS currently held, not
@@ -202,7 +203,7 @@ async function councilElectorate(req: PayloadRequest, now: string): Promise<numb
   return count
 }
 
-export async function countEligible(req: PayloadRequest, proposal: any): Promise<number> {
+export async function countEligible(req: PayloadRequest, proposal: Doc): Promise<number> {
   // Eligible-voter registry snapshot for the 5% quorum (S09 §2 step 6).
   const now = new Date().toISOString()
   if (proposal.body === 'council') {
@@ -251,13 +252,13 @@ export async function countEligible(req: PayloadRequest, proposal: any): Promise
     overrideAccess: true,
   })
   const accounts = new Set<number>()
-  for (const row of scoped as any[]) accounts.add(accountIdOf(row))
+  for (const row of scoped as Doc[]) accounts.add(accountIdOf(row))
   return Math.max((await eligibleAccounts(req, accounts)).size, 1)
 }
 
 // Advance the proposal state machine according to wall-clock deadlines.
 // Idempotent: safe to call from reads and explicit close/advance calls.
-export async function advanceIfDue(req: PayloadRequest, proposal: any) {
+export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
   const now = Date.now()
   const past = (d?: string | null) => d && new Date(d).getTime() <= now
   const update = async (data: any, type: string, detail?: any) => {
@@ -309,7 +310,7 @@ export async function advanceIfDue(req: PayloadRequest, proposal: any) {
       overrideAccess: true,
     })
     const cast = ballots.length
-    const votesFor = (ballots as any[]).filter((b) => b.choice === 'for').length
+    const votesFor = (ballots as Doc[]).filter((b) => b.choice === 'for').length
     if (
       requiresQuorum(proposal.decisionType) &&
       !quorumMet(cast, proposal.eligibleVoterCount ?? 0)
@@ -348,7 +349,7 @@ export async function advanceIfDue(req: PayloadRequest, proposal: any) {
   return proposal
 }
 
-export async function checkVeto(req: PayloadRequest, proposal: any) {
+export async function checkVeto(req: PayloadRequest, proposal: Doc) {
   const { docs } = await req.payload.find({
     collection: 'decision-vetoes',
     where: {
@@ -357,7 +358,7 @@ export async function checkVeto(req: PayloadRequest, proposal: any) {
     limit: 500,
     overrideAccess: true,
   })
-  if (proposal.status === 'voting' && vetoThresholdMet(docs as any[])) {
+  if (proposal.status === 'voting' && vetoThresholdMet(docs as unknown as VetoRequest[])) {
     proposal = await req.payload.update({
       collection: 'decision-proposals',
       id: proposal.id,
@@ -419,7 +420,7 @@ export const vetoView = (v: any) => ({
   createdAt: v.createdAt,
 })
 
-export const proposalView = (p: any, flags?: any[], counts?: any) => ({
+export const proposalView = (p: any, flags?: Doc[], counts?: any) => ({
   id: p.id,
   title: p.title,
   context: p.context,

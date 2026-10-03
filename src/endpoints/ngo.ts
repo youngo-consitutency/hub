@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { emailConfigured, sendEmail } from '../lib/email'
@@ -10,6 +10,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { trimmed } from '../lib/text'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
+import type { Doc, DocData } from '../lib/domain'
 
 const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-invite' })
 
@@ -57,7 +58,7 @@ export const ngoEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'requests')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (!b.title || !b.kind) throw fail.validation({ title: 'title and kind required.' })
       const pool = requirePgPool()
       const { rows } = await pool.query(
@@ -86,14 +87,14 @@ export const ngoEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'requests')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const nextStatus = String(b.status || 'done')
       if (!['open', 'in_progress', 'done', 'declined'].includes(nextStatus))
         throw fail.validation({ status: 'Invalid request status.' })
       const pool = requirePgPool()
       const { rows } = await pool.query(
         'UPDATE ngo_requests SET status=$1, updated_at=now() WHERE id=$2 AND org_account_id=$3 RETURNING *',
-        [nextStatus, req.routeParams?.id, ctx.orgAccountId],
+        [nextStatus, param(req, 'id'), ctx.orgAccountId],
       )
       const item = rows[0]
       if (!item) throw fail.notFound('Request not found.')
@@ -133,7 +134,7 @@ export const ngoEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await inviteLimit(req)
       const { account, ctx } = await requireOrgScope(req, 'seats')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const email = trimmed(b.email, 200).toLowerCase()
       if (!email || !email.includes('@'))
         throw fail.validation({ email: 'A valid email address is required.' })
@@ -172,7 +173,7 @@ export const ngoEndpoints: Endpoint[] = [
           inviteTokenHash: sha256Hex(token),
           inviteExpiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
           invitedBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -187,7 +188,7 @@ export const ngoEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'ngo-seats',
           id: seat.id,
-          data: { status: 'revoked' } as any,
+          data: { status: 'revoked' } as DocData,
           overrideAccess: true,
           req,
         })
@@ -218,10 +219,10 @@ export const ngoEndpoints: Endpoint[] = [
       const { account, ctx } = await requireOrgScope(req, 'seats')
       const seat = (await req.payload.findByID({
         collection: 'ngo-seats',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!seat) throw fail.notFound('Seat not found.')
       if (
         String(typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount) !==
@@ -231,7 +232,7 @@ export const ngoEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'ngo-seats',
         id: seat.id,
-        data: { status: 'revoked' } as any,
+        data: { status: 'revoked' } as DocData,
         overrideAccess: true,
         req,
       })
@@ -247,7 +248,7 @@ export const ngoEndpoints: Endpoint[] = [
     path: '/member/ngo/invite/:token',
     method: 'get',
     handler: endpoint(async (req) => {
-      const token = String(req.routeParams?.token)
+      const token = param(req, 'token')
       const { docs } = await req.payload.find({
         collection: 'ngo-seats',
         where: { inviteTokenHash: { equals: sha256Hex(token) } },
@@ -255,7 +256,7 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      const seat = docs[0] as any
+      const seat = docs[0] as Doc
       if (
         !seat ||
         seat.status !== 'invited' ||
@@ -276,14 +277,14 @@ export const ngoEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      const token = String(req.routeParams?.token)
+      const token = param(req, 'token')
       const { docs } = await req.payload.find({
         collection: 'ngo-seats',
         where: { inviteTokenHash: { equals: sha256Hex(token) } },
         limit: 1,
         overrideAccess: true,
       })
-      const seat = docs[0] as any
+      const seat = docs[0] as Doc
       if (
         !seat ||
         seat.status !== 'invited' ||
@@ -300,7 +301,7 @@ export const ngoEndpoints: Endpoint[] = [
           status: 'active',
           acceptedAt: new Date().toISOString(),
           inviteTokenHash: null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

@@ -3,6 +3,7 @@
 // project/amendment write guards.
 import { createHash } from 'node:crypto'
 import { type Pool, type PoolClient } from 'pg'
+import type { Doc } from '../../lib/domain'
 
 export class ContributionError extends Error {
   status: number
@@ -152,7 +153,7 @@ export function assertExpectedVersion(currentVersion: number, expectedVersion: n
     )
 }
 
-export async function assertCitations(client: PoolClient, evidence: any[]) {
+export async function assertCitations(client: PoolClient, evidence: Doc[]) {
   const ids = [...new Set(evidence.map((item) => item.sourceVersionId))]
   const { rows } = await client.query(
     `SELECT v.id::text FROM negotiation_document_versions v
@@ -175,7 +176,7 @@ export async function insertEvidence(
   table: string,
   ownerColumn: string,
   ownerId: string,
-  evidence: any[],
+  evidence: Doc[],
 ) {
   for (const citation of evidence) {
     await client.query(
@@ -199,7 +200,7 @@ export async function writeAudit(
     action: string
     targetType: string
     targetId: string
-    detail: any
+    detail: Doc
   },
 ) {
   await client.query(

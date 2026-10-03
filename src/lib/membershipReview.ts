@@ -1,6 +1,7 @@
 import { accountView } from './accounts'
 import { requirePgPool, getPgPool } from './pg'
 import { toCamelCase } from './case'
+import type { Doc, AccountLike, AccountView } from './domain'
 
 // Shapes consumed by the membership-team review queue.
 
@@ -50,7 +51,7 @@ function toIsoDate(value: any) {
   return match ? match[1] : text || null
 }
 
-export function extractPublicLinks(...values: any[]) {
+export function extractPublicLinks(...values: Doc[]) {
   const found: { href: string; host: string }[] = []
   const seen = new Set<string>()
   for (const value of values) {
@@ -87,7 +88,7 @@ export function extractPublicLinks(...values: any[]) {
   return found
 }
 
-export function membershipReviewAccount(row: any) {
+export function membershipReviewAccount(row: Doc) {
   const account = accountView(row)
   if (!account) return null
   const r = toCamelCase<Record<string, any>>(row)
@@ -159,10 +160,10 @@ export async function listMembershipReviewItems() {
      ORDER BY created_at DESC
      LIMIT 500`,
   )
-  return rows.map(membershipReviewAccount)
+  return rows.map(membershipReviewAccount).filter((a): a is NonNullable<typeof a> => a !== null)
 }
 
-function profileShape(row: any, account: any) {
+function profileShape(row: Doc, account: AccountLike) {
   const r = toCamelCase<any>(row)
   const updatedAt = r.updatedAt ?? null
   const photoUpdatedAt = r.photoUpdatedAt ?? null
@@ -189,11 +190,11 @@ function profileShape(row: any, account: any) {
   }
 }
 
-export async function listMemberProfileSummaries(accounts: any[]) {
-  const byAccountId = new Map<number, any>()
+export async function listMemberProfileSummaries(accounts: AccountLike[]) {
+  const byAccountId = new Map<number, Doc>()
   if (!accounts.length) return byAccountId
   const pool = getPgPool()
-  let rows: any[] = []
+  let rows: Doc[] = []
   if (pool) {
     const result = await pool.query(
       `SELECT p.*,
@@ -208,7 +209,7 @@ export async function listMemberProfileSummaries(accounts: any[]) {
   }
   const byId = new Map(rows.map((row) => [row.account_id, row]))
   for (const account of accounts) {
-    const profile = profileShape(byId.get(account.id), account)
+    const profile = profileShape(byId.get(account.id) || {}, account)
     byAccountId.set(account.id, {
       displayName: profile.displayName,
       headline: profile.headline,

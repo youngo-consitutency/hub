@@ -1,4 +1,5 @@
 import type { Access, FieldAccess } from 'payload'
+import { getAccessProfile, hasCapability } from './access'
 
 // Coherent access model for generated REST/GraphQL surfaces.
 //
@@ -30,3 +31,11 @@ export const staffWrites = {
   update: isStaff,
   delete: isStaff,
 } as const
+
+// Capability check for generated-API reads — resolves the caller's
+// authority records exactly as the endpoint guards do.
+export const grantsCapability = async (req: any, capability: string) => {
+  if (!req.user || req.user.collection !== 'accounts') return false
+  const profile = await getAccessProfile(req, req.user)
+  return hasCapability(profile, capability)
+}

@@ -1,4 +1,5 @@
 import type { PayloadRequest } from 'payload'
+import type { Doc } from './domain'
 
 // Content documents carry console-editable structured content (onboarding,
 // policies, contact lists). The SPA fetches them via GET /api/documents/:slug.
@@ -14,6 +15,6 @@ export async function getDocument(
     pagination: false,
     req,
   })
-  const doc = docs[0] as any
+  const doc = docs[0] as Doc
   return doc ? { slug: doc.slug, title: doc.title, body: doc.body } : null
 }

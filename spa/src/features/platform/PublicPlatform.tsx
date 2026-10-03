@@ -1,5 +1,5 @@
 import { Feedback } from './Feedback.tsx'
-import { Skeletons } from '../../components/ui.jsx'
+import { Skeletons } from '../../components/ui'
 import { useState, type FormEvent } from 'react'
 import { usePlatform, post, values } from './api.ts'
 import { Field, Text } from './fields.tsx'

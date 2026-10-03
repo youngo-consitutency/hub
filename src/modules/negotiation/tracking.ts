@@ -1,6 +1,7 @@
 // Public negotiation tracking reads — ported from server/lib/negotiations.js.
 // Relational model only; the JSON-fixture fallback path is not carried over.
 import { getPgPool } from '../../lib/pg'
+import type { Doc } from '../../lib/domain'
 
 const MAX_PAGE_SIZE = 50
 
@@ -28,7 +29,7 @@ export async function listPublicTracks(filters: Record<string, any> = {}) {
     return { items: [], page: paging.page, pageSize: paging.pageSize, total: 0 }
   }
 
-  const values: any[] = []
+  const values: Doc[] = []
   const where = ["t.publication_status = 'published'"]
   const add = (sql: string, value: any) => {
     values.push(value)
@@ -75,7 +76,7 @@ export async function listPublicTracks(filters: Record<string, any> = {}) {
     [...values, paging.pageSize, paging.offset],
   )
   return {
-    items: rows.rows.map((row: any) => ({
+    items: rows.rows.map((row: Doc) => ({
       id: row.id,
       slug: row.slug,
       topic: row.topic,
@@ -143,7 +144,7 @@ export async function getPublicTrack(slug: string) {
     topic: track.topic,
     summary: track.summary,
     activityStatus: track.activity_status,
-    agendaItems: agenda.rows.map((row: any) => ({
+    agendaItems: agenda.rows.map((row: Doc) => ({
       id: row.id,
       body: row.body,
       session: row.session,
@@ -152,7 +153,7 @@ export async function getPublicTrack(slug: string) {
       title: row.official_title,
       lineageFrom: row.lineage_from,
     })),
-    documents: documents.rows.map((row: any) => ({
+    documents: documents.rows.map((row: Doc) => ({
       id: row.id,
       title: row.title,
       sourceIdentifier: row.source_identifier,
@@ -181,7 +182,7 @@ export async function getPublicTrack(slug: string) {
         safeDiagnostic: row.safe_diagnostic,
       },
     })),
-    calls: calls.rows.map((row: any) => ({
+    calls: calls.rows.map((row: Doc) => ({
       id: row.id,
       title: row.title,
       mandate: row.mandate,
@@ -205,9 +206,13 @@ export async function getPublicTrack(slug: string) {
 
 export async function listPublicCalls(filters: Record<string, any> = {}) {
   const tracks = await listPublicTracks({ ...filters, pageSize: MAX_PAGE_SIZE })
-  const details = await Promise.all(tracks.items.map((item: any) => getPublicTrack(item.slug)))
+  const details = await Promise.all(
+    tracks.items
+      .filter((t): t is NonNullable<typeof t> => t != null)
+      .map((item) => getPublicTrack(item.slug)),
+  )
   const byId = new Map()
-  details.flatMap((item: any) => item.calls).forEach((call: any) => byId.set(call.id, call))
+  details.flatMap((item) => item?.calls ?? []).forEach((call: any) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 

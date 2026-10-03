@@ -1,11 +1,11 @@
 import type { Endpoint } from 'payload'
 import { after } from 'next/server'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
+import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
+import { hasCapability } from '../lib/access'
 import {
   drainNotificationOutbox,
   enqueueNotification,
@@ -19,6 +19,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
+import type { Doc, DocData } from '../lib/domain'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -29,7 +30,7 @@ const broadcastLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 4,
   scope: 'notifications-broadcast',
-  key: (req) => String((req as any).user?.id || 'anon'),
+  key: (req) => String((req as Doc).user?.id || 'anon'),
 })
 
 const resultPage = (title: string, message: string) =>
@@ -81,9 +82,8 @@ function broadcastInput(body: any) {
 }
 
 const requireNotifyCapability = async (req: any) => {
-  const account = requireAccount(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.capabilities.includes('notifications.send'))
+  const { account, access } = await memberContext(req)
+  if (!hasCapability(access, 'notifications.send'))
     throw fail.forbidden('Sending Hub email is not assigned to this account.')
   return account
 }
@@ -94,7 +94,7 @@ export const notificationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await requireNotifyCapability(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       let input
       try {
         input = broadcastInput(b)
@@ -125,7 +125,7 @@ export const notificationEndpoints: Endpoint[] = [
           'email_not_configured',
           'Email delivery is not configured for this Hub yet.',
         )
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       let input
       try {
         input = broadcastInput(b)
@@ -211,7 +211,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/unsubscribe',
     method: 'get',
     handler: async (req) => {
-      const verified = verifyUnsubscribeToken(String((req as any).query?.token || ''))
+      const verified = verifyUnsubscribeToken(String((req as Doc).query?.token || ''))
       if (!verified)
         return html(
           resultPage(
@@ -227,7 +227,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const email = {
         digest: Boolean(row?.email?.digest),
         deadline: Boolean(row?.email?.deadline),
@@ -238,14 +238,14 @@ export const notificationEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'notification-prefs',
           id: row.id,
-          data: { email } as any,
+          data: { email } as DocData,
           overrideAccess: true,
           req,
         })
       } else {
         await req.payload.create({
           collection: 'notification-prefs',
-          data: { account: verified.accountId, email } as any,
+          data: { account: verified.accountId, email } as DocData,
           overrideAccess: true,
           req,
         })
@@ -262,7 +262,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/verify-email',
     method: 'get',
     handler: async (req) => {
-      const token = String((req as any).query?.token || '')
+      const token = String((req as Doc).query?.token || '')
       const { docs } = await req.payload.find({
         collection: 'email-verification-tokens',
         where: {
@@ -273,7 +273,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       if (!row)
         return html(
           resultPage(
@@ -286,14 +286,14 @@ export const notificationEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'email-verification-tokens',
         id: row.id,
-        data: { usedAt: new Date().toISOString() } as any,
+        data: { usedAt: new Date().toISOString() } as DocData,
         overrideAccess: true,
         req,
       })
       await req.payload.update({
         collection: 'accounts',
         id: accountId,
-        data: { emailVerifiedAt: new Date().toISOString() } as any,
+        data: { emailVerifiedAt: new Date().toISOString() } as DocData,
         overrideAccess: true,
         req,
       })
@@ -329,7 +329,7 @@ export const notificationEndpoints: Endpoint[] = [
           account: account.id,
           tokenHash: sha256Hex(token),
           expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -359,7 +359,7 @@ export const notificationEndpoints: Endpoint[] = [
       const left = Buffer.from(expected)
       const right = Buffer.from(supplied)
       if (left.length !== right.length || !timingSafeEqual(left, right)) throw fail.unauthorized()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       // Provider events are recorded for audit; suppression handled when email
       // delivery is wired to a real provider.
       await audit(req, null, {
@@ -385,7 +385,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       return json({
         accountId: account.id,
         timezone: row?.timezone || 'UTC',
@@ -406,7 +406,7 @@ export const notificationEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (!account.emailVerifiedAt && Object.values(b?.email || {}).some(Boolean)) {
         return json(
           {
@@ -442,18 +442,18 @@ export const notificationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const data = { account: account.id, timezone, digestDay, digestHourUtc, email }
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const saved = row
         ? await req.payload.update({
             collection: 'notification-prefs',
             id: row.id,
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'notification-prefs',
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })

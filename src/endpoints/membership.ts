@@ -1,12 +1,19 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib/membership'
+import { hasCapability } from '../lib/access'
+import {
+  destroyAllSessions,
+  findAccountRowById,
+  hasActivePlatformMandate,
+  setAccountFields,
+} from '../lib/membership'
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
 import { withAuthorityLock } from '../lib/authorityLock'
+import type { Doc, DocData, AccountLike } from '../lib/domain'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -55,7 +62,7 @@ async function openHandover(
       status: 'open',
       openedBy: actorId,
       openedAt: new Date().toISOString(),
-    } as any,
+    } as DocData,
     overrideAccess: true,
     // Always bind to the request: inside an authority transaction an
     // unbound create runs on another pooled connection and deadlocks on
@@ -75,7 +82,7 @@ async function endRecords(
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
   return withAuthorityLock(req, accountId, async () => {
-    const and: any[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
+    const and: Doc[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
     if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
     const { docs } = await req.payload.find({
       collection: 'authority-records',
@@ -85,7 +92,7 @@ async function endRecords(
       req,
     })
     const ended = new Date().toISOString()
-    for (const doc of docs as any[]) {
+    for (const doc of docs as Doc[]) {
       await req.payload.update({
         collection: 'authority-records',
         id: doc.id,
@@ -111,12 +118,13 @@ export async function applyMembershipTransition(
     scopeTypes?: string[]
     accountFields: Record<string, any>
     handover: { reason: string; scopeLabel: string; items?: string[] }
-    actor: any
+    actor: AccountLike
     auditEntry: (result: { ended: number; updated: any }) => Record<string, any>
   },
-  hooks?: { afterSweep?: () => Promise<void> },
+  hooks?: { beforeSweep?: () => Promise<void>; afterSweep?: () => Promise<void> },
 ) {
   return withAuthorityLock(req, accountId, async () => {
+    await hooks?.beforeSweep?.()
     const ended = await endRecords(req, accountId, { scopeTypes: transition.scopeTypes })
     await hooks?.afterSweep?.()
     const updated = await req.payload.update({
@@ -188,7 +196,7 @@ export const membershipEndpoints: Endpoint[] = [
         membershipEndedAt: account.membershipEndedAt,
         // All authority — participation and mandates (WG Contact Points,
         // team roles, Council seats) — in one list.
-        records: (recordRes.docs as any[]).map((a) => ({
+        records: (recordRes.docs as Doc[]).map((a) => ({
           id: a.id,
           kind: a.kind,
           role: a.role,
@@ -199,7 +207,7 @@ export const membershipEndpoints: Endpoint[] = [
           startsAt: a.startsAt,
           endsAt: a.endsAt,
         })),
-        openHandovers: (handovers as any[]).map(handoverView),
+        openHandovers: (handovers as Doc[]).map(handoverView),
       })
     }),
   },
@@ -212,7 +220,7 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({
           _: 'Only Constituency Work membership renews annually.',
         })
-      if (!['active', 'expired'].includes(account.membershipStatus))
+      if (!['active', 'expired'].includes(String(account.membershipStatus ?? '')))
         throw fail.conflict(
           'invalid_state',
           `Cannot renew while membership status is ${account.membershipStatus}.`,
@@ -241,7 +249,7 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const scope = b.scope === 'membership' ? 'membership' : 'constituency_work'
       if (scope === 'constituency_work') {
         if (account.membershipTrack !== 'constituency_work')
@@ -299,7 +307,7 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 20,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map(handoverView) })
+      return json({ items: (docs as Doc[]).map(handoverView) })
     }),
   },
   {
@@ -310,17 +318,17 @@ export const membershipEndpoints: Endpoint[] = [
       const h = await req.payload
         .findByID({
           collection: 'handovers',
-          id: Number(req.routeParams!.id),
+          id: Number(param(req, 'id')),
           overrideAccess: true,
         })
         .catch(() => {
           throw fail.notFound('Handover not found.')
         })
-      const owner = (h.account as any)?.id ?? h.account
+      const owner = (h.account as Doc)?.id ?? h.account
       if (owner !== account.id) throw fail.forbidden('This is not your handover.')
       if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
-      const idx = Number(req.routeParams!.idx)
-      const items = (h.items ?? []) as any[]
+      const idx = Number(param(req, 'idx'))
+      const items = (h.items ?? []) as Doc[]
       if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
         throw fail.validation({ idx: 'No such handover item.' })
       items[idx] = {
@@ -373,8 +381,8 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 10000,
         overrideAccess: true,
       })
-      const results: any[] = []
-      for (const row of docs as any[]) {
+      const results: Doc[] = []
+      for (const row of docs as Doc[]) {
         const { ended } = await applyMembershipTransition(req, row.id, {
           scopeTypes: CW_SCOPES,
           accountFields: { constituencyWorkStatus: '', renewalDueAt: null },
@@ -396,9 +404,9 @@ export const membershipEndpoints: Endpoint[] = [
     path: '/member/team/membership/accounts/:id/terminate',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
-      const id = String(req.routeParams!.id)
-      const b = ((await req.json?.()) || {}) as any
+      const { account: staff, access } = await requireTeam(req, 'membership_team')
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
@@ -406,26 +414,41 @@ export const membershipEndpoints: Endpoint[] = [
       if (!target) throw fail.notFound('Account not found.')
       if (target.id === staff.id)
         throw fail.validation({ _: 'You cannot terminate your own account.' })
-      if (['admin', 'focal_point'].includes(target.role) && staff.role !== 'admin')
-        throw fail.forbidden('Only an admin can terminate platform staff membership.')
-      const { updated, handover } = await applyMembershipTransition(req, target.id, {
-        accountFields: {
-          membershipStatus: 'terminated',
-          membershipEndedAt: new Date().toISOString(),
-          membershipEndReason: reason.slice(0, 500),
-          constituencyWorkStatus: '',
-          hubAccessStatus: 'suspended',
+      if ((await hasActivePlatformMandate(target.id)) && !hasCapability(access, 'platform.manage'))
+        throw fail.forbidden('Only a platform officer can terminate an officer\u2019s membership.')
+      const { updated, handover } = await applyMembershipTransition(
+        req,
+        target.id,
+        {
+          accountFields: {
+            membershipStatus: 'terminated',
+            membershipEndedAt: new Date().toISOString(),
+            membershipEndReason: reason.slice(0, 500),
+            constituencyWorkStatus: '',
+            hubAccessStatus: 'suspended',
+          },
+          handover: { reason: 'termination', scopeLabel: 'Membership' },
+          actor: staff,
+          auditEntry: (r) => ({
+            action: 'membership.terminated',
+            targetType: 'account',
+            targetId: id,
+            reason: reason.slice(0, 500),
+            after: accountView(r.updated),
+          }),
         },
-        handover: { reason: 'termination', scopeLabel: 'Membership' },
-        actor: staff,
-        auditEntry: (r) => ({
-          action: 'membership.terminated',
-          targetType: 'account',
-          targetId: id,
-          reason: reason.slice(0, 500),
-          after: accountView(r.updated),
-        }),
-      })
+        {
+          // Recheck under the lock: a platform mandate granted between the
+          // pre-check above and this sweep must not be ended silently.
+          beforeSweep: async () => {
+            if (
+              (await hasActivePlatformMandate(target.id)) &&
+              !hasCapability(access, 'platform.manage')
+            )
+              throw fail.forbidden('Only a platform officer can terminate an officer’s membership.')
+          },
+        },
+      )
       await destroyAllSessions(target.id)
       return json({
         account: accountView(updated),
@@ -438,25 +461,27 @@ export const membershipEndpoints: Endpoint[] = [
     path: '/member/team/membership/accounts/:id/records/:rid/end',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
-      const b = ((await req.json?.()) || {}) as any
+      const { account: staff, access } = await requireTeam(req, 'membership_team')
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
       const record = await req.payload
         .findByID({
           collection: 'authority-records',
-          id: Number(req.routeParams!.rid),
+          id: Number(param(req, 'rid')),
           overrideAccess: true,
         })
         .catch(() => {
           throw fail.notFound('Authority record not found.')
         })
-      const owner = (record.account as any)?.id ?? record.account
-      if (String(owner) !== String(req.routeParams!.id))
+      const owner = (record.account as Doc)?.id ?? record.account
+      if (String(owner) !== param(req, 'id'))
         throw fail.validation({ id: 'Record does not belong to that account.' })
       if (record.status !== 'active')
         throw fail.conflict('invalid_phase', `Record is already ${record.status}.`)
+      if (record.scopeType === 'platform' && !hasCapability(access, 'platform.manage'))
+        throw fail.forbidden('Only a platform officer can end a platform mandate.')
       const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
         // Re-read under the lock: a concurrent staff request or the
         // endRecords sweep can change the status between the pre-check
@@ -466,7 +491,7 @@ export const membershipEndpoints: Endpoint[] = [
           id: record.id,
           overrideAccess: true,
           req,
-        })) as any
+        })) as Doc
         if (current.status !== 'active')
           throw fail.conflict('invalid_phase', `Record is already ${current.status}.`)
         const endsAt = new Date().toISOString()
@@ -521,7 +546,7 @@ export const membershipEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const items = []
-      for (const h of docs as any[]) {
+      for (const h of docs as Doc[]) {
         const acct =
           typeof h.account === 'object'
             ? { id: h.account.id, name: h.account.name }
@@ -538,14 +563,14 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
       const h = await req.payload
         .findByID({
           collection: 'handovers',
-          id: Number(req.routeParams!.id),
+          id: Number(param(req, 'id')),
           overrideAccess: true,
         })
         .catch(() => {
@@ -596,7 +621,7 @@ export const membershipEndpoints: Endpoint[] = [
       if (account.membershipStatus !== 'rejected') {
         throw new ApiError(409, 'not_rejected', 'Only a rejected application can be appealed.')
       }
-      const bytes = Buffer.from(await (req as any).arrayBuffer())
+      const bytes = Buffer.from(await (req as Doc).arrayBuffer())
       const identityKind = String(req.headers.get('x-identity-kind') || '')
       const statement = decodeURIComponent(String(req.headers.get('x-appeal-statement') || ''))
       const appeal = await submitAppeal({

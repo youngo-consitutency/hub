@@ -1,4 +1,5 @@
 import type { Payload, PayloadRequest } from 'payload'
+import type { Doc } from './domain'
 
 // Shared writer coordination for an account's authority records (S11/S13).
 //
@@ -31,7 +32,7 @@ import type { Payload, PayloadRequest } from 'payload'
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
 function txHandle(payload: Payload, transactionID: any) {
-  const tx = (payload.db as any).sessions?.[transactionID]?.db
+  const tx = (payload.db as Doc).sessions?.[transactionID]?.db
   if (!tx) throw new Error('Authority locks require an open database transaction.')
   return tx
 }
@@ -43,7 +44,7 @@ export async function advisoryAuthorityLock(
 ): Promise<void> {
   if (!Number.isInteger(accountId))
     throw new Error('Authority lock requires an integer account id.')
-  await (payload.db as any).execute({
+  await (payload.db as Doc).execute({
     db: txHandle(payload, transactionID),
     raw: `SELECT pg_advisory_xact_lock(${AUTHORITY_LOCK_NS}, ${accountId})`,
   })

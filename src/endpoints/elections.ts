@@ -1,11 +1,12 @@
 import crypto from 'node:crypto'
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
 import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
+import type { Doc, DocData } from '../lib/domain'
 
 // S10 elections. See lib/governance.ts for shared helpers and the
 // credential-secrecy model.
@@ -49,7 +50,7 @@ export const electionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((e) => electionView(e)) })
+      return json({ items: (docs as Doc[]).map((e) => electionView(e)) })
     }),
   },
   {
@@ -59,7 +60,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may create elections.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!Array.isArray(b.races) || !b.races.length)
@@ -78,7 +79,7 @@ export const electionEndpoints: Endpoint[] = [
           })),
           quorumIndividuals: b.quorumIndividuals ?? 100,
           quorumOrganisations: b.quorumOrganisations ?? 25,
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -94,7 +95,7 @@ export const electionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       // Candidacies are published simultaneously when voting opens (S10
       // §2.3); before that only counts are exposed.
       const { docs: all } = await req.payload.find({
@@ -109,7 +110,7 @@ export const electionEndpoints: Endpoint[] = [
       return json({
         election: electionView(e, {
           candidateCount: all.length,
-          candidates: published ? (all as any[]).map(candidateView) : undefined,
+          candidates: published ? (all as Doc[]).map(candidateView) : undefined,
         }),
       })
     }),
@@ -121,7 +122,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may advance phases.')
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       const flow: Record<string, string> = {
         announced: 'nominations',
         nominations: 'voting',
@@ -179,10 +180,10 @@ export const electionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       if (e.status !== 'nominations')
         throw fail.conflict('invalid_phase', 'Nominations are not open.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
@@ -208,7 +209,7 @@ export const electionEndpoints: Endpoint[] = [
           videoUrl: b.videoUrl?.trim() || null,
           status: 'pending',
           nominatedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -226,14 +227,14 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team screens candidacies.')
-      const e = await loadElection(req, req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const e = await loadElection(req, param(req, 'id'))
+      const b = await readBody(req)
       if (!['screened_in', 'screened_out'].includes(b.status))
         throw fail.validation({ status: 'Must be screened_in or screened_out.' })
       const candidate = await req.payload
         .findByID({
           collection: 'election-candidates',
-          id: Number(req.routeParams!.cid),
+          id: Number(param(req, 'cid')),
           overrideAccess: true,
         })
         .catch(() => {
@@ -261,7 +262,7 @@ export const electionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       // Credentials may be issued once voting is scheduled (or in advance).
       if (!['nominations', 'voting', 'tallying'].includes(e.status))
         throw fail.conflict('invalid_phase', 'Voter credentials are not yet being issued.')
@@ -285,7 +286,7 @@ export const electionEndpoints: Endpoint[] = [
           kind,
           tokenHash: tokenHash(e.id, token),
           issuedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -301,10 +302,10 @@ export const electionEndpoints: Endpoint[] = [
     path: '/governance/elections/:id/vote',
     method: 'post',
     handler: endpoint(async (req) => {
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       if (e.status !== 'voting')
         throw fail.conflict('invalid_phase', 'Voting is not open for this election.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
       if (!b.token?.trim()) fields.token = 'Required.'
@@ -322,7 +323,7 @@ export const electionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       if (!voters.length) throw fail.forbidden('Invalid voter credential.')
-      const voter = voters[0] as any
+      const voter = voters[0] as Doc
       const { totalDocs: cast } = await req.payload.find({
         collection: 'election-ballots',
         where: {
@@ -350,8 +351,8 @@ export const electionEndpoints: Endpoint[] = [
         limit: 500,
         overrideAccess: true,
       })
-      const valid = new Set((cands as any[]).map((c) => c.id))
-      const ranks = (b.ranks as any[]).map(String).filter(Boolean)
+      const valid = new Set((cands as Doc[]).map((c) => c.id))
+      const ranks = (b.ranks as Doc[]).map(String).filter(Boolean)
       if (ranks.some((r) => !valid.has(Number(r))))
         throw fail.validation({ ranks: 'Contains an unknown or unscreened candidate id.' })
       if (new Set(ranks).size !== ranks.length)
@@ -366,7 +367,7 @@ export const electionEndpoints: Endpoint[] = [
             kind: voter.kind,
             ranks: ranks.map(Number),
             castAt: new Date().toISOString(),
-          } as any,
+          } as DocData,
           overrideAccess: true,
         })
       } catch (error) {
@@ -406,7 +407,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may tally.')
-      let e = await loadElection(req, req.routeParams!.id as string)
+      let e = await loadElection(req, param(req, 'id'))
       if (!['voting', 'tallying'].includes(e.status))
         throw fail.conflict('invalid_phase', `Cannot tally while status is ${e.status}.`)
       const { docs: ballots } = await req.payload.find({
@@ -418,10 +419,10 @@ export const electionEndpoints: Endpoint[] = [
       // Quorum counts distinct voters who participated in the election,
       // not per-race ballots (a voter may vote in several races).
       const indSet = new Set(
-        (ballots as any[]).filter((b) => b.kind === 'individual').map((b) => b.voterTokenHash),
+        (ballots as Doc[]).filter((b) => b.kind === 'individual').map((b) => b.voterTokenHash),
       )
       const orgSet = new Set(
-        (ballots as any[]).filter((b) => b.kind === 'organisation').map((b) => b.voterTokenHash),
+        (ballots as Doc[]).filter((b) => b.kind === 'organisation').map((b) => b.voterTokenHash),
       )
       const ind = indSet.size
       const org = orgSet.size
@@ -449,15 +450,15 @@ export const electionEndpoints: Endpoint[] = [
           limit: 500,
           overrideAccess: true,
         })
-        const raceBallots = (ballots as any[])
+        const raceBallots = (ballots as Doc[])
           .filter((b) => b.race === race.slug)
           .map((b) => ({ ranks: (b.ranks ?? []).map(String) }))
         const tally = tallyIrv(
           raceBallots,
-          (cands as any[]).map((c) => String(c.id)),
+          (cands as Doc[]).map((c) => String(c.id)),
         )
         result.races[race.slug] = {
-          candidates: (cands as any[]).map((c) => ({
+          candidates: (cands as Doc[]).map((c) => ({
             id: c.id,
             name: accountRef(c.account)?.name,
           })),

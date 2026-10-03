@@ -1,37 +1,16 @@
 import type { PayloadRequest } from 'payload'
 import { ApiError, fail } from './respond'
-import { getAccessProfile } from './access'
-import { toCamelCase } from './case'
+import { getAccessProfile, hasCapability, hasTeamRole } from './access'
+import type { AccessProfile } from './access'
+import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
+import type { AccountLike, AccountView, Doc } from './domain'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
-export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
-// Account rows arrive from Payload docs (camelCase) and raw SQL
-// (snake_case) — normalise once, then read the canonical field names.
-const accountRow = (account: any): Record<string, any> => (account ? toCamelCase(account) : {})
-
-// Single source for "may use member features". Every endpoint must go through
-// requireVerifiedMember/requireCwMember below — do not re-implement the check.
-export function isVerifiedAccount(account: any): boolean {
-  const r = accountRow(account)
-  return (
-    r.hubAccessStatus === 'active' &&
-    (r.memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(r.role))
-  )
-}
-
-// Active Constituency Work membership (S17): decision rights and mandate
-// eligibility. Same predicate the platform bridge uses — keep them aligned.
-export function isCwActive(account: any): boolean {
-  const r = accountRow(account)
-  return (
-    r.membershipTrack === 'constituency_work' &&
-    r.constituencyWorkStatus === 'active' &&
-    ['active', 'renewal_due'].includes(r.membershipStatus ?? '') &&
-    r.hubAccessStatus === 'active'
-  )
-}
+// Re-exported so callers keep a single import site; the predicates live in
+// the leaf module to keep accounts/access acyclic.
+export { isVerifiedAccount, isCwActive }
 
 export function requireVerifiedMember(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -41,8 +20,8 @@ export function requireVerifiedMember(req: PayloadRequest) {
 }
 
 // Constituency Work membership is required for decision rights (S17 §1.1).
-// A role label is not membership: admins and focal points need an active CW
-// record like everyone else.
+// A mandate is not membership: officers need an active CW record like
+// everyone else.
 export function requireCwMember(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
   if (!isCwActive(account))
@@ -55,9 +34,11 @@ export function requireCwMember(req: PayloadRequest) {
 }
 
 // Normalises a Payload doc or raw SQL row into the SPA's account shape.
-export function accountView(row: any) {
-  const r = accountRow(row)
+export function accountView(row: AccountLike | Doc): AccountView
+export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null
+export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null {
   if (!row) return null
+  const r = accountRow(row)
   const name = r.name || [r.firstName, r.lastName].filter(Boolean).join(' ')
   const memberStatus = r.memberStatus ?? 'pending_course'
   const role = r.role || 'member'
@@ -104,14 +85,8 @@ export function accountView(row: any) {
     isVerified: isVerifiedAccount({
       hubAccessStatus,
       memberStatus,
-      role,
     }),
-    isAdmin: role === 'admin',
-    isFocalPoint: role === 'focal_point',
-    isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
-    isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: r.entityType === 'organization',
-    isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: r.createdAt,
     lastLoginAt: r.lastLoginAt ?? null,
     mustChangePassword: Boolean(r.mustChangePassword),
@@ -120,36 +95,63 @@ export function accountView(row: any) {
 
 // The SPA may also hit with a Bearer token (agent/MCP use) in addition to the
 // httpOnly cookie; Payload already populates req.user for both.
-export function requireAccount(req: PayloadRequest): any {
+export function requireAccount(req: PayloadRequest): AccountLike {
   const user = req.user
   if (!user || user.collection !== 'accounts') {
     throw fail.unauthorized()
   }
-  return user
+  return user as AccountLike
 }
 
-// Team workspaces require the corresponding *appointment*. Technical
-// administrators do not inherit team authority (S13: administration ≠
-// constituency authority).
-export async function requireTeam(req: PayloadRequest, teamRole: string) {
+export interface MemberContext {
+  account: AccountLike
+  access: AccessProfile
+}
+
+// The authenticated request context every member endpoint needs: the account
+// plus its derived access profile. Capability gates build on this pair.
+export async function memberContext(req: PayloadRequest): Promise<MemberContext> {
+  const account = requireAccount(req)
+  return { account, access: await getAccessProfile(req, account) }
+}
+
+export async function verifiedContext(req: PayloadRequest): Promise<MemberContext> {
   const account = requireVerifiedMember(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.teamRoles.includes(teamRole))
+  return { account, access: await getAccessProfile(req, account) }
+}
+
+// Team workspaces require the corresponding authority record.
+export async function requireTeam(req: PayloadRequest, teamRole: string): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!hasTeamRole(ctx.access, teamRole))
     throw fail.forbidden('This team workspace is not assigned to your account.')
-  return { account, access }
+  return ctx
 }
 
-export async function requireAdmin(req: PayloadRequest) {
-  const account = requireVerifiedMember(req)
-  if (account.role !== 'admin') throw fail.forbidden('This console is for administrators.')
-  return account
+// The accounts console gates on the `accounts.manage` capability, held by
+// platform mandates (focal point, internal-management coordinator) — not by
+// an account flag.
+export async function requireAccountsManager(req: PayloadRequest): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!hasCapability(ctx.access, 'accounts.manage'))
+    throw fail.forbidden('This console is for platform operators.')
+  return ctx
+}
+
+// Platform-wide operations (contact-point call scheduling and the like) gate
+// on the `platform.manage` capability — the focal point and peers.
+export async function requirePlatformOperator(req: PayloadRequest): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!hasCapability(ctx.access, 'platform.manage'))
+    throw fail.forbidden('This area is for platform officers.')
+  return ctx
 }
 
 export function adminReason(body: any): string {
   const reason = String(body?.reason || '').trim()
   if (reason.length < 8)
     throw fail.validation({
-      _: 'Give a reason of at least 8 characters for this admin action.',
+      _: 'Give a reason of at least 8 characters for this operation.',
     })
   return reason.slice(0, 500)
 }

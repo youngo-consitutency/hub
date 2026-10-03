@@ -1,8 +1,9 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { getDocument } from '../lib/documents'
+import type { Doc, DocData } from '../lib/domain'
 
 // The questionnaire structure (kinds + sections) is console-editable content
 // in the `consultation` document; the API both serves and validates with it.
@@ -46,7 +47,7 @@ export const consultationEndpoints: Endpoint[] = [
       })
       return json(
         {
-          items: (docs as any[]).map((row) => ({
+          items: (docs as Doc[]).map((row) => ({
             id: row.id,
             kind: row.kind,
             body: row.body,
@@ -64,7 +65,7 @@ export const consultationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await consultationLimit(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (b.website) return json({ ok: true, item: null }, { status: 201 })
       const { kinds, sections } = await consultationOptions(req)
       const kind = String(b.kind || '')
@@ -85,7 +86,7 @@ export const consultationEndpoints: Endpoint[] = [
           body,
           displayName: cleanText(b.name, 80) || null,
           section,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -98,7 +99,7 @@ export const consultationEndpoints: Endpoint[] = [
             body,
             name: cleanText(b.name, 80) || null,
             section,
-            createdAt: (item as any).createdAt,
+            createdAt: (item as Doc).createdAt,
           },
         },
         { status: 201 },

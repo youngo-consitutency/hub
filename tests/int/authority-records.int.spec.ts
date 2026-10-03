@@ -128,15 +128,30 @@ describe('record-derived permissions', () => {
     expect(access.unmappedRecords).toBe(1)
   })
 
-  it('gives a technical administrator no constituency authority', async () => {
-    const { account } = await provisionAccount({ role: 'admin' })
+  it('gives a plain member no authority beyond base capabilities', async () => {
+    const { account } = await provisionAccount({})
     const access = await accessFor(account)
-    expect(access.capabilities).toContain('platform.manage')
     expect(access.councilSeats).toEqual([])
+    expect(access.capabilities).not.toContain('platform.manage')
+    expect(access.capabilities).not.toContain('accounts.manage')
     expect(access.capabilities).not.toContain('council.vote')
     expect(access.capabilities).not.toContain('selection.manage')
     expect(access.capabilities).not.toContain('safeguarding.case')
     expect(access.teamRoles).toEqual([])
+  })
+
+  it('gives a focal point platform operations without team memberships', async () => {
+    const { account } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
+    })
+    const access = await accessFor(account)
+    expect(access.capabilities).toContain('platform.manage')
+    expect(access.capabilities).toContain('accounts.manage')
+    expect(access.capabilities).toContain('audit.read')
+    expect(access.councilSeats).toContain('focal_point')
+    expect(access.capabilities).not.toContain('safeguarding.case')
+    expect(access.capabilities).not.toContain('finance.review')
   })
 
   it('suppresses CW-gated records while membership is inactive', async () => {
@@ -271,8 +286,8 @@ describe('authority service', () => {
     ).rejects.toMatchObject({ status: 409 })
 
     // Nor a principal whose mandate has ended.
-    const { account: admin } = await provisionAccount({ role: 'admin' })
-    await revokeAuthority(req, (principal as any).id, admin, 'Term ended.')
+    const { account: actor } = await provisionAccount({})
+    await revokeAuthority(req, (principal as any).id, actor, 'Term ended.')
     const { account: third } = await provisionAccount({ membershipTrack: 'constituency_work' })
     await expect(
       grantAuthority(req, {
@@ -305,7 +320,7 @@ describe('authority service', () => {
     const { grantAuthority, revokeAuthority } = await import('@/lib/authorityService')
     const req = { payload, headers: new Headers() } as any
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
-    const { account: actor } = await provisionAccount({ role: 'admin' })
+    const { account: actor } = await provisionAccount({})
     const row = await grantAuthority(req, {
       account: account.id,
       role: 'team.data_controller',

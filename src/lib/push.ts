@@ -2,6 +2,7 @@ import webPush from 'web-push'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
+import type { Doc } from './domain'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
 // Rows live in the Payload `push-subscriptions` table; endpoints are validated
@@ -18,7 +19,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 export const pushConfigured =
   process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
 
-const publicRow = (row: any) => {
+const publicRow = (row: Doc) => {
   const r = toCamelCase<Record<string, any>>(row)
   return {
     id: r.id,
@@ -57,7 +58,7 @@ export function validatedPushEndpoint(value: any) {
   return url.href
 }
 
-export function toWebPushSubscription(row: any) {
+export function toWebPushSubscription(row: Doc) {
   return {
     endpoint: validatedPushEndpoint(row.endpoint),
     keys: row.keys || {},
@@ -140,7 +141,7 @@ export async function listSubscriberAccounts() {
      GROUP BY a.id, a.email, a.name, a.first_name, a.last_name
      ORDER BY max(s.created_at) DESC`,
   )
-  return rows.map((row: any) => ({
+  return rows.map((row: Doc) => ({
     id: row.id,
     email: row.email,
     name: row.name || [row.first_name, row.last_name].filter(Boolean).join(' ') || row.email,
@@ -177,7 +178,7 @@ export async function pruneEndpoints(endpoints: string[]) {
 }
 
 /** Send a notification and prune endpoints the push service reports expired. */
-export async function deliverPush(rows: any[], payload: string) {
+export async function deliverPush(rows: Doc[], payload: string) {
   if (process.env.HUB_DEMO_MODE === 'true')
     return { sent: 0, failed: 0, pruned: 0, total: rows.length }
 
@@ -195,7 +196,7 @@ export async function deliverPush(rows: any[], payload: string) {
   }
   const expired: string[] = []
   results.forEach((result, index) => {
-    const status = result.status === 'rejected' ? (result.reason as any)?.statusCode : null
+    const status = result.status === 'rejected' ? (result.reason as Doc)?.statusCode : null
     if (status === 404 || status === 410) expired.push(rows[index].endpoint)
   })
   if (expired.length) await pruneEndpoints(expired)

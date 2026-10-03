@@ -1,9 +1,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
 import { contributionsFromCsv, previewCsvImport, synthesizeGysContributions } from '../lib/gys.js'
+import type { Doc, DocData } from '../lib/domain'
 
 const GYS_STATUSES = [
   'submitted',
@@ -24,7 +25,7 @@ const GYS_TRANSITIONS: Record<string, string[]> = {
   published: [],
 }
 
-const publicCycleView = (row: any) =>
+const publicCycleView = (row: Doc) =>
   row
     ? {
         id: row.id,
@@ -39,7 +40,7 @@ const publicCycleView = (row: any) =>
       }
     : null
 
-const publicContributionView = (row: any) => ({
+const publicContributionView = (row: Doc) => ({
   id: row.id,
   cycleId: typeof row.cycle === 'object' ? row.cycle?.id : row.cycle,
   title: row.title,
@@ -61,7 +62,7 @@ const publicContributionView = (row: any) => ({
 
 async function getGysWorkflow(req: PayloadRequest): Promise<{
   cycle: NonNullable<ReturnType<typeof publicCycleView>>
-  contributions: any[]
+  contributions: Doc[]
   statuses: string[]
   synthesis: any
 }> {
@@ -81,13 +82,13 @@ async function getGysWorkflow(req: PayloadRequest): Promise<{
         title: `Global Youth Statement ${year}`,
         year,
         status: 'intake',
-      } as any,
+      } as DocData,
       overrideAccess: true,
       req,
     })
     docs = [created]
   }
-  const cycle = docs[0] as any
+  const cycle = docs[0] as Doc
   const { docs: contributions } = await req.payload.find({
     collection: 'gys-tracked-contributions',
     where: { cycle: { equals: cycle.id } },
@@ -96,7 +97,7 @@ async function getGysWorkflow(req: PayloadRequest): Promise<{
     overrideAccess: true,
     depth: 1,
   })
-  const items = (contributions as any[]).map(publicContributionView)
+  const items = (contributions as Doc[]).map(publicContributionView)
   return {
     cycle: publicCycleView(cycle)!,
     contributions: items,
@@ -131,7 +132,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const preview = previewCsvImport(b.csvText, b.columnMap)
       if (!preview.ok) throw fail.validation({ csvText: preview.error || 'Invalid CSV.' })
       return json(preview)
@@ -142,7 +143,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const workflow = await getGysWorkflow(req)
       let parsed: any
       try {
@@ -150,8 +151,8 @@ export const gysEndpoints: Endpoint[] = [
       } catch (err: any) {
         throw fail.validation({ csvText: err.message })
       }
-      const imported: any[] = []
-      const errors: any[] = []
+      const imported: Doc[] = []
+      const errors: Doc[] = []
       let skipped = 0
       for (const item of parsed.contributions) {
         if (item.externalId) {
@@ -178,7 +179,7 @@ export const gysEndpoints: Endpoint[] = [
                 ...item,
                 author: staff.id,
                 status: 'submitted',
-              } as any,
+              } as DocData,
               overrideAccess: true,
               req,
             }),
@@ -208,7 +209,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const allowed = [
         'planning',
         'intake',
@@ -224,7 +225,7 @@ export const gysEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'gys-workflow-cycles',
         id: workflow.cycle.id,
-        data: { status: b.status } as any,
+        data: { status: b.status } as DocData,
         overrideAccess: true,
         req,
       })
@@ -242,7 +243,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (!String(b.title || '').trim() || !String(b.body || '').trim())
         throw fail.validation({
           title: 'Title and contribution text are required.',
@@ -280,7 +281,7 @@ export const gysEndpoints: Endpoint[] = [
           author: staff.id,
           status: 'submitted',
           version: 1,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -297,13 +298,13 @@ export const gysEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const row = (await req.payload.findByID({
         collection: 'gys-tracked-contributions',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!row) throw fail.notFound()
       const status = String(b.status || '')
       if (!GYS_STATUSES.includes(status))
@@ -319,7 +320,7 @@ export const gysEndpoints: Endpoint[] = [
           status,
           reviewer: staff.id,
           version: (row.version || 1) + (status !== row.status ? 1 : 0),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

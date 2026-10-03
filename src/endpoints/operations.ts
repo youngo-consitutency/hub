@@ -1,8 +1,9 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
-import { requireVerifiedMember } from '../lib/accounts'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
-import { getAccessProfile } from '../lib/access'
+import type { AccountLike, Doc, DocData } from '../lib/domain'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
 // recognition (S20), partnerships (S13), privacy requests (S08). Members
@@ -10,15 +11,14 @@ import { getAccessProfile } from '../lib/access'
 // scoped endpoints. Generated REST writes stay staff-only throughout.
 
 // Review authority: a member holding one of the named team roles
-// (e.g. 'finance_team', 'safeguarding_team'). The admin role carries no
-// team authority — technical administration is not constituency authority.
+// (e.g. 'finance_team', 'safeguarding_team'). Account labels carry no
+// team authority — every review right is an evidenced record.
 // Review authority by capability: the shared registry decides which
 // authority records carry each review right (e.g. only gct.finance — not
 // every GCT member — holds finance.review).
 async function requireOpsCapability(req: PayloadRequest, capabilities: string[]) {
-  const account = requireVerifiedMember(req)
-  const access = await getAccessProfile(req, account)
-  if (!capabilities.some((c) => access.capabilities.includes(c)))
+  const { account, access } = await verifiedContext(req)
+  if (!capabilities.some((c) => hasCapability(access, c)))
     throw fail.forbidden('This workspace is not assigned to your account.')
   return { account }
 }
@@ -28,7 +28,7 @@ const accountRef = (a: any) =>
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
-const own = (doc: any) => {
+const own = (doc: Doc) => {
   const id = doc?.account?.id ?? doc?.reporter?.id ?? doc?.account ?? doc?.reporter
   return typeof id === 'object' ? id?.id : id
 }
@@ -46,7 +46,7 @@ async function loadDoc(
     })
 }
 
-function ownOr404(doc: any, account: any) {
+function ownOr404(doc: Doc, account: AccountLike) {
   if (own(doc) !== account.id) throw fail.notFound('Record not found.') // don't leak existence
 }
 
@@ -88,7 +88,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((f) => fundingView(f)) })
+      return json({ items: (docs as Doc[]).map((f) => fundingView(f)) })
     }),
   },
   {
@@ -96,7 +96,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!b.purpose?.trim()) fields.purpose = 'Required.'
@@ -119,7 +119,7 @@ export const operationEndpoints: Endpoint[] = [
           periodEnd: b.periodEnd ?? null,
           status: 'submitted',
           submittedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -135,7 +135,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
+      const f = await loadDoc(req, 'funding-requests', param(req, 'id'))
       ownOr404(f, account)
       return json({ request: fundingView(f) })
     }),
@@ -146,7 +146,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
+      const f = await loadDoc(req, 'funding-requests', param(req, 'id'))
       ownOr404(f, account)
       if (f.status !== 'submitted')
         throw fail.conflict('invalid_phase', `Cannot withdraw while ${f.status}.`)
@@ -170,11 +170,11 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
+      const f = await loadDoc(req, 'funding-requests', param(req, 'id'))
       ownOr404(f, account)
       if (f.status !== 'disbursed')
         throw fail.conflict('invalid_phase', 'A report can only follow a disbursement.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       if (!b.reportNote?.trim())
         throw fail.validation({ reportNote: 'Describe how the funds were used.' })
       const updated = await req.payload.update({
@@ -208,7 +208,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((f) => fundingView(f, true)) })
+      return json({ items: (docs as Doc[]).map((f) => fundingView(f, true)) })
     }),
   },
   {
@@ -216,8 +216,8 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireOpsCapability(req, ['finance.review'])
-      const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const f = await loadDoc(req, 'funding-requests', param(req, 'id'))
+      const b = await readBody(req)
       const next = String(b.status || '')
       const allowed: Record<string, string[]> = {
         submitted: ['under_review', 'approved', 'rejected'],
@@ -251,7 +251,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireOpsCapability(req, ['finance.review'])
-      const f = await loadDoc(req, 'funding-requests', req.routeParams!.id as string)
+      const f = await loadDoc(req, 'funding-requests', param(req, 'id'))
       if (f.status !== 'approved')
         throw fail.conflict('invalid_phase', 'Only an approved request can be disbursed.')
       const updated = await req.payload.update({
@@ -277,7 +277,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!['safeguarding', 'child_safeguarding', 'concern', 'coc'].includes(b.kind))
         fields.kind = 'Invalid case type.'
@@ -297,7 +297,7 @@ export const operationEndpoints: Endpoint[] = [
           involvedParties: b.involvedParties ?? null,
           status: 'received',
           receivedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -323,7 +323,7 @@ export const operationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((c) => ({
+        items: (docs as Doc[]).map((c) => ({
           caseRef: `SG-${c.id}`,
           kind: c.kind,
           status: c.status,
@@ -346,7 +346,7 @@ export const operationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((c) => ({
+        items: (docs as Doc[]).map((c) => ({
           id: c.id,
           kind: c.kind,
           severity: c.severity,
@@ -372,8 +372,8 @@ export const operationEndpoints: Endpoint[] = [
         'safeguarding.case',
         'awareness.case',
       ])
-      const c = await loadDoc(req, 'safeguarding-cases', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const c = await loadDoc(req, 'safeguarding-cases', param(req, 'id'))
+      const b = await readBody(req)
       const next = String(b.status || '')
       const flow: Record<string, string[]> = {
         received: ['triaged', 'closed'],
@@ -411,7 +411,7 @@ export const operationEndpoints: Endpoint[] = [
         targetType: 'safeguarding_case',
         targetId: String(c.id),
       })
-      return json({ case: { id: (updated as any).id, status: (updated as any).status } })
+      return json({ case: { id: (updated as Doc).id, status: (updated as Doc).status } })
     }),
   },
 
@@ -436,7 +436,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.interest?.trim()) fields.interest = 'Name the interest.'
       if (!b.details?.trim()) fields.details = 'Describe the conflict.'
@@ -450,7 +450,7 @@ export const operationEndpoints: Endpoint[] = [
           relatedScope: b.relatedScope?.trim() || null,
           status: 'declared',
           declaredAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -484,8 +484,8 @@ export const operationEndpoints: Endpoint[] = [
         'membership.review',
         'safeguarding.case',
       ])
-      const d = await loadDoc(req, 'coi-declarations', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const d = await loadDoc(req, 'coi-declarations', param(req, 'id'))
+      const b = await readBody(req)
       if (!['under_review', 'resolved', 'dismissed'].includes(b.status))
         throw fail.validation({ status: 'Must be under_review, resolved or dismissed.' })
       const updated = await req.payload.update({
@@ -529,7 +529,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!['certificate', 'letter', 'other'].includes(b.kind))
         fields.kind = 'Must be certificate, letter or other.'
@@ -544,7 +544,7 @@ export const operationEndpoints: Endpoint[] = [
           eventRef: b.eventRef?.trim() || null,
           status: 'requested',
           requestedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -575,8 +575,8 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireOpsCapability(req, ['recognition.review'])
-      const r = await loadDoc(req, 'recognition-requests', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const r = await loadDoc(req, 'recognition-requests', param(req, 'id'))
+      const b = await readBody(req)
       const flow: Record<string, string[]> = {
         requested: ['approved', 'declined'],
         approved: ['issued'],
@@ -609,7 +609,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.organisationName?.trim()) fields.organisationName = 'Required.'
       if (!['partnership', 'sponsorship', 'mou', 'other'].includes(b.kind))
@@ -627,7 +627,7 @@ export const operationEndpoints: Endpoint[] = [
           requiresCouncilDecision: Boolean(b.requiresCouncilDecision),
           status: 'proposed',
           proposedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -658,8 +658,8 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireOpsCapability(req, ['partnership.review'])
-      const p = await loadDoc(req, 'partnership-requests', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const p = await loadDoc(req, 'partnership-requests', param(req, 'id'))
+      const b = await readBody(req)
       const flow: Record<string, string[]> = {
         proposed: ['under_review', 'declined'],
         under_review: ['approved', 'declined'],
@@ -721,7 +721,7 @@ export const operationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!['access', 'erasure', 'rectification', 'portability', 'objection'].includes(b.kind))
         fields.kind = 'Invalid request type.'
@@ -736,7 +736,7 @@ export const operationEndpoints: Endpoint[] = [
           status: 'received',
           dueAt: new Date(Date.now() + 30 * 86400000).toISOString(),
           requestedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -770,8 +770,8 @@ export const operationEndpoints: Endpoint[] = [
         'privacy.manage',
         'membership.review',
       ])
-      const p = await loadDoc(req, 'privacy-requests', req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const p = await loadDoc(req, 'privacy-requests', param(req, 'id'))
+      const b = await readBody(req)
       const flow: Record<string, string[]> = {
         received: ['in_progress', 'declined'],
         in_progress: ['fulfilled', 'declined'],

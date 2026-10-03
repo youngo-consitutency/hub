@@ -1,11 +1,12 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile, hasCapability } from '../lib/access'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
+import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
+import type { Doc, DocData } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -44,7 +45,7 @@ async function evidenceForQuery(
         snippet: snippet.slice(0, 280),
         url,
       })
-      ;(evidence[evidence.length - 1] as any).score = score
+      ;(evidence[evidence.length - 1] as Doc).score = score
     }
   }
 
@@ -78,11 +79,11 @@ async function evidenceForQuery(
         '/profile',
       )
   }
-  evidence.sort((a, b) => (b as any).score - (a as any).score)
+  evidence.sort((a, b) => (b as Doc).score - (a as Doc).score)
   return evidence.slice(0, Math.max(1, Math.min(25, limit)))
 }
 
-const writebackView = (row: any) => ({
+const writebackView = (row: Doc) => ({
   id: row.id,
   kind: row.kind,
   title: row.title,
@@ -105,9 +106,8 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await intelligenceLimit(req)
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
-      const b = ((await req.json?.()) || {}) as any
+      const { account, access } = await verifiedContext(req)
+      const b = await readBody(req)
       const query = String(b.query || '').trim()
       if (query.length < 3 || query.length > 500)
         throw fail.validation({ query: 'Ask a question of 3–500 characters.' })
@@ -126,7 +126,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       })
       return json({
         query,
-        audience: account.role === 'admin' ? 'admin' : 'member',
+        audience: hasCapability(access, 'intelligence.operations.read') ? 'operator' : 'member',
         evidence,
         citations: evidence.map((e, i) => ({ ...e, evidenceId: `E${i + 1}` })),
         synthesis: {
@@ -146,9 +146,9 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const isAdmin = account.role === 'admin'
-      const where: any = isAdmin ? {} : { account: { equals: account.id } }
+      const { account, access } = await verifiedContext(req)
+      const isOperator = hasCapability(access, 'intelligence.operations.read')
+      const where: any = isOperator ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
         collection: 'research-notes',
         where,
@@ -166,7 +166,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await intelligenceLimit(req)
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (b.action !== 'save_research_note')
         throw fail.validation({ action: 'Unsupported writeback action.' })
       const title = cleanText(b.title, 160)
@@ -200,7 +200,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           citations,
           status: 'pending_review',
           idempotencyKey: idempotencyKey || null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -216,16 +216,16 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/approve',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Research notes are approved by administrators.')
-      const id = String(req.routeParams?.id)
+      const { account, access } = await verifiedContext(req)
+      if (!hasCapability(access, 'intelligence.writeback.approve'))
+        throw fail.forbidden('Research notes are approved by platform officers.')
+      const id = param(req, 'id')
       const row = (await req.payload.findByID({
         collection: 'research-notes',
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!row) throw fail.notFound()
       if (
         String(typeof row.account === 'object' ? row.account.id : row.account) ===
@@ -234,7 +234,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         throw new ApiError(
           409,
           'separation_of_duties',
-          'A research note must be approved by a different administrator than its author.',
+          'A research note must be approved by an operator other than its author.',
         )
       if (!['pending_review', 'draft'].includes(row.status))
         throw new ApiError(409, 'conflict', 'This note was already reviewed.')
@@ -245,7 +245,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'approved',
           approvedBy: account.id,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -261,16 +261,16 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/apply',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Research notes are applied by administrators.')
-      const id = String(req.routeParams?.id)
+      const { account, access } = await verifiedContext(req)
+      if (!hasCapability(access, 'intelligence.writeback.apply'))
+        throw fail.forbidden('Research notes are applied by platform officers.')
+      const id = param(req, 'id')
       const row = (await req.payload.findByID({
         collection: 'research-notes',
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!row) throw fail.notFound()
       if (row.status !== 'approved')
         throw new ApiError(409, 'conflict', 'Only approved notes can be applied.')
@@ -279,7 +279,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         throw new ApiError(
           409,
           'separation_of_duties',
-          'A research note must be applied by a different administrator than its approver.',
+          'A research note must be applied by a different operator than its approver.',
         )
       const updated = await req.payload.update({
         collection: 'research-notes',
@@ -288,7 +288,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'applied',
           appliedBy: account.id,
           appliedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -304,16 +304,16 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/metrics',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const isAdmin = account.role === 'admin'
-      const where: any = isAdmin ? {} : { account: { equals: account.id } }
+      const { account, access } = await verifiedContext(req)
+      const isOperator = hasCapability(access, 'intelligence.operations.read')
+      const where: any = isOperator ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
         collection: 'research-notes',
         where,
         limit: 500,
         overrideAccess: true,
       })
-      const byStatus = (notes.docs as any[]).reduce<Record<string, number>>((acc, n) => {
+      const byStatus = (notes.docs as Doc[]).reduce<Record<string, number>>((acc, n) => {
         acc[n.status] = (acc[n.status] || 0) + 1
         return acc
       }, {})

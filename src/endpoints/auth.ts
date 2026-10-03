@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody } from '../lib/respond'
 import { validateRegistration } from '../lib/registration'
 import {
   accountView,
@@ -13,6 +13,7 @@ import { sendEmail, emailConfigured } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
+import type { Doc, DocData } from '../lib/domain'
 
 const registerLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -24,7 +25,7 @@ const loginAccountLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   scope: 'login-account',
-  key: (req) => `email:${String((req as any)._bodyEmail || '')}`,
+  key: (req) => `email:${String((req as Doc)._bodyEmail || '')}`,
 })
 const resetRequestLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -43,7 +44,7 @@ const changePasswordLimit = rateLimit({
 })
 
 const GENERIC_FORGOT =
-  'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
+  'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask a platform officer if email delivery is not configured yet.'
 
 const noStore = (res: Response) => {
   res.headers.set('Cache-Control', 'no-store')
@@ -62,7 +63,7 @@ async function loginResponse(req: any, email: string, password: string) {
     overrideAccess: true,
     showHiddenFields: true,
   })
-  const doc = found.docs[0] as any
+  const doc = found.docs[0] as Doc
 
   let logged: any
   try {
@@ -85,7 +86,7 @@ async function loginResponse(req: any, email: string, password: string) {
           password,
           legacyPasswordHash: null,
           legacyPasswordSalt: null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -117,7 +118,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await registerLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       const result = await validateRegistration(req, b)
       if (result.honeypot) {
         req.payload.logger.info({ event: 'hub_register_rejected_as_automated' })
@@ -196,17 +197,17 @@ export const authEndpoints: Endpoint[] = [
           role: 'member',
           wgInterests: data.wgInterests,
           mustChangePassword: false,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
 
       const logged = await loginResponse(req, data.email, data.password)
       if (!logged) throw fail.unauthorized()
-      const expiresAt = new Date((logged as any).exp * 1000)
+      const expiresAt = new Date((logged as Doc).exp * 1000)
       req.payload.logger.info({
         event: 'hub_register',
-        track: (created as any).membershipTrack,
+        track: (created as Doc).membershipTrack,
       })
       return noStore(
         json(
@@ -230,11 +231,11 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/login',
     method: 'post',
     handler: endpoint(async (req) => {
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true }))
       const email = String(b.email || '').trim()
       const password = String(b.password || '')
-      ;(req as any)._bodyEmail = email
+      ;(req as Doc)._bodyEmail = email
       await loginLimit(req)
       await loginAccountLimit(req)
 
@@ -267,7 +268,7 @@ export const authEndpoints: Endpoint[] = [
         .update({
           collection: 'accounts',
           id: logged.user.id,
-          data: { lastLoginAt: new Date().toISOString() } as any,
+          data: { lastLoginAt: new Date().toISOString() } as DocData,
           overrideAccess: true,
           req,
         })
@@ -298,7 +299,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       try {
-        await (req.payload as any).logout?.({ collection: 'accounts', req })
+        await (req.payload as Doc).logout?.({ collection: 'accounts', req })
       } catch {
         // Cookie clear below is the effective logout.
       }
@@ -311,7 +312,7 @@ export const authEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await changePasswordLimit(req)
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       const currentPassword = String(b.currentPassword || '')
       const password = String(b.password || '')
       const passwordConfirm = String(b.passwordConfirm || '')
@@ -338,7 +339,7 @@ export const authEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'accounts',
         id: account.id,
-        data: { password, mustChangePassword: false } as any,
+        data: { password, mustChangePassword: false } as DocData,
         overrideAccess: true,
         req,
       })
@@ -355,7 +356,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await resetRequestLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true, message: GENERIC_FORGOT }))
       const email = String(b.email || '')
         .trim()
@@ -370,7 +371,7 @@ export const authEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const account = docs[0] as any
+      const account = docs[0] as Doc
       if (account) {
         const rawToken = randomBytes(32).toString('hex')
         const tokenHash = sha256Hex(rawToken)
@@ -412,14 +413,15 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await resetConsumeLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true }))
       const token = String(b.token || '').trim()
       const password = String(b.password || '')
       const passwordConfirm = String(b.passwordConfirm || '')
       const fields: Record<string, string> = {}
       if (!token)
-        fields.token = 'Reset token is missing. Open the full link from your email or admin.'
+        fields.token =
+          'Reset token is missing. Open the full link from your email or a platform officer.'
       if (password.length < 10) fields.password = 'Password must be at least 10 characters.'
       if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
@@ -435,7 +437,7 @@ export const authEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const reset = docs[0] as any
+      const reset = docs[0] as Doc
       if (!reset) {
         return json(
           {
@@ -450,7 +452,7 @@ export const authEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'accounts',
         id: typeof reset.account === 'object' ? reset.account.id : reset.account,
-        data: { password, mustChangePassword: false } as any,
+        data: { password, mustChangePassword: false } as DocData,
         overrideAccess: true,
         req,
       })

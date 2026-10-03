@@ -1,8 +1,9 @@
 import type { Endpoint } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
+import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
+import { requireAccount, memberContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
 import {
   deleteSubscription,
@@ -15,13 +16,14 @@ import {
 } from '../lib/push'
 import { drainNotificationOutbox, enqueueNotification } from '../lib/notifications'
 import { audit } from '../lib/audit'
+import type { Doc } from '../lib/domain'
 
 // Keyed on the account rather than the caller IP — venue networks share IPs.
 const pushTestLimit = rateLimit({
   windowMs: 60_000,
   max: 5,
   scope: 'push-test',
-  key: (req) => String((req as any).user?.id || 'anon'),
+  key: (req) => String((req as Doc).user?.id || 'anon'),
 })
 const pushSendLimit = rateLimit({ windowMs: 60_000, max: 10, scope: 'push-send' })
 
@@ -43,7 +45,7 @@ export const pushEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       if (!pushConfigured) throw pushUnavailable()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const subscription = b.subscription?.endpoint ? b.subscription : b
       if (!subscription?.endpoint)
         throw fail.validation({ endpoint: 'A subscription endpoint is required.' })
@@ -69,7 +71,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const removed = await deleteSubscription({
         accountId: account.id,
         endpoint: b.endpoint || null,
@@ -86,7 +88,7 @@ export const pushEndpoints: Endpoint[] = [
       return json({
         configured: pushConfigured,
         subscribed: rows.length > 0,
-        subscriptions: rows.map((row: any) => ({
+        subscriptions: rows.map((row: Doc) => ({
           id: row.id,
           endpoint: row.endpoint,
           createdAt: row.createdAt,
@@ -105,7 +107,7 @@ export const pushEndpoints: Endpoint[] = [
       const rows = await listSubscriptionsForAccounts([account.id])
       if (!rows.length)
         throw new ApiError(404, 'no_subscriptions', 'Subscribe on this device first.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const payload = JSON.stringify({
         title: b.title || 'YOUNGO Hub',
         body: b.body || 'Test notification.',
@@ -121,11 +123,12 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/send',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const { account, access } = await memberContext(req)
+      if (!hasCapability(access, 'notifications.send'))
+        throw fail.forbidden('Sending notifications requires a mandate.')
       await pushSendLimit(req)
       if (!pushConfigured) throw pushUnavailable()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const { userIds, title, body, icon, badge, tag, data, requireInteraction } = b
       const targetAll = userIds === 'all'
       if (!targetAll && (!Array.isArray(userIds) || !userIds.length))
@@ -148,7 +151,7 @@ export const pushEndpoints: Endpoint[] = [
       // One outbox job per member — delivery, endpoint pruning and retries
       // happen in the post-response drain (after() and the cron backstop),
       // never inside this request.
-      const accountIds = [...new Set(rows.map((row: any) => row.accountId))]
+      const accountIds = [...new Set(rows.map((row: Doc) => row.accountId))]
       const campaignId =
         String(req.headers.get('x-idempotency-key') || '')
           .trim()
@@ -184,13 +187,14 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/admin/summary',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const { access } = await memberContext(req)
+      if (!hasCapability(access, 'accounts.manage'))
+        throw fail.forbidden('Platform operator access required.')
       const subscribers = await listSubscriberAccounts()
       return json({
         configured: pushConfigured,
         accounts: subscribers.length,
-        devices: subscribers.reduce((total: number, row: any) => total + row.devices, 0),
+        devices: subscribers.reduce((total: number, row: Doc) => total + row.devices, 0),
       })
     }),
   },
@@ -198,8 +202,9 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/admin/subscribers',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const { access } = await memberContext(req)
+      if (!hasCapability(access, 'accounts.manage'))
+        throw fail.forbidden('Platform operator access required.')
       return json({
         configured: pushConfigured,
         items: await listSubscriberAccounts(),

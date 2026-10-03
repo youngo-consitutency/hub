@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import {
   getPublicTrack,
@@ -20,6 +20,7 @@ import {
   createAmendment,
   appendAmendmentVersion,
 } from '../modules/negotiation/contributionAmendments'
+import type { Doc } from '../lib/domain'
 import {
   confirmAmendmentReconciliation,
   suggestAmendmentReconciliation,
@@ -55,7 +56,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations/calls',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json(await listPublicCalls(req.query as any))
+      return json(await listPublicCalls(req.query as Doc))
     }),
   },
   {
@@ -63,7 +64,7 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const project = await createSubmissionProject({
         account,
         input: b,
@@ -87,7 +88,7 @@ export const negotiationEndpoints: Endpoint[] = [
       const account = requireVerifiedHuman(req)
       const project = await getAccessibleProject({
         account,
-        projectId: String(req.routeParams?.id),
+        projectId: param(req, 'id'),
       })
       return json({ project })
     }),
@@ -97,10 +98,10 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const version = await appendSubmissionVersion({
         account,
-        projectId: String(req.routeParams?.id),
+        projectId: param(req, 'id'),
         input: b,
       })
       return json({ version }, { status: 201 })
@@ -111,7 +112,7 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const amendment = await createAmendment({ account, input: b })
       return json({ amendment }, { status: 201 })
     }),
@@ -121,10 +122,10 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const version = await appendAmendmentVersion({
         account,
-        amendmentId: String(req.routeParams?.id),
+        amendmentId: param(req, 'id'),
         input: b,
       })
       return json({ version }, { status: 201 })
@@ -135,10 +136,10 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const reconciliation = await suggestAmendmentReconciliation({
         account,
-        amendmentId: String(req.routeParams?.id),
+        amendmentId: param(req, 'id'),
         input: b,
       })
       return json({ reconciliation }, { status: 201 })
@@ -149,11 +150,11 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = (await req.json?.()) || {}
+      const b = await readBody(req)
       const reconciliation = await confirmAmendmentReconciliation({
         account,
-        amendmentId: String(req.routeParams?.id),
-        reconciliationId: String(req.routeParams?.reconciliationId),
+        amendmentId: param(req, 'id'),
+        reconciliationId: param(req, 'reconciliationId'),
         input: b,
       })
       return json({ reconciliation })
@@ -163,10 +164,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations/documents/:id/versions/:versionId',
     method: 'get',
     handler: endpoint(async (req) => {
-      const item = await getPublicDocumentVersion(
-        String(req.routeParams?.id),
-        String(req.routeParams?.versionId),
-      )
+      const item = await getPublicDocumentVersion(param(req, 'id'), param(req, 'versionId'))
       if (!item) throw fail.notFound('Not found.')
       return json(item)
     }),
@@ -176,13 +174,13 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       try {
         const result = await reviewDocumentExtraction({
           req,
           account,
-          documentId: String(req.routeParams?.id),
-          versionId: String(req.routeParams?.versionId),
+          documentId: param(req, 'id'),
+          versionId: param(req, 'versionId'),
           expectedRevision: Number(b.expectedRevision),
           text: String(b.text ?? ''),
           method: b.method,
@@ -202,7 +200,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json(await listPublicTracks(req.query as any))
+      return json(await listPublicTracks(req.query as Doc))
     }),
   },
   {
@@ -210,10 +208,10 @@ export const negotiationEndpoints: Endpoint[] = [
     method: 'put',
     handler: endpoint(async (req) => {
       const account = requireVerifiedHuman(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const result = await putFollow({
         accountId: account.id,
-        slug: String(req.routeParams?.slug),
+        slug: param(req, 'slug'),
         preferences: b,
       })
       if (!result) throw fail.notFound('Not found.')
@@ -237,7 +235,7 @@ export const negotiationEndpoints: Endpoint[] = [
       const account = requireVerifiedHuman(req)
       const result = await deleteFollow({
         accountId: account.id,
-        slug: String(req.routeParams?.slug),
+        slug: param(req, 'slug'),
       })
       if (result && 'unavailable' in result && result.unavailable)
         return json(
@@ -256,7 +254,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const item = await getPublicTrack(String(req.routeParams?.slug))
+      const item = await getPublicTrack(param(req, 'slug'))
       if (!item) throw fail.notFound('Not found.')
       return json(item)
     }),

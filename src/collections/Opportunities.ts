@@ -1,9 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
-import {
-  OPPORTUNITY_FORMAT_VALUES,
-  OPPORTUNITY_KIND_VALUES,
-} from '../../spa/shared/opportunities.js'
+import { OPPORTUNITY_FORMAT_VALUES, OPPORTUNITY_KIND_VALUES } from '../../spa/shared/opportunities'
 
 // Shared opportunity board + NGO-posted opportunities.
 export const Opportunities: CollectionConfig = {

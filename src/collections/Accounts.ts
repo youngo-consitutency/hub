@@ -174,18 +174,13 @@ export const Accounts: CollectionConfig = {
     { name: 'membershipEndedAt', access: { update: isStaffField }, type: 'date' },
     { name: 'membershipEndReason', access: { update: isStaffField }, type: 'text' },
     {
+      // Technical account kind only — authority lives in authority_records.
       name: 'role',
       access: { update: isStaffField },
       type: 'select',
       required: true,
       defaultValue: 'member',
-      options: [
-        { label: 'Member', value: 'member' },
-        { label: 'Administrator', value: 'admin' },
-        { label: 'Focal Point', value: 'focal_point' },
-        { label: 'WG Contact Point', value: 'wg_contact' },
-        { label: 'Organisation admin', value: 'ngo_admin' },
-      ],
+      options: [{ label: 'Member', value: 'member' }],
     },
     { name: 'wgInterests', type: 'json' },
     { name: 'appointmentEvidence', access: { update: isStaffField }, type: 'json' },

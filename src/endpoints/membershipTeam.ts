@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import {
@@ -9,6 +9,7 @@ import {
   findAccountRowById,
 } from '../lib/membership'
 import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
+import type { Doc } from '../lib/domain'
 import {
   listLatestAppealsForAccounts,
   readAppealProof,
@@ -24,9 +25,9 @@ export const membershipTeamEndpoints: Endpoint[] = [
       await requireTeam(req, 'membership_team')
       const items = await listMembershipReviewItems()
       const profiles = await listMemberProfileSummaries(items)
-      const appeals = await listLatestAppealsForAccounts(items.map((item: any) => item.id))
+      const appeals = await listLatestAppealsForAccounts(items.map((item) => item.id))
       return json({
-        items: items.map((item: any) => ({
+        items: items.map((item) => ({
           ...item,
           profile: profiles.get(item.id),
           appeal: appeals.get(item.id) || null,
@@ -39,7 +40,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const id = String(req.routeParams?.id)
+      const id = param(req, 'id')
       const updatedRow = await setAccountFields(id, {
         member_status: 'verified',
         hub_access_status: 'active',
@@ -52,7 +53,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
       const updated = accountView(updatedRow)
       let verifyBody: any = {}
       try {
-        verifyBody = (await req.json?.()) || {}
+        verifyBody = await readBody(req)
       } catch {
         verifyBody = {}
       }
@@ -72,8 +73,8 @@ export const membershipTeamEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const result = await updateMembershipLifecycle({
         actor: accountView(staff),
         targetId: id,
@@ -95,7 +96,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       await requireTeam(req, 'membership_team')
-      const proof = await readAppealProof(String(req.routeParams?.id))
+      const proof = await readAppealProof(param(req, 'id'))
       if (!proof) throw fail.notFound('Appeal proof not found.')
       return new Response(new Uint8Array(proof.proof_bytes), {
         headers: {
@@ -111,9 +112,9 @@ export const membershipTeamEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const appeal = await reviewAppeal({
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         decision: b.decision,
         note: b.note,
         reviewerId: staff.id,

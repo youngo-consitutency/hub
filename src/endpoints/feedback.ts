@@ -1,9 +1,10 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
+import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
+import type { Doc, DocData } from '../lib/domain'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -32,12 +33,12 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback/options',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       return json({
         kinds: FEEDBACK_KINDS,
         severities: FEEDBACK_SEVERITIES,
-        canTriage: account.role === 'admin' || access.teamRoles.includes('membership_team'),
+        canTriage:
+          hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team'),
       })
     }),
   },
@@ -62,7 +63,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await feedbackLimit(req)
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const title = trimmed(b.title, 200)
       const kind = FEEDBACK_KINDS.some((k) => k.value === b.kind) ? b.kind : null
       const severity = FEEDBACK_SEVERITIES.some((s) => s.value === b.severity)
@@ -88,7 +89,7 @@ export const feedbackEndpoints: Endpoint[] = [
           account: account.id,
           contactEmail: account.email,
           status: 'new',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -99,10 +100,11 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
-      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
-      if (!canTriage) throw fail.forbidden('Feedback triage is for admins and the Membership Team.')
+      const { access } = await memberContext(req)
+      const canTriage =
+        hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
+      if (!canTriage)
+        throw fail.forbidden('Feedback triage is for platform operators and the Membership Team.')
       const where: any = {}
       if (req.query?.status) where.status = { equals: req.query.status }
       if (req.query?.kind) where.kind = { equals: req.query.kind }
@@ -120,18 +122,18 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback/:id',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
-      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
+      const { access } = await memberContext(req)
+      const canTriage =
+        hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const data: any = {}
       if (b.status && ['new', 'triaged', 'in_progress', 'resolved', 'declined'].includes(b.status))
         data.status = b.status
       if (b.triageNote !== undefined) data.triageNote = trimmed(b.triageNote, 2000)
       const updated = await req.payload.update({
         collection: 'feedback-tickets',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         data,
         overrideAccess: true,
         req,

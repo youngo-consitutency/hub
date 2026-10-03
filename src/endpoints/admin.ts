@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, adminReason, requireAdmin } from '../lib/accounts'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
+import { accountView, adminReason, requireAccountsManager } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { rateLimit } from '../lib/rateLimit'
 import {
@@ -9,22 +9,22 @@ import {
   sendMembershipActivatedEmail,
   findAccountRowById,
 } from '../lib/membership'
-import { ensureOwnerSeat, listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
+import { listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
 import { resolveLegacyRole } from '../lib/authority'
+import { hasCapability } from '../lib/access'
 import { grantAuthority, revokeAuthorityInTx } from '../lib/authorityService'
 import { withAuthorityLock } from '../lib/authorityLock'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
+import type { Doc } from '../lib/domain'
 
 const adminLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
   scope: 'admin',
 })
-
-const ROLE_OPTIONS = ['member', 'admin', 'focal_point', 'wg_contact', 'ngo_admin']
 
 export const adminEndpoints: Endpoint[] = [
   // ── Admin: accounts ───────────────────────────────────────────────
@@ -33,7 +33,7 @@ export const adminEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      await requireAdmin(req)
+      await requireAccountsManager(req)
       return json(
         await queryAccountsForAdmin({
           search: req.query?.search,
@@ -52,7 +52,7 @@ export const adminEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      await requireAdmin(req)
+      await requireAccountsManager(req)
       const where: any = {}
       if (req.query?.action) where.action = { contains: req.query.action }
       if (req.query?.actorId) where.actor = { equals: req.query.actorId }
@@ -71,9 +71,9 @@ export const adminEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      const admin = await requireAdmin(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const { account: admin } = await requireAccountsManager(req)
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const before = await findAccountRowById(id)
       if (!before) throw fail.notFound('Account not found.')
@@ -102,12 +102,13 @@ export const adminEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      const admin = await requireAdmin(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const { account: admin, access } = await requireAccountsManager(req)
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const result = await updateMembershipLifecycle({
         actor: accountView(admin),
+        actorIsOfficer: hasCapability(access, 'platform.manage'),
         targetId: id,
         body: { ...b, reason },
       })
@@ -123,47 +124,13 @@ export const adminEndpoints: Endpoint[] = [
     }),
   },
   {
-    path: '/member/admin/accounts/:id/role',
-    method: 'post',
-    handler: endpoint(async (req) => {
-      await adminLimit(req)
-      const admin = await requireAdmin(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
-      const reason = adminReason(b)
-      const role = String(b.role || 'member')
-      if (!ROLE_OPTIONS.includes(role)) throw fail.validation({ role: 'Invalid role.' })
-      const items = await listAccountsForAdmin()
-      const target = items.find((item: any) => String(item.id) === id)
-      if (!target) throw fail.notFound('Account not found.')
-      if (target.id === admin.id && role !== 'admin')
-        throw new ApiError(400, 'self_demote', 'You cannot remove your own admin access.')
-      if (role === 'ngo_admin' && (target.entityType !== 'organization' || !target.isVerified))
-        throw fail.validation({
-          role: 'Only a verified organisation account can become an NGO administrator.',
-        })
-      const updatedRow = await setAccountFields(id, { role })
-      const updated = accountView(updatedRow)
-      if (role === 'ngo_admin') await ensureOwnerSeat(updated)
-      await audit(req, admin, {
-        action: 'account.platform_role_changed',
-        targetType: 'account',
-        targetId: id,
-        before: { role: target.role },
-        after: { role },
-        reason,
-      })
-      return json({ account: updated })
-    }),
-  },
-  {
     path: '/member/admin/accounts/:id/team-role',
     method: 'post',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      const admin = await requireAdmin(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const { account: admin } = await requireAccountsManager(req)
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const teamRole = String(b.teamRole || '')
       if (
@@ -173,7 +140,7 @@ export const adminEndpoints: Endpoint[] = [
       )
         throw fail.validation({ teamRole: 'Invalid team role.' })
       const items = await listAccountsForAdmin()
-      const target = items.find((item: any) => String(item.id) === id)
+      const target = items.find((item) => item && String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
       // Team roles are canonical mandates written to `authority-records`
@@ -202,7 +169,7 @@ export const adminEndpoints: Endpoint[] = [
             overrideAccess: true,
             req,
           })
-          for (const record of active as any[]) {
+          for (const record of active as Doc[]) {
             await revokeAuthorityInTx(req, record.id, admin, reason)
           }
         })
@@ -242,9 +209,9 @@ export const adminEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await adminLimit(req)
-      const admin = await requireAdmin(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const { account: admin } = await requireAccountsManager(req)
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       if (!emailConfigured())
         throw new ApiError(
@@ -279,7 +246,7 @@ export const adminEndpoints: Endpoint[] = [
       } catch {
         await req.payload.delete({
           collection: 'password-resets' as never,
-          id: (reset as any).id,
+          id: (reset as Doc).id,
           overrideAccess: true,
           req,
         })

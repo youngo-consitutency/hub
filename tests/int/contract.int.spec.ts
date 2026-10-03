@@ -43,7 +43,10 @@ describe('API contract (requires dev server on :3000)', () => {
 
   beforeAll(async () => {
     member = await session({})
-    admin = await session({ role: 'admin' })
+    admin = await session({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
+    })
     membershipStaff = await session({
       membershipTrack: 'constituency_work',
       teams: ['membership_team'],

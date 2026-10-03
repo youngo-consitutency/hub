@@ -5,6 +5,7 @@ import { sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
+import type { Doc } from './domain'
 
 // Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
 // — the announcement broadcast surface (preview/send/outbox). The queue rows
@@ -252,7 +253,7 @@ export async function sendTemplatedEmail({
 
 // ── Outbox ───────────────────────────────────────────────────────
 
-function publicOutbox(row: any) {
+function publicOutbox(row: Doc) {
   if (!row) return null
   const r = toCamelCase<Record<string, any>>(row)
   return {
@@ -381,7 +382,7 @@ export async function claimNotificationBatch(limit = 50) {
 }
 
 // Requeue with backoff; rows past the attempt ceiling go terminal instead.
-export async function rescheduleNotification(row: any, code: string) {
+export async function rescheduleNotification(row: Doc, code: string) {
   const pool = getPgPool()!
   const attempts = Number(row.attempts || 0) + 1
   if (attempts >= MAX_DELIVERY_ATTEMPTS) return markNotificationFailed(row.id, code)
@@ -397,7 +398,7 @@ export async function rescheduleNotification(row: any, code: string) {
   )
 }
 
-async function deliverOutboxRow(req: any, row: any, connectBody: any) {
+async function deliverOutboxRow(req: any, row: Doc, connectBody: any) {
   if (row.channel === 'push') {
     const subscriptions = await listSubscriptionsForAccounts([row.account_id])
     if (!subscriptions.length)
@@ -492,5 +493,5 @@ export async function listEligibleNotificationAccountIds({
        AND ${filters[scope.type]}`,
     scope.type === 'all_active' ? [category] : [category, ids],
   )
-  return rows.map((row: any) => String(row.id))
+  return rows.map((row: Doc) => String(row.id))
 }

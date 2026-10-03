@@ -36,6 +36,16 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
       'constituency.coordinate',
       'points.award',
       'intelligence.contacts.read',
+      // Platform operation — the senior officers administer the Hub itself.
+      'platform.manage',
+      'accounts.manage',
+      'audit.read',
+      'ngo.manage_all',
+      'wg.manage_all',
+      'notifications.send',
+      'intelligence.operations.read',
+      'intelligence.writeback.approve',
+      'intelligence.writeback.apply',
     ],
     requiresCw: true,
   },
@@ -145,7 +155,13 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     label: 'GCT coordinator — Partnerships',
     scopeTypes: ['team'],
     teamKeys: ['gct'],
-    capabilities: ['gct.coordinate', 'partnership.review', 'intelligence.contacts.read'],
+    capabilities: [
+      'gct.coordinate',
+      'partnership.review',
+      'intelligence.contacts.read',
+      // Partnerships owns organisation relationships end to end.
+      'ngo.manage_all',
+    ],
     requiresCw: true,
   },
   'gct.membership': {
@@ -171,7 +187,13 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     label: 'GCT coordinator — Internal management',
     scopeTypes: ['team'],
     teamKeys: ['gct'],
-    capabilities: ['gct.coordinate', 'intelligence.contacts.read'],
+    capabilities: [
+      'gct.coordinate',
+      'intelligence.contacts.read',
+      // Internal management runs the accounts console.
+      'accounts.manage',
+      'audit.read',
+    ],
     requiresCw: true,
   },
   'gct.coordination': {
@@ -236,7 +258,7 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     label: 'Communications Team member',
     scopeTypes: ['team'],
     teamKeys: ['comms_team'],
-    capabilities: ['content.review', 'content.publish'],
+    capabilities: ['content.review', 'content.publish', 'notifications.send'],
     requiresCw: true,
   },
   'team.reforms': {
@@ -250,7 +272,9 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     label: 'Data Controller',
     scopeTypes: ['team'],
     teamKeys: ['data_controller'],
-    capabilities: ['privacy.manage'],
+    // Data Controller oversees what enters the system — including
+    // independently approving intelligence writebacks.
+    capabilities: ['privacy.manage', 'intelligence.writeback.approve'],
     requiresCw: true,
   },
   'team.gys_policy': {
