@@ -1,7 +1,7 @@
 {
   "name": "youngo-hub",
   "version": "1.0.0",
-  "description": "YOUNGO Hub — member platform and mission control (Next.js + Payload CMS)",
+  "description": "YOUNGO Hub \u2014 member platform and mission control (Next.js + Payload CMS)",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -82,6 +82,7 @@
     },
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.12"
-    }
+    },
+    "sass": "1.105.1"
   }
 }
