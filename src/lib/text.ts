@@ -6,10 +6,12 @@ export const trimmed = (v: unknown, max: number) =>
     .slice(0, max)
 
 // Strips markup and collapses whitespace — for free-text fields that must
-// never carry HTML.
+// never carry HTML. The tag pattern requires a letter/! after `<` (so plain
+// text like "a < b" survives) and tolerates a missing `>` (so unterminated
+// tags cannot slip through).
 export const cleanText = (v: unknown, max: number) =>
   String(v ?? '')
-    .replace(/<[^>]*>/g, '')
+    .replace(/<\/?[a-zA-Z!][^>]*>?/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, max)

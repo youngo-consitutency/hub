@@ -28,6 +28,10 @@ import {
   TbVideo,
 } from 'react-icons/tb'
 
+// Exact host or a true subdomain — 'app.zoom.us' matches, 'notzoom.us'
+// does not.
+const hostIs = (host, domain) => host === domain || host.endsWith(`.${domain}`)
+
 export function destinationIconFor(rawUrl = '') {
   if (/^mailto:/i.test(rawUrl)) return TbMail
 
@@ -41,44 +45,39 @@ export function destinationIconFor(rawUrl = '') {
   const host = url.hostname.replace(/^www\./, '').toLowerCase()
   const path = url.pathname.toLowerCase()
 
-  if (host.endsWith('instagram.com')) return TbBrandInstagram
-  if (host.endsWith('linkedin.com')) return TbBrandLinkedin
-  if (host.endsWith('whatsapp.com')) return TbBrandWhatsapp
-  if (host.endsWith('facebook.com')) return TbBrandFacebook
-  if (host.endsWith('youtube.com') || host === 'youtu.be') return TbBrandYoutube
-  if (host.endsWith('twitter.com') || host === 'x.com') return TbBrandX
-  if (host.endsWith('github.com')) return TbBrandGithub
-  if (host.endsWith('t.me') || host.endsWith('telegram.me')) {
+  if (hostIs(host, 'instagram.com')) return TbBrandInstagram
+  if (hostIs(host, 'linkedin.com')) return TbBrandLinkedin
+  if (hostIs(host, 'whatsapp.com')) return TbBrandWhatsapp
+  if (hostIs(host, 'facebook.com')) return TbBrandFacebook
+  if (hostIs(host, 'youtube.com') || host === 'youtu.be') return TbBrandYoutube
+  if (hostIs(host, 'twitter.com') || host === 'x.com') return TbBrandX
+  if (hostIs(host, 'github.com')) return TbBrandGithub
+  if (hostIs(host, 't.me') || hostIs(host, 'telegram.me')) {
     return TbBrandTelegram
   }
-  if (host.endsWith('discord.com') || host.endsWith('discord.gg')) {
+  if (hostIs(host, 'discord.com') || hostIs(host, 'discord.gg')) {
     return TbBrandDiscord
   }
-  if (host.endsWith('tiktok.com')) return TbBrandTiktok
+  if (hostIs(host, 'tiktok.com')) return TbBrandTiktok
   if (host === 'linktr.ee') return TbBrandLinktree
-  if (host.endsWith('airtable.com')) return TbBrandAirtable
+  if (hostIs(host, 'airtable.com')) return TbBrandAirtable
   if (host === 'drive.google.com') return TbBrandGoogleDrive
   if (host === 'calendar.app.google' || host === 'calendar.google.com') {
     return TbCalendar
   }
   if (host === 'meet.google.com') return TbVideo
-  if (host.endsWith('zoom.us')) return TbBrandZoom
-  if (host.endsWith('notion.site') || host === 'notion.so') {
+  if (hostIs(host, 'zoom.us')) return TbBrandZoom
+  if (hostIs(host, 'notion.site') || host === 'notion.so') {
     return TbBrandNotion
   }
-  if (host.endsWith('mailchi.mp') || host.endsWith('mailchimp.com')) {
+  if (hostIs(host, 'mailchi.mp') || hostIs(host, 'mailchimp.com')) {
     return TbMail
   }
-  if (host.endsWith('openstreetmap.org')) return TbMap
-  if (
-    host.endsWith('microsoft.com') ||
-    host.endsWith('office.com') ||
-    host.endsWith('outlook.com') ||
-    host.endsWith('outlook.live.com') ||
-    host.endsWith('outlook.office.com')
-  ) {
+  if (hostIs(host, 'openstreetmap.org')) return TbMap
+  if (hostIs(host, 'microsoft.com') || hostIs(host, 'office.com') || hostIs(host, 'outlook.com')) {
     return TbBrandOffice
   }
+  if (host === 'outlook.live.com') return TbBrandOffice
 
   if (host === 'docs.google.com') {
     if (path.startsWith('/forms/')) return TbForms
@@ -88,7 +87,7 @@ export function destinationIconFor(rawUrl = '') {
   }
 
   if (host === 'forms.gle') return TbForms
-  if (host.endsWith('google.com')) return TbBrandGoogle
+  if (hostIs(host, 'google.com')) return TbBrandGoogle
   if (path.endsWith('.pdf')) return TbFileText
   return TbGlobe
 }

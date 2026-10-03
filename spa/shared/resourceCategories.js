@@ -31,6 +31,10 @@ function resourceUrl(resource) {
   }
 }
 
+// Exact host or a true subdomain — 'app.whatsapp.com' matches,
+// 'notwhatsapp.com' does not.
+const hostIs = (host, domain) => host === domain || host.endsWith(`.${domain}`)
+
 export function resourceCategory(resource) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''
@@ -41,7 +45,7 @@ export function resourceCategory(resource) {
     /\b(join|membership|onboarding|register|registration|sign[ -]?up|renewal|interest)\b/.test(
       label,
     ) ||
-    host.endsWith('airtable.com') ||
+    hostIs(host, 'airtable.com') ||
     host === 'forms.gle' ||
     (host === 'docs.google.com' && path.startsWith('/forms/'))
   ) {
@@ -53,19 +57,21 @@ export function resourceCategory(resource) {
       label,
     ) ||
     host === 'linktr.ee' ||
-    host.endsWith('whatsapp.com') ||
-    host.endsWith('linkedin.com') ||
-    host.endsWith('instagram.com') ||
-    host.endsWith('facebook.com') ||
     host === 'x.com' ||
-    host.endsWith('twitter.com') ||
-    host.endsWith('youtube.com') ||
     host === 'youtu.be' ||
-    host.endsWith('t.me') ||
-    host.endsWith('telegram.me') ||
-    host.endsWith('discord.com') ||
-    host.endsWith('discord.gg') ||
-    host.endsWith('tiktok.com')
+    [
+      'whatsapp.com',
+      'linkedin.com',
+      'instagram.com',
+      'facebook.com',
+      'twitter.com',
+      'youtube.com',
+      't.me',
+      'telegram.me',
+      'discord.com',
+      'discord.gg',
+      'tiktok.com',
+    ].some((domain) => hostIs(host, domain))
   ) {
     return 'channels'
   }
@@ -76,8 +82,8 @@ export function resourceCategory(resource) {
     host === 'meet.google.com' ||
     host === 'calendar.google.com' ||
     host === 'calendar.app.google' ||
-    host.endsWith('zoom.us') ||
-    host.endsWith('notion.site') ||
+    hostIs(host, 'zoom.us') ||
+    hostIs(host, 'notion.site') ||
     host === 'notion.so'
   ) {
     return 'workspace'
