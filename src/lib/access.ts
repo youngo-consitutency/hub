@@ -88,7 +88,7 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
     req.payload.find({
       collection: 'appointments',
       where: { account: { equals: account.id } },
-      limit: 1000,
+      pagination: false,
       overrideAccess: true,
     }),
     req.payload.find({

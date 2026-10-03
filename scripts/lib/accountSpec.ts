@@ -160,7 +160,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     const canonical = normaliseScopeType(scopeType)
     const participation =
       role === 'member' &&
-      ['body', 'working_group', 'organisation', 'operational_team'].includes(canonical)
+      ['body', 'working_group', 'organisation'].includes(canonical)
     if (participation) {
       // The ledger stores its own enum spelling ('organization').
       return upsertAssignment(

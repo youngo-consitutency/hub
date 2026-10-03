@@ -52,6 +52,9 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_appointments_fk";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_appointments_id_idx";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "appointments_id";
   DROP TABLE "appointments";
   DROP TYPE "public"."enum_appointments_appointment_role";
   DROP TYPE "public"."enum_appointments_scope_type";

@@ -48,8 +48,18 @@ loadEnv({ path: '.env.local' })
 loadEnv()
 
 const WRITE = process.argv.includes('--write')
-const evidenceArg = process.argv.find((a) => a.startsWith('--focal-evidence='))
-const evidencePath = evidenceArg?.split('=')[1]
+const evidenceIdx = process.argv.findIndex(
+  (a) => a === '--focal-evidence' || a.startsWith('--focal-evidence='),
+)
+const evidencePath =
+  evidenceIdx === -1
+    ? undefined
+    : process.argv[evidenceIdx].includes('=')
+      ? process.argv[evidenceIdx].slice('--focal-evidence='.length)
+      : process.argv[evidenceIdx + 1]
+if (evidenceIdx !== -1 && !evidencePath) {
+  throw new Error('--focal-evidence requires a file path.')
+}
 
 const { default: config } = await import('../src/payload.config')
 const { getPayload } = await import('payload')

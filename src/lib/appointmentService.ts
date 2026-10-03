@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { isCwActive } from './accounts'
-import { APPOINTMENT_ROLES, councilSeatFor, normaliseScopeType } from './appointments'
+import { APPOINTMENT_ROLES, appointmentCurrent, councilSeatFor, normaliseScopeType } from './appointments'
 import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
 
@@ -62,12 +62,13 @@ export async function grantAppointment(req: PayloadRequest, input: GrantInput) {
       .catch(() => {
         throw fail.notFound('Principal appointment not found.')
       })
+    if (!appointmentCurrent(principal as any) || (principal as any).appointmentRole === 'council.substitute')
+      throw fail.conflict('invalid_principal', 'The principal appointment is not a current seat holder.')
     if (!principal.councilSeat)
       throw fail.conflict('no_seat', 'The principal appointment does not hold a Council seat.')
     row.substituteFor = principal.id
     row.councilSeat = principal.councilSeat
-    row.scopeType = (principal as any).scopeType
-    row.scopeId = (principal as any).scopeId
+    row.scopeId = `seat:${principal.councilSeat}`
   } else {
     row.councilSeat = councilSeatFor(input.appointmentRole, { scopeId, councilSeat: null })
   }

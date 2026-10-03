@@ -330,7 +330,6 @@ const PARTICIPATION_SCOPES = new Set([
   'body',
   'working_group',
   'organisation',
-  'operational_team',
   'negotiation_track',
   'negotiation_project',
 ])

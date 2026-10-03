@@ -231,6 +231,68 @@ describe('appointment service', () => {
     ).rejects.toMatchObject({ status: 409 })
   })
 
+  it('confines a substitute to the covered seat and validates the principal', async () => {
+    const payload = await testPayload()
+    const { grantAppointment, revokeAppointment } = await import('@/lib/appointmentService')
+    const req = { payload, headers: new Headers() } as any
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    const { account: deputy } = await provisionAccount({ membershipTrack: 'constituency_work' })
+
+    const principal = await grantAppointment(req, {
+      account: account.id,
+      appointmentRole: 'wg.contact_point',
+      scopeType: 'working_group',
+      scopeId: 'oceans',
+    } as any)
+
+    const sub = await grantAppointment(req, {
+      account: deputy.id,
+      appointmentRole: 'council.substitute',
+      scopeType: 'platform',
+      scopeId: 'platform',
+      substituteFor: principal.id,
+    } as any)
+    // The row keeps the platform scope — the covered seat is carried by
+    // councilSeat alone, so the substitute can never inherit the
+    // principal's participation scopes.
+    expect(sub.scopeType).toBe('platform')
+    expect(sub.scopeId).toBe('seat:wg:oceans')
+    expect(sub.councilSeat).toBe('wg:oceans')
+
+    const access = await accessFor(deputy)
+    expect(access.councilSeats).toEqual(['wg:oceans'])
+    expect(access.wgAssignments ?? []).not.toContainEqual(
+      expect.objectContaining({ wgSlug: 'oceans' }),
+    )
+    expect(access.bodyScopes ?? []).not.toContain('oceans')
+
+    // A substitute cannot cover another substitute.
+    const { account: second } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await expect(
+      grantAppointment(req, {
+        account: second.id,
+        appointmentRole: 'council.substitute',
+        scopeType: 'platform',
+        scopeId: 'platform',
+        substituteFor: sub.id,
+      } as any),
+    ).rejects.toMatchObject({ status: 409 })
+
+    // Nor a principal whose mandate has ended.
+    const { account: admin } = await provisionAccount({ role: 'admin' })
+    await revokeAppointment(req, principal.id, admin, 'Term ended.')
+    const { account: third } = await provisionAccount({ membershipTrack: 'constituency_work' })
+    await expect(
+      grantAppointment(req, {
+        account: third.id,
+        appointmentRole: 'council.substitute',
+        scopeType: 'platform',
+        scopeId: 'platform',
+        substituteFor: principal.id,
+      } as any),
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
   it('refuses a CW-gated mandate for a Network member', async () => {
     const payload = await testPayload()
     const { grantAppointment } = await import('@/lib/appointmentService')
