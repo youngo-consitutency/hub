@@ -1,3 +1,4 @@
+import { CatalogueResults } from '../components/CatalogueResults.jsx'
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api.js'
@@ -31,6 +32,7 @@ const REGIONS = [
   { key: 'weog', label: regionLabel('weog') },
 ]
 
+/** Browse Conferences of Youth with search, type and region filters, sorting and catalogue layouts. */
 export function Coys() {
   const [typeFilters, setTypeFilters] = useState({})
   const [regionFilters, setRegionFilters] = useState({})
@@ -173,30 +175,32 @@ export function Coys() {
                   </FilterMenu>
                 </div>
               </div>
-              {items.length ? (
-                <div className="cardGrid">
-                  {items.map((c) => (
-                    <CoyCard
-                      key={c.slug}
-                      coy={c}
-                      typeFilterState={typeFilters[c.type] || 'neutral'}
-                      regionFilterState={regionFilters[c.region] || 'neutral'}
-                      onTypeFilter={() =>
-                        setTypeFilters((current) => toggleFilter(current, c.type))
-                      }
-                      onRegionFilter={() =>
-                        setRegionFilters((current) => toggleFilter(current, c.region))
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  icon={Search}
-                  title="No conferences match"
-                  body="Try a different type, region, or search term."
-                />
-              )}
+              <CatalogueResults count={items.length}>
+                {items.length ? (
+                  <div className="cardGrid">
+                    {items.map((c) => (
+                      <CoyCard
+                        key={c.slug}
+                        coy={c}
+                        typeFilterState={typeFilters[c.type] || 'neutral'}
+                        regionFilterState={regionFilters[c.region] || 'neutral'}
+                        onTypeFilter={() =>
+                          setTypeFilters((current) => toggleFilter(current, c.type))
+                        }
+                        onRegionFilter={() =>
+                          setRegionFilters((current) => toggleFilter(current, c.region))
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Empty
+                    icon={Search}
+                    title="No conferences match"
+                    body="Try a different type, region, or search term."
+                  />
+                )}
+              </CatalogueResults>
             </>
           )
         }}
