@@ -1,10 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import {
-  requireVerifiedMember,
-  verifiedContext,
-  memberContext,
-} from '../lib/accounts'
+import { requireVerifiedMember, verifiedContext, memberContext } from '../lib/accounts'
 import * as store from '../lib/content'
 import { opportunityShape } from '../lib/content'
 import { requirePgPool } from '../lib/pg'
