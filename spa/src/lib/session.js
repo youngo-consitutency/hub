@@ -55,10 +55,6 @@ export function hasCachedSession() {
   return Boolean(getCachedAccount())
 }
 
-export function isSignedIn() {
-  return hasCachedSession()
-}
-
 export async function signOut() {
   try {
     await apiPost('/auth/logout', {})

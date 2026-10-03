@@ -2,8 +2,8 @@ import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
 
-// Admin account surface: sortable account lists, team assignments and the
-// organisation-owner seat guarantee.
+// Admin account surface: sortable account lists, team authority records and
+// the organisation-owner seat guarantee.
 
 // Ports of server/lib/lifecycle.js queryAccountsForAdmin/listAccountsForAdmin
 // and server/lib/access.js setTeamAssignment / ensureOwnerSeat.

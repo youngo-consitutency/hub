@@ -128,13 +128,6 @@ export function requireAccount(req: PayloadRequest): any {
   return user
 }
 
-export async function requireCapability(req: PayloadRequest, capability: string) {
-  const account = requireAccount(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.capabilities.includes(capability)) throw fail.forbidden()
-  return { account, access }
-}
-
 // Team workspaces require the corresponding *appointment*. Technical
 // administrators do not inherit team authority (S13: administration ≠
 // constituency authority).

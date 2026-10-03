@@ -492,17 +492,6 @@ export function recordCurrent(
   return true
 }
 
-// Why a row does not currently grant authority (for reporting/audit).
-export function recordState(
-  row: { status: string; startsAt?: any; endsAt?: any },
-  now = new Date(),
-) {
-  if (row.status !== 'active') return row.status // inactive | expired | revoked
-  if (row.startsAt && new Date(row.startsAt).getTime() > now.getTime()) return 'future'
-  if (row.endsAt && new Date(row.endsAt).getTime() <= now.getTime()) return 'lapsed'
-  return 'current'
-}
-
 export function councilSeatFor(
   roleKey: string,
   row: { scopeId: string; councilSeat?: string | null },

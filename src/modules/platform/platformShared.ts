@@ -141,7 +141,7 @@ export interface Overview {
 // One translation between the S09 engine store (decision_proposals) and the
 // platform UI's decision vocabulary. decision_proposals is the single source
 // of truth; platform_decisions survives only as a uuid-keyed projection.
-export const STAGE_SQL = `CASE dp.status WHEN 'vetoed' THEN 'withdrawn' WHEN 'failed_quorum' THEN 'not_adopted' WHEN 'rejected' THEN 'not_adopted' ELSE dp.status::text END`
+const STAGE_SQL = `CASE dp.status WHEN 'vetoed' THEN 'withdrawn' WHEN 'failed_quorum' THEN 'not_adopted' WHEN 'rejected' THEN 'not_adopted' ELSE dp.status::text END`
 export const BODY_ID_SQL = `CASE dp.body WHEN 'council' THEN 'council' ELSE dp.body_ref END`
 const DEADLINE_SQL = `CASE dp.status WHEN 'consultation' THEN dp.consultation_ends_at WHEN 'revision' THEN dp.revision_ends_at WHEN 'decision' THEN dp.decision_ends_at WHEN 'voting' THEN dp.voting_ends_at ELSE NULL END`
 export const DECISION_VIEW_SELECT = `SELECT COALESCE(pd.id::text, dp.id::text) AS id,

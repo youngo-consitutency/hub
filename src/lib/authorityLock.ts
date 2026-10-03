@@ -80,19 +80,3 @@ export async function withAuthorityLock<T>(
     delete req.transactionID
   }
 }
-
-// Lock an authority-record row for the duration of the current
-// transaction. Any concurrent UPDATE/DELETE to the same row waits for us
-// — Postgres row locks need no cooperation from the other writer.
-export async function lockAuthorityRecordRow(
-  payload: Payload,
-  transactionID: any,
-  recordId: number,
-): Promise<void> {
-  if (!Number.isInteger(recordId))
-    throw new Error('Row lock requires an integer authority-record id.')
-  await (payload.db as any).execute({
-    db: txHandle(payload, transactionID),
-    raw: `SELECT id FROM authority_records WHERE id=${recordId} FOR UPDATE`,
-  })
-}

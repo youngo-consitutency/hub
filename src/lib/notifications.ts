@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
-import { emailConfigured, sendEmail } from './email'
+import { sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
@@ -11,7 +11,7 @@ import { appBaseUrl } from './env'
 // live in `notification_outbox`; eligibility reads the v2 notification_prefs
 // model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
 
-export const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -276,7 +276,7 @@ function publicOutbox(row: any) {
   }
 }
 
-export const NOTIFICATION_CHANNELS = ['email', 'push']
+const NOTIFICATION_CHANNELS = ['email', 'push']
 
 export async function enqueueNotification({
   accountId,
@@ -494,5 +494,3 @@ export async function listEligibleNotificationAccountIds({
   )
   return rows.map((row: any) => String(row.id))
 }
-
-export { emailConfigured }

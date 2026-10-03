@@ -1,6 +1,6 @@
 /**
  * Generate VAPID keys for Web Push
- * Run with: npm run setup:push
+ * Run with: node scripts/setup/generate-vapid-keys.mjs
  */
 // web-push is CommonJS — it has no named ESM exports, so take the default.
 import webPush from 'web-push'

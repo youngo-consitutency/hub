@@ -137,21 +137,3 @@ export interface Overview {
   canPublish: boolean
   notices: { kind: string; title: string; dueAt: string }[]
 }
-
-export function transitionDeadline(
-  process: Decision['process'],
-  stage: DecisionState,
-  now: Date,
-  snapHours = 24,
-): string | null {
-  const hours =
-    process === 'standard'
-      ? { consultation: 120, revision: 24, decision: 24 }
-      : {
-          consultation: snapHours / 2,
-          revision: snapHours / 4,
-          decision: snapHours / 4,
-        }
-  const duration = stage === 'voting' ? 24 : hours[stage as keyof typeof hours]
-  return duration ? new Date(now.getTime() + duration * 3600000).toISOString() : null
-}

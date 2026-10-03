@@ -47,12 +47,12 @@ function date(input: Input, key: string, required = false): string | null {
   if (!Number.isFinite(Date.parse(value))) fail(400, `Check ${key}.`)
   return new Date(value).toISOString()
 }
-export function intId(value: unknown): number {
+function intId(value: unknown): number {
   const n = Number(value)
   if (!Number.isInteger(n) || n <= 0) fail(400, 'Invalid record identifier.')
   return n
 }
-export function uuid(value: unknown): string {
+function uuid(value: unknown): string {
   if (
     typeof value !== 'string' ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
@@ -70,7 +70,7 @@ export function db() {
     )
   return requirePgPool()
 }
-export async function transaction<T>(run: (client: PoolClient) => Promise<T>): Promise<T> {
+async function transaction<T>(run: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await db().connect()
   try {
     await client.query('BEGIN')
