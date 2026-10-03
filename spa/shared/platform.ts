@@ -37,13 +37,15 @@ export interface Body {
   canManage: boolean
   canParticipate: boolean
 }
-export interface Assignment {
+export interface AuthorityRecord {
   id: string
   accountId: string
   name: string
+  kind: 'mandate' | 'participation'
   scopeType: string
   scopeId: string
   role: string
+  councilSeat: string | null
   startsAt: string
   endsAt: string | null
   status: string
@@ -125,7 +127,7 @@ export interface Enquiry {
 export interface Overview {
   bodies: Body[]
   people: Person[]
-  assignments: Assignment[]
+  records: AuthorityRecord[]
   tasks: Task[]
   decisions: Decision[]
   enquiries: Enquiry[]

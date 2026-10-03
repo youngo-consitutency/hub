@@ -17,7 +17,7 @@ const REVIEW_COLUMNS = `
   policies_accepted, membership_policy_version,
   privacy_consent, privacy_notice_version, privacy_consent_at,
   coi_declared, coi_details,
-  member_status, role, team_roles, course_passed_at, course_score, verified_at,
+  member_status, role, (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles, course_passed_at, course_score, verified_at,
   constituency_work_status, hub_access_status, membership_status,
   onboarding_cohort, renewal_due_at, membership_ended_at, membership_end_reason,
   created_at, last_login_at, email_verified_at, verified_by

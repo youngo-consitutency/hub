@@ -222,6 +222,7 @@ export async function listMemberPeople({
   const offsetSlot = values.length + 2
   const { rows } = await pool.query(
     `SELECT a.*, p.*,
+            (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles,
             ph.updated_at AS photo_updated_at,
             (ph.account_id IS NOT NULL) AS has_photo
      FROM ${fromSql}

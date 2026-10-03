@@ -71,8 +71,7 @@ export interface Config {
     users: User;
     media: Media;
     accounts: Account;
-    appointments: Appointment;
-    assignments: Assignment;
+    'authority-records': AuthorityRecord;
     'member-profiles': MemberProfile;
     'working-groups': WorkingGroup;
     'wg-progress': WgProgress;
@@ -136,8 +135,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     accounts: AccountsSelect<false> | AccountsSelect<true>;
-    appointments: AppointmentsSelect<false> | AppointmentsSelect<true>;
-    assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
+    'authority-records': AuthorityRecordsSelect<false> | AuthorityRecordsSelect<true>;
     'member-profiles': MemberProfilesSelect<false> | MemberProfilesSelect<true>;
     'working-groups': WorkingGroupsSelect<false> | WorkingGroupsSelect<true>;
     'wg-progress': WgProgressSelect<false> | WgProgressSelect<true>;
@@ -376,15 +374,6 @@ export interface Account {
   membershipEndedAt?: string | null;
   membershipEndReason?: string | null;
   role: 'member' | 'admin' | 'focal_point' | 'wg_contact' | 'ngo_admin';
-  teamRoles?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   wgInterests?:
     | {
         [k: string]: unknown;
@@ -436,57 +425,13 @@ export interface Account {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "appointments".
+ * via the `definition` "authority-records".
  */
-export interface Appointment {
+export interface AuthorityRecord {
   id: number;
   account: number | Account;
-  appointmentRole:
-    | 'focal_point'
-    | 'council.substitute'
-    | 'org.representative'
-    | 'org.member'
-    | 'org.admin'
-    | 'wg.member'
-    | 'wg.contact_point'
-    | 'wg.safeguarding_officer'
-    | 'ot.member'
-    | 'ot.liaison'
-    | 'body.member'
-    | 'body.coordinator'
-    | 'body.contact_point'
-    | 'body.liaison'
-    | 'body.council_representative'
-    | 'gct.coordinator'
-    | 'gct.partnerships'
-    | 'gct.membership'
-    | 'gct.finance'
-    | 'gct.internal'
-    | 'gct.coordination'
-    | 'team.membership'
-    | 'team.selections'
-    | 'team.election_facilitation'
-    | 'team.awareness'
-    | 'team.safeguarding'
-    | 'team.finance'
-    | 'team.partnerships'
-    | 'team.comms'
-    | 'team.reforms'
-    | 'team.data_controller'
-    | 'team.gys_policy'
-    | 'content.editor'
-    | 'content.publisher'
-    | 'coy.lcoy_liaison'
-    | 'coy.rcoy_liaison'
-    | 'coy.gcoy_liaison'
-    | 'cct.member'
-    | 'cct.coordinator'
-    | 'negotiation.member'
-    | 'negotiation.reviewer'
-    | 'negotiation.applier'
-    | 'negotiation.grant_manager'
-    | 'negotiation.process_facilitator'
-    | 'negotiation.transmitter';
+  kind: 'mandate' | 'participation';
+  role: string;
   scopeType:
     | 'platform'
     | 'organisation'
@@ -499,11 +444,11 @@ export interface Appointment {
     | 'negotiation_project';
   scopeId: string;
   councilSeat?: string | null;
-  substituteFor?: (number | null) | Appointment;
+  substituteFor?: (number | null) | AuthorityRecord;
   status: 'active' | 'inactive' | 'expired' | 'revoked';
   startsAt: string;
   endsAt?: string | null;
-  appointedVia?:
+  provenance?:
     | {
         [k: string]: unknown;
       }
@@ -512,34 +457,8 @@ export interface Appointment {
     | number
     | boolean
     | null;
-  appointedBy?: (number | null) | Account;
+  recordedBy?: (number | null) | Account;
   evidence?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "assignments".
- */
-export interface Assignment {
-  id: number;
-  account: number | Account;
-  scopeType:
-    | 'team'
-    | 'working_group'
-    | 'negotiation_track'
-    | 'negotiation_project'
-    | 'platform_body'
-    | 'body'
-    | 'organization'
-    | 'platform';
-  scopeId: string;
-  role: string;
-  appointmentEvidence?: string | null;
-  status: 'active' | 'inactive' | 'expired' | 'revoked';
-  startsAt?: string | null;
-  endsAt?: string | null;
-  assignedBy?: (number | null) | Account;
   updatedAt: string;
   createdAt: string;
 }
@@ -1835,12 +1754,8 @@ export interface PayloadLockedDocument {
         value: number | Account;
       } | null)
     | ({
-        relationTo: 'appointments';
-        value: number | Appointment;
-      } | null)
-    | ({
-        relationTo: 'assignments';
-        value: number | Assignment;
+        relationTo: 'authority-records';
+        value: number | AuthorityRecord;
       } | null)
     | ({
         relationTo: 'member-profiles';
@@ -2210,7 +2125,6 @@ export interface AccountsSelect<T extends boolean = true> {
   membershipEndedAt?: T;
   membershipEndReason?: T;
   role?: T;
-  teamRoles?: T;
   wgInterests?: T;
   appointmentEvidence?: T;
   coursePassedAt?: T;
@@ -2244,11 +2158,12 @@ export interface AccountsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "appointments_select".
+ * via the `definition` "authority-records_select".
  */
-export interface AppointmentsSelect<T extends boolean = true> {
+export interface AuthorityRecordsSelect<T extends boolean = true> {
   account?: T;
-  appointmentRole?: T;
+  kind?: T;
+  role?: T;
   scopeType?: T;
   scopeId?: T;
   councilSeat?: T;
@@ -2256,26 +2171,9 @@ export interface AppointmentsSelect<T extends boolean = true> {
   status?: T;
   startsAt?: T;
   endsAt?: T;
-  appointedVia?: T;
-  appointedBy?: T;
+  provenance?: T;
+  recordedBy?: T;
   evidence?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "assignments_select".
- */
-export interface AssignmentsSelect<T extends boolean = true> {
-  account?: T;
-  scopeType?: T;
-  scopeId?: T;
-  role?: T;
-  appointmentEvidence?: T;
-  status?: T;
-  startsAt?: T;
-  endsAt?: T;
-  assignedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

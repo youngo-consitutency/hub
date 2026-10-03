@@ -68,11 +68,11 @@ async function evidenceForQuery(
     for (const c of await store.listDirectory(req))
       push('contact', c.name, c.role || '', `/directory`)
   }
-  // Members always see their own role/assignment context
+  // Members always see their own role/record context
   if (access.accountId) {
-    for (const a of access.assignments || [])
+    for (const a of access.records || [])
       push(
-        'assignment',
+        'authority_record',
         `Your role: ${a.role}`,
         `Scope: ${a.scopeType} ${a.scopeId || ''}`,
         '/profile',

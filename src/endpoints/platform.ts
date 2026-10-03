@@ -90,7 +90,7 @@ export const platformEndpoints: Endpoint[] = [
     }),
   },
   {
-    path: '/platform/assignments',
+    path: '/platform/records',
     method: 'post',
     handler: endpoint(async (req) => {
       await platform.assign(await actor(req), await body(req))
@@ -98,24 +98,11 @@ export const platformEndpoints: Endpoint[] = [
     }),
   },
   {
-    path: '/platform/assignments/:id/revoke',
+    path: '/platform/records/:id/revoke',
     method: 'post',
     handler: endpoint(async (req) => {
       const b = await body(req)
       await platform.revoke(await actor(req), p(req, 'id'), platform.text(b, 'reason', 2000))
-      return json({ ok: true })
-    }),
-  },
-  {
-    path: '/platform/appointments/:id/revoke',
-    method: 'post',
-    handler: endpoint(async (req) => {
-      const b = await body(req)
-      await platform.revokeAppointment(
-        await actor(req),
-        p(req, 'id'),
-        platform.text(b, 'reason', 2000),
-      )
       return json({ ok: true })
     }),
   },

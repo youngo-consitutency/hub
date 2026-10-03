@@ -2,13 +2,13 @@ import type { Payload, PayloadRequest } from 'payload'
 
 // Shared writer coordination for an account's authority records (S11/S13).
 //
-// Every path that creates or ends a mandate — the assignments backfill,
-// grantAppointment/revokeAppointment, and the platform assign()/revoke()
-// SQL — takes the same transaction-scoped advisory lock on
+// Every path that creates or ends an authority record —
+// grantAuthority/revokeAuthority, the platform assign()/revoke() SQL, and
+// membership exits — takes the same transaction-scoped advisory lock on
 // (AUTHORITY_LOCK_NS, accountId). The lock releases automatically at
-// commit/rollback, so a migration's check→insert can never interleave with
-// a concurrent human grant, revocation or edit: whichever transaction
-// commits first wins, and the other sees the result.
+// commit/rollback, so a check→insert can never interleave with a
+// concurrent grant, revocation or edit: whichever transaction commits
+// first wins, and the other sees the result.
 //
 // Lock ordering contract (deadlock-free). Every coordinated path acquires
 // locks in this exact order:
@@ -16,13 +16,13 @@ import type { Payload, PayloadRequest } from 'payload'
 //      always FIRST, in ascending account-id order (actor and target,
 //      deduplicated; a self-targeting write takes one key)
 //   2. row locks (SELECT ... FOR UPDATE / FOR SHARE reads / UPDATEs)
-//   3. writes to `appointments` / `assignments`
+//   3. writes to `authority_records`
 //
 // Advisory-first is what makes the order complete: permissions() acquires
 // FOR SHARE on the actor's own rows before writing, and a FOR SHARE holder
 // upgrading to a write waits behind queued FOR UPDATE requests — if the
 // advisory lock were taken after row locks, a self-targeting write (or a
-// migration holding FOR UPDATE on the actor's row) could form a cycle.
+// writer holding FOR UPDATE on the actor's row) could form a cycle.
 // Multi-key ordering matters the same way: a writer holding FOR SHARE on
 // the actor's rows and writing the target's rows could deadlock with the
 // mirrored pair (A writes B while B writes A), so both keys are taken up
@@ -81,18 +81,18 @@ export async function withAuthorityLock<T>(
   }
 }
 
-// Lock a ledger row for the duration of the current transaction. Any
-// concurrent UPDATE/DELETE to the same row waits for us — Postgres row
-// locks need no cooperation from the other writer.
-export async function lockAssignmentRow(
+// Lock an authority-record row for the duration of the current
+// transaction. Any concurrent UPDATE/DELETE to the same row waits for us
+// — Postgres row locks need no cooperation from the other writer.
+export async function lockAuthorityRecordRow(
   payload: Payload,
   transactionID: any,
-  assignmentId: number,
+  recordId: number,
 ): Promise<void> {
-  if (!Number.isInteger(assignmentId))
-    throw new Error('Row lock requires an integer assignment id.')
+  if (!Number.isInteger(recordId))
+    throw new Error('Row lock requires an integer authority-record id.')
   await (payload.db as any).execute({
     db: txHandle(payload, transactionID),
-    raw: `SELECT id FROM assignments WHERE id=${assignmentId} FOR UPDATE`,
+    raw: `SELECT id FROM authority_records WHERE id=${recordId} FOR UPDATE`,
   })
 }
