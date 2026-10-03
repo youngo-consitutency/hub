@@ -42,6 +42,17 @@ describe('toCamelCase row normalisation', () => {
     const row = toCamelCase<any>({ meta_json: { inner_key: 'v' } })
     expect(row.metaJson).toEqual({ inner_key: 'v' })
   })
+
+  it('keeps the populated value when spellings collide — camel then snake', () => {
+    const row = toCamelCase<any>({ firstName: 'Ada', first_name: null })
+    expect(row.firstName).toBe('Ada')
+  })
+
+  it('keeps the populated value when spellings collide — snake then camel', () => {
+    const row = toCamelCase<any>({ first_name: null, firstName: 'Ada' })
+    expect(row.firstName).toBe('Ada')
+    expect(toCamelCase<any>({ first_name: 'Ada', firstName: null }).firstName).toBe('Ada')
+  })
 })
 
 describe('toCamelCaseRows', () => {

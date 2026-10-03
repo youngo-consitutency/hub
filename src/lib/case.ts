@@ -17,6 +17,9 @@ export function toCamelCase<T extends Record<string, unknown>>(
     const camelKey = key.startsWith('_')
       ? key
       : key.replace(/_([a-z0-9])/g, (_, char) => char.toUpperCase())
+    // Keys that normalise to the same name collide on mixed-shape rows; a
+    // nullish value never replaces one already populated.
+    if (value == null && result[camelKey] != null) continue
     result[camelKey] = value
   }
   return result as T
