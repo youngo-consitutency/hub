@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { accountRef, isSelector, loadSelection } from '../lib/governance'
@@ -71,7 +71,7 @@ export const selectionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isSelector(req, account)))
         throw fail.forbidden('Selections are created by the selection/coordination team.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!b.opportunityNote?.trim()) fields.opportunityNote = 'Required.'
@@ -110,7 +110,7 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       const { totalDocs: committeeCount } = await req.payload.find({
         collection: 'selection-committee',
         where: { selection: { equals: s.id } },
@@ -135,7 +135,7 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (!['committee_forming', 'open'].includes(s.status))
         throw fail.conflict('invalid_phase', 'The committee can no longer be joined.')
       const existing = await committeeMember(req, s.id, account.id)
@@ -162,7 +162,7 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (!(await canAdminister(req, s, account)))
         throw fail.forbidden('The Selections Team may open applications.')
       if (s.status !== 'committee_forming') throw fail.conflict('invalid_phase', 'Already opened.')
@@ -200,9 +200,9 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (s.status !== 'open') throw fail.conflict('invalid_phase', 'Applications are not open.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       if (!b.answers || typeof b.answers !== 'object')
         throw fail.validation({ answers: 'Required.' })
       const { totalDocs: existing } = await req.payload.find({
@@ -241,10 +241,10 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       const member = await committeeMember(req, s.id, account.id)
       if (!member) throw fail.forbidden('Only committee members may declare recusals.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       if (!Array.isArray(b.applicantIds) || !b.applicantIds.length)
         throw fail.validation({ applicantIds: 'List the application ids you are conflicted on.' })
       const updated = await req.payload.update({
@@ -269,7 +269,7 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (!(await canAdminister(req, s, account)))
         throw fail.forbidden('The Selections Team may close applications.')
       if (s.status !== 'open')
@@ -293,12 +293,12 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (s.status !== 'evaluating')
         throw fail.conflict('invalid_phase', 'Evaluations open once applications close.')
       const member = await committeeMember(req, s.id, account.id)
       if (!member) throw fail.forbidden('Only committee members may evaluate.')
-      const applicationId = Number(req.routeParams!.aid)
+      const applicationId = Number(param(req, 'aid'))
       // Recusal check (S24 §2.2.4): conflicted members may not evaluate.
       const recused = (member.recusedApplicantIds ?? []).map(Number)
       if (recused.includes(applicationId))
@@ -306,7 +306,7 @@ export const selectionEndpoints: Endpoint[] = [
           'conflict_of_interest',
           'You declared a conflict of interest on this application.',
         )
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const data: any = {
         selection: s.id,
         application: applicationId,
@@ -366,12 +366,12 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (!(await canAdminister(req, s, account)))
         throw fail.forbidden('The Selections Team may record the final decision.')
       if (s.status !== 'evaluating')
         throw fail.conflict('invalid_phase', 'Evaluations must finish before deciding.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       if (!Array.isArray(b.selectedApplicationIds))
         throw fail.validation({ selectedApplicationIds: 'Required.' })
       if (b.selectedApplicationIds.length > (s.spotsAvailable ?? 1))
@@ -416,7 +416,7 @@ export const selectionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const s = await loadSelection(req, req.routeParams!.id as string)
+      const s = await loadSelection(req, param(req, 'id'))
       if (!(await canAdminister(req, s, account)))
         throw fail.forbidden('The Selections Team may announce the outcome.')
       if (s.status !== 'decided') throw fail.conflict('invalid_phase', 'Record the decision first.')

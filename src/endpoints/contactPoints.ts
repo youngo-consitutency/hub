@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requirePlatformOperator, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
@@ -32,7 +32,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg))
         throw fail.forbidden('You are not a contact point for this working group.')
@@ -65,11 +65,11 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
-      const accountId = String(req.routeParams?.accountId)
-      const b = ((await req.json?.()) || {}) as any
+      const accountId = param(req, 'accountId')
+      const b = await readBody(req)
       const roleInWg = ['member', 'contact_point', 'observer'].includes(b.roleInWg)
         ? b.roleInWg
         : 'member'
@@ -101,7 +101,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
       const { docs } = await req.payload.find({
@@ -119,10 +119,10 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const title = String(b.title || '')
         .trim()
         .slice(0, 200)
@@ -171,10 +171,10 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const { docs } = await req.payload.find({
         collection: 'working-groups',
         where: { slug: { equals: wg } },
@@ -239,7 +239,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const id = String(req.routeParams?.id)
+      const id = param(req, 'id')
       const slot = (await req.payload.findByID({
         collection: 'cp-call-slots',
         id,
@@ -265,7 +265,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const id = String(b.slotId || '')
       const slot = (await req.payload.findByID({
         collection: 'cp-call-slots',
@@ -321,7 +321,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account } = await requirePlatformOperator(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const slots = Array.isArray(b.slots) ? b.slots : [b]
       const created: any[] = []
       for (const s of slots) {
@@ -353,7 +353,7 @@ export const contactPointEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await requirePlatformOperator(req)
-      const id = String(req.routeParams?.id)
+      const id = param(req, 'id')
       const slot = (await req.payload.findByID({
         collection: 'cp-call-slots',
         id,

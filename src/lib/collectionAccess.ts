@@ -1,4 +1,5 @@
 import type { Access, FieldAccess } from 'payload'
+import { getAccessProfile } from './access'
 
 // Coherent access model for generated REST/GraphQL surfaces.
 //
@@ -35,7 +36,6 @@ export const staffWrites = {
 // authority records exactly as the endpoint guards do.
 export const grantsCapability = async (req: any, capability: string) => {
   if (!req.user || req.user.collection !== 'accounts') return false
-  const { getAccessProfile } = await import('./access')
   const profile = await getAccessProfile(req, req.user)
   return profile.capabilities.includes(capability)
 }

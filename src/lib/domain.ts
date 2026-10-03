@@ -1,0 +1,70 @@
+// Canonical shapes crossing the endpoint/library boundary.
+//
+// Account rows arrive as Payload docs (camelCase) or raw SQL rows
+// (snake_case) — `accountRow` normalises them, `accountView` projects the
+// SPA-facing shape. Everything downstream of requireAccount works with
+// AccountLike; anything sent to the client is an AccountView.
+//
+// This module is a leaf: it declares types only and may be imported by any
+// layer without risking a dependency cycle.
+
+/** Minimal account identity — Payload user docs, SQL rows and views all satisfy it. */
+export interface AccountLike {
+  id: number
+  email: string
+  entityType?: string
+  membershipTrack?: string | null
+  constituencyWorkStatus?: string | null
+  membershipStatus?: string | null
+  hubAccessStatus?: string | null
+  memberStatus?: string | null
+  [key: string]: any
+}
+
+/** The SPA-facing account projection produced by `accountView`. */
+export interface AccountView {
+  id: number
+  email: string
+  name?: string
+  firstName?: string | null
+  lastName?: string | null
+  phone?: string | null
+  gender?: string | null
+  entityType?: string
+  membershipTrack?: string | null
+  country?: string | null
+  nationality?: string | null
+  region?: string | null
+  ageBand?: string | null
+  organizationName?: string | null
+  organizationType?: string | null
+  isUnfcccAdmitted: boolean
+  youthAffiliation?: string | null
+  under18: boolean
+  constituencyWorkStatus: string | null
+  membershipPolicyVersion?: string | null
+  privacyConsent: boolean
+  privacyNoticeVersion?: string | null
+  privacyConsentAt: string | null
+  emailVerifiedAt: string | null
+  memberStatus?: string
+  hubAccessStatus: string
+  membershipStatus: string
+  onboardingCohort?: string | null
+  renewalDueAt?: string | null
+  membershipEndedAt?: string | null
+  membershipEndReason?: string | null
+  /** Technical account kind — always 'member'; authority lives in records. */
+  role: string
+  teamRoles: string[]
+  wgInterests: string[]
+  coursePassedAt: string | null
+  courseScore?: number | null
+  verifiedAt: string | null
+  isVerified: boolean
+  isNgo: boolean
+  createdAt?: string
+  lastLoginAt?: string | null
+  mustChangePassword: boolean
+  [key: string]: any
+}

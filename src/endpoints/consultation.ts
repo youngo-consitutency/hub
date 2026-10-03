@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { getDocument } from '../lib/documents'
@@ -64,7 +64,7 @@ export const consultationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await consultationLimit(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (b.website) return json({ ok: true, item: null }, { status: 201 })
       const { kinds, sections } = await consultationOptions(req)
       const kind = String(b.kind || '')

@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json, PUBLIC_CACHE, viewCache } from '../lib/respond'
+import { endpoint, fail, json, PUBLIC_CACHE, viewCache, param, readBody } from '../lib/respond'
 import { isVerifiedAccount } from '../lib/accounts'
 import { eventView, groupView, feedView, searchView, directoryView } from '../lib/views'
 import * as store from '../lib/content'
@@ -102,7 +102,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
-      const event = await store.getEvent(req, String(req.routeParams?.slug))
+      const event = await store.getEvent(req, param(req, 'slug'))
       if (!event) throw fail.notFound('Unknown event')
       return viewCache(json(eventView(event, opts)), opts.includePrivate)
     }),
@@ -119,7 +119,7 @@ export const publicEndpoints: Endpoint[] = [
     path: '/submissions/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const sub = await store.getSubmission(req, String(req.routeParams?.slug))
+      const sub = await store.getSubmission(req, param(req, 'slug'))
       if (!sub) throw fail.notFound('Unknown submission')
       return viewCache(json(sub), false)
     }),
@@ -141,7 +141,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
-      const d = await store.getDecision(req, String(req.routeParams?.slug), opts.includePrivate)
+      const d = await store.getDecision(req, param(req, 'slug'), opts.includePrivate)
       if (!d) throw fail.notFound('Unknown decision')
       return viewCache(json(d), opts.includePrivate)
     }),
@@ -165,7 +165,7 @@ export const publicEndpoints: Endpoint[] = [
     path: '/coys/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const coy = await store.getCoy(req, String(req.routeParams?.slug))
+      const coy = await store.getCoy(req, param(req, 'slug'))
       if (!coy) throw fail.notFound('Unknown COY')
       return viewCache(json(coy), false)
     }),
@@ -183,7 +183,7 @@ export const publicEndpoints: Endpoint[] = [
     path: '/groups/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const slug = String(req.routeParams?.slug)
+      const slug = param(req, 'slug')
       const opts = viewOptions(req)
       const group = await store.getGroup(req, slug)
       if (!group) throw fail.notFound('Unknown working group')
@@ -229,7 +229,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await gysSignupLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return json({ ok: true }, { status: 201 })
 
       const name = String(b.name || '').trim()
@@ -268,7 +268,7 @@ export const publicEndpoints: Endpoint[] = [
     path: '/documents/:slug',
     method: 'get',
     handler: endpoint(async (req) => {
-      const doc = await getDocument(req, String(req.routeParams?.slug))
+      const doc = await getDocument(req, param(req, 'slug'))
       if (!doc) throw fail.notFound('Unknown document')
       return viewCache(json(doc), false)
     }),

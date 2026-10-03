@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import {
   accountView,
   isVerifiedAccount,
@@ -165,7 +165,7 @@ export const memberEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const course = await getCourse(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const answers = b?.answers || {}
       let score = 0
       for (const q of course.quiz) if (answers[q.id] === q.correct) score += 1
@@ -186,7 +186,7 @@ export const memberEndpoints: Endpoint[] = [
         )
       }
       const now = new Date().toISOString()
-      const status = account.membershipStatus
+      const status = String(account.membershipStatus ?? '')
       const nextStatus = ['active', 'renewal_due', 'awaiting_onboarding'].includes(status)
         ? status
         : account.membershipTrack === 'constituency_work'
@@ -237,7 +237,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const wg = String(req.routeParams?.wg)
+      const wg = param(req, 'wg')
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
       let activities: any[] = []
@@ -262,8 +262,8 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
-      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+      const b = await readBody(req)
+      const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
         presentationOk: Boolean(b.presentationOk),
         rulesOk: Boolean(b.rulesOk),
         status: 'active',
@@ -276,7 +276,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const progress = await upsertWgProgress(req, account.id, String(req.routeParams?.wg), {
+      const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
         status: 'pending_approval',
       })
       return json({ progress: wgProgressView(progress, account.id) })
@@ -327,7 +327,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const displayName = trimmed(b.displayName, 120)
       if (!displayName) fields.displayName = 'Display name is required.'

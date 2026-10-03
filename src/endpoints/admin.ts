@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, adminReason, requireAccountsManager } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { rateLimit } from '../lib/rateLimit'
@@ -71,8 +71,8 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       const { account: admin } = await requireAccountsManager(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const before = await findAccountRowById(id)
       if (!before) throw fail.notFound('Account not found.')
@@ -102,8 +102,8 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       const { account: admin, access } = await requireAccountsManager(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const result = await updateMembershipLifecycle({
         actor: accountView(admin),
@@ -128,8 +128,8 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       const { account: admin } = await requireAccountsManager(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       const teamRole = String(b.teamRole || '')
       if (
@@ -209,8 +209,8 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       const { account: admin } = await requireAccountsManager(req)
-      const id = String(req.routeParams?.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = adminReason(b)
       if (!emailConfigured())
         throw new ApiError(

@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import {
@@ -217,7 +217,7 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({
           _: 'Only Constituency Work membership renews annually.',
         })
-      if (!['active', 'expired'].includes(account.membershipStatus))
+      if (!['active', 'expired'].includes(String(account.membershipStatus ?? '')))
         throw fail.conflict(
           'invalid_state',
           `Cannot renew while membership status is ${account.membershipStatus}.`,
@@ -246,7 +246,7 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const scope = b.scope === 'membership' ? 'membership' : 'constituency_work'
       if (scope === 'constituency_work') {
         if (account.membershipTrack !== 'constituency_work')
@@ -315,7 +315,7 @@ export const membershipEndpoints: Endpoint[] = [
       const h = await req.payload
         .findByID({
           collection: 'handovers',
-          id: Number(req.routeParams!.id),
+          id: Number(param(req, 'id')),
           overrideAccess: true,
         })
         .catch(() => {
@@ -324,7 +324,7 @@ export const membershipEndpoints: Endpoint[] = [
       const owner = (h.account as any)?.id ?? h.account
       if (owner !== account.id) throw fail.forbidden('This is not your handover.')
       if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
-      const idx = Number(req.routeParams!.idx)
+      const idx = Number(param(req, 'idx'))
       const items = (h.items ?? []) as any[]
       if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
         throw fail.validation({ idx: 'No such handover item.' })
@@ -402,8 +402,8 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff, access } = await requireTeam(req, 'membership_team')
-      const id = String(req.routeParams!.id)
-      const b = ((await req.json?.()) || {}) as any
+      const id = param(req, 'id')
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
@@ -447,21 +447,21 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
       const record = await req.payload
         .findByID({
           collection: 'authority-records',
-          id: Number(req.routeParams!.rid),
+          id: Number(param(req, 'rid')),
           overrideAccess: true,
         })
         .catch(() => {
           throw fail.notFound('Authority record not found.')
         })
       const owner = (record.account as any)?.id ?? record.account
-      if (String(owner) !== String(req.routeParams!.id))
+      if (String(owner) !== param(req, 'id'))
         throw fail.validation({ id: 'Record does not belong to that account.' })
       if (record.status !== 'active')
         throw fail.conflict('invalid_phase', `Record is already ${record.status}.`)
@@ -546,14 +546,14 @@ export const membershipEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
         throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
       const h = await req.payload
         .findByID({
           collection: 'handovers',
-          id: Number(req.routeParams!.id),
+          id: Number(param(req, 'id')),
           overrideAccess: true,
         })
         .catch(() => {

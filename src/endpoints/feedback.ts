@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
@@ -64,7 +64,7 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await feedbackLimit(req)
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const title = trimmed(b.title, 200)
       const kind = FEEDBACK_KINDS.some((k) => k.value === b.kind) ? b.kind : null
       const severity = FEEDBACK_SEVERITIES.some((s) => s.value === b.severity)
@@ -131,14 +131,14 @@ export const feedbackEndpoints: Endpoint[] = [
         access.capabilities.includes('accounts.manage') ||
         access.teamRoles.includes('membership_team')
       if (!canTriage) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const data: any = {}
       if (b.status && ['new', 'triaged', 'in_progress', 'resolved', 'declined'].includes(b.status))
         data.status = b.status
       if (b.triageNote !== undefined) data.triageNote = trimmed(b.triageNote, 2000)
       const updated = await req.payload.update({
         collection: 'feedback-tickets',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         data,
         overrideAccess: true,
         req,

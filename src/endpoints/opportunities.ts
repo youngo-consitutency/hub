@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import * as store from '../lib/content'
@@ -176,7 +176,7 @@ export const opportunityEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'requests')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const title = trimmed(b.title, 200)
       if (title.length < 6)
         throw fail.validation({ title: 'Give the posting a title of at least 6 characters.' })
@@ -241,7 +241,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const { account, ctx } = await requireOrgScope(req, 'requests')
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any
@@ -275,7 +275,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const approve = b.decision === 'approve'
       const reviewNote = trimmed(b.note, 1000) || null
       if (!approve && !reviewNote)
@@ -284,7 +284,7 @@ export const opportunityEndpoints: Endpoint[] = [
         })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any
@@ -320,8 +320,8 @@ export const opportunityEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
-      const orgAccountId = String(req.routeParams?.orgAccountId)
-      const b = ((await req.json?.()) || {}) as any
+      const orgAccountId = param(req, 'orgAccountId')
+      const b = await readBody(req)
       const state = String(b.state || '')
       if (!['trusted', 'review_required'].includes(state))
         throw fail.validation({ state: 'Trust state must be trusted or review_required.' })
@@ -361,12 +361,12 @@ export const opportunityEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
       if (!access.teamRoles.includes('membership_team')) throw fail.forbidden()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const reviewNote = trimmed(b.note, 1000) || null
       if (!reviewNote) throw fail.validation({ note: 'Give a reason for unpublishing.' })
       const item = (await req.payload.findByID({
         collection: 'opportunities',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any

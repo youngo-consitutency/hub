@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
@@ -107,7 +107,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       await intelligenceLimit(req)
       const account = requireVerifiedMember(req)
       const access = await getAccessProfile(req, account)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const query = String(b.query || '').trim()
       if (query.length < 3 || query.length > 500)
         throw fail.validation({ query: 'Ask a question of 3–500 characters.' })
@@ -167,7 +167,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await intelligenceLimit(req)
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (b.action !== 'save_research_note')
         throw fail.validation({ action: 'Unsupported writeback action.' })
       const title = cleanText(b.title, 160)
@@ -221,7 +221,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!hasCapability(access, 'intelligence.writeback.approve'))
         throw fail.forbidden('Research notes are approved by platform officers.')
-      const id = String(req.routeParams?.id)
+      const id = param(req, 'id')
       const row = (await req.payload.findByID({
         collection: 'research-notes',
         id,
@@ -267,7 +267,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       const access = await getAccessProfile(req, account)
       if (!hasCapability(access, 'intelligence.writeback.apply'))
         throw fail.forbidden('Research notes are applied by platform officers.')
-      const id = String(req.routeParams?.id)
+      const id = param(req, 'id')
       const row = (await req.payload.findByID({
         collection: 'research-notes',
         id,

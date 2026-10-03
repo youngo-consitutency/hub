@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
@@ -78,7 +78,7 @@ export const resourceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await submissionLimit(req)
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       await checkDuplicateUrl(req, b.url)
       const slug = resourceSlug(b.title)
       if (!slug) throw fail.validation({ title: 'A title is required.' })
@@ -109,7 +109,7 @@ export const resourceEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const draft = (await req.payload.findByID({
         collection: 'content-drafts',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any
@@ -120,7 +120,7 @@ export const resourceEndpoints: Endpoint[] = [
         String(account.id)
       )
         throw fail.forbidden('Only the author can edit this submission.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       await checkDuplicateUrl(req, b.url, draft.contentKey)
       const updated = await req.payload.update({
         collection: 'content-drafts',
@@ -200,9 +200,9 @@ export const resourceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await submissionLimit(req)
       const account = requireVerifiedMember(req)
-      const slug = String(req.routeParams?.slug)
+      const slug = param(req, 'slug')
       await requireResource(req, slug)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const detail = String(b.detail || '').trim()
       const options = await getDocument(req, 'content-options')
       const issueKinds = (options?.body?.resourceIssueKinds || []).map((k: any) => String(k.value))
@@ -243,8 +243,8 @@ export const resourceEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await canReview(req, account)))
         throw fail.forbidden('This content responsibility is not assigned to your account.')
-      const slug = String(req.routeParams?.slug)
-      const b = ((await req.json?.()) || {}) as any
+      const slug = param(req, 'slug')
+      const b = await readBody(req)
       const note = String(b.note || '').trim()
       if (
         !['verified', 'needs_changes', 'retired'].includes(b.status) ||
@@ -358,9 +358,9 @@ export const resourceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await submissionLimit(req)
       const account = requireVerifiedMember(req)
-      const slug = String(req.routeParams?.slug)
+      const slug = param(req, 'slug')
       await requireResource(req, slug)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       await checkDuplicateUrl(req, b.url, slug)
       const draft = await req.payload.create({
         collection: 'content-drafts',

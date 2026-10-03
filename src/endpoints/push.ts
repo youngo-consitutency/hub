@@ -1,7 +1,7 @@
 import type { Endpoint } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
@@ -44,7 +44,7 @@ export const pushEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       if (!pushConfigured) throw pushUnavailable()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const subscription = b.subscription?.endpoint ? b.subscription : b
       if (!subscription?.endpoint)
         throw fail.validation({ endpoint: 'A subscription endpoint is required.' })
@@ -70,7 +70,7 @@ export const pushEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const removed = await deleteSubscription({
         accountId: account.id,
         endpoint: b.endpoint || null,
@@ -106,7 +106,7 @@ export const pushEndpoints: Endpoint[] = [
       const rows = await listSubscriptionsForAccounts([account.id])
       if (!rows.length)
         throw new ApiError(404, 'no_subscriptions', 'Subscribe on this device first.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const payload = JSON.stringify({
         title: b.title || 'YOUNGO Hub',
         body: b.body || 'Test notification.',
@@ -128,7 +128,7 @@ export const pushEndpoints: Endpoint[] = [
         throw fail.forbidden('Sending notifications requires a mandate.')
       await pushSendLimit(req)
       if (!pushConfigured) throw pushUnavailable()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const { userIds, title, body, icon, badge, tag, data, requireInteraction } = b
       const targetAll = userIds === 'all'
       if (!targetAll && (!Array.isArray(userIds) || !userIds.length))

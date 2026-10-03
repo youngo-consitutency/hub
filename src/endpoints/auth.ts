@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody } from '../lib/respond'
 import { validateRegistration } from '../lib/registration'
 import {
   accountView,
@@ -117,7 +117,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await registerLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       const result = await validateRegistration(req, b)
       if (result.honeypot) {
         req.payload.logger.info({ event: 'hub_register_rejected_as_automated' })
@@ -230,7 +230,7 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/login',
     method: 'post',
     handler: endpoint(async (req) => {
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true }))
       const email = String(b.email || '').trim()
       const password = String(b.password || '')
@@ -311,7 +311,7 @@ export const authEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await changePasswordLimit(req)
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       const currentPassword = String(b.currentPassword || '')
       const password = String(b.password || '')
       const passwordConfirm = String(b.passwordConfirm || '')
@@ -355,7 +355,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await resetRequestLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true, message: GENERIC_FORGOT }))
       const email = String(b.email || '')
         .trim()
@@ -412,7 +412,7 @@ export const authEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await resetConsumeLimit(req)
-      const b = ((await req.json?.()) || {}) as Record<string, any>
+      const b = await readBody(req)
       if (b.website) return noStore(json({ ok: true }))
       const token = String(b.token || '').trim()
       const password = String(b.password || '')

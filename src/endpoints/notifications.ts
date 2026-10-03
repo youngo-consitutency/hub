@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload'
 import { after } from 'next/server'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { getAccessProfile } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
@@ -94,7 +94,7 @@ export const notificationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await requireNotifyCapability(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       let input
       try {
         input = broadcastInput(b)
@@ -125,7 +125,7 @@ export const notificationEndpoints: Endpoint[] = [
           'email_not_configured',
           'Email delivery is not configured for this Hub yet.',
         )
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       let input
       try {
         input = broadcastInput(b)
@@ -359,7 +359,7 @@ export const notificationEndpoints: Endpoint[] = [
       const left = Buffer.from(expected)
       const right = Buffer.from(supplied)
       if (left.length !== right.length || !timingSafeEqual(left, right)) throw fail.unauthorized()
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       // Provider events are recorded for audit; suppression handled when email
       // delivery is wired to a real provider.
       await audit(req, null, {
@@ -406,7 +406,7 @@ export const notificationEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (!account.emailVerifiedAt && Object.values(b?.email || {}).some(Boolean)) {
         return json(
           {

@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
@@ -59,7 +59,7 @@ export const organisationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const orgAccountId = String(b.orgAccountId || '').trim()
       if (!orgAccountId) throw fail.validation({ orgAccountId: 'Choose an organisation.' })
       const org = (await req.payload.findByID({
@@ -113,12 +113,12 @@ export const organisationEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, ctx } = await requireOrgScope(req, 'seats')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const approve = b.decision === 'approve'
       const seatRole = AFFILIATION_ROLES.includes(b.seatRole) ? b.seatRole : 'affiliate'
       const seat = (await req.payload.findByID({
         collection: 'ngo-seats',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any

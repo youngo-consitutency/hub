@@ -1,6 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { deriveAuthority, type AuthorityRow } from './authority'
-import { isCwActive } from './accounts'
+import { isCwActive } from './accountStatus'
+import type { AccountLike } from './domain'
 
 // Derives the capability model from `authority-records`: time-bounded,
 // scoped, evidenced records — mandates and participation share one store.
@@ -32,7 +33,7 @@ export interface AccessProfile {
   manageAllWgs: boolean
   isFocalPoint?: boolean
   isMandateHolder?: boolean
-  accountId?: string
+  accountId?: number
 }
 
 // Only coordination responsibilities carry wg.manage. Ordinary group
@@ -52,7 +53,10 @@ const EMPTY: AccessProfile = {
   manageAllWgs: false,
 }
 
-export async function getAccessProfile(req: PayloadRequest, account: any): Promise<AccessProfile> {
+export async function getAccessProfile(
+  req: PayloadRequest,
+  account: AccountLike | null | undefined,
+): Promise<AccessProfile> {
   if (!account) return EMPTY
 
   const cw = isCwActive(account)
@@ -97,10 +101,16 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
   }
 }
 
-export function hasCapability(access: any, capability: string) {
+export function hasCapability(
+  access: Pick<AccessProfile, 'capabilities'> | null | undefined,
+  capability: string,
+): boolean {
   return Boolean(access?.capabilities?.includes(capability))
 }
 
-export function canManageWg(access: any, wgSlug: string) {
-  return access?.manageAllWgs || hasCapability(access, `wg.manage:${wgSlug}`)
+export function canManageWg(
+  access: Pick<AccessProfile, 'capabilities' | 'manageAllWgs'> | null | undefined,
+  wgSlug: string,
+): boolean {
+  return Boolean(access?.manageAllWgs) || hasCapability(access, `wg.manage:${wgSlug}`)
 }

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import type { Endpoint } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
@@ -59,7 +59,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may create elections.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
       if (!Array.isArray(b.races) || !b.races.length)
@@ -94,7 +94,7 @@ export const electionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       // Candidacies are published simultaneously when voting opens (S10
       // §2.3); before that only counts are exposed.
       const { docs: all } = await req.payload.find({
@@ -121,7 +121,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may advance phases.')
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       const flow: Record<string, string> = {
         announced: 'nominations',
         nominations: 'voting',
@@ -179,10 +179,10 @@ export const electionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       if (e.status !== 'nominations')
         throw fail.conflict('invalid_phase', 'Nominations are not open.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
@@ -226,14 +226,14 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team screens candidacies.')
-      const e = await loadElection(req, req.routeParams!.id as string)
-      const b = (await req.json?.()) ?? ({} as any)
+      const e = await loadElection(req, param(req, 'id'))
+      const b = await readBody(req)
       if (!['screened_in', 'screened_out'].includes(b.status))
         throw fail.validation({ status: 'Must be screened_in or screened_out.' })
       const candidate = await req.payload
         .findByID({
           collection: 'election-candidates',
-          id: Number(req.routeParams!.cid),
+          id: Number(param(req, 'cid')),
           overrideAccess: true,
         })
         .catch(() => {
@@ -261,7 +261,7 @@ export const electionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireCwMember(req)
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       // Credentials may be issued once voting is scheduled (or in advance).
       if (!['nominations', 'voting', 'tallying'].includes(e.status))
         throw fail.conflict('invalid_phase', 'Voter credentials are not yet being issued.')
@@ -301,10 +301,10 @@ export const electionEndpoints: Endpoint[] = [
     path: '/governance/elections/:id/vote',
     method: 'post',
     handler: endpoint(async (req) => {
-      const e = await loadElection(req, req.routeParams!.id as string)
+      const e = await loadElection(req, param(req, 'id'))
       if (e.status !== 'voting')
         throw fail.conflict('invalid_phase', 'Voting is not open for this election.')
-      const b = (await req.json?.()) ?? ({} as any)
+      const b = await readBody(req)
       const fields: Record<string, string> = {}
       const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
       if (!b.token?.trim()) fields.token = 'Required.'
@@ -406,7 +406,7 @@ export const electionEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may tally.')
-      let e = await loadElection(req, req.routeParams!.id as string)
+      let e = await loadElection(req, param(req, 'id'))
       if (!['voting', 'tallying'].includes(e.status))
         throw fail.conflict('invalid_phase', `Cannot tally while status is ${e.status}.`)
       const { docs: ballots } = await req.payload.find({

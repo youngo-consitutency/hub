@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
@@ -221,7 +221,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden('Content drafting is not assigned.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const contentType = String(b.contentType || '')
       if (!['event', 'announcement', 'resource'].includes(contentType))
         throw fail.validation({ contentType: 'Choose events, announcements, or resources.' })
@@ -249,12 +249,12 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden()
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (String(draft.author?.id ?? draft.author) !== String(account.id))
         throw fail.forbidden('Only the author can edit this draft.')
       if (!['draft', 'changes_requested'].includes(draft.status))
         throw new ApiError(409, 'conflict', 'This draft is already in review.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
@@ -274,7 +274,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canDraft } = await draftAccess(req)
       if (!canDraft) throw fail.forbidden()
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (String(draft.author?.id ?? draft.author) !== String(account.id))
         throw fail.forbidden('Only the author can submit this draft.')
       if (!['draft', 'changes_requested'].includes(draft.status))
@@ -298,12 +298,12 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canReview } = await draftAccess(req)
       if (!canReview) throw fail.forbidden('Content review is not assigned.')
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (draft.status !== 'in_review')
         throw new ApiError(409, 'conflict', 'Only drafts in review can be decided.')
       if (String(draft.author?.id ?? draft.author) === String(account.id))
         throw fail.forbidden('Authors cannot review their own draft.')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const decision = ['approve', 'decline', 'request_changes'].includes(b.decision)
         ? b.decision
         : null
@@ -336,7 +336,7 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const draft = await getDraft(req, String(req.routeParams?.id))
+      const draft = await getDraft(req, param(req, 'id'))
       if (draft.status !== 'approved')
         throw new ApiError(409, 'conflict', 'Only approved drafts can be published.')
       if (String(draft.author?.id ?? draft.author) === String(account.id))
@@ -361,8 +361,8 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { canDraft, canReview } = await draftAccess(req)
       if (!canDraft && !canReview) throw fail.forbidden()
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
       let item: any = null
       if (contentType === 'event') item = await store.getEvent(req, slug)
       else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
@@ -378,9 +378,9 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
-      const b = ((await req.json?.()) || {}) as any
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
+      const b = await readBody(req)
       const payload = b.payload ?? b
       const item = await applyToLive(req, contentType, slug, payload)
       await audit(req, account, {
@@ -399,8 +399,8 @@ export const contentEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, canPublish } = await draftAccess(req)
       if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
-      const contentType = String(req.routeParams?.contentType)
-      const slug = String(req.routeParams?.slug)
+      const contentType = param(req, 'contentType')
+      const slug = param(req, 'slug')
       if (!['event', 'announcement'].includes(contentType))
         throw fail.validation({
           contentType: 'contentType must be event or announcement.',
@@ -441,7 +441,7 @@ export const contentEndpoints: Endpoint[] = [
               ctaLabel: live.ctaLabel || '',
               ctaDeadlineAt: live.ctaDeadlineAt || '',
             }
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const cleanReason =
         String(b.reason || '')
           .trim()

@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json } from '../lib/respond'
+import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
@@ -131,7 +131,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const preview = previewCsvImport(b.csvText, b.columnMap)
       if (!preview.ok) throw fail.validation({ csvText: preview.error || 'Invalid CSV.' })
       return json(preview)
@@ -142,7 +142,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const workflow = await getGysWorkflow(req)
       let parsed: any
       try {
@@ -208,7 +208,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const allowed = [
         'planning',
         'intake',
@@ -242,7 +242,7 @@ export const gysEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       if (!String(b.title || '').trim() || !String(b.body || '').trim())
         throw fail.validation({
           title: 'Title and contribution text are required.',
@@ -297,10 +297,10 @@ export const gysEndpoints: Endpoint[] = [
     method: 'patch',
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
-      const b = ((await req.json?.()) || {}) as any
+      const b = await readBody(req)
       const row = (await req.payload.findByID({
         collection: 'gys-tracked-contributions',
-        id: String(req.routeParams?.id),
+        id: param(req, 'id'),
         overrideAccess: true,
         req,
       })) as any
