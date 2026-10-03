@@ -279,7 +279,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         throw new ApiError(
           409,
           'separation_of_duties',
-          'A research note must be applied by a different administrator than its approver.',
+          'A research note must be applied by a different operator than its approver.',
         )
       const updated = await req.payload.update({
         collection: 'research-notes',

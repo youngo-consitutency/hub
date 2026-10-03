@@ -55,7 +55,8 @@ export async function hasActivePlatformMandate(accountId: number | string) {
   const pool = requirePgPool()
   const { rows } = await pool.query(
     `SELECT 1 FROM authority_records
-     WHERE account_id=$1 AND status='active' AND scope_type='platform' LIMIT 1`,
+     WHERE account_id=$1 AND status='active' AND scope_type='platform'
+       AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now()) LIMIT 1`,
     [Number(accountId)],
   )
   return rows.length > 0

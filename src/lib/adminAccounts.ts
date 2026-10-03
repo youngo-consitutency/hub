@@ -62,11 +62,11 @@ export async function queryAccountsForAdmin({
   if (cleanStatus) add('membership_status = ?', cleanStatus)
   if (cleanRole === 'member')
     where.push(
-      `NOT EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active')`,
+      `NOT EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now()))`,
     )
   else if (cleanRole)
     add(
-      `EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active' AND ar.role = ?)`,
+      `EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now()) AND ar.role = ?)`,
       cleanRole,
     )
   const filter = where.length ? `WHERE ${where.join(' AND ')}` : ''

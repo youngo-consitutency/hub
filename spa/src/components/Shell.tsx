@@ -87,13 +87,11 @@ export function Shell({ children }: any) {
       const first = controls[0]
       const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
-        event
-          .preventDefault()(last as any)
-          .focus()
+        event.preventDefault()
+        ;(last as any).focus()
       } else if (!event.shiftKey && document.activeElement === last) {
-        event
-          .preventDefault()(first as any)
-          .focus()
+        event.preventDefault()
+        ;(first as any).focus()
       }
     }
 

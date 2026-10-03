@@ -50,7 +50,6 @@ const ROLE_OPTIONS = [
   { value: 'gct.partnerships', label: 'GCT — Partnerships' },
   { value: 'gct.membership', label: 'GCT — Membership' },
   { value: 'gct.finance', label: 'GCT — Finance' },
-  { value: 'gct.recognition', label: 'GCT — Recognition' },
   { value: 'team.membership', label: 'Membership Team' },
   { value: 'team.comms', label: 'Communications Team' },
   { value: 'team.data_controller', label: 'Data Controller' },

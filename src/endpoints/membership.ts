@@ -121,9 +121,10 @@ export async function applyMembershipTransition(
     actor: AccountLike
     auditEntry: (result: { ended: number; updated: any }) => Record<string, any>
   },
-  hooks?: { afterSweep?: () => Promise<void> },
+  hooks?: { beforeSweep?: () => Promise<void>; afterSweep?: () => Promise<void> },
 ) {
   return withAuthorityLock(req, accountId, async () => {
+    await hooks?.beforeSweep?.()
     const ended = await endRecords(req, accountId, { scopeTypes: transition.scopeTypes })
     await hooks?.afterSweep?.()
     const updated = await req.payload.update({
@@ -415,24 +416,39 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({ _: 'You cannot terminate your own account.' })
       if ((await hasActivePlatformMandate(target.id)) && !hasCapability(access, 'platform.manage'))
         throw fail.forbidden('Only a platform officer can terminate an officer\u2019s membership.')
-      const { updated, handover } = await applyMembershipTransition(req, target.id, {
-        accountFields: {
-          membershipStatus: 'terminated',
-          membershipEndedAt: new Date().toISOString(),
-          membershipEndReason: reason.slice(0, 500),
-          constituencyWorkStatus: '',
-          hubAccessStatus: 'suspended',
+      const { updated, handover } = await applyMembershipTransition(
+        req,
+        target.id,
+        {
+          accountFields: {
+            membershipStatus: 'terminated',
+            membershipEndedAt: new Date().toISOString(),
+            membershipEndReason: reason.slice(0, 500),
+            constituencyWorkStatus: '',
+            hubAccessStatus: 'suspended',
+          },
+          handover: { reason: 'termination', scopeLabel: 'Membership' },
+          actor: staff,
+          auditEntry: (r) => ({
+            action: 'membership.terminated',
+            targetType: 'account',
+            targetId: id,
+            reason: reason.slice(0, 500),
+            after: accountView(r.updated),
+          }),
         },
-        handover: { reason: 'termination', scopeLabel: 'Membership' },
-        actor: staff,
-        auditEntry: (r) => ({
-          action: 'membership.terminated',
-          targetType: 'account',
-          targetId: id,
-          reason: reason.slice(0, 500),
-          after: accountView(r.updated),
-        }),
-      })
+        {
+          // Recheck under the lock: a platform mandate granted between the
+          // pre-check above and this sweep must not be ended silently.
+          beforeSweep: async () => {
+            if (
+              (await hasActivePlatformMandate(target.id)) &&
+              !hasCapability(access, 'platform.manage')
+            )
+              throw fail.forbidden('Only a platform officer can terminate an officer’s membership.')
+          },
+        },
+      )
       await destroyAllSessions(target.id)
       return json({
         account: accountView(updated),
@@ -445,7 +461,7 @@ export const membershipEndpoints: Endpoint[] = [
     path: '/member/team/membership/accounts/:id/records/:rid/end',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
+      const { account: staff, access } = await requireTeam(req, 'membership_team')
       const b = await readBody(req)
       const reason = String(b.reason || '').trim()
       if (reason.length < 8)
@@ -464,6 +480,8 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({ id: 'Record does not belong to that account.' })
       if (record.status !== 'active')
         throw fail.conflict('invalid_phase', `Record is already ${record.status}.`)
+      if (record.scopeType === 'platform' && !hasCapability(access, 'platform.manage'))
+        throw fail.forbidden('Only a platform officer can end a platform mandate.')
       const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
         // Re-read under the lock: a concurrent staff request or the
         // endRecords sweep can change the status between the pre-check

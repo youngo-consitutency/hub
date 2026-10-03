@@ -212,7 +212,6 @@ function ResponsibilitySection({ account }: any) {
   const access = account?.access || {}
   const teamRoles = access.teamRoles || account?.teamRoles || []
   const capabilities = access.capabilities || []
-  const isOfficer = capabilities.includes('platform.manage')
   const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
   const responsibilities = [
     {
@@ -255,7 +254,7 @@ function ResponsibilitySection({ account }: any) {
       label: 'NGO workspace',
       detail: 'Manage organisation participation and representatives.',
       icon: Building2,
-      visible: access.ngo || isOfficer,
+      visible: Boolean(access.ngo),
     },
     {
       href: '/admin',

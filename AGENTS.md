@@ -41,6 +41,22 @@ The former OpenSpec handoff and contracts are not included in this public checko
 - Editorial approval, constituency endorsement, and external transmission are distinct. Agents cannot grant any of them. Research-note approval remains the existing independent-admin process.
 - Derive scope in `src/lib/access.ts`; do not reuse broad content apply-now capabilities or give agents database credentials. Restricted project material requires an explicit project-scoped grant and remains outside ordinary Intelligence retrieval.
 
+## Operator recovery
+
+All console access derives from `authority-records`; if every officer's
+Constituency Work lapses, `deriveAuthority` skips their records and no
+account can grant new mandates through the app. The out-of-band recovery
+path is `scripts/setup/grant-authority.ts`, which writes a single
+provenance-stamped record directly:
+
+```sh
+ACCOUNT_ID=<id> ROLE=focal_point npx tsx scripts/setup/grant-authority.ts
+```
+
+Keep at least one operator in active Constituency Work so this stays a
+last resort; every use is auditable via `provenance.source =
+'manual_recovery'`.
+
 ## Verification
 
 Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through provisioning scripts or direct database access. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.

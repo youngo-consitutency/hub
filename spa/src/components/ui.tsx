@@ -202,7 +202,8 @@ export function FilterMenu({ children, activeCount = 0, label = 'Filters', onCle
                 const firstFilter = event.currentTarget
                   .closest('.filterMenu')
                   ?.querySelector('.filterMenuPanel button')
-                onClear()(firstFilter as HTMLElement | undefined)?.focus({ preventScroll: true })
+                onClear()
+                ;(firstFilter as HTMLElement | undefined)?.focus({ preventScroll: true })
               }}
             >
               <TbX size={15} strokeWidth={1.75} aria-hidden />
