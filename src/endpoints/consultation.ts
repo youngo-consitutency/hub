@@ -37,7 +37,7 @@ export const consultationEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const where: any = {}
       if (req.query?.kind) where.kind = { equals: req.query.kind }
-      if (req.query?.section) where.section = { equals: req.query.section }
+      if (req.query?.section) where['meta.section'] = { equals: req.query.section }
       const { docs } = await req.payload.find({
         collection: 'consultation-contributions',
         where,
@@ -51,8 +51,8 @@ export const consultationEndpoints: Endpoint[] = [
             id: row.id,
             kind: row.kind,
             body: row.body,
-            name: row.displayName || null,
-            section: row.section,
+            name: row.name || null,
+            section: row.meta?.section || null,
             createdAt: row.createdAt,
           })),
         },

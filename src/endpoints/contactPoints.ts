@@ -8,24 +8,20 @@ import { getDocument } from '../lib/documents'
 import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol'
 import type { Doc } from '../lib/domain'
 
-function publicSlot(s: any) {
+function publicSlot(s: any, { withEmail = false } = {}) {
+  const person = (a: any) =>
+    a && typeof a === 'object'
+      ? withEmail
+        ? { id: a.id, name: a.name, email: a.email }
+        : { id: a.id, name: a.name }
+      : null
   return {
     id: s.id,
     startsAt: s.startsAt,
     durationMinutes: s.durationMin,
     meetUrl: s.meetingUrl || null,
-    host:
-      s.hostAccount && typeof s.hostAccount === 'object'
-        ? { id: s.hostAccount.id, name: s.hostAccount.name, email: s.hostAccount.email }
-        : null,
-    bookedBy:
-      s.bookedByAccount && typeof s.bookedByAccount === 'object'
-        ? {
-            id: s.bookedByAccount.id,
-            name: s.bookedByAccount.name,
-            email: s.bookedByAccount.email,
-          }
-        : null,
+    host: person(s.hostAccount),
+    bookedBy: person(s.bookedByAccount),
     bookedAt: s.bookedAt || null,
   }
 }
@@ -230,7 +226,7 @@ export const contactPointEndpoints: Endpoint[] = [
               typeof s.bookedByAccount !== 'object' ||
               s.bookedByAccount.id !== account.id,
           )
-          .map(publicSlot),
+          .map((s) => publicSlot(s)),
         mine: slots
           .filter(
             (s) =>
@@ -238,7 +234,7 @@ export const contactPointEndpoints: Endpoint[] = [
               typeof s.bookedByAccount === 'object' &&
               String(s.bookedByAccount.id) === String(account.id),
           )
-          .map(publicSlot),
+          .map((s) => publicSlot(s)),
       })
     }),
   },
@@ -258,9 +254,16 @@ export const contactPointEndpoints: Endpoint[] = [
       if (slot.bookedByAccount) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       if (Date.parse(slot.startsAt) < Date.now())
         throw fail.validation({ startsAt: 'This slot is in the past.' })
-      const updated = await req.payload.update({
+      // Conditional write claims the slot atomically: if another request
+      // booked it between our read and this update, no row matches and we
+      // surface the conflict instead of overwriting their booking.
+      const claimed = await req.payload.update({
         collection: 'cp-call-slots',
-        id,
+        where: {
+          id: { equals: id },
+          bookedByAccount: { exists: false },
+          status: { equals: 'open' },
+        },
         data: {
           bookedByAccount: account.id,
           bookedAt: new Date().toISOString(),
@@ -269,6 +272,8 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
+      const updated = claimed.docs[0]
+      if (!updated) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       return json({ slot: updated }, { status: 201 })
     }),
   },
@@ -311,7 +316,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      return json({ slots: (docs as Doc[]).map(publicSlot) })
+      return json({ slots: (docs as Doc[]).map((s) => publicSlot(s, { withEmail: true })) })
     }),
   },
   {
@@ -326,7 +331,7 @@ export const contactPointEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ slots: (docs as Doc[]).map(publicSlot) })
+      return json({ slots: (docs as Doc[]).map((s) => publicSlot(s, { withEmail: true })) })
     }),
   },
   {
