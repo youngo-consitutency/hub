@@ -2,8 +2,8 @@ import type { Endpoint } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
-import { getAccessProfile, hasCapability } from '../lib/access'
+import { requireAccount, memberContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
 import {
   deleteSubscription,
@@ -122,8 +122,7 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/send',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await memberContext(req)
       if (!hasCapability(access, 'notifications.send'))
         throw fail.forbidden('Sending notifications requires a mandate.')
       await pushSendLimit(req)
@@ -187,8 +186,7 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/admin/summary',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       if (!hasCapability(access, 'accounts.manage'))
         throw fail.forbidden('Platform operator access required.')
       const subscribers = await listSubscriberAccounts()
@@ -203,8 +201,7 @@ export const pushEndpoints: Endpoint[] = [
     path: '/push/admin/subscribers',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       if (!hasCapability(access, 'accounts.manage'))
         throw fail.forbidden('Platform operator access required.')
       return json({

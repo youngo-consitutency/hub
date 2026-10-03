@@ -1,8 +1,7 @@
 import type { Endpoint } from 'payload'
 import { after } from 'next/server'
 import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
@@ -81,8 +80,7 @@ function broadcastInput(body: any) {
 }
 
 const requireNotifyCapability = async (req: any) => {
-  const account = requireAccount(req)
-  const access = await getAccessProfile(req, account)
+  const { account, access } = await memberContext(req)
   if (!access.capabilities.includes('notifications.send'))
     throw fail.forbidden('Sending Hub email is not assigned to this account.')
   return account

@@ -5,8 +5,8 @@ import {
   isVerifiedAccount,
   requireAccount,
   requireVerifiedMember,
+  memberContext,
 } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
 import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
@@ -111,8 +111,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/access',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await memberContext(req)
       const seat = await req.payload
         .find({
           collection: 'ngo-seats',
@@ -390,8 +389,7 @@ export const memberEndpoints: Endpoint[] = [
     path: '/member/focal/overview',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       // The focal overview belongs to the elected Focal Points — an
       // administrator has no mandate and gets no view.
       if (!access.isFocalPoint) throw fail.forbidden()

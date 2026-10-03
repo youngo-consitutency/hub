@@ -1,7 +1,6 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, param } from '../lib/respond'
-import { accountView, requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { accountView, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { getMemberPerson, listMemberPeople } from '../lib/memberDirectory'
 import { readMemberPhoto } from '../lib/memberPhotos'
 
@@ -28,8 +27,7 @@ export const peopleEndpoints: Endpoint[] = [
     path: '/member/people/:id',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       const person = await getMemberPerson({ ...accountView(account), access }, param(req, 'id'))
       if (!person) throw fail.notFound('Member profile not found.')
       return json({ person })
@@ -40,8 +38,7 @@ export const peopleEndpoints: Endpoint[] = [
     path: '/member/people/:id/photo',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       const id = Number(param(req, 'id'))
       const person = await getMemberPerson({ ...accountView(account), access }, id)
       if (!person) throw fail.notFound('Profile photo not found.')

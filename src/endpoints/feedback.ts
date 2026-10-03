@@ -1,7 +1,6 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireAccount } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { trimmed } from '../lib/text'
 
@@ -32,8 +31,7 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback/options',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       return json({
         kinds: FEEDBACK_KINDS,
         severities: FEEDBACK_SEVERITIES,
@@ -101,8 +99,7 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       const canTriage =
         access.capabilities.includes('accounts.manage') ||
         access.teamRoles.includes('membership_team')
@@ -125,8 +122,7 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback/:id',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       const canTriage =
         access.capabilities.includes('accounts.manage') ||
         access.teamRoles.includes('membership_team')

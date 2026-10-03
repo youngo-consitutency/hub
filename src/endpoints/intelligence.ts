@@ -1,7 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile, hasCapability } from '../lib/access'
+import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
@@ -105,8 +105,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       await intelligenceLimit(req)
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       const b = await readBody(req)
       const query = String(b.query || '').trim()
       if (query.length < 3 || query.length > 500)
@@ -146,8 +145,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
       const where: any = isOperator ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
@@ -217,8 +215,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/approve',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       if (!hasCapability(access, 'intelligence.writeback.approve'))
         throw fail.forbidden('Research notes are approved by platform officers.')
       const id = param(req, 'id')
@@ -263,8 +260,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/writebacks/:id/apply',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       if (!hasCapability(access, 'intelligence.writeback.apply'))
         throw fail.forbidden('Research notes are applied by platform officers.')
       const id = param(req, 'id')
@@ -307,8 +303,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     path: '/intelligence/metrics',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
       const where: any = isOperator ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({

@@ -101,41 +101,48 @@ export function requireAccount(req: PayloadRequest): AccountLike {
   return user as AccountLike
 }
 
-// Team workspaces require the corresponding authority record.
-export async function requireTeam(
-  req: PayloadRequest,
-  teamRole: string,
-): Promise<{ account: AccountLike; access: AccessProfile }> {
+export interface MemberContext {
+  account: AccountLike
+  access: AccessProfile
+}
+
+// The authenticated request context every member endpoint needs: the account
+// plus its derived access profile. Capability gates build on this pair.
+export async function memberContext(req: PayloadRequest): Promise<MemberContext> {
+  const account = requireAccount(req)
+  return { account, access: await getAccessProfile(req, account) }
+}
+
+export async function verifiedContext(req: PayloadRequest): Promise<MemberContext> {
   const account = requireVerifiedMember(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.teamRoles.includes(teamRole))
+  return { account, access: await getAccessProfile(req, account) }
+}
+
+// Team workspaces require the corresponding authority record.
+export async function requireTeam(req: PayloadRequest, teamRole: string): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!ctx.access.teamRoles.includes(teamRole))
     throw fail.forbidden('This team workspace is not assigned to your account.')
-  return { account, access }
+  return ctx
 }
 
 // The accounts console gates on the `accounts.manage` capability, held by
 // platform mandates (focal point, internal-management coordinator) — not by
 // an account flag.
-export async function requireAccountsManager(
-  req: PayloadRequest,
-): Promise<{ account: AccountLike; access: AccessProfile }> {
-  const account = requireVerifiedMember(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.capabilities.includes('accounts.manage'))
+export async function requireAccountsManager(req: PayloadRequest): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!ctx.access.capabilities.includes('accounts.manage'))
     throw fail.forbidden('This console is for platform operators.')
-  return { account, access }
+  return ctx
 }
 
 // Platform-wide operations (contact-point call scheduling and the like) gate
 // on the `platform.manage` capability — the focal point and peers.
-export async function requirePlatformOperator(
-  req: PayloadRequest,
-): Promise<{ account: AccountLike; access: AccessProfile }> {
-  const account = requireVerifiedMember(req)
-  const access = await getAccessProfile(req, account)
-  if (!access.capabilities.includes('platform.manage'))
+export async function requirePlatformOperator(req: PayloadRequest): Promise<MemberContext> {
+  const ctx = await verifiedContext(req)
+  if (!ctx.access.capabilities.includes('platform.manage'))
     throw fail.forbidden('This area is for platform officers.')
-  return { account, access }
+  return ctx
 }
 
 export function adminReason(body: any): string {

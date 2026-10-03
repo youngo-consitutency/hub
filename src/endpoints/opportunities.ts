@@ -1,7 +1,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireAccount, requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import {
+  requireVerifiedMember,
+  verifiedContext,
+  memberContext,
+} from '../lib/accounts'
 import * as store from '../lib/content'
 import { opportunityShape } from '../lib/content'
 import { requirePgPool } from '../lib/pg'
@@ -92,8 +95,7 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/review',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = requireAccount(req)
-      const access = await getAccessProfile(req, account)
+      const { access } = await memberContext(req)
       if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const [pending, published] = await Promise.all([
@@ -271,8 +273,7 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/review',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const b = await readBody(req)
@@ -316,8 +317,7 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/trust/:orgAccountId',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       if (!access.teamRoles.includes('membership_team'))
         throw fail.forbidden('Posting review requires a Membership Team appointment.')
       const orgAccountId = param(req, 'orgAccountId')
@@ -358,8 +358,7 @@ export const opportunityEndpoints: Endpoint[] = [
     path: '/member/opportunities/:id/unpublish',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       if (!access.teamRoles.includes('membership_team')) throw fail.forbidden()
       const b = await readBody(req)
       const reviewNote = trimmed(b.note, 1000) || null

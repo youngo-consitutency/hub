@@ -1,7 +1,6 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
-import { getAccessProfile } from '../lib/access'
+import { requireCwMember, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
 import {
@@ -424,8 +423,7 @@ export const decisionEndpoints: Endpoint[] = [
     path: '/decisions/:id/vetoes/:vetoId/confirm',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const access = await getAccessProfile(req, account)
+      const { account, access } = await verifiedContext(req)
       // Verifying a veto request against eligible representation is a
       // coordination duty (GCT), not a technical-administration function.
       if (!access.capabilities.includes('gct.coordinate'))
