@@ -1,7 +1,7 @@
 // Canonical title → slug used by both the Hub API and the MCP client so
 // agent-submitted content lands on the same slug space as the web app.
 // Returns '' when nothing usable remains — callers decide the fallback.
-export function slugify(title: any) {
+export function slugify(title) {
   return String(title || '')
     .toLowerCase()
     .normalize('NFKD')
