@@ -22,6 +22,7 @@ import { getPayload } from 'payload'
 loadEnv({ path: '.env.local' })
 loadEnv()
 const { AUTHORITY_ROLES, recordKind, councilSeatFor } = await import('../../src/lib/authority')
+const { isCwActive } = await import('../../src/lib/accountStatus')
 const { default: config } = await import('../../src/payload.config')
 
 async function main() {
@@ -49,6 +50,18 @@ async function main() {
     .catch(() => null)
   if (!account) {
     console.error(`No account with id ${accountId}.`)
+    process.exit(1)
+  }
+
+  // A requiresCw role is ignored by deriveAuthority while the holder's
+  // Constituency Work membership is inactive — the grant would restore
+  // nothing. Restore CW first (db update to constituency_work records or
+  // the account's cwActiveUntil), then re-run.
+  if (spec.requiresCw && !isCwActive(account)) {
+    console.error(
+      `Account ${accountId} has no active Constituency Work, and ${role} ` +
+        'requires it — restore CW first, then re-run this grant.',
+    )
     process.exit(1)
   }
 

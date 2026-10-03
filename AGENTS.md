@@ -53,9 +53,12 @@ provenance-stamped record directly:
 ACCOUNT_ID=<id> ROLE=focal_point npx tsx scripts/setup/grant-authority.ts
 ```
 
-Keep at least one operator in active Constituency Work so this stays a
-last resort; every use is auditable via `provenance.source =
-'manual_recovery'`.
+The target account must already hold active Constituency Work — every
+officer role is `requiresCw`, so a grant to a lapsed account is ignored by
+`deriveAuthority` and the script refuses. Restore the account's CW record
+in the database first, then re-run. Keep at least one operator in active
+Constituency Work so this stays a last resort; every use is auditable via
+`provenance.source = 'manual_recovery'`.
 
 ## Verification
 

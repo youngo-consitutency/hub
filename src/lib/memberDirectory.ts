@@ -60,7 +60,8 @@ async function relationshipMaps(accounts: Doc[]) {
     // Platform-scope mandates replace the old account-role badge.
     pool.query(
       `SELECT account_id, role FROM authority_records
-         WHERE account_id=ANY($1::int[]) AND status='active' AND scope_type='platform'`,
+         WHERE account_id=ANY($1::int[]) AND status='active' AND scope_type='platform'
+           AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now())`,
       [ids],
     ),
   ])
