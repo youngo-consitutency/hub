@@ -159,8 +159,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     if (!appointmentRole) throw new Error(`Unmapped scope ${scopeType}:${scopeId} role=${role}`)
     const canonical = normaliseScopeType(scopeType)
     const participation =
-      role === 'member' &&
-      ['body', 'working_group', 'organisation'].includes(canonical)
+      role === 'member' && ['body', 'working_group', 'organisation'].includes(canonical)
     if (participation) {
       // The ledger stores its own enum spelling ('organization').
       return upsertAssignment(
