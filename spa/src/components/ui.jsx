@@ -9,6 +9,8 @@ import {
   TbCheck as Check,
   TbMinus as Minus,
   TbX,
+  TbAdjustmentsHorizontal,
+  TbChevronDown,
 } from 'react-icons/tb'
 
 /** @param {import("react").AnchorHTMLAttributes<HTMLAnchorElement> & { peek?: boolean }} props */
@@ -179,35 +181,39 @@ export function SortButton({ active, icon: Icon, children, ...rest }) {
   )
 }
 
+/** Render collapsible filters with an active count and an optional clear action that restores focus. */
 export function FilterMenu({ children, activeCount = 0, label = 'Filters', onClear }) {
   return (
-    <section className="filterMenu" aria-label={label}>
-      <div className="filterSummary">
-        <span role="status">
-          {activeCount > 0
-            ? `${activeCount} active ${activeCount === 1 ? 'filter' : 'filters'}`
-            : ''}
-        </span>
-        {onClear && (
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            disabled={activeCount === 0}
-            onClick={(event) => {
-              const firstFilter = event.currentTarget
-                .closest('.filterMenu')
-                ?.querySelector('.filterMenuPanel button')
-              onClear()
-              firstFilter?.focus({ preventScroll: true })
-            }}
-          >
-            <TbX size={15} strokeWidth={1.75} aria-hidden />
-            Clear filters
-          </button>
-        )}
+    <details className="filterMenu">
+      <summary className="filterToggle">
+        <TbAdjustmentsHorizontal size={17} aria-hidden />
+        <span>{label}</span>
+        {activeCount > 0 && <span className="filterActiveCount">{activeCount} active</span>}
+        <TbChevronDown className="filterChevron" size={17} aria-hidden />
+      </summary>
+      <div className="filterMenuContent">
+        <div className="filterSummary">
+          {onClear && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={activeCount === 0}
+              onClick={(event) => {
+                const firstFilter = event.currentTarget
+                  .closest('.filterMenu')
+                  ?.querySelector('.filterMenuPanel button')
+                onClear()
+                firstFilter?.focus({ preventScroll: true })
+              }}
+            >
+              <TbX size={15} strokeWidth={1.75} aria-hidden />
+              Clear filters
+            </button>
+          )}
+        </div>
+        <div className="filterMenuPanel">{children}</div>
       </div>
-      <div className="filterMenuPanel">{children}</div>
-    </section>
+    </details>
   )
 }
 

@@ -38,10 +38,22 @@ describe('payload', () => {
 describe('API contract (requires dev server on :3000)', () => {
   let member: { cookie: string; account: any }
   let admin: { cookie: string; account: any }
+  let membershipStaff: { cookie: string; account: any }
+  let publisher: { cookie: string; account: any }
 
   beforeAll(async () => {
     member = await session({})
     admin = await session({ role: 'admin' })
+    membershipStaff = await session({
+      membershipTrack: 'constituency_work',
+      teams: ['membership_team'],
+    })
+    publisher = await session({
+      membershipTrack: 'constituency_work',
+      appointments: [
+        { role: 'content.publisher', scopeType: 'team', scopeId: 'content_publisher' },
+      ],
+    })
   })
 
   it('rejects anonymous member requests', async () => {
@@ -159,7 +171,7 @@ describe('API contract (requires dev server on :3000)', () => {
   it('rejects invalid opportunity trust states', async () => {
     const res = await api('/member/opportunities/trust/11', {
       method: 'POST',
-      cookie: admin.cookie,
+      cookie: membershipStaff.cookie,
       body: JSON.stringify({ state: 'bogus' }),
     })
     expect(res.status).toBe(400)
@@ -185,7 +197,7 @@ describe('API contract (requires dev server on :3000)', () => {
     expect(slug).toBeTruthy()
     const unpub = await api(`/member/content/live/event/${slug}/unpublish`, {
       method: 'POST',
-      cookie: admin.cookie,
+      cookie: publisher.cookie,
       body: JSON.stringify({ reason: 'contract test' }),
     })
     expect(unpub.status).toBe(200)
@@ -195,7 +207,7 @@ describe('API contract (requires dev server on :3000)', () => {
     // restore for other tests
     await api(`/member/content/live/event/${slug}`, {
       method: 'PATCH',
-      cookie: admin.cookie,
+      cookie: publisher.cookie,
       body: JSON.stringify({ payload: { title: event.title } }),
     })
   })

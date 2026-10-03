@@ -15,6 +15,23 @@ export function isVerifiedAccount(account: any): boolean {
   )
 }
 
+// Active Constituency Work membership (S17): decision rights and mandate
+// eligibility. Same predicate the platform bridge uses — keep them aligned.
+// Accepts Payload docs (camelCase) and raw SQL rows (snake_case).
+export function isCwActive(account: any): boolean {
+  if (!account) return false
+  const track = account.membershipTrack ?? account.membership_track
+  const cwStatus = account.constituencyWorkStatus ?? account.constituency_work_status
+  const membership = account.membershipStatus ?? account.membership_status
+  const hub = account.hubAccessStatus ?? account.hub_access_status
+  return (
+    track === 'constituency_work' &&
+    cwStatus === 'active' &&
+    ['active', 'renewal_due'].includes(membership ?? '') &&
+    hub === 'active'
+  )
+}
+
 export function requireVerifiedMember(req: PayloadRequest) {
   const account = requireAccount(req)
   if (!isVerifiedAccount(account))
@@ -23,13 +40,15 @@ export function requireVerifiedMember(req: PayloadRequest) {
 }
 
 // Constituency Work membership is required for decision rights (S17 §1.1).
+// A role label is not membership: admins and focal points need an active CW
+// record like everyone else.
 export function requireCwMember(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
-  if (account.membershipTrack !== 'constituency_work' && !VERIFIED_PLATFORM_ROLES.has(account.role))
+  if (!isCwActive(account))
     throw new ApiError(
       403,
       'not_constituency_work',
-      'Decision rights require Constituency Work membership (S17 §1.1).',
+      'Decision rights require active Constituency Work membership (S17 §1.1).',
     )
   return account
 }
@@ -121,10 +140,13 @@ export async function requireCapability(req: PayloadRequest, capability: string)
   return { account, access }
 }
 
+// Team workspaces require the corresponding *appointment*. Technical
+// administrators do not inherit team authority (S13: administration ≠
+// constituency authority).
 export async function requireTeam(req: PayloadRequest, teamRole: string) {
   const account = requireVerifiedMember(req)
   const access = await getAccessProfile(req, account)
-  if (account.role !== 'admin' && !access.teamRoles.includes(teamRole))
+  if (!access.teamRoles.includes(teamRole))
     throw fail.forbidden('This team workspace is not assigned to your account.')
   return { account, access }
 }

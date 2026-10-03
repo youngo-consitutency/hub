@@ -1,7 +1,6 @@
-import { DateStamp } from '../components/DateStamp.jsx'
 import { canManageGroups } from '../lib/groupPermissions.js'
 import { useApi } from '../lib/api.js'
-import { A, Async, LifecycleTiming, Section, Empty, PageHeader } from '../components/ui.jsx'
+import { A, Async, LifecycleTiming, Section, PageHeader } from '../components/ui.jsx'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards.jsx'
 import { MissionMetric } from '../components/MissionConsole.jsx'
 import { fmtDual } from '../lib/time.js'
@@ -9,7 +8,6 @@ import { useAccount } from '../lib/accountContext.jsx'
 import { DestinationIcon } from '../components/DestinationLink.jsx'
 import {
   TbRadio as Radio,
-  TbCalendarOff as CalendarOff,
   TbUsers as Users,
   TbArrowUpRight as ArrowUpRight,
   TbPin as Pin,
@@ -52,6 +50,7 @@ function LiveBanner({ event }) {
   )
 }
 
+/** Show the member feed, summary counts, workspaces, responsibilities and upcoming activities. */
 export function Home() {
   const feed = useApi('/feed')
   const groups = useApi('/groups')
@@ -74,25 +73,8 @@ export function Home() {
               }
             />
 
-            <div className="mcHero homeHero">
-              <div className="homeNextEvent">
-                {data.week[0] && <DateStamp iso={data.week[0].startsAt} />}
-                <p className="pageEyebrow">Coming up this week</p>
-                <h2>{data.week[0]?.title || 'Time for your next contribution'}</h2>
-                <p>
-                  {data.week[0]
-                    ? fmtDual(data.week[0].startsAt)
-                    : 'Find a group or explore current opportunities.'}
-                </p>
-                <A
-                  className="btn btn-primary"
-                  href={data.week[0] ? `/calendar/${data.week[0].slug}` : '/opportunities'}
-                >
-                  {data.week[0] ? 'Event details' : 'Explore opportunities'}{' '}
-                  <ArrowUpRight size={16} aria-hidden />
-                </A>
-              </div>
-              <div className="mcHeroMetrics">
+            <div className="homeSummary" aria-label="Hub overview">
+              <div className="homeMetrics">
                 <MissionMetric
                   value={String(data.counts?.closing ?? data.closing.length)}
                   label="Closing soon"
@@ -157,7 +139,6 @@ export function Home() {
                         <Pin size={16} strokeWidth={2} />
                       </span>
                       <div className="pinnedBannerCopy">
-                        <p className="pinnedBannerEyebrow">Pinned announcement</p>
                         <h3 className="pinnedBannerTitle">{a.title}</h3>
                         <p className="pinnedBannerBody">{a.body}</p>
                       </div>
@@ -200,11 +181,7 @@ export function Home() {
                   ))}
                 </div>
               ) : (
-                <Empty
-                  icon={CalendarOff}
-                  title="Nothing scheduled this week"
-                  body="Subscribe from Calendar so new calls show up automatically."
-                />
+                <p className="meta">No meetings are scheduled this week.</p>
               )}
             </Section>
 
@@ -310,6 +287,7 @@ function ResponsibilitySection({ account }) {
   )
 }
 
+/** Combine group and workspace queries to show joined groups and their setup status, or a join link. */
 function WorkspaceSection({ groups, workspaces }) {
   return (
     <Section
@@ -330,11 +308,11 @@ function WorkspaceSection({ groups, workspaces }) {
               const joined = groupData.items.filter((group) => progressBySlug.has(group.slug))
               if (!joined.length) {
                 return (
-                  <Empty
-                    icon={Users}
-                    title="No group workspaces yet"
-                    body="Choose a working group to open its member workspace."
-                  />
+                  <A className="workspaceStart" href="/groups">
+                    <Users size={20} aria-hidden />
+                    <span>Join a working group</span>
+                    <ArrowUpRight size={18} aria-hidden />
+                  </A>
                 )
               }
               return (

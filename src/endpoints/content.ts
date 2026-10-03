@@ -10,9 +10,9 @@ async function draftAccess(req: PayloadRequest) {
   if (!isVerifiedAccount(account))
     throw new ApiError(403, 'not_verified', 'Complete the membership course to use this feature.')
   const access = await getAccessProfile(req, account)
-  const canDraft = hasCapability(access, 'content.draft') || account.role === 'admin'
-  const canReview = hasCapability(access, 'content.review') || account.role === 'admin'
-  const canPublish = hasCapability(access, 'content.publish') || account.role === 'admin'
+  const canDraft = hasCapability(access, 'content.draft')
+  const canReview = hasCapability(access, 'content.review')
+  const canPublish = hasCapability(access, 'content.publish')
   return { account, access, canDraft, canReview, canPublish }
 }
 

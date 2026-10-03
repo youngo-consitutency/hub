@@ -11,6 +11,7 @@ import { emailConfigured, getEmailTransport } from './lib/email'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Accounts } from './collections/Accounts'
+import { Appointments } from './collections/Appointments'
 import { Assignments } from './collections/Assignments'
 import { WorkingGroups } from './collections/WorkingGroups'
 import { Events } from './collections/Events'
@@ -89,6 +90,7 @@ export default buildConfig({
     Users,
     Media,
     Accounts,
+    Appointments,
     Assignments,
     MemberProfiles,
     WorkingGroups,

@@ -84,43 +84,6 @@ export async function queryAccountsForAdmin({
   }
 }
 
-export async function setTeamAssignment({
-  accountId,
-  teamRole,
-  enabled,
-  assignedBy,
-}: {
-  accountId: number | string
-  teamRole: string
-  enabled: boolean
-  assignedBy?: number | string | null
-}) {
-  const pool = requirePgPool()
-  if (enabled) {
-    const updated = await pool.query(
-      `UPDATE assignments
-       SET status='active', ends_at=NULL, assigned_by_id=$3, updated_at=now()
-       WHERE account_id=$1 AND scope_type='team' AND scope_id=$2 AND role='member'`,
-      [accountId, teamRole, assignedBy || null],
-    )
-    if (!updated.rowCount) {
-      await pool.query(
-        `INSERT INTO assignments(account_id, scope_type, scope_id, role, status, assigned_by_id)
-         VALUES($1,'team',$2,'member','active',$3)
-         ON CONFLICT(account_id,scope_type,scope_id,role)
-         DO UPDATE SET status='active', ends_at=NULL, assigned_by_id=EXCLUDED.assigned_by_id, updated_at=now()`,
-        [accountId, teamRole, assignedBy || null],
-      )
-    }
-    return
-  }
-  await pool.query(
-    `UPDATE assignments SET status='inactive', ends_at=now(), updated_at=now()
-     WHERE account_id=$1 AND scope_type='team' AND scope_id=$2`,
-    [accountId, teamRole],
-  )
-}
-
 export async function ensureOwnerSeat(orgAccount: any) {
   if (
     !orgAccount ||

@@ -7,6 +7,7 @@ import {
   TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
 
+/** Browse negotiation tracks with text search and an optional open-calls filter. */
 export function Negotiations() {
   const [search, setSearch] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
@@ -16,7 +17,7 @@ export function Negotiations() {
     <div>
       <PageHeader
         title="Negotiations"
-        description="Source-backed tracks, agenda lineage and contribution calls. Fixture labels indicate development-only evidence."
+        description="Follow negotiation topics, review the evidence and find open calls."
       />
       <div className="catalogTools">
         <div className="catalogSearchRow">

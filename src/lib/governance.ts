@@ -1,26 +1,22 @@
 import crypto from 'node:crypto'
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
-import { VERIFIED_PLATFORM_ROLES } from './accounts'
 import { getAccessProfile } from './access'
 
 // Shared S10/S24 helpers. Secret ballots are keyed by voter credentials
 // (HMAC'd tokens) and never reference an account — server-trust secrecy.
-// Facilitators are admins or members carrying the `election_facilitation` /
-// `selection_team` assignment (team scope).
+// Facilitation and selection authority come from appointments
+// (team.election_facilitation / selection.manage) — never from the admin
+// role or a bare account title.
 
 export async function isFacilitator(req: PayloadRequest, account: any) {
-  if (account.role === 'admin') return true
   const access = await getAccessProfile(req, account)
-  return access.teamRoles.some((r) => ['election_facilitation', 'bottomlining', 'blt'].includes(r))
+  return access.capabilities.includes('election.facilitate')
 }
 
 export async function isSelector(req: PayloadRequest, account: any) {
-  if (VERIFIED_PLATFORM_ROLES.has(account.role)) return true
   const access = await getAccessProfile(req, account)
-  return access.teamRoles.some((r) =>
-    ['selection_team', 'gct', 'election_facilitation'].includes(r),
-  )
+  return access.capabilities.includes('selection.manage')
 }
 
 export const accountRef = (a: any) =>

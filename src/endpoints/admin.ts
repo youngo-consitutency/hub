@@ -9,12 +9,10 @@ import {
   sendMembershipActivatedEmail,
   findAccountRowById,
 } from '../lib/membership'
-import {
-  setTeamAssignment,
-  ensureOwnerSeat,
-  listAccountsForAdmin,
-  queryAccountsForAdmin,
-} from '../lib/adminAccounts'
+import { ensureOwnerSeat, listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
+import { legacyAppointmentRole } from '../lib/appointments'
+import { grantAppointment, revokeAppointmentInTx } from '../lib/appointmentService'
+import { withAuthorityLock } from '../lib/authorityLock'
 import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
@@ -178,14 +176,83 @@ export const adminEndpoints: Endpoint[] = [
       const target = items.find((item: any) => String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
-      if (b.enabled === false) roles.delete(teamRole)
-      else roles.add(teamRole)
-      const updatedRow = await setAccountFields(id, { team_roles: [...roles] })
-      await setTeamAssignment({
-        accountId: id,
-        teamRole,
-        enabled: b.enabled !== false,
-        assignedBy: admin.id,
+      // Team roles are canonical mandates: write them as `appointments`
+      // (with the shared lock and audit trail), not as legacy ledger rows.
+      const appointmentRole = legacyAppointmentRole('team', teamRole, 'member')
+      if (!appointmentRole) throw fail.validation({ teamRole: 'Invalid team role.' })
+      if (b.enabled === false) {
+        roles.delete(teamRole)
+        // Under ONE advisory lock — including when no appointment exists —
+        // so a racing grant or migration write cannot interleave between
+        // lookup and revocation: (a) revoke every active canonical
+        // appointment for the tuple whatever its provenance, and (b) end
+        // the legacy ledger row — an unmigrated assignment would otherwise
+        // keep granting the removed authority.
+        await withAuthorityLock(req, target.id, async () => {
+          const { docs: active } = await req.payload.find({
+            collection: 'appointments',
+            where: {
+              and: [
+                { account: { equals: target.id } },
+                { appointmentRole: { equals: appointmentRole } },
+                { scopeType: { equals: 'team' } },
+                { scopeId: { equals: teamRole } },
+                { status: { equals: 'active' } },
+              ],
+            },
+            limit: 50,
+            overrideAccess: true,
+            req,
+          })
+          for (const appt of active as any[]) {
+            await revokeAppointmentInTx(req, appt.id, admin, reason)
+          }
+          const { docs: ledger } = await req.payload.find({
+            collection: 'assignments',
+            where: {
+              and: [
+                { account: { equals: target.id } },
+                { scopeType: { equals: 'team' } },
+                { scopeId: { equals: teamRole } },
+                { status: { equals: 'active' } },
+              ],
+            },
+            limit: 50,
+            overrideAccess: true,
+            req,
+          })
+          const endedAt = new Date().toISOString()
+          for (const row of ledger as any[]) {
+            await req.payload.update({
+              collection: 'assignments',
+              id: row.id,
+              data: { status: 'revoked', endsAt: endedAt },
+              overrideAccess: true,
+              req,
+            })
+          }
+        })
+      } else {
+        roles.add(teamRole)
+        try {
+          await grantAppointment(req, {
+            account: target.id,
+            appointmentRole,
+            scopeType: 'team',
+            scopeId: teamRole,
+            evidence: reason,
+            appointedBy: admin.id,
+            appointedVia: { source: 'admin_console' },
+          })
+        } catch (error: any) {
+          // Already holds the mandate — enabling twice is a no-op.
+          if (error?.code !== 'duplicate_appointment') throw error
+        }
+      }
+      // team_roles is jsonb — bind a JSON document, not a JS array (pg would
+      // encode it as a Postgres array literal).
+      const updatedRow = await setAccountFields(id, {
+        team_roles: JSON.stringify([...roles]),
       })
       await audit(req, admin, {
         action: 'account.team_assignment_changed',

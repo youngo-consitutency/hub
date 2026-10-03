@@ -1,3 +1,4 @@
+import { CatalogueResults } from '../components/CatalogueResults.jsx'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav.jsx'
 import { useState } from 'react'
@@ -29,6 +30,7 @@ const TOPIC_ICONS = {
   'governance-integrity': ShieldCheck,
 }
 
+/** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
 export function Groups() {
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState({})
@@ -134,15 +136,17 @@ export function Groups() {
                   </FilterMenu>
                 </div>
               </div>
-              {groups.length ? (
-                <div className="cardGrid">{groups.map(renderGroup)}</div>
-              ) : (
-                <Empty
-                  icon={Search}
-                  title="No groups match"
-                  body="Try a different topic or search term."
-                />
-              )}
+              <CatalogueResults count={groups.length}>
+                {groups.length ? (
+                  <div className="cardGrid">{groups.map(renderGroup)}</div>
+                ) : (
+                  <Empty
+                    icon={Search}
+                    title="No groups match"
+                    body="Try a different topic or search term."
+                  />
+                )}
+              </CatalogueResults>
             </>
           )
         }}

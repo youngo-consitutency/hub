@@ -3,7 +3,7 @@
 
 /* ── Layout helpers ────────────────────────────────── */
 .pageHeader {
-  padding-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--section-gap);
 }
@@ -30,7 +30,7 @@
 }
 
 .pageTitle {
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: clamp(24px, 2.5vw, 30px);
   line-height: 1.15;
   letter-spacing: -0.035em;
   display: flex;
@@ -111,7 +111,7 @@
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(var(--catalog-columns), minmax(0, 1fr));
-  grid-auto-rows: 1fr;
+  grid-auto-rows: auto;
   justify-content: start;
   gap: var(--space-4);
   align-items: stretch;
@@ -155,7 +155,6 @@
 .catalogFilterRow .filterMenu {
   width: 100%;
 }
-
 .catalogFilterRow .filterMenuPanel {
   width: 100%;
   max-width: 100%;
@@ -230,6 +229,66 @@
 
 .filterMenu {
   width: 100%;
+}
+
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+}
+.filterToggle::-webkit-details-marker {
+  display: none;
+}
+.filterToggle:hover {
+  background: var(--bg-raised);
+}
+.filterToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.filterChevron {
+  margin-left: auto;
+}
+.filterMenu[open] .filterChevron {
+  transform: rotate(180deg);
+}
+.filterActiveCount {
+  color: var(--accent);
+  font-size: 12px;
+}
+.filterMenuContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding-top: var(--space-3);
+}
+.filterMenuContent > .filterSummary {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+.filterMenuContent > .filterMenuPanel {
+  grid-column: 1;
+  grid-row: 1;
+}
+@media (max-width: 620px) {
+  .filterMenuContent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .filterMenuContent > .filterSummary {
+    grid-column: 1;
+    grid-row: 2;
+  }
 }
 
 .filterMenuPanel {
@@ -1537,4 +1596,35 @@
 .pageHeader:has(.pageSectionNav) {
   border-bottom: 0;
   padding-bottom: 0;
+}
+
+/* The layout choice changes presentation only; records and filters stay mounted. */
+.catalogueResultBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.catalogueResults[data-view='list'] .cardGrid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+@media (min-width: 760px) {
+  .catalogueResults[data-view='list'] .entityCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    column-gap: var(--space-6);
+    align-content: start;
+  }
+  .catalogueResults[data-view='list'] .entityCard > :first-child:not(.entityCardLinkOverlay),
+  .catalogueResults[data-view='list'] .entityCard > .entityCardHeader {
+    grid-column: 1;
+  }
+  .catalogueResults[data-view='list'] .entityCard > * {
+    min-width: 0;
+  }
+  .catalogueResults[data-view='list'] .entityCardFooter {
+    margin-top: 0;
+  }
 }

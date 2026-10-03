@@ -1,6 +1,6 @@
 import { describe, it, beforeAll, expect } from 'vitest'
 
-import { testPayload } from './provision'
+import { provisionAccount, testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('generated API access control', () => {
@@ -112,7 +112,9 @@ describe('generated API access control', () => {
   it('grants wg.manage only for coordination assignment roles', async () => {
     const { getAccessProfile } = await import('@/lib/access')
     const payload = await testPayload()
-    const account = member.account
+    // WG Contact Point is a CW-gated mandate (S17/S25) — the holder needs
+    // active Constituency Work membership.
+    const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     const assignment = await payload.create({
       collection: 'assignments',
       data: {

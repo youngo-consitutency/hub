@@ -15,7 +15,7 @@ describe('elections (S10) and selections (S24)', () => {
   beforeAll(async () => {
     facilitator = await session({
       membershipTrack: 'constituency_work',
-      teams: ['election_facilitation'],
+      teams: ['election_facilitation', 'selection_team'],
     })
     cwMember = await session({
       membershipTrack: 'constituency_work',
