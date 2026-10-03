@@ -1,6 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { requireVerifiedMember } from './accounts'
+import { toCamelCase } from './case'
 
 // Organisation-scope helpers shared by the NGO, organisations and
 // opportunities endpoints. Access derives from the member's active
@@ -66,23 +67,24 @@ export async function requireOrgScope(
   return { account, ctx }
 }
 
-export const seatView = (row: any) => ({
-  id: row.id,
-  orgAccountId:
-    typeof row.orgAccount === 'object'
-      ? row.orgAccount?.id
-      : (row.orgAccount ?? row.org_account_id),
-  memberAccountId:
-    typeof row.memberAccount === 'object'
-      ? row.memberAccount?.id
-      : (row.memberAccount ?? row.member_account_id ?? null),
-  email: row.email ?? null,
-  name: row.name || null,
-  seatRole: row.seatRole ?? row.seat_role,
-  status: row.status,
-  inviteExpiresAt: row.inviteExpiresAt ?? row.invite_expires_at ?? null,
-  createdAt: row.createdAt ?? row.created_at,
-  acceptedAt: row.acceptedAt ?? row.accepted_at ?? null,
-  memberName: row.member_name || row.name || null,
-  memberEmail: row.member_email || row.email || null,
-})
+export const seatView = (row: any) => {
+  const r = toCamelCase<any>(row)
+  return {
+    id: r.id,
+    orgAccountId:
+      typeof r.orgAccount === 'object' ? r.orgAccount?.id : (r.orgAccount ?? r.orgAccountId),
+    memberAccountId:
+      typeof r.memberAccount === 'object'
+        ? r.memberAccount?.id
+        : (r.memberAccount ?? r.memberAccountId ?? null),
+    email: r.email ?? null,
+    name: r.name || null,
+    seatRole: r.seatRole,
+    status: r.status,
+    inviteExpiresAt: r.inviteExpiresAt ?? null,
+    createdAt: r.createdAt,
+    acceptedAt: r.acceptedAt ?? null,
+    memberName: r.memberName || r.name || null,
+    memberEmail: r.memberEmail || r.email || null,
+  }
+}

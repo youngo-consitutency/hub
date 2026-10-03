@@ -1,5 +1,6 @@
 import { accountView } from './accounts'
-import { requirePgPool, getPgPool, pickField } from './pg'
+import { requirePgPool, getPgPool } from './pg'
+import { toCamelCase } from './case'
 
 // Shapes consumed by the membership-team review queue.
 
@@ -28,8 +29,15 @@ function textList(value: any): string[] {
   return []
 }
 
-function pickDate(row: any, snake: string, camel: string) {
-  const value = row?.[snake] ?? row?.[camel]
+// Application booleans may arrive as booleans or 'yes'/'no' strings —
+// keep the tri-state: undecided stays null rather than collapsing to false.
+function toBool(value: any): boolean | null {
+  if (value === true || value === 'yes' || value === 'true') return true
+  if (value === false || value === 'no' || value === 'false') return false
+  return null
+}
+
+function toIsoDate(value: any) {
   if (value == null || value === '') return null
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     const year = value.getUTCFullYear()
@@ -40,13 +48,6 @@ function pickDate(row: any, snake: string, camel: string) {
   const text = String(value).trim()
   const match = text.match(/^(\d{4}-\d{2}-\d{2})/)
   return match ? match[1] : text || null
-}
-
-function pickBool(row: any, snake: string, camel: string) {
-  const value = row?.[snake] ?? row?.[camel]
-  if (value === true || value === 'yes' || value === 'true') return true
-  if (value === false || value === 'no' || value === 'false') return false
-  return null
 }
 
 export function extractPublicLinks(...values: any[]) {
@@ -89,11 +90,12 @@ export function extractPublicLinks(...values: any[]) {
 export function membershipReviewAccount(row: any) {
   const account = accountView(row)
   if (!account) return null
-  const orgWebsite = pickField(row, 'org_website', 'orgWebsite')
-  const orgSocial = pickField(row, 'org_social', 'orgSocial')
-  const under18 = Boolean(row.under_18 ?? row.under18)
-  const minorityGroups = textList(row.minority_groups ?? row.minorityGroups)
-  const minorityOther = pickField(row, 'minority_other', 'minorityOther')
+  const r = toCamelCase<Record<string, any>>(row)
+  const orgWebsite = r.orgWebsite ?? null
+  const orgSocial = r.orgSocial ?? null
+  const under18 = Boolean(r.under18)
+  const minorityGroups = textList(r.minorityGroups)
+  const minorityOther = r.minorityOther ?? null
   return {
     ...account,
     application: {
@@ -102,48 +104,48 @@ export function membershipReviewAccount(row: any) {
       email: account.email,
       phone: account.phone,
       gender: account.gender,
-      genderOther: pickField(row, 'gender_other', 'genderOther'),
-      dateOfBirth: pickDate(row, 'date_of_birth', 'dateOfBirth'),
+      genderOther: r.genderOther ?? null,
+      dateOfBirth: toIsoDate(r.dateOfBirth),
       ageBand: account.ageBand,
       entityType: account.entityType,
       membershipTrack: account.membershipTrack,
       countryOfResidence: account.country,
       region: account.region,
       nationality: account.nationality,
-      motivation: pickField(row, 'motivation', 'motivation'),
+      motivation: r.motivation ?? null,
       minorityIdentity: minorityGroups.length || minorityOther ? true : false,
       minorityGroups,
       minorityOther,
-      memberOfAccreditedNgo: pickBool(row, 'member_of_accredited_ngo', 'memberOfAccreditedNgo'),
+      memberOfAccreditedNgo: toBool(r.memberOfAccreditedNgo),
       organizationName: account.organizationName,
       organizationType: account.organizationType,
       isUnfcccAdmitted: account.isUnfcccAdmitted,
       youthAffiliation: account.youthAffiliation,
       orgWebsite,
       orgSocial,
-      orgMission: pickField(row, 'org_mission', 'orgMission'),
-      orgOperateIn: pickField(row, 'org_operate_in', 'orgOperateIn'),
+      orgMission: r.orgMission ?? null,
+      orgOperateIn: r.orgOperateIn ?? null,
       under18,
-      guardianName: under18 ? pickField(row, 'guardian_name', 'guardianName') : null,
-      guardianEmail: under18 ? pickField(row, 'guardian_email', 'guardianEmail') : null,
-      guardianConsent: under18 ? pickBool(row, 'guardian_consent', 'guardianConsent') : null,
-      dcpName: pickField(row, 'dcp_name', 'dcpName'),
-      dcpEmail: pickField(row, 'dcp_email', 'dcpEmail'),
-      dcpPhone: pickField(row, 'dcp_phone', 'dcpPhone'),
-      ycpName: pickField(row, 'ycp_name', 'ycpName'),
-      ycpEmail: pickField(row, 'ycp_email', 'ycpEmail'),
-      ycpPhone: pickField(row, 'ycp_phone', 'ycpPhone'),
-      acceptCodeOfConduct: pickBool(row, 'accept_code_of_conduct', 'acceptCodeOfConduct'),
-      acceptDataProtection: pickBool(row, 'accept_data_protection', 'acceptDataProtection'),
-      acceptPrinciples: pickBool(row, 'accept_principles', 'acceptPrinciples'),
-      acceptCoiPolicy: pickBool(row, 'accept_coi_policy', 'acceptCoiPolicy'),
-      policiesAccepted: pickBool(row, 'policies_accepted', 'policiesAccepted'),
+      guardianName: under18 ? (r.guardianName ?? null) : null,
+      guardianEmail: under18 ? (r.guardianEmail ?? null) : null,
+      guardianConsent: under18 ? toBool(r.guardianConsent) : null,
+      dcpName: r.dcpName ?? null,
+      dcpEmail: r.dcpEmail ?? null,
+      dcpPhone: r.dcpPhone ?? null,
+      ycpName: r.ycpName ?? null,
+      ycpEmail: r.ycpEmail ?? null,
+      ycpPhone: r.ycpPhone ?? null,
+      acceptCodeOfConduct: toBool(r.acceptCodeOfConduct),
+      acceptDataProtection: toBool(r.acceptDataProtection),
+      acceptPrinciples: toBool(r.acceptPrinciples),
+      acceptCoiPolicy: toBool(r.acceptCoiPolicy),
+      policiesAccepted: toBool(r.policiesAccepted),
       membershipPolicyVersion: account.membershipPolicyVersion || null,
-      privacyConsent: pickBool(row, 'privacy_consent', 'privacyConsent'),
+      privacyConsent: toBool(r.privacyConsent),
       privacyNoticeVersion: account.privacyNoticeVersion,
       privacyConsentAt: account.privacyConsentAt,
-      coiDeclared: pickBool(row, 'coi_declared', 'coiDeclared'),
-      coiDetails: pickField(row, 'coi_details', 'coiDetails'),
+      coiDeclared: toBool(r.coiDeclared),
+      coiDetails: r.coiDetails ?? null,
       links: extractPublicLinks(orgWebsite, orgSocial),
     },
   }
@@ -161,24 +163,25 @@ export async function listMembershipReviewItems() {
 }
 
 function profileShape(row: any, account: any) {
-  const updatedAt = row?.updated_at ?? row?.updatedAt ?? null
-  const photoUpdatedAt = row?.photo_updated_at ?? row?.photoUpdatedAt ?? null
+  const r = toCamelCase<any>(row)
+  const updatedAt = r.updatedAt ?? null
+  const photoUpdatedAt = r.photoUpdatedAt ?? null
   return {
     accountId: account.id,
-    displayName: row?.display_name ?? row?.displayName ?? account.name ?? 'YOUNGO member',
-    headline: row?.headline || '',
-    bio: row?.bio || '',
-    pronouns: row?.pronouns || '',
-    expertiseTags: row?.expertise_tags ?? row?.expertiseTags ?? [],
-    directoryVisibility: row?.directory_visibility ?? row?.directoryVisibility ?? 'private',
-    showCountry: Boolean(row?.show_country ?? row?.showCountry),
-    showOrganization: Boolean(row?.show_organization ?? row?.showOrganization),
-    showWorkingGroups: row?.show_working_groups ?? row?.showWorkingGroups ?? true,
-    showRoles: row?.show_roles ?? row?.showRoles ?? true,
-    roleTitle: row?.role_title ?? row?.roleTitle ?? '',
-    revision: row?.revision || 1,
+    displayName: r.displayName ?? account.name ?? 'YOUNGO member',
+    headline: r.headline || '',
+    bio: r.bio || '',
+    pronouns: r.pronouns || '',
+    expertiseTags: r.expertiseTags ?? [],
+    directoryVisibility: r.directoryVisibility ?? 'private',
+    showCountry: Boolean(r.showCountry),
+    showOrganization: Boolean(r.showOrganization),
+    showWorkingGroups: r.showWorkingGroups ?? true,
+    showRoles: r.showRoles ?? true,
+    roleTitle: r.roleTitle ?? '',
+    revision: r.revision || 1,
     updatedAt,
-    hasPhoto: Boolean(row?.has_photo ?? row?.hasPhoto ?? photoUpdatedAt),
+    hasPhoto: Boolean(r.hasPhoto ?? photoUpdatedAt),
     photoUpdatedAt,
     photoUrl: photoUpdatedAt
       ? `/api/member/people/${account.id}/photo?v=${encodeURIComponent(photoUpdatedAt)}`

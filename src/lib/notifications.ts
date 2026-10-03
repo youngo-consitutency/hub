@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
+import { toCamelCase } from './case'
 import { emailConfigured, sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
@@ -253,24 +254,25 @@ export async function sendTemplatedEmail({
 
 function publicOutbox(row: any) {
   if (!row) return null
+  const r = toCamelCase<Record<string, any>>(row)
   return {
-    id: row.id,
-    accountId: row.account_id ?? row.accountId,
-    channel: row.channel || 'email',
-    category: row.category,
-    templateKey: row.template_key ?? row.templateKey,
-    sourceType: row.source_type ?? row.sourceType ?? null,
-    sourceId: row.source_id ?? row.sourceId ?? null,
-    deduplicationKey: row.deduplication_key ?? row.deduplicationKey ?? null,
-    payload: row.payload || {},
-    status: row.status,
-    attempts: Number(row.attempts || 0),
-    availableAt: row.available_at ?? row.availableAt,
-    leaseUntil: row.lease_until ?? row.leaseUntil ?? null,
-    providerMessageId: row.provider_message_id ?? row.providerMessageId ?? null,
-    lastErrorCode: row.last_error_code ?? row.lastErrorCode ?? null,
-    createdAt: row.created_at ?? row.createdAt,
-    sentAt: row.sent_at ?? row.sentAt ?? null,
+    id: r.id,
+    accountId: r.accountId,
+    channel: r.channel || 'email',
+    category: r.category,
+    templateKey: r.templateKey,
+    sourceType: r.sourceType ?? null,
+    sourceId: r.sourceId ?? null,
+    deduplicationKey: r.deduplicationKey ?? null,
+    payload: r.payload || {},
+    status: r.status,
+    attempts: Number(r.attempts || 0),
+    availableAt: r.availableAt,
+    leaseUntil: r.leaseUntil ?? null,
+    providerMessageId: r.providerMessageId ?? null,
+    lastErrorCode: r.lastErrorCode ?? null,
+    createdAt: r.createdAt,
+    sentAt: r.sentAt ?? null,
   }
 }
 
