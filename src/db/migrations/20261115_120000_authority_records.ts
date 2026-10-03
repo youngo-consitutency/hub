@@ -55,13 +55,48 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   INSERT INTO "authority_records" (
     "account_id","kind","role","scope_type","scope_id","status",
     "starts_at","ends_at","evidence","recorded_by_id","provenance",
-    "created_at","updated_at"
+    "created_at","updated_at","council_seat"
   )
   SELECT
     a."account_id",
     (CASE WHEN a."role"='member' AND norm.scope IN ('body','working_group','organisation','negotiation_track','negotiation_project')
          THEN 'participation' ELSE 'mandate' END)::"enum_authority_records_kind",
+    canon.role,
+    norm.scope::"enum_authority_records_scope_type",
+    a."scope_id",
+    a."status"::text::"enum_authority_records_status",
+    COALESCE(a."starts_at", a."created_at", now()),
+    a."ends_at",
+    a."appointment_evidence",
+    a."assigned_by_id",
+    jsonb_build_object(
+      'source','assignments_migration',
+      'assignmentId',a."id",
+      'assignmentRole',a."role",
+      'assignmentScope',a."scope_type"::text||':'||a."scope_id"
+    ),
+    a."created_at",
+    a."updated_at",
+    -- Seat-bearing roles get their stored seat — councilElectorate reads
+    -- council_seat directly. The scope guard mirrors AUTHORITY_ROLES
+    -- scopeTypes: an out-of-scope canonical key resolves to nothing and
+    -- must not accredit a seat either.
     CASE
+      WHEN canon.role='focal_point' AND norm.scope='platform' THEN 'focal_point'
+      WHEN canon.role='org.representative' AND norm.scope='organisation' THEN 'org:'||a."scope_id"
+      WHEN canon.role='wg.contact_point' AND norm.scope IN ('working_group','body') THEN 'wg:'||a."scope_id"
+      WHEN canon.role='ot.liaison' AND norm.scope='operational_team' THEN 'ot:'||a."scope_id"
+      WHEN canon.role IN ('body.contact_point','body.liaison','body.council_representative')
+           AND norm.scope='body' THEN 'body:'||a."scope_id"
+      ELSE NULL END
+  FROM "assignments" a
+  CROSS JOIN LATERAL (
+    SELECT CASE WHEN a."scope_type"='organization' THEN 'organisation'
+                WHEN a."scope_type"='platform_body' THEN 'body'
+                ELSE a."scope_type"::text END AS scope
+  ) norm
+  CROSS JOIN LATERAL (
+    SELECT CASE
       WHEN norm.scope='team' AND a."scope_id"='gct' THEN CASE a."role"
         WHEN 'partnerships' THEN 'gct.partnerships' WHEN 'membership' THEN 'gct.membership'
         WHEN 'finance' THEN 'gct.finance' WHEN 'internal' THEN 'gct.internal'
@@ -103,28 +138,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
         WHEN 'transmitter' THEN 'negotiation.transmitter' ELSE a."role" END
       WHEN norm.scope='event' THEN CASE a."role"
         WHEN 'coordinator' THEN 'cct.coordinator' WHEN 'member' THEN 'cct.member' ELSE a."role" END
-      ELSE a."role" END,
-    norm.scope::"enum_authority_records_scope_type",
-    a."scope_id",
-    a."status"::text::"enum_authority_records_status",
-    COALESCE(a."starts_at", a."created_at", now()),
-    a."ends_at",
-    a."appointment_evidence",
-    a."assigned_by_id",
-    jsonb_build_object(
-      'source','assignments_migration',
-      'assignmentId',a."id",
-      'assignmentRole',a."role",
-      'assignmentScope',a."scope_type"::text||':'||a."scope_id"
-    ),
-    a."created_at",
-    a."updated_at"
-  FROM "assignments" a
-  CROSS JOIN LATERAL (
-    SELECT CASE WHEN a."scope_type"='organization' THEN 'organisation'
-                WHEN a."scope_type"='platform_body' THEN 'body'
-                ELSE a."scope_type"::text END AS scope
-  ) norm
+      ELSE a."role" END AS role
+  ) canon
   -- Two collisions are both safe to skip: legacy rows that canonicalise
   -- onto an already-active tuple (active_scope_unique), and rows already
   -- migrated at runtime (migration_source_unique on provenance.assignmentId
@@ -165,6 +180,18 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
   ALTER TABLE "appointments" RENAME COLUMN "role" TO "appointment_role";
   ALTER TABLE "appointments" RENAME COLUMN "provenance" TO "appointed_via";
   ALTER TABLE "appointments" RENAME COLUMN "recorded_by_id" TO "appointed_by_id";
+  -- Reverse the up() constraint/index renames so a later up() finds the
+  -- appointments_* names it expects.
+  ALTER TABLE "appointments" RENAME CONSTRAINT "authority_records_account_id_accounts_id_fk" TO "appointments_account_id_accounts_id_fk";
+  ALTER TABLE "appointments" RENAME CONSTRAINT "authority_records_recorded_by_id_accounts_id_fk" TO "appointments_appointed_by_id_accounts_id_fk";
+  ALTER TABLE "appointments" RENAME CONSTRAINT "authority_records_substitute_for_id_authority_records_id_fk" TO "appointments_substitute_for_id_appointments_id_fk";
+  ALTER INDEX "authority_records_account_idx" RENAME TO "appointments_account_idx";
+  ALTER INDEX "authority_records_role_idx" RENAME TO "appointments_appointment_role_idx";
+  ALTER INDEX "authority_records_scope_id_idx" RENAME TO "appointments_scope_id_idx";
+  ALTER INDEX "authority_records_status_idx" RENAME TO "appointments_status_idx";
+  ALTER INDEX "authority_records_council_seat_idx" RENAME TO "appointments_council_seat_idx";
+  ALTER INDEX "authority_records_active_scope_unique" RENAME TO "appointments_active_scope_unique";
+  ALTER INDEX "authority_records_migration_source_unique" RENAME TO "appointments_migration_source_unique";
   ALTER TYPE "public"."enum_authority_records_scope_type" RENAME TO "enum_appointments_scope_type";
   ALTER TYPE "public"."enum_authority_records_status" RENAME TO "enum_appointments_status";
   DROP TYPE "public"."enum_authority_records_kind";

@@ -469,13 +469,15 @@ export function resolveLegacyRole(scopeType: string, scopeId: string, role: stri
 }
 
 // Resolve an authority row to its registry role: a canonical stored key
-// wins; recorded legacy strings fall back to the explicit map.
+// wins — but only inside the scopes that role declares (a canonical key
+// recorded against the wrong scope grants nothing); recorded legacy
+// strings fall back to the explicit map.
 export function resolveRecordRole(row: {
   role?: string | null
   scopeType: string
   scopeId: string
 }): string | null {
-  if (row.role && AUTHORITY_ROLES[row.role]) return row.role
+  if (row.role && AUTHORITY_ROLES[row.role]?.scopeTypes.includes(row.scopeType)) return row.role
   return resolveLegacyRole(row.scopeType, row.scopeId, row.role ?? '')
 }
 

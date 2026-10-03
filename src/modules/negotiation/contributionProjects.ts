@@ -253,7 +253,7 @@ export async function listAccessibleProjects({
      LEFT JOIN authority_records a
        ON a.account_id=$1 AND a.scope_type='negotiation_project'
        AND a.scope_id=p.id::text AND a.status='active'
-       AND (a.ends_at IS NULL OR a.ends_at>now())
+       AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())
      WHERE m.account_id IS NOT NULL OR a.id IS NOT NULL
      ORDER BY p.updated_at DESC`,
     [account.id],
@@ -291,7 +291,7 @@ export async function getAccessibleProject({
        OR EXISTS (SELECT 1 FROM authority_records a
          WHERE a.account_id=$1 AND a.scope_type='negotiation_project'
            AND a.scope_id=p.id::text AND a.status='active'
-           AND (a.ends_at IS NULL OR a.ends_at>now()))
+           AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now()))
      )`,
     [account.id, projectId],
   )

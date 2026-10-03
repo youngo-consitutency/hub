@@ -130,12 +130,7 @@ export async function applyAccountSpec(payload: any, spec: AccountSpec) {
     await recordScope('body', spec.body.slug, spec.body.role)
   }
   for (const a of spec.records ?? []) {
-    await upsertRecord(
-      a.role,
-      a.scopeType ?? 'platform',
-      a.scopeId ?? 'platform',
-      a.kind ?? 'mandate',
-    )
+    await upsertRecord(a.role, a.scopeType ?? 'platform', a.scopeId ?? 'platform', a.kind)
   }
   if (spec.wg) {
     await recordScope('working_group', spec.wg.slug, spec.wg.role)

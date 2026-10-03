@@ -55,21 +55,26 @@ export async function advisoryAuthorityLock(
 // transaction the lock is taken on it and `fn` joins it; the caller still
 // owns commit/rollback. Locks are transaction-scoped, so they release
 // automatically at commit/rollback and re-acquiring the same key inside
-// one transaction is a no-op.
+// one transaction is a no-op. Multiple accounts are locked in ascending
+// id order, exactly as the lock-order contract requires.
 export async function withAuthorityLock<T>(
   req: PayloadRequest,
-  accountId: number,
+  accountId: number | number[],
   fn: () => Promise<T>,
 ): Promise<T> {
+  const accountIds = [...new Set([accountId].flat())].sort((a, b) => a - b)
+  const acquire = async (transactionID: any) => {
+    for (const id of accountIds) await advisoryAuthorityLock(req.payload, transactionID, id)
+  }
   if (req.transactionID != null) {
-    await advisoryAuthorityLock(req.payload, req.transactionID as any, accountId)
+    await acquire(req.transactionID)
     return fn()
   }
   const transactionID = await req.payload.db.beginTransaction()
   if (transactionID == null) throw new Error('Database transactions are unavailable.')
   req.transactionID = transactionID
   try {
-    await advisoryAuthorityLock(req.payload, transactionID, accountId)
+    await acquire(transactionID)
     const result = await fn()
     await req.payload.db.commitTransaction(transactionID)
     return result

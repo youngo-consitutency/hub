@@ -458,6 +458,17 @@ export const membershipEndpoints: Endpoint[] = [
       if (record.status !== 'active')
         throw fail.conflict('invalid_phase', `Record is already ${record.status}.`)
       const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
+        // Re-read under the lock: a concurrent staff request or the
+        // endRecords sweep can change the status between the pre-check
+        // and this update — only an active record may transition.
+        const current = (await req.payload.findByID({
+          collection: 'authority-records',
+          id: record.id,
+          overrideAccess: true,
+          req,
+        })) as any
+        if (current.status !== 'active')
+          throw fail.conflict('invalid_phase', `Record is already ${current.status}.`)
         const endsAt = new Date().toISOString()
         const updated = await req.payload.update({
           collection: 'authority-records',

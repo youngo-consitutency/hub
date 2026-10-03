@@ -171,16 +171,33 @@ async function councilElectorate(req: PayloadRequest, now: string): Promise<numb
     pagination: false,
     overrideAccess: true,
   })
-  const seats = new Map<string, number>() // seat -> holder account id
+  const seats = new Map<string, Set<number>>() // seat -> holder account ids
   const focalHolders = new Set<number>()
   for (const row of docs) {
     if (!row.councilSeat) continue
-    if (row.councilSeat === 'focal_point') focalHolders.add(accountIdOf(row))
-    else seats.set(row.councilSeat, accountIdOf(row))
+    if (row.councilSeat === 'focal_point') {
+      focalHolders.add(accountIdOf(row))
+      continue
+    }
+    const holders = seats.get(row.councilSeat) ?? new Set<number>()
+    holders.add(accountIdOf(row))
+    seats.set(row.councilSeat, holders)
   }
-  const eligible = await eligibleAccounts(req, new Set([...seats.values(), ...focalHolders]))
+  const holderIds = new Set<number>(focalHolders)
+  for (const holders of seats.values()) for (const id of holders) holderIds.add(id)
+  const eligible = await eligibleAccounts(req, holderIds)
   let count = 0
-  for (const holder of seats.values()) if (eligible.has(holder)) count += 1
+  for (const holders of seats.values()) {
+    // Several records can share one seat (multiple WG Contact Points, a
+    // substitute covering a principal): the seat votes if ANY holder is
+    // eligible, and still only counts once.
+    for (const holder of holders) {
+      if (eligible.has(holder)) {
+        count += 1
+        break
+      }
+    }
+  }
   for (const holder of focalHolders) if (eligible.has(holder)) count += 1
   return count
 }

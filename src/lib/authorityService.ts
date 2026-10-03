@@ -61,6 +61,7 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
     evidence: input.evidence?.trim() || null,
   } as any
 
+  const lockAccounts: number[] = [input.account]
   if (input.role === 'council.substitute') {
     if (!input.substituteFor)
       throw fail.validation({ substituteFor: 'A substitute covers a principal appointment.' })
@@ -69,13 +70,9 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
       .catch(() => {
         throw fail.notFound('Principal appointment not found.')
       })
-    if (!recordCurrent(principal as any) || (principal as any).role === 'council.substitute')
-      throw fail.conflict('invalid_principal', 'The principal record is not a current seat holder.')
-    if (!principal.councilSeat)
-      throw fail.conflict('no_seat', 'The principal record does not hold a Council seat.')
     row.substituteFor = principal.id
-    row.councilSeat = principal.councilSeat
-    row.scopeId = `seat:${principal.councilSeat}`
+    const principalAccount = (principal.account as any)?.id ?? principal.account
+    if (Number.isInteger(principalAccount)) lockAccounts.push(principalAccount)
   } else {
     row.councilSeat = councilSeatFor(input.role, { scopeId, councilSeat: null })
   }
@@ -83,9 +80,33 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
   // Create + audit commit together under the shared authority lock: a
   // grant without its audit record (or vice versa) must never persist,
   // and the check→insert sequence serialises with every other authority
-  // writer on the account.
+  // writer on the account. Substitute grants additionally lock the
+  // PRINCIPAL's account — a revocation of the covered seat is an authority
+  // write on that account, so both keys are held (ascending order) before
+  // the principal is re-validated inside the transaction.
   try {
-    return await withAuthorityLock(req, input.account, async () => {
+    return await withAuthorityLock(req, lockAccounts, async () => {
+      if (input.role === 'council.substitute') {
+        const principal = await req.payload
+          .findByID({
+            collection: 'authority-records',
+            id: row.substituteFor,
+            overrideAccess: true,
+            req,
+          })
+          .catch(() => {
+            throw fail.notFound('Principal appointment not found.')
+          })
+        if (!recordCurrent(principal as any) || (principal as any).role === 'council.substitute')
+          throw fail.conflict(
+            'invalid_principal',
+            'The principal record is not a current seat holder.',
+          )
+        if (!principal.councilSeat)
+          throw fail.conflict('no_seat', 'The principal record does not hold a Council seat.')
+        row.councilSeat = principal.councilSeat
+        row.scopeId = `seat:${principal.councilSeat}`
+      }
       // Eligibility is verified UNDER the lock: a concurrent resignation or
       // termination takes the same lock, so the account state checked here
       // is the state the grant commits against.
