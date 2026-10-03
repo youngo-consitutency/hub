@@ -1,3 +1,7 @@
+interface WorkspaceProps {
+  slug: string
+}
+
 import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 import { useApi } from '../lib/api'
@@ -23,7 +27,7 @@ import {
   TbLockOpen as Unlock,
 } from 'react-icons/tb'
 
-export function Workspace({ slug }: any) {
+export function Workspace({ slug }: WorkspaceProps) {
   const groupQuery = useApi(`/groups/${encodeURIComponent(slug)}`, [slug])
   const [state, setState] = useState<Record<string, any>>({
     progress: null,

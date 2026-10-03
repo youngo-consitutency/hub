@@ -1,3 +1,7 @@
+interface AccessGateProps {
+  children?: import('react').ReactNode | ((data: any) => import('react').ReactNode)
+}
+
 import { useCallback, useEffect, useState } from 'react'
 import { MembershipMandateGate } from './MembershipMandateGate'
 import { AuthGate } from './AuthGate'
@@ -17,7 +21,7 @@ import { navigate, usePath } from '../lib/router'
  * membership policy before registering. App.jsx handles course-verification
  * and role-specific routes.
  */
-export function AccessGate({ children }: any) {
+export function AccessGate({ children }: AccessGateProps) {
   const path = usePath()
   const [ready, setReady] = useState(false)
   const [policyOk, setPolicyOk] = useState(false)

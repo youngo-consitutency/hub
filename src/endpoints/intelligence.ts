@@ -6,7 +6,7 @@ import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -200,7 +200,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           citations,
           status: 'pending_review',
           idempotencyKey: idempotencyKey || null,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -245,7 +245,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'approved',
           approvedBy: account.id,
           reviewedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -288,7 +288,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'applied',
           appliedBy: account.id,
           appliedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })

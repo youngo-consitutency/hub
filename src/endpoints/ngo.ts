@@ -10,7 +10,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { trimmed } from '../lib/text'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-invite' })
 
@@ -173,7 +173,7 @@ export const ngoEndpoints: Endpoint[] = [
           inviteTokenHash: sha256Hex(token),
           inviteExpiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
           invitedBy: account.id,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -188,7 +188,7 @@ export const ngoEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'ngo-seats',
           id: seat.id,
-          data: { status: 'revoked' } as DocData,
+          data: { status: 'revoked' },
           overrideAccess: true,
           req,
         })
@@ -232,7 +232,7 @@ export const ngoEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'ngo-seats',
         id: seat.id,
-        data: { status: 'revoked' } as DocData,
+        data: { status: 'revoked' },
         overrideAccess: true,
         req,
       })
@@ -301,7 +301,7 @@ export const ngoEndpoints: Endpoint[] = [
           status: 'active',
           acceptedAt: new Date().toISOString(),
           inviteTokenHash: null,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })

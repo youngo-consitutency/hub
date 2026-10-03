@@ -1,8 +1,30 @@
+interface ExtLinkProps {
+  href?: string
+  children?: import('react').ReactNode
+}
+
+interface DataCategoryProps {
+  category?: any
+}
+
+interface BodyProps {
+  notice?: any
+  policies?: any
+}
+
+interface HeaderProps {
+  notice?: any
+}
+
+interface PrivacyProps {
+  standalone?: any
+}
+
 import { TbArrowLeft as ArrowLeft, TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { useDocument } from '../lib/documents'
 import { Brand } from '../components/Brand'
 
-function ExtLink({ href, children }: any) {
+function ExtLink({ href, children }: ExtLinkProps) {
   if (!href) return <span>{children}</span>
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="mandateExtLink">
@@ -12,7 +34,7 @@ function ExtLink({ href, children }: any) {
   )
 }
 
-function DataCategory({ category }: any) {
+function DataCategory({ category }: DataCategoryProps) {
   return (
     <div className="privacyDataCategory">
       <h3>{category.label}</h3>
@@ -33,7 +55,7 @@ function DataCategory({ category }: any) {
   )
 }
 
-function Body({ notice, policies }: any) {
+function Body({ notice, policies }: BodyProps) {
   const PRIVACY_META = notice?.PRIVACY_META || {}
   const PRIVACY_VERSION = notice?.PRIVACY_VERSION
   const PRIVACY_SECTIONS = notice?.PRIVACY_SECTIONS || []
@@ -120,7 +142,7 @@ function Body({ notice, policies }: any) {
   )
 }
 
-function Header({ notice }: any) {
+function Header({ notice }: HeaderProps) {
   const PRIVACY_META = notice?.PRIVACY_META || {}
   const PRIVACY_VERSION = notice?.PRIVACY_VERSION
   return (
@@ -142,7 +164,7 @@ function Header({ notice }: any) {
  * Renders the privacy notice inside the app or as a standalone public page.
  * The standalone route lets visitors review it before registration.
  */
-export function Privacy({ standalone = false }: any) {
+export function Privacy({ standalone = false }: PrivacyProps) {
   const { doc: notice, loading, error, retry } = useDocument('privacy-notice')
   const { doc: policies } = useDocument('policies')
   if (loading) {

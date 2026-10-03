@@ -3,7 +3,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { accountRef, isSelector, loadSelection } from '../lib/governance'
-import type { AccountLike, Doc, DocData } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
 
 // S24 selections.
 
@@ -95,7 +95,7 @@ export const selectionEndpoints: Endpoint[] = [
           deadlineAt: b.deadlineAt ?? null,
           spotsAvailable: b.spotsAvailable ?? 1,
           createdBy: account.id,
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -147,7 +147,7 @@ export const selectionEndpoints: Endpoint[] = [
           selection: s.id,
           account: account.id,
           joinedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -226,7 +226,7 @@ export const selectionEndpoints: Endpoint[] = [
           region: b.region?.trim() || null,
           status: 'submitted',
           submittedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {

@@ -1,4 +1,8 @@
-export function Brand({ constituencyOnly = false }: any) {
+interface BrandProps {
+  constituencyOnly?: any
+}
+
+export function Brand({ constituencyOnly = false }: BrandProps) {
   const src = constituencyOnly ? '/brand/youngo-logo.png' : '/brand/youngo-hub-logo.png'
 
   return (

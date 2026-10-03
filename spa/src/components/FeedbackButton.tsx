@@ -1,3 +1,15 @@
+interface FeedbackFormProps {
+  pagePath?: any
+  kinds?: any
+  severities?: any
+  onDone?: any
+}
+
+interface FeedbackButtonProps {
+  mode?: any
+  label?: string
+}
+
 import { SidePanel } from './SidePanel.tsx'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
@@ -23,7 +35,7 @@ const FALLBACK_SEVERITIES = [
 
 const EMPTY = { kind: 'bug', severity: 'normal', title: '', body: '' }
 
-function FeedbackForm({ pagePath, kinds, severities, onDone }: any) {
+function FeedbackForm({ pagePath, kinds, severities, onDone }: FeedbackFormProps) {
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState<any>(null)
   const [sending, setSending] = useState(false)
@@ -110,7 +122,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }: any) {
   )
 }
 
-export function FeedbackButton({ mode = 'floating', label = 'Feedback' }: any) {
+export function FeedbackButton({ mode = 'floating', label = 'Feedback' }: FeedbackButtonProps) {
   const path = usePath()
   const [open, setOpen] = useState(false)
   const [sent, setSent] = useState(false)

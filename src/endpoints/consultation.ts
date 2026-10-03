@@ -3,7 +3,7 @@ import { endpoint, fail, json, readBody } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { getDocument } from '../lib/documents'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 // The questionnaire structure (kinds + sections) is console-editable content
 // in the `consultation` document; the API both serves and validates with it.
@@ -37,7 +37,7 @@ export const consultationEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const where: any = {}
       if (req.query?.kind) where.kind = { equals: req.query.kind }
-      if (req.query?.section) where.section = { equals: req.query.section }
+      if (req.query?.section) where['meta.section'] = { equals: req.query.section }
       const { docs } = await req.payload.find({
         collection: 'consultation-contributions',
         where,
@@ -51,8 +51,8 @@ export const consultationEndpoints: Endpoint[] = [
             id: row.id,
             kind: row.kind,
             body: row.body,
-            name: row.displayName || null,
-            section: row.section,
+            name: row.name || null,
+            section: row.meta?.section || null,
             createdAt: row.createdAt,
           })),
         },
@@ -84,9 +84,9 @@ export const consultationEndpoints: Endpoint[] = [
         data: {
           kind,
           body,
-          displayName: cleanText(b.name, 80) || null,
-          section,
-        } as DocData,
+          name: cleanText(b.name, 80) || null,
+          meta: { section },
+        },
         overrideAccess: true,
         req,
       })

@@ -1,3 +1,17 @@
+interface DestinationIconProps {
+  url?: string
+  size?: any
+  className?: string
+  [key: string]: any
+}
+
+interface ExternalResourceRowProps {
+  href?: string
+  label?: string
+  meta?: string | null
+  className?: string
+}
+
 import {
   TbArrowUpRight,
   TbBrandAirtable,
@@ -92,12 +106,22 @@ export function destinationIconFor(rawUrl = '') {
   return TbGlobe
 }
 
-export function DestinationIcon({ url, size = 18, className = '', ...props }: any) {
+export function DestinationIcon({
+  url,
+  size = 18,
+  className = '',
+  ...props
+}: DestinationIconProps) {
   const Icon = destinationIconFor(url)
   return <Icon className={className} size={size} aria-hidden focusable="false" {...props} />
 }
 
-export function ExternalResourceRow({ href, label, meta, className = '' }: any) {
+export function ExternalResourceRow({
+  href,
+  label,
+  meta,
+  className = '',
+}: ExternalResourceRowProps) {
   return (
     <a
       href={href}

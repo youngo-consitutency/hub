@@ -4,7 +4,8 @@ import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { ContentDraft } from '../payload-types'
 
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -97,20 +98,20 @@ async function applyToLive(
         : null,
       meetingUrl: payload.meetingUrl || null,
       recordingUrl: payload.recordingUrl || null,
-      state: 'published',
+      state: 'published' as const,
     }
     if (docs[0]) {
       return req.payload.update({
         collection: 'content-events',
         id: (docs[0] as Doc).id,
-        data: data as DocData,
+        data: data,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-events',
-      data: data as DocData,
+      data: data,
       overrideAccess: true,
       req,
     })
@@ -134,14 +135,14 @@ async function applyToLive(
       return req.payload.update({
         collection: 'content-announcements',
         id: (docs[0] as Doc).id,
-        data: data as DocData,
+        data: data,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-announcements',
-      data: data as DocData,
+      data: data,
       overrideAccess: true,
       req,
     })
@@ -167,14 +168,14 @@ async function applyToLive(
       return req.payload.update({
         collection: 'catalogue-resources',
         id: (docs[0] as Doc).id,
-        data: data as DocData,
+        data: data,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'catalogue-resources',
-      data: data as DocData,
+      data: data,
       overrideAccess: true,
       req,
     })
@@ -232,12 +233,12 @@ export const contentEndpoints: Endpoint[] = [
       const created = await req.payload.create({
         collection: 'content-drafts',
         data: {
-          contentType,
+          contentType: contentType as ContentDraft['contentType'],
           contentKey,
           payload,
           author: account.id,
           status: 'draft',
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -262,7 +263,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           payload: b.payload ?? draft.payload,
           revision: (draft.revision || 1) + 1,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -286,7 +287,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'in_review',
           submittedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -324,7 +325,7 @@ export const contentEndpoints: Endpoint[] = [
           reviewer: account.id,
           reviewNote: String(b.reviewNote || '').slice(0, 2000),
           reviewedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -349,7 +350,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'published',
           publishedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -451,7 +452,7 @@ export const contentEndpoints: Endpoint[] = [
       await req.payload.update({
         collection,
         id: live.id,
-        data: { state: 'unpublished' } as DocData,
+        data: { state: 'unpublished' },
         overrideAccess: true,
         req,
       })

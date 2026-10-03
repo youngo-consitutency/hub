@@ -1,3 +1,16 @@
+interface LiveBannerProps {
+  event?: any
+}
+
+interface ResponsibilitySectionProps {
+  account?: any
+}
+
+interface WorkspaceSectionProps {
+  groups?: any
+  workspaces?: any
+}
+
 import { canManageGroups } from '../lib/groupPermissions'
 import { useApi } from '../lib/api'
 import { A, Async, LifecycleTiming, Section, PageHeader } from '../components/ui'
@@ -25,7 +38,7 @@ import {
   TbSpeakerphone as Megaphone,
 } from 'react-icons/tb'
 
-function LiveBanner({ event }: any) {
+function LiveBanner({ event }: LiveBannerProps) {
   return (
     <div className="liveBanner">
       <span className="liveDot pulse" />
@@ -208,7 +221,7 @@ export function Home() {
   )
 }
 
-function ResponsibilitySection({ account }: any) {
+function ResponsibilitySection({ account }: ResponsibilitySectionProps) {
   const access = account?.access || {}
   const teamRoles = access.teamRoles || account?.teamRoles || []
   const capabilities = access.capabilities || []
@@ -288,7 +301,7 @@ function ResponsibilitySection({ account }: any) {
 }
 
 /** Combine group and workspace queries to show joined groups and their setup status, or a join link. */
-function WorkspaceSection({ groups, workspaces }: any) {
+function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
   return (
     <Section
       label="Your workspaces"

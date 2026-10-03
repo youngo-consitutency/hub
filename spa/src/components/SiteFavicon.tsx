@@ -1,8 +1,12 @@
+interface SiteFaviconProps {
+  url?: string
+}
+
 import { useState } from 'react'
 import { TbWorld } from 'react-icons/tb'
 import { faviconUrl } from '../lib/favicon'
 
-export function SiteFavicon({ url }: any) {
+export function SiteFavicon({ url }: SiteFaviconProps) {
   const src = faviconUrl(url)
   const [failed, setFailed] = useState<any>(null)
   return (

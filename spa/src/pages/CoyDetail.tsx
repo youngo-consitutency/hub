@@ -1,3 +1,7 @@
+interface CoyDetailProps {
+  slug?: string
+}
+
 import { useApi } from '../lib/api'
 import { Async, BackLink, LifecycleTiming, StatusChip, PageHeader, Section } from '../components/ui'
 import { fmtDateRange } from '../lib/time'
@@ -20,7 +24,7 @@ const REGION_LABEL = {
 }
 const CTA = { registration_open: 'Register', applications_open: 'Apply' }
 
-export function CoyDetail({ slug }: any) {
+export function CoyDetail({ slug }: CoyDetailProps) {
   const query = useApi(`/coys/${slug}`)
   return (
     <div className="detailPage">
@@ -77,7 +81,6 @@ export function CoyDetail({ slug }: any) {
                     <LifecycleTiming
                       iso={coy.applicationsCloseAt}
                       label="Applications close"
-                      relation={applicationsOpen ? 'until' : 'closed'}
                       showCountdown={applicationsOpen}
                     />
                   )}

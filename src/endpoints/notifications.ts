@@ -19,7 +19,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -238,14 +238,14 @@ export const notificationEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'notification-prefs',
           id: row.id,
-          data: { email } as DocData,
+          data: { email },
           overrideAccess: true,
           req,
         })
       } else {
         await req.payload.create({
           collection: 'notification-prefs',
-          data: { account: verified.accountId, email } as DocData,
+          data: { account: Number(verified.accountId), email },
           overrideAccess: true,
           req,
         })
@@ -286,14 +286,14 @@ export const notificationEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'email-verification-tokens',
         id: row.id,
-        data: { usedAt: new Date().toISOString() } as DocData,
+        data: { usedAt: new Date().toISOString() },
         overrideAccess: true,
         req,
       })
       await req.payload.update({
         collection: 'accounts',
         id: accountId,
-        data: { emailVerifiedAt: new Date().toISOString() } as DocData,
+        data: { emailVerifiedAt: new Date().toISOString() },
         overrideAccess: true,
         req,
       })
@@ -329,7 +329,7 @@ export const notificationEndpoints: Endpoint[] = [
           account: account.id,
           tokenHash: sha256Hex(token),
           expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -447,13 +447,13 @@ export const notificationEndpoints: Endpoint[] = [
         ? await req.payload.update({
             collection: 'notification-prefs',
             id: row.id,
-            data: data as DocData,
+            data: data,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'notification-prefs',
-            data: data as DocData,
+            data: data,
             overrideAccess: true,
             req,
           })

@@ -1,3 +1,7 @@
+interface ShellProps {
+  children?: import('react').ReactNode
+}
+
 import { canManageGroups } from '../lib/groupPermissions'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -44,7 +48,7 @@ const SECTION = {
   mine: 'Your responsibilities',
 }
 
-export function Shell({ children }: any) {
+export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
   const menuButtonRef = useRef<any>(null)

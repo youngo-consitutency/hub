@@ -1,3 +1,7 @@
+interface DateStampProps {
+  iso: string
+}
+
 const monthFormat = new Intl.DateTimeFormat('en-GB', { month: 'short' })
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -6,7 +10,7 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
 })
 
 /** Compact calendar date, shared by public previews and member event cards. */
-export function DateStamp({ iso }: any) {
+export function DateStamp({ iso }: DateStampProps) {
   const date = new Date(iso)
   if (!iso || Number.isNaN(date.getTime())) return null
   return (

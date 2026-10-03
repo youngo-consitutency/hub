@@ -1,3 +1,16 @@
+interface ForgotPasswordFormProps {
+  login?: any
+  fields?: any
+  error?: string
+  forgotMsg?: any
+  status?: any
+  setLog?: any
+  onSubmit?: any
+  onBack?: any
+  className?: string
+  hideOperatorNote?: any
+}
+
 import { TbArrowLeft as ArrowLeft } from 'react-icons/tb'
 import { Button } from '../ui'
 import { FieldError } from '../FormControls'
@@ -15,7 +28,7 @@ export function ForgotPasswordForm({
   onBack,
   className = 'authForm card',
   hideOperatorNote = false,
-}: any) {
+}: ForgotPasswordFormProps) {
   return (
     <form className={className} onSubmit={onSubmit} noValidate>
       <FormAlert>{error}</FormAlert>

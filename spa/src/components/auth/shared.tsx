@@ -1,9 +1,40 @@
+interface WgInterestsSectionProps {
+  selected?: any
+  onToggle?: any
+}
+
+interface PhoneFieldProps {
+  label?: string
+  value?: any
+  onValueChange?: any
+  onLoad?: any
+  error?: string
+  required?: boolean
+}
+
+interface PolicyLinkProps {
+  href?: string
+  children?: import('react').ReactNode
+}
+
+interface PrivacyConsentSectionProps {
+  checked?: boolean
+  onChange?: any
+  error?: string
+  isOrg?: any
+  notice?: any
+}
+
+interface FormAlertProps {
+  children?: import('react').ReactNode
+}
+
 import { TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { FieldError, MultiSelectDropdown } from '../FormControls'
 import { fieldClass, checkClass } from './helpers'
 import { useWorkingGroups } from '../../lib/workingGroups'
 
-export function WgInterestsSection({ selected, onToggle }: any) {
+export function WgInterestsSection({ selected, onToggle }: WgInterestsSectionProps) {
   const wg = useWorkingGroups()
   const options = wg.groups.map((g: any) => ({ value: g.slug, label: g.name }))
   return (
@@ -23,7 +54,14 @@ export function WgInterestsSection({ selected, onToggle }: any) {
   )
 }
 
-export function PhoneField({ label, value, onValueChange, onLoad, error, required = false }: any) {
+export function PhoneField({
+  label,
+  value,
+  onValueChange,
+  onLoad,
+  error,
+  required = false,
+}: PhoneFieldProps) {
   return (
     <label className={fieldClass(error)}>
       <span>
@@ -68,7 +106,7 @@ export function PhoneField({ label, value, onValueChange, onLoad, error, require
 }
 
 /** Policy link that does not change the surrounding checkbox. */
-export function PolicyLink({ href, children }: any) {
+export function PolicyLink({ href, children }: PolicyLinkProps) {
   if (!href) return <span>{children}</span>
   return (
     <a
@@ -88,7 +126,13 @@ export function PolicyLink({ href, children }: any) {
  * Privacy consent is separate from agreeing to follow YOUNGO policies. The
  * summary remains visible without opening the full notice.
  */
-export function PrivacyConsentSection({ checked, onChange, error, isOrg, notice }: any) {
+export function PrivacyConsentSection({
+  checked,
+  onChange,
+  error,
+  isOrg,
+  notice,
+}: PrivacyConsentSectionProps) {
   const CONSENT_SUMMARY = notice?.CONSENT_SUMMARY || []
   const CONSENT_STATEMENT = notice?.CONSENT_STATEMENT
   const PRIVACY_VERSION = notice?.PRIVACY_VERSION
@@ -127,7 +171,7 @@ export function PrivacyConsentSection({ checked, onChange, error, isOrg, notice 
   )
 }
 
-export function FormAlert({ children }: any) {
+export function FormAlert({ children }: FormAlertProps) {
   if (!children) return null
   return (
     <div className="formAlert" role="alert">

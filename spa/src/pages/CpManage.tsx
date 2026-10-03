@@ -1,3 +1,7 @@
+interface CpManageProps {
+  slug: string
+}
+
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
 import { useContentOptionLabels, useContentOptions } from '../lib/documents'
@@ -6,7 +10,7 @@ import { apiGet, apiPost, useApi } from '../lib/api'
 import { Async, BackLink, Button, Empty, ErrorCard, PageHeader, FilterPill } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
 
-export function CpManage({ slug }: any) {
+export function CpManage({ slug }: CpManageProps) {
   const { assignmentLabels } = useContentOptionLabels()
   const { wgActivityKinds } = useContentOptions()
   const [activityBusy, setActivityBusy] = useState(false)

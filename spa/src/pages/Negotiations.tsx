@@ -1,3 +1,8 @@
+interface TrackResultsProps {
+  data?: any
+  search?: any
+}
+
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
 import { A, Async, Empty, PageHeader } from '../components/ui'
@@ -47,7 +52,7 @@ export function Negotiations() {
   )
 }
 
-function TrackResults({ data, search }: any) {
+function TrackResults({ data, search }: TrackResultsProps) {
   const items = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase()
     if (!needle) return data.items

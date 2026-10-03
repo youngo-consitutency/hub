@@ -1,3 +1,27 @@
+interface ResponseFieldProps {
+  label?: string
+  children?: import('react').ReactNode
+}
+
+interface ResponseGroupProps {
+  title?: string
+  children?: import('react').ReactNode
+}
+
+interface SocialLinksProps {
+  links?: any
+}
+
+interface ApplicationResponsesProps {
+  item?: any
+}
+
+interface AppealPanelProps {
+  item?: any
+  busy?: boolean
+  onReview?: any
+}
+
 import { Children, useState } from 'react'
 import { useContentOptionLabels } from '../lib/documents'
 import { SidePanel } from '../components/SidePanel.tsx'
@@ -81,7 +105,7 @@ function formatDateOnly(value: any) {
   })
 }
 
-function ResponseField({ label, children }: any) {
+function ResponseField({ label, children }: ResponseFieldProps) {
   if (children == null || children === '') return null
   if (Array.isArray(children) && !children.length) return null
   return (
@@ -92,7 +116,7 @@ function ResponseField({ label, children }: any) {
   )
 }
 
-function ResponseGroup({ title, children }: any) {
+function ResponseGroup({ title, children }: ResponseGroupProps) {
   const items = Children.toArray(children)
   if (!items.length) return null
   return (
@@ -140,7 +164,7 @@ function applicationSearchText(item: any) {
     .toLowerCase()
 }
 
-function SocialLinks({ links }: any) {
+function SocialLinks({ links }: SocialLinksProps) {
   if (!links?.length) return null
   return (
     <div className="membershipSocialLinks">
@@ -160,7 +184,7 @@ function SocialLinks({ links }: any) {
   )
 }
 
-function ApplicationResponses({ item }: any) {
+function ApplicationResponses({ item }: ApplicationResponsesProps) {
   const wg = useWorkingGroups()
   const app = item.application || {}
   const groups = (item.wgInterests || []).map(wg.label)
@@ -295,7 +319,7 @@ function ApplicationResponses({ item }: any) {
   )
 }
 
-function AppealPanel({ item, busy, onReview }: any) {
+function AppealPanel({ item, busy, onReview }: AppealPanelProps) {
   const appeal = item.appeal
   if (!appeal) return null
   const open = appeal.status === 'submitted'

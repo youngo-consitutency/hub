@@ -20,7 +20,7 @@ import {
   recordEvent,
   vetoView,
 } from '../lib/decisionRuntime'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 // S09 decision workflow endpoints. Members act through these — direct REST
 // writes on the decision collections are staff-only (see Decisions.ts), so
@@ -95,7 +95,7 @@ export const decisionEndpoints: Endpoint[] = [
             Array.isArray(b.contactPersons) && b.contactPersons.length
               ? b.contactPersons
               : [account.id],
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await recordEvent(req, proposal.id, 'created', account)
@@ -191,7 +191,7 @@ export const decisionEndpoints: Endpoint[] = [
           account: account.id,
           body: b.body.trim(),
           createdAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'commented', account)
@@ -233,7 +233,7 @@ export const decisionEndpoints: Endpoint[] = [
           raisedBy: account.id,
           status: 'open',
           raisedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await recordEvent(req, p.id, `flag_${b.kind}_raised`, account, { flagId: flag.id })
@@ -372,7 +372,7 @@ export const decisionEndpoints: Endpoint[] = [
             account: account.id,
             choice: b.choice,
             castAt: new Date().toISOString(),
-          } as DocData,
+          },
           overrideAccess: true,
         })
       } catch (error: any) {
@@ -414,7 +414,7 @@ export const decisionEndpoints: Endpoint[] = [
           requestedBy: account.id,
           status: 'pending',
           createdAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'veto_requested', account, { vetoId: veto.id })

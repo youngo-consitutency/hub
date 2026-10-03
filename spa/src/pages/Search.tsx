@@ -1,3 +1,8 @@
+interface DirectMatchesProps {
+  query?: any
+  data?: any
+}
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   TbAddressBook as AddressBook,
@@ -69,7 +74,7 @@ function confidenceLabel(value: any) {
   return 'Insufficient evidence'
 }
 
-function DirectMatches({ query, data }: any) {
+function DirectMatches({ query, data }: DirectMatchesProps) {
   const total = GROUPS.reduce((count, group) => count + (data[group.key]?.length || 0), 0)
   if (!total)
     return (

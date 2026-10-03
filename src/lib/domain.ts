@@ -18,14 +18,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Doc = Record<string, any>
 
-/**
- * Write payload for `payload.create`/`update`. The generated `Options` types
- * demand each collection's exact data shape; endpoint builders compose
- * dynamic partials, so the write boundary stays `any` under one name.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type DocData = any
-
 /** Payload relationship field: an id, a populated doc, or empty. */
 export type Rel = number | string | { id: number | string } | null | undefined
 

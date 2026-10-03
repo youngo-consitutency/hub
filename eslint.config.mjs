@@ -24,12 +24,23 @@ const eslintConfig = [
     },
   },
   {
-    // spa/ is the preserved legacy member app — vendored verbatim, idiomatic
-    // React SPA code intentionally outside the Next.js rules (its own router
-    // uses <a href>, effects set state on mount).
+    // spa/ is the member app — its own wouter router uses <a href> (not
+    // next/link), and mount effects intentionally set state on load.
+    // React-compiler-era strictness (nested components, render-time impurity)
+    // flags working legacy patterns; kept visible as warnings, fixed
+    // opportunistically.
+    files: ['spa/**/*.{js,jsx,ts,tsx,mjs}'],
+    rules: {
+      '@next/next/no-html-link-for-pages': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/use-memo': 'warn',
+    },
+  },
+  {
     ignores: [
       '.next/',
-      'spa/',
       'dist/',
       'coverage/',
       'test-results/',

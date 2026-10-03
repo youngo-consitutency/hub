@@ -1,3 +1,7 @@
+interface PersonBehindHubProps {
+  person?: any
+}
+
 import { TbHelpCircle as HelpIcon } from 'react-icons/tb'
 import {
   TbHome as Home,
@@ -11,7 +15,7 @@ import { A, PageHeader, Section } from '../components/ui'
 import { FeedbackButton } from '../components/FeedbackButton'
 import { useDocument } from '../lib/documents'
 
-function PersonBehindHub({ person }: any) {
+function PersonBehindHub({ person }: PersonBehindHubProps) {
   const initials = person.name
     .split(' ')
     .map((part: any) => part[0])

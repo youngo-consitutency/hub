@@ -13,7 +13,8 @@ import { sendEmail, emailConfigured } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { Account } from '../payload-types'
 
 const registerLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -86,7 +87,7 @@ async function loginResponse(req: any, email: string, password: string) {
           password,
           legacyPasswordHash: null,
           legacyPasswordSalt: null,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -164,8 +165,8 @@ export const authEndpoints: Endpoint[] = [
           nationality: data.nationality,
           country: data.country,
           motivation: data.motivation,
-          entityType: data.entityType,
-          membershipTrack: data.membershipTrack,
+          entityType: data.entityType as Account['entityType'],
+          membershipTrack: data.membershipTrack as Account['membershipTrack'],
           organizationName: data.organizationName,
           organizationType: data.organizationType,
           isUnfcccAdmitted: data.isUnfcccAdmitted,
@@ -190,14 +191,14 @@ export const authEndpoints: Endpoint[] = [
           privacyConsent: data.privacyConsent,
           privacyConsentAt: data.privacyConsentAt,
           privacyNoticeVersion: data.privacyNoticeVersion,
-          memberStatus: data.memberStatus,
+          memberStatus: data.memberStatus as Account['memberStatus'],
           hubAccessStatus: 'pending_course',
           membershipStatus: 'registered',
-          constituencyWorkStatus: data.constituencyWorkStatus,
+          constituencyWorkStatus: data.constituencyWorkStatus as Account['constituencyWorkStatus'],
           role: 'member',
           wgInterests: data.wgInterests,
           mustChangePassword: false,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -268,7 +269,7 @@ export const authEndpoints: Endpoint[] = [
         .update({
           collection: 'accounts',
           id: logged.user.id,
-          data: { lastLoginAt: new Date().toISOString() } as DocData,
+          data: { lastLoginAt: new Date().toISOString() },
           overrideAccess: true,
           req,
         })
@@ -339,7 +340,7 @@ export const authEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'accounts',
         id: account.id,
-        data: { password, mustChangePassword: false } as DocData,
+        data: { password, mustChangePassword: false },
         overrideAccess: true,
         req,
       })
@@ -452,7 +453,7 @@ export const authEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'accounts',
         id: typeof reset.account === 'object' ? reset.account.id : reset.account,
-        data: { password, mustChangePassword: false } as DocData,
+        data: { password, mustChangePassword: false },
         overrideAccess: true,
         req,
       })
