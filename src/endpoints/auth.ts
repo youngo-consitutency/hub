@@ -419,7 +419,8 @@ export const authEndpoints: Endpoint[] = [
       const passwordConfirm = String(b.passwordConfirm || '')
       const fields: Record<string, string> = {}
       if (!token)
-        fields.token = 'Reset token is missing. Open the full link from your email or a platform officer.'
+        fields.token =
+          'Reset token is missing. Open the full link from your email or a platform officer.'
       if (password.length < 10) fields.password = 'Password must be at least 10 characters.'
       if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
