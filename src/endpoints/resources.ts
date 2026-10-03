@@ -5,10 +5,11 @@ import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
-import { slugify } from '../../spa/shared/slug.js'
+import { slugify } from '../../spa/shared/slug'
 import { audit } from '../lib/audit'
+import type { AccountLike, Doc, DocData } from '../lib/domain'
 
-const canReview = async (req: PayloadRequest, account: any) => {
+const canReview = async (req: PayloadRequest, account: AccountLike) => {
   const access = await getAccessProfile(req, account)
   return hasCapability(access, 'content.review')
 }
@@ -90,7 +91,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug },
           author: account.id,
           status: 'in_review',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -112,7 +113,7 @@ export const resourceEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!draft || draft.contentType !== 'resource')
         throw fail.notFound('Resource submission not found.')
       if (
@@ -129,7 +130,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug: draft.contentKey },
           status: 'in_review',
           revision: (draft.revision || 1) + 1,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -170,13 +171,13 @@ export const resourceEndpoints: Endpoint[] = [
           overrideAccess: true,
         }),
       ])
-      const latestReviewBySlug = new Map<string, any>()
-      for (const r of reviews.docs as any[]) {
+      const latestReviewBySlug = new Map<string, Doc>()
+      for (const r of reviews.docs as Doc[]) {
         if (!latestReviewBySlug.has(r.resourceSlug)) latestReviewBySlug.set(r.resourceSlug, r)
       }
       return json({
         items,
-        issues: (issues.docs as any[]).map((i) => ({
+        issues: (issues.docs as Doc[]).map((i) => ({
           id: i.id,
           resourceSlug: i.resourceSlug,
           kind: i.kind,
@@ -229,7 +230,7 @@ export const resourceEndpoints: Endpoint[] = [
           kind: b.kind,
           detail,
           reportedBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -284,7 +285,7 @@ export const resourceEndpoints: Endpoint[] = [
             tags: b.checks?.tags === true,
           },
           reviewedBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -296,7 +297,7 @@ export const resourceEndpoints: Endpoint[] = [
               id,
               overrideAccess: true,
               req,
-            })) as any
+            })) as Doc
             if (issue && issue.resourceSlug === slug && !issue.resolvedAt) {
               await req.payload.update({
                 collection: 'resource-issues',
@@ -305,7 +306,7 @@ export const resourceEndpoints: Endpoint[] = [
                   resolvedAt: new Date().toISOString(),
                   resolvedBy: account.id,
                   reviewId: String(review.id),
-                } as any,
+                } as DocData,
                 overrideAccess: true,
                 req,
               })
@@ -323,7 +324,7 @@ export const resourceEndpoints: Endpoint[] = [
             limit: 1,
             overrideAccess: true,
           })
-        ).docs[0] as any
+        ).docs[0] as Doc
         if (res) {
           await req.payload.update({
             collection: 'catalogue-resources',
@@ -337,7 +338,7 @@ export const resourceEndpoints: Endpoint[] = [
                     : 'verified',
               checkedAt: new Date().toISOString(),
               retiredAt: b.status === 'retired' ? new Date().toISOString() : null,
-            } as any,
+            } as DocData,
             overrideAccess: true,
             req,
           })
@@ -370,7 +371,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug },
           author: account.id,
           status: 'in_review',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

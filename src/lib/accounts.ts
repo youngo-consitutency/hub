@@ -3,7 +3,7 @@ import { ApiError, fail } from './respond'
 import { getAccessProfile, hasCapability, hasTeamRole } from './access'
 import type { AccessProfile } from './access'
 import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
-import type { AccountLike, AccountView } from './domain'
+import type { AccountLike, AccountView, Doc } from './domain'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
@@ -34,7 +34,9 @@ export function requireCwMember(req: PayloadRequest) {
 }
 
 // Normalises a Payload doc or raw SQL row into the SPA's account shape.
-export function accountView(row: AccountLike | null | undefined): AccountView | null {
+export function accountView(row: AccountLike | Doc): AccountView
+export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null
+export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null {
   if (!row) return null
   const r = accountRow(row)
   const name = r.name || [r.firstName, r.lastName].filter(Boolean).join(' ')

@@ -6,6 +6,7 @@ import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
 import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
+import type { Doc, DocData } from '../lib/domain'
 
 // S10 elections. See lib/governance.ts for shared helpers and the
 // credential-secrecy model.
@@ -49,7 +50,7 @@ export const electionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((e) => electionView(e)) })
+      return json({ items: (docs as Doc[]).map((e) => electionView(e)) })
     }),
   },
   {
@@ -78,7 +79,7 @@ export const electionEndpoints: Endpoint[] = [
           })),
           quorumIndividuals: b.quorumIndividuals ?? 100,
           quorumOrganisations: b.quorumOrganisations ?? 25,
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -109,7 +110,7 @@ export const electionEndpoints: Endpoint[] = [
       return json({
         election: electionView(e, {
           candidateCount: all.length,
-          candidates: published ? (all as any[]).map(candidateView) : undefined,
+          candidates: published ? (all as Doc[]).map(candidateView) : undefined,
         }),
       })
     }),
@@ -208,7 +209,7 @@ export const electionEndpoints: Endpoint[] = [
           videoUrl: b.videoUrl?.trim() || null,
           status: 'pending',
           nominatedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -285,7 +286,7 @@ export const electionEndpoints: Endpoint[] = [
           kind,
           tokenHash: tokenHash(e.id, token),
           issuedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -322,7 +323,7 @@ export const electionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       if (!voters.length) throw fail.forbidden('Invalid voter credential.')
-      const voter = voters[0] as any
+      const voter = voters[0] as Doc
       const { totalDocs: cast } = await req.payload.find({
         collection: 'election-ballots',
         where: {
@@ -350,8 +351,8 @@ export const electionEndpoints: Endpoint[] = [
         limit: 500,
         overrideAccess: true,
       })
-      const valid = new Set((cands as any[]).map((c) => c.id))
-      const ranks = (b.ranks as any[]).map(String).filter(Boolean)
+      const valid = new Set((cands as Doc[]).map((c) => c.id))
+      const ranks = (b.ranks as Doc[]).map(String).filter(Boolean)
       if (ranks.some((r) => !valid.has(Number(r))))
         throw fail.validation({ ranks: 'Contains an unknown or unscreened candidate id.' })
       if (new Set(ranks).size !== ranks.length)
@@ -366,7 +367,7 @@ export const electionEndpoints: Endpoint[] = [
             kind: voter.kind,
             ranks: ranks.map(Number),
             castAt: new Date().toISOString(),
-          } as any,
+          } as DocData,
           overrideAccess: true,
         })
       } catch (error) {
@@ -418,10 +419,10 @@ export const electionEndpoints: Endpoint[] = [
       // Quorum counts distinct voters who participated in the election,
       // not per-race ballots (a voter may vote in several races).
       const indSet = new Set(
-        (ballots as any[]).filter((b) => b.kind === 'individual').map((b) => b.voterTokenHash),
+        (ballots as Doc[]).filter((b) => b.kind === 'individual').map((b) => b.voterTokenHash),
       )
       const orgSet = new Set(
-        (ballots as any[]).filter((b) => b.kind === 'organisation').map((b) => b.voterTokenHash),
+        (ballots as Doc[]).filter((b) => b.kind === 'organisation').map((b) => b.voterTokenHash),
       )
       const ind = indSet.size
       const org = orgSet.size
@@ -449,15 +450,15 @@ export const electionEndpoints: Endpoint[] = [
           limit: 500,
           overrideAccess: true,
         })
-        const raceBallots = (ballots as any[])
+        const raceBallots = (ballots as Doc[])
           .filter((b) => b.race === race.slug)
           .map((b) => ({ ranks: (b.ranks ?? []).map(String) }))
         const tally = tallyIrv(
           raceBallots,
-          (cands as any[]).map((c) => String(c.id)),
+          (cands as Doc[]).map((c) => String(c.id)),
         )
         result.races[race.slug] = {
-          candidates: (cands as any[]).map((c) => ({
+          candidates: (cands as Doc[]).map((c) => ({
             id: c.id,
             name: accountRef(c.account)?.name,
           })),

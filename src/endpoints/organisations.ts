@@ -3,6 +3,7 @@ import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
+import type { Doc, DocData } from '../lib/domain'
 
 export const organisationEndpoints: Endpoint[] = [
   {
@@ -20,7 +21,7 @@ export const organisationEndpoints: Endpoint[] = [
         sort: 'organizationName',
         overrideAccess: true,
       })
-      const items = (docs as any[])
+      const items = (docs as Doc[])
         .map((a) => ({
           id: a.id,
           name: a.organizationName || a.name,
@@ -47,7 +48,7 @@ export const organisationEndpoints: Endpoint[] = [
         depth: 1,
       })
       return json({
-        items: (docs as any[]).map((s) => ({
+        items: (docs as Doc[]).map((s) => ({
           ...seatView(s),
           organizationName: s.orgAccount?.organizationName || s.orgAccount?.name || null,
         })),
@@ -67,7 +68,7 @@ export const organisationEndpoints: Endpoint[] = [
         id: orgAccountId,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!org || org.entityType !== 'organization')
         throw new ApiError(404, 'unknown_organisation', 'Organisation not found.')
       const dup = await req.payload.find({
@@ -95,7 +96,7 @@ export const organisationEndpoints: Endpoint[] = [
           name: account.name,
           seatRole: 'affiliate',
           status: 'requested',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -121,7 +122,7 @@ export const organisationEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!seat) throw fail.notFound('Seat request not found.')
       if (
         String(typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount) !==
@@ -133,16 +134,16 @@ export const organisationEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'ngo-seats',
         id: seat.id,
-        data: approve
+        data: (approve
           ? {
               status: 'active',
               seatRole,
               acceptedAt: new Date().toISOString(),
             }
-          : { status: 'declined' },
+          : { status: 'declined' }) as DocData,
         overrideAccess: true,
         req,
-      } as any)
+      })
       await audit(req, account, {
         action: approve ? 'ngo.affiliation_approved' : 'ngo.affiliation_declined',
         targetType: 'ngo_seat',

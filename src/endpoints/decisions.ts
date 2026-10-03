@@ -20,6 +20,7 @@ import {
   recordEvent,
   vetoView,
 } from '../lib/decisionRuntime'
+import type { Doc, DocData } from '../lib/domain'
 
 // S09 decision workflow endpoints. Members act through these — direct REST
 // writes on the decision collections are staff-only (see Decisions.ts), so
@@ -53,7 +54,7 @@ export const decisionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const items = []
-      for (const p of docs as any[]) {
+      for (const p of docs as Doc[]) {
         items.push(proposalView(await advanceIfDue(req, p)))
       }
       return json({ items })
@@ -94,7 +95,7 @@ export const decisionEndpoints: Endpoint[] = [
             Array.isArray(b.contactPersons) && b.contactPersons.length
               ? b.contactPersons
               : [account.id],
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, proposal.id, 'created', account)
@@ -133,10 +134,10 @@ export const decisionEndpoints: Endpoint[] = [
       })
       return json({
         proposal: proposalView(p, flags, {
-          comments: (comments as any[]).length,
+          comments: (comments as Doc[]).length,
           ballots,
         }),
-        comments: (comments as any[]).map(commentView),
+        comments: (comments as Doc[]).map(commentView),
         myBallot: mine[0] ? ballotView(mine[0]) : null,
       })
     }),
@@ -190,7 +191,7 @@ export const decisionEndpoints: Endpoint[] = [
           account: account.id,
           body: b.body.trim(),
           createdAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'commented', account)
@@ -232,7 +233,7 @@ export const decisionEndpoints: Endpoint[] = [
           raisedBy: account.id,
           status: 'open',
           raisedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, `flag_${b.kind}_raised`, account, { flagId: flag.id })
@@ -256,7 +257,7 @@ export const decisionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
-      if (!['open'].includes((flag as any).status))
+      if (!['open'].includes((flag as Doc).status))
         throw fail.conflict('invalid_phase', 'Flag is no longer open.')
       const b = await readBody(req)
       const updated = await req.payload.update({
@@ -289,7 +290,7 @@ export const decisionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
-      const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
+      const raiser = (flag as Doc).raisedBy?.id ?? (flag as Doc).raisedBy
       // S09: a flag is withdrawn by its raiser or through the documented
       // nullification/escalation process — never by administrator override.
       if (raiser !== account.id) throw fail.forbidden('Only the flag raiser may withdraw it.')
@@ -371,7 +372,7 @@ export const decisionEndpoints: Endpoint[] = [
             account: account.id,
             choice: b.choice,
             castAt: new Date().toISOString(),
-          } as any,
+          } as DocData,
           overrideAccess: true,
         })
       } catch (error: any) {
@@ -413,7 +414,7 @@ export const decisionEndpoints: Endpoint[] = [
           requestedBy: account.id,
           status: 'pending',
           createdAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'veto_requested', account, { vetoId: veto.id })
@@ -484,7 +485,7 @@ export const decisionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((e) => ({
+        items: (docs as Doc[]).map((e) => ({
           id: e.id,
           type: e.type,
           actor: accountRef(e.actor),

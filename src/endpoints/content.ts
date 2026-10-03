@@ -4,6 +4,7 @@ import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
+import type { Doc, DocData } from '../lib/domain'
 
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -46,7 +47,7 @@ async function getDraft(req: PayloadRequest, id: string) {
       overrideAccess: true,
       depth: 1,
       req,
-    })) as any
+    })) as Doc
     if (!d) throw fail.notFound('Draft not found.')
     return d
   } catch (e: any) {
@@ -91,7 +92,7 @@ async function applyToLive(
                 limit: 1,
                 overrideAccess: true,
               })
-            ).docs[0] as any
+            ).docs[0] as Doc
           )?.id
         : null,
       meetingUrl: payload.meetingUrl || null,
@@ -101,15 +102,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'content-events',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-events',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -132,15 +133,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'content-announcements',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'content-announcements',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -165,15 +166,15 @@ async function applyToLive(
     if (docs[0]) {
       return req.payload.update({
         collection: 'catalogue-resources',
-        id: (docs[0] as any).id,
-        data: data as any,
+        id: (docs[0] as Doc).id,
+        data: data as DocData,
         overrideAccess: true,
         req,
       })
     }
     return req.payload.create({
       collection: 'catalogue-resources',
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
@@ -203,7 +204,7 @@ export const contentEndpoints: Endpoint[] = [
       return json({
         permissions: { canDraft, canReview, canPublish },
         items: docs.map(draftView),
-        publications: (docs as any[])
+        publications: (docs as Doc[])
           .filter((d) => d.status === 'published')
           .map(draftView)
           .slice(0, 100),
@@ -236,7 +237,7 @@ export const contentEndpoints: Endpoint[] = [
           payload,
           author: account.id,
           status: 'draft',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -261,7 +262,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           payload: b.payload ?? draft.payload,
           revision: (draft.revision || 1) + 1,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -285,7 +286,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'in_review',
           submittedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -323,7 +324,7 @@ export const contentEndpoints: Endpoint[] = [
           reviewer: account.id,
           reviewNote: String(b.reviewNote || '').slice(0, 2000),
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -348,7 +349,7 @@ export const contentEndpoints: Endpoint[] = [
         data: {
           status: 'published',
           publishedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -363,7 +364,7 @@ export const contentEndpoints: Endpoint[] = [
       if (!canDraft && !canReview) throw fail.forbidden()
       const contentType = param(req, 'contentType')
       const slug = param(req, 'slug')
-      let item: any = null
+      let item: Doc | null | undefined = null
       if (contentType === 'event') item = await store.getEvent(req, slug)
       else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
       else if (contentType === 'resource')
@@ -414,7 +415,7 @@ export const contentEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const live = docs[0] as any
+      const live = docs[0] as Doc
       if (!live)
         throw new ApiError(404, 'not_found', `No live ${contentType} with slug "${slug}".`, {
           slug: `No live ${contentType} with slug "${slug}".`,
@@ -450,7 +451,7 @@ export const contentEndpoints: Endpoint[] = [
       await req.payload.update({
         collection,
         id: live.id,
-        data: { state: 'unpublished' } as any,
+        data: { state: 'unpublished' } as DocData,
         overrideAccess: true,
         req,
       })

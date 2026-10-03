@@ -3,6 +3,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { accountRef, isSelector, loadSelection } from '../lib/governance'
+import type { AccountLike, Doc, DocData } from '../lib/domain'
 
 // S24 selections.
 
@@ -31,13 +32,13 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
     limit: 1,
     overrideAccess: true,
   })
-  return docs[0] as any
+  return docs[0] as Doc
 }
 
 // Recording a selection stage belongs to the Selections Team (S24) —
 // no account attribute grants selection authority on its own.
-async function canAdminister(req: PayloadRequest, s: any, account: any) {
-  const creator = (s.createdBy as any)?.id ?? s.createdBy
+async function canAdminister(req: PayloadRequest, s: any, account: AccountLike) {
+  const creator = (s.createdBy as Doc)?.id ?? s.createdBy
   return creator === account.id || (await isSelector(req, account))
 }
 
@@ -61,7 +62,7 @@ export const selectionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((s) => selectionView(s)) })
+      return json({ items: (docs as Doc[]).map((s) => selectionView(s)) })
     }),
   },
   {
@@ -94,7 +95,7 @@ export const selectionEndpoints: Endpoint[] = [
           deadlineAt: b.deadlineAt ?? null,
           spotsAvailable: b.spotsAvailable ?? 1,
           createdBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -146,7 +147,7 @@ export const selectionEndpoints: Endpoint[] = [
           selection: s.id,
           account: account.id,
           joinedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -225,7 +226,7 @@ export const selectionEndpoints: Endpoint[] = [
           region: b.region?.trim() || null,
           status: 'submitted',
           submittedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -386,7 +387,7 @@ export const selectionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const selected = new Set(b.selectedApplicationIds.map(Number))
-      for (const app of apps as any[]) {
+      for (const app of apps as Doc[]) {
         await req.payload.update({
           collection: 'selection-applications',
           id: app.id,
@@ -441,7 +442,7 @@ export const selectionEndpoints: Endpoint[] = [
       })
       return json({
         selection: selectionView(updated),
-        selected: (apps as any[]).map((a) => ({
+        selected: (apps as Doc[]).map((a) => ({
           id: a.id,
           account: accountRef(a.account),
         })),

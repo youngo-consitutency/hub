@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { deriveAuthority, type AuthorityRow } from './authority'
 import { isCwActive } from './accountStatus'
-import type { AccountLike } from './domain'
+import type { AccountLike, Doc } from './domain'
 
 // Derives the capability model from `authority-records`: time-bounded,
 // scoped, evidenced records — mandates and participation share one store.
@@ -70,7 +70,7 @@ export async function getAccessProfile(
     overrideAccess: true,
   })
 
-  const derived = deriveAuthority(docs as any[] as AuthorityRow[], {
+  const derived = deriveAuthority(docs as Doc[] as AuthorityRow[], {
     cw,
     baseCapabilities: ['hub.read', 'intelligence.query', 'intelligence.writeback.propose'],
   })

@@ -5,7 +5,8 @@ import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
-import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol.js'
+import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol'
+import type { Doc, DocData } from '../lib/domain'
 
 function publicSlot(s: any) {
   return {
@@ -45,7 +46,7 @@ export const contactPointEndpoints: Endpoint[] = [
         depth: 1,
       })
       return json({
-        members: (docs as any[]).map((d) => ({
+        members: (docs as Doc[]).map((d) => ({
           progress: {
             wg_slug: d.wgSlug,
             status: d.status,
@@ -82,15 +83,15 @@ export const contactPointEndpoints: Endpoint[] = [
       if (!docs[0]) throw fail.notFound()
       const updated = await req.payload.update({
         collection: 'wg-progress',
-        id: (docs[0] as any).id,
-        data: { roleInWg } as any,
+        id: (docs[0] as Doc).id,
+        data: { roleInWg } as DocData,
         overrideAccess: true,
         req,
       })
       await audit(req, account, {
         action: 'wg.role_update',
         targetType: 'wg_progress',
-        targetId: String((docs[0] as any).id),
+        targetId: String((docs[0] as Doc).id),
         after: { wg, roleInWg },
       })
       return json({ progress: updated })
@@ -111,7 +112,7 @@ export const contactPointEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map(wgActivityView) })
+      return json({ items: (docs as Doc[]).map(wgActivityView) })
     }),
   },
   {
@@ -152,7 +153,7 @@ export const contactPointEndpoints: Endpoint[] = [
           url: b.url ? String(b.url) : null,
           taskForceSlug,
           createdBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -185,7 +186,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const data: any = { publicSpace: Boolean(b.publicSpace) }
       const updated = await req.payload.update({
         collection: 'working-groups',
-        id: (docs[0] as any).id,
+        id: (docs[0] as Doc).id,
         data,
         overrideAccess: true,
         req,
@@ -193,7 +194,7 @@ export const contactPointEndpoints: Endpoint[] = [
       await audit(req, account, {
         action: 'wg.public_space',
         targetType: 'working_group',
-        targetId: String((docs[0] as any).id),
+        targetId: String((docs[0] as Doc).id),
         after: { wg, publicSpace: data.publicSpace },
       })
       return json({ group: updated })
@@ -216,7 +217,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      const slots = docs as any[]
+      const slots = docs as Doc[]
       return json({
         slots: slots
           .filter(
@@ -245,7 +246,7 @@ export const contactPointEndpoints: Endpoint[] = [
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!slot) throw fail.notFound()
       if (slot.bookedBy) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       if (Date.parse(slot.startsAt) < Date.now())
@@ -253,7 +254,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'cp-call-slots',
         id,
-        data: { bookedBy: account.id, bookedAt: new Date().toISOString() } as any,
+        data: { bookedBy: account.id, bookedAt: new Date().toISOString() } as DocData,
         overrideAccess: true,
         req,
       })
@@ -272,14 +273,14 @@ export const contactPointEndpoints: Endpoint[] = [
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!slot) throw fail.notFound()
       const bookedById = typeof slot.bookedBy === 'object' ? slot.bookedBy.id : slot.bookedBy
       if (String(bookedById) !== String(account.id)) throw fail.forbidden()
       const released = await req.payload.update({
         collection: 'cp-call-slots',
         id,
-        data: { bookedBy: null, bookedAt: null } as any,
+        data: { bookedBy: null, bookedAt: null } as DocData,
         overrideAccess: true,
         req,
       })
@@ -298,7 +299,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      return json({ slots: (docs as any[]).map(publicSlot) })
+      return json({ slots: (docs as Doc[]).map(publicSlot) })
     }),
   },
   {
@@ -313,7 +314,7 @@ export const contactPointEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ slots: (docs as any[]).map(publicSlot) })
+      return json({ slots: (docs as Doc[]).map(publicSlot) })
     }),
   },
   {
@@ -323,7 +324,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const { account } = await requirePlatformOperator(req)
       const b = await readBody(req)
       const slots = Array.isArray(b.slots) ? b.slots : [b]
-      const created: any[] = []
+      const created: Doc[] = []
       for (const s of slots) {
         const startsAt = Date.parse(s.startsAt)
         const duration = Number(s.durationMinutes || 30)
@@ -339,7 +340,7 @@ export const contactPointEndpoints: Endpoint[] = [
               durationMinutes: duration,
               host: account.id,
               meetUrl: String(s.meetUrl || '').slice(0, 500) || null,
-            } as any,
+            } as DocData,
             overrideAccess: true,
             req,
           }),
@@ -359,7 +360,7 @@ export const contactPointEndpoints: Endpoint[] = [
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!slot) throw fail.notFound()
       await req.payload.delete({
         collection: 'cp-call-slots',

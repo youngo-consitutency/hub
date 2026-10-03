@@ -2,6 +2,7 @@ import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
 import { AUTHORITY_ROLES } from './authority'
+import type { Doc } from './domain'
 
 // Admin account surface: sortable account lists filtered by status or
 // authority-record role.
@@ -49,7 +50,7 @@ export async function queryAccountsForAdmin({
   const cleanPage = Math.min(100_000, Math.max(1, Number.parseInt(page, 10) || 1))
   const cleanPageSize = Math.min(50, Math.max(1, Number.parseInt(pageSize, 10) || 12))
   const pool = requirePgPool()
-  const values: any[] = []
+  const values: Doc[] = []
   const where: string[] = []
   const add = (clause: string, value: any) => {
     values.push(value)

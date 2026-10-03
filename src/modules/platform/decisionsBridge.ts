@@ -11,6 +11,7 @@ import {
   recordEvent,
 } from '../../lib/decisionRuntime'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
+import type { Doc, DocData } from '../../lib/domain'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
 // S09 decision engine. decision_proposals is the single store; the legacy
@@ -120,7 +121,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
       fail(409, 'The proposal cannot be edited in this phase.')
     if (
       proposal.proposedBy !== actor.id &&
-      (proposal.proposedBy as any)?.id !== actor.id &&
+      (proposal.proposedBy as Doc)?.id !== actor.id &&
       !p.manages(bodyId)
     )
       fail(403, 'Only the author or a body coordinator can edit.')
@@ -138,7 +139,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
           ...(proposal.revisions ?? []),
           { version, title, proposal: proposalText, createdAt: new Date().toISOString() },
         ],
-      } as any,
+      } as Doc,
       overrideAccess: true,
     })
     await recordEvent(req, proposal.id, 'revised', actor, { version })
@@ -190,7 +191,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
           createdAt: new Date().toISOString(),
         },
       ],
-    } as any,
+    } as DocData,
     overrideAccess: true,
   })
   const { rows } = await db().query(
@@ -243,7 +244,7 @@ export async function decisionDetail(req: PayloadRequest, actor: Actor, id: stri
   })
 
   const contributions = [
-    ...(comments as any[]).map((c) => ({
+    ...(comments as Doc[]).map((c) => ({
       id: `c:${c.id}`,
       authorId: c.account?.id ?? c.account,
       authorName: c.account?.name ?? '',
@@ -279,7 +280,7 @@ export async function decisionDetail(req: PayloadRequest, actor: Actor, id: stri
         createdAt: r.createdAt,
       }))
       .sort((a: any, b: any) => b.version - a.version),
-    history: (events as any[]).map((e) => ({
+    history: (events as Doc[]).map((e) => ({
       action: e.type,
       reason: e.detail ? JSON.stringify(e.detail) : '',
       createdAt: e.createdAt,
@@ -314,7 +315,7 @@ export async function contribute(req: PayloadRequest, actor: Actor, id: string, 
         account: account.id,
         body: message,
         createdAt: new Date().toISOString(),
-      } as any,
+      } as DocData,
       overrideAccess: true,
     })
     await recordEvent(req, proposal.id, 'commented', account)
@@ -334,7 +335,7 @@ export async function contribute(req: PayloadRequest, actor: Actor, id: string, 
       raisedBy: account.id,
       status: 'open',
       raisedAt: new Date().toISOString(),
-    } as any,
+    } as DocData,
     overrideAccess: true,
   })
   await recordEvent(req, proposal.id, `flag_${kind}_raised`, account, {
@@ -360,10 +361,10 @@ export async function resolveContribution(
       overrideAccess: true,
     })
     .catch(() => fail(404, 'Contribution not found.'))
-  const proposalId = (flag as any).proposal?.id ?? (flag as any).proposal
+  const proposalId = (flag as Doc).proposal?.id ?? (flag as Doc).proposal
   const proposal = await loadProposal(req, proposalId)
   if (CLOSED.includes(proposal.status)) fail(409, 'The decision is already closed.')
-  const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
+  const raiser = (flag as Doc).raisedBy?.id ?? (flag as Doc).raisedBy
   // A coordinator may answer a flag, but its author must confirm withdrawal.
   const p = await permissions(actor)
   if (raiser !== actor.id && !p.officer)
@@ -371,17 +372,17 @@ export async function resolveContribution(
   const reason = text(input, 'resolution', 3000)
   await req.payload.update({
     collection: 'decision-flags',
-    id: (flag as any).id,
+    id: (flag as Doc).id,
     data: {
       status: 'withdrawn',
       responseNote: reason,
-      respondedBy: actor.id as any,
+      respondedBy: actor.id,
       respondedAt: new Date().toISOString(),
-    },
+    } as DocData,
     overrideAccess: true,
   })
   await recordEvent(req, proposal.id, 'flag_withdrawn', actor, {
-    flagId: (flag as any).id,
+    flagId: (flag as Doc).id,
     resolution: reason,
   })
 }
@@ -617,7 +618,7 @@ export async function publishDecision(
     limit: 1,
     overrideAccess: true,
   })
-  const lastEditor = (lastRevised[0] as any)?.actor?.id ?? (lastRevised[0] as any)?.actor
+  const lastEditor = (lastRevised[0] as Doc)?.actor?.id ?? (lastRevised[0] as Doc)?.actor
   const author = proposal.proposedBy?.id ?? proposal.proposedBy
   if (author === actor.id || (lastEditor ?? author) === actor.id)
     fail(409, 'Only an adopted, current proposal can be published by a different person.')

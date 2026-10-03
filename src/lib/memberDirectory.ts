@@ -2,6 +2,7 @@ import { accountView } from './accounts'
 import { profileShape } from './membershipReview'
 import { AUTHORITY_ROLES } from './authority'
 import { requirePgPool, getPgPool } from './pg'
+import type { Doc, AccountLike, AccountView } from './domain'
 
 // Member directory: profile rows, relationship maps and visibility-safe
 // person shapes for the member interface.
@@ -28,10 +29,10 @@ async function profileRow(accountId: number) {
   return rows[0] || null
 }
 
-async function relationshipMaps(accounts: any[]) {
+async function relationshipMaps(accounts: Doc[]) {
   const ids = accounts.map((account) => account.id)
   const progressByAccount = new Map<number, any[]>(ids.map((id) => [id, []]))
-  const orgByAccount = new Map<number, any>()
+  const orgByAccount = new Map<number, Doc>()
   const mandateByAccount = new Map<number, string>()
   if (!ids.length) return { progressByAccount, orgByAccount, mandateByAccount }
   const pool = getPgPool()
@@ -80,10 +81,10 @@ async function relationshipMaps(accounts: any[]) {
   return { progressByAccount, orgByAccount, workingGroupNames, teamLabels, mandateByAccount }
 }
 
-function relationshipsFor(account: any, maps: any) {
+function relationshipsFor(account: AccountLike, maps: any) {
   const wgName = (slug: string) => maps.workingGroupNames?.[slug] || slug
   const progress = maps.progressByAccount.get(account.id) || []
-  const bySlug = new Map<string, any>()
+  const bySlug = new Map<string, Doc>()
   for (const item of progress)
     bySlug.set(item.wg_slug, {
       slug: item.wg_slug,
@@ -114,12 +115,12 @@ function relationshipsFor(account: any, maps: any) {
 
 function safePerson(
   profile: any,
-  account: any,
+  account: AccountLike,
   relationships: any,
   { duty = false, workingGroup = '' } = {},
 ) {
   const group = workingGroup
-    ? relationships.workingGroups.find((item: any) => item.slug === workingGroup)
+    ? relationships.workingGroups.find((item: Doc) => item.slug === workingGroup)
     : null
   const contactRole = wgDutyRoleLabel(group?.role)
   const showLocation = duty || profile.showCountry
@@ -167,8 +168,8 @@ export async function listMemberPeople({
   const pool = requirePgPool()
   let currentPage = cleanPage
   let total = 0
-  let accounts: any[] = []
-  let profileRows: any[] = []
+  let accounts: AccountView[] = []
+  let profileRows: Doc[] = []
 
   const values: any[] = []
   const where = [
@@ -242,7 +243,7 @@ export async function listMemberPeople({
      LIMIT $${limitSlot} OFFSET $${offsetSlot}`,
     [...values, cleanPageSize, (currentPage - 1) * cleanPageSize],
   )
-  accounts = rows.map(accountView)
+  accounts = rows.map(accountView).filter((a): a is AccountView => a !== null)
   profileRows = rows
 
   const maps = await relationshipMaps(accounts)
@@ -261,7 +262,7 @@ export async function listMemberPeople({
   }
 }
 
-export async function getMemberPerson(viewer: any, accountId: any) {
+export async function getMemberPerson(viewer: AccountLike, accountId: any) {
   const pool = requirePgPool()
   const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [Number(accountId)])
   const account = accountView(rows[0])
@@ -277,7 +278,7 @@ export async function getMemberPerson(viewer: any, accountId: any) {
   return safePerson(profile, account, relationshipsFor(account, maps))
 }
 
-export async function getOwnMemberProfile(account: any) {
+export async function getOwnMemberProfile(account: AccountLike) {
   const profile = profileShape(await profileRow(account.id), account)
   const maps = await relationshipMaps([account])
   return {

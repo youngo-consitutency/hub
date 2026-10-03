@@ -20,6 +20,7 @@ import {
   createAmendment,
   appendAmendmentVersion,
 } from '../modules/negotiation/contributionAmendments'
+import type { Doc } from '../lib/domain'
 import {
   confirmAmendmentReconciliation,
   suggestAmendmentReconciliation,
@@ -55,7 +56,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations/calls',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json(await listPublicCalls(req.query as any))
+      return json(await listPublicCalls(req.query as Doc))
     }),
   },
   {
@@ -199,7 +200,7 @@ export const negotiationEndpoints: Endpoint[] = [
     path: '/negotiations',
     method: 'get',
     handler: endpoint(async (req) => {
-      return json(await listPublicTracks(req.query as any))
+      return json(await listPublicTracks(req.query as Doc))
     }),
   },
   {

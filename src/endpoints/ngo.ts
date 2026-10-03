@@ -10,6 +10,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { trimmed } from '../lib/text'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
+import type { Doc, DocData } from '../lib/domain'
 
 const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-invite' })
 
@@ -172,7 +173,7 @@ export const ngoEndpoints: Endpoint[] = [
           inviteTokenHash: sha256Hex(token),
           inviteExpiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
           invitedBy: account.id,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -187,7 +188,7 @@ export const ngoEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'ngo-seats',
           id: seat.id,
-          data: { status: 'revoked' } as any,
+          data: { status: 'revoked' } as DocData,
           overrideAccess: true,
           req,
         })
@@ -221,7 +222,7 @@ export const ngoEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!seat) throw fail.notFound('Seat not found.')
       if (
         String(typeof seat.orgAccount === 'object' ? seat.orgAccount.id : seat.orgAccount) !==
@@ -231,7 +232,7 @@ export const ngoEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'ngo-seats',
         id: seat.id,
-        data: { status: 'revoked' } as any,
+        data: { status: 'revoked' } as DocData,
         overrideAccess: true,
         req,
       })
@@ -255,7 +256,7 @@ export const ngoEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      const seat = docs[0] as any
+      const seat = docs[0] as Doc
       if (
         !seat ||
         seat.status !== 'invited' ||
@@ -283,7 +284,7 @@ export const ngoEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const seat = docs[0] as any
+      const seat = docs[0] as Doc
       if (
         !seat ||
         seat.status !== 'invited' ||
@@ -300,7 +301,7 @@ export const ngoEndpoints: Endpoint[] = [
           status: 'active',
           acceptedAt: new Date().toISOString(),
           inviteTokenHash: null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

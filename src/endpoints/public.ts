@@ -5,6 +5,7 @@ import { eventView, groupView, feedView, searchView, directoryView } from '../li
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
 import { rateLimit } from '../lib/rateLimit'
+import type { Doc } from '../lib/domain'
 
 // Members who are verified get the private view of shared content.
 const viewOptions = (req: PayloadRequest) => {
@@ -24,7 +25,7 @@ async function wgProgressFor(req: PayloadRequest, wgSlug: string) {
     limit: 1,
     overrideAccess: true,
   })
-  return (docs[0] as any) || null
+  return (docs[0] as Doc) || null
 }
 
 const gysSignupLimit = rateLimit({

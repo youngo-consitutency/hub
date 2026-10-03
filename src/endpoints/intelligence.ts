@@ -6,6 +6,7 @@ import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
+import type { Doc, DocData } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -44,7 +45,7 @@ async function evidenceForQuery(
         snippet: snippet.slice(0, 280),
         url,
       })
-      ;(evidence[evidence.length - 1] as any).score = score
+      ;(evidence[evidence.length - 1] as Doc).score = score
     }
   }
 
@@ -78,11 +79,11 @@ async function evidenceForQuery(
         '/profile',
       )
   }
-  evidence.sort((a, b) => (b as any).score - (a as any).score)
+  evidence.sort((a, b) => (b as Doc).score - (a as Doc).score)
   return evidence.slice(0, Math.max(1, Math.min(25, limit)))
 }
 
-const writebackView = (row: any) => ({
+const writebackView = (row: Doc) => ({
   id: row.id,
   kind: row.kind,
   title: row.title,
@@ -199,7 +200,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           citations,
           status: 'pending_review',
           idempotencyKey: idempotencyKey || null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -224,7 +225,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!row) throw fail.notFound()
       if (
         String(typeof row.account === 'object' ? row.account.id : row.account) ===
@@ -244,7 +245,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'approved',
           approvedBy: account.id,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -269,7 +270,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         id,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!row) throw fail.notFound()
       if (row.status !== 'approved')
         throw new ApiError(409, 'conflict', 'Only approved notes can be applied.')
@@ -287,7 +288,7 @@ export const intelligenceEndpoints: Endpoint[] = [
           status: 'applied',
           appliedBy: account.id,
           appliedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -312,7 +313,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         limit: 500,
         overrideAccess: true,
       })
-      const byStatus = (notes.docs as any[]).reduce<Record<string, number>>((acc, n) => {
+      const byStatus = (notes.docs as Doc[]).reduce<Record<string, number>>((acc, n) => {
         acc[n.status] = (acc[n.status] || 0) + 1
         return acc
       }, {})

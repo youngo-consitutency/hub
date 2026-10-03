@@ -1,5 +1,5 @@
-import { bodyRoles } from '../../../shared/protocol.js'
-import { useContentOptionLabels } from '../../lib/documents.js'
+import { bodyRoles } from '../../../shared/protocol'
+import { useContentOptionLabels } from '../../lib/documents'
 import { SidePanel } from '../../components/SidePanel.tsx'
 import {
   TbSitemap as BodiesIcon,
@@ -14,7 +14,7 @@ import {
   TbProgress as ProgressIcon,
   TbList as ListIcon,
 } from 'react-icons/tb'
-import { PageSectionNav } from '../../components/PageSectionNav.jsx'
+import { PageSectionNav } from '../../components/PageSectionNav'
 import { Feedback } from './Feedback.tsx'
 import { useState, type FormEvent } from 'react'
 import {
@@ -25,7 +25,7 @@ import {
   Empty,
   ErrorCard,
   Skeletons,
-} from '../../components/ui.jsx'
+} from '../../components/ui'
 import {
   BODY_KINDS,
   type Overview,

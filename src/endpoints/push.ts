@@ -16,13 +16,14 @@ import {
 } from '../lib/push'
 import { drainNotificationOutbox, enqueueNotification } from '../lib/notifications'
 import { audit } from '../lib/audit'
+import type { Doc } from '../lib/domain'
 
 // Keyed on the account rather than the caller IP — venue networks share IPs.
 const pushTestLimit = rateLimit({
   windowMs: 60_000,
   max: 5,
   scope: 'push-test',
-  key: (req) => String((req as any).user?.id || 'anon'),
+  key: (req) => String((req as Doc).user?.id || 'anon'),
 })
 const pushSendLimit = rateLimit({ windowMs: 60_000, max: 10, scope: 'push-send' })
 
@@ -87,7 +88,7 @@ export const pushEndpoints: Endpoint[] = [
       return json({
         configured: pushConfigured,
         subscribed: rows.length > 0,
-        subscriptions: rows.map((row: any) => ({
+        subscriptions: rows.map((row: Doc) => ({
           id: row.id,
           endpoint: row.endpoint,
           createdAt: row.createdAt,
@@ -150,7 +151,7 @@ export const pushEndpoints: Endpoint[] = [
       // One outbox job per member — delivery, endpoint pruning and retries
       // happen in the post-response drain (after() and the cron backstop),
       // never inside this request.
-      const accountIds = [...new Set(rows.map((row: any) => row.accountId))]
+      const accountIds = [...new Set(rows.map((row: Doc) => row.accountId))]
       const campaignId =
         String(req.headers.get('x-idempotency-key') || '')
           .trim()
@@ -193,7 +194,7 @@ export const pushEndpoints: Endpoint[] = [
       return json({
         configured: pushConfigured,
         accounts: subscribers.length,
-        devices: subscribers.reduce((total: number, row: any) => total + row.devices, 0),
+        devices: subscribers.reduce((total: number, row: Doc) => total + row.devices, 0),
       })
     }),
   },

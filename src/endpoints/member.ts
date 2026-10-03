@@ -16,14 +16,15 @@ import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
+import type { Doc, DocData } from '../lib/domain'
 
 // Course structure (modules, quiz, pass score) is staff-editable content —
 // the `membership-course` content document holds the whole definition.
 type CourseDoc = {
   version: string
   passScore: number
-  modules: any[]
-  quiz: { id: string; prompt: string; choices: any[]; correct: string }[]
+  modules: Doc[]
+  quiz: { id: string; prompt: string; choices: Doc[]; correct: string }[]
 }
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
@@ -44,7 +45,7 @@ async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlu
     limit: 1,
     overrideAccess: true,
   })
-  return (docs[0] as any) || null
+  return (docs[0] as Doc) || null
 }
 
 async function upsertWgProgress(
@@ -80,14 +81,14 @@ async function upsertWgProgress(
     return req.payload.update({
       collection: 'wg-progress',
       id: existing.id,
-      data: data as any,
+      data: data as DocData,
       overrideAccess: true,
       req,
     })
   }
   return req.payload.create({
     collection: 'wg-progress',
-    data: data as any,
+    data: data as DocData,
     overrideAccess: true,
     req,
   })
@@ -124,7 +125,7 @@ export const memberEndpoints: Endpoint[] = [
           sort: '-acceptedAt',
           overrideAccess: true,
         })
-        .then((r) => r.docs[0] as any)
+        .then((r) => r.docs[0] as Doc)
       return json({
         ...access,
         canAdminister: hasCapability(access, 'accounts.manage'),
@@ -202,7 +203,7 @@ export const memberEndpoints: Endpoint[] = [
           coursePassedAt: account.coursePassedAt || now,
           courseScore: score,
           verifiedAt: account.verifiedAt || now,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -228,7 +229,7 @@ export const memberEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((d) => wgProgressView(d, account.id)),
+        items: (docs as Doc[]).map((d) => wgProgressView(d, account.id)),
       })
     }),
   },
@@ -240,7 +241,7 @@ export const memberEndpoints: Endpoint[] = [
       const wg = param(req, 'wg')
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
-      let activities: any[] = []
+      let activities: Doc[] = []
       if (unlocked) {
         const { docs } = await req.payload.find({
           collection: 'wg-activities',
@@ -295,7 +296,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const photoUpdatedAt = row?.photoUpdatedAt ?? null
       return json({
         profile: {
@@ -351,7 +352,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const existing = docs[0] as any
+      const existing = docs[0] as Doc
       const data = {
         account: account.id,
         displayName,
@@ -371,13 +372,13 @@ export const memberEndpoints: Endpoint[] = [
         ? await req.payload.update({
             collection: 'member-profiles',
             id: existing.id,
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'member-profiles',
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
@@ -421,7 +422,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'put',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const bytes = Buffer.from(await (req as any).arrayBuffer())
+      const bytes = Buffer.from(await (req as Doc).arrayBuffer())
       const photo = await saveMemberPhoto(
         account.id,
         bytes,

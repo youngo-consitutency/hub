@@ -7,8 +7,9 @@ import type { AccountLike } from './domain'
 
 // Account rows arrive from Payload docs (camelCase) and raw SQL
 // (snake_case) — normalise once, then read the canonical field names.
-export const accountRow = (account: any): Record<string, any> =>
-  account ? toCamelCase(account) : {}
+export const accountRow = (
+  account: Partial<AccountLike> | null | undefined,
+): Record<string, any> => (account ? toCamelCase(account) : {})
 
 // Single source for "may use member features". Every endpoint must go through
 // requireVerifiedMember/requireCwMember in ./accounts — do not re-implement

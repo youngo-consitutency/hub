@@ -8,6 +8,7 @@ import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
+import type { Doc, DocData } from '../lib/domain'
 
 const OPPORTUNITY_KINDS = [
   { value: 'event', label: 'Event' },
@@ -45,7 +46,7 @@ async function orgPostingTrust(req: PayloadRequest, orgAccountId: any) {
     id: orgAccountId,
     overrideAccess: true,
     req,
-  })) as any
+  })) as Doc
   if (org?.postingTrust) return org.postingTrust === 'trusted'
   const published = await req.payload.find({
     collection: 'opportunities',
@@ -128,7 +129,7 @@ export const opportunityEndpoints: Endpoint[] = [
           ORDER BY a.organization_name NULLS LAST, a.id
           LIMIT 200`,
       )
-      const organisations = orgRows.map((row: any) => {
+      const organisations = orgRows.map((row: Doc) => {
         const override = row.override_state || null
         const trusted =
           override === 'trusted' || (override !== 'review_required' && Boolean(row.has_published))
@@ -141,8 +142,8 @@ export const opportunityEndpoints: Endpoint[] = [
         }
       })
       return json({
-        items: (pending.docs as any[]).map(opportunityShape),
-        published: (published.docs as any[]).map(opportunityShape),
+        items: (pending.docs as Doc[]).map(opportunityShape),
+        published: (published.docs as Doc[]).map(opportunityShape),
         organisations,
       })
     }),
@@ -162,7 +163,7 @@ export const opportunityEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map(opportunityShape),
+        items: (docs as Doc[]).map(opportunityShape),
         trusted: await orgPostingTrust(req, ctx.orgAccountId),
         kinds: OPPORTUNITY_KINDS,
         formats: OPPORTUNITY_FORMATS,
@@ -192,7 +193,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: ctx.orgAccountId,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       const created = await req.payload.create({
         collection: 'opportunities',
         data: {
@@ -211,7 +212,7 @@ export const opportunityEndpoints: Endpoint[] = [
           organizationName: org?.organizationName || org?.name || null,
           status,
           source: 'ngo',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -243,7 +244,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (
         !item ||
         !['published', 'pending_review'].includes(item.status) ||
@@ -254,7 +255,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
-        data: { status: 'withdrawn' } as any,
+        data: { status: 'withdrawn' } as DocData,
         overrideAccess: true,
         req,
       })
@@ -285,7 +286,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!item || item.status !== 'pending_review')
         throw new ApiError(404, 'not_found', 'That posting is no longer awaiting review.')
       const updated = await req.payload.update({
@@ -295,7 +296,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: approve ? 'published' : 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -327,7 +328,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: orgAccountId,
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!org || org.entityType !== 'organization')
         throw fail.notFound('Organisation account not found.')
       await req.payload.update({
@@ -336,7 +337,7 @@ export const opportunityEndpoints: Endpoint[] = [
         data: {
           postingTrust: state,
           postingTrustNote: trimmed(b.note, 500) || null,
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -365,7 +366,7 @@ export const opportunityEndpoints: Endpoint[] = [
         id: param(req, 'id'),
         overrideAccess: true,
         req,
-      })) as any
+      })) as Doc
       if (!item || item.status !== 'published')
         throw new ApiError(404, 'not_found', 'That posting is not published.')
       const updated = await req.payload.update({
@@ -375,7 +376,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

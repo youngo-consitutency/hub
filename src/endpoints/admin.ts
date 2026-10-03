@@ -18,6 +18,7 @@ import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
+import type { Doc } from '../lib/domain'
 
 const adminLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -139,7 +140,7 @@ export const adminEndpoints: Endpoint[] = [
       )
         throw fail.validation({ teamRole: 'Invalid team role.' })
       const items = await listAccountsForAdmin()
-      const target = items.find((item: any) => String(item.id) === id)
+      const target = items.find((item) => item && String(item.id) === id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
       // Team roles are canonical mandates written to `authority-records`
@@ -168,7 +169,7 @@ export const adminEndpoints: Endpoint[] = [
             overrideAccess: true,
             req,
           })
-          for (const record of active as any[]) {
+          for (const record of active as Doc[]) {
             await revokeAuthorityInTx(req, record.id, admin, reason)
           }
         })
@@ -245,7 +246,7 @@ export const adminEndpoints: Endpoint[] = [
       } catch {
         await req.payload.delete({
           collection: 'password-resets' as never,
-          id: (reset as any).id,
+          id: (reset as Doc).id,
           overrideAccess: true,
           req,
         })

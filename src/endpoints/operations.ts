@@ -3,6 +3,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
+import type { AccountLike, Doc, DocData } from '../lib/domain'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
 // recognition (S20), partnerships (S13), privacy requests (S08). Members
@@ -27,7 +28,7 @@ const accountRef = (a: any) =>
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
-const own = (doc: any) => {
+const own = (doc: Doc) => {
   const id = doc?.account?.id ?? doc?.reporter?.id ?? doc?.account ?? doc?.reporter
   return typeof id === 'object' ? id?.id : id
 }
@@ -45,7 +46,7 @@ async function loadDoc(
     })
 }
 
-function ownOr404(doc: any, account: any) {
+function ownOr404(doc: Doc, account: AccountLike) {
   if (own(doc) !== account.id) throw fail.notFound('Record not found.') // don't leak existence
 }
 
@@ -87,7 +88,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((f) => fundingView(f)) })
+      return json({ items: (docs as Doc[]).map((f) => fundingView(f)) })
     }),
   },
   {
@@ -118,7 +119,7 @@ export const operationEndpoints: Endpoint[] = [
           periodEnd: b.periodEnd ?? null,
           status: 'submitted',
           submittedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -207,7 +208,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: (docs as any[]).map((f) => fundingView(f, true)) })
+      return json({ items: (docs as Doc[]).map((f) => fundingView(f, true)) })
     }),
   },
   {
@@ -296,7 +297,7 @@ export const operationEndpoints: Endpoint[] = [
           involvedParties: b.involvedParties ?? null,
           status: 'received',
           receivedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -322,7 +323,7 @@ export const operationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((c) => ({
+        items: (docs as Doc[]).map((c) => ({
           caseRef: `SG-${c.id}`,
           kind: c.kind,
           status: c.status,
@@ -345,7 +346,7 @@ export const operationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as any[]).map((c) => ({
+        items: (docs as Doc[]).map((c) => ({
           id: c.id,
           kind: c.kind,
           severity: c.severity,
@@ -410,7 +411,7 @@ export const operationEndpoints: Endpoint[] = [
         targetType: 'safeguarding_case',
         targetId: String(c.id),
       })
-      return json({ case: { id: (updated as any).id, status: (updated as any).status } })
+      return json({ case: { id: (updated as Doc).id, status: (updated as Doc).status } })
     }),
   },
 
@@ -449,7 +450,7 @@ export const operationEndpoints: Endpoint[] = [
           relatedScope: b.relatedScope?.trim() || null,
           status: 'declared',
           declaredAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -543,7 +544,7 @@ export const operationEndpoints: Endpoint[] = [
           eventRef: b.eventRef?.trim() || null,
           status: 'requested',
           requestedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -626,7 +627,7 @@ export const operationEndpoints: Endpoint[] = [
           requiresCouncilDecision: Boolean(b.requiresCouncilDecision),
           status: 'proposed',
           proposedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -735,7 +736,7 @@ export const operationEndpoints: Endpoint[] = [
           status: 'received',
           dueAt: new Date(Date.now() + 30 * 86400000).toISOString(),
           requestedAt: new Date().toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
       })
       await audit(req, account, {

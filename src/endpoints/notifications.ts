@@ -19,6 +19,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
+import type { Doc, DocData } from '../lib/domain'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -29,7 +30,7 @@ const broadcastLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 4,
   scope: 'notifications-broadcast',
-  key: (req) => String((req as any).user?.id || 'anon'),
+  key: (req) => String((req as Doc).user?.id || 'anon'),
 })
 
 const resultPage = (title: string, message: string) =>
@@ -210,7 +211,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/unsubscribe',
     method: 'get',
     handler: async (req) => {
-      const verified = verifyUnsubscribeToken(String((req as any).query?.token || ''))
+      const verified = verifyUnsubscribeToken(String((req as Doc).query?.token || ''))
       if (!verified)
         return html(
           resultPage(
@@ -226,7 +227,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const email = {
         digest: Boolean(row?.email?.digest),
         deadline: Boolean(row?.email?.deadline),
@@ -237,14 +238,14 @@ export const notificationEndpoints: Endpoint[] = [
         await req.payload.update({
           collection: 'notification-prefs',
           id: row.id,
-          data: { email } as any,
+          data: { email } as DocData,
           overrideAccess: true,
           req,
         })
       } else {
         await req.payload.create({
           collection: 'notification-prefs',
-          data: { account: verified.accountId, email } as any,
+          data: { account: verified.accountId, email } as DocData,
           overrideAccess: true,
           req,
         })
@@ -261,7 +262,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/verify-email',
     method: 'get',
     handler: async (req) => {
-      const token = String((req as any).query?.token || '')
+      const token = String((req as Doc).query?.token || '')
       const { docs } = await req.payload.find({
         collection: 'email-verification-tokens',
         where: {
@@ -272,7 +273,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       if (!row)
         return html(
           resultPage(
@@ -285,14 +286,14 @@ export const notificationEndpoints: Endpoint[] = [
       await req.payload.update({
         collection: 'email-verification-tokens',
         id: row.id,
-        data: { usedAt: new Date().toISOString() } as any,
+        data: { usedAt: new Date().toISOString() } as DocData,
         overrideAccess: true,
         req,
       })
       await req.payload.update({
         collection: 'accounts',
         id: accountId,
-        data: { emailVerifiedAt: new Date().toISOString() } as any,
+        data: { emailVerifiedAt: new Date().toISOString() } as DocData,
         overrideAccess: true,
         req,
       })
@@ -328,7 +329,7 @@ export const notificationEndpoints: Endpoint[] = [
           account: account.id,
           tokenHash: sha256Hex(token),
           expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })
@@ -384,7 +385,7 @@ export const notificationEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       return json({
         accountId: account.id,
         timezone: row?.timezone || 'UTC',
@@ -441,18 +442,18 @@ export const notificationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const data = { account: account.id, timezone, digestDay, digestHourUtc, email }
-      const row = docs[0] as any
+      const row = docs[0] as Doc
       const saved = row
         ? await req.payload.update({
             collection: 'notification-prefs',
             id: row.id,
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })
         : await req.payload.create({
             collection: 'notification-prefs',
-            data: data as any,
+            data: data as DocData,
             overrideAccess: true,
             req,
           })

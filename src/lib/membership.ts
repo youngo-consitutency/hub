@@ -6,6 +6,7 @@ import { accountView } from './accounts'
 import { sendEmail } from './email'
 import { appBaseUrl } from './env'
 import { requirePgPool } from './pg'
+import type { AccountLike } from './domain'
 
 // Port of server/routes/member/guards.js updateMembershipLifecycle +
 // server/lib/accounts.js setAccountFields/destroyAllSessions.
@@ -77,7 +78,7 @@ export async function destroyAllSessions(accountId: number | string) {
   await pool.query(`DELETE FROM accounts_sessions WHERE _parent_id=$1`, [Number(accountId)])
 }
 
-export async function sendMembershipActivatedEmail(account: any) {
+export async function sendMembershipActivatedEmail(account: AccountLike) {
   if (!account?.email) return { sent: false, reason: 'missing_recipient' }
   const firstName =
     String(account.firstName || account.first_name || account.name || '')
@@ -102,7 +103,7 @@ export async function updateMembershipLifecycle({
   targetId,
   body,
 }: {
-  actor: any
+  actor: AccountLike
   /** Whether the actor holds platform.manage — gates officer-account edits. */
   actorIsOfficer?: boolean
   targetId: number | string

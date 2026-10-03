@@ -9,6 +9,7 @@ import {
   findAccountRowById,
 } from '../lib/membership'
 import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
+import type { Doc } from '../lib/domain'
 import {
   listLatestAppealsForAccounts,
   readAppealProof,
@@ -24,9 +25,9 @@ export const membershipTeamEndpoints: Endpoint[] = [
       await requireTeam(req, 'membership_team')
       const items = await listMembershipReviewItems()
       const profiles = await listMemberProfileSummaries(items)
-      const appeals = await listLatestAppealsForAccounts(items.map((item: any) => item.id))
+      const appeals = await listLatestAppealsForAccounts(items.map((item) => item.id))
       return json({
-        items: items.map((item: any) => ({
+        items: items.map((item) => ({
           ...item,
           profile: profiles.get(item.id),
           appeal: appeals.get(item.id) || null,

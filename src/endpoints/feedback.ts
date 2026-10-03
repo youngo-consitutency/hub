@@ -4,6 +4,7 @@ import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
+import type { Doc, DocData } from '../lib/domain'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -88,7 +89,7 @@ export const feedbackEndpoints: Endpoint[] = [
           account: account.id,
           contactEmail: account.email,
           status: 'new',
-        } as any,
+        } as DocData,
         overrideAccess: true,
         req,
       })

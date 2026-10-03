@@ -8,6 +8,37 @@
 // This module is a leaf: it declares types only and may be imported by any
 // layer without risking a dependency cycle.
 
+/**
+ * A Payload collection doc at an untyped boundary. Generated types exist in
+ * `payload-types.ts` for strongly-typed call sites; helpers that work across
+ * collections or map raw rows take `Doc` until they can take a concrete type.
+ * The `any` inside is intentional — reads stay permissive like the legacy
+ * JavaScript they replaced; tighten per-site as types land.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Doc = Record<string, any>
+
+/**
+ * Write payload for `payload.create`/`update`. The generated `Options` types
+ * demand each collection's exact data shape; endpoint builders compose
+ * dynamic partials, so the write boundary stays `any` under one name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type DocData = any
+
+/** Payload relationship field: an id, a populated doc, or empty. */
+export type Rel = number | string | { id: number | string } | null | undefined
+
+/**
+ * Minimal identity recorded on events and audit entries. Satisfied by
+ * AccountLike, AccountView and the platform module's Actor; system events
+ * pass null.
+ */
+export interface ActorLike {
+  id: number | string
+  email?: string
+}
+
 /** Minimal account identity — Payload user docs, SQL rows and views all satisfy it. */
 export interface AccountLike {
   id: number
