@@ -126,7 +126,7 @@ export const intelligenceEndpoints: Endpoint[] = [
       })
       return json({
         query,
-        audience: account.role === 'admin' ? 'admin' : 'member',
+        audience: hasCapability(access, 'intelligence.operations.read') ? 'operator' : 'member',
         evidence,
         citations: evidence.map((e, i) => ({ ...e, evidenceId: `E${i + 1}` })),
         synthesis: {
@@ -147,8 +147,9 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const isAdmin = account.role === 'admin'
-      const where: any = isAdmin ? {} : { account: { equals: account.id } }
+      const access = await getAccessProfile(req, account)
+      const isOperator = hasCapability(access, 'intelligence.operations.read')
+      const where: any = isOperator ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
         collection: 'research-notes',
         where,
@@ -217,8 +218,9 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Research notes are approved by administrators.')
+      const access = await getAccessProfile(req, account)
+      if (!hasCapability(access, 'intelligence.writeback.approve'))
+        throw fail.forbidden('Research notes are approved by platform officers.')
       const id = String(req.routeParams?.id)
       const row = (await req.payload.findByID({
         collection: 'research-notes',
@@ -234,7 +236,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         throw new ApiError(
           409,
           'separation_of_duties',
-          'A research note must be approved by a different administrator than its author.',
+          'A research note must be approved by an operator other than its author.',
         )
       if (!['pending_review', 'draft'].includes(row.status))
         throw new ApiError(409, 'conflict', 'This note was already reviewed.')
@@ -262,8 +264,9 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      if (account.role !== 'admin')
-        throw fail.forbidden('Research notes are applied by administrators.')
+      const access = await getAccessProfile(req, account)
+      if (!hasCapability(access, 'intelligence.writeback.apply'))
+        throw fail.forbidden('Research notes are applied by platform officers.')
       const id = String(req.routeParams?.id)
       const row = (await req.payload.findByID({
         collection: 'research-notes',
@@ -305,8 +308,9 @@ export const intelligenceEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const isAdmin = account.role === 'admin'
-      const where: any = isAdmin ? {} : { account: { equals: account.id } }
+      const access = await getAccessProfile(req, account)
+      const isOperator = hasCapability(access, 'intelligence.operations.read')
+      const where: any = isOperator ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
         collection: 'research-notes',
         where,

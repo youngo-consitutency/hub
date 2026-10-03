@@ -37,7 +37,9 @@ export const feedbackEndpoints: Endpoint[] = [
       return json({
         kinds: FEEDBACK_KINDS,
         severities: FEEDBACK_SEVERITIES,
-        canTriage: account.role === 'admin' || access.teamRoles.includes('membership_team'),
+        canTriage:
+          access.capabilities.includes('accounts.manage') ||
+          access.teamRoles.includes('membership_team'),
       })
     }),
   },
@@ -101,8 +103,11 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const access = await getAccessProfile(req, account)
-      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
-      if (!canTriage) throw fail.forbidden('Feedback triage is for admins and the Membership Team.')
+      const canTriage =
+        access.capabilities.includes('accounts.manage') ||
+        access.teamRoles.includes('membership_team')
+      if (!canTriage)
+        throw fail.forbidden('Feedback triage is for platform operators and the Membership Team.')
       const where: any = {}
       if (req.query?.status) where.status = { equals: req.query.status }
       if (req.query?.kind) where.kind = { equals: req.query.kind }
@@ -122,7 +127,9 @@ export const feedbackEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const access = await getAccessProfile(req, account)
-      const canTriage = account.role === 'admin' || access.teamRoles.includes('membership_team')
+      const canTriage =
+        access.capabilities.includes('accounts.manage') ||
+        access.teamRoles.includes('membership_team')
       if (!canTriage) throw fail.forbidden()
       const b = ((await req.json?.()) || {}) as any
       const data: any = {}

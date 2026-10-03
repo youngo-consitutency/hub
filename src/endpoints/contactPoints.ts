@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
-import { accountView, requireAdmin, requireVerifiedMember } from '../lib/accounts'
+import { accountView, requirePlatformOperator, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
@@ -290,7 +290,7 @@ export const contactPointEndpoints: Endpoint[] = [
     path: '/member/admin/cp-calls',
     method: 'get',
     handler: endpoint(async (req) => {
-      await requireAdmin(req)
+      await requirePlatformOperator(req)
       const { docs } = await req.payload.find({
         collection: 'cp-call-slots',
         sort: 'startsAt',
@@ -305,7 +305,7 @@ export const contactPointEndpoints: Endpoint[] = [
     path: '/member/admin/cp-calls/mine',
     method: 'get',
     handler: endpoint(async (req) => {
-      const account = await requireAdmin(req)
+      const { account } = await requirePlatformOperator(req)
       const { docs } = await req.payload.find({
         collection: 'cp-call-slots',
         where: { host: { equals: account.id } },
@@ -320,7 +320,7 @@ export const contactPointEndpoints: Endpoint[] = [
     path: '/member/admin/cp-calls',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = await requireAdmin(req)
+      const { account } = await requirePlatformOperator(req)
       const b = ((await req.json?.()) || {}) as any
       const slots = Array.isArray(b.slots) ? b.slots : [b]
       const created: any[] = []
@@ -352,7 +352,7 @@ export const contactPointEndpoints: Endpoint[] = [
     path: '/member/admin/cp-calls/:id/cancel',
     method: 'post',
     handler: endpoint(async (req) => {
-      await requireAdmin(req)
+      await requirePlatformOperator(req)
       const id = String(req.routeParams?.id)
       const slot = (await req.payload.findByID({
         collection: 'cp-call-slots',

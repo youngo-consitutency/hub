@@ -10,7 +10,7 @@ import {
   proposalFlags,
   recordEvent,
 } from '../../lib/decisionRuntime'
-import { requireCwMember, requireVerifiedMember, VERIFIED_PLATFORM_ROLES } from '../../lib/accounts'
+import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
 // S09 decision engine. decision_proposals is the single store; the legacy
@@ -222,7 +222,7 @@ export async function decisionDetail(req: PayloadRequest, actor: Actor, id: stri
   await syncProjection(proposal)
   const p = await permissions(actor)
   const bodyId = platformBodyId(proposal)
-  if (!p.participates(bodyId) && !VERIFIED_PLATFORM_ROLES.has(account.role))
+  if (!p.participates(bodyId) && !p.officer)
     fail(403, 'Only members of this body can read the process.')
 
   const flags = await proposalFlags(req, proposal.id)
@@ -365,7 +365,8 @@ export async function resolveContribution(
   if (CLOSED.includes(proposal.status)) fail(409, 'The decision is already closed.')
   const raiser = (flag as any).raisedBy?.id ?? (flag as any).raisedBy
   // A coordinator may answer a flag, but its author must confirm withdrawal.
-  if (raiser !== actor.id && account.role !== 'admin')
+  const p = await permissions(actor)
+  if (raiser !== actor.id && !p.officer)
     fail(403, 'Only the flag author can confirm that their concern is resolved.')
   const reason = text(input, 'resolution', 3000)
   await req.payload.update({

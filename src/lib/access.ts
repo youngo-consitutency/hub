@@ -40,21 +40,6 @@ export interface AccessProfile {
 // callers that still look at legacy wgAssignments roles.
 export const WG_COORDINATION_ROLES = new Set(['contact', 'lead', 'coordinator', 'contact_point'])
 
-// Technical administration: system-level capabilities a platform
-// administrator holds by virtue of the `admin` account role. Deliberately
-// excludes constituency authority — no Council vote, no team review powers,
-// no confidential case access, no selector/facilitator rights.
-const ADMIN_CAPABILITIES = [
-  'platform.manage',
-  'accounts.manage',
-  'audit.read',
-  'notifications.send',
-  'ngo.manage_all',
-  'intelligence.operations.read',
-  'intelligence.writeback.approve',
-  'intelligence.writeback.apply',
-]
-
 const EMPTY: AccessProfile = {
   teamRoles: [],
   wgAssignments: [],
@@ -92,13 +77,8 @@ export async function getAccessProfile(req: PayloadRequest, account: any): Promi
   }
 
   const capabilities = new Set(derived.capabilities)
-  if (account.role === 'admin') {
-    for (const cap of ADMIN_CAPABILITIES) capabilities.add(cap)
-  }
-  // A `focal_point` account title grants nothing by itself — Council voting
-  // and coordination require an evidenced `focal_point` record (S11).
-  // Legitimate mandates carry verifiable provenance; revoking the record
-  // removes the authority even when the title remains.
+  // Every capability comes from an evidenced record — account titles grant
+  // nothing on their own.
 
   const councilSeats = new Set(derived.councilSeats)
   return {

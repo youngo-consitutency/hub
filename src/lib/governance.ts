@@ -5,9 +5,9 @@ import { getAccessProfile } from './access'
 
 // Shared S10/S24 helpers. Secret ballots are keyed by voter credentials
 // (HMAC'd tokens) and never reference an account — server-trust secrecy.
-// Facilitation and selection authority come from appointments
-// (team.election_facilitation / selection.manage) — never from the admin
-// role or a bare account title.
+// Facilitation and selection authority come from authority records
+// (team.election_facilitation / selection.manage) — never from a bare
+// account title.
 
 export async function isFacilitator(req: PayloadRequest, account: any) {
   const access = await getAccessProfile(req, account)

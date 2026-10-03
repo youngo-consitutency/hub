@@ -14,7 +14,7 @@ import {
 function roleForGroup(access, slug) {
   return (
     access.wgAssignments?.find((item) => item.wgSlug === slug)?.role ||
-    (access.manageAllWgs ? 'admin' : 'contact')
+    (access.manageAllWgs ? 'officer' : 'contact')
   )
 }
 
@@ -123,9 +123,7 @@ export function CpOverview() {
                       <p className="mcWgFocus">{group.focusLine}</p>
                       <div className="mcWgMeta">
                         <span className="mcPill mono">
-                          {role === 'admin'
-                            ? 'Administrative access'
-                            : assignmentLabels[role] || role}
+                          {role === 'officer' ? 'Platform officer' : assignmentLabels[role] || role}
                         </span>
                         {pending > 0 ? (
                           <span className="mcPill mcPillWarn mono">

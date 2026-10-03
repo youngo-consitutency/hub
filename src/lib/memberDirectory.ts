@@ -1,5 +1,6 @@
 import { accountView } from './accounts'
 import { profileShape } from './membershipReview'
+import { AUTHORITY_ROLES } from './authority'
 import { requirePgPool, getPgPool } from './pg'
 
 // Member directory: profile rows, relationship maps and visibility-safe
@@ -31,10 +32,11 @@ async function relationshipMaps(accounts: any[]) {
   const ids = accounts.map((account) => account.id)
   const progressByAccount = new Map<number, any[]>(ids.map((id) => [id, []]))
   const orgByAccount = new Map<number, any>()
-  if (!ids.length) return { progressByAccount, orgByAccount }
+  const mandateByAccount = new Map<number, string>()
+  if (!ids.length) return { progressByAccount, orgByAccount, mandateByAccount }
   const pool = getPgPool()
-  if (!pool) return { progressByAccount, orgByAccount }
-  const [progressResult, seatsResult, wgResult, optionsResult] = await Promise.all([
+  if (!pool) return { progressByAccount, orgByAccount, mandateByAccount }
+  const [progressResult, seatsResult, wgResult, optionsResult, mandateResult] = await Promise.all([
     pool.query(
       `SELECT account_id, wg_slug, role_in_wg, status
          FROM wg_progress
@@ -54,7 +56,15 @@ async function relationshipMaps(accounts: any[]) {
     // Working-group names and staff labels live in the database.
     pool.query(`SELECT slug, name FROM working_groups`),
     pool.query(`SELECT body FROM content_documents WHERE slug='content-options'`),
+    // Platform-scope mandates replace the old account-role badge.
+    pool.query(
+      `SELECT account_id, role FROM authority_records
+         WHERE account_id=ANY($1::int[]) AND status='active' AND scope_type='platform'`,
+      [ids],
+    ),
   ])
+  for (const row of mandateResult.rows)
+    mandateByAccount.set(row.account_id, AUTHORITY_ROLES[row.role]?.label || row.role)
   for (const row of progressResult.rows) progressByAccount.get(row.account_id)?.push(row)
   for (const row of seatsResult.rows)
     orgByAccount.set(row.member_account_id, {
@@ -67,7 +77,7 @@ async function relationshipMaps(accounts: any[]) {
   const teamLabels = Object.fromEntries(
     (optionsResult.rows[0]?.body?.teamLabels || []).map((t: any) => [t.value, t.label]),
   )
-  return { progressByAccount, orgByAccount, workingGroupNames, teamLabels }
+  return { progressByAccount, orgByAccount, workingGroupNames, teamLabels, mandateByAccount }
 }
 
 function relationshipsFor(account: any, maps: any) {
@@ -98,7 +108,7 @@ function relationshipsFor(account: any, maps: any) {
         name: maps.teamLabels?.[slug] || slug.replaceAll('_', ' '),
       })),
     organization: maps.orgByAccount.get(account.id) || null,
-    platformRole: account.role && account.role !== 'member' ? account.role : null,
+    platformRole: maps.mandateByAccount?.get(account.id) || null,
   }
 }
 
@@ -260,7 +270,7 @@ export async function getMemberPerson(viewer: any, accountId: any) {
   const profile = profileShape(row, account)
   const canOverride =
     viewer.id === account.id ||
-    viewer.role === 'admin' ||
+    viewer.access?.capabilities?.includes('accounts.manage') ||
     viewer.access?.teamRoles?.includes('membership_team')
   if (profile.directoryVisibility !== 'members' && !canOverride) return null
   const maps = await relationshipMaps([account])

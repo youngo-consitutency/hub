@@ -1,6 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { requireVerifiedMember } from './accounts'
+import { getAccessProfile, hasCapability } from './access'
 import { toCamelCase } from './case'
 
 // Organisation-scope helpers shared by the NGO, organisations and
@@ -18,7 +19,8 @@ export type OrgContext = {
 
 async function resolveOrgContext(req: PayloadRequest, account: any): Promise<OrgContext | null> {
   const requestedOrgId = (req.query?.orgId as string) || (req.body as any)?.orgId || null
-  if (account.role === 'admin') {
+  const access = await getAccessProfile(req, account)
+  if (hasCapability(access, 'ngo.manage_all')) {
     if (!requestedOrgId) return null
     return {
       orgAccountId: String(requestedOrgId),

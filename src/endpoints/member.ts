@@ -127,7 +127,7 @@ export const memberEndpoints: Endpoint[] = [
         .then((r) => r.docs[0] as any)
       return json({
         ...access,
-        isAdmin: account.role === 'admin',
+        canAdminister: access.capabilities.includes('accounts.manage'),
         managedWgs: access.wgAssignments.map((i: any) => i.wgSlug).sort(),
         ngo: seat
           ? {

@@ -5,7 +5,6 @@ import { toCamelCase } from './case'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
-export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
 // Account rows arrive from Payload docs (camelCase) and raw SQL
 // (snake_case) — normalise once, then read the canonical field names.
@@ -15,10 +14,7 @@ const accountRow = (account: any): Record<string, any> => (account ? toCamelCase
 // requireVerifiedMember/requireCwMember below — do not re-implement the check.
 export function isVerifiedAccount(account: any): boolean {
   const r = accountRow(account)
-  return (
-    r.hubAccessStatus === 'active' &&
-    (r.memberStatus === 'verified' || VERIFIED_PLATFORM_ROLES.has(r.role))
-  )
+  return r.hubAccessStatus === 'active' && r.memberStatus === 'verified'
 }
 
 // Active Constituency Work membership (S17): decision rights and mandate
@@ -41,8 +37,8 @@ export function requireVerifiedMember(req: PayloadRequest) {
 }
 
 // Constituency Work membership is required for decision rights (S17 §1.1).
-// A role label is not membership: admins and focal points need an active CW
-// record like everyone else.
+// A mandate is not membership: officers need an active CW record like
+// everyone else.
 export function requireCwMember(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
   if (!isCwActive(account))
@@ -106,12 +102,7 @@ export function accountView(row: any) {
       memberStatus,
       role,
     }),
-    isAdmin: role === 'admin',
-    isFocalPoint: role === 'focal_point',
-    isMandateHolder: ['admin', 'focal_point', 'wg_contact', 'ngo_admin'].includes(role),
-    isWgContact: role === 'wg_contact' || role === 'admin',
     isNgo: r.entityType === 'organization',
-    isNgoAdmin: role === 'ngo_admin' || role === 'admin',
     createdAt: r.createdAt,
     lastLoginAt: r.lastLoginAt ?? null,
     mustChangePassword: Boolean(r.mustChangePassword),
@@ -128,9 +119,7 @@ export function requireAccount(req: PayloadRequest): any {
   return user
 }
 
-// Team workspaces require the corresponding *appointment*. Technical
-// administrators do not inherit team authority (S13: administration ≠
-// constituency authority).
+// Team workspaces require the corresponding authority record.
 export async function requireTeam(req: PayloadRequest, teamRole: string) {
   const account = requireVerifiedMember(req)
   const access = await getAccessProfile(req, account)
@@ -139,17 +128,32 @@ export async function requireTeam(req: PayloadRequest, teamRole: string) {
   return { account, access }
 }
 
-export async function requireAdmin(req: PayloadRequest) {
+// The accounts console gates on the `accounts.manage` capability, held by
+// platform mandates (focal point, internal-management coordinator) — not by
+// an account flag.
+export async function requireAccountsManager(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
-  if (account.role !== 'admin') throw fail.forbidden('This console is for administrators.')
-  return account
+  const access = await getAccessProfile(req, account)
+  if (!access.capabilities.includes('accounts.manage'))
+    throw fail.forbidden('This console is for platform operators.')
+  return { account, access }
+}
+
+// Platform-wide operations (contact-point call scheduling and the like) gate
+// on the `platform.manage` capability — the focal point and peers.
+export async function requirePlatformOperator(req: PayloadRequest) {
+  const account = requireVerifiedMember(req)
+  const access = await getAccessProfile(req, account)
+  if (!access.capabilities.includes('platform.manage'))
+    throw fail.forbidden('This area is for platform officers.')
+  return { account, access }
 }
 
 export function adminReason(body: any): string {
   const reason = String(body?.reason || '').trim()
   if (reason.length < 8)
     throw fail.validation({
-      _: 'Give a reason of at least 8 characters for this admin action.',
+      _: 'Give a reason of at least 8 characters for this operation.',
     })
   return reason.slice(0, 500)
 }

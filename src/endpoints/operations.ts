@@ -10,8 +10,8 @@ import { getAccessProfile } from '../lib/access'
 // scoped endpoints. Generated REST writes stay staff-only throughout.
 
 // Review authority: a member holding one of the named team roles
-// (e.g. 'finance_team', 'safeguarding_team'). The admin role carries no
-// team authority — technical administration is not constituency authority.
+// (e.g. 'finance_team', 'safeguarding_team'). Account labels carry no
+// team authority — every review right is an evidenced record.
 // Review authority by capability: the shared registry decides which
 // authority records carry each review right (e.g. only gct.finance — not
 // every GCT member — holds finance.review).

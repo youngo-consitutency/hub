@@ -34,8 +34,8 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
   return docs[0] as any
 }
 
-// Recording a selection stage belongs to the Selections Team (S24) — the
-// `admin` account role grants no selection authority on its own.
+// Recording a selection stage belongs to the Selections Team (S24) —
+// no account attribute grants selection authority on its own.
 async function canAdminister(req: PayloadRequest, s: any, account: any) {
   const creator = (s.createdBy as any)?.id ?? s.createdBy
   return creator === account.id || (await isSelector(req, account))

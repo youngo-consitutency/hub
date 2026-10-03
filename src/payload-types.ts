@@ -373,7 +373,7 @@ export interface Account {
   renewalDueAt?: string | null;
   membershipEndedAt?: string | null;
   membershipEndReason?: string | null;
-  role: 'member' | 'admin' | 'focal_point' | 'wg_contact' | 'ngo_admin';
+  role: 'member';
   wgInterests?:
     | {
         [k: string]: unknown;

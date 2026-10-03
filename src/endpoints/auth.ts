@@ -43,7 +43,7 @@ const changePasswordLimit = rateLimit({
 })
 
 const GENERIC_FORGOT =
-  'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask an admin if email delivery is not configured yet.'
+  'If an account exists for that email, a password reset link has been issued. Check your inbox — or ask a platform officer if email delivery is not configured yet.'
 
 const noStore = (res: Response) => {
   res.headers.set('Cache-Control', 'no-store')
@@ -419,7 +419,7 @@ export const authEndpoints: Endpoint[] = [
       const passwordConfirm = String(b.passwordConfirm || '')
       const fields: Record<string, string> = {}
       if (!token)
-        fields.token = 'Reset token is missing. Open the full link from your email or admin.'
+        fields.token = 'Reset token is missing. Open the full link from your email or a platform officer.'
       if (password.length < 10) fields.password = 'Password must be at least 10 characters.'
       if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)

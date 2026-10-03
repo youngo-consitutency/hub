@@ -139,7 +139,7 @@ export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'
     bodyScopes: derived.bodyScopes,
     teamRoles: derived.teamRoles,
     cw,
-    admin: current.role === 'admin',
+    officer: caps.has('platform.manage'),
     membership: caps.has('membership.review'),
     partnerships: caps.has('partnership.review'),
     publisher: caps.has('content.publish'),
@@ -155,14 +155,14 @@ export async function overview(actor: Actor) {
   const p = await permissions(actor)
   const bodyIds = p.bodyScopes
   const [bodies, people, records, tasks, decisions, enquiries] = await Promise.all([
-    db().query(bodySelect + ' WHERE $1::boolean ORDER BY name', [p.cw || p.admin]),
+    db().query(bodySelect + ' WHERE $1::boolean ORDER BY name', [p.cw || p.officer]),
     db().query(
       `SELECT id,name,entity_type AS "entityType",membership_track AS "membershipTrack",membership_status AS "membershipStatus" FROM accounts WHERE $1::boolean OR id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now()) AND ((ar.scope_type='body' AND ar.scope_id=ANY($4::text[])) OR ($5::boolean AND ar.scope_type='team' AND ar.role='team.partnerships')))) ORDER BY name LIMIT 1000`,
-      [p.membership || p.admin, actor.id, p.cw, bodyIds, p.partnerships],
+      [p.membership || p.officer, actor.id, p.cw, bodyIds, p.partnerships],
     ),
     db().query(
       `SELECT ar.id,ar.account_id AS "accountId",a.name,ar.kind,ar.scope_type AS "scopeType",ar.scope_id AS "scopeId",ar.role,ar.council_seat AS "councilSeat",ar.starts_at AS "startsAt",ar.ends_at AS "endsAt",ar.status,ar.evidence FROM authority_records ar JOIN accounts a ON a.id=ar.account_id WHERE $1::boolean OR ar.account_id=$2 OR ($3::boolean AND ar.scope_type='body' AND ar.scope_id=ANY($4::text[])) ORDER BY ar.created_at DESC LIMIT 1000`,
-      [p.admin || p.membership, actor.id, p.cw, bodyIds],
+      [p.officer || p.membership, actor.id, p.cw, bodyIds],
     ),
     db().query(
       taskSelect + ' WHERE t.body_id=ANY($1::text[]) ORDER BY t.due_at NULLS LAST LIMIT 500',
@@ -225,8 +225,8 @@ export async function overview(actor: Actor) {
   return {
     bodies: bodies.rows.map((b: Body) => ({
       ...b,
-      description: p.admin || p.participates(b.id) ? b.description : '',
-      publicSummary: p.admin || p.publisher || p.participates(b.id) ? b.publicSummary : '',
+      description: p.officer || p.participates(b.id) ? b.description : '',
+      publicSummary: p.officer || p.publisher || p.participates(b.id) ? b.publicSummary : '',
       canManage: p.manages(b.id),
       canParticipate: p.participates(b.id),
     })),
@@ -238,7 +238,7 @@ export async function overview(actor: Actor) {
     })),
     decisions: decisions.rows,
     enquiries: enquiries.rows,
-    canAdminister: p.admin,
+    canAdminister: p.officer,
     canReviewMembership: p.membership,
     canManagePartnerships: p.partnerships,
     canPublish: p.publisher,
@@ -249,12 +249,12 @@ export async function overview(actor: Actor) {
 export async function saveBody(actor: Actor, input: Input, id?: string) {
   return transaction(async (client) => {
     const p = await permissions(actor, client)
-    if (id ? !p.manages(id) && !p.admin : !p.admin)
+    if (id ? !p.manages(id) && !p.officer : !p.officer)
       fail(
         403,
         'An assigned Contact Point, Liaison, coordinator or platform administrator is required.',
       )
-    if (id && !p.admin) {
+    if (id && !p.officer) {
       const body = (await client.query('SELECT kind FROM platform_bodies WHERE id=$1', [id]))
         .rows[0]
       if (!body || body.kind !== input.kind)
@@ -339,7 +339,7 @@ export async function assign(actor: Actor, input: Input) {
     // Self-targeting (actor === target) collapses to a single key.
     await lockAuthority(client, intId(actor.id), accountId)
     const p = await permissions(actor, client)
-    if (!p.admin) fail(403, 'Only platform administrators can record an evidenced assignment.')
+    if (!p.officer) fail(403, 'Only platform administrators can record an evidenced assignment.')
     // Accept both spellings; canonicalise to 'organisation' — the stored
     // enum and registry vocabulary.
     const scopeType = normaliseScopeType(text(input, 'scopeType')),
@@ -445,7 +445,7 @@ export async function revoke(actor: Actor, id: string, reason: string) {
     ])
     if (!target.rowCount) fail(404, 'Authority record not found.')
     await lockAuthority(client, intId(actor.id), intId(target.rows[0].account_id))
-    if (!(await permissions(actor, client)).admin)
+    if (!(await permissions(actor, client)).officer)
       fail(403, 'Platform administrator access required.')
     const result = await client.query(
       `UPDATE authority_records SET status='revoked',ends_at=now(),updated_at=now() WHERE id=$1 AND status='active' RETURNING account_id`,
@@ -671,7 +671,7 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
       if (member.membership_track !== 'constituency_work')
         fail(409, 'This person is already a Network member.')
       await client.query(
-        `UPDATE accounts SET membership_track='network',constituency_work_status=NULL,membership_status='active',hub_access_status='active',renewal_due_at=NULL,role=CASE WHEN role IN ('wg_contact','focal_point') THEN 'member' ELSE role END WHERE id=$1`,
+        `UPDATE accounts SET membership_track='network',constituency_work_status=NULL,membership_status='active',hub_access_status='active',renewal_due_at=NULL WHERE id=$1`,
         [id],
       )
       // Every authority record — mandate or participation — ends with the

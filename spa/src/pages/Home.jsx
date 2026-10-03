@@ -212,7 +212,8 @@ function ResponsibilitySection({ account }) {
   const access = account?.access || {}
   const teamRoles = access.teamRoles || account?.teamRoles || []
   const capabilities = access.capabilities || []
-  const isAdmin = account?.role === 'admin'
+  const isOfficer = capabilities.includes('platform.manage')
+  const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
   const responsibilities = [
     {
       href: '/cp',
@@ -226,7 +227,7 @@ function ResponsibilitySection({ account }) {
       label: 'Global Focal Point',
       detail: 'Coordinate constituency-wide mandates and UNFCCC-facing work.',
       icon: Network,
-      visible: isAdmin || account?.role === 'focal_point',
+      visible: access.isFocalPoint,
     },
     {
       href: '/team/membership',
@@ -254,14 +255,14 @@ function ResponsibilitySection({ account }) {
       label: 'NGO workspace',
       detail: 'Manage organisation participation and representatives.',
       icon: Building2,
-      visible: access.ngo || isAdmin || account?.role === 'ngo_admin',
+      visible: access.ngo || isOfficer,
     },
     {
       href: '/admin',
       label: 'Platform administration',
       detail: 'Manage system-wide access and operations.',
       icon: Shield,
-      visible: isAdmin,
+      visible: canManageAccounts,
     },
   ].filter((item) => item.visible)
 

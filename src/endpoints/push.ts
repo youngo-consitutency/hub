@@ -3,6 +3,7 @@ import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
+import { getAccessProfile, hasCapability } from '../lib/access'
 import { rateLimit } from '../lib/rateLimit'
 import {
   deleteSubscription,
@@ -122,7 +123,9 @@ export const pushEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const access = await getAccessProfile(req, account)
+      if (!hasCapability(access, 'notifications.send'))
+        throw fail.forbidden('Sending notifications requires a mandate.')
       await pushSendLimit(req)
       if (!pushConfigured) throw pushUnavailable()
       const b = ((await req.json?.()) || {}) as any
@@ -185,7 +188,9 @@ export const pushEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const access = await getAccessProfile(req, account)
+      if (!hasCapability(access, 'accounts.manage'))
+        throw fail.forbidden('Platform operator access required.')
       const subscribers = await listSubscriberAccounts()
       return json({
         configured: pushConfigured,
@@ -199,7 +204,9 @@ export const pushEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
-      if (account.role !== 'admin') throw fail.forbidden('Admin access required.')
+      const access = await getAccessProfile(req, account)
+      if (!hasCapability(access, 'accounts.manage'))
+        throw fail.forbidden('Platform operator access required.')
       return json({
         configured: pushConfigured,
         items: await listSubscriberAccounts(),

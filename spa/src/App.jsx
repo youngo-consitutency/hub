@@ -267,23 +267,26 @@ function AppRoutes() {
     )
   }
 
+  const capabilities = account?.access?.capabilities || []
+  const canManageAccounts =
+    account?.access?.canAdminister || capabilities.includes('accounts.manage')
   if (
     path.startsWith('/staff/review') &&
-    account?.role !== 'admin' &&
+    !canManageAccounts &&
     !account?.access?.teamRoles?.includes('membership_team')
   ) {
     return (
       <Shell>
         <Locked
           title="Review team only"
-          body="Feedback and posting review are available to admins and the Membership Team."
+          body="Feedback and posting review are available to platform operators and the Membership Team."
         />
       </Shell>
     )
   }
 
   // Route guards improve the interface; the API still enforces every permission.
-  if (path.startsWith('/admin') && account && account.role !== 'admin') {
+  if (path.startsWith('/admin') && account && !canManageAccounts) {
     return (
       <Shell>
         <Locked title="Admin only" body="This workspace requires platform administration access." />
@@ -291,7 +294,6 @@ function AppRoutes() {
     )
   }
   if (path.startsWith('/staff/content') && account) {
-    const capabilities = account.access?.capabilities || []
     if (!capabilities.includes('content.draft') && !capabilities.includes('content.review')) {
       return (
         <Shell>
@@ -303,18 +305,16 @@ function AppRoutes() {
       )
     }
   }
-  if (path.startsWith('/focal') && account && !['admin', 'focal_point'].includes(account.role)) {
+  if (path.startsWith('/focal') && account && !account.access?.isFocalPoint) {
     return (
       <Shell>
-        <Locked
-          title="Focal Points only"
-          body="This workspace is for constituency Focal Points and admins."
-        />
+        <Locked title="Focal Points only" body="This workspace is for the Global Focal Points." />
       </Shell>
     )
   }
-  // The NGO portal needs an organisation context, including for administrators.
-  if (path.startsWith('/ngo') && account && account.role !== 'ngo_admin' && !account.access?.ngo) {
+  // The NGO portal needs an organisation context — an active seat or an
+  // organisation-scope authority record.
+  if (path.startsWith('/ngo') && account && !account.access?.ngo) {
     // Any signed-in account may open an invitation before it has an NGO seat.
     if (!path.startsWith('/ngo/accept')) {
       return (
@@ -327,7 +327,7 @@ function AppRoutes() {
       )
     }
   }
-  if (path.startsWith('/cp/') && account && account.role !== 'admin') {
+  if (path.startsWith('/cp/') && account) {
     const requestedWg = path.split('/')[2]
     const managesRequestedWg = canManageGroup(account, requestedWg)
     if (!managesRequestedWg) {

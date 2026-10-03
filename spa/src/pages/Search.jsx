@@ -124,8 +124,9 @@ export function Search() {
   const [reasons, setReasons] = useState({})
   const citations = useMemo(() => result?.synthesis?.citations || [], [result])
 
+  const isOperator = (account?.access?.capabilities || []).includes('intelligence.operations.read')
   const refreshReview = async () => {
-    if (account?.role !== 'admin') return
+    if (!isOperator) return
     try {
       const [queue, metrics] = await Promise.all([
         apiGet('/intelligence/writebacks'),
@@ -139,7 +140,7 @@ export function Search() {
 
   useEffect(() => {
     refreshReview()
-  }, [account?.role])
+  }, [isOperator])
 
   const submit = async (event) => {
     event.preventDefault()
@@ -351,7 +352,7 @@ export function Search() {
         />
       )}
 
-      {account?.role === 'admin' && (
+      {isOperator && (
         <Section
           label="Research-note review"
           action={

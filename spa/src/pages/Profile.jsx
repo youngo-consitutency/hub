@@ -19,11 +19,11 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 
-const ROLE_LABELS = {
-  admin: 'Administrator',
-  focal_point: 'Global Focal Point',
-  ngo_admin: 'Organisation administrator',
-  member: 'Member',
+const SEAT_LABELS = {
+  owner: 'Organisation owner',
+  representative: 'Organisation representative',
+  affiliate: 'Organisation affiliate',
+  viewer: 'Organisation viewer',
 }
 
 export function Profile() {
@@ -56,7 +56,11 @@ export function Profile() {
         <MemberProfileEditor
           query={profileQuery}
           account={account}
-          roleLabel={ROLE_LABELS[account?.role] || account?.role}
+          roleLabel={
+            account?.access?.isFocalPoint
+              ? 'Global Focal Point'
+              : SEAT_LABELS[account?.access?.ngo?.seatRole] || 'Member'
+          }
         />
         <div className="profileSideStack">
           <NotificationSettings />

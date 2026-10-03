@@ -2,7 +2,12 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json } from '../lib/respond'
 import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import { destroyAllSessions, findAccountRowById, setAccountFields } from '../lib/membership'
+import {
+  destroyAllSessions,
+  findAccountRowById,
+  hasActivePlatformMandate,
+  setAccountFields,
+} from '../lib/membership'
 import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
@@ -396,7 +401,7 @@ export const membershipEndpoints: Endpoint[] = [
     path: '/member/team/membership/accounts/:id/terminate',
     method: 'post',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
+      const { account: staff, access } = await requireTeam(req, 'membership_team')
       const id = String(req.routeParams!.id)
       const b = ((await req.json?.()) || {}) as any
       const reason = String(b.reason || '').trim()
@@ -406,8 +411,11 @@ export const membershipEndpoints: Endpoint[] = [
       if (!target) throw fail.notFound('Account not found.')
       if (target.id === staff.id)
         throw fail.validation({ _: 'You cannot terminate your own account.' })
-      if (['admin', 'focal_point'].includes(target.role) && staff.role !== 'admin')
-        throw fail.forbidden('Only an admin can terminate platform staff membership.')
+      if (
+        (await hasActivePlatformMandate(target.id)) &&
+        !access.capabilities.includes('platform.manage')
+      )
+        throw fail.forbidden('Only a platform officer can terminate an officer\u2019s membership.')
       const { updated, handover } = await applyMembershipTransition(req, target.id, {
         accountFields: {
           membershipStatus: 'terminated',

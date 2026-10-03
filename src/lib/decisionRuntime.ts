@@ -94,8 +94,7 @@ export async function isBodyMember(
   account: any,
   proposal: any,
 ): Promise<boolean> {
-  // No title grants body membership — `admin` and `focal_point` roles confer
-  // nothing here; only an appointment or participation row does.
+  // No title grants body membership — only an authority record does.
   const access = await getAccessProfile(req, account)
   const scopeIds = new Set(access.wgAssignments.map((w) => `working_group:${w.wgSlug}`))
   const teamIds = new Set(access.teamRoles)

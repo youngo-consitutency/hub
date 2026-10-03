@@ -53,7 +53,7 @@ export function Shell({ children }) {
   const access = account?.access || {
     teamRoles: account?.teamRoles || [],
     wgAssignments: [],
-    manageAllWgs: account?.role === 'admin',
+    manageAllWgs: false,
   }
   useEffect(() => {
     setSheet(false)
@@ -106,9 +106,10 @@ export function Shell({ children }) {
   const verified = Boolean(account?.isVerified)
 
   const nav = useMemo(() => {
-    const isAdmin = account?.role === 'admin'
     const teamRoles = access.teamRoles || []
     const capabilities = access.capabilities || []
+    const isOfficer = capabilities.includes('platform.manage')
+    const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
 
     const entries = [
       // Before the course is passed only these two are reachable.
@@ -231,28 +232,28 @@ export function Shell({ children }) {
         href: '/focal',
         label: 'Global Focal Point',
         icon: Network,
-        when: isAdmin || account?.role === 'focal_point',
+        when: access.isFocalPoint,
       },
       {
         section: SECTION.mine,
         href: '/ngo',
         label: 'NGO platform',
         icon: Building2,
-        when: access.ngo || account?.role === 'ngo_admin',
+        when: access.ngo,
       },
       {
         section: SECTION.mine,
         href: '/staff/review',
         label: 'Review queue',
         icon: ClipboardCheck,
-        when: isAdmin || teamRoles.includes('membership_team'),
+        when: canManageAccounts || teamRoles.includes('membership_team'),
       },
       {
         section: SECTION.mine,
         href: '/admin',
         label: 'Admin',
         icon: Shield,
-        when: isAdmin,
+        when: canManageAccounts,
       },
     ]
 
@@ -378,10 +379,7 @@ export function Shell({ children }) {
                   aria-hidden
                 />
               </span>
-              {account.role === 'admin' && <span className="metaMuted">Administrator</span>}
-              {account.role === 'focal_point' && (
-                <span className="metaMuted">Global Focal Point</span>
-              )}
+              {access.isFocalPoint && <span className="metaMuted">Global Focal Point</span>}
             </A>
           )}
           {account && !verified && (

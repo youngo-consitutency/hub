@@ -1,12 +1,12 @@
 import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
+import { AUTHORITY_ROLES } from './authority'
 
-// Admin account surface: sortable account lists, team authority records and
-// the organisation-owner seat guarantee.
+// Admin account surface: sortable account lists filtered by status or
+// authority-record role.
 
-// Ports of server/lib/lifecycle.js queryAccountsForAdmin/listAccountsForAdmin
-// and server/lib/access.js setTeamAssignment / ensureOwnerSeat.
+// Ports of server/lib/lifecycle.js queryAccountsForAdmin/listAccountsForAdmin.
 
 const ACCOUNT_SORTS: Record<string, string> = {
   newest: 'created_at DESC',
@@ -43,9 +43,8 @@ export async function queryAccountsForAdmin({
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanEntityType = ['individual', 'organization'].includes(entityType) ? entityType : ''
   const cleanStatus = MEMBERSHIP_STATUSES.includes(status) ? status : ''
-  const cleanRole = ['member', 'focal_point', 'wg_contact', 'ngo_admin', 'admin'].includes(role)
-    ? role
-    : ''
+  // The role filter matches active authority records, not an account flag.
+  const cleanRole = role === 'member' || AUTHORITY_ROLES[role] ? String(role) : ''
   const cleanSort = ACCOUNT_SORTS[sort] ? sort : 'newest'
   const cleanPage = Math.min(100_000, Math.max(1, Number.parseInt(page, 10) || 1))
   const cleanPageSize = Math.min(50, Math.max(1, Number.parseInt(pageSize, 10) || 12))
@@ -60,7 +59,15 @@ export async function queryAccountsForAdmin({
     add(`concat_ws(' ', name, email, organization_name, country) ILIKE ?`, `%${cleanSearch}%`)
   if (cleanEntityType) add('entity_type = ?', cleanEntityType)
   if (cleanStatus) add('membership_status = ?', cleanStatus)
-  if (cleanRole) add('role = ?', cleanRole)
+  if (cleanRole === 'member')
+    where.push(
+      `NOT EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active')`,
+    )
+  else if (cleanRole)
+    add(
+      `EXISTS (SELECT 1 FROM authority_records ar WHERE ar.account_id=accounts.id AND ar.status='active' AND ar.role = ?)`,
+      cleanRole,
+    )
   const filter = where.length ? `WHERE ${where.join(' AND ')}` : ''
   const count = await pool.query(`SELECT count(*)::int AS total FROM accounts ${filter}`, values)
   const total = count.rows[0]?.total || 0
@@ -84,27 +91,5 @@ export async function queryAccountsForAdmin({
   }
 }
 
-export async function ensureOwnerSeat(orgAccount: any) {
-  if (
-    !orgAccount ||
-    orgAccount.entityType !== 'organization' ||
-    !orgAccount.isVerified ||
-    !['ngo_admin', 'admin'].includes(orgAccount.role)
-  )
-    return null
-  const pool = requirePgPool()
-  const existing = await pool.query(
-    `SELECT * FROM ngo_seats
-     WHERE org_account_id=$1 AND seat_role='owner' AND status='active'
-     LIMIT 1`,
-    [orgAccount.id],
-  )
-  if (existing.rowCount) return existing.rows[0]
-  const { rows } = await pool.query(
-    `INSERT INTO ngo_seats (org_account_id, member_account_id, email, name, seat_role, status, accepted_at)
-     VALUES ($1,$2,$3,$4,'owner','active', now())
-     RETURNING *`,
-    [orgAccount.id, orgAccount.id, orgAccount.email, orgAccount.name],
-  )
-  return rows[0]
-}
+// Organisation ownership lives in authority_records (org-scope records) and
+// ngo_seats — there is no account-level shortcut to maintain here.

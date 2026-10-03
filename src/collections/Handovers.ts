@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { grantsCapability, staffWrites } from '../lib/collectionAccess'
 
 // S17 handover duty: when membership ends — or a mandate is revoked — the
 // member has two weeks to return YOUNGO data and complete handover tasks.
@@ -8,10 +8,10 @@ import { staffWrites } from '../lib/collectionAccess'
 export const Handovers: CollectionConfig = {
   slug: 'handovers',
   access: {
-    read: ({ req }) => {
+    read: async ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      if ((req.user as any).role === 'admin') return true
+      if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
     ...staffWrites,

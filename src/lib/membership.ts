@@ -48,6 +48,18 @@ export async function findAccountRowById(id: number | string) {
   return rows[0] || null
 }
 
+// Platform-scope mandates (focal point and peers) may only be ended by
+// another platform officer — ordinary team staff cannot touch them.
+export async function hasActivePlatformMandate(accountId: number | string) {
+  const pool = requirePgPool()
+  const { rows } = await pool.query(
+    `SELECT 1 FROM authority_records
+     WHERE account_id=$1 AND status='active' AND scope_type='platform' LIMIT 1`,
+    [Number(accountId)],
+  )
+  return rows.length > 0
+}
+
 export async function setAccountFields(id: number | string, fields: Record<string, any>) {
   const pool = requirePgPool()
   const keys = Object.keys(fields).filter((key) => ACCOUNT_FIELD_COLUMNS.has(key))
@@ -86,10 +98,13 @@ export async function sendMembershipActivatedEmail(account: any) {
 
 export async function updateMembershipLifecycle({
   actor,
+  actorIsOfficer,
   targetId,
   body,
 }: {
   actor: any
+  /** Whether the actor holds platform.manage — gates officer-account edits. */
+  actorIsOfficer?: boolean
   targetId: number | string
   body: any
 }) {
@@ -99,15 +114,16 @@ export async function updateMembershipLifecycle({
   const beforeRow = await findAccountRowById(targetId)
   if (!beforeRow) throw new ApiError(404, 'not_found', 'Account not found.')
   const before = accountView(beforeRow)!
-  if (actor.role !== 'admin' && ['admin', 'focal_point'].includes(before.role))
-    throw new ApiError(403, 'forbidden', 'Only an admin can change platform staff membership.')
+  const beforeIsOfficer = await hasActivePlatformMandate(before.id)
+  if (!actorIsOfficer && beforeIsOfficer)
+    throw new ApiError(
+      403,
+      'forbidden',
+      'Only a platform officer can change an officer\u2019s membership.',
+    )
   if (actor.id === before.id && ENDED_MEMBERSHIP_STATUSES.includes(status))
-    throw new ApiError(400, 'self_suspend', 'You cannot suspend your own admin account.')
-  if (
-    status === 'active' &&
-    !before.coursePassedAt &&
-    !['admin', 'focal_point'].includes(before.role)
-  )
+    throw new ApiError(400, 'self_suspend', 'You cannot suspend your own account.')
+  if (status === 'active' && !before.coursePassedAt && !beforeIsOfficer)
     throw new ApiError(
       409,
       'course_required',

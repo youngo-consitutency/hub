@@ -36,13 +36,26 @@ const STATUS_OPTIONS = [
   { value: 'expired', label: 'Expired' },
   { value: 'terminated', label: 'Terminated' },
 ]
+// Filter values are authority-record roles — 'member' means no active records.
 const ROLE_OPTIONS = [
-  { value: '', label: 'All platform roles' },
-  { value: 'member', label: 'Member' },
-  { value: 'focal_point', label: 'Focal Point' },
-  { value: 'wg_contact', label: 'WG Contact Point' },
-  { value: 'ngo_admin', label: 'NGO administrator' },
-  { value: 'admin', label: 'Administrator' },
+  { value: '', label: 'All authority roles' },
+  { value: 'member', label: 'Member (no active records)' },
+  { value: 'focal_point', label: 'Global Focal Point' },
+  { value: 'council.substitute', label: 'Council substitute' },
+  { value: 'wg.contact_point', label: 'WG Contact Point' },
+  { value: 'org.representative', label: 'Organisation representative' },
+  { value: 'org.admin', label: 'Organisation administrator' },
+  { value: 'gct.internal', label: 'GCT — Internal management' },
+  { value: 'gct.coordination', label: 'GCT — Coordination' },
+  { value: 'gct.partnerships', label: 'GCT — Partnerships' },
+  { value: 'gct.membership', label: 'GCT — Membership' },
+  { value: 'gct.finance', label: 'GCT — Finance' },
+  { value: 'gct.recognition', label: 'GCT — Recognition' },
+  { value: 'team.membership', label: 'Membership Team' },
+  { value: 'team.comms', label: 'Communications Team' },
+  { value: 'team.data_controller', label: 'Data Controller' },
+  { value: 'team.election_facilitation', label: 'Election Facilitation' },
+  { value: 'team.safeguarding', label: 'Safeguarding Team' },
 ]
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
@@ -63,7 +76,6 @@ function AdminDialog({ title, children, onClose }) {
 function AccountManager({ account, onClose, onChanged, onReset }) {
   const { teamLabels } = useContentOptionLabels()
   const [status, setStatus] = useState(account.membershipStatus)
-  const [role, setRole] = useState(account.role)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -91,9 +103,6 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
         reason,
       }),
     )
-
-  const updateRole = () =>
-    run('role', () => apiPost(`/member/admin/accounts/${account.id}/role`, { role, reason }))
 
   const toggleTeamRole = (teamRole) => {
     const enabled = !account.teamRoles?.includes(teamRole)
@@ -153,23 +162,6 @@ function AccountManager({ account, onClose, onChanged, onReset }) {
         >
           <ShieldCheck size={16} aria-hidden />
           {busy === 'status' ? 'Updating…' : 'Confirm lifecycle change'}
-        </Button>
-      </div>
-
-      <div className="adminActionBlock">
-        <SearchableSelect
-          label="Platform role"
-          options={ROLE_OPTIONS.slice(1)}
-          value={role}
-          onChange={setRole}
-          searchPlaceholder="Search platform roles…"
-        />
-        <Button
-          variant="secondary"
-          disabled={!reasonReady || busy || role === account.role}
-          onClick={updateRole}
-        >
-          {busy === 'role' ? 'Updating…' : 'Confirm role change'}
         </Button>
       </div>
 
@@ -388,7 +380,6 @@ export function Admin() {
                   <span className="chip chip-neutral">
                     {labelFor(STATUS_OPTIONS, account.membershipStatus)}
                   </span>
-                  <span className="chip chip-neutral">{labelFor(ROLE_OPTIONS, account.role)}</span>
                 </div>
                 <p className="metaMuted">
                   {[account.country, account.region].filter(Boolean).join(' · ')}
