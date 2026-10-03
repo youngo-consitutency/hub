@@ -46,6 +46,7 @@ async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlu
   return (docs[0] as any) || null
 }
 
+/** Create or update a member's working-group progress record from a patch of fields. */
 async function upsertWgProgress(
   req: PayloadRequest,
   accountId: string | number,

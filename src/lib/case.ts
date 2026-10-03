@@ -8,6 +8,7 @@
 // noise. Keys that already start with '_' (e.g. `_order`, `_parent_id`)
 // are internal Payload bookkeeping and are left untouched.
 
+/** Shallowly convert a row's snake_case keys to camelCase, preferring non-null values on collision. */
 export function toCamelCase<T extends Record<string, unknown>>(
   obj: Record<string, unknown> | null | undefined,
 ): T {
@@ -25,6 +26,7 @@ export function toCamelCase<T extends Record<string, unknown>>(
   return result as T
 }
 
+/** Apply {@link toCamelCase} to each row in a list. */
 export const toCamelCaseRows = <T extends Record<string, unknown>>(
   rows: Record<string, unknown>[],
 ): T[] => rows.map((row) => toCamelCase<T>(row))

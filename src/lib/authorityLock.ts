@@ -30,12 +30,14 @@ import type { Payload, PayloadRequest } from 'payload'
 // holding an advisory key another writer needs to acquire first.
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
+/** Look up the underlying DB handle for an open Payload transaction. */
 function txHandle(payload: Payload, transactionID: any) {
   const tx = (payload.db as any).sessions?.[transactionID]?.db
   if (!tx) throw new Error('Authority locks require an open database transaction.')
   return tx
 }
 
+/** Take the transaction-scoped Postgres advisory lock for an account's authority records. */
 export async function advisoryAuthorityLock(
   payload: Payload,
   transactionID: any,

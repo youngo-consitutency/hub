@@ -67,6 +67,7 @@ const EMPTY: AccessProfile = {
   manageAllWgs: false,
 }
 
+/** Load an account's active authority-records and derive its capability profile. */
 export async function getAccessProfile(req: PayloadRequest, account: any): Promise<AccessProfile> {
   if (!account) return EMPTY
 

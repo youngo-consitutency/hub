@@ -77,6 +77,7 @@ export async function recordEvent(
   })
 }
 
+/** Whether the account is a recorded contact person or proposer for this proposal. */
 export function isContactPerson(account: any, proposal: any): boolean {
   // The contact person is a recorded role on the proposal — a technical
   // administrator does not gain constituency authority over it.
@@ -134,6 +135,7 @@ const currentRow = (now: string): any[] => [
   { or: [{ startsAt: { exists: false } }, { startsAt: { less_than_equal: now } }] },
   { or: [{ endsAt: { exists: false } }, { endsAt: { greater_than: now } }] },
 ]
+/** Extract the account id from an authority row's `account` relationship, populated or not. */
 const accountIdOf = (row: any) =>
   (typeof row.account === 'object' ? row.account?.id : row.account) as number
 
@@ -202,6 +204,7 @@ async function councilElectorate(req: PayloadRequest, now: string): Promise<numb
   return count
 }
 
+/** Count eligible voters for a proposal's body, for the 5% quorum check. */
 export async function countEligible(req: PayloadRequest, proposal: any): Promise<number> {
   // Eligible-voter registry snapshot for the 5% quorum (S09 §2 step 6).
   const now = new Date().toISOString()

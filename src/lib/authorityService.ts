@@ -29,6 +29,7 @@ export interface GrantInput {
   substituteFor?: number
 }
 
+/** Validate and create a new active authority record, auditing the grant under the account's lock. */
 export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
   const spec = AUTHORITY_ROLES[input.role]
   if (!spec) throw fail.validation({ role: 'Unknown authority role.' })
@@ -189,6 +190,7 @@ export async function revokeAuthorityInTx(
   return updated
 }
 
+/** Validate the reason, then revoke an authority record under its account's advisory lock. */
 export async function revokeAuthority(
   req: PayloadRequest,
   recordId: number,

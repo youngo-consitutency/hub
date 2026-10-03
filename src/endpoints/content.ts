@@ -5,6 +5,7 @@ import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
 
+/** Resolve the requesting account and its content draft/review/publish capabilities. */
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
   if (!isVerifiedAccount(account))

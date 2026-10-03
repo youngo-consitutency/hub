@@ -9,11 +9,13 @@ import { getAccessProfile } from './access'
 // (team.election_facilitation / selection.manage) — never from the admin
 // role or a bare account title.
 
+/** Whether the account holds the election-facilitation capability. */
 export async function isFacilitator(req: PayloadRequest, account: any) {
   const access = await getAccessProfile(req, account)
   return access.capabilities.includes('election.facilitate')
 }
 
+/** Whether the account holds the selection-management capability. */
 export async function isSelector(req: PayloadRequest, account: any) {
   const access = await getAccessProfile(req, account)
   return access.capabilities.includes('selection.manage')

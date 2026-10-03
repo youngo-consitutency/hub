@@ -28,6 +28,7 @@ const HANDOVER_ITEMS = [
   'Confirm removal of YOUNGO data from personal devices',
 ]
 
+/** Create a handover record listing the standard duties for an exiting account. */
 async function openHandover(
   req: PayloadRequest,
   {

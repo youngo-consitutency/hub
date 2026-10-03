@@ -47,11 +47,13 @@ function date(input: Input, key: string, required = false): string | null {
   if (!Number.isFinite(Date.parse(value))) fail(400, `Check ${key}.`)
   return new Date(value).toISOString()
 }
+/** Parse a value as a positive integer id, failing the request otherwise. */
 function intId(value: unknown): number {
   const n = Number(value)
   if (!Number.isInteger(n) || n <= 0) fail(400, 'Invalid record identifier.')
   return n
 }
+/** Validate a value as a UUID string, failing the request otherwise. */
 function uuid(value: unknown): string {
   if (
     typeof value !== 'string' ||
@@ -108,6 +110,7 @@ async function lockAuthority(client: Pick<PoolClient, 'query'>, ...accountIds: n
     await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, id])
 }
 
+/** Derive the acting account's platform permissions from its active authority records. */
 export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'> = db()) {
   const current = (
     await client.query(
@@ -151,6 +154,7 @@ const bodySelect = `SELECT id,name,kind,description,public_summary AS "publicSum
 const taskSelect = `SELECT t.id,t.body_id AS "bodyId",t.title,t.description,t.owner_id AS "ownerId",a.name AS "ownerName",t.due_at AS "dueAt",t.status,t.decision_id AS "decisionId",t.version,t.created_by AS "createdBy" FROM platform_tasks t LEFT JOIN accounts a ON a.id=t.owner_id`
 const enquirySelect = `SELECT id,organisation,contact_name AS "contactName",email,message,status,owner_id AS "ownerId",follow_up_at AS "followUpAt",decision_id AS "decisionId",public_summary AS "publicSummary",website,version FROM platform_enquiries`
 
+/** Build the actor's platform overview: visible bodies, people, records, tasks, decisions and enquiries. */
 export async function overview(actor: Actor) {
   const p = await permissions(actor)
   const bodyIds = p.bodyScopes
@@ -330,6 +334,7 @@ const GCT_AREAS = [
   'coordination',
 ]
 
+/** Record (or refresh) an evidenced authority record for an account, as a platform administrator. */
 export async function assign(actor: Actor, input: Input) {
   return transaction(async (client) => {
     const accountId = intId(input.accountId)
@@ -433,6 +438,7 @@ export async function assign(actor: Actor, input: Input) {
     })
   })
 }
+/** End an active authority record, as a platform administrator. */
 export async function revoke(actor: Actor, id: string, reason: string) {
   return transaction(async (client) => {
     if (reason.length < 8) fail(400, 'Give a reason for ending this record.')
@@ -455,6 +461,7 @@ export async function revoke(actor: Actor, id: string, reason: string) {
     await audit(client, actor, 'authority.revoked', id, reason)
   })
 }
+/** Record the actor's participation ('body.member') in an open-membership body. */
 export async function joinBody(actor: Actor, id: string) {
   return transaction(async (client) => {
     if (!(await permissions(actor, client)).cw)
@@ -475,6 +482,7 @@ export async function joinBody(actor: Actor, id: string) {
   })
 }
 
+/** Create or update a platform task, enforcing body-management permission for the owner. */
 export async function saveTask(actor: Actor, input: Input, id?: string) {
   return transaction(async (client) => {
     const bodyId = text(input, 'bodyId'),
@@ -540,6 +548,7 @@ export async function createEnquiry(input: Input) {
   )
   return { ok: true, id: rows[0].id }
 }
+/** Update a partnership enquiry, enforcing partnerships-team permission for the owner. */
 export async function updateEnquiry(actor: Actor, id: string, input: Input) {
   return transaction(async (client) => {
     if (!(await permissions(actor, client)).partnerships)
@@ -622,6 +631,7 @@ export async function publicPlatform() {
   }
 }
 
+/** Apply a Membership Team lifecycle action (e.g. activation, track change) to an account. */
 export async function membershipAction(actor: Actor, id: string, input: Input) {
   return transaction(async (client) => {
     // Lifecycle writes touch the TARGET account's rows; permissions()

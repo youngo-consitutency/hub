@@ -139,6 +139,7 @@ function cleanPageNumber(value: any) {
   return Math.min(50, Math.max(1, n))
 }
 
+/** Query the public member directory, paginated and filtered by search, tag and working group. */
 export async function listMemberPeople({
   search = '',
   tag = '',

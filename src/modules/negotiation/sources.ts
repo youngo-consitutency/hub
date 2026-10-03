@@ -24,6 +24,7 @@ const EXTRACTION_RISKS: [string, RegExp][] = [
   ['contact_phone', /(?:\+?\d[\d ()-]{7,}\d)/],
 ]
 
+/** Validate reviewed extraction text and flag any sensitive-content markers it contains. */
 function assessExtractionText(value: any) {
   const text = String(value || '')
   if (!text.trim())

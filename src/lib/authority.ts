@@ -347,6 +347,7 @@ const SCOPE_TYPE_ALIASES: Record<string, string> = {
   organization: 'organisation',
   platform_body: 'body',
 }
+/** Map historical scope-type spellings to their canonical form. */
 export function normaliseScopeType(scopeType: string): string {
   return SCOPE_TYPE_ALIASES[scopeType] ?? scopeType
 }
@@ -494,6 +495,7 @@ export function recordCurrent(
   return true
 }
 
+/** Resolve the Council seat key a role grants on the given row, if any. */
 export function councilSeatFor(
   roleKey: string,
   row: { scopeId: string; councilSeat?: string | null },
@@ -506,11 +508,13 @@ export function councilSeatFor(
   return spec.councilSeat.replace('{scope}', row.scopeId)
 }
 
+/** Expand a role's capability templates for the given scope. */
 export function capabilitiesFor(roleKey: string, scopeId: string): string[] {
   const spec = AUTHORITY_ROLES[roleKey]
   return (spec?.capabilities ?? []).map((c) => c.replace('{scope}', scopeId))
 }
 
+/** List the legacy team keys a role maps to. */
 export function teamKeysFor(roleKey: string): string[] {
   return AUTHORITY_ROLES[roleKey]?.teamKeys ?? []
 }
@@ -658,6 +662,7 @@ const MEMBER_KIND_ROLES = new Set([
   'negotiation.member',
 ])
 
+/** Classify a role/scope pair as member-joinable 'participation' or an appointed 'mandate'. */
 export function recordKind(scopeType: string, role: string): 'mandate' | 'participation' {
   return MEMBER_KIND_ROLES.has(role) && PARTICIPATION_SCOPES.has(normaliseScopeType(scopeType))
     ? 'participation'

@@ -8,6 +8,7 @@ import { getDocument } from '../lib/documents'
 import { slugify } from '../../spa/shared/slug.js'
 import { audit } from '../lib/audit'
 
+/** Whether the account holds the content-review capability. */
 const canReview = async (req: PayloadRequest, account: any) => {
   const access = await getAccessProfile(req, account)
   return hasCapability(access, 'content.review')

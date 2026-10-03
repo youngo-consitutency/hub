@@ -16,6 +16,7 @@ export type OrgContext = {
   canManageSeats: boolean
 }
 
+/** Resolve the organisation scope an account is acting in, from its active seat or an admin's org query. */
 async function resolveOrgContext(req: PayloadRequest, account: any): Promise<OrgContext | null> {
   const requestedOrgId = (req.query?.orgId as string) || (req.body as any)?.orgId || null
   if (account.role === 'admin') {
@@ -64,6 +65,7 @@ export async function requireOrgScope(
   return { account, ctx }
 }
 
+/** Normalise an ngo-seat row (document or raw SQL) into its public API shape. */
 export const seatView = (row: any) => {
   const r = toCamelCase<any>(row)
   return {

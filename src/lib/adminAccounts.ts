@@ -31,6 +31,7 @@ export async function listAccountsForAdmin() {
   return rows.map(accountView)
 }
 
+/** Search, filter, sort and paginate accounts for the admin console. */
 export async function queryAccountsForAdmin({
   search = '',
   entityType = '',
@@ -84,6 +85,7 @@ export async function queryAccountsForAdmin({
   }
 }
 
+/** Ensure a verified NGO account holds the active 'owner' seat on its own organisation, creating it if missing. */
 export async function ensureOwnerSeat(orgAccount: any) {
   if (
     !orgAccount ||

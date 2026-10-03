@@ -9,6 +9,7 @@ export const VERIFIED_PLATFORM_ROLES = new Set(['admin', 'focal_point'])
 
 // Account rows arrive from Payload docs (camelCase) and raw SQL
 // (snake_case) — normalise once, then read the canonical field names.
+/** Normalise an account row to camelCase, or an empty object when absent. */
 const accountRow = (account: any): Record<string, any> => (account ? toCamelCase(account) : {})
 
 // Single source for "may use member features". Every endpoint must go through
@@ -33,6 +34,7 @@ export function isCwActive(account: any): boolean {
   )
 }
 
+/** Require the current account and throw unless it is a verified member. */
 export function requireVerifiedMember(req: PayloadRequest) {
   const account = requireAccount(req)
   if (!isVerifiedAccount(account))

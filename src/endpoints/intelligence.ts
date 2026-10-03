@@ -21,6 +21,7 @@ type Evidence = {
   url: string
 }
 
+/** Gather evidence snippets matching a query from the sources the account may access. */
 async function evidenceForQuery(
   req: PayloadRequest,
   query: string,

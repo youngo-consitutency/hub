@@ -18,6 +18,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 export const pushConfigured =
   process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
 
+/** Normalise a push-subscription row into its public API shape. */
 const publicRow = (row: any) => {
   const r = toCamelCase<Record<string, any>>(row)
   return {

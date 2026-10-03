@@ -235,6 +235,7 @@ export async function appendSubmissionVersion({
   }
 }
 
+/** List submission projects the account can access, via membership or an active authority record. */
 export async function listAccessibleProjects({
   account,
   pool = getPgPool(),
@@ -270,6 +271,7 @@ export async function listAccessibleProjects({
   }))
 }
 
+/** Load a submission project by id if the account can access it via membership or an active authority record. */
 export async function getAccessibleProject({
   account,
   projectId,

@@ -16,6 +16,7 @@ export const APPEAL_PROOF_TYPES = new Set([
 export const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 export const APPEAL_MAX_PER_ACCOUNT = 3
 
+/** Shape a raw appeal row for public/API consumption, optionally omitting the statement. */
 export function publicAppeal(row: any, { includeStatement = true } = {}): any {
   if (!row) return null
   const r = toCamelCase<Record<string, any>>(row)

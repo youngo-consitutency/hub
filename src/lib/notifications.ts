@@ -252,6 +252,7 @@ export async function sendTemplatedEmail({
 
 // ── Outbox ───────────────────────────────────────────────────────
 
+/** Shape a raw notification_outbox row into its public API representation. */
 function publicOutbox(row: any) {
   if (!row) return null
   const r = toCamelCase<Record<string, any>>(row)

@@ -37,6 +37,7 @@ function toBool(value: any): boolean | null {
   return null
 }
 
+/** Normalise a date-like value to an ISO 'YYYY-MM-DD' string, or null. */
 function toIsoDate(value: any) {
   if (value == null || value === '') return null
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -87,6 +88,7 @@ export function extractPublicLinks(...values: any[]) {
   return found
 }
 
+/** Build the full membership-review shape (account + application answers) from a raw row. */
 export function membershipReviewAccount(row: any) {
   const account = accountView(row)
   if (!account) return null
@@ -162,6 +164,7 @@ export async function listMembershipReviewItems() {
   return rows.map(membershipReviewAccount)
 }
 
+/** Shape a raw profile row plus its account into the public profile fields. */
 function profileShape(row: any, account: any) {
   const r = toCamelCase<any>(row)
   const updatedAt = r.updatedAt ?? null

@@ -4,6 +4,7 @@
 
 const JOIN_LINK_PATTERNS = [/^meet\.google\.com$/, /^meet\.jit\.si$/, /^(www\.)?whereby\.com$/]
 
+/** Whether a URL points at a conferencing join page (as opposed to a registration/info page). */
 function isMeetingJoinLink(value: string): boolean {
   let url: URL
   try {
@@ -65,6 +66,7 @@ function resourceViews(
     )
 }
 
+/** Strip private contact fields unless the caller is entitled to see them. */
 function contactView(
   contact: Record<string, unknown> | null | undefined,
   { includePrivate = false } = {},
