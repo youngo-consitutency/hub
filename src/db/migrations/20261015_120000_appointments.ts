@@ -1,11 +1,8 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// Appointments: the table of mandated responsibilities (S13/S14/S15/S25).
-// Distinct from `assignments`, which remains the participation ledger
-// (working-group/body membership, negotiation scopes). One account may hold
-// a role on a scope only once at a time — the partial unique index prevents
-// duplicate appointments under concurrency. `assignments.status` gains
-// 'revoked' so ended mandates are distinguishable from ordinary inactivity.
+// Appointments: mandated responsibilities (S13/S14/S15/S25), distinct from
+// the `assignments` participation ledger. Partial unique index = one active
+// role per (account, scope). `assignments.status` gains 'revoked'.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   CREATE TYPE "public"."enum_appointments_appointment_role" AS ENUM('focal_point', 'council.substitute', 'org.representative', 'org.member', 'org.admin', 'wg.member', 'wg.contact_point', 'wg.safeguarding_officer', 'ot.member', 'ot.liaison', 'body.member', 'body.coordinator', 'body.contact_point', 'body.liaison', 'body.council_representative', 'gct.coordinator', 'gct.partnerships', 'gct.membership', 'gct.finance', 'gct.internal', 'gct.coordination', 'team.membership', 'team.selections', 'team.election_facilitation', 'team.awareness', 'team.safeguarding', 'team.finance', 'team.partnerships', 'team.comms', 'team.reforms', 'team.data_controller', 'team.gys_policy', 'content.editor', 'content.publisher', 'coy.lcoy_liaison', 'coy.rcoy_liaison', 'coy.gcoy_liaison', 'cct.member', 'cct.coordinator', 'negotiation.member', 'negotiation.reviewer', 'negotiation.applier', 'negotiation.grant_manager', 'negotiation.process_facilitator', 'negotiation.transmitter');

@@ -1,12 +1,6 @@
-// Canonical shapes crossing the endpoint/library boundary.
-//
-// Account rows arrive as Payload docs (camelCase) or raw SQL rows
-// (snake_case) — `accountRow` normalises them, `accountView` projects the
-// SPA-facing shape. Everything downstream of requireAccount works with
-// AccountLike; anything sent to the client is an AccountView.
-//
-// This module is a leaf: it declares types only and may be imported by any
-// layer without risking a dependency cycle.
+// Canonical shapes crossing the endpoint/library boundary. `accountRow`
+// normalises Payload docs / SQL rows; `accountView` projects the member shape.
+// Types-only leaf — safe to import from any layer.
 
 /**
  * A Payload collection doc at an untyped boundary. Generated types exist in

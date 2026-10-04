@@ -116,7 +116,7 @@ interface AsyncProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
-import { navigate, replace } from '../lib/router'
+import { navigate, replace, peekBackground } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
@@ -130,7 +130,6 @@ import {
   TbChevronDown,
 } from 'react-icons/tb'
 
-/** @param {import("react").AnchorHTMLAttributes<HTMLAnchorElement> & { peek?: boolean }} props */
 export function A({
   href,
   className,
@@ -158,7 +157,7 @@ export function A({
         )
           return
         e.preventDefault()
-        const background = window.history.state?.peekBackground
+        const background = peekBackground()
         const go = peek && background ? replace : navigate
         go(
           href,
@@ -187,7 +186,6 @@ export function Button({ variant = 'secondary', sm, glow, className = '', ...res
   return <button type="button" className={cls} {...rest} />
 }
 
-/** @param {import("react").ButtonHTMLAttributes<HTMLButtonElement> & {active?: boolean, state?: string, icon?: import("react").ElementType, prefix?: string}} props */
 export function FilterPill({
   active,
   state,
@@ -339,7 +337,6 @@ export function FilterMenu({
   )
 }
 
-/** @param {{ title: import("react").ReactNode, description?: import("react").ReactNode, action?: import("react").ReactNode, icon?: import("react").ElementType, children?: import("react").ReactNode }} props */
 export function PageHeader({ title, description, action, children, icon: Icon }: PageHeaderProps) {
   return (
     <header className="pageHeader">
@@ -481,14 +478,6 @@ export function Skeletons({ n = 3 }: SkeletonsProps) {
   )
 }
 
-/**
- * @param {{
- *   icon?: import('react-icons').IconType,
- *   title?: import('react').ReactNode,
- *   body?: import('react').ReactNode,
- *   cta?: import('react').ReactNode,
- * }} props
- */
 export function Empty({ icon: Icon, title, body, cta }: EmptyProps) {
   return (
     <div className="empty">

@@ -6,16 +6,11 @@ import { audit } from '../lib/audit'
 import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
-// recognition (S20), partnerships (S13), privacy requests (S08). Members
-// file and track their own records; the responsible teams review through
-// scoped endpoints. Generated REST writes stay staff-only throughout.
+// recognition (S20), partnerships (S13), privacy (S08). Members file their
+// own records; teams review through scoped endpoints.
 
-// Review authority: a member holding one of the named team roles
-// (e.g. 'finance_team', 'safeguarding_team'). Account labels carry no
-// team authority — every review right is an evidenced record.
-// Review authority by capability: the shared registry decides which
-// authority records carry each review right (e.g. only gct.finance — not
-// every GCT member — holds finance.review).
+// Review authority is capability-derived: only records the registry maps to
+// each review right (e.g. only gct.finance holds finance.review).
 async function requireOpsCapability(req: PayloadRequest, capabilities: string[]) {
   const { account, access } = await verifiedContext(req)
   if (!capabilities.some((c) => hasCapability(access, c)))

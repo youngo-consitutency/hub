@@ -440,8 +440,8 @@ export const membershipEndpoints: Endpoint[] = [
           }),
         },
         {
-          // Recheck under the lock: a platform mandate granted between the
-          // pre-check above and this sweep must not be ended silently.
+          // Recheck under the lock — a mandate granted mid-sweep must not
+          // be ended silently.
           beforeSweep: async () => {
             if (
               (await hasActivePlatformMandate(target.id)) &&
@@ -485,9 +485,7 @@ export const membershipEndpoints: Endpoint[] = [
       if (record.scopeType === 'platform' && !hasCapability(access, 'platform.manage'))
         throw fail.forbidden('Only a platform officer can end a platform mandate.')
       const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
-        // Re-read under the lock: a concurrent staff request or the
-        // endRecords sweep can change the status between the pre-check
-        // and this update — only an active record may transition.
+        // Re-read under the lock — only an active record may transition.
         const current = (await req.payload.findByID({
           collection: 'authority-records',
           id: record.id,
@@ -559,8 +557,7 @@ export const membershipEndpoints: Endpoint[] = [
     }),
   },
   {
-    // Close a handover without full completion (e.g. member unreachable —
-    // data access is already revoked; record the decision).
+    // Close a handover without completion (e.g. member unreachable).
     path: '/member/team/membership/handovers/:id/waive',
     method: 'post',
     handler: endpoint(async (req) => {
@@ -614,8 +611,7 @@ export const membershipEndpoints: Endpoint[] = [
     }),
   },
   {
-    // Raw file body: X-Identity-Kind + X-Appeal-Statement (URI-encoded) headers,
-    // Content-Type = the file's type. Matches the legacy SPA apiPostFile call.
+    // Raw file body via X-Identity-Kind / X-Appeal-Statement headers.
     path: '/member/membership/appeal',
     method: 'post',
     handler: endpoint(async (req) => {

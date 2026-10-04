@@ -1,11 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
-// S10 elections: secret ballots are held on voter credentials (random tokens)
-// rather than account references — the ballot table deliberately cannot be
-// joined back to an account, giving server-trust secrecy. This is NOT an
-// end-to-end verifiable scheme like Belenios (see vault OSS evaluation); an
-// externally-run election can be recorded via elections.externalRef.
+// S10 elections: ballots key on random voter credentials, never accounts —
+// server-trust secrecy, not end-to-end verifiable like Belenios (see vault
+// OSS evaluation). Externally-run elections link via elections.externalRef.
 
 export const Elections: CollectionConfig = {
   slug: 'elections',
@@ -102,9 +100,8 @@ export const ElectionCandidates: CollectionConfig = {
   ],
 }
 
-// Voter registry snapshot: one credential (random token) per eligible voter
-// per election. Only the token's HMAC is stored — the raw token is returned
-// once at issuance and never persisted.
+// Voter registry: one credential per eligible voter per election. Only the
+// token's HMAC is stored — the raw token is returned once at issuance.
 export const ElectionVoters: CollectionConfig = {
   slug: 'election-voters',
   access: {
@@ -145,8 +142,7 @@ export const ElectionBallots: CollectionConfig = {
     read: isStaff,
     ...staffWrites,
   },
-  // One ballot per credential per race — enforced at the database so
-  // concurrent submissions cannot double-count.
+  // One ballot per credential per race — enforced at the database.
   indexes: [{ unique: true, fields: ['election', 'race', 'voterTokenHash'] }],
   fields: [
     {
@@ -255,8 +251,7 @@ export const SelectionCommittee: CollectionConfig = {
       index: true,
     },
     { name: 'joinedAt', type: 'date', required: true },
-    // COI declarations → recusals (S24 §2.2.4): the member lists applicant
-    // ids they must not discuss or score.
+    // COI recusals (S24 §2.2.4): applicant ids the member may not discuss.
     { name: 'recusedApplicantIds', type: 'json' },
     { name: 'coiNote', type: 'textarea' },
   ],
@@ -302,7 +297,7 @@ export const SelectionApplications: CollectionConfig = {
 export const SelectionEvaluations: CollectionConfig = {
   slug: 'selection-evaluations',
   access: {
-    // Evaluations stay confidential to the committee + staff.
+    // Evaluations stay confidential to the committee and staff.
     read: isStaff,
     ...staffWrites,
   },
@@ -334,8 +329,8 @@ export const SelectionEvaluations: CollectionConfig = {
       type: 'select',
       options: ['black', 'red', 'orange', 'yellow', 'green'],
     },
-    // Numerical method: per-criterion scores 0-10 (recorded privately, then
-    // revealed at the final call — S24 Annex 3 option 2).
+    // Numerical method: scores 0-10 per criterion, revealed at the final
+    // call (S24 Annex 3 option 2).
     { name: 'scores', type: 'json' },
     { name: 'comment', type: 'textarea' },
     { name: 'evaluatedAt', type: 'date', required: true },

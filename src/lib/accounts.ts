@@ -5,11 +5,9 @@ import type { AccessProfile } from './access'
 import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
 import type { AccountLike, AccountView, Doc, AnyValue } from './domain'
 
-// Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
-// reads from /api/auth/me and login/register responses.
+// The account shape the member UI reads from /api/auth/me and auth responses.
 
-// Re-exported so callers keep a single import site; the predicates live in
-// the leaf module to keep accounts/access acyclic.
+// Re-exported from the leaf module to keep accounts/access acyclic.
 export { isVerifiedAccount, isCwActive }
 
 export function requireVerifiedMember(req: PayloadRequest) {
@@ -19,9 +17,8 @@ export function requireVerifiedMember(req: PayloadRequest) {
   return account
 }
 
-// Constituency Work membership is required for decision rights (S17 §1.1).
-// A mandate is not membership: officers need an active CW record like
-// everyone else.
+// CW membership is required for decision rights (S17 §1.1) — a mandate is
+// not membership.
 export function requireCwMember(req: PayloadRequest) {
   const account = requireVerifiedMember(req)
   if (!isCwActive(account))
@@ -93,8 +90,7 @@ export function accountView(row: AccountLike | Doc | null | undefined): AccountV
   }
 }
 
-// The SPA may also hit with a Bearer token (agent/MCP use) in addition to the
-// httpOnly cookie; Payload already populates req.user for both.
+// Bearer token (agent/MCP) as well as the cookie — req.user covers both.
 export function requireAccount(req: PayloadRequest): AccountLike {
   const user = req.user
   if (!user || user.collection !== 'accounts') {
@@ -108,8 +104,7 @@ export interface MemberContext {
   access: AccessProfile
 }
 
-// The authenticated request context every member endpoint needs: the account
-// plus its derived access profile. Capability gates build on this pair.
+// Account + derived access profile — the context capability gates need.
 export async function memberContext(req: PayloadRequest): Promise<MemberContext> {
   const account = requireAccount(req)
   return { account, access: await getAccessProfile(req, account) }
@@ -128,9 +123,7 @@ export async function requireTeam(req: PayloadRequest, teamRole: string): Promis
   return ctx
 }
 
-// The accounts console gates on the `accounts.manage` capability, held by
-// platform mandates (focal point, internal-management coordinator) — not by
-// an account flag.
+// The accounts console gates on `accounts.manage` (platform mandates only).
 export async function requireAccountsManager(req: PayloadRequest): Promise<MemberContext> {
   const ctx = await verifiedContext(req)
   if (!hasCapability(ctx.access, 'accounts.manage'))
@@ -138,8 +131,7 @@ export async function requireAccountsManager(req: PayloadRequest): Promise<Membe
   return ctx
 }
 
-// Platform-wide operations (contact-point call scheduling and the like) gate
-// on the `platform.manage` capability — the focal point and peers.
+// Platform-wide operations gate on `platform.manage`.
 export async function requirePlatformOperator(req: PayloadRequest): Promise<MemberContext> {
   const ctx = await verifiedContext(req)
   if (!hasCapability(ctx.access, 'platform.manage'))
@@ -156,8 +148,7 @@ export function adminReason(body: AnyValue): string {
   return reason.slice(0, 500)
 }
 
-// Payload's auth cookie. Setting it ourselves keeps the legacy
-// {ok, token, account, expiresAt} response contract.
+// Payload's auth cookie — set directly to keep the response contract.
 export const SESSION_COOKIE = 'payload-token'
 
 export function sessionCookieHeader(token: string, expiresAt: Date | string | number) {

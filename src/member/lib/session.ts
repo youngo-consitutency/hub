@@ -1,18 +1,14 @@
 import type { AnyValue } from './types'
 import { apiPost } from './api'
 
-// The session credential lives ONLY in the HttpOnly `youngo_session` cookie the
-// server sets at login. It is deliberately unreadable from JavaScript, so a
-// cross-site-scripting bug cannot exfiltrate it. Nothing here may store a token.
-//
-// What is cached below is the account *profile* — display data the UI already
-// renders — so the first paint after a reload does not flash a signed-out shell
-// while `/auth/me` is in flight. The cookie remains the only proof of identity.
+// The session credential lives ONLY in the HttpOnly `youngo_session` cookie —
+// unreadable from JS so XSS cannot exfiltrate it. Nothing here stores a token.
+// What is cached is the account *profile* only, so first paint doesn't flash a
+// signed-out shell while `/auth/me` is in flight.
 const ACCOUNT_KEY = 'youngo-hub:session-account'
 
-// Earlier builds mirrored the session token into localStorage. Remove any
-// leftover copy on load so upgrading clients stop carrying a stealable
-// credential; the cookie they already hold keeps them signed in.
+// Earlier builds stored the token in localStorage; remove leftover copies
+// so upgrading clients stop carrying a stealable credential.
 const LEGACY_TOKEN_KEY = 'youngo-hub:session-token'
 try {
   localStorage.removeItem(LEGACY_TOKEN_KEY)

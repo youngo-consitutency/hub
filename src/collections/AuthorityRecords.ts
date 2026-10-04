@@ -3,13 +3,10 @@ import type { CollectionConfig } from 'payload'
 import { AUTHORITY_ROLE_KEYS } from '../lib/authority'
 import { staffWrites } from '../lib/collectionAccess'
 
-// The single authority store: every scoped responsibility an account holds —
-// mandated (S13/S14/S25/S15: Council seats, team roles, officers) or
-// participation (member-joinable WG/body/organisation/negotiation
-// membership). One row per (account, role, scope); the partial unique index
-// prevents duplicate active records under concurrency. `role` is free text:
-// grants write canonical registry keys, migrated rows keep their recorded
-// string — lib/authority.ts resolves both to one vocabulary.
+// The single authority store: mandated (S13/S14/S25/S15) or participation
+// records, one row per (account, role, scope); the partial unique index
+// prevents duplicate actives. `role` is free text — lib/authority.ts resolves
+// canonical keys and migrated legacy strings to one vocabulary.
 export const AuthorityRecords: CollectionConfig = {
   slug: 'authority-records',
   access: {
@@ -18,9 +15,7 @@ export const AuthorityRecords: CollectionConfig = {
       if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    // Records are created through governed flows (selections, elections,
-    // Council records, membership joins) — never written directly over the
-    // generated API.
+    // Records are created through governed flows — never the generated API.
     ...staffWrites,
   },
   fields: [
@@ -39,9 +34,8 @@ export const AuthorityRecords: CollectionConfig = {
       index: true,
     },
     {
-      // Canonical registry key for mandates and canonical participation
-      // roles; migrated rows may carry a recorded legacy string that the
-      // resolver maps (or reports as unmapped — never widened).
+      // Canonical registry key; migrated rows may carry legacy strings the
+      // resolver maps or reports as unmapped.
       name: 'role',
       type: 'text',
       required: true,
@@ -50,9 +44,7 @@ export const AuthorityRecords: CollectionConfig = {
         const v = String(value ?? '')
         if (!v.trim()) return 'Required.'
         if (AUTHORITY_ROLE_KEYS.includes(v)) return true
-        // Legacy recorded spellings are accepted so migrated rows round-trip
-        // through Payload writes; they grant nothing unless the resolver maps
-        // them.
+        // Legacy spellings accepted for round-tripping; they grant nothing.
         return /^[a-z0-9._-]+$/i.test(v) || 'Unknown role.'
       },
     },
@@ -74,8 +66,7 @@ export const AuthorityRecords: CollectionConfig = {
     },
     { name: 'scopeId', type: 'text', required: true, index: true },
     {
-      // Council seat this record occupies ('wg:finance', 'org:12',
-      // 'focal_point'). For substitutes this is the seat they cover.
+      // Council seat this record occupies (substitutes: the covered seat).
       name: 'councilSeat',
       type: 'text',
     },
@@ -96,11 +87,8 @@ export const AuthorityRecords: CollectionConfig = {
     { name: 'startsAt', type: 'date', required: true },
     { name: 'endsAt', type: 'date' },
     {
-      // How the record was made — e.g. the adopted decision, completed
-      // selection or election it records. For migrated rows it also carries
-      // the immutable link to the source `assignments` row
-      // (source: 'assignments_migration', assignmentId), which is why the
-      // value is write-once: provenance must never be edited.
+      // Provenance — the decision/selection/election that made the record,
+      // or the migrated `assignments` link. Write-once; never editable.
       name: 'provenance',
       type: 'json',
       hooks: {

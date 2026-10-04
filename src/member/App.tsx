@@ -9,7 +9,7 @@ import { canManageGroup, canManageGroups } from './lib/groupPermissions'
 import { Shell } from './components/Shell'
 import { AccessGate } from './components/AccessGate'
 import { AccountProvider, useAccount } from './lib/accountContext'
-import { usePath, navigate, replace } from './lib/router'
+import { usePath, navigate, replace, peekBackground } from './lib/router'
 import { lazy, Suspense, useEffect } from 'react'
 import { A, Button, Empty, Skeletons, PageHeader } from './components/ui'
 import { signOut } from './lib/session'
@@ -385,9 +385,9 @@ function AppRoutes() {
     )
   }
 
-  const peekBackground = window.history.state?.peekBackground
+  const background = peekBackground()
   const peekRoute =
-    canPeek(path) && typeof peekBackground === 'string' ? routeFor(peekBackground) : null
+    canPeek(path) && typeof background === 'string' ? routeFor(background) : null
 
   const BackgroundPage = peekRoute?.Page || Page
   const backgroundSlug = peekRoute ? peekRoute.slug : slug

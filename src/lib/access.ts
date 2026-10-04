@@ -3,12 +3,8 @@ import { deriveAuthority, type AuthorityRow } from './authority'
 import { isCwActive } from './accountStatus'
 import type { AccountLike, Doc } from './domain'
 
-// Derives the capability model from `authority-records`: time-bounded,
-// scoped, evidenced records — mandates and participation share one store.
-// `account.role` carries only technical administration and entity kind — it
-// never creates constituency authority on its own (a title without a record
-// grants nothing). Rows whose recorded role maps to no registry role are
-// denied and reported, never widened.
+// Derives the capability model from `authority-records`. `account.role` is
+// technical only — titles grant nothing. Unmapped roles deny, never widen.
 export interface AccessProfile {
   teamRoles: string[]
   wgAssignments: { wgSlug: string; role: string }[]
@@ -36,9 +32,8 @@ export interface AccessProfile {
   accountId?: number
 }
 
-// Only coordination responsibilities carry wg.manage. Ordinary group
-// membership is an affiliation, not a management mandate [S25]. Kept for
-// callers that still look at legacy wgAssignments roles.
+// Only coordination records carry wg.manage — membership is affiliation,
+// not a mandate [S25]. Kept for legacy wgAssignments callers.
 export const WG_COORDINATION_ROLES = new Set(['contact', 'lead', 'coordinator', 'contact_point'])
 
 const EMPTY: AccessProfile = {
@@ -81,8 +76,7 @@ export async function getAccessProfile(
   }
 
   const capabilities = new Set(derived.capabilities)
-  // Every capability comes from an evidenced record — account titles grant
-  // nothing on their own.
+  // Every capability comes from an evidenced record.
 
   const councilSeats = new Set(derived.councilSeats)
   return {

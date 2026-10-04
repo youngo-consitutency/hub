@@ -1,11 +1,9 @@
 import type { AnyValue } from './domain'
 import type { ErrorEvent } from '@sentry/core'
 
-// Shared beforeSend scrubbing for server, edge and browser runtimes.
-// Credentials and member-identifying fields never leave the process —
-// dataCollection stays at the restrictive baseline everywhere and this
-// strips anything that still arrives via request payloads, headers,
-// breadcrumbs or extras.
+// Shared beforeSend scrubbing: credentials and member-identifying fields
+// never leave the process — this strips anything arriving via payloads,
+// headers, breadcrumbs or extras.
 
 // v11 replacement for `sendDefaultPii: false` — leaving dataCollection
 // unset would collect more than the old restrictive default.

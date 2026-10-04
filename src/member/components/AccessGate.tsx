@@ -60,8 +60,8 @@ export function AccessGate({ children }: AccessGateProps) {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      // The HttpOnly cookie is the authority. A missing local cache must not
-      // strand an otherwise valid session (for example, after clearing storage).
+      // The HttpOnly cookie is the authority — a missing local cache must not
+      // strand a valid session.
       setAccount(getCachedAccount())
       await refreshSession()
       if (alive) setReady(true)
@@ -84,10 +84,8 @@ export function AccessGate({ children }: AccessGateProps) {
     return <Privacy standalone />
   }
 
-  // Public website: anyone curious about the constituency can browse it
-  // before any gate — no account, policy scroll, or cookies required. All
-  // data it shows comes from the public API, which redacts member-only
-  // details.
+  // Public website: browsable before any gate; data comes from the redacting
+  // public API.
   if (path.startsWith('/about')) {
     return <PublicSite />
   }
@@ -116,14 +114,12 @@ export function AccessGate({ children }: AccessGateProps) {
     )
   }
 
-  // Published negotiation evidence is a public projection. It must remain
-  // reachable without accepting membership terms or creating an account.
+  // Published negotiation evidence stays reachable without an account.
   if (!account && path.startsWith('/negotiations')) {
     return <>{typeof children === 'function' ? children(null) : children}</>
   }
 
-  // Signed-in members always enter the Hub. The membership policy is only a
-  // gate for people who do not yet have an account.
+  // Signed-in members always enter; the policy only gates new accounts.
   if (account) {
     if (account.mustChangePassword) {
       return (

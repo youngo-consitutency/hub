@@ -1,17 +1,16 @@
 import type { AnyValue, Doc } from './types'
 import { useApi } from './api'
 
-// Content documents are staff-editable records (collection
-// `content-documents`) fetched through GET /api/documents/:slug.
-// Each body preserves the shape of the former spa/src/content module.
+// Staff-editable records (`content-documents`) fetched via
+// GET /api/documents/:slug.
 
 export function useDocument(slug: AnyValue) {
   const { data, error, loading, retry } = useApi(slug ? `/documents/${slug}` : null)
   return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
 }
 
-// Event types + resource taxonomy are staff-editable in the `content-options`
-// document. Empty arrays until the document loads (or while it is unset).
+// Event types + taxonomy from the `content-options` document; empty until
+// loaded.
 export function useContentOptions() {
   const { doc } = useDocument('content-options')
   return {
@@ -28,7 +27,7 @@ export function useContentOptions() {
   }
 }
 
-// {value,label} lists become lookup maps: labels.teamLabels['membership_team'].
+// {value,label} lists become lookup maps.
 export function useContentOptionLabels() {
   const options = useContentOptions()
   const toMap = (items: Doc) =>
@@ -47,8 +46,7 @@ export function publishedLinks(links: AnyValue) {
   return (links || []).filter((link: AnyValue) => link.url)
 }
 
-// Single {value,label} lookup used wherever an option list needs a display
-// label (documents-driven vocab and local option constants alike).
+// Single {value,label} lookup for display labels.
 export function optionLabel(items: Doc, value: AnyValue) {
   return items.find((item: Doc) => item.value === value)?.label || value
 }

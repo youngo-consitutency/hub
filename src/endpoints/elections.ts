@@ -96,8 +96,7 @@ export const electionEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
       const e = await loadElection(req, param(req, 'id'))
-      // Candidacies are published simultaneously when voting opens (S10
-      // §2.3); before that only counts are exposed.
+      // Candidacies publish when voting opens (S10 §2.3); counts only before.
       const { docs: all } = await req.payload.find({
         collection: 'election-candidates',
         where: {
@@ -371,10 +370,9 @@ export const electionEndpoints: Endpoint[] = [
           overrideAccess: true,
         })
       } catch (error) {
-        // The count check above races; the (election, race, voterTokenHash)
-        // unique index is the real guard. Converted error shapes vary, so
-        // also re-confirm against the table — a row for this credential
-        // after a failed insert means the race was lost.
+        // The count check races; the unique index is the real guard, so
+        // re-confirm against the table — a row after a failed insert means
+        // the race was lost.
         const { totalDocs } = await req.payload.find({
           collection: 'election-ballots',
           where: {

@@ -3,12 +3,9 @@ import { describe, it, expect } from 'vitest'
 
 import { provisionAccount, testPayload } from './provision'
 
-// Authority-store regression coverage: the shared permission model derives
-// every capability and Council seat from `authority-records` — the single
-// store for mandates and participation. Legacy role spellings resolve
-// through one explicit map; unmapped strings are denied, never widened.
-// All records are generated at runtime; nothing about real people is
-// embedded here.
+// Authority-store regression coverage: all capabilities and Council seats
+// derive from `authority-records`. Unmapped legacy strings deny, never widen.
+// All records are generated at runtime; no real people embedded.
 
 const NOW = Date.now()
 const iso = (ms: number) => new Date(NOW + ms).toISOString()
@@ -34,8 +31,7 @@ async function createRecord(account: AnyValue, data: AnyValue) {
   })
 }
 
-// Waits until Postgres registers a writer QUEUED on the account's shared
-// advisory lock — real database evidence of blocking, not a timeout guess.
+// Waits until pg_locks shows a writer queued on the advisory lock.
 async function waitForAdvisoryWaiter(accountId: number, timeoutMs = 10000) {
   const { requirePgPool } = await import('@/lib/pg')
   const { AUTHORITY_LOCK_NS } = await import('@/lib/authorityLock')
@@ -111,8 +107,7 @@ describe('record-derived permissions', () => {
 
   it('resolves recorded legacy role strings and denies unmapped ones', async () => {
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
-    // Rows written before the single-store migration keep their recorded
-    // spelling; the resolver maps them (or reports them unmapped).
+    // Legacy spellings resolve via the map (or report unmapped).
     await createRecord(account, {
       scopeType: 'team',
       scopeId: 'election_facilitation',
@@ -260,9 +255,8 @@ describe('authority service', () => {
       scopeId: 'platform',
       substituteFor: (principal as AnyValue).id,
     })
-    // The row keeps the platform scope — the covered seat is carried by
-    // councilSeat alone, so the substitute can never inherit the
-    // principal's participation scopes.
+    // The covered seat lives in councilSeat alone — the substitute can't
+    // inherit the principal's participation scopes.
     expect((sub as AnyValue).scopeType).toBe('platform')
     expect((sub as AnyValue).scopeId).toBe('seat:wg:oceans')
     expect((sub as AnyValue).councilSeat).toBe('wg:oceans')
@@ -348,8 +342,7 @@ describe('authority service', () => {
     const { withAuthorityLock } = await import('@/lib/authorityLock')
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
 
-    // Hold the account's authority lock inside a transaction; a grant for
-    // the same account must queue on it — verified in pg_locks.
+    // Hold the account lock; a concurrent grant must queue (pg_locks).
     const holderReq = { payload, headers: new Headers() } as AnyValue
     let pauseReached!: () => void
     const atPause = new Promise<void>((r) => (pauseReached = r))

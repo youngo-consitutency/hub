@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// CI smoke for the content MCP service: boots mcp-content/server.mjs and
-// completes the MCP handshake (initialize → tools/list) against it. The
-// Hub API is deliberately unreachable — listing tools must never need it,
-// so this also proves the service carries no database/API dependency at
-// handshake time.
+// CI smoke: boot mcp-content/server.mjs and complete the MCP handshake. The
+// Hub API is deliberately unreachable — tools/list must never need it.
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

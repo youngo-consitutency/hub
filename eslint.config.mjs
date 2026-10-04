@@ -24,11 +24,9 @@ const eslintConfig = [
     },
   },
   {
-    // src/member/ is the member app — its own wouter router uses <a href>
-    // (not next/link), and mount effects intentionally set state on load.
-    // React-compiler-era strictness (nested components, render-time impurity)
-    // flags working legacy patterns; kept visible as warnings, fixed
-    // opportunistically.
+    // src/member/ is the member app mid-migration to App Router — mount
+    // effects set state on load, and render-time strictness flags working
+    // legacy patterns. Kept visible as warnings, fixed opportunistically.
     files: ['src/member/**/*.{js,jsx,ts,tsx,mjs}'],
     rules: {
       '@next/next/no-html-link-for-pages': 'off',

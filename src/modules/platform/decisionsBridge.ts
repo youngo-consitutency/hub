@@ -14,11 +14,9 @@ import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
 import type { Doc, AnyValue } from '../../lib/domain'
 import type { DecisionFlag, DecisionProposal } from '../../payload-types'
 
-// Bridge between the operational platform UI (/platform/decisions*) and the
-// S09 decision engine. decision_proposals is the single store; the legacy
-// platform_decisions table survives only as a uuid-keyed projection so
-// platform_tasks/platform_enquiries foreign keys and old links keep working.
-// Every mutation writes S09 first, then syncs the projection row.
+// Bridge: operational platform UI → S09 engine. decision_proposals is the
+// store; platform_decisions survives as a uuid-keyed projection for legacy
+// foreign keys. Mutations write S09 first, then sync the projection.
 
 const STAGE: Record<string, string> = {
   draft: 'draft',
@@ -47,8 +45,7 @@ function deadlineFor(p: AnyValue): string | null {
   return null
 }
 
-// Accept a numeric S09 id, a platform projection uuid, or an imported
-// legacy uuid stored in legacy_ref.
+// Accept a numeric S09 id, a projection uuid, or a legacy_ref uuid.
 async function resolveProposal(req: PayloadRequest, raw: string) {
   const id = String(raw)
   if (/^\d+$/.test(id)) return loadProposal(req, Number(id))
@@ -69,8 +66,7 @@ async function publicId(p: AnyValue): Promise<string> {
   return rows[0]?.id ?? String(p.id)
 }
 
-// Mirror the mutable display columns back into platform_decisions so raw-SQL
-// readers (public register, enquiry gate, task links) stay consistent.
+// Mirror display columns into platform_decisions for raw-SQL readers.
 async function syncProjection(p: AnyValue) {
   await db().query(
     `UPDATE platform_decisions SET
@@ -608,8 +604,7 @@ export async function publishDecision(
     fail(403, 'The publisher must belong to this body to review its decision.')
   if (proposal.status !== 'adopted' || Number(proposal.version) !== Number(version))
     fail(409, 'Only an adopted, current proposal can be published by a different person.')
-  // Editorial independence: neither the author nor the last reviser may
-  // approve publication of their own text.
+  // Editorial independence: author/last reviser may not self-approve.
   const { docs: lastRevised } = await req.payload.find({
     collection: 'decision-events',
     where: {
