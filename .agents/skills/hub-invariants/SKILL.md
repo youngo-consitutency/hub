@@ -39,3 +39,7 @@ Apply these on every change. They exist because real bugs shipped when they were
 - British English in docs, UI copy, and comments.
 - No AI-generated imagery.
 - Comments: concise — state the invariant or rationale, do not narrate the code.
+
+## Session memory
+
+Use the `memory` MCP server (bank `youngo-hub`): `recall` tagged `project:youngo-hub` before substantive work, `retain` verified findings and decisions after. No local vault files. Never retain secrets or member data.
