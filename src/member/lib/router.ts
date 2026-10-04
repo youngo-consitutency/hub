@@ -5,7 +5,8 @@
 // fall back to a hard navigation.
 'use client'
 import type { AnyValue } from './types'
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 
 const PEEK_KEY = 'youngo.peekBackground'
@@ -14,6 +15,16 @@ let bound: AppRouterInstance | null = null
 
 export function bindRouter(router: AppRouterInstance) {
   bound = router
+}
+
+// Mount once inside every tree that calls navigate(): binds the App Router
+// instance so navigate/replace soft-navigate instead of hard-reloading.
+export function RouterBridge() {
+  const router = useRouter()
+  useEffect(() => {
+    bindRouter(router)
+  }, [router])
+  return null
 }
 
 export function peekBackground(): string | null {

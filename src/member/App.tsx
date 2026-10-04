@@ -1,19 +1,12 @@
-interface LockedProps {
-  title?: string
-  body?: AnyValue
-  course?: AnyValue
-}
-
 import type { AnyValue, Doc } from './lib/types'
-import { canManageGroup, canManageGroups } from './lib/groupPermissions'
 import { Shell } from './components/Shell'
 import { AccessGate } from './components/AccessGate'
 import { AccountProvider, useAccount } from './lib/accountContext'
 import { usePath, navigate, replace, peekBackground } from './lib/router'
 import { lazy, Suspense, useEffect } from 'react'
-import { A, Button, Empty, Skeletons, PageHeader } from './components/ui'
-import { signOut } from './lib/session'
-import { TbCompass as Compass, TbLock as Lock } from 'react-icons/tb'
+import { A, Empty, Skeletons } from './components/ui'
+import { lockedFor } from './lib/guards'
+import { TbCompass as Compass } from 'react-icons/tb'
 import { Privacy } from './pages/Privacy'
 import { RoutePeek } from './components/RoutePeek'
 
@@ -74,18 +67,6 @@ const Profile = lazyPage(() => import('./pages/Profile'), 'Profile')
 const ReviewQueue = lazyPage(() => import('./pages/ReviewQueue'), 'ReviewQueue')
 const CpCallBook = lazyPage(() => import('./pages/CpCallBook'), 'CpCallBook')
 const Help = lazyPage(() => import('./pages/Help'), 'Help')
-
-// These pages remain available while the membership course is incomplete.
-const PRE_VERIFY = [
-  /^\/onboarding/,
-  /^\/library/,
-  /^\/resources/,
-  /^\/recognition/,
-  /^\/privacy/,
-  /^\/help/,
-  /^\/about/,
-  /^\/membership\/appeal/,
-]
 
 const ROUTES = [
   [/^\/platform\/people$/, PeopleRedirect],
@@ -214,38 +195,6 @@ function SearchRedirect() {
   return <Skeletons n={2} />
 }
 
-function Locked({
-  title = 'Complete your membership course',
-  body = 'Your account is registered. Pass the short membership course to use the rest of the Hub.',
-  course = false,
-}: LockedProps) {
-  return (
-    <div>
-      <PageHeader icon={Lock} title={title} />
-      <Empty
-        icon={Lock}
-        body={body}
-        cta={
-          course ? (
-            <>
-              <A className="btn btn-primary" href="/onboarding/course">
-                Start course
-              </A>
-              <Button variant="ghost" onClick={() => signOut()}>
-                Sign out
-              </Button>
-            </>
-          ) : undefined
-        }
-      />
-    </div>
-  )
-}
-
-function isPreVerify(path: AnyValue) {
-  return PRE_VERIFY.some((re) => re.test(path))
-}
-
 function AppRoutes() {
   const path = usePath()
   const { account } = useAccount()
@@ -260,130 +209,8 @@ function AppRoutes() {
     }
   }, [account, verified, path])
 
-  if (account && !verified && !isPreVerify(path)) {
-    return (
-      <Shell>
-        <Locked course />
-      </Shell>
-    )
-  }
-
-  const capabilities = account?.access?.capabilities || []
-  const canManageAccounts =
-    account?.access?.canAdminister || capabilities.includes('accounts.manage')
-  if (
-    path.startsWith('/staff/review') &&
-    !canManageAccounts &&
-    !account?.access?.teamRoles?.includes('membership_team')
-  ) {
-    return (
-      <Shell>
-        <Locked
-          title="Review team only"
-          body="Feedback and posting review are available to platform operators and the Membership Team."
-        />
-      </Shell>
-    )
-  }
-
-  // Route guards improve the interface; the API still enforces every permission.
-  if (path.startsWith('/admin') && account && !canManageAccounts) {
-    return (
-      <Shell>
-        <Locked title="Admin only" body="This workspace requires platform administration access." />
-      </Shell>
-    )
-  }
-  if (path.startsWith('/staff/content') && account) {
-    if (!capabilities.includes('content.draft') && !capabilities.includes('content.review')) {
-      return (
-        <Shell>
-          <Locked
-            title="Website permission required"
-            body="Ask a platform administrator to record your approved website drafting or publishing access."
-          />
-        </Shell>
-      )
-    }
-  }
-  if (path.startsWith('/focal') && account && !account.access?.isFocalPoint) {
-    return (
-      <Shell>
-        <Locked title="Focal Points only" body="This workspace is for the Global Focal Points." />
-      </Shell>
-    )
-  }
-  // The NGO portal needs an organisation context — an active seat or an
-  // organisation-scope authority record.
-  if (path.startsWith('/ngo') && account && !account.access?.ngo) {
-    // Any signed-in account may open an invitation before it has an NGO seat.
-    if (!path.startsWith('/ngo/accept')) {
-      return (
-        <Shell>
-          <Locked
-            title="NGO access required"
-            body="An approved organisation seat is required. You can also accept a seat invite."
-          />
-        </Shell>
-      )
-    }
-  }
-  if (path.startsWith('/cp/') && account) {
-    const requestedWg = path.split('/')[2]
-    const managesRequestedWg = canManageGroup(account, requestedWg)
-    if (!managesRequestedWg) {
-      return (
-        <Shell>
-          <Locked
-            title="WG Contact Points only"
-            body="A current Contact Point assignment for this working group is required."
-          />
-        </Shell>
-      )
-    }
-  }
-  const access = account?.access
-  const hasCpWorkspace = canManageGroups(account)
-  if (path === '/cp' && account && access && !hasCpWorkspace) {
-    return (
-      <Shell>
-        <Locked
-          title="WG Contact Points only"
-          body="A current Working Group Contact Point mandate must be recorded for your account."
-        />
-      </Shell>
-    )
-  }
-  if (
-    path.startsWith('/team/membership') &&
-    account &&
-    access &&
-    !access.teamRoles?.includes('membership_team')
-  ) {
-    return (
-      <Shell>
-        <Locked
-          title="Membership Team only"
-          body="Ask an admin to add this team responsibility to your account."
-        />
-      </Shell>
-    )
-  }
-  if (
-    path.startsWith('/team/gys') &&
-    account &&
-    access &&
-    !access.teamRoles?.includes('gys_policy_team')
-  ) {
-    return (
-      <Shell>
-        <Locked
-          title="GYS Policy Team only"
-          body="Ask an admin to add this team responsibility to your account."
-        />
-      </Shell>
-    )
-  }
+  const locked = lockedFor(path, account)
+  if (locked) return <Shell>{locked}</Shell>
 
   const background = peekBackground()
   const peekRoute =

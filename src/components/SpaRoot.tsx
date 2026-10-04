@@ -1,14 +1,13 @@
 'use client'
 
-// Mounts the preserved member SPA verbatim. The SPA manages its own
-// history-based router, API calls to /api/*, styles and PWA behaviour.
+// Mounts the member app for routes not yet ported to the App Router.
 import { useEffect } from 'react'
 import { SWRConfig } from 'swr'
-import { Router } from 'wouter'
 import '../member/styles/tokens.css'
 import '../member/styles/app.css'
 import App from '../member/App'
 import { disablePWAInDevelopment, initPWA } from '../member/lib/pwa'
+import { RouterBridge } from '../member/lib/router'
 import { watchSystemTheme } from '../member/lib/theme'
 
 export default function SpaRoot() {
@@ -28,11 +27,8 @@ export default function SpaRoot() {
         errorRetryCount: 3,
       }}
     >
-      {/* ssrPath keeps the SPA renderable during Next.js SSR — the old router
-          served '/' as the server snapshot. */}
-      <Router ssrPath="/">
-        <App />
-      </Router>
+      <RouterBridge />
+      <App />
     </SWRConfig>
   )
 }
