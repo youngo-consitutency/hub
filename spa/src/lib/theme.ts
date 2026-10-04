@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 const THEMES = new Set(['light', 'dark'])
 export const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)'
 
@@ -6,11 +7,11 @@ export const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)'
 // source of truth; the Hub does not store a competing override.
 export const DEFAULT_THEME = 'light'
 
-export function systemTheme(media: any) {
+export function systemTheme(media: AnyValue) {
   return media?.matches ? 'dark' : DEFAULT_THEME
 }
 
-export function applyTheme(theme: any, root = document.documentElement) {
+export function applyTheme(theme: AnyValue, root = document.documentElement) {
   const next = THEMES.has(theme) ? theme : DEFAULT_THEME
   root.dataset.theme = next
   root.ownerDocument

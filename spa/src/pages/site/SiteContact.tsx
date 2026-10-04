@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../lib/types'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbAt as AtSign,
@@ -33,8 +34,8 @@ export function SiteContact() {
       <section className="siteSection" aria-labelledby="routes-heading">
         <h2 id="routes-heading">{contact.routesTitle}</h2>
         <div className="cardGrid">
-          {(contact.routes || []).map(({ icon, title, body, cta }: any) => {
-            const Icon = (ROUTE_ICONS as any)[icon] || Users
+          {(contact.routes || []).map(({ icon, title, body, cta }: AnyValue) => {
+            const Icon = (ROUTE_ICONS as AnyValue)[icon] || Users
             return (
               <article key={title} className="card siteContactCard">
                 <span className="iconTile" aria-hidden>
@@ -82,7 +83,7 @@ export function SiteContact() {
           <h2 id="socials-heading">{follow.title}</h2>
           <p className="siteSectionLead">{follow.lead}</p>
           <ul className="siteSocialList" aria-label="Official YOUNGO channels">
-            {socials.map((link: any) => (
+            {socials.map((link: AnyValue) => (
               <li key={link.key}>
                 <a href={link.url} target="_blank" rel="noreferrer noopener">
                   <DestinationIcon url={link.url} size={16} />

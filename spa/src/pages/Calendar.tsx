@@ -2,6 +2,7 @@ interface CalendarEventIconProps {
   type: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useApi } from '../lib/api'
@@ -58,7 +59,7 @@ const EVENT_ICONS = {
 }
 
 function CalendarEventIcon({ type }: CalendarEventIconProps) {
-  const Icon = (EVENT_ICONS as any)[type] || CalendarClock
+  const Icon = (EVENT_ICONS as AnyValue)[type] || CalendarClock
   return (
     <span className="calendarEventIcon" data-event-type={type} aria-hidden>
       <Icon size={15} strokeWidth={1.8} />
@@ -68,13 +69,15 @@ function CalendarEventIcon({ type }: CalendarEventIconProps) {
 
 export function Calendar() {
   const { eventTypes } = useContentOptions()
-  const EVENT_TYPES = Object.fromEntries(eventTypes.map((t: any) => [t.value, t.short || t.label]))
-  const [typeFilters, setTypeFilters] = useState<Record<string, any>>({})
+  const EVENT_TYPES = Object.fromEntries(
+    eventTypes.map((t: AnyValue) => [t.value, t.short || t.label]),
+  )
+  const [typeFilters, setTypeFilters] = useState<Doc>({})
   const [month, setMonth] = useState(calendarMonth)
-  const [selectedDay, setSelectedDay] = useState<any>(null)
+  const [selectedDay, setSelectedDay] = useState<AnyValue>(null)
   const [agendaScope, setAgendaScope] = useState('month')
-  const [calendarPanel, setCalendarPanel] = useState<any>(null)
-  const [calendarHeight, setCalendarHeight] = useState<any>(null)
+  const [calendarPanel, setCalendarPanel] = useState<AnyValue>(null)
+  const [calendarHeight, setCalendarHeight] = useState<AnyValue>(null)
   const query = useApi('/events?type=all')
   const today = new Date().toISOString().slice(0, 10)
 
@@ -88,7 +91,7 @@ export function Calendar() {
     return () => observer.disconnect()
   }, [calendarPanel])
 
-  const changeType = (nextType: any) => {
+  const changeType = (nextType: AnyValue) => {
     if (nextType === 'all') setTypeFilters({})
     else {
       setTypeFilters((current) => toggleFilter(current, nextType))
@@ -97,7 +100,7 @@ export function Calendar() {
     if (agendaScope === 'day') setAgendaScope('month')
   }
 
-  const changeMonth = (amount: any) => {
+  const changeMonth = (amount: AnyValue) => {
     setMonth((current) => shiftCalendarMonth(current, amount))
     setSelectedDay(null)
     setAgendaScope('month')
@@ -109,7 +112,7 @@ export function Calendar() {
     setAgendaScope('month')
   }
 
-  const changeAgendaScope = (scope: any) => {
+  const changeAgendaScope = (scope: AnyValue) => {
     setAgendaScope(scope)
     setSelectedDay(null)
     if (scope !== 'month') setMonth(calendarMonth())
@@ -150,7 +153,7 @@ export function Calendar() {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: any) =>
+        empty={(d: AnyValue) =>
           d.items.length === 0 ? (
             <Empty
               icon={CalendarOff}
@@ -160,8 +163,10 @@ export function Calendar() {
           ) : null
         }
       >
-        {(data: any) => {
-          const events = data.items.filter((event: any) => matchesFilters(event.type, typeFilters))
+        {(data: Doc) => {
+          const events = data.items.filter((event: AnyValue) =>
+            matchesFilters(event.type, typeFilters),
+          )
           const grouped = groupEventsByDate(events)
           const days = buildCalendarDays(month, grouped)
           const monthEvents = eventsInCalendarMonth(events, month)
@@ -185,7 +190,9 @@ export function Calendar() {
               : agendaScope === 'week'
                 ? 'This week'
                 : formatCalendarMonth(month)
-          const visibleTypes = [...new Set<any>(monthEvents.map((event: any) => event.type))]
+          const visibleTypes = [
+            ...new Set<AnyValue>(monthEvents.map((event: AnyValue) => event.type)),
+          ]
 
           return (
             <div className="calendarLayout">
@@ -236,7 +243,7 @@ export function Calendar() {
                 <div className="calendarMonthGrid">
                   {days.map((date) => {
                     const dots = date.events.slice(0, 4)
-                    const label = `${formatCalendarDay(date.key)}: ${date.events.map((event: any) => event.title).join(', ')}`
+                    const label = `${formatCalendarDay(date.key)}: ${date.events.map((event: AnyValue) => event.title).join(', ')}`
                     const content = (
                       <>
                         <time
@@ -248,7 +255,7 @@ export function Calendar() {
                         </time>
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
-                            {dots.map((event: any) => (
+                            {dots.map((event: AnyValue) => (
                               <CalendarEventIcon key={event.slug} type={event.type} />
                             ))}
                             {date.events.length > dots.length && (
@@ -379,7 +386,7 @@ export function Calendar() {
                           </div>
                         )}
                         <div className="calendarAgendaCards">
-                          {dateEvents.map((event: any) => (
+                          {dateEvents.map((event: AnyValue) => (
                             <EventCard key={event.slug} event={event} />
                           ))}
                         </div>

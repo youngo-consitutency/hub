@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffField } from '../lib/collectionAccess'
+import { isStaff } from '../lib/collectionAccess'
 
 export const FeedbackTickets: CollectionConfig = {
   slug: 'feedback-tickets',

@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useMemo, useState } from 'react'
 import { apiPost } from '../lib/api'
 import { Button } from '../components/ui'
@@ -16,12 +17,12 @@ export function ResetPassword() {
   const token = useMemo(() => tokenFromUrl(), [])
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [fields, setFields] = useState<Record<string, any>>({})
-  const [error, setError] = useState<any>(null)
+  const [fields, setFields] = useState<Doc>({})
+  const [error, setError] = useState<AnyValue>(null)
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = async (e: any) => {
+  const submit = async (e: AnyValue) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
@@ -34,8 +35,8 @@ export function ResetPassword() {
       })
       setDone(true)
     } catch (err) {
-      setFields((err as any).fields || {})
-      setError((err as any).message)
+      setFields((err as AnyValue).fields || {})
+      setError((err as AnyValue).message)
     } finally {
       setSubmitting(false)
     }

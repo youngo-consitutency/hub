@@ -1,8 +1,9 @@
 interface DirectMatchesProps {
-  query?: any
-  data?: any
+  query?: AnyValue
+  data?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   TbAddressBook as AddressBook,
@@ -26,49 +27,49 @@ const GROUPS = [
   {
     key: 'events',
     label: 'Events',
-    to: (event: any) => `/calendar/${event.slug}`,
-    line: (event: any) => fmtDual(event.startsAt),
-    icon: (event: any) => (event.wg?.slug ? workingGroupIcon(event.wg.slug) : CalendarDays),
+    to: (event: AnyValue) => `/calendar/${event.slug}`,
+    line: (event: AnyValue) => fmtDual(event.startsAt),
+    icon: (event: AnyValue) => (event.wg?.slug ? workingGroupIcon(event.wg.slug) : CalendarDays),
   },
   {
     key: 'submissions',
     label: 'Submissions',
-    to: (submission: any) => `/submissions/${submission.slug}`,
-    line: (submission: any) => submission.wg?.name || submission.status,
-    icon: (submission: any) =>
+    to: (submission: AnyValue) => `/submissions/${submission.slug}`,
+    line: (submission: AnyValue) => submission.wg?.name || submission.status,
+    icon: (submission: AnyValue) =>
       submission.wg?.slug ? workingGroupIcon(submission.wg.slug) : FileText,
   },
   {
     key: 'decisions',
     label: 'Council',
-    to: (decision: any) => `/council/${decision.slug}`,
-    line: (decision: any) => decision.proposer,
+    to: (decision: AnyValue) => `/council/${decision.slug}`,
+    line: (decision: AnyValue) => decision.proposer,
     icon: () => Gavel,
   },
   {
     key: 'coys',
     label: 'COYs',
-    to: (coy: any) => `/coys/${coy.slug}`,
-    line: (coy: any) => fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc),
+    to: (coy: AnyValue) => `/coys/${coy.slug}`,
+    line: (coy: AnyValue) => fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc),
     icon: () => Globe,
   },
   {
     key: 'groups',
     label: 'Working groups',
-    to: (group: any) => `/groups/${group.slug}`,
-    line: (group: any) => group.focusLine,
-    icon: (group: any) => workingGroupIcon(group.slug),
+    to: (group: AnyValue) => `/groups/${group.slug}`,
+    line: (group: AnyValue) => group.focusLine,
+    icon: (group: AnyValue) => workingGroupIcon(group.slug),
   },
   {
     key: 'contacts',
     label: 'Directory',
     to: () => '/directory',
-    line: (contact: any) => contact.description,
+    line: (contact: AnyValue) => contact.description,
     icon: () => AddressBook,
   },
 ]
 
-function confidenceLabel(value: any) {
+function confidenceLabel(value: AnyValue) {
   if (value === 'medium') return 'Evidence-supported'
   if (value === 'low') return 'Limited evidence'
   return 'Insufficient evidence'
@@ -89,7 +90,7 @@ function DirectMatches({ query, data }: DirectMatchesProps) {
       {GROUPS.filter((group) => data[group.key]?.length).map((group) => (
         <Section key={group.key} label={group.label}>
           <div className="cardGrid">
-            {data[group.key].map((item: any, index: any) => {
+            {data[group.key].map((item: AnyValue, index: number) => {
               const ResultIcon = group.icon(item)
               return (
                 <A
@@ -122,12 +123,12 @@ export function Search() {
   const initialQuery = new URLSearchParams(window.location.search).get('q') || ''
   const [query, setQuery] = useState(initialQuery)
   const direct = useApi(`/search?q=${encodeURIComponent(query)}`, [query])
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AnyValue>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [proposal, setProposal] = useState<Record<string, any>>({ status: 'idle', message: '' })
-  const [review, setReview] = useState<Record<string, any>>({ items: [], metrics: null, error: '' })
-  const [reasons, setReasons] = useState<Record<string, any>>({})
+  const [proposal, setProposal] = useState<AnyValue>({ status: 'idle', message: '' })
+  const [review, setReview] = useState<AnyValue>({ items: [], metrics: null, error: '' })
+  const [reasons, setReasons] = useState<AnyValue>({})
   const citations = useMemo(() => result?.synthesis?.citations || [], [result])
 
   const isOperator = (account?.access?.capabilities || []).includes('intelligence.operations.read')
@@ -140,7 +141,7 @@ export function Search() {
       ])
       setReview({ items: queue.items || [], metrics, error: '' })
     } catch (requestError) {
-      setReview((current) => ({ ...current, error: (requestError as any).message }))
+      setReview((current: AnyValue) => ({ ...current, error: (requestError as AnyValue).message }))
     }
   }, [isOperator])
 
@@ -148,7 +149,7 @@ export function Search() {
     refreshReview()
   }, [refreshReview])
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     const clean = query.trim()
     if (clean.length < 3) return
@@ -159,7 +160,7 @@ export function Search() {
     try {
       setResult(await apiPost('/intelligence/query', { query: clean, limit: 10 }))
     } catch (requestError) {
-      setError((requestError as any).message)
+      setError((requestError as AnyValue).message)
       setResult(null)
     } finally {
       setLoading(false)
@@ -172,7 +173,7 @@ export function Search() {
     try {
       const body = [
         result.synthesis.answer,
-        ...result.synthesis.bullets.map((item: any) => `- ${item.text}`),
+        ...result.synthesis.bullets.map((item: AnyValue) => `- ${item.text}`),
         '',
         result.synthesis.caveat,
       ].join('\n')
@@ -182,7 +183,7 @@ export function Search() {
           action: 'save_research_note',
           title: `Evidence note: ${result.query.slice(0, 120)}`,
           body,
-          citations: citations.map((item: any) => item.evidenceId),
+          citations: citations.map((item: AnyValue) => item.evidenceId),
         },
         { 'Idempotency-Key': crypto.randomUUID() },
       )
@@ -191,11 +192,11 @@ export function Search() {
         message: 'Proposed for independent admin review. No source record was changed.',
       })
     } catch (requestError) {
-      setProposal({ status: 'error', message: (requestError as any).message })
+      setProposal({ status: 'error', message: (requestError as AnyValue).message })
     }
   }
 
-  const reviewWriteback = async (item: any, action: any) => {
+  const reviewWriteback = async (item: AnyValue, action: AnyValue) => {
     try {
       if (action === 'approve')
         await apiPost(`/intelligence/writebacks/${item.id}/approve`, {
@@ -204,9 +205,9 @@ export function Search() {
       else await apiPost(`/intelligence/writebacks/${item.id}/apply`, {})
       await refreshReview()
     } catch (requestError) {
-      setReview((current) => ({
+      setReview((current: AnyValue) => ({
         ...current,
-        error: (requestError as any).message,
+        error: (requestError as AnyValue).message,
       }))
     }
   }
@@ -275,10 +276,10 @@ export function Search() {
             </div>
             {result.synthesis.bullets.length ? (
               <ol className="intelligenceBullets">
-                {result.synthesis.bullets.map((item: any, index: any) => (
+                {result.synthesis.bullets.map((item: AnyValue, index: number) => (
                   <li key={index}>
                     {item.text}{' '}
-                    {item.citationIndexes.map((citation: any) => (
+                    {item.citationIndexes.map((citation: AnyValue) => (
                       <a key={citation} className="citationChip" href={`#evidence-${citation}`}>
                         [{citation}]
                       </a>
@@ -317,7 +318,7 @@ export function Search() {
             action={<span>{result.policy.indexedSources.join(' · ')}</span>}
           >
             <div className="cardGrid">
-              {result.evidence.map((item: any, index: any) => (
+              {result.evidence.map((item: AnyValue, index: number) => (
                 <article
                   className="card intelligenceEvidence"
                   id={`evidence-${index + 1}`}
@@ -347,7 +348,7 @@ export function Search() {
       {query.trim() ? (
         <Section label="Direct matches">
           <Async query={direct} skeletons={3}>
-            {(data: any) => <DirectMatches query={query} data={data} />}
+            {(data: AnyValue) => <DirectMatches query={query} data={data} />}
           </Async>
         </Section>
       ) : (
@@ -364,8 +365,8 @@ export function Search() {
           action={
             review.metrics && (
               <span>
-                {(review.metrics as any).queries.total} questions ·{' '}
-                {(review.metrics as any).queries.last_24h} today
+                {(review.metrics as AnyValue).queries.total} questions ·{' '}
+                {(review.metrics as AnyValue).queries.last_24h} today
               </span>
             )
           }
@@ -376,45 +377,45 @@ export function Search() {
           {review.error && <p className="intelligenceErrorText meta">{review.error}</p>}
           <div className="stackSm searchReviewQueue">
             {review.items.length === 0 && <p className="metaMuted">No research-note proposals.</p>}
-            {review.items.map((item: any) => {
-              const proposedBy = (item as any).proposed_by || (item as any).proposedBy
-              const payload = (item as any).payload || {}
+            {review.items.map((item: AnyValue) => {
+              const proposedBy = (item as AnyValue).proposed_by || (item as AnyValue).proposedBy
+              const payload = (item as AnyValue).payload || {}
               return (
-                <div className="intelligenceQueueItem" key={(item as any).id}>
+                <div className="intelligenceQueueItem" key={(item as AnyValue).id}>
                   <div>
-                    <strong>{payload.title || (item as any).action}</strong>
+                    <strong>{payload.title || (item as AnyValue).action}</strong>
                     <p className="metaMuted">
-                      {(item as any).status} · proposed by{' '}
+                      {(item as AnyValue).status} · proposed by{' '}
                       {proposedBy === account.id ? 'you' : proposedBy}
                     </p>
                   </div>
-                  {(item as any).status === 'proposed' && proposedBy !== account.id && (
+                  {(item as AnyValue).status === 'proposed' && proposedBy !== account.id && (
                     <input
                       className="input"
                       placeholder="Approval reason (required)"
-                      value={reasons[(item as any).id] || ''}
+                      value={reasons[(item as AnyValue).id] || ''}
                       onChange={(event) =>
-                        setReasons((current) => ({
+                        setReasons((current: AnyValue) => ({
                           ...current,
-                          [(item as any).id]: event.target.value,
+                          [(item as AnyValue).id]: event.target.value,
                         }))
                       }
                     />
                   )}
                   <div className="rowGap">
-                    {(item as any).status === 'proposed' && (
+                    {(item as AnyValue).status === 'proposed' && (
                       <button
                         className="btn btn-secondary btn-sm"
                         disabled={
                           proposedBy === account.id ||
-                          (reasons[(item as any).id] || '').trim().length < 8
+                          (reasons[(item as AnyValue).id] || '').trim().length < 8
                         }
                         onClick={() => reviewWriteback(item, 'approve')}
                       >
                         Approve
                       </button>
                     )}
-                    {(item as any).status === 'approved' && (
+                    {(item as AnyValue).status === 'approved' && (
                       <button
                         className="btn btn-primary btn-sm"
                         onClick={() => reviewWriteback(item, 'apply')}

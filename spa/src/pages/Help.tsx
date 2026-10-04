@@ -1,7 +1,8 @@
 interface PersonBehindHubProps {
-  person?: any
+  person?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { TbHelpCircle as HelpIcon } from 'react-icons/tb'
 import {
   TbHome as Home,
@@ -18,7 +19,7 @@ import { useDocument } from '../lib/documents'
 function PersonBehindHub({ person }: PersonBehindHubProps) {
   const initials = person.name
     .split(' ')
-    .map((part: any) => part[0])
+    .map((part: AnyValue) => part[0])
     .slice(0, 2)
     .join('')
   return (
@@ -110,7 +111,7 @@ export function Help() {
       {HUB_LAUNCHERS.length > 0 && (
         <Section label="People behind the Hub">
           <div className="helpPeopleGrid">
-            {HUB_LAUNCHERS.map((person: any) => (
+            {HUB_LAUNCHERS.map((person: AnyValue) => (
               <PersonBehindHub key={person.name} person={person} />
             ))}
           </div>

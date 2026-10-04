@@ -5,7 +5,7 @@ import { resolveCoyStatus } from '../../spa/shared/coyStatus'
 import { normalizeTaskForces } from '../../spa/shared/protocol'
 import type { Doc } from './domain'
 
-type AnyRecord = Record<string, any>
+type AnyRecord = Doc
 type Req = PayloadRequest | Payload
 
 const p = (req: Req): Payload => ('payload' in req ? req.payload : req)

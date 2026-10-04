@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 // Canonical time display and countdown.
 // All params explicit so node --test can pin tz/now.
 
@@ -5,7 +6,7 @@ export function localTz() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
-export function fmtDay(iso: any, tz: any) {
+export function fmtDay(iso: AnyValue, tz: AnyValue) {
   return new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
     day: 'numeric',
@@ -14,7 +15,7 @@ export function fmtDay(iso: any, tz: any) {
   }).format(new Date(iso))
 }
 
-function hm(iso: any, tz: any) {
+function hm(iso: AnyValue, tz: AnyValue) {
   return new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
@@ -23,7 +24,7 @@ function hm(iso: any, tz: any) {
   }).format(new Date(iso))
 }
 
-function zoneAbbr(iso: any, tz: any) {
+function zoneAbbr(iso: AnyValue, tz: AnyValue) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     timeZone: tz,
@@ -33,7 +34,7 @@ function zoneAbbr(iso: any, tz: any) {
 }
 
 // "Wed 15 Jul · 13:00 UTC · 16:00 EAT"; single time when viewer zone is UTC.
-export function fmtDual(iso: any, tz = localTz()) {
+export function fmtDual(iso: AnyValue, tz = localTz()) {
   const day = fmtDay(iso, 'UTC')
   const utc = `${hm(iso, 'UTC')} UTC`
   const zone = zoneAbbr(iso, tz)
@@ -41,7 +42,7 @@ export function fmtDual(iso: any, tz = localTz()) {
   return `${day} · ${utc} · ${hm(iso, tz)} ${zone}`
 }
 
-export function fmtMoment(iso: any, tz = localTz()) {
+export function fmtMoment(iso: AnyValue, tz = localTz()) {
   const zone = zoneAbbr(iso, tz)
   const isUtc = zone === 'UTC' || zone === 'GMT'
   return {
@@ -53,9 +54,9 @@ export function fmtMoment(iso: any, tz = localTz()) {
   }
 }
 
-export function fmtDateRange(startsOn: any, endsOn: any, datesTbc: any) {
+export function fmtDateRange(startsOn: AnyValue, endsOn: AnyValue, datesTbc: AnyValue) {
   if (!startsOn) return 'Dates TBC'
-  const fmt = (d: any) =>
+  const fmt = (d: AnyValue) =>
     new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
       month: 'short',
@@ -67,7 +68,7 @@ export function fmtDateRange(startsOn: any, endsOn: any, datesTbc: any) {
 }
 
 // Thresholds per design system §6.3: >7d neutral, ≤7d warn, ≤48h danger.
-export function countdown(iso: any, now = new Date()) {
+export function countdown(iso: AnyValue, now = new Date()) {
   const ms = new Date(iso).getTime() - now.getTime()
   if (ms <= 0) return { label: 'closed', tone: 'danger' }
   const totalH = Math.floor(ms / 3600000)
@@ -82,7 +83,7 @@ export function countdown(iso: any, now = new Date()) {
   return { label, tone }
 }
 
-export function formatCountdownLabel(prefix: any, value: any) {
+export function formatCountdownLabel(prefix: AnyValue, value: AnyValue) {
   if (!prefix) return value === 'closed' ? 'Closed' : value
   if (value !== 'closed') return `${prefix} ${value}`
   if (/closes in$/i.test(prefix)) return 'Closed'
@@ -90,7 +91,7 @@ export function formatCountdownLabel(prefix: any, value: any) {
   return `${prefix} closed`
 }
 
-export function formatDateTime(value: any) {
+export function formatDateTime(value: AnyValue) {
   if (!value) return 'Not set'
   const date = new Date(value)
   return Number.isNaN(date.getTime())

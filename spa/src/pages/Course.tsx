@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
@@ -12,13 +13,13 @@ import {
 
 export function Course() {
   const { account, setAccount } = useAccount()
-  const [data, setData] = useState<any>(null)
-  const [error, setError] = useState<any>(null)
+  const [data, setData] = useState<AnyValue>(null)
+  const [error, setError] = useState<AnyValue>(null)
   const [step, setStep] = useState('modules') // modules | quiz | done
   const [moduleIdx, setModuleIdx] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [answers, setAnswers] = useState<Doc>({})
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AnyValue>(null)
 
   const load = () => {
     setError(null)
@@ -37,7 +38,7 @@ export function Course() {
   const mod = data.modules[moduleIdx]
   const lastModule = moduleIdx >= data.modules.length - 1
 
-  const submitQuiz = async (e: any) => {
+  const submitQuiz = async (e: AnyValue) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
@@ -47,7 +48,7 @@ export function Course() {
       setAccount(res.account)
       setStep('done')
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
       setResult({ score: null, passed: false })
     } finally {
       setSubmitting(false)
@@ -126,7 +127,7 @@ export function Course() {
               </div>
             </div>
             <div className="stackSm courseModuleBody">
-              {mod.body.map((p: any, i: any) => (
+              {mod.body.map((p: AnyValue, i: number) => (
                 <p key={i} className="meta mandatePara">
                   {p}
                 </p>
@@ -145,13 +146,13 @@ export function Course() {
 
       {step === 'quiz' && (
         <form className="stack" style={{ marginTop: 16 }} onSubmit={submitQuiz}>
-          {data.quiz.map((q: any, qi: any) => (
+          {data.quiz.map((q: AnyValue, qi: AnyValue) => (
             <div key={q.id} className="card">
               <h3>
                 {qi + 1}. {q.prompt}
               </h3>
               <div className="stackSm" style={{ marginTop: 10 }}>
-                {q.choices.map((c: any) => (
+                {q.choices.map((c: AnyValue) => (
                   <label
                     key={c.id}
                     className={`authChoice ${answers[q.id] === c.id ? 'active' : ''}`}

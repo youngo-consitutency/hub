@@ -86,7 +86,7 @@ function Workspace({ tab }: { tab: Tab }) {
   const [editorOpen, setEditorOpen] = useState(false)
   const [recordOpen, setRecordOpen] = useState(false)
 
-  const { data, error, loading, reload } = usePlatform<Overview>('/overview')
+  const { data, asOf, error, loading, reload } = usePlatform<Overview>('/overview')
   const [message, setMessage] = useState(''),
     [failure, setFailure] = useState(''),
     [busy, setBusy] = useState(false)
@@ -183,7 +183,7 @@ function Workspace({ tab }: { tab: Tab }) {
                   <DueIcon size={20} aria-hidden /> Upcoming & overdue
                 </h2>
                 <p className="meta">
-                  {data.notices.filter((n) => Date.parse(n.dueAt) < Date.now()).length} overdue ·{' '}
+                  {data.notices.filter((n) => Date.parse(n.dueAt) < asOf).length} overdue ·{' '}
                   {data.notices.length} items to review
                 </p>
               </div>

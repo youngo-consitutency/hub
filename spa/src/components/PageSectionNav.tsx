@@ -1,7 +1,8 @@
 interface PageSectionNavProps {
-  section?: any
+  section?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import {
   TbUsers,
   TbAt,
@@ -34,11 +35,11 @@ const SECTION_ICONS = {
 export function PageSectionNav({ section }: PageSectionNavProps) {
   const path = usePath()
   const current = pageSectionFor(path)
-  const { label, items } = (PAGE_SECTIONS as any)[section]
+  const { label, items } = (PAGE_SECTIONS as AnyValue)[section]
   return (
     <nav className="pageSectionNav" aria-label={label}>
-      {items.map(({ href, label }: any) => {
-        const Icon = (SECTION_ICONS as any)[href]
+      {items.map(({ href, label }: AnyValue) => {
+        const Icon = (SECTION_ICONS as AnyValue)[href]
         return (
           <A
             key={href}

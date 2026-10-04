@@ -2,13 +2,14 @@ interface SiteFaviconProps {
   url?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useState } from 'react'
 import { TbWorld } from 'react-icons/tb'
 import { faviconUrl } from '../lib/favicon'
 
 export function SiteFavicon({ url }: SiteFaviconProps) {
   const src = faviconUrl(url)
-  const [failed, setFailed] = useState<any>(null)
+  const [failed, setFailed] = useState<AnyValue>(null)
   return (
     <span className="siteFavicon" aria-hidden="true">
       {src && failed !== src ? (

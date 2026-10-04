@@ -1,7 +1,8 @@
 interface PaletteBodyProps {
-  onClose?: any
+  onClose?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useApi } from '../lib/api'
 import { navigate } from '../lib/router'
@@ -63,49 +64,49 @@ const GROUPS = [
     key: 'events',
     label: 'Events',
     icon: CalendarDays,
-    to: (e: any) => `/calendar/${e.slug}`,
-    title: (e: any) => e.title,
-    line: (e: any) => fmtDual(e.startsAt),
+    to: (e: AnyValue) => `/calendar/${e.slug}`,
+    title: (e: AnyValue) => e.title,
+    line: (e: AnyValue) => fmtDual(e.startsAt),
   },
   {
     key: 'submissions',
     label: 'Submissions',
     icon: FileText,
-    to: (s: any) => `/submissions/${s.slug}`,
-    title: (s: any) => s.title,
-    line: (s: any) => s.wg?.name || s.status,
+    to: (s: AnyValue) => `/submissions/${s.slug}`,
+    title: (s: AnyValue) => s.title,
+    line: (s: AnyValue) => s.wg?.name || s.status,
   },
   {
     key: 'decisions',
     label: 'Council',
     icon: Gavel,
-    to: (d: any) => `/council/${d.slug}`,
-    title: (d: any) => d.title,
-    line: (d: any) => d.proposer,
+    to: (d: AnyValue) => `/council/${d.slug}`,
+    title: (d: AnyValue) => d.title,
+    line: (d: AnyValue) => d.proposer,
   },
   {
     key: 'coys',
     label: 'COYs',
     icon: MapPin,
-    to: (c: any) => `/coys/${c.slug}`,
-    title: (c: any) => c.title,
-    line: (c: any) => fmtDateRange(c.startsOn, c.endsOn, c.datesTbc),
+    to: (c: AnyValue) => `/coys/${c.slug}`,
+    title: (c: AnyValue) => c.title,
+    line: (c: AnyValue) => fmtDateRange(c.startsOn, c.endsOn, c.datesTbc),
   },
   {
     key: 'groups',
     label: 'Working groups',
     icon: Users,
-    to: (g: any) => `/groups/${g.slug}`,
-    title: (g: any) => g.name,
-    line: (g: any) => g.focusLine,
+    to: (g: AnyValue) => `/groups/${g.slug}`,
+    title: (g: AnyValue) => g.name,
+    line: (g: AnyValue) => g.focusLine,
   },
   {
     key: 'contacts',
     label: 'Directory',
     icon: Users,
     to: () => '/directory',
-    title: (c: any) => c.roleTitle,
-    line: (c: any) => c.description,
+    title: (c: AnyValue) => c.roleTitle,
+    line: (c: AnyValue) => c.description,
   },
 ]
 
@@ -113,7 +114,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
   const query = useApi(`/search?q=${encodeURIComponent(q)}`, [q])
-  const listRef = useRef<any>(null)
+  const listRef = useRef<AnyValue>(null)
 
   // Flatten grouped results into a single navigable list, plus page shortcuts.
   const flat = useMemo(() => {
@@ -134,7 +135,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
     const data = query.data
     if (!data) return pages
     const content = GROUPS.flatMap((g) =>
-      (data[g.key] || []).map((item: any) => ({
+      (data[g.key] || []).map((item: Doc) => ({
         to: g.to(item),
         title: g.title(item),
         line: g.line(item),
@@ -149,12 +150,12 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
     setActive(0)
   }, [flat.length])
 
-  const go = (to: any) => {
+  const go = (to: AnyValue) => {
     onClose()
     navigate(to)
   }
 
-  const onKeyDown = (e: any) => {
+  const onKeyDown = (e: AnyValue) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActive((i) => Math.min(i + 1, flat.length - 1))
@@ -249,11 +250,11 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
-  const dialogRef = useRef<any>(null)
-  const returnFocusRef = useRef<any>(null)
+  const dialogRef = useRef<AnyValue>(null)
+  const returnFocusRef = useRef<AnyValue>(null)
 
   useEffect(() => {
-    const onKey = (e: any) => {
+    const onKey = (e: AnyValue) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setOpen((current) => {
@@ -276,7 +277,7 @@ export function CommandPalette() {
     returnFocusRef.current = null
   }, [open])
 
-  const keepFocusInside = (event: any) => {
+  const keepFocusInside = (event: AnyValue) => {
     if (event.key !== 'Tab') return
     const focusable = [
       ...(dialogRef.current?.querySelectorAll(

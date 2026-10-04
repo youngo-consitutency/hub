@@ -1,15 +1,16 @@
 interface FeedbackFormProps {
-  pagePath?: any
-  kinds?: any
-  severities?: any
-  onDone?: any
+  pagePath?: AnyValue
+  kinds?: AnyValue
+  severities?: AnyValue
+  onDone?: AnyValue
 }
 
 interface FeedbackButtonProps {
-  mode?: any
+  mode?: AnyValue
   label?: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
@@ -37,13 +38,13 @@ const EMPTY = { kind: 'bug', severity: 'normal', title: '', body: '' }
 
 function FeedbackForm({ pagePath, kinds, severities, onDone }: FeedbackFormProps) {
   const [form, setForm] = useState(EMPTY)
-  const [error, setError] = useState<any>(null)
+  const [error, setError] = useState<AnyValue>(null)
   const [sending, setSending] = useState(false)
 
-  const set = (key: any) => (event: any) =>
+  const set = (key: AnyValue) => (event: AnyValue) =>
     setForm((current) => ({ ...current, [key]: event.target.value }))
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setSending(true)
     setError(null)
@@ -57,7 +58,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }: FeedbackFormProps
       })
       onDone()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
       setSending(false)
     }
   }
@@ -67,7 +68,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }: FeedbackFormProps
       <label className="field">
         <span>What kind of feedback is this?</span>
         <select className="input" value={form.kind} onChange={set('kind')}>
-          {kinds.map((item: any) => (
+          {kinds.map((item: Doc) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>
@@ -77,7 +78,7 @@ function FeedbackForm({ pagePath, kinds, severities, onDone }: FeedbackFormProps
       <label className="field">
         <span>How much is it holding you up?</span>
         <select className="input" value={form.severity} onChange={set('severity')}>
-          {severities.map((item: any) => (
+          {severities.map((item: Doc) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>
@@ -126,7 +127,7 @@ export function FeedbackButton({ mode = 'floating', label = 'Feedback' }: Feedba
   const path = usePath()
   const [open, setOpen] = useState(false)
   const [sent, setSent] = useState(false)
-  const [options, setOptions] = useState<Record<string, any>>({
+  const [options, setOptions] = useState<Doc>({
     kinds: FALLBACK_KINDS,
     severities: FALLBACK_SEVERITIES,
   })

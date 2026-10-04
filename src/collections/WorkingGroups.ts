@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffField, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
+import { isStaffField, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
 export const WorkingGroups: CollectionConfig = {
   slug: 'working-groups',

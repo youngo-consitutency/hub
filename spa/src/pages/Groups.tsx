@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -33,12 +34,12 @@ const TOPIC_ICONS = {
 /** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
 export function Groups() {
   const [search, setSearch] = useState('')
-  const [topics, setTopics] = useState<Record<string, any>>({})
+  const [topics, setTopics] = useState<Doc>({})
   const [descending, setDescending] = useState(false)
   const query = useApi('/groups')
   const { doc: directory } = useDocument('directory')
   const topicList = directory?.topics || []
-  const topicLabel = (key: any) => topicList.find((t: any) => t.key === key)?.label || key
+  const topicLabel = (key: AnyValue) => topicList.find((t: AnyValue) => t.key === key)?.label || key
 
   return (
     <div>
@@ -47,14 +48,14 @@ export function Groups() {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: any) =>
+        empty={(d: AnyValue) =>
           d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null
         }
       >
-        {(data: any) => {
+        {(data: Doc) => {
           const needle = search.trim().toLocaleLowerCase()
           const groups = data.items
-            .filter((group: any) => {
+            .filter((group: Doc) => {
               const matchesSearch =
                 !needle ||
                 [group.name, group.focusLine, topicLabel(group.topic)]
@@ -65,11 +66,11 @@ export function Groups() {
               const matchesTopic = matchesFilters(topicKey, topics)
               return matchesSearch && matchesTopic
             })
-            .sort((a: any, b: any) =>
+            .sort((a: AnyValue, b: AnyValue) =>
               descending ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name),
             )
 
-          const renderGroup = (group: any) => (
+          const renderGroup = (group: Doc) => (
             <GroupCard
               key={group.slug}
               group={group}
@@ -121,11 +122,11 @@ export function Groups() {
                         >
                           All topics
                         </FilterPill>
-                        {topicList.map((item: any) => (
+                        {topicList.map((item: Doc) => (
                           <FilterPill
                             key={item.key}
                             state={topics[item.key] || 'neutral'}
-                            icon={(TOPIC_ICONS as any)[item.key]}
+                            icon={(TOPIC_ICONS as AnyValue)[item.key]}
                             onClick={() => setTopics((current) => toggleFilter(current, item.key))}
                           >
                             {item.label}

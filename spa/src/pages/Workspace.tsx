@@ -2,6 +2,7 @@ interface WorkspaceProps {
   slug: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 import { useApi } from '../lib/api'
@@ -29,7 +30,7 @@ import {
 
 export function Workspace({ slug }: WorkspaceProps) {
   const groupQuery = useApi(`/groups/${encodeURIComponent(slug)}`, [slug])
-  const [state, setState] = useState<Record<string, any>>({
+  const [state, setState] = useState<Doc>({
     progress: null,
     activities: [],
     loading: true,
@@ -88,7 +89,7 @@ export function Workspace({ slug }: WorkspaceProps) {
       })
       setState((s) => ({ ...s, progress: res.progress }))
     } catch (e) {
-      setState((s) => ({ ...s, error: (e as any).message }))
+      setState((s) => ({ ...s, error: (e as AnyValue).message }))
     } finally {
       setSaving(false)
     }
@@ -98,7 +99,7 @@ export function Workspace({ slug }: WorkspaceProps) {
     <div className="workspacePage">
       <BackLink href="/groups">Working groups</BackLink>
       <Async query={groupQuery} skeletons={2}>
-        {(group: any) => {
+        {(group: Doc) => {
           return (
             <>
               <PageHeader title={group.name} description={group.focusLine} />
@@ -195,7 +196,7 @@ export function Workspace({ slug }: WorkspaceProps) {
                             <span>1</span> Group introduction
                           </legend>
                           <div className="workspaceIntroduction">
-                            {onboard.presentation.map((paragraph: any) => (
+                            {onboard.presentation.map((paragraph: AnyValue) => (
                               <p key={paragraph} className="meta mandatePara">
                                 {paragraph}
                               </p>
@@ -309,8 +310,8 @@ export function Workspace({ slug }: WorkspaceProps) {
                   <Section label="WG activities">
                     {state.activities?.length ? (
                       <div className="cardGrid">
-                        {state.activities.map((activity: any) => (
-                          <WgActivityCard key={(activity as any).id} activity={activity} />
+                        {state.activities.map((activity: AnyValue) => (
+                          <WgActivityCard key={(activity as AnyValue).id} activity={activity} />
                         ))}
                       </div>
                     ) : (

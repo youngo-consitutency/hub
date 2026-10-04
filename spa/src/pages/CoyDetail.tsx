@@ -2,6 +2,7 @@ interface CoyDetailProps {
   slug?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useApi } from '../lib/api'
 import { Async, BackLink, LifecycleTiming, StatusChip, PageHeader, Section } from '../components/ui'
 import { fmtDateRange } from '../lib/time'
@@ -30,12 +31,12 @@ export function CoyDetail({ slug }: CoyDetailProps) {
     <div className="detailPage">
       <BackLink href="/coys">COY tracker</BackLink>
       <Async query={query}>
-        {(coy: any) => {
+        {(coy: AnyValue) => {
           const place = [coy.city, coy.country].filter(Boolean).join(', ')
           const mapQuery = encodeURIComponent(place || coy.country || coy.title)
           const status = resolveCoyStatus(coy)
           const applicationsOpen = coyApplicationsAreOpen(coy)
-          const cta = (CTA as any)[status]
+          const cta = (CTA as AnyValue)[status]
           const hasActions = Boolean((cta && coy.registerUrl) || place)
           return (
             <>
@@ -43,7 +44,7 @@ export function CoyDetail({ slug }: CoyDetailProps) {
                 <PageHeader
                   title={coy.title}
                   description={
-                    (REGION_LABEL as any)[coy.region] || coy.region || 'Conference of Youth'
+                    (REGION_LABEL as AnyValue)[coy.region] || coy.region || 'Conference of Youth'
                   }
                 />
 

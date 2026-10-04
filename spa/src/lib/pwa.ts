@@ -1,4 +1,5 @@
-let deferredInstallPrompt: any = null
+import type { AnyValue } from './types'
+let deferredInstallPrompt: AnyValue = null
 const HUB_CACHE_PREFIX = 'youngo-hub-'
 
 export async function disablePWAInDevelopment() {
@@ -102,7 +103,7 @@ export async function getPushRegistration() {
 /**
  * Convert base64 string to Uint8Array for VAPID key
  */
-function urlBase64ToUint8Array(base64String: any) {
+function urlBase64ToUint8Array(base64String: AnyValue) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = window.atob(base64)
@@ -117,7 +118,7 @@ function urlBase64ToUint8Array(base64String: any) {
  * Subscribe to push notifications
  * @param {string} vapidPublicKey - VAPID public key from backend
  */
-export async function subscribeToPush(vapidPublicKey: any) {
+export async function subscribeToPush(vapidPublicKey: AnyValue) {
   if (!isPushSupported()) {
     console.log('[Push] Push not supported')
     return { success: false, error: 'Push not supported' }
@@ -158,7 +159,7 @@ export async function subscribeToPush(vapidPublicKey: any) {
     return { success: true, subscription, isNew }
   } catch (error) {
     console.error('[Push] Subscription failed:', error)
-    return { success: false, error: (error as any).message }
+    return { success: false, error: (error as AnyValue).message }
   }
 }
 
@@ -191,7 +192,7 @@ export async function unsubscribeFromPush() {
     return { success: true }
   } catch (error) {
     console.error('[Push] Unsubscribe failed:', error)
-    return { success: false, error: (error as any).message }
+    return { success: false, error: (error as AnyValue).message }
   }
 }
 
@@ -231,7 +232,7 @@ export async function getPushSubscriptionStatus() {
     }
   } catch (error) {
     console.error('[Push] Status check failed:', error)
-    return { supported: true, subscribed: false, error: (error as any).message }
+    return { supported: true, subscribed: false, error: (error as AnyValue).message }
   }
 }
 
@@ -261,14 +262,14 @@ export async function requestNotificationPermission() {
 export function isPWA() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
+    (window.navigator as AnyValue).standalone === true
   )
 }
 
 /**
  * Check if app can be installed (beforeinstallprompt event)
  */
-export function setupInstallPrompt(onPrompt: any) {
+export function setupInstallPrompt(onPrompt?: AnyValue) {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredInstallPrompt = e
@@ -294,7 +295,7 @@ export function isInstallPromptAvailable() {
 }
 
 export async function initPWA() {
-  setupInstallPrompt((available: any) => {
+  setupInstallPrompt((available: AnyValue) => {
     window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }))
   })
   const registration = await registerServiceWorker()

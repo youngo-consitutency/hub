@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { testPayload } from './provision'
@@ -210,7 +211,7 @@ describe('decision engine (S09)', () => {
           cookie: cwMember.cookie,
         })
       ).json()
-      expect(events.items.map((e: any) => e.type)).toEqual(
+      expect(events.items.map((e: AnyValue) => e.type)).toEqual(
         expect.arrayContaining([
           'created',
           'presented',

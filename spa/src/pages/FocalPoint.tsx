@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useApi } from '../lib/api'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui'
 import { ContactCard } from '../components/cards'
@@ -21,7 +22,7 @@ export function FocalPoint() {
         description="Follow constituency work, connect with mandate holders and coordinate UNFCCC communications."
       />
       <Async query={query} skeletons={5}>
-        {(data: any) => (
+        {(data: Doc) => (
           <>
             <div className="metricGrid">
               {[
@@ -46,7 +47,7 @@ export function FocalPoint() {
                 }
               >
                 <div className="stackSm">
-                  {data.events.slice(0, 4).map((event: any) => (
+                  {data.events.slice(0, 4).map((event: AnyValue) => (
                     <A key={event.slug} href={`/calendar/${event.slug}`} className="card recordRow">
                       <Calendar size={20} aria-hidden />
                       <div>
@@ -69,7 +70,7 @@ export function FocalPoint() {
                 }
               >
                 <div className="stackSm">
-                  {data.decisions.slice(0, 4).map((item: any) => (
+                  {data.decisions.slice(0, 4).map((item: Doc) => (
                     <A key={item.id} href={`/council/${item.id}`} className="card recordRow">
                       <Gavel size={20} aria-hidden />
                       <div>
@@ -78,7 +79,7 @@ export function FocalPoint() {
                         <span className="chip chip-neutral">
                           {item.stage
                             .replaceAll('_', ' ')
-                            .replace(/^./, (c: any) => c.toUpperCase())}
+                            .replace(/^./, (c: AnyValue) => c.toUpperCase())}
                         </span>
                       </div>
                       <Arrow size={17} aria-hidden />
@@ -99,7 +100,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.submissions.slice(0, 3).map((item: any) => (
+                {data.submissions.slice(0, 3).map((item: Doc) => (
                   <A key={item.slug} href={`/submissions/${item.slug}`} className="card entityCard">
                     <FileText size={22} aria-hidden />
                     <h3>{item.title}</h3>
@@ -119,7 +120,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.mandateContacts.slice(0, 3).map((contact: any, i: any) => (
+                {data.mandateContacts.slice(0, 3).map((contact: Doc, i: number) => (
                   <ContactCard key={i} contact={contact} />
                 ))}
               </div>
@@ -136,7 +137,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.groups.map((group: any) => (
+                {data.groups.map((group: Doc) => (
                   <A key={group.slug} href={`/groups/${group.slug}`} className="card entityCard">
                     <Users size={22} aria-hidden />
                     <h3>{group.name}</h3>

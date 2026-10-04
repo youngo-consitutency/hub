@@ -3,7 +3,7 @@ import { ApiError, fail } from './respond'
 import { getAccessProfile, hasCapability, hasTeamRole } from './access'
 import type { AccessProfile } from './access'
 import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
-import type { AccountLike, AccountView, Doc } from './domain'
+import type { AccountLike, AccountView, Doc, AnyValue } from './domain'
 
 // Port of server/lib/accounts.js publicAccount() — the exact shape the SPA
 // reads from /api/auth/me and login/register responses.
@@ -147,7 +147,7 @@ export async function requirePlatformOperator(req: PayloadRequest): Promise<Memb
   return ctx
 }
 
-export function adminReason(body: any): string {
+export function adminReason(body: AnyValue): string {
   const reason = String(body?.reason || '').trim()
   if (reason.length < 8)
     throw fail.validation({

@@ -6,7 +6,7 @@ import { accountView } from './accounts'
 import { sendEmail } from './email'
 import { appBaseUrl } from './env'
 import { requirePgPool } from './pg'
-import type { AccountLike } from './domain'
+import type { AccountLike, Doc, AnyValue } from './domain'
 
 // Port of server/routes/member/guards.js updateMembershipLifecycle +
 // server/lib/accounts.js setAccountFields/destroyAllSessions.
@@ -62,7 +62,7 @@ export async function hasActivePlatformMandate(accountId: number | string) {
   return rows.length > 0
 }
 
-export async function setAccountFields(id: number | string, fields: Record<string, any>) {
+export async function setAccountFields(id: number | string, fields: Doc) {
   const pool = requirePgPool()
   const keys = Object.keys(fields).filter((key) => ACCOUNT_FIELD_COLUMNS.has(key))
   if (!keys.length) return findAccountRowById(id)
@@ -93,7 +93,7 @@ export async function sendMembershipActivatedEmail(account: AccountLike) {
       text: `Hi ${firstName},\n\nYour YOUNGO Hub membership is now active. Sign in at ${origin}/ to get started.\n\n— YOUNGO Hub`,
     })
     return { sent: delivered }
-  } catch (error) {
+  } catch {
     return { sent: false, reason: 'send_failed' }
   }
 }
@@ -108,7 +108,7 @@ export async function updateMembershipLifecycle({
   /** Whether the actor holds platform.manage — gates officer-account edits. */
   actorIsOfficer?: boolean
   targetId: number | string
-  body: any
+  body: AnyValue
 }) {
   const status = String(body?.status || body?.membershipStatus || '')
   if (!MEMBERSHIP_STATUSES.includes(status))

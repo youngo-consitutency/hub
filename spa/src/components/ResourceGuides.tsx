@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { A, Section, Skeletons, Empty, ErrorCard } from './ui'
 import { useDocument } from '../lib/documents'
 
@@ -12,7 +13,7 @@ export function ResourceGuides() {
       <Section label={library.sectionLabel}>
         {library.description && <p className="sectionIntro">{library.description}</p>}
         <div className="resourceList">
-          {(library.guides || []).map((guide: any) => (
+          {(library.guides || []).map((guide: AnyValue) => (
             <A key={guide.title} href={guide.href} className="resourceRow">
               <span className="resourceCopy">
                 <strong>{guide.title}</strong>

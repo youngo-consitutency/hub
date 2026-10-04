@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from './types'
 import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPost } from './api'
 import {
@@ -14,11 +15,11 @@ import {
 export const DISMISS_KEY = 'youngo-hub:alert-setup-dismissed'
 
 export function useAlertSetup() {
-  const [state, setState] = useState<Record<string, any>>({ loading: true })
+  const [state, setState] = useState<Doc>({ loading: true })
   const [installAvailable, setInstallAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<any>(null)
-  const [error, setError] = useState<any>(null)
+  const [message, setMessage] = useState<AnyValue>(null)
+  const [error, setError] = useState<AnyValue>(null)
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISS_KEY) === '1'
@@ -34,7 +35,7 @@ export function useAlertSetup() {
       await apiGet('/push/vapid-key')
       configured = true
     } catch (fetchError) {
-      configured = (fetchError as any).status !== 503
+      configured = (fetchError as AnyValue).status !== 503
     }
     setState({ loading: false, configured, ...browser })
     setInstallAvailable(isInstallPromptAvailable())
@@ -45,7 +46,7 @@ export function useAlertSetup() {
   }, [refresh])
 
   useEffect(() => {
-    const onPrompt = (event: any) => setInstallAvailable(Boolean(event.detail?.available))
+    const onPrompt = (event: AnyValue) => setInstallAvailable(Boolean(event.detail?.available))
     window.addEventListener('pwa-install-available', onPrompt)
     return () => window.removeEventListener('pwa-install-available', onPrompt)
   }, [])
@@ -74,7 +75,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
       return false
     } finally {
       setBusy(false)
@@ -95,7 +96,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
       return false
     } finally {
       setBusy(false)
@@ -114,7 +115,7 @@ export function useAlertSetup() {
       setMessage('Test sent — it should appear within a few seconds.')
       return true
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
       return false
     } finally {
       setBusy(false)
@@ -140,7 +141,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
       return false
     } finally {
       setBusy(false)
@@ -158,12 +159,12 @@ export function useAlertSetup() {
 
   const supported = !state.loading && isPushSupported()
   const installFirst = !state.loading && needsHomeScreenInstall()
-  const blocked = (state as any).permission === 'denied'
+  const blocked = (state as AnyValue).permission === 'denied'
   const needsAction =
     !state.loading &&
     supported &&
-    (state as any).configured &&
-    !(state as any).subscribed &&
+    (state as AnyValue).configured &&
+    !(state as AnyValue).subscribed &&
     !blocked
 
   return {

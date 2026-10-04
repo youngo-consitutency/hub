@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, expect } from 'vitest'
 
 import { provisionAccount, testPayload } from './provision'
@@ -12,13 +13,13 @@ import { provisionAccount, testPayload } from './provision'
 const NOW = Date.now()
 const iso = (ms: number) => new Date(NOW + ms).toISOString()
 
-async function accessFor(account: any) {
+async function accessFor(account: AnyValue) {
   const payload = await testPayload()
   const { getAccessProfile } = await import('@/lib/access')
-  return getAccessProfile({ payload } as any, account)
+  return getAccessProfile({ payload } as AnyValue, account)
 }
 
-async function createRecord(account: any, data: Record<string, any>) {
+async function createRecord(account: AnyValue, data: AnyValue) {
   const payload = await testPayload()
   return payload.create({
     collection: 'authority-records',
@@ -28,7 +29,7 @@ async function createRecord(account: any, data: Record<string, any>) {
       status: 'active',
       startsAt: iso(-86400000),
       ...data,
-    } as any,
+    } as AnyValue,
     overrideAccess: true,
   })
 }
@@ -85,7 +86,7 @@ describe('record-derived permissions', () => {
   it('recognises a recorded substitute for the seat it covers only', async () => {
     const payload = await testPayload()
     const { grantAuthority } = await import('@/lib/authorityService')
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     const principal = await grantAuthority(req, {
       account: account.id,
@@ -101,7 +102,7 @@ describe('record-derived permissions', () => {
       role: 'council.substitute',
       scopeType: 'platform',
       scopeId: 'platform',
-      substituteFor: (principal as any).id,
+      substituteFor: (principal as AnyValue).id,
     })
     const access = await accessFor(deputy)
     // The seat key is the principal's — a substitute cannot mint a new seat.
@@ -216,7 +217,7 @@ describe('authority service', () => {
   it('grants transactionally and rejects duplicates', async () => {
     const payload = await testPayload()
     const { grantAuthority } = await import('@/lib/authorityService')
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
 
     const first = await grantAuthority(req, {
@@ -226,7 +227,7 @@ describe('authority service', () => {
       scopeId: 'ace',
       evidence: 'Recorded selection outcome',
     })
-    expect((first as any).councilSeat).toBe('wg:ace')
+    expect((first as AnyValue).councilSeat).toBe('wg:ace')
 
     await expect(
       grantAuthority(req, {
@@ -241,7 +242,7 @@ describe('authority service', () => {
   it('confines a substitute to the covered seat and validates the principal', async () => {
     const payload = await testPayload()
     const { grantAuthority, revokeAuthority } = await import('@/lib/authorityService')
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     const { account: deputy } = await provisionAccount({ membershipTrack: 'constituency_work' })
 
@@ -257,14 +258,14 @@ describe('authority service', () => {
       role: 'council.substitute',
       scopeType: 'platform',
       scopeId: 'platform',
-      substituteFor: (principal as any).id,
+      substituteFor: (principal as AnyValue).id,
     })
     // The row keeps the platform scope — the covered seat is carried by
     // councilSeat alone, so the substitute can never inherit the
     // principal's participation scopes.
-    expect((sub as any).scopeType).toBe('platform')
-    expect((sub as any).scopeId).toBe('seat:wg:oceans')
-    expect((sub as any).councilSeat).toBe('wg:oceans')
+    expect((sub as AnyValue).scopeType).toBe('platform')
+    expect((sub as AnyValue).scopeId).toBe('seat:wg:oceans')
+    expect((sub as AnyValue).councilSeat).toBe('wg:oceans')
 
     const access = await accessFor(deputy)
     expect(access.councilSeats).toEqual(['wg:oceans'])
@@ -281,13 +282,13 @@ describe('authority service', () => {
         role: 'council.substitute',
         scopeType: 'platform',
         scopeId: 'platform',
-        substituteFor: (sub as any).id,
+        substituteFor: (sub as AnyValue).id,
       }),
     ).rejects.toMatchObject({ status: 409 })
 
     // Nor a principal whose mandate has ended.
     const { account: actor } = await provisionAccount({})
-    await revokeAuthority(req, (principal as any).id, actor, 'Term ended.')
+    await revokeAuthority(req, (principal as AnyValue).id, actor, 'Term ended.')
     const { account: third } = await provisionAccount({ membershipTrack: 'constituency_work' })
     await expect(
       grantAuthority(req, {
@@ -295,7 +296,7 @@ describe('authority service', () => {
         role: 'council.substitute',
         scopeType: 'platform',
         scopeId: 'platform',
-        substituteFor: (principal as any).id,
+        substituteFor: (principal as AnyValue).id,
       }),
     ).rejects.toMatchObject({ status: 409 })
   })
@@ -303,7 +304,7 @@ describe('authority service', () => {
   it('refuses a CW-gated mandate for a Network member', async () => {
     const payload = await testPayload()
     const { grantAuthority } = await import('@/lib/authorityService')
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     const { account } = await provisionAccount({ membershipTrack: 'network' })
     await expect(
       grantAuthority(req, {
@@ -318,7 +319,7 @@ describe('authority service', () => {
   it('records revocation with a reason and blocks double revocation', async () => {
     const payload = await testPayload()
     const { grantAuthority, revokeAuthority } = await import('@/lib/authorityService')
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     const { account } = await provisionAccount({ membershipTrack: 'constituency_work' })
     const { account: actor } = await provisionAccount({})
     const row = await grantAuthority(req, {
@@ -329,13 +330,13 @@ describe('authority service', () => {
     })
     const revoked = await revokeAuthority(
       req,
-      (row as any).id,
+      (row as AnyValue).id,
       actor,
       'Mandate ended, handover complete.',
     )
-    expect((revoked as any).status).toBe('revoked')
+    expect((revoked as AnyValue).status).toBe('revoked')
     await expect(
-      revokeAuthority(req, (row as any).id, actor, 'Mandate ended, handover complete.'),
+      revokeAuthority(req, (row as AnyValue).id, actor, 'Mandate ended, handover complete.'),
     ).rejects.toMatchObject({ status: 409 })
     const access = await accessFor(account)
     expect(access.capabilities).not.toContain('privacy.manage')
@@ -349,7 +350,7 @@ describe('authority service', () => {
 
     // Hold the account's authority lock inside a transaction; a grant for
     // the same account must queue on it — verified in pg_locks.
-    const holderReq = { payload, headers: new Headers() } as any
+    const holderReq = { payload, headers: new Headers() } as AnyValue
     let pauseReached!: () => void
     const atPause = new Promise<void>((r) => (pauseReached = r))
     let release!: () => void
@@ -360,7 +361,7 @@ describe('authority service', () => {
     })
     await atPause
 
-    const req = { payload, headers: new Headers() } as any
+    const req = { payload, headers: new Headers() } as AnyValue
     let grantSettled = false
     const grantP = grantAuthority(req, {
       account: account.id,
@@ -377,7 +378,7 @@ describe('authority service', () => {
     release()
     await holderP
     const granted = await grantP
-    expect((granted as any).role).toBe('team.finance')
+    expect((granted as AnyValue).role).toBe('team.finance')
     expect((await accessFor(account)).capabilities).toContain('finance.review')
   })
 
@@ -392,8 +393,8 @@ describe('authority service', () => {
       scopeId: 'reforms_team',
     }
     const results = await Promise.allSettled([
-      grantAuthority({ payload, headers: new Headers() } as any, input),
-      grantAuthority({ payload, headers: new Headers() } as any, input),
+      grantAuthority({ payload, headers: new Headers() } as AnyValue, input),
+      grantAuthority({ payload, headers: new Headers() } as AnyValue, input),
     ])
     const ok = results.filter((r) => r.status === 'fulfilled')
     const dup = results.filter(
@@ -431,6 +432,6 @@ describe('provenance', () => {
       id: row.id,
       overrideAccess: true,
     })
-    expect((after as any).provenance.source).toBe('council_minutes')
+    expect((after as AnyValue).provenance.source).toBe('council_minutes')
   })
 })

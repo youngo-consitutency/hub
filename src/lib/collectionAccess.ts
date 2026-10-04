@@ -1,3 +1,4 @@
+import type { AnyValue } from './domain'
 import type { Access, FieldAccess } from 'payload'
 import { getAccessProfile, hasCapability } from './access'
 
@@ -34,7 +35,7 @@ export const staffWrites = {
 
 // Capability check for generated-API reads — resolves the caller's
 // authority records exactly as the endpoint guards do.
-export const grantsCapability = async (req: any, capability: string) => {
+export const grantsCapability = async (req: AnyValue, capability: string) => {
   if (!req.user || req.user.collection !== 'accounts') return false
   const profile = await getAccessProfile(req, req.user)
   return hasCapability(profile, capability)

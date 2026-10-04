@@ -1,6 +1,8 @@
+import type { AnyValue } from '../../lib/types'
 import { apiGet } from '../../lib/api'
 
-export const asOptions = (values: any) => values.map((value: any) => ({ value, label: value }))
+export const asOptions = (values: AnyValue) =>
+  values.map((value: AnyValue) => ({ value, label: value }))
 
 // Registration option lists (regions, genders, nationalities, …) are
 // staff-editable content in the `registration-options` document.
@@ -15,7 +17,7 @@ export function loadRegistrationOptions() {
   return registrationOptionsPromise
 }
 
-export function wordCount(value: any) {
+export function wordCount(value: AnyValue) {
   const text = String(value || '').trim()
   return text ? text.split(/\s+/).length : 0
 }
@@ -31,8 +33,8 @@ export function loadPhoneSupport() {
 }
 
 export function loadNationalityOptions() {
-  nationalityOptionsPromise ||= loadRegistrationOptions().then((options: any) =>
-    (options.nationalities || []).map((nationality: any) => ({
+  nationalityOptionsPromise ||= loadRegistrationOptions().then((options: AnyValue) =>
+    (options.nationalities || []).map((nationality: AnyValue) => ({
       value: nationality,
       label: nationality,
     })),
@@ -112,17 +114,17 @@ export function initialRegistrationForm() {
   }
 }
 
-export function phoneInputValue(value: any) {
+export function phoneInputValue(value: AnyValue) {
   return `+ ${String(value || '')
     .replaceAll('+', '')
     .trimStart()}`
 }
 
-export function fieldClass(err: any) {
+export function fieldClass(err: AnyValue) {
   return err ? 'field hasError' : 'field'
 }
 
-export function checkClass(err: any) {
+export function checkClass(err: AnyValue) {
   return err ? 'authCheck hasError' : 'authCheck'
 }
 
@@ -135,7 +137,7 @@ export function scrollToFirstError() {
   })
 }
 
-export function ageFromDob(dob: any) {
+export function ageFromDob(dob: AnyValue) {
   if (!dob) return null
   const d = new Date(dob)
   if (Number.isNaN(d.getTime())) return null

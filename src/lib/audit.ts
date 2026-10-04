@@ -1,5 +1,5 @@
 import type { PayloadRequest } from 'payload'
-import type { ActorLike } from './domain'
+import type { ActorLike, AnyValue } from './domain'
 
 // Single audit-trail writer. Everything records actor, actorEmail, and the
 // inbound request id; callers supply action/target fields via entry.
@@ -8,8 +8,8 @@ export interface AuditEntry {
   targetType?: string
   targetId?: string | null
   reason?: string | null
-  before?: any
-  after?: any
+  before?: AnyValue
+  after?: AnyValue
 }
 
 export async function audit(req: PayloadRequest, actor: ActorLike | null, entry: AuditEntry) {

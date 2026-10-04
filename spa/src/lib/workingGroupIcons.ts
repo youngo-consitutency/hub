@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 import {
   TbBolt,
   TbBuildingCommunity,
@@ -48,6 +49,6 @@ export const WORKING_GROUP_ICONS = {
   water: TbDroplet,
 }
 
-export function workingGroupIcon(slug: any) {
-  return (WORKING_GROUP_ICONS as any)[slug] || TbUsersGroup
+export function workingGroupIcon(slug: AnyValue) {
+  return (WORKING_GROUP_ICONS as AnyValue)[slug] || TbUsersGroup
 }

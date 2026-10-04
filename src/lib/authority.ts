@@ -1,3 +1,4 @@
+import type { AnyValue } from './domain'
 // Policy-backed authority model.
 //
 // An authority record is a time-bounded, scoped, evidenced responsibility or
@@ -509,7 +510,7 @@ export function resolveRecordRole(row: {
 // Future, expired, revoked and inactive rows grant nothing — but they are
 // still reported so members can see pending or finished mandates.
 export function recordCurrent(
-  row: { status: string; startsAt?: any; endsAt?: any },
+  row: { status: string; startsAt?: AnyValue; endsAt?: AnyValue },
   now = new Date(),
 ) {
   if (row.status !== 'active') return false
@@ -566,8 +567,8 @@ export interface AuthorityRow {
   scopeId: string
   councilSeat?: string | null
   status: string
-  startsAt?: any
-  endsAt?: any
+  startsAt?: AnyValue
+  endsAt?: AnyValue
   provenance?: { source?: string; assignmentId?: number | string } | null
 }
 

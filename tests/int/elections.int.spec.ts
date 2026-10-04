@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { api, session } from './helpers'
@@ -53,7 +54,7 @@ describe('elections (S10) and selections (S24)', () => {
     const { items } = await res.json()
     expect(items.length).toBeGreaterThan(0)
     // results are only exposed once an election resolves
-    const done = items.find((e: any) => e.status === 'completed')
+    const done = items.find((e: AnyValue) => e.status === 'completed')
     if (done) expect(done.result).toBeTruthy()
   })
 

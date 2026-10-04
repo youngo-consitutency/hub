@@ -1,23 +1,24 @@
 interface ResourceQueueProps {
-  account?: any
+  account?: AnyValue
 }
 
 interface LinkReviewProps {
-  item?: any
-  issues?: any
-  previous?: any
-  onClose?: any
-  onSaved?: any
-  onCorrect?: any
+  item?: AnyValue
+  issues?: AnyValue
+  previous?: AnyValue
+  onClose?: AnyValue
+  onSaved?: AnyValue
+  onCorrect?: AnyValue
 }
 
 interface SubmissionReviewProps {
-  item?: any
-  account?: any
-  onClose?: any
-  onSaved?: any
+  item?: AnyValue
+  account?: AnyValue
+  onClose?: AnyValue
+  onSaved?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions'
@@ -44,13 +45,13 @@ function ResourceQueue({ account }: ResourceQueueProps) {
   const query = useApi('/member/resources/issues')
   const [filter, setFilter] = useState('needs_verification')
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<any>(null)
-  const [correction, setCorrection] = useState<any>(null)
+  const [selected, setSelected] = useState<AnyValue>(null)
+  const [correction, setCorrection] = useState<AnyValue>(null)
   const [limit, setLimit] = useState(12)
   const [message, setMessage] = useState('')
   const data = query.data
   const items =
-    (filter === 'submissions' ? data?.submissions : data?.items)?.filter((item: any) => {
+    (filter === 'submissions' ? data?.submissions : data?.items)?.filter((item: AnyValue) => {
       const title = item.title || item.payload.title
       return (
         title.toLowerCase().includes(search.toLowerCase()) &&
@@ -59,7 +60,7 @@ function ResourceQueue({ account }: ResourceQueueProps) {
           : item.verification.status === filter)
       )
     }) || []
-  function saved(text: any) {
+  function saved(text: AnyValue) {
     setSelected(null)
     setMessage(text)
     query.retry()
@@ -95,7 +96,7 @@ function ResourceQueue({ account }: ResourceQueueProps) {
           >
             <option value="needs_verification">
               Needs verification (
-              {data?.items.filter((i: any) => i.verification.status === 'needs_verification')
+              {data?.items.filter((i: AnyValue) => i.verification.status === 'needs_verification')
                 .length || 0}
               )
             </option>
@@ -138,8 +139,8 @@ function ResourceQueue({ account }: ResourceQueueProps) {
           <LinkReview
             key={selected.slug + selected.fingerprint}
             item={selected}
-            issues={(data?.issues || []).filter((i: any) => i.resourceSlug === selected.slug)}
-            previous={data?.reviews.find((i: any) => i.resourceSlug === selected.slug)}
+            issues={(data?.issues || []).filter((i: AnyValue) => i.resourceSlug === selected.slug)}
+            previous={data?.reviews.find((i: AnyValue) => i.resourceSlug === selected.slug)}
             onClose={() => setSelected(null)}
             onSaved={saved}
             onCorrect={() => {
@@ -167,7 +168,7 @@ function ResourceQueue({ account }: ResourceQueueProps) {
                 {items.length} resources in this queue
               </p>
               <div className="cardGrid resourceHubGrid">
-                {items.slice(0, limit).map((item: any) => (
+                {items.slice(0, limit).map((item: AnyValue) => (
                   <ResourceCard
                     key={item.slug || item.id}
                     resource={item.payload || item}
@@ -201,17 +202,17 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
     resourceTypes: RESOURCE_TYPES,
     resourceIssueKinds: RESOURCE_ISSUE_KINDS,
   } = useContentOptions()
-  const [checks, setChecks] = useState<Record<string, any>>({
+  const [checks, setChecks] = useState<AnyValue>({
     link: false,
     description: false,
     tags: false,
   })
   const [status, setStatus] = useState('verified')
   const [note, setNote] = useState('')
-  const [resolved, setResolved] = useState<any[]>([])
+  const [resolved, setResolved] = useState<AnyValue[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  async function submit(event: any) {
+  async function submit(event: AnyValue) {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -229,7 +230,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
           : 'Review saved. The catalogue now shows the updated verification state.',
       )
     } catch (error) {
-      setError((error as any).message)
+      setError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -275,7 +276,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
       {issues.length > 0 && (
         <fieldset className="resourceTopicPicker">
           <legend>Open reports</legend>
-          {issues.map((issue: any) => (
+          {issues.map((issue: AnyValue) => (
             <label key={issue.id} className="resourceCheck resourceIssue">
               <input
                 type="checkbox"
@@ -290,7 +291,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
               />
               <span>
                 <strong>
-                  {RESOURCE_ISSUE_KINDS.find((k: any) => k.value === issue.kind)?.label}
+                  {RESOURCE_ISSUE_KINDS.find((k: AnyValue) => k.value === issue.kind)?.label}
                 </strong>{' '}
                 — {issue.detail}
                 <small className="metaMuted">
@@ -315,9 +316,9 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
           <label className="resourceCheck" key={key}>
             <input
               type="checkbox"
-              checked={(checks as any)[key]}
+              checked={(checks as AnyValue)[key]}
               onChange={(event) =>
-                setChecks((current) => ({
+                setChecks((current: AnyValue) => ({
                   ...current,
                   [key]: event.target.checked,
                 }))
@@ -377,7 +378,7 @@ function SubmissionReview({ item, account, onClose, onSaved }: SubmissionReviewP
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [checked, setChecked] = useState(false)
-  async function act(decision: any) {
+  async function act(decision: AnyValue) {
     setBusy(true)
     setError('')
     try {
@@ -392,7 +393,7 @@ function SubmissionReview({ item, account, onClose, onSaved }: SubmissionReviewP
           : 'Submission review saved.',
       )
     } catch (error) {
-      setError((error as any).message)
+      setError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }

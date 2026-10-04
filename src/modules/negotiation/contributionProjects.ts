@@ -14,7 +14,7 @@ import {
 } from './contributionShared'
 import { normalizeDraftVersionInput, normalizeProjectInput } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
-import type { Doc, AccountLike } from '../../lib/domain'
+import type { Doc, AccountLike, AnyValue } from '../../lib/domain'
 
 export async function createSubmissionProject({
   account,
@@ -22,7 +22,7 @@ export async function createSubmissionProject({
   pool = getPgPool(),
 }: {
   account: AccountLike
-  input: any
+  input: AnyValue
   pool?: Pool | null
 }) {
   const data = normalizeProjectInput(input)
@@ -147,7 +147,7 @@ export async function appendSubmissionVersion({
 }: {
   account: AccountLike
   projectId: string
-  input: any
+  input: AnyValue
   pool?: Pool | null
 }) {
   const data = normalizeDraftVersionInput(input)

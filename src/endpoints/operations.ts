@@ -3,7 +3,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
-import type { AccountLike, Doc } from '../lib/domain'
+import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
 // recognition (S20), partnerships (S13), privacy requests (S08). Members
@@ -23,7 +23,7 @@ async function requireOpsCapability(req: PayloadRequest, capabilities: string[])
   return { account }
 }
 
-const accountRef = (a: any) =>
+const accountRef = (a: AnyValue) =>
   a == null
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
@@ -40,7 +40,7 @@ async function loadDoc(
   notFound = 'Record not found.',
 ) {
   return req.payload
-    .findByID({ collection: collection as any, id: Number(id), overrideAccess: true })
+    .findByID({ collection: collection as AnyValue, id: Number(id), overrideAccess: true })
     .catch(() => {
       throw fail.notFound(notFound)
     })
@@ -50,7 +50,7 @@ function ownOr404(doc: Doc, account: AccountLike) {
   if (own(doc) !== account.id) throw fail.notFound('Record not found.') // don't leak existence
 }
 
-const fundingView = (f: any, staff = false) => ({
+const fundingView = (f: AnyValue, staff = false) => ({
   id: f.id,
   title: f.title,
   purpose: f.purpose,
@@ -203,7 +203,7 @@ export const operationEndpoints: Endpoint[] = [
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'funding-requests',
-        where: status ? { status: { equals: status as any } } : {},
+        where: status ? { status: { equals: status as AnyValue } } : {},
         sort: '-submittedAt',
         limit: 200,
         overrideAccess: true,
@@ -231,7 +231,7 @@ export const operationEndpoints: Endpoint[] = [
         collection: 'funding-requests',
         id: f.id,
         data: {
-          status: next as any,
+          status: next as AnyValue,
           reviewNote: b.reviewNote?.trim() || f.reviewNote,
           reviewedBy: staff.id,
           reviewedAt: new Date().toISOString(),
@@ -340,7 +340,7 @@ export const operationEndpoints: Endpoint[] = [
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'safeguarding-cases',
-        where: status ? { status: { equals: status as any } } : {},
+        where: status ? { status: { equals: status as AnyValue } } : {},
         sort: '-receivedAt',
         limit: 200,
         overrideAccess: true,
@@ -398,7 +398,7 @@ export const operationEndpoints: Endpoint[] = [
         collection: 'safeguarding-cases',
         id: c.id,
         data: {
-          status: next as any,
+          status: next as AnyValue,
           updates,
           assignedTo: b.assignTo ?? c.assignedTo ?? staff.id,
           outcomeNote: b.outcomeNote?.trim() || c.outcomeNote,

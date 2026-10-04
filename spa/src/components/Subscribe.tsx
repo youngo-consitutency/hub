@@ -1,18 +1,19 @@
 interface CopyFeedButtonProps {
-  path?: any
+  path?: AnyValue
   label?: string
   className?: string
 }
 
 interface FeedRowProps {
   label?: string
-  path?: any
+  path?: AnyValue
 }
 
 interface CalendarSubscribeProps {
   type?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   TbCalendarPlus as CalendarPlus,
@@ -76,18 +77,18 @@ function FeedRow({ label, path }: FeedRowProps) {
 export function CalendarSubscribe({ type }: CalendarSubscribeProps) {
   const panelId = useId()
   const [open, setOpen] = useState(false)
-  const wrapRef = useRef<any>(null)
-  const triggerRef = useRef<any>(null)
+  const wrapRef = useRef<AnyValue>(null)
+  const triggerRef = useRef<AnyValue>(null)
   const filtered = type && type !== 'all'
 
   useEffect(() => {
     if (!open) return undefined
-    const dismissOnOutsideClick = (event: any) => {
+    const dismissOnOutsideClick = (event: AnyValue) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) {
         setOpen(false)
       }
     }
-    const dismissOnEscape = (event: any) => {
+    const dismissOnEscape = (event: AnyValue) => {
       if (event.key === 'Escape') {
         setOpen(false)
         triggerRef.current?.focus()

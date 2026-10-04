@@ -1,7 +1,8 @@
 interface PostingMetaProps {
-  item?: any
+  item?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { formatDateTime } from '../lib/time'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useState } from 'react'
@@ -22,7 +23,7 @@ function PostingMeta({ item }: PostingMetaProps) {
   return (
     <>
       <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-        <span className="chip chip-info">{(KIND_LABEL as any)[item.kind] || item.kind}</span>
+        <span className="chip chip-info">{(KIND_LABEL as AnyValue)[item.kind] || item.kind}</span>
         <span className="chip chip-neutral">{item.format}</span>
         {item.region && <span className="chip chip-neutral">{regionLabel(item.region)}</span>}
       </div>
@@ -44,14 +45,14 @@ function PostingMeta({ item }: PostingMetaProps) {
 }
 
 export function OpportunityReview() {
-  const [state, setState] = useState<Record<string, any>>({
+  const [state, setState] = useState<AnyValue>({
     items: null,
     published: null,
     organisations: null,
     error: null,
   })
-  const [notes, setNotes] = useState<Record<string, any>>({})
-  const [busy, setBusy] = useState<any>(null)
+  const [notes, setNotes] = useState<AnyValue>({})
+  const [busy, setBusy] = useState<AnyValue>(null)
 
   const load = () => {
     apiGet('/member/opportunities/review')
@@ -77,20 +78,21 @@ export function OpportunityReview() {
     load()
   }, [])
 
-  const setNote = (id: any, value: any) => setNotes((current) => ({ ...current, [id]: value }))
+  const setNote = (id: AnyValue, value: AnyValue) =>
+    setNotes((current: AnyValue) => ({ ...current, [id]: value }))
 
-  const run = async (key: any, work: any) => {
+  const run = async (key: AnyValue, work: AnyValue) => {
     setBusy(key)
     try {
       await work()
       load()
     } catch (error) {
-      setState((current) => ({ ...current, error: (error as any).message }))
+      setState((current: AnyValue) => ({ ...current, error: (error as AnyValue).message }))
     }
     setBusy(null)
   }
 
-  const decide = (id: any, decision: any) =>
+  const decide = (id: AnyValue, decision: AnyValue) =>
     run(`review:${id}`, () =>
       apiPost(`/member/opportunities/${id}/review`, {
         decision,
@@ -98,14 +100,14 @@ export function OpportunityReview() {
       }).then(() => setNote(id, '')),
     )
 
-  const unpublish = (id: any) =>
+  const unpublish = (id: AnyValue) =>
     run(`unpublish:${id}`, () =>
       apiPost(`/member/opportunities/${id}/unpublish`, {
         note: notes[id] || '',
       }).then(() => setNote(id, '')),
     )
 
-  const setTrust = (orgAccountId: any, nextState: any) =>
+  const setTrust = (orgAccountId: AnyValue, nextState: AnyValue) =>
     run(`trust:${orgAccountId}`, () =>
       apiPost(`/member/opportunities/trust/${orgAccountId}`, {
         state: nextState,
@@ -129,31 +131,31 @@ export function OpportunityReview() {
           />
         )}
         <div className="stack">
-          {(state.items || []).map((item: any) => (
-            <div key={(item as any).id} className="card stackSm">
+          {(state.items || []).map((item: AnyValue) => (
+            <div key={(item as AnyValue).id} className="card stackSm">
               <PostingMeta item={item} />
               <label className="field">
                 <span>Note to the organisation (required to reject)</span>
                 <input
                   className="input"
-                  value={notes[(item as any).id] || ''}
-                  onChange={(event) => setNote((item as any).id, event.target.value)}
+                  value={notes[(item as AnyValue).id] || ''}
+                  onChange={(event) => setNote((item as AnyValue).id, event.target.value)}
                 />
               </label>
               <div className="rowGap">
                 <Button
                   sm
                   variant="primary"
-                  disabled={busy === `review:${(item as any).id}`}
-                  onClick={() => decide((item as any).id, 'approve')}
+                  disabled={busy === `review:${(item as AnyValue).id}`}
+                  onClick={() => decide((item as AnyValue).id, 'approve')}
                 >
                   Approve and publish
                 </Button>
                 <Button
                   sm
                   variant="ghost"
-                  disabled={busy === `review:${(item as any).id}`}
-                  onClick={() => decide((item as any).id, 'reject')}
+                  disabled={busy === `review:${(item as AnyValue).id}`}
+                  onClick={() => decide((item as AnyValue).id, 'reject')}
                 >
                   Reject
                 </Button>
@@ -165,7 +167,7 @@ export function OpportunityReview() {
 
       {state.published && (
         <Section label="Live NGO postings" action={<span>Staff can take a posting down</span>}>
-          {(state.published as any).length === 0 ? (
+          {(state.published as AnyValue).length === 0 ? (
             <Empty
               icon={Megaphone}
               title="Nothing live"
@@ -173,7 +175,7 @@ export function OpportunityReview() {
             />
           ) : (
             <div className="stack">
-              {(state.published as any).map((item: any) => (
+              {(state.published as AnyValue).map((item: AnyValue) => (
                 <div key={item.id} className="card stackSm">
                   <PostingMeta item={item} />
                   <label className="field">
@@ -199,13 +201,13 @@ export function OpportunityReview() {
         </Section>
       )}
 
-      {state.organisations && (state.organisations as any).length > 0 && (
+      {state.organisations && (state.organisations as AnyValue).length > 0 && (
         <Section
           label="Organisation posting trust"
           action={<span>Override the first-posting rule</span>}
         >
           <div className="stackSm">
-            {(state.organisations as any).map((org: any) => (
+            {(state.organisations as AnyValue).map((org: AnyValue) => (
               <div key={org.orgAccountId} className="card cardTight stackSm">
                 <div className="rowBetween" style={{ flexWrap: 'wrap', gap: 8 }}>
                   <div>

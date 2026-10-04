@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 const REGION_ABBREVIATIONS = {
   global: 'GLO',
   africa: 'AFR',
@@ -19,17 +20,17 @@ const REGION_ABBREVIATIONS = {
   weog: 'WEOG',
 }
 
-export function regionAbbreviation(value: any) {
+export function regionAbbreviation(value: AnyValue) {
   const normalized = regionKey(value)
   if (!normalized) return ''
-  if ((REGION_ABBREVIATIONS as any)[normalized]) {
-    return (REGION_ABBREVIATIONS as any)[normalized]
+  if ((REGION_ABBREVIATIONS as AnyValue)[normalized]) {
+    return (REGION_ABBREVIATIONS as AnyValue)[normalized]
   }
 
   const words = normalized.split(/[\s–—-]+/).filter(Boolean)
   if (words.length > 1) {
     return words
-      .map((word: any) => word[0])
+      .map((word: AnyValue) => word[0])
       .join('')
       .slice(0, 4)
       .toLocaleUpperCase()
@@ -37,7 +38,7 @@ export function regionAbbreviation(value: any) {
   return normalized.slice(0, 3).toLocaleUpperCase()
 }
 
-export function regionFilterPrefix(value: any, label = value) {
+export function regionFilterPrefix(value: AnyValue, label = value) {
   const abbreviation = regionAbbreviation(value)
   return abbreviation ===
     String(label || '')
@@ -76,19 +77,19 @@ const REGION_ALIASES = {
   'western europe & others': 'weog',
 }
 
-export function regionKey(value: any) {
+export function regionKey(value: AnyValue) {
   const key = String(value || '')
     .trim()
     .toLowerCase()
     .replace(/[_–—-]+/g, ' ')
     .replace(/\s+/g, ' ')
-  return (REGION_ALIASES as any)[key] || key
+  return (REGION_ALIASES as AnyValue)[key] || key
 }
 
-export function regionLabel(value: any) {
+export function regionLabel(value: AnyValue) {
   const key = regionKey(value)
   return (
-    (REGION_NAMES as any)[key] ||
+    (REGION_NAMES as AnyValue)[key] ||
     String(value || '')
       .trim()
       .replace(/[_-]+/g, ' ')

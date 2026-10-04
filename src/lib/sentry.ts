@@ -1,3 +1,4 @@
+import type { AnyValue } from './domain'
 import type { ErrorEvent } from '@sentry/core'
 
 // Shared beforeSend scrubbing for server, edge and browser runtimes.
@@ -41,7 +42,7 @@ function scrubQuery(query: unknown): unknown {
     .join('&')
 }
 
-function scrubValue(value: any, depth = 0): any {
+function scrubValue(value: AnyValue, depth = 0): AnyValue {
   if (depth > 6 || value == null || typeof value !== 'object') return value
   if (Array.isArray(value)) return value.map((item) => scrubValue(item, depth + 1))
   return Object.fromEntries(

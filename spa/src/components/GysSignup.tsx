@@ -1,7 +1,8 @@
 interface GysSignupProps {
-  embedded?: any
+  embedded?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import { apiPost } from '../lib/api'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
@@ -18,12 +19,12 @@ export function GysSignup({ embedded = false }: GysSignupProps) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState('idle') // idle | submitting | done
-  const [fields, setFields] = useState<Record<string, any>>({})
-  const [error, setError] = useState<any>(null)
+  const [fields, setFields] = useState<Doc>({})
+  const [error, setError] = useState<AnyValue>(null)
 
-  const set = (k: any) => (e: any) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const set = (k: AnyValue) => (e: AnyValue) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  const submit = async (e: any) => {
+  const submit = async (e: AnyValue) => {
     e.preventDefault()
     setStatus('submitting')
     setError(null)
@@ -33,8 +34,8 @@ export function GysSignup({ embedded = false }: GysSignupProps) {
       setStatus('done')
     } catch (err) {
       setStatus('idle')
-      setFields((err as any).fields || {})
-      if (!(err as any).fields) setError((err as any).message)
+      setFields((err as AnyValue).fields || {})
+      if (!(err as AnyValue).fields) setError((err as AnyValue).message)
     }
   }
 

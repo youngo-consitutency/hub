@@ -9,19 +9,20 @@ interface ResponseGroupProps {
 }
 
 interface SocialLinksProps {
-  links?: any
+  links?: AnyValue
 }
 
 interface ApplicationResponsesProps {
-  item?: any
+  item?: AnyValue
 }
 
 interface AppealPanelProps {
-  item?: any
+  item?: AnyValue
   busy?: boolean
-  onReview?: any
+  onReview?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { Children, useState } from 'react'
 import { useContentOptionLabels } from '../lib/documents'
 import { SidePanel } from '../components/SidePanel.tsx'
@@ -84,13 +85,13 @@ const YOUTH_AFFILIATION_LABELS = {
   no: 'No',
 }
 
-function yesNo(value: any) {
+function yesNo(value: AnyValue) {
   if (value === true || value === 'yes') return 'Yes'
   if (value === false || value === 'no') return 'No'
   return null
 }
 
-function formatDateOnly(value: any) {
+function formatDateOnly(value: AnyValue) {
   if (!value) return null
   const text = String(value)
   const match = text.match(/^(\d{4}-\d{2}-\d{2})/)
@@ -127,7 +128,7 @@ function ResponseGroup({ title, children }: ResponseGroupProps) {
   )
 }
 
-function applicationSearchText(item: any) {
+function applicationSearchText(item: Doc) {
   const app = item.application || {}
   return [
     item.name,
@@ -168,7 +169,7 @@ function SocialLinks({ links }: SocialLinksProps) {
   if (!links?.length) return null
   return (
     <div className="membershipSocialLinks">
-      {links.map((link: any) => (
+      {links.map((link: AnyValue) => (
         <a
           key={link.href}
           href={link.href}
@@ -201,12 +202,12 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
       <dl className="membershipResponseList">
         <ResponseGroup title="Account">
           <ResponseField label="Account type">
-            {(ENTITY_LABELS as any)[app.entityType || item.entityType] ||
+            {(ENTITY_LABELS as AnyValue)[app.entityType || item.entityType] ||
               app.entityType ||
               item.entityType}
           </ResponseField>
           <ResponseField label="Membership track">
-            {(TRACK_LABELS as any)[app.membershipTrack || item.membershipTrack] ||
+            {(TRACK_LABELS as AnyValue)[app.membershipTrack || item.membershipTrack] ||
               app.membershipTrack ||
               item.membershipTrack}
           </ResponseField>
@@ -220,7 +221,7 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
             <ResponseField label="Gender">{gender}</ResponseField>
             <ResponseField label="Date of birth">{formatDateOnly(app.dateOfBirth)}</ResponseField>
             <ResponseField label="Age band">
-              {(AGE_LABELS as any)[app.ageBand] || app.ageBand}
+              {(AGE_LABELS as AnyValue)[app.ageBand] || app.ageBand}
             </ResponseField>
           </ResponseGroup>
         )}
@@ -257,7 +258,7 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
               {yesNo(app.isUnfcccAdmitted)}
             </ResponseField>
             <ResponseField label="Youth affiliation within the UNFCCC">
-              {(YOUTH_AFFILIATION_LABELS as any)[app.youthAffiliation] || app.youthAffiliation}
+              {(YOUTH_AFFILIATION_LABELS as AnyValue)[app.youthAffiliation] || app.youthAffiliation}
             </ResponseField>
             <ResponseField label="Region where legally established">{app.region}</ResponseField>
             <ResponseField label="Country where legally established">
@@ -334,7 +335,7 @@ function AppealPanel({ item, busy, onReview }: AppealPanelProps) {
           Appeal {appeal.status}
         </span>
         <span className="chip chip-neutral">
-          {(IDENTITY_LABELS as any)[appeal.identityKind] || appeal.identityKind}
+          {(IDENTITY_LABELS as AnyValue)[appeal.identityKind] || appeal.identityKind}
         </span>
       </div>
       {appeal.statement && <p className="meta">{appeal.statement}</p>}
@@ -371,15 +372,15 @@ function AppealPanel({ item, busy, onReview }: AppealPanelProps) {
 
 export function MembershipTeam() {
   const { teamLabels } = useContentOptionLabels()
-  const [ending, setEnding] = useState<any>(null)
+  const [ending, setEnding] = useState<AnyValue>(null)
   const [reason, setReason] = useState('')
   const query = useApi('/member/team/membership/overview')
   const [filter, setFilter] = useState('pending')
   const [search, setSearch] = useState('')
-  const [busy, setBusy] = useState<any>(null)
-  const [actionError, setActionError] = useState<any>(null)
+  const [busy, setBusy] = useState<AnyValue>(null)
+  const [actionError, setActionError] = useState<AnyValue>(null)
 
-  const setStatus = async (id: any, status: any, confirmed = false) => {
+  const setStatus = async (id: AnyValue, status: AnyValue, confirmed = false) => {
     if (status === 'terminated' && !confirmed) {
       setReason('')
       setActionError(null)
@@ -396,20 +397,20 @@ export function MembershipTeam() {
       setEnding(null)
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(null)
     }
   }
 
-  const reviewAppeal = async (item: any, decision: any) => {
+  const reviewAppeal = async (item: Doc, decision: Doc) => {
     setBusy(item.id)
     try {
       setActionError(null)
       await apiPost(`/member/team/membership/appeals/${item.appeal.id}/review`, { decision })
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(null)
     }
@@ -425,12 +426,12 @@ export function MembershipTeam() {
         <PageSectionNav section="membership" />
       </PageHeader>
       <Async query={query} skeletons={5}>
-        {(data: any) => {
-          const active = data.items.filter((item: any) => item.membershipStatus === 'active')
-          const pending = data.items.filter((item: any) => item.membershipStatus !== 'active')
-          const appeals = data.items.filter((item: any) => item.appeal?.status === 'submitted')
-          const rejected = data.items.filter((item: any) => item.membershipStatus === 'rejected')
-          const shown = data.items.filter((item: any) => {
+        {(data: Doc) => {
+          const active = data.items.filter((item: Doc) => item.membershipStatus === 'active')
+          const pending = data.items.filter((item: Doc) => item.membershipStatus !== 'active')
+          const appeals = data.items.filter((item: Doc) => item.appeal?.status === 'submitted')
+          const rejected = data.items.filter((item: Doc) => item.membershipStatus === 'rejected')
+          const shown = data.items.filter((item: Doc) => {
             const stateMatch =
               filter === 'all' ||
               (filter === 'pending'
@@ -459,7 +460,7 @@ export function MembershipTeam() {
                   <RefreshCw size={18} aria-hidden />
                   <strong>
                     {
-                      data.items.filter((item: any) => item.membershipStatus === 'renewal_due')
+                      data.items.filter((item: Doc) => item.membershipStatus === 'renewal_due')
                         .length
                     }
                   </strong>
@@ -509,7 +510,7 @@ export function MembershipTeam() {
                   <Empty icon={ClipboardCheck} title="No applications in this view" />
                 ) : (
                   <div className="stackSm">
-                    {shown.map((item: any) => (
+                    {shown.map((item: Doc) => (
                       <div key={item.id} className="card cardTight membershipQueueCard">
                         <div className="queueRow">
                           <div className="queueIdentity membershipQueueIdentity">
@@ -532,16 +533,16 @@ export function MembershipTeam() {
                                 <span
                                   className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
                                 >
-                                  {(STATUS_LABELS as any)[item.membershipStatus] ||
+                                  {(STATUS_LABELS as AnyValue)[item.membershipStatus] ||
                                     item.membershipStatus}
                                 </span>
                                 <span className="chip chip-neutral">
-                                  {(ENTITY_LABELS as any)[item.entityType] || item.entityType}
+                                  {(ENTITY_LABELS as AnyValue)[item.entityType] || item.entityType}
                                 </span>
                                 <span className="chip chip-neutral">
                                   Hub: {item.hubAccessStatus}
                                 </span>
-                                {item.teamRoles?.map((role: any) => (
+                                {item.teamRoles?.map((role: AnyValue) => (
                                   <span key={role} className="chip chip-neutral">
                                     {teamLabels[role] || role.replaceAll('_', ' ')}
                                   </span>
@@ -563,7 +564,7 @@ export function MembershipTeam() {
                                 label,
                               }))}
                               value={item.membershipStatus}
-                              onChange={(status: any) => setStatus(item.id, status)}
+                              onChange={(status: AnyValue) => setStatus(item.id, status)}
                               disabled={busy === item.id}
                               className="queueSelect"
                               searchPlaceholder="Search statuses…"

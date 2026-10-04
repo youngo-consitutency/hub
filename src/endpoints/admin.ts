@@ -18,7 +18,7 @@ import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 const adminLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -53,7 +53,7 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       await requireAccountsManager(req)
-      const where: any = {}
+      const where: AnyValue = {}
       if (req.query?.action) where.action = { contains: req.query.action }
       if (req.query?.actorId) where.actor = { equals: req.query.actorId }
       const { docs } = await req.payload.find({
@@ -185,7 +185,7 @@ export const adminEndpoints: Endpoint[] = [
             recordedBy: admin.id,
             provenance: { source: 'admin_console' },
           })
-        } catch (error: any) {
+        } catch (error: AnyValue) {
           // Already holds the mandate — enabling twice is a no-op.
           if (error?.code !== 'duplicate_record') throw error
         }

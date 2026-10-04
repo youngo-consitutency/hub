@@ -7,7 +7,7 @@ import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { slugify } from '../../spa/shared/slug'
 import { audit } from '../lib/audit'
-import type { AccountLike, Doc } from '../lib/domain'
+import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 
 const canReview = async (req: PayloadRequest, account: AccountLike) => {
   const access = await getAccessProfile(req, account)
@@ -22,7 +22,7 @@ const submissionLimit = rateLimit({
 
 const resourceSlug = slugify
 
-const draftView = (d: any) => ({
+const draftView = (d: AnyValue) => ({
   id: d.id,
   contentType: d.contentType,
   contentKey: d.contentKey,
@@ -39,7 +39,7 @@ async function checkDuplicateUrl(req: PayloadRequest, url: string, exceptSlug?: 
   const target = String(url).trim().toLowerCase()
   const items = await store.listResources(req)
   const hit = items.find(
-    (r: any) => String(r.url || '').toLowerCase() === target && r.slug !== exceptSlug,
+    (r: AnyValue) => String(r.url || '').toLowerCase() === target && r.slug !== exceptSlug,
   )
   if (hit)
     throw fail.validation({
@@ -49,7 +49,7 @@ async function checkDuplicateUrl(req: PayloadRequest, url: string, exceptSlug?: 
 
 async function requireResource(req: PayloadRequest, slug: string) {
   const items = await store.listResources(req)
-  const item = items.find((r: any) => r.slug === slug)
+  const item = items.find((r: AnyValue) => r.slug === slug)
   if (!item) throw fail.notFound('Resource not found.')
   return item
 }
@@ -206,7 +206,9 @@ export const resourceEndpoints: Endpoint[] = [
       const b = await readBody(req)
       const detail = String(b.detail || '').trim()
       const options = await getDocument(req, 'content-options')
-      const issueKinds = (options?.body?.resourceIssueKinds || []).map((k: any) => String(k.value))
+      const issueKinds = (options?.body?.resourceIssueKinds || []).map((k: AnyValue) =>
+        String(k.value),
+      )
       if (!issueKinds.includes(String(b.kind)) || detail.length < 8 || detail.length > 2000)
         throw fail.validation({
           detail: 'Choose an issue type and explain the concern in 8–2,000 characters.',

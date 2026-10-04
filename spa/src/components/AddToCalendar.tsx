@@ -1,8 +1,9 @@
 interface AddToCalendarProps {
-  event?: any
+  event?: AnyValue
   className?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   TbCalendarPlus as CalendarPlus,
@@ -23,15 +24,15 @@ import {
 export function AddToCalendar({ event, className = 'btn btn-secondary' }: AddToCalendarProps) {
   const panelId = useId()
   const [open, setOpen] = useState(false)
-  const wrapRef = useRef<any>(null)
-  const triggerRef = useRef<any>(null)
+  const wrapRef = useRef<AnyValue>(null)
+  const triggerRef = useRef<AnyValue>(null)
 
   useEffect(() => {
     if (!open) return undefined
-    const onDoc = (e: any) => {
+    const onDoc = (e: AnyValue) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
     }
-    const onKey = (e: any) => {
+    const onKey = (e: AnyValue) => {
       if (e.key === 'Escape') {
         setOpen(false)
         triggerRef.current?.focus()

@@ -1,5 +1,6 @@
+import type { AnyValue } from '../lib/types'
 interface BrandProps {
-  constituencyOnly?: any
+  constituencyOnly?: AnyValue
 }
 
 export function Brand({ constituencyOnly = false }: BrandProps) {

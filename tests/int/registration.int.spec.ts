@@ -3,6 +3,7 @@
  * the privacy notice from content documents, so the spec stubs
  * `req.payload.find` — no server or database required.
  */
+import type { AnyValue, Doc } from '../../src/lib/domain'
 import { describe, it, expect } from 'vitest'
 
 import { validateRegistration } from '@/lib/registration'
@@ -23,16 +24,16 @@ const OPTIONS = {
 
 const req = {
   payload: {
-    find: async ({ where }: any) => {
+    find: async ({ where }: AnyValue) => {
       const slug = where?.slug?.equals
-      const docs: Record<string, any> = {
+      const docs: Doc = {
         'privacy-notice': { slug, title: 'Privacy notice', body: NOTICE },
         'registration-options': { slug, title: 'Options', body: OPTIONS },
       }
       return { docs: docs[slug] ? [docs[slug]] : [] }
     },
   },
-} as any
+} as AnyValue
 
 const individual = (overrides: Record<string, unknown> = {}) => ({
   entityType: 'individual',

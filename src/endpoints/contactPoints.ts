@@ -6,10 +6,10 @@ import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
 import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
-function publicSlot(s: any, { withEmail = false } = {}) {
-  const person = (a: any) =>
+function publicSlot(s: AnyValue, { withEmail = false } = {}) {
+  const person = (a: AnyValue) =>
     a && typeof a === 'object'
       ? withEmail
         ? { id: a.id, name: a.name, email: a.email }
@@ -129,7 +129,7 @@ export const contactPointEndpoints: Endpoint[] = [
         .slice(0, 200)
       if (!title || !b.kind) throw fail.validation({ title: 'title and kind are required.' })
       const options = await getDocument(req, 'content-options')
-      const kinds = (options?.body?.wgActivityKinds || []).map((k: any) => String(k.value))
+      const kinds = (options?.body?.wgActivityKinds || []).map((k: AnyValue) => String(k.value))
       if (!kinds.includes(String(b.kind)))
         throw new ApiError(400, 'validation', 'Invalid activity kind.')
       if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))
@@ -183,7 +183,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       if (!docs[0]) throw fail.notFound('Unknown working group.')
-      const data: any = { publicSpace: Boolean(b.publicSpace) }
+      const data: Doc = { publicSpace: Boolean(b.publicSpace) }
       const updated = await req.payload.update({
         collection: 'working-groups',
         id: (docs[0] as Doc).id,

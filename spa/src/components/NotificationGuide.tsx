@@ -1,8 +1,9 @@
 interface NotificationGuideProps {
-  device?: any
-  onClose?: any
+  device?: AnyValue
+  onClose?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
 import {
   TbInfoCircle as Info,
@@ -49,7 +50,7 @@ export const DEVICE_GUIDES = {
 }
 
 export function NotificationGuide({ device, onClose }: NotificationGuideProps) {
-  const guide = (DEVICE_GUIDES as any)[device] || DEVICE_GUIDES.desktop
+  const guide = (DEVICE_GUIDES as AnyValue)[device] || DEVICE_GUIDES.desktop
   const GuideIcon = guide.Icon
 
   return (
@@ -64,7 +65,7 @@ export function NotificationGuide({ device, onClose }: NotificationGuideProps) {
         </div>
       </div>
       <ol className="notificationGuideSteps">
-        {guide.steps.map((step: any, index: any) => (
+        {guide.steps.map((step: AnyValue, index: number) => (
           <li key={step}>
             {device === 'ios' && index === 0 && <Share size={16} strokeWidth={1.75} aria-hidden />}
             {step}

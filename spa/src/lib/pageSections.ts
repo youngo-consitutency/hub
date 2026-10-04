@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 // Combine only close pairs; keep the other member destinations directly visible.
 export const PAGE_SECTIONS = {
   people: {
@@ -42,9 +43,9 @@ export const PAGE_SECTIONS = {
   },
 }
 
-const matches = (path: any, href: any) => path === href || path.startsWith(`${href}/`)
+const matches = (path: AnyValue, href: AnyValue) => path === href || path.startsWith(`${href}/`)
 
-export function pageSectionFor(path: any) {
+export function pageSectionFor(path: AnyValue) {
   if (matches(path, '/platform/partnerships')) return null
   return (
     Object.entries(PAGE_SECTIONS)
@@ -54,9 +55,9 @@ export function pageSectionFor(path: any) {
   )
 }
 
-export function navigationActive(path: any, href: any) {
+export function navigationActive(path: AnyValue, href: AnyValue) {
   const current = pageSectionFor(path)
-  if (current && (PAGE_SECTIONS as any)[current.section].href === href) return true
+  if (current && (PAGE_SECTIONS as AnyValue)[current.section].href === href) return true
   if (['/', '/directory', '/platform'].includes(href)) return path === href
   return matches(path, href)
 }

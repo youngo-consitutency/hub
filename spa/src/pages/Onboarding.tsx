@@ -1,3 +1,4 @@
+import type { Doc } from '../lib/types'
 import { TbSchool as OnboardingIcon } from 'react-icons/tb'
 import { useAccount } from '../lib/accountContext'
 import { A, PageHeader, Section } from '../components/ui'
@@ -162,7 +163,7 @@ export function Onboarding() {
                 : 'These answers apply after you finish the membership course.'}
             </p>
             <div className="faqList">
-              {FAQ_VERIFIED.map((item: any) => (
+              {FAQ_VERIFIED.map((item: Doc) => (
                 <details key={item.q} className="faqItem">
                   <summary>{item.q}</summary>
                   <p className="meta faqAnswer">{item.a}</p>

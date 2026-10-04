@@ -1,9 +1,10 @@
 interface FaqItemProps {
-  q?: any
-  a?: any
+  q?: AnyValue
+  a?: AnyValue
   id?: string
 }
 
+import type { AnyValue, Doc } from '../../lib/types'
 import { TbChevronDown as ChevronDown } from 'react-icons/tb'
 import { A, Skeletons } from '../../components/ui'
 import { useDocument } from '../../lib/documents'
@@ -36,7 +37,7 @@ export function SiteFaq() {
       </header>
 
       <ul className="siteFaqList">
-        {(faq.items || []).map((item: any, index: any) => (
+        {(faq.items || []).map((item: Doc, index: number) => (
           <FaqItem key={item.q} q={item.q} a={item.a} id={`faq-${index}`} />
         ))}
       </ul>

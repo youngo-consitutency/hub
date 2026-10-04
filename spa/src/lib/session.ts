@@ -1,3 +1,4 @@
+import type { AnyValue } from './types'
 import { apiPost } from './api'
 
 // The session credential lives ONLY in the HttpOnly `youngo_session` cookie the
@@ -28,7 +29,7 @@ export function getCachedAccount() {
   }
 }
 
-export function setSession({ account }: any = {}) {
+export function setSession({ account }: AnyValue = {}) {
   try {
     if (account) localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account))
     else localStorage.removeItem(ACCOUNT_KEY)

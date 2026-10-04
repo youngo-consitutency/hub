@@ -1,7 +1,8 @@
 interface CoyRowProps {
-  coy?: any
+  coy?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../../lib/types'
 import { regionLabel } from '../../lib/regions'
 import {
   TbCalendar as CalendarDays,
@@ -32,7 +33,7 @@ const STATUS_LABEL = {
 
 function CoyRow({ coy }: CoyRowProps) {
   const status = resolveCoyStatus(coy)
-  const [chipClass, chipLabel] = (STATUS_LABEL as any)[status] || ['chip-neutral', status]
+  const [chipClass, chipLabel] = (STATUS_LABEL as AnyValue)[status] || ['chip-neutral', status]
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   return (
     <li className="siteCoyRow">
@@ -94,8 +95,8 @@ export function SiteCoy() {
           </a>
         </div>
         <div className="cardGrid">
-          {(coy.formats || []).map(({ icon, title, body }: any) => {
-            const Icon = (FORMAT_ICONS as any)[icon] || Globe
+          {(coy.formats || []).map(({ icon, title, body }: AnyValue) => {
+            const Icon = (FORMAT_ICONS as AnyValue)[icon] || Globe
             return (
               <article key={title} className="card siteFormatCard">
                 <span className="iconTile" aria-hidden>
@@ -117,7 +118,7 @@ export function SiteCoy() {
             <p className="meta">{COY_CURRENT.note}</p>
           </div>
           <div className="siteCtaActions">
-            {COY_SITE_LINKS.map((link: any) => (
+            {COY_SITE_LINKS.map((link: AnyValue) => (
               <a
                 key={link.href}
                 className="btn btn-secondary btn-sm"
@@ -138,7 +139,7 @@ export function SiteCoy() {
         <p className="siteSectionLead">{upcoming.lead}</p>
         <Async
           query={query}
-          empty={(data: any) =>
+          empty={(data: Doc) =>
             data.items.length === 0 ? (
               <Empty
                 icon={CalendarDays}
@@ -148,21 +149,21 @@ export function SiteCoy() {
             ) : null
           }
         >
-          {(data: any) => {
-            const global = data.items.filter((c: any) => c.type === 'coy')
-            const regional = data.items.filter((c: any) => c.type !== 'coy')
+          {(data: Doc) => {
+            const global = data.items.filter((c: AnyValue) => c.type === 'coy')
+            const regional = data.items.filter((c: AnyValue) => c.type !== 'coy')
             return (
               <div className="stack">
                 {global.length > 0 && (
                   <ul className="card siteCoyList">
-                    {global.map((coy: any) => (
+                    {global.map((coy: AnyValue) => (
                       <CoyRow key={coy.slug} coy={coy} />
                     ))}
                   </ul>
                 )}
                 {regional.length > 0 && (
                   <ul className="card siteCoyList">
-                    {regional.map((coy: any) => (
+                    {regional.map((coy: AnyValue) => (
                       <CoyRow key={coy.slug} coy={coy} />
                     ))}
                   </ul>

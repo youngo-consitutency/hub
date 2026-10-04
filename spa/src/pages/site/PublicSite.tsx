@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../lib/types'
 import { useEffect, useRef, useState } from 'react'
 import { TbArrowRight as ArrowRight, TbMenu2 as Menu, TbX as X } from 'react-icons/tb'
 import { A } from '../../components/ui'
@@ -25,7 +26,7 @@ const NAV = [
   { href: '/about/contact', label: 'Contact' },
 ]
 
-function isActive(path: any, href: any) {
+function isActive(path: AnyValue, href: AnyValue) {
   return href === '/'
     ? ['/', '/about', '/about/', '/landingV2', '/landingV2/'].includes(path)
     : path.startsWith(href)
@@ -34,7 +35,7 @@ function isActive(path: any, href: any) {
 function SiteHeader() {
   const path = usePath()
   const [open, setOpen] = useState(false)
-  const menuButtonRef = useRef<any>(null)
+  const menuButtonRef = useRef<AnyValue>(null)
 
   useEffect(() => {
     setOpen(false)
@@ -42,7 +43,7 @@ function SiteHeader() {
 
   useEffect(() => {
     if (!open) return undefined
-    const close = (event: any) => {
+    const close = (event: AnyValue) => {
       if (event.key !== 'Escape') return
       setOpen(false)
       menuButtonRef.current?.focus()
@@ -139,7 +140,7 @@ function SiteFooter() {
         </nav>
         <div className="siteFooterCol">
           <h2>{footer.involvedTitle}</h2>
-          {(footer.involved || []).map((link: any) =>
+          {(footer.involved || []).map((link: AnyValue) =>
             link.external ? (
               <a key={link.label} href={link.href} target="_blank" rel="noreferrer noopener">
                 {link.label}
@@ -151,7 +152,7 @@ function SiteFooter() {
               </A>
             ),
           )}
-          {YOUNGO_NETWORK.map((network: any) => (
+          {YOUNGO_NETWORK.map((network: AnyValue) => (
             <a
               key={network.key}
               href={network.url}
@@ -166,7 +167,7 @@ function SiteFooter() {
         {socials.length > 0 && (
           <div className="siteFooterCol">
             <h2>{footer.followTitle}</h2>
-            {socials.map((link: any) => (
+            {socials.map((link: AnyValue) => (
               <a key={link.key} href={link.url} target="_blank" rel="noreferrer noopener">
                 <DestinationIcon url={link.url} size={15} />
                 {link.label}
@@ -211,7 +212,7 @@ export function PublicSite() {
   const path = usePath()
   const { doc: site } = useDocument('site')
   const consult = site?.consultBanner
-  let Page: any = SiteNotFound
+  let Page: AnyValue = SiteNotFound
   if (path === '/' || path === '/about' || path === '/about/' || /^\/landingV2(?:\/|$)/.test(path))
     Page = SiteHome
   else if (path.startsWith('/about/working-groups')) Page = SiteWorkingGroups
@@ -237,7 +238,7 @@ export function PublicSite() {
             <strong>{consult.title}</strong> {consult.body}
           </span>
           <span className="siteConsultBannerActions">
-            {(consult.links || []).map((link: any) => (
+            {(consult.links || []).map((link: AnyValue) => (
               <a key={link.href} href={link.href}>
                 {link.label}
               </a>

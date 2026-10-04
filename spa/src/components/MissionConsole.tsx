@@ -1,11 +1,12 @@
 interface MissionMetricProps {
-  value?: any
+  value?: AnyValue
   label?: string
-  tone?: any
+  tone?: AnyValue
   href?: string
   icon?: import('react').ElementType
 }
 
+import type { AnyValue } from '../lib/types'
 import { A } from './ui'
 
 export function MissionMetric({ value, label, tone, href, icon: Icon }: MissionMetricProps) {

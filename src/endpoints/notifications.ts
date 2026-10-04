@@ -19,7 +19,7 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -42,7 +42,7 @@ const html = (body: string, status = 200) =>
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   })
 
-function trustedActionUrl(value: any) {
+function trustedActionUrl(value: AnyValue) {
   const text = String(value || '').trim()
   if (!text) return null
   const url = new URL(text, appBaseUrl())
@@ -53,7 +53,7 @@ function trustedActionUrl(value: any) {
   return url.toString()
 }
 
-function broadcastInput(body: any) {
+function broadcastInput(body: AnyValue) {
   const title = String(body?.title || '')
     .trim()
     .slice(0, 160)
@@ -81,7 +81,7 @@ function broadcastInput(body: any) {
   }
 }
 
-const requireNotifyCapability = async (req: any) => {
+const requireNotifyCapability = async (req: AnyValue) => {
   const { account, access } = await memberContext(req)
   if (!hasCapability(access, 'notifications.send'))
     throw fail.forbidden('Sending Hub email is not assigned to this account.')
@@ -98,7 +98,7 @@ export const notificationEndpoints: Endpoint[] = [
       let input
       try {
         input = broadcastInput(b)
-      } catch (error: any) {
+      } catch (error: AnyValue) {
         throw new ApiError(400, 'validation', error.message)
       }
       const connect = (await getDocument(req, 'connect'))?.body
@@ -129,7 +129,7 @@ export const notificationEndpoints: Endpoint[] = [
       let input
       try {
         input = broadcastInput(b)
-      } catch (error: any) {
+      } catch (error: AnyValue) {
         throw new ApiError(400, 'validation', error.message)
       }
       const eligible = await listEligibleNotificationAccountIds({

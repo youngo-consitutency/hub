@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api'
 import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
@@ -19,13 +20,13 @@ const initialForm = {
 export function AmendmentProposal() {
   const tracks = useApi('/negotiations')
   const [form, setForm] = useState(initialForm)
-  const [trackDetail, setTrackDetail] = useState<any>(null)
+  const [trackDetail, setTrackDetail] = useState<AnyValue>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [created, setCreated] = useState<any>(null)
+  const [created, setCreated] = useState<AnyValue>(null)
   const [idempotency] = useState(() => crypto.randomUUID())
   const selectedTrack = useMemo(
-    () => tracks.data?.items.find((track: any) => track.id === form.trackId),
+    () => tracks.data?.items.find((track: AnyValue) => track.id === form.trackId),
     [tracks.data, form.trackId],
   )
 
@@ -48,10 +49,10 @@ export function AmendmentProposal() {
     }
   }, [selectedTrack])
 
-  const set = (name: any) => (event: any) =>
+  const set = (name: AnyValue) => (event: AnyValue) =>
     setForm((current) => ({ ...current, [name]: event.target.value }))
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setSaving(true)
     setError('')
@@ -82,7 +83,7 @@ export function AmendmentProposal() {
       })
       setCreated(result.amendment)
     } catch (requestError) {
-      setError((requestError as any).message)
+      setError((requestError as AnyValue).message)
     } finally {
       setSaving(false)
     }
@@ -108,7 +109,7 @@ export function AmendmentProposal() {
         description="Anchor an insert, replacement or deletion to one exact source version. Competing alternatives remain separate proposals."
       />
       <Async query={tracks}>
-        {(data: any) => (
+        {(data: Doc) => (
           <form onSubmit={submit}>
             <Section label="Exact target">
               <div className="card detailPanel formGrid">
@@ -116,7 +117,7 @@ export function AmendmentProposal() {
                   <span>Negotiation track</span>
                   <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
-                    {data.items.map((track: any) => (
+                    {data.items.map((track: AnyValue) => (
                       <option value={track.id} key={track.id}>
                         {track.topic}
                       </option>
@@ -133,7 +134,7 @@ export function AmendmentProposal() {
                     onChange={set('targetDocumentVersionId')}
                   >
                     <option value="">Select a source version</option>
-                    {(trackDetail?.documents || []).map((document: any) => (
+                    {(trackDetail?.documents || []).map((document: AnyValue) => (
                       <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>

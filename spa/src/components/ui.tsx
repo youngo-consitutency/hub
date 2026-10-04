@@ -2,37 +2,37 @@ interface AProps {
   href?: string
   className?: string
   children?: import('react').ReactNode
-  onClick?: any
-  target?: any
-  peek?: any
-  [key: string]: any
+  onClick?: AnyValue
+  target?: AnyValue
+  peek?: AnyValue
+  [key: string]: AnyValue
 }
 
 interface ButtonProps {
-  variant?: any
+  variant?: AnyValue
   sm?: boolean
   glow?: boolean
   className?: string
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
 interface FilterPillProps {
   active?: boolean
-  state?: any
+  state?: AnyValue
   icon?: import('react').ElementType
-  prefix?: any
+  prefix?: AnyValue
   children?: import('react').ReactNode
   className?: string
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
 interface FilterChipProps {
   children?: import('react').ReactNode
-  state?: any
-  tone?: any
-  onClick?: any
+  state?: AnyValue
+  tone?: AnyValue
+  onClick?: AnyValue
   icon?: import('react').ElementType
-  prefix?: any
+  prefix?: AnyValue
   className?: string
 }
 
@@ -40,61 +40,61 @@ interface SortButtonProps {
   active?: boolean
   icon?: import('react').ElementType
   children?: import('react').ReactNode
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
 interface FilterMenuProps {
   children?: import('react').ReactNode
-  activeCount?: any
+  activeCount?: AnyValue
   label?: string
-  onClear?: any
+  onClear?: AnyValue
 }
 
 interface PageHeaderProps {
   title?: string
   description?: string
-  action?: any
+  action?: AnyValue
   children?: import('react').ReactNode
   icon?: import('react').ElementType
 }
 
 interface StatusChipProps {
-  status?: any
-  filterState?: any
-  onClick?: any
+  status?: AnyValue
+  filterState?: AnyValue
+  onClick?: AnyValue
 }
 
 interface LifecycleTimingProps {
-  status?: any
+  status?: AnyValue
   iso?: string
   label?: string
   showCountdown?: boolean
-  statusFilterState?: any
-  onStatusFilter?: any
+  statusFilterState?: AnyValue
+  onStatusFilter?: AnyValue
   className?: string
 }
 
 interface SectionProps {
   label?: string
   meta?: string | null
-  action?: any
+  action?: AnyValue
   children?: import('react').ReactNode
 }
 
 interface SkeletonsProps {
-  n?: any
+  n?: AnyValue
 }
 
 interface EmptyProps {
   icon?: import('react').ElementType
   title?: string
-  body?: any
-  cta?: any
+  body?: AnyValue
+  cta?: AnyValue
 }
 
 interface ErrorCardProps {
-  message?: any
-  onRetry?: any
+  message?: AnyValue
+  onRetry?: AnyValue
 }
 
 interface BackLinkProps {
@@ -103,17 +103,18 @@ interface BackLinkProps {
 }
 
 interface TimelineProps {
-  steps?: any
-  currentIndex?: any
+  steps?: AnyValue
+  currentIndex?: AnyValue
 }
 
 interface AsyncProps {
-  query?: any
-  skeletons?: any
-  children: (data: any) => import('react').ReactNode
-  empty?: any
+  query?: AnyValue
+  skeletons?: AnyValue
+  children: (data: Doc) => import('react').ReactNode
+  empty?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
 import { navigate, replace } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
@@ -232,7 +233,7 @@ export function FilterPill({
   )
 }
 
-function filterStateLabel(filterState: any) {
+function filterStateLabel(filterState: AnyValue) {
   return filterState === 'include'
     ? 'included; activate to exclude'
     : filterState === 'exclude'
@@ -386,7 +387,7 @@ const CHIP = {
 }
 
 export function StatusChip({ status, filterState = 'neutral', onClick }: StatusChipProps) {
-  const [cls, label, pulse] = (CHIP as any)[status] || [
+  const [cls, label, pulse] = (CHIP as AnyValue)[status] || [
     'chip-neutral',
     String(status || '').replaceAll('_', ' '),
   ]
@@ -530,7 +531,7 @@ export function BackLink({ href, children }: BackLinkProps) {
 export function Timeline({ steps, currentIndex }: TimelineProps) {
   return (
     <div className="timelineStrip" aria-label="Process timeline">
-      {steps.map((label: any, i: any) => (
+      {steps.map((label: AnyValue, i: number) => (
         <Fragment key={label}>
           {i > 0 && <span className="timelineLine" />}
           <span

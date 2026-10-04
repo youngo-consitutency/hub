@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../../../lib/domain'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import ical, { ICalAlarmType, ICalCalendarMethod } from 'ical-generator'
@@ -8,20 +9,20 @@ export const dynamic = 'force-dynamic'
 
 // Feed names come from the `content-options` document so new event types
 // need no code change. `plural` labels the per-type feeds.
-async function typeLabels(req: any): Promise<Record<string, string>> {
+async function typeLabels(req: AnyValue): Promise<Record<string, string>> {
   const doc = await getDocument(req, 'content-options').catch(() => null)
   const entries = Array.isArray(doc?.body?.eventTypes) ? doc.body.eventTypes : []
   return Object.fromEntries(
     entries
-      .filter((t: any) => t?.value)
-      .map((t: any) => [t.value, String(t.plural || t.label || t.value)]),
+      .filter((t: AnyValue) => t?.value)
+      .map((t: AnyValue) => [t.value, String(t.plural || t.label || t.value)]),
   )
 }
 
 const stripIcs = (file: string) => file.replace(/\.ics$/, '')
 
 // Calendar feeds carry UTC times, meeting URLs and a 15-minute VALARM.
-function buildCalendar({ name, events }: { name: string; events: any[] }) {
+function buildCalendar({ name, events }: { name: string; events: AnyValue[] }) {
   const cal = ical({
     name,
     prodId: { company: 'YOUNGO Hub', product: 'Hub', language: 'EN' },
@@ -58,7 +59,7 @@ const notFound = (message: string) =>
 export async function GET(_request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const payload = await getPayload({ config })
-  const req = { payload } as any
+  const req = { payload } as AnyValue
 
   const [scope, file] = path
   if (scope === 'all.ics') {

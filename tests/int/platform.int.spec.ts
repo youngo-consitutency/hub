@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { testPayload } from './provision'
@@ -5,14 +6,14 @@ import { api, session, BASE } from './helpers'
 
 describe('platform decision bridge', () => {
   const BODY = `it-body-${Math.random().toString(36).slice(2, 8)}`
-  let coordinator: { cookie: string; account: any }
-  let member: { cookie: string; account: any }
-  let publisher: { cookie: string; account: any }
+  let coordinator: { cookie: string; account: Doc }
+  let member: { cookie: string; account: Doc }
+  let publisher: { cookie: string; account: Doc }
   const past = () => new Date(Date.now() - 3600000).toISOString()
 
   beforeAll(async () => {
     const payload = await testPayload()
-    await (payload.db as any).pool.query(
+    await (payload.db as AnyValue).pool.query(
       `INSERT INTO platform_bodies (id, name, kind) VALUES ($1, $2, 'working_group') ON CONFLICT DO NOTHING`,
       [BODY, `Bridge test body ${BODY}`],
     )
@@ -33,7 +34,7 @@ describe('platform decision bridge', () => {
 
   it('bridges the platform UI onto the S09 engine end to end', { timeout: 120000 }, async () => {
     const payload = await testPayload()
-    const pool = (payload.db as any).pool
+    const pool = (payload.db as AnyValue).pool
 
     // create via the platform surface — stored in the S09 engine
     const created = await api('/platform/decisions', {
@@ -159,6 +160,6 @@ describe('platform decision bridge', () => {
     // public register exposes it anonymously
     const publicRes = await fetch(`${BASE}/api/platform/public`)
     const pub = await publicRes.json()
-    expect(pub.decisions.some((x: any) => x.title === 'Bridged proposal')).toBe(true)
+    expect(pub.decisions.some((x: AnyValue) => x.title === 'Bridged proposal')).toBe(true)
   })
 })

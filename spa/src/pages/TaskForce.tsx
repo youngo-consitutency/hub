@@ -1,8 +1,9 @@
 interface TaskForceProps {
   slug?: string
-  extra?: any
+  extra?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useApi } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
 import { WgActivityCard } from '../components/WgActivityCard'
@@ -19,7 +20,7 @@ export function TaskForce({ slug, extra }: TaskForceProps) {
         {groupQuery.data?.name || 'Working group'}
       </BackLink>
       <Async query={groupQuery} skeletons={2}>
-        {(group: any) => {
+        {(group: Doc) => {
           const force = taskForceBySlug(group, extra)
           if (!force) {
             return (
@@ -35,7 +36,8 @@ export function TaskForce({ slug, extra }: TaskForceProps) {
             workspaceQuery.data?.progress?.rules_ok,
           )
           const activities = (workspaceQuery.data?.activities || []).filter(
-            (activity: any) => (activity.taskForceSlug || activity.task_force_slug) === force.slug,
+            (activity: AnyValue) =>
+              (activity.taskForceSlug || activity.task_force_slug) === force.slug,
           )
           return (
             <>
@@ -62,7 +64,7 @@ export function TaskForce({ slug, extra }: TaskForceProps) {
                   />
                 ) : activities.length ? (
                   <div className="cardGrid">
-                    {activities.map((activity: any) => (
+                    {activities.map((activity: AnyValue) => (
                       <WgActivityCard key={activity.id} activity={activity} />
                     ))}
                   </div>

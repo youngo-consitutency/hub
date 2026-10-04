@@ -1,8 +1,9 @@
 interface TicketCardProps {
-  ticket?: any
-  onUpdate?: any
+  ticket?: AnyValue
+  onUpdate?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { formatDateTime } from '../lib/time'
 import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api'
@@ -50,7 +51,7 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
     setNote(ticket.triageNote || '')
   }, [ticket.id, ticket.triageNote])
 
-  const patch = async (body: any) => {
+  const patch = async (body: AnyValue) => {
     setSaving(true)
     try {
       await onUpdate(ticket.id, body)
@@ -63,8 +64,12 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
     <div className="card cardTight feedbackTicket">
       <div className="feedbackTicketMain">
         <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-          <span className="chip chip-info">{(KIND_LABEL as any)[ticket.kind] || ticket.kind}</span>
-          <span className={`chip ${(SEVERITY_CHIP as any)[ticket.severity] || 'chip-neutral'}`}>
+          <span className="chip chip-info">
+            {(KIND_LABEL as AnyValue)[ticket.kind] || ticket.kind}
+          </span>
+          <span
+            className={`chip ${(SEVERITY_CHIP as AnyValue)[ticket.severity] || 'chip-neutral'}`}
+          >
             {ticket.severity}
           </span>
           <span className="chip chip-neutral">{ticket.status}</span>
@@ -134,7 +139,7 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
 
 export function FeedbackQueue() {
   const [status, setStatus] = useState('new')
-  const [state, setState] = useState<Record<string, any>>({ items: null, error: null })
+  const [state, setState] = useState<Doc>({ items: null, error: null })
 
   const load = useCallback(() => {
     apiGet(`/member/feedback${status ? `?status=${status}` : ''}`)
@@ -146,12 +151,12 @@ export function FeedbackQueue() {
     load()
   }, [load])
 
-  const updateTicket = async (id: any, body: any) => {
+  const updateTicket = async (id: AnyValue, body: AnyValue) => {
     try {
       await apiPatch(`/member/feedback/${id}`, body)
       load()
     } catch (error) {
-      setState((current) => ({ ...current, error: (error as any).message }))
+      setState((current) => ({ ...current, error: (error as AnyValue).message }))
       throw error
     }
   }
@@ -183,8 +188,8 @@ export function FeedbackQueue() {
         />
       )}
       <div className="stackSm">
-        {(state.items || []).map((ticket: any) => (
-          <TicketCard key={(ticket as any).id} ticket={ticket} onUpdate={updateTicket} />
+        {(state.items || []).map((ticket: Doc) => (
+          <TicketCard key={(ticket as AnyValue).id} ticket={ticket} onUpdate={updateTicket} />
         ))}
       </div>
     </Section>

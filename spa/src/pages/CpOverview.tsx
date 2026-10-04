@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useContentOptionLabels } from '../lib/documents'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, useApi } from '../lib/api'
@@ -11,9 +12,9 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 
-function roleForGroup(access: any, slug: any) {
+function roleForGroup(access: AnyValue, slug: AnyValue) {
   return (
-    access.wgAssignments?.find((item: any) => item.wgSlug === slug)?.role ||
+    access.wgAssignments?.find((item: Doc) => item.wgSlug === slug)?.role ||
     (access.manageAllWgs ? 'officer' : 'contact')
   )
 }
@@ -23,11 +24,11 @@ export function CpOverview() {
   const groups = useApi('/groups')
   const { account } = useAccount()
   const access = account?.access || { wgAssignments: [], manageAllWgs: false }
-  const [pendingByWg, setPendingByWg] = useState<Record<string, any>>({})
+  const [pendingByWg, setPendingByWg] = useState<Doc>({})
 
   const assignedSlugs = useMemo(() => {
     if (access.manageAllWgs) return null
-    return new Set((access.wgAssignments || []).map((item: any) => item.wgSlug).filter(Boolean))
+    return new Set((access.wgAssignments || []).map((item: Doc) => item.wgSlug).filter(Boolean))
   }, [access.manageAllWgs, access.wgAssignments])
 
   useEffect(() => {
@@ -35,14 +36,14 @@ export function CpOverview() {
     if (!items?.length) return
     const assigned = access.manageAllWgs
       ? items
-      : items.filter((group: any) => assignedSlugs?.has(group.slug))
+      : items.filter((group: Doc) => assignedSlugs?.has(group.slug))
     let cancelled = false
     Promise.all(
-      assigned.map(async (group: any) => {
+      assigned.map(async (group: Doc) => {
         try {
           const data = await apiGet(`/member/cp/${encodeURIComponent(group.slug)}/members`)
           const pending = (data.items || []).filter(
-            (m: any) => m.status === 'pending_approval' || m.status === 'interested',
+            (m: AnyValue) => m.status === 'pending_approval' || m.status === 'interested',
           ).length
           return [group.slug, pending]
         } catch {
@@ -89,16 +90,16 @@ export function CpOverview() {
 
         <Async
           query={groups}
-          empty={(data: any) =>
+          empty={(data: Doc) =>
             !data.items?.length ? (
               <Empty icon={Briefcase} title="No working groups available" />
             ) : null
           }
         >
-          {(data: any) => {
+          {(data: Doc) => {
             const assigned = access.manageAllWgs
               ? data.items
-              : data.items.filter((group: any) => assignedSlugs?.has(group.slug))
+              : data.items.filter((group: Doc) => assignedSlugs?.has(group.slug))
             if (!assigned.length) {
               return (
                 <Empty
@@ -110,7 +111,7 @@ export function CpOverview() {
             }
             return (
               <div className="cardGrid">
-                {assigned.map((group: any) => {
+                {assigned.map((group: Doc) => {
                   const pending = pendingByWg[group.slug] || 0
                   const role = roleForGroup(access, group.slug)
                   return (

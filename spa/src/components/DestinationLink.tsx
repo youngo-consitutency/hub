@@ -1,8 +1,8 @@
 interface DestinationIconProps {
   url?: string
-  size?: any
+  size?: AnyValue
   className?: string
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
 interface ExternalResourceRowProps {
@@ -12,6 +12,8 @@ interface ExternalResourceRowProps {
   className?: string
 }
 
+import type { AnyValue } from '../lib/types'
+import { createElement } from 'react'
 import {
   TbArrowUpRight,
   TbBrandAirtable,
@@ -44,7 +46,7 @@ import {
 
 // Exact host or a true subdomain — 'app.zoom.us' matches, 'notzoom.us'
 // does not.
-const hostIs = (host: any, domain: any) => host === domain || host.endsWith(`.${domain}`)
+const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
 
 export function destinationIconFor(rawUrl = '') {
   if (/^mailto:/i.test(rawUrl)) return TbMail
@@ -112,8 +114,13 @@ export function DestinationIcon({
   className = '',
   ...props
 }: DestinationIconProps) {
-  const Icon = destinationIconFor(url)
-  return <Icon className={className} size={size} aria-hidden focusable="false" {...props} />
+  return createElement(destinationIconFor(url), {
+    className,
+    size,
+    'aria-hidden': true,
+    focusable: 'false',
+    ...props,
+  })
 }
 
 export function ExternalResourceRow({

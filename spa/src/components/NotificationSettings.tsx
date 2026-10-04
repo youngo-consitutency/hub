@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { useEffect, useRef, useState } from 'react'
 import {
   TbBell as Bell,
@@ -27,8 +28,8 @@ export { DEVICE_GUIDES, NotificationGuide }
  */
 export function NotificationSettings() {
   const setup = useAlertSetup()
-  const [helpDevice, setHelpDevice] = useState<any>(null)
-  const cardRef = useRef<any>(null)
+  const [helpDevice, setHelpDevice] = useState<AnyValue>(null)
+  const cardRef = useRef<AnyValue>(null)
 
   useEffect(() => {
     if (window.location.hash !== '#alerts') return
@@ -56,8 +57,10 @@ export function NotificationSettings() {
       ) : (
         <>
           <div className="notificationStatusActions">
-            <span className={`chip ${(state as any).subscribed ? 'chip-accent' : 'chip-neutral'}`}>
-              {(state as any).subscribed ? 'On' : 'Off'}
+            <span
+              className={`chip ${(state as AnyValue).subscribed ? 'chip-accent' : 'chip-neutral'}`}
+            >
+              {(state as AnyValue).subscribed ? 'On' : 'Off'}
             </span>
             <button
               type="button"
@@ -71,7 +74,7 @@ export function NotificationSettings() {
           </div>
           <div className="notificationHeadingRow">
             <span className="iconTile" aria-hidden>
-              {(state as any).subscribed ? <BellRing size={20} /> : <Bell size={20} />}
+              {(state as AnyValue).subscribed ? <BellRing size={20} /> : <Bell size={20} />}
             </span>
             <div className="notificationHeadingCopy">
               <h2>Alerts on this device</h2>
@@ -103,7 +106,7 @@ export function NotificationSettings() {
               This browser cannot show web notifications. Chrome, Edge, Firefox, and Safari 16.4 or
               later all can.
             </p>
-          ) : !(state as any).configured ? (
+          ) : !(state as AnyValue).configured ? (
             <p className="meta notificationHint">
               Notifications are not switched on for this Hub deployment yet. The admin team enables
               them once the server keys are in place.
@@ -136,7 +139,7 @@ export function NotificationSettings() {
             </p>
           ) : (
             <div className="rowGap notificationActions">
-              {(state as any).subscribed ? (
+              {(state as AnyValue).subscribed ? (
                 <>
                   <Button variant="secondary" onClick={setup.disable} disabled={busy}>
                     <BellOff size={16} strokeWidth={1.75} aria-hidden />

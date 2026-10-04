@@ -1,8 +1,9 @@
+import type { AnyValue } from '../src/lib/types'
 const TERMINAL = new Set(['cancelled', 'concluded'])
 const CLOSED_APPLICATIONS = new Set(['applications_closed', 'registration_closed'])
 const OPEN_APPLICATIONS = new Set(['applications_open', 'registration_open'])
 
-function endOfUtcDay(isoDate: any) {
+function endOfUtcDay(isoDate: AnyValue) {
   if (!isoDate) return null
   const time = Date.parse(`${String(isoDate).slice(0, 10)}T23:59:59.000Z`)
   return Number.isFinite(time) ? time : null
@@ -13,7 +14,7 @@ function endOfUtcDay(isoDate: any) {
  * `applications_closed` after `applicationsCloseAt`, and a past `endsOn`
  * becomes `concluded`.
  */
-export function resolveCoyStatus(coy: any, now = new Date()) {
+export function resolveCoyStatus(coy: AnyValue, now = new Date()) {
   if (!coy?.status) return coy?.status
   if (TERMINAL.has(coy.status) || CLOSED_APPLICATIONS.has(coy.status)) {
     return coy.status
@@ -28,6 +29,6 @@ export function resolveCoyStatus(coy: any, now = new Date()) {
   return coy.status
 }
 
-export function coyApplicationsAreOpen(coy: any, now = new Date()) {
+export function coyApplicationsAreOpen(coy: AnyValue, now = new Date()) {
   return OPEN_APPLICATIONS.has(resolveCoyStatus(coy, now))
 }

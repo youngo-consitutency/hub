@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { getAccessProfile, hasCapability } from './access'
-import type { AccountLike } from './domain'
+import type { AccountLike, AnyValue } from './domain'
 
 // Shared S10/S24 helpers. Secret ballots are keyed by voter credentials
 // (HMAC'd tokens) and never reference an account — server-trust secrecy.
@@ -20,7 +20,7 @@ export async function isSelector(req: PayloadRequest, account: AccountLike) {
   return hasCapability(access, 'selection.manage')
 }
 
-export const accountRef = (a: any) =>
+export const accountRef = (a: AnyValue) =>
   a == null
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }

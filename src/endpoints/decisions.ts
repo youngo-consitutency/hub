@@ -20,7 +20,7 @@ import {
   recordEvent,
   vetoView,
 } from '../lib/decisionRuntime'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 // S09 decision workflow endpoints. Members act through these — direct REST
 // writes on the decision collections are staff-only (see Decisions.ts), so
@@ -41,7 +41,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const where: any = {}
+      const where: AnyValue = {}
       const body = req.query?.body as string | undefined
       const status = req.query?.status as string | undefined
       if (body) where.body = { equals: body }
@@ -348,7 +348,7 @@ export const decisionEndpoints: Endpoint[] = [
       if (!(await isBodyMember(req, account, p)))
         throw fail.forbidden('Only members of the decision-making body may vote.')
       const b = await readBody(req)
-      const options = (p.ballotOptions ?? []).map((o: any) => o.option)
+      const options = (p.ballotOptions ?? []).map((o: AnyValue) => o.option)
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
       const hasBallot = async () => {
@@ -375,7 +375,7 @@ export const decisionEndpoints: Endpoint[] = [
           },
           overrideAccess: true,
         })
-      } catch (error: any) {
+      } catch (error: AnyValue) {
         // The pre-check is only a fast path: concurrent submissions can both
         // see zero ballots, so the unique (proposal, account) index is the
         // real guard. Converted error shapes vary between drizzle paths, so

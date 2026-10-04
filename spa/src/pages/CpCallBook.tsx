@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { apiPost } from '../lib/api'
@@ -8,7 +9,7 @@ import { useWorkingGroups } from '../lib/workingGroups'
 import { useAccount } from '../lib/accountContext'
 import { TbCalendarCheck as CalendarCheck } from 'react-icons/tb'
 
-function groupByDay(slots: any) {
+function groupByDay(slots: AnyValue) {
   const map = new Map()
   for (const slot of slots) {
     const day = new Intl.DateTimeFormat('en-GB', {
@@ -26,7 +27,7 @@ function groupByDay(slots: any) {
 export function CpCallBook() {
   const { account } = useAccount()
   const wg = useWorkingGroups()
-  const WG_OPTIONS = wg.groups.map((group: any) => ({
+  const WG_OPTIONS = wg.groups.map((group: AnyValue) => ({
     value: group.slug,
     label: group.name,
   }))
@@ -37,14 +38,14 @@ export function CpCallBook() {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
 
-  const book = async (id: any) => {
+  const book = async (id: AnyValue) => {
     setBusy(id)
     setError('')
     try {
       await apiPost(`/member/cp-calls/slots/${id}/book`, { wgSlug })
       query.retry()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     } finally {
       setBusy('')
     }
@@ -57,7 +58,7 @@ export function CpCallBook() {
       await apiPost('/member/cp-calls/mine/cancel', {})
       query.retry()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     } finally {
       setBusy('')
     }
@@ -71,7 +72,7 @@ export function CpCallBook() {
       />
       {error && <ErrorCard message={error} onRetry={() => setError('')} />}
       <Async query={query}>
-        {(data: any) =>
+        {(data: AnyValue) =>
           data.mine ? (
             <Section label="Your call">
               <div className="card cardTight">
@@ -103,7 +104,7 @@ export function CpCallBook() {
                     <div key={day} className="stackSm" style={{ marginBottom: 16 }}>
                       <h3>{day}</h3>
                       <div className="dashboardCardGrid">
-                        {slots.map((slot: any) => (
+                        {slots.map((slot: AnyValue) => (
                           <div key={slot.id} className="card cardTight">
                             <strong>{slot.hostLabel}</strong>
                             <p className="meta">{fmtDual(slot.startsAt)}</p>

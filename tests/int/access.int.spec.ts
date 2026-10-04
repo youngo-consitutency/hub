@@ -1,10 +1,11 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { provisionAccount, testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('generated API access control', () => {
-  let member: { cookie: string; account: any }
+  let member: { cookie: string; account: AnyValue }
   let memberAccountId: string
 
   beforeAll(async () => {
@@ -95,13 +96,13 @@ describe('generated API access control', () => {
         whatsappUrl: 'https://chat.example/fixture',
         groupUrl: 'https://group.example/fixture',
         driveUrl: 'https://drive.example/fixture',
-      } as any,
+      } as AnyValue,
       overrideAccess: true,
     })
     const res = await api('/working-groups?limit=50', { cookie: member.cookie })
     expect(res.status).toBe(200)
     const body = await res.json()
-    const doc = body.docs?.find((d: any) => d.slug === slug)
+    const doc = body.docs?.find((d: AnyValue) => d.slug === slug)
     expect(doc).toBeTruthy()
     expect(doc.whatsappUrl).toBeUndefined()
     expect(doc.groupUrl).toBeUndefined()
@@ -125,11 +126,11 @@ describe('generated API access control', () => {
         role: 'wg.member',
         status: 'active',
         startsAt: new Date(Date.now() - 86400000).toISOString(),
-      } as any,
+      } as AnyValue,
       overrideAccess: true,
     })
     try {
-      const req = { payload } as any
+      const req = { payload } as AnyValue
       const memberProfile = await getAccessProfile(req, account)
       expect(memberProfile.capabilities).not.toContain('wg.manage:contract-wg')
       await payload.update({

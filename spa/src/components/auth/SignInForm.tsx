@@ -1,14 +1,15 @@
 interface SignInFormProps {
-  login?: any
-  fields?: any
+  login?: AnyValue
+  fields?: AnyValue
   error?: string
-  status?: any
-  setLog?: any
-  onSubmit?: any
-  onForgot?: any
+  status?: AnyValue
+  setLog?: AnyValue
+  onSubmit?: AnyValue
+  onForgot?: AnyValue
   className?: string
 }
 
+import type { AnyValue } from '../../lib/types'
 import { Button } from '../ui'
 import { FieldError } from '../FormControls'
 import { fieldClass } from './helpers'

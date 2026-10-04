@@ -1,9 +1,10 @@
 interface LockedProps {
   title?: string
-  body?: any
-  course?: any
+  body?: AnyValue
+  course?: AnyValue
 }
 
+import type { AnyValue, Doc } from './lib/types'
 import { canManageGroup, canManageGroups } from './lib/groupPermissions'
 import { Shell } from './components/Shell'
 import { AccessGate } from './components/AccessGate'
@@ -16,8 +17,8 @@ import { TbCompass as Compass, TbLock as Lock } from 'react-icons/tb'
 import { Privacy } from './pages/Privacy'
 import { RoutePeek } from './components/RoutePeek'
 
-const lazyPage = (loader: any, name: any) =>
-  lazy(() => loader().then((module: any) => ({ default: module[name] })))
+const lazyPage = (loader: AnyValue, name: AnyValue) =>
+  lazy(() => loader().then((module: AnyValue) => ({ default: module[name] })))
 const Home = lazyPage(() => import('./pages/Home'), 'Home')
 const Calendar = lazyPage(() => import('./pages/Calendar'), 'Calendar')
 const Submissions = lazyPage(() => import('./pages/Submissions'), 'Submissions')
@@ -149,18 +150,18 @@ const PEEK_ROUTES = [
   /^\/groups\/(.+)$/,
 ]
 
-function routeFor(path: any) {
-  const match = ROUTES.find(([pattern]) => (pattern as any).test(path))
+function routeFor(path: AnyValue) {
+  const match = ROUTES.find(([pattern]) => (pattern as AnyValue).test(path))
   if (!match) return { Page: NotFound, slug: null, extra: null }
   const captured = path.match(match[0])
   return {
-    Page: match[1] as any,
+    Page: match[1] as AnyValue,
     slug: captured?.[1] ?? null,
     extra: captured?.[2] ?? null,
   }
 }
 
-function canPeek(path: any) {
+function canPeek(path: AnyValue) {
   return PEEK_ROUTES.some((pattern) => pattern.test(path))
 }
 
@@ -241,7 +242,7 @@ function Locked({
   )
 }
 
-function isPreVerify(path: any) {
+function isPreVerify(path: AnyValue) {
   return PRE_VERIFY.some((re) => re.test(path))
 }
 
@@ -421,7 +422,7 @@ export default function App() {
         </div>
       )}
       <AccessGate>
-        {(account: any) => (
+        {(account: Doc) => (
           <AccountProvider initialAccount={account}>
             <AppRoutes />
           </AccountProvider>

@@ -1,8 +1,9 @@
 interface ChangePasswordGateProps {
-  account?: any
-  onChanged?: any
+  account?: AnyValue
+  onChanged?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { TbKey as KeyRound } from 'react-icons/tb'
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { Button } from './ui'

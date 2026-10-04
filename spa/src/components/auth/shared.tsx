@@ -1,13 +1,13 @@
 interface WgInterestsSectionProps {
-  selected?: any
-  onToggle?: any
+  selected?: AnyValue
+  onToggle?: AnyValue
 }
 
 interface PhoneFieldProps {
   label?: string
-  value?: any
-  onValueChange?: any
-  onLoad?: any
+  value?: AnyValue
+  onValueChange?: AnyValue
+  onLoad?: AnyValue
   error?: string
   required?: boolean
 }
@@ -19,16 +19,17 @@ interface PolicyLinkProps {
 
 interface PrivacyConsentSectionProps {
   checked?: boolean
-  onChange?: any
+  onChange?: AnyValue
   error?: string
-  isOrg?: any
-  notice?: any
+  isOrg?: AnyValue
+  notice?: AnyValue
 }
 
 interface FormAlertProps {
   children?: import('react').ReactNode
 }
 
+import type { AnyValue } from '../../lib/types'
 import { TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { FieldError, MultiSelectDropdown } from '../FormControls'
 import { fieldClass, checkClass } from './helpers'
@@ -36,7 +37,7 @@ import { useWorkingGroups } from '../../lib/workingGroups'
 
 export function WgInterestsSection({ selected, onToggle }: WgInterestsSectionProps) {
   const wg = useWorkingGroups()
-  const options = wg.groups.map((g: any) => ({ value: g.slug, label: g.name }))
+  const options = wg.groups.map((g: AnyValue) => ({ value: g.slug, label: g.name }))
   return (
     <section className="card authSection">
       <h2 className="authSectionTitle">Working groups you’re interested in</h2>
@@ -87,11 +88,11 @@ export function PhoneField({
         onKeyDown={(event) => {
           const input = event.currentTarget
           if (
-            ((event as any).key === 'Backspace' &&
-              (input as any as any).selectionStart <= 2 &&
+            ((event as AnyValue).key === 'Backspace' &&
+              (input as AnyValue as AnyValue).selectionStart <= 2 &&
               (input.selectionEnd ?? 0) <= 2) ||
             (event.key === 'Delete' &&
-              (input as any as any).selectionStart === 0 &&
+              (input as AnyValue as AnyValue).selectionStart === 0 &&
               (input.selectionEnd ?? 0) <= 2)
           ) {
             event.preventDefault()
@@ -146,7 +147,7 @@ export function PrivacyConsentSection({
           : 'We use the information on this form to create and manage your Hub account. The Membership Policy covers participation in YOUNGO; the Privacy Notice covers how this information is used and protected.'}
       </p>
       <ul className="authBullet meta">
-        {CONSENT_SUMMARY.map((point: any) => (
+        {CONSENT_SUMMARY.map((point: AnyValue) => (
           <li key={point}>{point}</li>
         ))}
       </ul>

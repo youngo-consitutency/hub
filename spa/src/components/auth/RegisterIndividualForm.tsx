@@ -1,20 +1,21 @@
 interface RegisterIndividualFormProps {
-  form?: any
-  fields?: any
-  under18?: any
-  countryOptions?: any
-  nationalityOptions?: any
-  setForm?: any
-  setReg?: any
-  setChoice?: any
-  setPhone?: any
-  setMinorityIdentity?: any
-  toggleMinority?: any
-  toggleWg?: any
-  ensureCountryOptions?: any
-  ensureNationalityOptions?: any
+  form?: AnyValue
+  fields?: AnyValue
+  under18?: AnyValue
+  countryOptions?: AnyValue
+  nationalityOptions?: AnyValue
+  setForm?: AnyValue
+  setReg?: AnyValue
+  setChoice?: AnyValue
+  setPhone?: AnyValue
+  setMinorityIdentity?: AnyValue
+  toggleMinority?: AnyValue
+  toggleWg?: AnyValue
+  ensureCountryOptions?: AnyValue
+  ensureNationalityOptions?: AnyValue
 }
 
+import type { AnyValue } from '../../lib/types'
 import { useDocument } from '../../lib/documents'
 import { Button } from '../ui'
 import { DatePicker, FieldError, MultiSelectDropdown, SearchableSelect } from '../FormControls'
@@ -70,7 +71,7 @@ export function RegisterIndividualForm({
       <section className="card authSection">
         <h2 className="authSectionTitle">How old are you? *</h2>
         <div className="authChoiceGrid">
-          {AGE_BAND_OPTIONS.map((opt: any) => (
+          {AGE_BAND_OPTIONS.map((opt: AnyValue) => (
             <label
               key={opt.value}
               className={`authChoice ${form.ageBand === opt.value ? 'active' : ''}`}
@@ -79,7 +80,7 @@ export function RegisterIndividualForm({
                 type="radio"
                 name="ageBand"
                 checked={form.ageBand === opt.value}
-                onChange={() => setForm((f: any) => ({ ...f, ageBand: opt.value }))}
+                onChange={() => setForm((f: AnyValue) => ({ ...f, ageBand: opt.value }))}
               />
               <strong>{opt.label}</strong>
             </label>
@@ -106,7 +107,7 @@ export function RegisterIndividualForm({
                 variant="secondary"
                 sm
                 onClick={() => {
-                  setForm((f: any) => ({
+                  setForm((f: AnyValue) => ({
                     ...f,
                     entityType: 'organization',
                   }))
@@ -377,7 +378,7 @@ export function RegisterIndividualForm({
               name="ngoStat"
               checked={form.memberOfAccreditedNgo === 'yes'}
               onChange={() =>
-                setForm((f: any) => ({
+                setForm((f: AnyValue) => ({
                   ...f,
                   memberOfAccreditedNgo: 'yes',
                 }))
@@ -391,7 +392,7 @@ export function RegisterIndividualForm({
               name="ngoStat"
               checked={form.memberOfAccreditedNgo === 'no'}
               onChange={() =>
-                setForm((f: any) => ({
+                setForm((f: AnyValue) => ({
                   ...f,
                   memberOfAccreditedNgo: 'no',
                 }))

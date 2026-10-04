@@ -4,7 +4,7 @@ import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
 import { contributionsFromCsv, previewCsvImport, synthesizeGysContributions } from '../lib/gys.js'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 import type { GysTrackedContribution } from '../payload-types'
 
 const GYS_STATUSES = [
@@ -65,7 +65,7 @@ async function getGysWorkflow(req: PayloadRequest): Promise<{
   cycle: NonNullable<ReturnType<typeof publicCycleView>>
   contributions: Doc[]
   statuses: string[]
-  synthesis: any
+  synthesis: AnyValue
 }> {
   let { docs } = await req.payload.find({
     collection: 'gys-workflow-cycles',
@@ -146,10 +146,10 @@ export const gysEndpoints: Endpoint[] = [
       const { account: staff } = await requireTeam(req, 'gys_policy_team')
       const b = await readBody(req)
       const workflow = await getGysWorkflow(req)
-      let parsed: any
+      let parsed: AnyValue
       try {
         parsed = contributionsFromCsv(b.csvText, b.columnMap)
-      } catch (err: any) {
+      } catch (err: AnyValue) {
         throw fail.validation({ csvText: err.message })
       }
       const imported: Doc[] = []
@@ -185,7 +185,7 @@ export const gysEndpoints: Endpoint[] = [
               req,
             }),
           )
-        } catch (err: any) {
+        } catch (err: AnyValue) {
           errors.push({ externalId: item.externalId, error: err.message })
         }
       }

@@ -1,10 +1,11 @@
 // Path-based routing via wouter — the listener/store machinery lives in the
 // library; this module adds the app's scroll-after-navigate behaviour and the
 // existing call-site API.
+import type { AnyValue } from './types'
 import { useLocation } from 'wouter'
 import { navigate as wouterNavigate } from 'wouter/use-browser-location'
 
-function scrollAfterNavigate(to: any, scroll: any) {
+function scrollAfterNavigate(to: AnyValue, scroll: AnyValue) {
   if (!scroll) return
   const hashIndex = String(to).indexOf('#')
   const hash = hashIndex >= 0 ? String(to).slice(hashIndex) : ''
@@ -17,13 +18,13 @@ function scrollAfterNavigate(to: any, scroll: any) {
   window.scrollTo(0, 0)
 }
 
-export function navigate(to: any, { state = {}, scroll = true } = {}) {
+export function navigate(to: AnyValue, { state = {}, scroll = true } = {}) {
   if (to === window.location.pathname + window.location.search + window.location.hash) return
   wouterNavigate(to, { state })
   scrollAfterNavigate(to, scroll)
 }
 
-export function replace(to: any, { state = {}, scroll = true } = {}) {
+export function replace(to: AnyValue, { state = {}, scroll = true } = {}) {
   wouterNavigate(to, { replace: true, state })
   scrollAfterNavigate(to, scroll)
 }

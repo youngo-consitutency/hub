@@ -2,6 +2,7 @@ interface ShellProps {
   children?: import('react').ReactNode
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -49,8 +50,8 @@ const SECTION = {
 export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
-  const menuButtonRef = useRef<any>(null)
-  const sheetRef = useRef<any>(null)
+  const menuButtonRef = useRef<AnyValue>(null)
+  const sheetRef = useRef<AnyValue>(null)
   const { account } = useAccount()
   const access = account?.access || {
     teamRoles: account?.teamRoles || [],
@@ -76,7 +77,7 @@ export function Shell({ children }: ShellProps) {
 
     ;(focusable()[0] as HTMLElement | undefined)?.focus()
 
-    const handleKeyboard = (event: any) => {
+    const handleKeyboard = (event: AnyValue) => {
       if (event.key === 'Escape') {
         event.preventDefault()
         setSheet(false)
@@ -90,10 +91,10 @@ export function Shell({ children }: ShellProps) {
       const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()
-        ;(last as any).focus()
+        ;(last as AnyValue).focus()
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault()
-        ;(first as any).focus()
+        ;(first as AnyValue).focus()
       }
     }
 
@@ -260,14 +261,14 @@ export function Shell({ children }: ShellProps) {
     ]
 
     const seen = new Set()
-    const sections: any = []
+    const sections: AnyValue = []
     for (const entry of entries) {
       // `when: undefined` means "any verified member"; the pre-course entries
       // above set it explicitly.
       const allowed = entry.when === undefined ? verified : Boolean(entry.when)
       if (!allowed || seen.has(entry.href)) continue
       seen.add(entry.href)
-      const group = sections.find((s: any) => s.section === entry.section)
+      const group = sections.find((s: AnyValue) => s.section === entry.section)
       const item = {
         href: entry.href,
         label: entry.label,
@@ -277,7 +278,9 @@ export function Shell({ children }: ShellProps) {
       else sections.push({ section: entry.section, items: [item] })
     }
     const order = [SECTION.home, SECTION.now, SECTION.people, SECTION.act, SECTION.mine]
-    return sections.sort((a: any, b: any) => order.indexOf(a.section) - order.indexOf(b.section))
+    return sections.sort(
+      (a: AnyValue, b: AnyValue) => order.indexOf(a.section) - order.indexOf(b.section),
+    )
   }, [
     account,
     verified,
@@ -333,10 +336,10 @@ export function Shell({ children }: ShellProps) {
             <span>Search the Hub</span>
           </A>
         )}
-        {nav.map((group: any) => (
+        {nav.map((group: Doc) => (
           <div className="navGroup" key={group.section || 'home'}>
             {group.section && <p className="navSection">{group.section}</p>}
-            {group.items.map(({ href, label, icon: Icon }: any) => (
+            {group.items.map(({ href, label, icon: Icon }: AnyValue) => (
               <A
                 key={href}
                 href={href}
@@ -476,11 +479,11 @@ export function Shell({ children }: ShellProps) {
               )}
             </div>
             <div className="sheetSections">
-              {nav.map((group: any) => (
+              {nav.map((group: Doc) => (
                 <section className="sheetSection" key={group.section}>
                   {group.section && <p className="navSection">{group.section}</p>}
                   <div className="sheetNavGrid">
-                    {group.items.map(({ href, label, icon: Icon }: any) => (
+                    {group.items.map(({ href, label, icon: Icon }: AnyValue) => (
                       <A
                         key={href}
                         href={href}

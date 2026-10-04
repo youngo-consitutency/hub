@@ -11,7 +11,7 @@ import {
   recordEvent,
 } from '../../lib/decisionRuntime'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
-import type { Doc } from '../../lib/domain'
+import type { Doc, AnyValue } from '../../lib/domain'
 import type { DecisionFlag, DecisionProposal } from '../../payload-types'
 
 // Bridge between the operational platform UI (/platform/decisions*) and the
@@ -35,11 +35,11 @@ const STAGE: Record<string, string> = {
 
 const CLOSED = ['adopted', 'vetoed', 'withdrawn', 'rejected', 'failed_quorum']
 
-function platformBodyId(p: any): string {
+function platformBodyId(p: AnyValue): string {
   return p.body === 'council' ? 'council' : String(p.bodyRef ?? '')
 }
 
-function deadlineFor(p: any): string | null {
+function deadlineFor(p: AnyValue): string | null {
   if (p.status === 'consultation') return p.consultationEndsAt
   if (p.status === 'revision') return p.revisionEndsAt
   if (p.status === 'decision') return p.decisionEndsAt
@@ -60,7 +60,7 @@ async function resolveProposal(req: PayloadRequest, raw: string) {
   return loadProposal(req, id) // legacy_ref fallback inside loadProposal
 }
 
-async function publicId(p: any): Promise<string> {
+async function publicId(p: AnyValue): Promise<string> {
   if (p.legacyRef) return p.legacyRef
   const { rows } = await db().query(
     'SELECT id FROM platform_decisions WHERE s09_proposal_id = $1',
@@ -71,7 +71,7 @@ async function publicId(p: any): Promise<string> {
 
 // Mirror the mutable display columns back into platform_decisions so raw-SQL
 // readers (public register, enquiry gate, task links) stay consistent.
-async function syncProjection(p: any) {
+async function syncProjection(p: AnyValue) {
   await db().query(
     `UPDATE platform_decisions SET
        title=$2, proposal=$3, stage=$4, deadline_at=$5, outcome=$6,
@@ -105,7 +105,7 @@ async function s09Body(bodySlug: string) {
   return { body: 'working_group', bodyRef: bodySlug }
 }
 
-async function bodyView(req: PayloadRequest, p: any) {
+async function bodyView(req: PayloadRequest, p: AnyValue) {
   const { rows } = await db().query(`${DECISION_VIEW_SELECT} WHERE dp.id = $1`, [p.id])
   return rows[0]
 }
@@ -217,7 +217,7 @@ export async function saveDecision(req: PayloadRequest, actor: Actor, input: Inp
 }
 
 export async function decisionDetail(req: PayloadRequest, actor: Actor, id: string) {
-  const account = requireVerifiedMember(req)
+  requireVerifiedMember(req)
   let proposal = await resolveProposal(req, id)
   proposal = await advanceIfDue(req, proposal)
   proposal = await checkVeto(req, proposal)
@@ -274,13 +274,13 @@ export async function decisionDetail(req: PayloadRequest, actor: Actor, id: stri
     decision: await bodyView(req, proposal),
     contributions,
     revisions: (proposal.revisions ?? [])
-      .map((r: any) => ({
+      .map((r: AnyValue) => ({
         version: r.version,
         title: r.title,
         proposal: r.proposal,
         createdAt: r.createdAt,
       }))
-      .sort((a: any, b: any) => b.version - a.version),
+      .sort((a: AnyValue, b: AnyValue) => b.version - a.version),
     history: (events as Doc[]).map((e) => ({
       action: e.type,
       reason: e.detail ? JSON.stringify(e.detail) : '',
@@ -350,7 +350,7 @@ export async function resolveContribution(
   contributionId: string,
   input: Input,
 ) {
-  const account = requireVerifiedMember(req)
+  requireVerifiedMember(req)
   const [kind, rawId] = String(contributionId).split(':')
   if (kind === 'c') fail(400, 'Comments are not flags.')
   if (kind !== 'f' || !/^\d+$/.test(rawId ?? '')) fail(404, 'Contribution not found.')
@@ -428,7 +428,7 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
     fail(400, 'Choose a recognised outcome basis.')
 
   const version = (proposal.version ?? 1) + 1
-  const bump = async (data: any, event: string, detail?: any) => {
+  const bump = async (data: Doc, event: string, detail?: AnyValue) => {
     const updated = await req.payload.update({
       collection: 'decision-proposals',
       id: proposal.id,

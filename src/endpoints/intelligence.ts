@@ -6,7 +6,7 @@ import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -25,7 +25,7 @@ type Evidence = {
 async function evidenceForQuery(
   req: PayloadRequest,
   query: string,
-  access: any,
+  access: AnyValue,
   limit: number,
 ): Promise<Evidence[]> {
   const needle = query.toLowerCase()
@@ -148,7 +148,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
-      const where: any = isOperator ? {} : { account: { equals: account.id } }
+      const where: AnyValue = isOperator ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
         collection: 'research-notes',
         where,
@@ -306,7 +306,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
-      const where: any = isOperator ? {} : { account: { equals: account.id } }
+      const where: AnyValue = isOperator ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
         collection: 'research-notes',
         where,

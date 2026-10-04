@@ -1,16 +1,17 @@
 interface ForgotPasswordFormProps {
-  login?: any
-  fields?: any
+  login?: AnyValue
+  fields?: AnyValue
   error?: string
-  forgotMsg?: any
-  status?: any
-  setLog?: any
-  onSubmit?: any
-  onBack?: any
+  forgotMsg?: AnyValue
+  status?: AnyValue
+  setLog?: AnyValue
+  onSubmit?: AnyValue
+  onBack?: AnyValue
   className?: string
-  hideOperatorNote?: any
+  hideOperatorNote?: AnyValue
 }
 
+import type { AnyValue } from '../../lib/types'
 import { TbArrowLeft as ArrowLeft } from 'react-icons/tb'
 import { Button } from '../ui'
 import { FieldError } from '../FormControls'

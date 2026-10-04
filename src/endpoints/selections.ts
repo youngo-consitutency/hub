@@ -3,11 +3,11 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { accountRef, isSelector, loadSelection } from '../lib/governance'
-import type { AccountLike, Doc } from '../lib/domain'
+import type { AccountLike, AnyValue } from '../lib/domain'
 
 // S24 selections.
 
-const selectionView = (s: any, extra?: any) => ({
+const selectionView = (s: AnyValue, extra?: AnyValue) => ({
   id: s.id,
   title: s.title,
   opportunityNote: s.opportunityNote,
@@ -15,7 +15,7 @@ const selectionView = (s: any, extra?: any) => ({
   bodyRef: s.bodyRef,
   status: s.status,
   method: s.method,
-  criteria: (s.criteria ?? []).map((c: any) => ({ name: c.name, weightPct: c.weightPct })),
+  criteria: (s.criteria ?? []).map((c: AnyValue) => ({ name: c.name, weightPct: c.weightPct })),
   deadlineAt: s.deadlineAt,
   spotsAvailable: s.spotsAvailable,
   selectionSummary: s.selectionSummary,
@@ -32,13 +32,13 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
     limit: 1,
     overrideAccess: true,
   })
-  return docs[0] as Doc
+  return docs[0] as AnyValue
 }
 
 // Recording a selection stage belongs to the Selections Team (S24) —
 // no account attribute grants selection authority on its own.
-async function canAdminister(req: PayloadRequest, s: any, account: AccountLike) {
-  const creator = (s.createdBy as Doc)?.id ?? s.createdBy
+async function canAdminister(req: PayloadRequest, s: AnyValue, account: AccountLike) {
+  const creator = (s.createdBy as AnyValue)?.id ?? s.createdBy
   return creator === account.id || (await isSelector(req, account))
 }
 
@@ -62,7 +62,7 @@ export const selectionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as Doc[]).map((s) => selectionView(s)) })
+      return json({ items: (docs as AnyValue[]).map((s) => selectionView(s)) })
     }),
   },
   {
@@ -88,7 +88,7 @@ export const selectionEndpoints: Endpoint[] = [
           bodyRef: b.bodyRef?.trim() || null,
           status: 'committee_forming',
           method: b.method,
-          criteria: (b.criteria ?? []).map((c: any) => ({
+          criteria: (b.criteria ?? []).map((c: AnyValue) => ({
             name: String(c.name).trim(),
             weightPct: Number(c.weightPct),
           })),
@@ -308,7 +308,7 @@ export const selectionEndpoints: Endpoint[] = [
           'You declared a conflict of interest on this application.',
         )
       const b = await readBody(req)
-      const data: any = {
+      const data: AnyValue = {
         selection: s.id,
         application: applicationId,
         evaluator: account.id,
@@ -387,7 +387,7 @@ export const selectionEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const selected = new Set(b.selectedApplicationIds.map(Number))
-      for (const app of apps as Doc[]) {
+      for (const app of apps as AnyValue[]) {
         await req.payload.update({
           collection: 'selection-applications',
           id: app.id,
@@ -442,7 +442,7 @@ export const selectionEndpoints: Endpoint[] = [
       })
       return json({
         selection: selectionView(updated),
-        selected: (apps as Doc[]).map((a) => ({
+        selected: (apps as AnyValue[]).map((a) => ({
           id: a.id,
           account: accountRef(a.account),
         })),

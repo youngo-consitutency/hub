@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbFileText as PolicyIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -36,13 +37,13 @@ const ARCHIVE_STATUSES = [
 /** Browse open or archived submissions with search, stage and group filters, sorting and layouts. */
 export function Submissions() {
   const [state, setState] = useState('open')
-  const [statusFilters, setStatusFilters] = useState<Record<string, any>>({})
-  const [groupFilters, setGroupFilters] = useState<Record<string, any>>({})
+  const [statusFilters, setStatusFilters] = useState<Doc>({})
+  const [groupFilters, setGroupFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
   const query = useApi(`/submissions?state=${state}`, [state])
 
-  const changeState = (nextState: any) => {
+  const changeState = (nextState: AnyValue) => {
     setState(nextState)
     setStatusFilters({})
     setGroupFilters({})
@@ -72,7 +73,7 @@ export function Submissions() {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: any) =>
+        empty={(d: AnyValue) =>
           d.items.length === 0 ? (
             state === 'open' ? (
               <Empty
@@ -83,7 +84,7 @@ export function Submissions() {
                   <A
                     href="#"
                     className="btn btn-secondary btn-sm"
-                    onClick={(e: any) => {
+                    onClick={(e: AnyValue) => {
                       e.preventDefault()
                       setState('archive')
                     }}
@@ -98,17 +99,17 @@ export function Submissions() {
           ) : null
         }
       >
-        {(data: any) => {
+        {(data: Doc) => {
           const statuses = state === 'open' ? OPEN_STATUSES : ARCHIVE_STATUSES
           const groups = [
             ...new Map(
-              data.items.filter((item: any) => item.wg).map((item: any) => [item.wg.slug, item.wg]),
+              data.items.filter((item: Doc) => item.wg).map((item: Doc) => [item.wg.slug, item.wg]),
             ).values(),
-          ].sort((a, b) => (a as any).name.localeCompare((b as any).name))
+          ].sort((a, b) => (a as AnyValue).name.localeCompare((b as AnyValue).name))
           const needle = search.trim().toLocaleLowerCase()
           const submissions = data.items
             .filter(
-              (submission: any) =>
+              (submission: Doc) =>
                 matchesFilters(submission.status, statusFilters) &&
                 matchesFilters(submission.wg?.slug, groupFilters) &&
                 (!needle ||
@@ -117,7 +118,7 @@ export function Submissions() {
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: any, b: any) =>
+            .sort((a: AnyValue, b: AnyValue) =>
               sort === 'title'
                 ? a.title.localeCompare(b.title)
                 : state === 'archive'
@@ -201,16 +202,16 @@ export function Submissions() {
                           </FilterPill>
                           {groups.map((item) => (
                             <FilterPill
-                              key={(item as any).slug}
-                              state={groupFilters[(item as any).slug] || 'neutral'}
-                              icon={workingGroupIcon((item as any).slug)}
+                              key={(item as AnyValue).slug}
+                              state={groupFilters[(item as AnyValue).slug] || 'neutral'}
+                              icon={workingGroupIcon((item as AnyValue).slug)}
                               onClick={() =>
                                 setGroupFilters((current) =>
-                                  toggleFilter(current, (item as any).slug),
+                                  toggleFilter(current, (item as AnyValue).slug),
                                 )
                               }
                             >
-                              {(item as any).name}
+                              {(item as AnyValue).name}
                             </FilterPill>
                           ))}
                         </div>
@@ -222,7 +223,7 @@ export function Submissions() {
               <CatalogueResults count={submissions.length}>
                 {submissions.length ? (
                   <div className="cardGrid">
-                    {submissions.map((submission: any) => (
+                    {submissions.map((submission: Doc) => (
                       <SubmissionCard
                         key={submission.slug}
                         sub={submission}
