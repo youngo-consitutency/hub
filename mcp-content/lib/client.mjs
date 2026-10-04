@@ -6,8 +6,8 @@
 // Schema-bound enums (select-field options) come from spa/shared; content
 // vocab and working groups are fetched live from the Hub API so the catalogue
 // always reflects the database — nothing operational is baked into this file.
-import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../spa/shared/opportunities.js'
-import { slugify } from '../../spa/shared/slug.js'
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../src/shared/opportunities.js'
+import { slugify } from '../../src/shared/slug.js'
 
 export { slugify }
 

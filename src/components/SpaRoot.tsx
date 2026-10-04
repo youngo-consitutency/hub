@@ -5,11 +5,11 @@
 import { useEffect } from 'react'
 import { SWRConfig } from 'swr'
 import { Router } from 'wouter'
-import '../../spa/src/styles/tokens.css'
-import '../../spa/src/styles/app.css'
-import App from '../../spa/src/App'
-import { disablePWAInDevelopment, initPWA } from '../../spa/src/lib/pwa'
-import { watchSystemTheme } from '../../spa/src/lib/theme'
+import '../member/styles/tokens.css'
+import '../member/styles/app.css'
+import App from '../member/App'
+import { disablePWAInDevelopment, initPWA } from '../member/lib/pwa'
+import { watchSystemTheme } from '../member/lib/theme'
 
 export default function SpaRoot() {
   useEffect(() => {

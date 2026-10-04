@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../src/lib/types'
+import type { AnyValue, Doc } from '../member/lib/types'
 export const RESOURCE_CATEGORIES = [
   { key: 'join', label: 'Join' },
   { key: 'channels', label: 'Channels' },

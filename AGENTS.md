@@ -1,6 +1,6 @@
 # YOUNGO Hub agent guidance
 
-YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `spa/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
+YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `src/member/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
 
 ## Hub Intelligence invariants
 

@@ -1,4 +1,4 @@
-import { bodyRoles } from '../../../spa/shared/protocol'
+import { bodyRoles } from '../../shared/protocol'
 import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
 import { AUTHORITY_LOCK_NS } from '../../lib/authorityLock'

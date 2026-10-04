@@ -5,7 +5,7 @@ import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
-import { slugify } from '../../spa/shared/slug'
+import { slugify } from '../shared/slug'
 import { audit } from '../lib/audit'
 import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 

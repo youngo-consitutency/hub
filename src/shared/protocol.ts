@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../src/lib/types'
+import type { AnyValue, Doc } from '../member/lib/types'
 // Governance-protocol contracts shared by the web app and server: which
 // roles exist per body kind, which roles grant website access, and which
 // task-force slugs are routable. Display labels live in the

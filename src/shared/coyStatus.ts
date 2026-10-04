@@ -1,4 +1,4 @@
-import type { AnyValue } from '../src/lib/types'
+import type { AnyValue } from '../member/lib/types'
 const TERMINAL = new Set(['cancelled', 'concluded'])
 const CLOSED_APPLICATIONS = new Set(['applications_closed', 'registration_closed'])
 const OPEN_APPLICATIONS = new Set(['applications_open', 'registration_open'])

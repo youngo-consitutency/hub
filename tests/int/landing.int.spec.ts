@@ -84,7 +84,7 @@ describe('Demo delivery guard', () => {
 
 describe('Group management presentation', () => {
   it('does not show contact tools to ordinary group members', async () => {
-    const { canManageGroups, canManageGroup } = await import('../../spa/src/lib/groupPermissions')
+    const { canManageGroups, canManageGroup } = await import('../../src/member/lib/groupPermissions')
     const member = {
       access: { wgAssignments: [{ wgSlug: 'finance', role: 'member' }], capabilities: [] },
     }

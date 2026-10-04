@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto'
 import type { Payload, PayloadRequest } from 'payload'
 import { assembleFeed } from './feed'
-import { resolveCoyStatus } from '../../spa/shared/coyStatus'
-import { normalizeTaskForces } from '../../spa/shared/protocol'
+import { resolveCoyStatus } from '../shared/coyStatus'
+import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
 
 type AnyRecord = Doc
