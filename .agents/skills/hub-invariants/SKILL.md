@@ -39,6 +39,7 @@ Apply these on every change. They exist because real bugs shipped when they were
 - British English in docs, UI copy, and comments.
 - No AI-generated imagery.
 - Comments: concise — state the invariant or rationale, do not narrate the code.
+- Minimal-code skills (e.g. ponytail) apply to scaffolding only — never cut a capability gate, authority check, audit write, `cleanText`/zod validation, `overrideAccess` write, or lock-order step to save lines. Those look redundant; they are the invariant.
 
 ## Session memory
 
