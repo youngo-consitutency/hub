@@ -54,6 +54,13 @@ data/
 .codex-vault/
 .cursor/
 .codex/
+.agent-vault/
+.devin/
+.claude
+.codex
+.cursor
+.agents/vault/
+.agents/tool-cfg/
 .idea/*
 !/.idea/runConfigurations
 

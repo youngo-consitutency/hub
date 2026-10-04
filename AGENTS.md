@@ -62,7 +62,7 @@ Constituency Work so this stays a last resort; every use is auditable via
 
 ## Task skills
 
-Task-specific recipes and non-negotiables live in `.agents/skills/` — load the matching skill before editing: `hub-invariants` (any change), `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp`.
+Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), `vault/` is the project memory (also reachable via the `.agent-vault` symlink), and `tool-cfg/` holds per-tool configs reached through the `.claude`/`.codex`/`.cursor` symlinks.
 
 ## Verification
 
