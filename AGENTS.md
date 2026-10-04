@@ -60,6 +60,10 @@ in the database first, then re-run. Keep at least one operator in active
 Constituency Work so this stays a last resort; every use is auditable via
 `provenance.source = 'manual_recovery'`.
 
+## Task skills
+
+Task-specific recipes and non-negotiables live in `.devin/skills/` — load the matching skill before editing: `hub-invariants` (any change), `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp`.
+
 ## Verification
 
 Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through provisioning scripts or direct database access. The hosted demo uses the existing Vercel `youngo-hub` project and `youngo-hub.vercel.app`; do not create another project. Confirm the target and database before deploying.
