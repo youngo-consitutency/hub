@@ -22,7 +22,8 @@
     "mcp:content": "node scripts/agent/hub-content-mcp.mjs",
     "mcp:content:http": "node mcp-content/server.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "sync:mcp": "node scripts/agent/sync-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
@@ -65,6 +66,7 @@
     "@types/web-push": "3.6.4",
     "eslint": "^9.16.0",
     "eslint-config-next": "16.3.6",
+    "jsonc-parser": "^3.3.1",
     "prettier": "^3.9.9",
     "tsx": "4.23.15",
     "typescript": "6.0.3",

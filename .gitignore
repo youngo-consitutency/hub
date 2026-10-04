@@ -41,6 +41,7 @@ data/
 .cursor
 .devin
 .zed
+.mcp.json
 .agent-vault
 .codex-vault
 .agents/vault/
