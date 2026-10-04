@@ -62,7 +62,7 @@ Constituency Work so this stays a last resort; every use is auditable via
 
 ## Task skills
 
-Task-specific recipes and non-negotiables live in `.devin/skills/` — load the matching skill before editing: `hub-invariants` (any change), `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp`.
+Task-specific recipes and non-negotiables live in `.agents/skills/` — load the matching skill before editing: `hub-invariants` (any change), `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp`.
 
 ## Verification
 

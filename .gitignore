@@ -70,6 +70,7 @@ data/
 !.github/PULL_REQUEST_TEMPLATE.md
 !.github/ISSUE_TEMPLATE/*.md
 !.github/ISSUE_TEMPLATE/*.yml
+!.agents/skills/**/*.md
 docs/*
 !docs/agent-context.md
 openspec/
