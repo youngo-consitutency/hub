@@ -3,19 +3,24 @@ name: Neon preview branch
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: Pull request number to provision (format.yml re-dispatches this after an auto-fix push, which emits no events)
+        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: neon-pr-${{ github.event.pull_request.number }}
+  group: neon-pr-${{ github.event.pull_request.number || inputs.pr-number }}
   cancel-in-progress: true
 
 env:
   NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
   NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
   NEONCTL: npx --yes neonctl@6.0.0
-  PR_BRANCH: pr-${{ github.event.pull_request.number }}
+  PR_BRANCH: pr-${{ github.event.pull_request.number || inputs.pr-number }}
 
 jobs:
   # Each open pull request gets an isolated Neon branch (pr-<number>) with
