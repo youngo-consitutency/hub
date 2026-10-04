@@ -1,7 +1,8 @@
+import type { Doc } from './domain'
 // Port of server/lib/feed.js — pure home-feed assembly.
 const DAY = 86400000
 
-type AnyRecord = Record<string, any>
+type AnyRecord = Doc
 
 export function assembleFeed(data: AnyRecord, now = new Date()) {
   const t = now.getTime()

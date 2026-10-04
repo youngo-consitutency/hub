@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../src/lib/domain'
 import crypto from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
@@ -23,7 +24,7 @@ export default async function globalSetup() {
   // The public-site specs assert rendered copy, so the `site` content
   // document is provisioned like any other test fixture — nothing in the
   // repository carries real content.
-  const ensureDoc = async (slug: string, title: string, body: any) => {
+  const ensureDoc = async (slug: string, title: string, body: AnyValue) => {
     const existing = await payload.find({
       collection: 'content-documents',
       where: { slug: { equals: slug } },
@@ -34,7 +35,7 @@ export default async function globalSetup() {
     if (!existing.docs[0]) {
       await payload.create({
         collection: 'content-documents',
-        data: { slug, title, body } as any,
+        data: { slug, title, body } as AnyValue,
         overrideAccess: true,
       })
     }
@@ -82,7 +83,7 @@ export default async function globalSetup() {
       data: {
         slug: `e2e-group-${suffix}`,
         name: `E2E Group ${suffix}`,
-      } as any,
+      } as AnyValue,
       overrideAccess: true,
     })
   }

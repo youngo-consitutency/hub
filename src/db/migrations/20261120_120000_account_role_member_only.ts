@@ -1,13 +1,8 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// `accounts.role` is reduced to the technical account kind — 'member' only.
-// Every authority value it used to mirror (admin, focal_point, wg_contact,
-// ngo_admin) now lives in `authority_records`, so the column is flattened
-// and the enum narrowed to prevent the parallel store from reappearing.
-//
-// Postgres cannot remove values from an enum type, so the type is rebuilt.
-// The column default must be dropped before the type change — Postgres
-// cannot cast a default expression automatically — and is restored after.
+// `accounts.role` narrows to the technical kind 'member' — its former
+// authority values now live in `authority_records`. Postgres can't remove
+// enum values, so the type is rebuilt (drop default → retype → restore).
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   UPDATE "accounts" SET "role"='member' WHERE "role" <> 'member';
@@ -21,9 +16,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   `)
 }
 
-// The enum widens back to its former values; flattened rows stay 'member' —
-// which account held which mandate cannot be reconstructed from a label, and
-// authority_records is the authoritative history either way.
+// Rollback widens the enum but rows stay 'member' — authority_records is the
+// authoritative history either way.
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
   ALTER TYPE "public"."enum_accounts_role" RENAME TO "enum_accounts_role_old";

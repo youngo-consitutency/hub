@@ -1,7 +1,4 @@
-// S09 Decision-Making Processes — pure domain logic.
-// No I/O here: windows, consensus outcomes, quorum/tally and veto rules are
-// computed from plain values so the endpoints stay thin and the rules stay
-// testable. References: S09 (decision process), S13 (bodies/quorum actors).
+// S09 decision-making — pure domain logic, no I/O (S09, S13).
 
 export const DECISION_TYPES = [
   'standard', // 5d consult / 24h revision / 24h decision
@@ -64,8 +61,7 @@ export function computeWindows(
 
 export const VOTING_WINDOW_MS = 24 * H
 
-// On-ground decisions are made by members present; the 5% quorum of the whole
-// body does not apply (S09 §3.3/§3.4).
+// On-ground decisions vote among members present; no 5% quorum (S09 §3.3/§3.4).
 export function requiresQuorum(type: DecisionType): boolean {
   return type !== 'og_standard' && type !== 'og_snap'
 }
@@ -79,9 +75,8 @@ export function quorumMet(votesCast: number, eligibleCount: number): boolean {
   return votesCast >= quorumNeeded(eligibleCount)
 }
 
-// A red flag stands until it is withdrawn or nullified — a response alone does
-// not resolve it. Grey flags never block consensus (they allow "consensus with
-// reservations"), but an unresolved grey may be escalated to red.
+// Red flags stand until withdrawn or nullified. Grey flags never block
+// consensus but may escalate to red.
 export function unresolvedRed(flagStatuses: string[]): number {
   return flagStatuses.filter((s) => s === 'open' || s === 'addressed').length
 }
@@ -94,8 +89,7 @@ export function consensusOutcome(
   return unresolvedRed(greyStatuses) > 0 ? 'consensus_with_reservations' : 'consensus'
 }
 
-// Adoption needs ≥⅔ of votes cast (S09 §2 step 6). Blank/spoiled ballots are
-// excluded from `cast` before calling this.
+// Adoption needs ≥⅔ of votes cast (S09 §2 step 6); blanks are excluded earlier.
 export function voteAdopted(votesFor: number, votesCast: number): boolean {
   if (votesCast <= 0) return false
   return votesFor / votesCast >= 2 / 3
@@ -106,8 +100,8 @@ export interface VetoRequest {
   groupKey: string
 }
 
-// Veto stops the vote (S09 §2 step 7): ≥20 organisations worldwide, or ≥6
-// organisations from the Global South, or ≥5 working groups/operational teams.
+// Veto stops the vote (S09 §2 step 7): ≥20 orgs, ≥6 Global South orgs, or
+// ≥5 working groups/operational teams.
 export function vetoThresholdMet(requests: VetoRequest[]): boolean {
   const orgs = new Set<string>()
   const orgsSouth = new Set<string>()
@@ -124,7 +118,7 @@ export function vetoThresholdMet(requests: VetoRequest[]): boolean {
 }
 
 export interface IrvBallot {
-  // Ordered candidate ids; empty array = blank ballot ("no good candidate").
+  // Ordered candidate ids; empty = blank ballot.
   ranks: string[]
 }
 
@@ -135,9 +129,8 @@ export interface IrvResult {
   rounds: { eliminated: string[]; tallies: Record<string, number> }[]
 }
 
-// Instant-runoff tally per S10 §3.4. Absolute majority of non-blank ballots
-// wins; fewest-first-preference candidates are eliminated (ties broken by
-// later preferences); majority of blank ballots → restart.
+// Instant-runoff (S10 §3.4): absolute majority of non-blank ballots wins;
+// fewest-top-preference candidates eliminated; blank majority → restart.
 export function tallyIrv(ballots: IrvBallot[], candidates: string[]): IrvResult {
   const blankCount = ballots.filter((b) => b.ranks.length === 0).length
   if (blankCount * 2 > ballots.length) {

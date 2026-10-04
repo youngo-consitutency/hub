@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Bootstrap a freshly migrated database. The repository carries no content
  * or account data — working groups, events, documents, resources and demo

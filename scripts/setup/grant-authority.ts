@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Out-of-band authority recovery. When no account can sign in holding the
  * capability to grant mandates — for example every officer's Constituency
@@ -15,6 +14,7 @@
  * This deliberately bypasses the governed assign() path, so the record's
  * provenance is stamped as a manual recovery for the audit trail.
  */
+import type { AnyValue } from '../../src/lib/domain'
 import { config as loadEnv } from 'dotenv'
 import { getPayload } from 'payload'
 
@@ -71,7 +71,7 @@ async function main() {
       account: accountId,
       role,
       kind: recordKind(scopeType, role),
-      scopeType: scopeType as any,
+      scopeType: scopeType as AnyValue,
       scopeId,
       status: 'active',
       startsAt: new Date().toISOString(),

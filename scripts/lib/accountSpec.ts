@@ -7,6 +7,7 @@
  * Every scope/role tuple lands in `authority-records`, matching the
  * runtime model in src/lib/authority.ts.
  */
+import type { AnyValue } from '../../src/lib/domain'
 import { recordKind, resolveLegacyRole, normaliseScopeType } from '../../src/lib/authority'
 
 export interface AccountSpec {
@@ -33,7 +34,7 @@ export interface AccountSpec {
 
 const NOW = () => new Date().toISOString()
 
-export async function applyAccountSpec(payload: any, spec: AccountSpec) {
+export async function applyAccountSpec(payload: AnyValue, spec: AccountSpec) {
   const verified = spec.verified !== false
   const track = spec.membershipTrack ?? 'network'
   const { docs } = await payload.find({

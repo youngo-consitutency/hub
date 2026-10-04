@@ -3,11 +3,11 @@ import { endpoint, fail, json, readBody } from '../lib/respond'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { getDocument } from '../lib/documents'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 // The questionnaire structure (kinds + sections) is console-editable content
 // in the `consultation` document; the API both serves and validates with it.
-async function consultationOptions(req: any) {
+async function consultationOptions(req: AnyValue) {
   const body = (await getDocument(req, 'consultation'))?.body || {}
   return {
     kinds: Array.isArray(body.kinds) ? body.kinds : [],
@@ -35,7 +35,7 @@ export const consultationEndpoints: Endpoint[] = [
     path: '/consultation/contributions',
     method: 'get',
     handler: endpoint(async (req) => {
-      const where: any = {}
+      const where: AnyValue = {}
       if (req.query?.kind) where.kind = { equals: req.query.kind }
       if (req.query?.section) where['meta.section'] = { equals: req.query.section }
       const { docs } = await req.payload.find({
@@ -69,14 +69,14 @@ export const consultationEndpoints: Endpoint[] = [
       if (b.website) return json({ ok: true, item: null }, { status: 201 })
       const { kinds, sections } = await consultationOptions(req)
       const kind = String(b.kind || '')
-      if (!kinds.some((k: any) => k.value === kind))
+      if (!kinds.some((k: AnyValue) => k.value === kind))
         throw fail.validation({ kind: 'Choose a contribution type.' })
       const body = cleanText(b.body, 800)
       if (body.length < 8)
         throw fail.validation({
           body: 'Write at least a short sentence so the room can use it.',
         })
-      const section = sections.some((s: any) => s.value === b.section)
+      const section = sections.some((s: AnyValue) => s.value === b.section)
         ? b.section
         : sections[0]?.value || null
       const item = await req.payload.create({

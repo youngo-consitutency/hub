@@ -1,10 +1,10 @@
+import type { AnyValue, Doc } from '../lib/domain'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
-import type { Doc } from '../lib/domain'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -105,7 +105,7 @@ export const feedbackEndpoints: Endpoint[] = [
         hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage)
         throw fail.forbidden('Feedback triage is for platform operators and the Membership Team.')
-      const where: any = {}
+      const where: AnyValue = {}
       if (req.query?.status) where.status = { equals: req.query.status }
       if (req.query?.kind) where.kind = { equals: req.query.kind }
       const { docs } = await req.payload.find({
@@ -127,7 +127,7 @@ export const feedbackEndpoints: Endpoint[] = [
         hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage) throw fail.forbidden()
       const b = await readBody(req)
-      const data: any = {}
+      const data: Doc = {}
       if (b.status && ['new', 'triaged', 'in_progress', 'resolved', 'declined'].includes(b.status))
         data.status = b.status
       if (b.triageNote !== undefined) data.triageNote = trimmed(b.triageNote, 2000)

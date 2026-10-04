@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaffOrMember, isStaffOrMemberField, staffWrites } from '../lib/collectionAccess'
+import { isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
 // Public contact directory. personName/channelValue are members-only fields —
 // the /api/directory view strips them for anonymous callers.

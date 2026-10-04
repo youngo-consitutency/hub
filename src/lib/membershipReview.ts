@@ -1,7 +1,7 @@
 import { accountView } from './accounts'
 import { requirePgPool, getPgPool } from './pg'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike, AccountView } from './domain'
+import type { Doc, AccountLike, AnyValue } from './domain'
 
 // Shapes consumed by the membership-team review queue.
 
@@ -24,7 +24,7 @@ const REVIEW_COLUMNS = `
   created_at, last_login_at, email_verified_at, verified_by
 `
 
-function textList(value: any): string[] {
+function textList(value: AnyValue): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean)
   if (typeof value === 'string' && value.trim()) return [value.trim()]
   return []
@@ -32,13 +32,13 @@ function textList(value: any): string[] {
 
 // Application booleans may arrive as booleans or 'yes'/'no' strings —
 // keep the tri-state: undecided stays null rather than collapsing to false.
-function toBool(value: any): boolean | null {
+function toBool(value: AnyValue): boolean | null {
   if (value === true || value === 'yes' || value === 'true') return true
   if (value === false || value === 'no' || value === 'false') return false
   return null
 }
 
-function toIsoDate(value: any) {
+function toIsoDate(value: AnyValue) {
   if (value == null || value === '') return null
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     const year = value.getUTCFullYear()
@@ -91,7 +91,7 @@ export function extractPublicLinks(...values: Doc[]) {
 export function membershipReviewAccount(row: Doc) {
   const account = accountView(row)
   if (!account) return null
-  const r = toCamelCase<Record<string, any>>(row)
+  const r = toCamelCase<Doc>(row)
   const orgWebsite = r.orgWebsite ?? null
   const orgSocial = r.orgSocial ?? null
   const under18 = Boolean(r.under18)
@@ -164,7 +164,7 @@ export async function listMembershipReviewItems() {
 }
 
 function profileShape(row: Doc, account: AccountLike) {
-  const r = toCamelCase<any>(row)
+  const r = toCamelCase<AnyValue>(row)
   const updatedAt = r.updatedAt ?? null
   const photoUpdatedAt = r.photoUpdatedAt ?? null
   return {

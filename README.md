@@ -13,7 +13,7 @@ The resource collection is part of the Hub. Existing source credits and review r
 
 ## How it is built
 
-React draws the member interface in `spa/`. Next.js runs the website and server. Payload manages accounts, content and access checks — deliberately without its admin panel; staff work happens through terminal scripts (`payload` local API) or the database. PostgreSQL stores the records. Server code and access checks are in `src/`.
+React draws the member interface in `src/member/`, routed through the Next.js App Router. Next.js runs the website and server. Payload manages accounts, content and access checks — deliberately without its admin panel; staff work happens through terminal scripts (`payload` local API) or the database. PostgreSQL stores the records. Server code and access checks are in `src/`.
 
 The separate [content service](https://github.com/youngo-consitutency/hub/wiki/Agent-tools) lets authorised assistant tools use the Hub’s API. It does not receive database credentials.
 

@@ -16,7 +16,7 @@ import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { wgActivityView } from '../lib/views'
-import type { Doc } from '../lib/domain'
+import type { AnyValue } from '../lib/domain'
 import type { Account } from '../payload-types'
 
 // Course structure (modules, quiz, pass score) is staff-editable content —
@@ -24,8 +24,8 @@ import type { Account } from '../payload-types'
 type CourseDoc = {
   version: string
   passScore: number
-  modules: Doc[]
-  quiz: { id: string; prompt: string; choices: Doc[]; correct: string }[]
+  modules: AnyValue[]
+  quiz: { id: string; prompt: string; choices: AnyValue[]; correct: string }[]
 }
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
@@ -46,17 +46,17 @@ async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlu
     limit: 1,
     overrideAccess: true,
   })
-  return (docs[0] as Doc) || null
+  return (docs[0] as AnyValue) || null
 }
 
 async function upsertWgProgress(
   req: PayloadRequest,
   accountId: string | number,
   wgSlug: string,
-  patch: Record<string, any>,
+  patch: AnyValue,
 ) {
   const existing = await wgProgress(req, accountId, wgSlug)
-  const p = toCamelCase<any>(patch)
+  const p = toCamelCase<AnyValue>(patch)
   const presentationOk = p.presentationOk ?? existing?.presentationOk ?? false
   const rulesOk = p.rulesOk ?? existing?.rulesOk ?? false
   const unlocked =
@@ -95,7 +95,7 @@ async function upsertWgProgress(
   })
 }
 
-function wgProgressView(d: any, accountId?: string | number) {
+function wgProgressView(d: AnyValue, accountId?: string | number) {
   if (!d) return null
   return {
     account_id: accountId ?? (typeof d.account === 'object' ? d.account?.id : d.account),
@@ -126,11 +126,11 @@ export const memberEndpoints: Endpoint[] = [
           sort: '-acceptedAt',
           overrideAccess: true,
         })
-        .then((r) => r.docs[0] as Doc)
+        .then((r) => r.docs[0] as AnyValue)
       return json({
         ...access,
         canAdminister: hasCapability(access, 'accounts.manage'),
-        managedWgs: access.wgAssignments.map((i: any) => i.wgSlug).sort(),
+        managedWgs: access.wgAssignments.map((i: AnyValue) => i.wgSlug).sort(),
         ngo: seat
           ? {
               orgAccountId:
@@ -230,7 +230,7 @@ export const memberEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as Doc[]).map((d) => wgProgressView(d, account.id)),
+        items: (docs as AnyValue[]).map((d) => wgProgressView(d, account.id)),
       })
     }),
   },
@@ -242,7 +242,7 @@ export const memberEndpoints: Endpoint[] = [
       const wg = param(req, 'wg')
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
-      let activities: Doc[] = []
+      let activities: AnyValue[] = []
       if (unlocked) {
         const { docs } = await req.payload.find({
           collection: 'wg-activities',
@@ -297,7 +297,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const row = docs[0] as Doc
+      const row = docs[0] as AnyValue
       const photoUpdatedAt = row?.photoUpdatedAt ?? null
       return json({
         profile: {
@@ -353,7 +353,7 @@ export const memberEndpoints: Endpoint[] = [
         limit: 1,
         overrideAccess: true,
       })
-      const existing = docs[0] as Doc
+      const existing = docs[0] as AnyValue
       const data = {
         account: account.id,
         displayName,
@@ -423,7 +423,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'put',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const bytes = Buffer.from(await (req as Doc).arrayBuffer())
+      const bytes = Buffer.from(await (req as AnyValue).arrayBuffer())
       const photo = await saveMemberPhoto(
         account.id,
         bytes,

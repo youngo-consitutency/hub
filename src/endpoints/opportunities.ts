@@ -8,7 +8,7 @@ import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 import type { Account } from '../payload-types'
 
 const OPPORTUNITY_KINDS = [
@@ -41,7 +41,7 @@ function safeUrl(value: unknown) {
   return url.toString()
 }
 
-async function orgPostingTrust(req: PayloadRequest, orgAccountId: any) {
+async function orgPostingTrust(req: PayloadRequest, orgAccountId: AnyValue) {
   const org = (await req.payload.findByID({
     collection: 'accounts',
     id: orgAccountId,

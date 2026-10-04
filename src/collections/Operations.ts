@@ -1,12 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { grantsCapability, isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
 
-// Operational workflow records. Members act through the domain endpoints in
-// src/endpoints/operations.ts — generated REST writes stay staff-only, and
-// confidential collections (safeguarding) are staff-read at the API level.
+// Operational workflow records — members act via src/endpoints/operations.ts;
+// generated REST writes are staff-only; safeguarding is staff-read.
 
-// S12 funding requests: submission → finance-team review → approval →
-// disbursement → spend report.
+// S12 funding: submission → review → approval → disbursement → spend report.
 export const FundingRequests: CollectionConfig = {
   slug: 'funding-requests',
   access: {
@@ -68,10 +66,8 @@ export const FundingRequests: CollectionConfig = {
   ],
 }
 
-// S23/S04 safeguarding + awareness cases. Strictly confidential: only the
-// safeguarding team (via endpoints) and the reporter's own reference are
-// readable — collection-level REST read is staff-only, and outcome notes
-// never leave the team.
+// S23/S04 safeguarding + awareness. Strictly confidential: REST read is
+// staff-only; reporters see only their own reference.
 export const SafeguardingCases: CollectionConfig = {
   slug: 'safeguarding-cases',
   access: {

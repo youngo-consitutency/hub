@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/domain'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireTeam } from '../lib/accounts'
@@ -9,7 +10,6 @@ import {
   findAccountRowById,
 } from '../lib/membership'
 import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
-import type { Doc } from '../lib/domain'
 import {
   listLatestAppealsForAccounts,
   readAppealProof,
@@ -51,7 +51,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
       })
       if (!updatedRow) throw fail.notFound('Account not found.')
       const updated = accountView(updatedRow)
-      let verifyBody: any = {}
+      let verifyBody: AnyValue = {}
       try {
         verifyBody = await readBody(req)
       } catch {
@@ -120,7 +120,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
         reviewerId: staff.id,
       })
       if (!appeal) throw fail.notFound('Appeal not found.')
-      let updated: any = null
+      let updated: AnyValue = null
       let emailSent: boolean | null = null
       if (appeal.status === 'granted') {
         const targetRow = await findAccountRowById(appeal.accountId)

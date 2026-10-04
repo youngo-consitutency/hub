@@ -3,7 +3,7 @@
 // project/amendment write guards.
 import { createHash } from 'node:crypto'
 import { type Pool, type PoolClient } from 'pg'
-import type { Doc } from '../../lib/domain'
+import type { Doc, AnyValue } from '../../lib/domain'
 
 export class ContributionError extends Error {
   status: number
@@ -18,7 +18,7 @@ export class ContributionError extends Error {
   }
 }
 
-export const requiredText = (value: any, name: string, max: number) => {
+export const requiredText = (value: AnyValue, name: string, max: number) => {
   const text = String(value || '').trim()
   if (!text || text.length > max)
     throw new ContributionError(
@@ -30,7 +30,7 @@ export const requiredText = (value: any, name: string, max: number) => {
   return text
 }
 
-export const optionalUrl = (value: any, name: string) => {
+export const optionalUrl = (value: AnyValue, name: string) => {
   if (!value) return null
   let url
   try {
@@ -43,7 +43,7 @@ export const optionalUrl = (value: any, name: string) => {
   return url.toString()
 }
 
-export const idempotencyKey = (value: any) => {
+export const idempotencyKey = (value: AnyValue) => {
   const key = String(value || '').trim()
   if (!key || key.length > 200)
     throw new ContributionError(
@@ -54,14 +54,14 @@ export const idempotencyKey = (value: any) => {
   return key
 }
 
-export function citations(input: any) {
+export function citations(input: AnyValue) {
   if (!Array.isArray(input) || input.length === 0)
     throw new ContributionError(
       422,
       'citations_required',
       'At least one immutable source citation is required.',
     )
-  return input.map((citation: any) => ({
+  return input.map((citation: Doc) => ({
     sourceVersionId: requiredText(citation?.sourceVersionId, 'sourceVersionId', 100),
     location:
       citation?.location && typeof citation.location === 'object'
@@ -77,7 +77,7 @@ export function citations(input: any) {
   }))
 }
 
-const stableValue = (value: any): any => {
+const stableValue = (value: AnyValue): AnyValue => {
   if (Array.isArray(value)) return value.map(stableValue)
   if (value && typeof value === 'object')
     return Object.fromEntries(
@@ -88,7 +88,7 @@ const stableValue = (value: any): any => {
   return value
 }
 
-export const contentHash = (payload: any) =>
+export const contentHash = (payload: AnyValue) =>
   `sha256:${createHash('sha256')
     .update(JSON.stringify(stableValue(payload)))
     .digest('hex')}`
@@ -98,7 +98,7 @@ export async function beginIdempotentMutation(
   operation: string,
   actorId: number,
   key: string,
-  payload: any,
+  payload: AnyValue,
 ) {
   const requestHash = contentHash(payload)
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))`, [
@@ -133,7 +133,7 @@ export async function saveIdempotency(
     actorId: number
     key: string
     requestHash: string
-    response: any
+    response: Doc
   },
 ) {
   await client.query(

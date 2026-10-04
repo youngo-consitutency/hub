@@ -1,3 +1,4 @@
+import type { AnyValue } from './domain'
 // Port of server/lib/publicViews.js — public/member view policy.
 // A conferencing *join* link is a credential: join links are stripped from
 // anonymous payloads while deliberate registration pages survive.
@@ -184,7 +185,7 @@ export function directoryView(items: Record<string, unknown>[], { includePrivate
 }
 
 // WG activity rows -> member-facing JSON.
-export function wgActivityView(d: any) {
+export function wgActivityView(d: AnyValue) {
   return {
     id: d.id,
     wg_slug: d.wgSlug,

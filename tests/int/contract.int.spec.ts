@@ -1,8 +1,9 @@
+import type { AnyValue, Doc } from '../../src/lib/domain'
 import type { Payload } from 'payload'
 
 import { describe, it, beforeAll, expect } from 'vitest'
 
-import { provisionAccount, testPayload, type TestSpec } from './provision'
+import { provisionAccount, testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('payload', () => {
@@ -36,10 +37,10 @@ describe('payload', () => {
 })
 
 describe('API contract (requires dev server on :3000)', () => {
-  let member: { cookie: string; account: any }
-  let admin: { cookie: string; account: any }
-  let membershipStaff: { cookie: string; account: any }
-  let publisher: { cookie: string; account: any }
+  let member: { cookie: string; account: Doc }
+  let admin: { cookie: string; account: Doc }
+  let membershipStaff: { cookie: string; account: Doc }
+  let publisher: { cookie: string; account: Doc }
 
   beforeAll(async () => {
     member = await session({})
@@ -76,7 +77,7 @@ describe('API contract (requires dev server on :3000)', () => {
         account: member.account.id,
         displayName: 'Directory Fixture',
         directoryVisibility: 'members',
-      } as any,
+      } as AnyValue,
       overrideAccess: true,
     })
     const res = await api('/member/people', { cookie: member.cookie })

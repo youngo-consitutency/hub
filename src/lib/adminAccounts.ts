@@ -2,7 +2,7 @@ import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
 import { AUTHORITY_ROLES } from './authority'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
 // Admin account surface: sortable account lists filtered by status or
 // authority-record role.
@@ -40,7 +40,7 @@ export async function queryAccountsForAdmin({
   sort = 'newest',
   page = 1,
   pageSize = 12,
-}: any = {}) {
+}: AnyValue = {}) {
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanEntityType = ['individual', 'organization'].includes(entityType) ? entityType : ''
   const cleanStatus = MEMBERSHIP_STATUSES.includes(status) ? status : ''
@@ -52,7 +52,7 @@ export async function queryAccountsForAdmin({
   const pool = requirePgPool()
   const values: Doc[] = []
   const where: string[] = []
-  const add = (clause: string, value: any) => {
+  const add = (clause: string, value: AnyValue) => {
     values.push(value)
     where.push(clause.replace('?', `$${values.length}`))
   }

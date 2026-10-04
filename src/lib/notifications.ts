@@ -5,18 +5,16 @@ import { sendEmail } from './email'
 import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
-// Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
-// — the announcement broadcast surface (preview/send/outbox). The queue rows
-// live in `notification_outbox`; eligibility reads the v2 notification_prefs
-// model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
+// Announcement broadcast surface (preview/send/outbox). Queue rows live in
+// `notification_outbox`; eligibility reads the notification_prefs model.
 
 const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
 // ── Templates ────────────────────────────────────────────────────
 
-const escapeHtml = (value: any) =>
+const escapeHtml = (value: AnyValue) =>
   String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -24,13 +22,13 @@ const escapeHtml = (value: any) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;')
 
-const singleLine = (value: any, max = 160) =>
+const singleLine = (value: AnyValue, max = 160) =>
   String(value ?? '')
     .replace(/[\r\n]+/g, ' ')
     .trim()
     .slice(0, max)
 
-const safeUrl = (value: any) => {
+const safeUrl = (value: AnyValue) => {
   const text = String(value || '').trim()
   if (!text) return null
   try {
@@ -42,7 +40,7 @@ const safeUrl = (value: any) => {
   }
 }
 
-const paragraphs = (value: any) =>
+const paragraphs = (value: AnyValue) =>
   String(value || '')
     .split(/\n{2,}/)
     .map((item) => item.trim())
@@ -53,7 +51,7 @@ const paragraphs = (value: any) =>
     )
     .join('\n')
 
-function templateContent(templateKey: string, data: any = {}) {
+function templateContent(templateKey: string, data: Doc = {}) {
   const actionUrl = safeUrl(data.actionUrl)
   const actionLabel = escapeHtml(singleLine(data.actionLabel || 'Open YOUNGO Hub', 80))
   const action = actionUrl
@@ -103,7 +101,7 @@ function templateContent(templateKey: string, data: any = {}) {
     const firstName = singleLine(data.firstName || 'there', 40)
     const social: { label: string; url: string }[] = (
       Array.isArray(data.socialLinks) ? data.socialLinks : []
-    ).filter((link: any) => link?.url)
+    ).filter((link: AnyValue) => link?.url)
     const socialHtml = social
       .map(
         (link) =>
@@ -140,11 +138,10 @@ function templateContent(templateKey: string, data: any = {}) {
   }
 }
 
-// Same content as the legacy mjml renderer, emitted as a fixed, responsive
-// table layout so no html-minifier dependency is needed.
+// Fixed responsive table layout — no html-minifier dependency.
 export function renderEmailTemplate(
   templateKey: string,
-  data: any = {},
+  data: Doc = {},
   { unsubscribeUrl = null }: { unsubscribeUrl?: string | null } = {},
 ) {
   const content = templateContent(templateKey, data)
@@ -182,7 +179,7 @@ ${content.action}
 const unsubscribeSecret = () =>
   String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() || process.env.PAYLOAD_SECRET!
 
-export function createUnsubscribeToken(accountId: any, category: string) {
+export function createUnsubscribeToken(accountId: AnyValue, category: string) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
     throw new Error('Invalid unsubscribe category.')
   const payload = Buffer.from(
@@ -209,7 +206,7 @@ export function verifyUnsubscribeToken(token: string) {
   }
 }
 
-export function unsubscribeUrl(accountId: any, category: string) {
+export function unsubscribeUrl(accountId: AnyValue, category: string) {
   return `${appBaseUrl()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
 }
 
@@ -223,7 +220,7 @@ export async function sendTemplatedEmail({
 }: {
   to: string
   templateKey: string
-  data?: any
+  data?: AnyValue
   unsubscribe?: string | null
 }) {
   const allowlist = String(process.env.EMAIL_RECIPIENT_ALLOWLIST || '')
@@ -255,7 +252,7 @@ export async function sendTemplatedEmail({
 
 function publicOutbox(row: Doc) {
   if (!row) return null
-  const r = toCamelCase<Record<string, any>>(row)
+  const r = toCamelCase<Doc>(row)
   return {
     id: r.id,
     accountId: r.accountId,
@@ -290,14 +287,14 @@ export async function enqueueNotification({
   payload = {},
   availableAt = new Date(),
 }: {
-  accountId: any
+  accountId: AnyValue
   channel?: string
   category?: string | null
   templateKey: string
   sourceType?: string | null
   sourceId?: string | null
   deduplicationKey: string
-  payload?: any
+  payload?: AnyValue
   availableAt?: Date
 }) {
   if (!NOTIFICATION_CHANNELS.includes(channel)) throw new Error('Invalid notification channel.')
@@ -330,7 +327,7 @@ export async function enqueueNotification({
   return { created: Boolean(rows[0]), item: publicOutbox(rows[0]) }
 }
 
-export async function markNotificationSent(id: any) {
+export async function markNotificationSent(id: AnyValue) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -341,7 +338,7 @@ export async function markNotificationSent(id: any) {
   )
 }
 
-export async function markNotificationFailed(id: any, code: string) {
+export async function markNotificationFailed(id: AnyValue, code: string) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -354,13 +351,11 @@ export async function markNotificationFailed(id: any, code: string) {
 
 // ── Worker ───────────────────────────────────────────────────────
 
-// Terminal after five delivery attempts; earlier failures back off
-// exponentially (30s → 30m cap) so a slow gateway doesn't stall the queue.
+// Terminal after five attempts; earlier failures back off exponentially.
 const MAX_DELIVERY_ATTEMPTS = 5
 const retryDelayMs = (attempts: number) => Math.min(30_000 * 2 ** attempts, 30 * 60_000)
 
-// Claim due rows with a short lease so concurrent drains (after() tasks, the
-// cron endpoint, overlapping deployments) never double-deliver the same row.
+// Claim due rows under a short lease so concurrent drains never double-deliver.
 export async function claimNotificationBatch(limit = 50) {
   const pool = getPgPool()!
   const { rows } = await pool.query(
@@ -398,7 +393,7 @@ export async function rescheduleNotification(row: Doc, code: string) {
   )
 }
 
-async function deliverOutboxRow(req: any, row: Doc, connectBody: any) {
+async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) {
   if (row.channel === 'push') {
     const subscriptions = await listSubscriptionsForAccounts([row.account_id])
     if (!subscriptions.length)
@@ -408,8 +403,7 @@ async function deliverOutboxRow(req: any, row: Doc, connectBody: any) {
     const payload =
       typeof row.payload === 'string' ? row.payload : JSON.stringify(row.payload || {})
     const result = await deliverPush(subscriptions, payload)
-    // deliverPush prunes dead endpoints itself; zero reachable devices means
-    // the member has nothing left to deliver to — retrying is pointless.
+    // Zero reachable devices after pruning means nothing to retry.
     if (!result.sent && result.failed)
       throw Object.assign(new Error(`Push delivery failed (${result.failed}/${result.total}).`), {
         code: 'push_delivery_failed',
@@ -433,10 +427,8 @@ async function deliverOutboxRow(req: any, row: Doc, connectBody: any) {
   })
 }
 
-// Bounded batch so a single invocation stays well under the platform's
-// request duration budget; whatever remains is picked up by the next drain
-// (another enqueue's after() task or the cron endpoint).
-export async function drainNotificationOutbox(req: any, { limit = 50 } = {}) {
+// Bounded batch; the next drain picks up whatever remains.
+export async function drainNotificationOutbox(req: AnyValue, { limit = 50 } = {}) {
   const connectBody = (await getDocument(req, 'connect').catch(() => null))?.body
   const claimed = await claimNotificationBatch(limit)
   const results = { claimed: claimed.length, sent: 0, retried: 0, failed: 0 }
@@ -445,7 +437,7 @@ export async function drainNotificationOutbox(req: any, { limit = 50 } = {}) {
       await deliverOutboxRow(req, row, connectBody)
       await markNotificationSent(row.id)
       results.sent += 1
-    } catch (error: any) {
+    } catch (error: AnyValue) {
       const attempts = Number(row.attempts || 0) + 1
       await rescheduleNotification(row, error.code || 'send_failed')
       if (attempts >= MAX_DELIVERY_ATTEMPTS) results.failed += 1

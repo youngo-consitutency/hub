@@ -2,7 +2,7 @@ import webPush from 'web-push'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
 // Rows live in the Payload `push-subscriptions` table; endpoints are validated
@@ -20,7 +20,7 @@ export const pushConfigured =
   process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
 
 const publicRow = (row: Doc) => {
-  const r = toCamelCase<Record<string, any>>(row)
+  const r = toCamelCase<Doc>(row)
   return {
     id: r.id,
     accountId: r.accountId,
@@ -31,17 +31,12 @@ const publicRow = (row: Doc) => {
 }
 
 // Push endpoints are browser-issued capabilities, never arbitrary webhook URLs.
-export function validatedPushEndpoint(value: any) {
+export function validatedPushEndpoint(value: AnyValue) {
   const invalid = () =>
     Object.assign(new Error('Use a supported browser push endpoint.'), {
       code: 'invalid_push_endpoint',
     })
-  if (
-    typeof value !== 'string' ||
-    value.length > 4096 ||
-    // eslint-disable-next-line no-control-regex
-    /[\\\s\x00-\x1f\x7f]/u.test(value)
-  )
+  if (typeof value !== 'string' || value.length > 4096 || /[\\\s\x00-\x1f\x7f]/u.test(value))
     throw invalid()
   let url: URL
   try {
@@ -76,7 +71,7 @@ export async function saveSubscription({
   userAgent = null,
 }: {
   accountId: number | string
-  subscription: any
+  subscription: AnyValue
   userAgent?: string | null
 }) {
   const endpoint = validatedPushEndpoint(subscription?.endpoint)
@@ -111,7 +106,7 @@ export async function saveSubscription({
   }
 }
 
-export async function listSubscriptionsForAccounts(accountIds: any) {
+export async function listSubscriptionsForAccounts(accountIds: AnyValue) {
   const ids = (Array.isArray(accountIds) ? accountIds : [accountIds])
     .filter(Boolean)
     .map(Number)
@@ -182,7 +177,7 @@ export async function deliverPush(rows: Doc[], payload: string) {
   if (process.env.HUB_DEMO_MODE === 'true')
     return { sent: 0, failed: 0, pruned: 0, total: rows.length }
 
-  const results: PromiseSettledResult<any>[] = []
+  const results: PromiseSettledResult<AnyValue>[] = []
   for (let offset = 0; offset < rows.length; offset += 10) {
     results.push(
       ...(await Promise.allSettled(

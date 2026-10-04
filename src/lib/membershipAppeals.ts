@@ -2,7 +2,7 @@ import { type Pool } from 'pg'
 import { ApiError } from './respond'
 import { requirePgPool, getPgPool } from './pg'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike } from './domain'
+import type { Doc, AccountLike, AnyValue } from './domain'
 
 // Identity appeals: members submit a statement + proof document; the
 // membership team reviews them. Proofs are bytea, access-scoped.
@@ -17,9 +17,9 @@ export const APPEAL_PROOF_TYPES = new Set([
 export const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 export const APPEAL_MAX_PER_ACCOUNT = 3
 
-export function publicAppeal(row: Doc, { includeStatement = true } = {}): any {
+export function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyValue {
   if (!row) return null
-  const r = toCamelCase<Record<string, any>>(row)
+  const r = toCamelCase<Doc>(row)
   return {
     id: r.id,
     accountId: r.accountId ?? null,
@@ -172,7 +172,7 @@ export async function submitAppeal({
       [account.id, kind, text, type, bytes, bytes.length],
     )
     return publicAppeal(rows[0])
-  } catch (error: any) {
+  } catch (error: AnyValue) {
     if (error.code === '23505')
       throw new ApiError(
         409,

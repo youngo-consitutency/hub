@@ -1,5 +1,6 @@
 // Input normalisation for negotiation contributions — every public entry
 // point validates through these before touching the database.
+import type { AnyValue } from '../../lib/domain'
 import {
   ContributionError,
   citations,
@@ -8,7 +9,7 @@ import {
   requiredText,
 } from './contributionShared'
 
-export function normalizeProjectInput(input: any = {}) {
+export function normalizeProjectInput(input: AnyValue = {}) {
   const callId = input.callId ? String(input.callId) : null
   return {
     idempotencyKey: idempotencyKey(input.idempotencyKey),
@@ -27,7 +28,7 @@ export function normalizeProjectInput(input: any = {}) {
   }
 }
 
-export function normalizeDraftVersionInput(input: any = {}) {
+export function normalizeDraftVersionInput(input: AnyValue = {}) {
   const expectedVersion = Number(input.expectedVersion)
   if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
     throw new ContributionError(422, 'validation', 'expectedVersion must be a positive integer.')
@@ -40,7 +41,7 @@ export function normalizeDraftVersionInput(input: any = {}) {
   }
 }
 
-export function normalizeAmendmentInput(input: any = {}) {
+export function normalizeAmendmentInput(input: AnyValue = {}) {
   const targetType = String(input.targetType || '')
   if (!['official_document', 'internal_draft'].includes(targetType))
     throw new ContributionError(422, 'validation', 'Invalid amendment target.')
@@ -72,7 +73,7 @@ export function normalizeAmendmentInput(input: any = {}) {
   }
 }
 
-export function normalizeAmendmentRevisionInput(input: any = {}) {
+export function normalizeAmendmentRevisionInput(input: AnyValue = {}) {
   const expectedVersion = Number(input.expectedVersion)
   if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
     throw new ContributionError(422, 'validation', 'expectedVersion must be a positive integer.')
@@ -94,7 +95,7 @@ export function normalizeAmendmentRevisionInput(input: any = {}) {
   }
 }
 
-export function normalizeReconciliationSuggestionInput(input: any = {}) {
+export function normalizeReconciliationSuggestionInput(input: AnyValue = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
   const confidence = Number(input.confidence)
   if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
@@ -119,7 +120,7 @@ export function normalizeReconciliationSuggestionInput(input: any = {}) {
   }
 }
 
-export function normalizeReconciliationConfirmationInput(input: any = {}) {
+export function normalizeReconciliationConfirmationInput(input: AnyValue = {}) {
   const expectedAmendmentVersion = Number(input.expectedAmendmentVersion)
   if (!Number.isInteger(expectedAmendmentVersion) || expectedAmendmentVersion < 1)
     throw new ContributionError(422, 'validation', 'Expected amendment version is required.')

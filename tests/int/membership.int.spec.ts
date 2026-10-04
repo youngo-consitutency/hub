@@ -1,12 +1,13 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('membership lifecycle (S17)', () => {
-  let cwMember: { cookie: string; account: any }
-  let staff: { cookie: string; account: any }
-  let member: { cookie: string; account: any }
+  let cwMember: { cookie: string; account: AnyValue }
+  let staff: { cookie: string; account: AnyValue }
+  let member: { cookie: string; account: AnyValue }
 
   beforeAll(async () => {
     cwMember = await session({
@@ -27,7 +28,7 @@ describe('membership lifecycle (S17)', () => {
     // A WG Contact Point is a mandate: it reports through `records`,
     // the single authority store.
     expect(
-      body.records.some((a: any) => a.role === 'wg.contact_point' && a.scopeId === 'finance'),
+      body.records.some((a: AnyValue) => a.role === 'wg.contact_point' && a.scopeId === 'finance'),
     ).toBe(true)
 
     const renew = await api('/member/membership/renew', {
@@ -72,7 +73,7 @@ describe('membership lifecycle (S17)', () => {
       expect(state.constituencyWorkStatus).toBeFalsy()
       // Resignation ends every record; ended rows stay visible for audit.
       expect(state.records.length).toBeGreaterThan(0)
-      expect(state.records.every((r: any) => r.status !== 'active')).toBe(true)
+      expect(state.records.every((r: AnyValue) => r.status !== 'active')).toBe(true)
 
       // member completes the checklist → handover closes
       const handoverId = body.handover.id
@@ -133,7 +134,7 @@ describe('membership lifecycle (S17)', () => {
         id: lapsed.account.id,
         data: {
           renewalDueAt: new Date(Date.now() - 86400000).toISOString(),
-        } as any,
+        } as AnyValue,
         overrideAccess: true,
       })
       const sweep = await api('/member/team/membership/renewals/run', {
@@ -142,7 +143,7 @@ describe('membership lifecycle (S17)', () => {
       })
       expect(sweep.status).toBe(200)
       const swept = await sweep.json()
-      const hit = swept.items.find((i: any) => i.accountId === lapsed.account.id)
+      const hit = swept.items.find((i: AnyValue) => i.accountId === lapsed.account.id)
       expect(hit).toBeTruthy()
       expect(hit.recordsEnded).toBe(1)
 

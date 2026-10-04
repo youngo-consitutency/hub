@@ -7,7 +7,7 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../spa/shared/opportunities.js'
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../src/shared/opportunities.js'
 import {
   HUB_CONTENT_TOOLS,
   callHubContentTool,

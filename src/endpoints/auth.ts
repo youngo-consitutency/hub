@@ -13,7 +13,7 @@ import { sendEmail, emailConfigured } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 import type { Account } from '../payload-types'
 
 const registerLimit = rateLimit({
@@ -52,7 +52,7 @@ const noStore = (res: Response) => {
   return res
 }
 
-async function loginResponse(req: any, email: string, password: string) {
+async function loginResponse(req: AnyValue, email: string, password: string) {
   const { payload } = req
 
   // Find the account first so legacy scrypt credentials can be verified and
@@ -66,14 +66,14 @@ async function loginResponse(req: any, email: string, password: string) {
   })
   const doc = found.docs[0] as Doc
 
-  let logged: any
+  let logged: AnyValue
   try {
     logged = await payload.login({
       collection: 'accounts',
       data: { email, password },
       req,
     })
-  } catch (err) {
+  } catch {
     logged = null
   }
 
@@ -245,7 +245,7 @@ export const authEndpoints: Endpoint[] = [
       if (!password) fields.password = 'Please enter your password.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
-      let logged: any = null
+      let logged: AnyValue = null
       try {
         logged = await loginResponse(req, email, password)
       } catch {
@@ -396,7 +396,7 @@ export const authEndpoints: Endpoint[] = [
               text: `Reset your password: ${origin}/reset-password?token=${rawToken}\n\nThis link expires in 1 hour.`,
             })
             req.payload.logger.info({ event: 'password_reset_email_accepted' })
-          } catch (error) {
+          } catch {
             req.payload.logger.warn({ event: 'password_reset_email_failed' })
           }
         } else {

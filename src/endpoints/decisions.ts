@@ -20,18 +20,14 @@ import {
   recordEvent,
   vetoView,
 } from '../lib/decisionRuntime'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
-// S09 decision workflow endpoints. Members act through these — direct REST
-// writes on the decision collections are staff-only (see Decisions.ts), so
-// every transition below also appends to decision-events and audit-log.
-// The state machine itself lives in src/lib/decisionRuntime.ts so the
-// platform bridge (src/modules/platform/decisionsBridge.ts) shares it.
+// S09 decision workflow endpoints — members act through these; collection
+// REST writes are staff-only, and every transition is audited. The state
+// machine lives in src/lib/decisionRuntime.ts (shared with the bridge).
 
-// A duplicate (proposal, account) insert can surface as the raw PostgreSQL
-// 23505 or the ValidationError the drizzle adapter converts it into. The
-// ballots table's only unique constraint is this pair — the serial primary
-// key cannot collide — so either shape is unambiguous here.
+// A duplicate (proposal, account) surfaces as raw 23505 or a converted
+// ValidationError — ballots' only unique constraint is this pair.
 const isDuplicateBallot = (error: unknown) =>
   isUniqueViolation(error, 'decision-ballots', 'decision_ballots')
 
@@ -41,7 +37,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const where: any = {}
+      const where: AnyValue = {}
       const body = req.query?.body as string | undefined
       const status = req.query?.status as string | undefined
       if (body) where.body = { equals: body }
@@ -317,10 +313,8 @@ export const decisionEndpoints: Endpoint[] = [
         return json({ proposal: proposalView(p) })
       if (!['consultation', 'revision', 'decision', 'voting'].includes(p.status))
         throw fail.conflict('invalid_phase', `Cannot close while status is ${p.status}.`)
-      // The contact person confirms the consultation outcome and closes the
-      // remaining windows (S09 §2 step 5-6): mark every pending phase
-      // deadline as elapsed, then let the state machine resolve the chain
-      // (consensus, consensus-with-reservations, or vote → tally).
+      // Contact person confirms and closes the windows (S09 §2 step 5-6):
+      // mark pending deadlines elapsed, then the state machine resolves.
       const past = new Date(Date.now() - 1000).toISOString()
       p = await req.payload.update({
         collection: 'decision-proposals',
@@ -348,7 +342,7 @@ export const decisionEndpoints: Endpoint[] = [
       if (!(await isBodyMember(req, account, p)))
         throw fail.forbidden('Only members of the decision-making body may vote.')
       const b = await readBody(req)
-      const options = (p.ballotOptions ?? []).map((o: any) => o.option)
+      const options = (p.ballotOptions ?? []).map((o: AnyValue) => o.option)
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
       const hasBallot = async () => {
@@ -375,12 +369,10 @@ export const decisionEndpoints: Endpoint[] = [
           },
           overrideAccess: true,
         })
-      } catch (error: any) {
-        // The pre-check is only a fast path: concurrent submissions can both
-        // see zero ballots, so the unique (proposal, account) index is the
-        // real guard. Converted error shapes vary between drizzle paths, so
-        // also re-confirm against the table — a row for this pair after a
-        // failed insert means the race was lost, whatever the error was.
+      } catch (error: AnyValue) {
+        // The pre-check is a fast path only — the unique index is the real
+        // guard, and error shapes vary, so re-confirm against the table: a
+        // row for this pair after a failed insert means the race was lost.
         if (isDuplicateBallot(error) || (await hasBallot()))
           throw fail.conflict('already_voted', 'Each member may vote once.')
         throw error
@@ -426,8 +418,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
-      // Verifying a veto request against eligible representation is a
-      // coordination duty (GCT), not a technical-administration function.
+      // Veto verification is a coordination duty (GCT), not admin.
       if (!hasCapability(access, 'gct.coordinate'))
         throw fail.forbidden('Veto requests are confirmed by the coordination team.')
       let p = await loadProposal(req, param(req, 'id'))

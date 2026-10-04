@@ -1,5 +1,5 @@
 import pg from 'pg'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
 // binary blobs). Lazily created so builds without DATABASE_URL still work.
@@ -31,20 +31,17 @@ export function requirePgPool(): pg.Pool {
   return found
 }
 
-// A unique-constraint violation surfaces two ways through Payload's drizzle
-// adapter: the raw PostgreSQL 23505 somewhere in the cause chain, or a
-// converted ValidationError (data.collection = collection slug). The field
-// errors carry tableName when the constraint maps to a column, or only a
-// 'must be unique' message when it does not — accept both.
-export function isUniqueViolation(error: any, collection: string, table: string): boolean {
-  let current: any = error
+// Unique violations surface as raw 23505 in the cause chain or a converted
+// ValidationError (data.collection = slug). Accept both shapes.
+export function isUniqueViolation(error: AnyValue, collection: string, table: string): boolean {
+  let current: AnyValue = error
   while (current) {
     if (current?.code === '23505') return true
     if (
       current?.name === 'ValidationError' &&
       current?.data?.collection === collection &&
       (current.data.errors || []).some(
-        (e: any) => e?.tableName === table || /unique/i.test(e?.message || ''),
+        (e: AnyValue) => e?.tableName === table || /unique/i.test(e?.message || ''),
       )
     )
       return true
@@ -52,6 +49,5 @@ export function isUniqueViolation(error: any, collection: string, table: string)
   }
   return false
 }
-// Dual-shape rows (snake_case from raw SQL, camelCase from Payload docs) are
-// normalised once at the boundary via src/lib/case.ts — read canonical
-// camelCase fields after `toCamelCase(row)`.
+// Dual-shape rows normalise via src/lib/case.ts — read camelCase after
+// `toCamelCase(row)`.

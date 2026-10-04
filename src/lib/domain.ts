@@ -1,12 +1,6 @@
-// Canonical shapes crossing the endpoint/library boundary.
-//
-// Account rows arrive as Payload docs (camelCase) or raw SQL rows
-// (snake_case) — `accountRow` normalises them, `accountView` projects the
-// SPA-facing shape. Everything downstream of requireAccount works with
-// AccountLike; anything sent to the client is an AccountView.
-//
-// This module is a leaf: it declares types only and may be imported by any
-// layer without risking a dependency cycle.
+// Canonical shapes crossing the endpoint/library boundary. `accountRow`
+// normalises Payload docs / SQL rows; `accountView` projects the member shape.
+// Types-only leaf — safe to import from any layer.
 
 /**
  * A Payload collection doc at an untyped boundary. Generated types exist in
@@ -18,8 +12,13 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Doc = Record<string, any>
 
-/** Payload relationship field: an id, a populated doc, or empty. */
-export type Rel = number | string | { id: number | string } | null | undefined
+/**
+ * An untyped scalar, object, or callable at a boundary — where `Doc` is
+ * wrong because the value is not necessarily an object. Named so remaining
+ * untyped edges stay greppable; tighten per-site as shapes land.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyValue = any
 
 /**
  * Minimal identity recorded on events and audit entries. Satisfied by
@@ -41,10 +40,10 @@ export interface AccountLike {
   membershipStatus?: string | null
   hubAccessStatus?: string | null
   memberStatus?: string | null
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
-/** The SPA-facing account projection produced by `accountView`. */
+/** The member-facing account projection produced by `accountView`. */
 export interface AccountView {
   id: number
   email: string
@@ -89,5 +88,5 @@ export interface AccountView {
   createdAt?: string
   lastLoginAt?: string | null
   mustChangePassword: boolean
-  [key: string]: any
+  [key: string]: AnyValue
 }

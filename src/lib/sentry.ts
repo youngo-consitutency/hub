@@ -1,10 +1,9 @@
+import type { AnyValue } from './domain'
 import type { ErrorEvent } from '@sentry/core'
 
-// Shared beforeSend scrubbing for server, edge and browser runtimes.
-// Credentials and member-identifying fields never leave the process —
-// dataCollection stays at the restrictive baseline everywhere and this
-// strips anything that still arrives via request payloads, headers,
-// breadcrumbs or extras.
+// Shared beforeSend scrubbing: credentials and member-identifying fields
+// never leave the process — this strips anything arriving via payloads,
+// headers, breadcrumbs or extras.
 
 // v11 replacement for `sendDefaultPii: false` — leaving dataCollection
 // unset would collect more than the old restrictive default.
@@ -41,7 +40,7 @@ function scrubQuery(query: unknown): unknown {
     .join('&')
 }
 
-function scrubValue(value: any, depth = 0): any {
+function scrubValue(value: AnyValue, depth = 0): AnyValue {
   if (depth > 6 || value == null || typeof value !== 'object') return value
   if (Array.isArray(value)) return value.map((item) => scrubValue(item, depth + 1))
   return Object.fromEntries(

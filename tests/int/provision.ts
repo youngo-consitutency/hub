@@ -3,6 +3,7 @@
  * the test database via the Payload local API, with generated emails and
  * per-run passwords. Nothing about the test identities lives in source.
  */
+import type { AccountLike } from '../../src/lib/domain'
 import crypto from 'node:crypto'
 import { getPayload, Payload } from 'payload'
 import config from '@/payload.config'
@@ -19,7 +20,7 @@ export type TestSpec = Omit<AccountSpec, 'email' | 'password' | 'name'>
 
 export async function provisionAccount(
   spec: TestSpec,
-): Promise<{ account: any; email: string; password: string }> {
+): Promise<{ account: AccountLike; email: string; password: string }> {
   const email = `it-${crypto.randomBytes(8).toString('hex')}@test.invalid`
   const password = `T!${crypto.randomBytes(12).toString('base64url')}`
   const account = await applyAccountSpec(await testPayload(), {

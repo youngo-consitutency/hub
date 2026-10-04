@@ -1,64 +1,54 @@
 # dependencies
 node_modules/
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+*.tsbuildinfo
 
-# testing
-/coverage
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
-# next.js
+# build output
 /.next/
 /out/
 /build
-
-# misc
-.DS_Store
-*.pem
-*.log
-*.tsbuildinfo
+dist/
 next-env.d.ts
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+/playwright/.cache/
+tests/e2e/.credentials.json
 
-# local env files
+# env & secrets
 .env
 .env.*
 !.env.example
-.env*.local
+*.pem
+*.log
 
-# vercel
-.vercel
-
-# Payload media uploads are runtime state, not source.
-/media
-
-# The repository carries no data: content, catalogues, accounts and runtime
-# stores all live in the database. Keep scratch dumps and research out.
-
-data/
+# local state & scratch
 *.local
 .local/
 .local-demo/
+data/
 *.seed.sql
-.demo-seed.sql
-.wwebjs_cache/
-.claude/
-.codex-vault/
-.cursor/
-.codex/
+/media
+.neon
+.vercel
+.DS_Store
+
+# agent state
+.claude
+.codex
+.cursor
+.devin
+.agent-vault
+.codex-vault
+.agents/vault/
+.agents/tool-cfg/
 .idea/*
 !/.idea/runConfigurations
+**_IGNORE_**
 
-# Long guides live in the GitHub wiki. Keep contributor entry points here.
-
+# Docs live in the GitHub wiki — only entry points are tracked
 *.[mM][dD]
 *.[mM][dD][xX]
 *.[mM][aA][rR][kK][dD][oO][wW][nN]
@@ -70,23 +60,4 @@ data/
 !.github/PULL_REQUEST_TEMPLATE.md
 !.github/ISSUE_TEMPLATE/*.md
 !.github/ISSUE_TEMPLATE/*.yml
-docs/*
-!docs/agent-context.md
-openspec/
-scripts/docs/
-scripts/research/
-scripts/tmp/
-
-# managed
-
-**.data.json
-**.node-persist**
-**_IGNORE_**
-
-# end managed
-dist/
-coverage/
-test-results/
-playwright-report/
-.neon
-tests/e2e/.credentials.json
+!.agents/skills/**/*.md
