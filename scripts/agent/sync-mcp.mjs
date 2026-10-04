@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'n
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
+import { applyEdits, modify, parse } from 'jsonc-parser'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
@@ -68,65 +69,20 @@ for (const p of [
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
-// Index of the closing `}` of the object literal that opens at openIdx,
-// skipping strings and comments so braces inside them cannot miscount.
-const objEnd = (s, openIdx) => {
-  let depth = 0
-  for (let j = openIdx; j < s.length; j++) {
-    const c = s[j]
-    if (c === '"') {
-      for (j++; j < s.length && s[j] !== '"'; j++) if (s[j] === '\\') j++
-    } else if (c === '/' && s[j + 1] === '/') {
-      while (j < s.length && s[j] !== '\n') j++
-    } else if (c === '/' && s[j + 1] === '*') {
-      while (j < s.length && !(s[j] === '*' && s[j + 1] === '/')) j++
-      j++
-    } else if (c === '{') depth++
-    else if (c === '}' && --depth === 0) return j
-  }
-  return -1
-}
-
-// Zed (JSONC): upsert entries inside context_servers only, so a same-named
-// key elsewhere in settings is never touched.
+// Zed (JSONC): merge into context_servers through a real JSONC edit, so
+// comments, strings and same-named keys elsewhere are never touched.
 {
   const p = join(ROOT, '.zed/settings.json')
-  let raw = existsSync(p) ? readFileSync(p, 'utf8') : '{\n}\n'
-  const entries = Object.entries(canonical)
-    .map(([name, s]) => {
-      const body = s.url
-        ? `"url": ${JSON.stringify(s.url)}` +
-          (s.headers ? `, "headers": ${JSON.stringify(s.headers)}` : '')
-        : `"command": ${JSON.stringify(s.command)}, "args": ${JSON.stringify(s.args)}` +
-          (s.env ? `, "env": ${JSON.stringify(s.env)}` : '')
-      return `    "${name}": { ${body} }`
-    })
-    .join(',\n')
-  const keyIdx = raw.search(/"context_servers"\s*:/)
-  if (keyIdx !== -1) {
-    const openIdx = raw.indexOf('{', keyIdx)
-    const closeIdx = objEnd(raw, openIdx)
-    let block = raw.slice(openIdx, closeIdx + 1)
-    for (const name of MANAGED) {
-      for (let i = block.indexOf(`"${name}"`); i !== -1; i = block.indexOf(`"${name}"`, i)) {
-        if (!new RegExp(`"${name}"\\s*:\\s*\\{`).test(block.slice(i, i + name.length + 10))) {
-          i++
-          continue
-        }
-        const end = objEnd(block, block.indexOf('{', i)) + 1
-        let e = end
-        while (block[e] === ',' || block[e] === ' ' || block[e] === '\n') e++
-        block = block.slice(0, i) + block.slice(e)
-        i = -1
-      }
-    }
-    raw =
-      raw.slice(0, openIdx + 1) + '\n' + entries + ',' + block.slice(1) + raw.slice(closeIdx + 1)
-  } else {
-    const last = raw.lastIndexOf('}')
-    raw = raw.slice(0, last) + `,\n  "context_servers": {\n${entries}\n  }\n` + raw.slice(last + 1)
-  }
-  write(p, raw)
+  const raw = existsSync(p) ? readFileSync(p, 'utf8') : '{}\n'
+  const settings = parse(raw, [], { allowTrailingComma: true }) ?? {}
+  const servers = Object.fromEntries(
+    Object.entries(settings.context_servers ?? {}).filter(([name]) => !MANAGED.includes(name)),
+  )
+  Object.assign(servers, canonical)
+  const edits = modify(raw, ['context_servers'], servers, {
+    formattingOptions: { insertSpaces: true, tabSize: 2 },
+  })
+  write(p, applyEdits(raw, edits))
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
