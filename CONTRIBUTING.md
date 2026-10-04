@@ -30,7 +30,7 @@ Use the shared components in `src/member/components/` and spacing and colour tok
 
 For a bug fix, add a test when it helps show the bug stays fixed. For a visual change, check a narrow phone screen, a desktop screen, keyboard use, and readable labels. Attach screenshots without member information.
 
-AI-assisted work is welcome. You are responsible for understanding it, checking its sources, and testing it. Never send private member data or credentials to an assistant.
+AI-assisted work is welcome. You are responsible for understanding it, checking its sources, and testing it. Never send private member data or credentials to an assistant. Shared agent skills live in `.agents/skills/` (restore with `npx skills experimental_install`); `npm run sync:mcp` writes the project's MCP servers into local agent configs — see the [agent tools guide](https://github.com/youngo-consitutency/hub/wiki/Agent-tools).
 
 ## Check your work
 
