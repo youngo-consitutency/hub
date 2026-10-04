@@ -28,7 +28,7 @@ reviews:
         src/lib/accounts.ts guards — review capability scoping, audit entries
         on state transitions, and that no raw account or guardian/PII fields
         leak into response views.
-    - path: spa/**
+    - path: src/member/**
       instructions: >-
         Member-facing copy uses British English. No AI-generated imagery.
         Client-side helpers may shape presentation only — authority is always

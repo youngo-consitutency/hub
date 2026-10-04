@@ -30,7 +30,7 @@ export function requireCwMember(req: PayloadRequest) {
   return account
 }
 
-// Normalises a Payload doc or raw SQL row into the SPA's account shape.
+// Normalises a Payload doc or raw SQL row into the member account shape.
 export function accountView(row: AccountLike | Doc): AccountView
 export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null
 export function accountView(row: AccountLike | Doc | null | undefined): AccountView | null {

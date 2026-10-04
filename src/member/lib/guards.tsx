@@ -1,6 +1,5 @@
-// Route guards shared by the App Router member layout and the legacy
-// AppRoutes. They improve the interface only — the API still enforces every
-// permission.
+// Route guards applied by the member layout. They improve the interface
+// only — the API still enforces every permission.
 import type { AnyValue } from './types'
 import { canManageGroup, canManageGroups } from './groupPermissions'
 import { Locked } from '../components/Locked'

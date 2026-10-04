@@ -43,15 +43,6 @@ export function clearSession() {
   }
 }
 
-/**
- * Whether a previous session is likely still active. This is a rendering hint
- * only — it reflects cached profile data, never proof of authentication. The
- * server decides, via the cookie, on the next `/auth/me` call.
- */
-export function hasCachedSession() {
-  return Boolean(getCachedAccount())
-}
-
 export async function signOut() {
   try {
     await apiPost('/auth/logout', {})

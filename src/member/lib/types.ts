@@ -10,12 +10,3 @@ export type Doc = Record<string, any>
 
 /** An untyped scalar, object, or callable at a boundary. */
 export type AnyValue = any
-
-/** An untyped callable at a boundary. */
-export type AnyFn = (...args: any[]) => any
-
-/** A DOM event whose concrete element type is unknown at the boundary. */
-export type SpaEvent = import('react').SyntheticEvent<Element> & {
-  target: AnyValue
-  currentTarget: AnyValue
-}

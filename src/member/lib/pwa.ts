@@ -301,21 +301,3 @@ export async function initPWA() {
   const registration = await registerServiceWorker()
   return { registration, isStandalone: isPWA() }
 }
-
-const pwa = {
-  registerServiceWorker,
-  subscribeToPush,
-  unsubscribeFromPush,
-  getPushSubscriptionStatus,
-  getPushRegistration,
-  requestNotificationPermission,
-  isPushSupported,
-  isIOS,
-  needsHomeScreenInstall,
-  isPWA,
-  setupInstallPrompt,
-  promptInstall,
-  isInstallPromptAvailable,
-  initPWA,
-}
-export default pwa

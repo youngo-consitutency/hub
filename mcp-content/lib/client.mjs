@@ -3,7 +3,7 @@
  * calls the same member APIs the website uses, so authorisation and audit stay
  * on the server. Never opens a database.
  */
-// Schema-bound enums (select-field options) come from spa/shared; content
+// Schema-bound enums (select-field options) come from src/shared; content
 // vocab and working groups are fetched live from the Hub API so the catalogue
 // always reflects the database — nothing operational is baked into this file.
 import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../src/shared/opportunities.js'
@@ -297,7 +297,7 @@ export async function catalogOptions(client) {
   }
 }
 
-// slugs share one algorithm with the Hub API (spa/shared/slug.js); 'item' is
+// slugs share one algorithm with the Hub API (src/shared/slug.js); 'item' is
 // the MCP fallback when a title normalises to nothing.
 const contentSlug = (title) => slugify(title) || 'item'
 

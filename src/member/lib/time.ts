@@ -83,14 +83,6 @@ export function countdown(iso: AnyValue, now = new Date()) {
   return { label, tone }
 }
 
-export function formatCountdownLabel(prefix: AnyValue, value: AnyValue) {
-  if (!prefix) return value === 'closed' ? 'Closed' : value
-  if (value !== 'closed') return `${prefix} ${value}`
-  if (/closes in$/i.test(prefix)) return 'Closed'
-  if (/close$/i.test(prefix)) return prefix.replace(/close$/i, 'closed')
-  return `${prefix} closed`
-}
-
 export function formatDateTime(value: AnyValue) {
   if (!value) return 'Not set'
   const date = new Date(value)
