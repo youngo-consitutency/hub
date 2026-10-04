@@ -62,7 +62,7 @@ Constituency Work so this stays a last resort; every use is auditable via
 
 ## Task skills
 
-Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), and `tool-cfg/` holds per-tool configs reached through the `.claude`/`.codex`/`.cursor` symlinks.
+Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), and `tool-cfg/` holds per-tool configs — it is a local convention reached through `.claude`/`.codex`/`.cursor` symlinks on the maintainer's machine, not a path tools discover on their own.
 
 Session memory uses the `memory` MCP server (Hindsight bank `youngo-hub`): `recall` with tag `project:youngo-hub` before substantive work, `retain` decisions/findings/state after. There is no local memory vault — do not create `.agent-vault/` or similar.
 
