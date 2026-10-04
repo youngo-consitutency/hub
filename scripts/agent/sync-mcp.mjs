@@ -9,8 +9,8 @@
 //
 // Get the key from a maintainer or the Hindsight/Vectorize dashboard.
 // Restart agents afterwards — MCP clients read config at launch.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs'
+import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 import { applyEdits, modify, parse } from 'jsonc-parser'
@@ -53,10 +53,14 @@ if (env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))) {
 const MANAGED = [...new Set([...Object.keys(canonical), 'memory', 'hub-content'])]
 
 const json = (o) => JSON.stringify(o, null, 2) + '\n'
+// writeFileSync truncates before writing — a crash mid-write would leave a
+// truncated settings file. Write a sibling temp file and rename over the
+// target so the swap is atomic.
 const write = (p, s) => {
   mkdirSync(dirname(p), { recursive: true })
-  if (existsSync(p)) chmodSync(p, 0o600)
-  writeFileSync(p, s, { mode: 0o600 })
+  const tmp = join(dirname(p), `.${basename(p)}.${process.pid}.tmp`)
+  writeFileSync(tmp, s, { mode: 0o600 })
+  renameSync(tmp, p)
 }
 
 // Devin (.devin -> .agents/tool-cfg/devin) and Cursor own their whole map.
