@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto'
 import type { Payload, PayloadRequest } from 'payload'
 import { assembleFeed } from './feed'
-import { resolveCoyStatus } from '../../spa/shared/coyStatus'
-import { normalizeTaskForces } from '../../spa/shared/protocol'
+import { resolveCoyStatus } from '../shared/coyStatus'
+import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
 
 type AnyRecord = Doc
@@ -15,7 +15,7 @@ const OPEN_SUB_STATES = ['open', 'drafting', 'internal_review']
 
 // The public register reads the S09 decision engine — decision-proposals is
 // the single decision store. Terminal statuses normalize to the vocabulary
-// the SPA pills and platform stage map share.
+// the member pills and platform stage map share.
 const DECISION_STAGE: Record<string, string> = {
   adopted: 'adopted',
   rejected: 'not_adopted',

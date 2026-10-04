@@ -31,11 +31,8 @@ export function requirePgPool(): pg.Pool {
   return found
 }
 
-// A unique-constraint violation surfaces two ways through Payload's drizzle
-// adapter: the raw PostgreSQL 23505 somewhere in the cause chain, or a
-// converted ValidationError (data.collection = collection slug). The field
-// errors carry tableName when the constraint maps to a column, or only a
-// 'must be unique' message when it does not — accept both.
+// Unique violations surface as raw 23505 in the cause chain or a converted
+// ValidationError (data.collection = slug). Accept both shapes.
 export function isUniqueViolation(error: AnyValue, collection: string, table: string): boolean {
   let current: AnyValue = error
   while (current) {
@@ -52,6 +49,5 @@ export function isUniqueViolation(error: AnyValue, collection: string, table: st
   }
   return false
 }
-// Dual-shape rows (snake_case from raw SQL, camelCase from Payload docs) are
-// normalised once at the boundary via src/lib/case.ts — read canonical
-// camelCase fields after `toCamelCase(row)`.
+// Dual-shape rows normalise via src/lib/case.ts — read camelCase after
+// `toCamelCase(row)`.

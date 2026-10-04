@@ -1,14 +1,8 @@
 import type { AnyValue } from './domain'
-// Policy-backed authority model.
-//
-// An authority record is a time-bounded, scoped, evidenced responsibility or
-// participation recorded on an `authority-records` row. Constituency authority
-// derives from these records — never from account titles. `account.role` only
-// distinguishes technical administration and account entity kind.
-//
-// Sources: S13 Governance Policy (bodies/Council), S14 Interim GCT Mandate,
-// S25 WG Contact Point Mandate, S15 Liaison Guidelines, S02 Awareness Team,
-// S23/S04 Safeguarding, S17 Membership, S24 Selections, S10 Elections.
+// Policy-backed authority model: time-bounded, scoped, evidenced records in
+// `authority-records`. Authority derives from records, never account titles.
+// Sources: S13 Governance, S14 GCT Mandate, S25 WG CP Mandate, S15 Liaisons,
+// S02 Awareness, S23/S04 Safeguarding, S17 Membership, S24 Selections, S10 Elections.
 
 export interface AuthorityRoleSpec {
   label: string
@@ -363,11 +357,8 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
 
 export const AUTHORITY_ROLE_KEYS = Object.keys(AUTHORITY_ROLES)
 
-// ── Scope-type normalisation ────────────────────────────────────────
-// Historical spellings still arrive from callers ('organization',
-// 'platform_body'); the store holds the canonical 'organisation'/'body'
-// — the migration canonicalised every copied row. Every comparison runs
-// on the canonical form.
+// Scope-type normalisation: legacy spellings ('organization', 'platform_body')
+// map to the canonical stored forms; every comparison runs canonical.
 const SCOPE_TYPE_ALIASES: Record<string, string> = {
   organization: 'organisation',
   platform_body: 'body',
@@ -376,11 +367,8 @@ export function normaliseScopeType(scopeType: string): string {
   return SCOPE_TYPE_ALIASES[scopeType] ?? scopeType
 }
 
-// ── Legacy normalisation ────────────────────────────────────────────
-// Explicit mapping from historical (scopeType, scopeId, role) tuples to
-// appointment roles. Records that match no rule are *unmapped*: they are
-// reported by the migration preview and grant no access. Never widen access
-// by guessing at names.
+// Legacy normalisation: explicit (scopeType, scopeId, role) → role map.
+// Unmatched records are unmapped — reported, never widened by guessing.
 
 const TEAM_LEGACY: Record<string, string> = {
   membership_team: 'team.membership',
@@ -409,9 +397,7 @@ const GCT_AREAS: Record<string, string> = {
   coordination: 'gct.coordination',
 }
 
-// Explicit (scopeId='gct', role) tuples. A generic area-agnostic membership
-// maps to the coordinator appointment; anything else is unmapped — never
-// defaulted into authority by a fallback.
+// Explicit (scopeId='gct', role) tuples; unmapped values never fall back.
 const GCT_LEGACY_ROLES: Record<string, string> = {
   ...GCT_AREAS,
   member: 'gct.coordinator',
@@ -419,8 +405,7 @@ const GCT_LEGACY_ROLES: Record<string, string> = {
   lead: 'gct.coordinator',
 }
 
-// Role values accepted on scope-keyed team/COY rows — the scopeId is the
-// authority tuple element, but only ordinary membership wordings.
+// Role wordings accepted on scope-keyed team/COY rows (membership only).
 const TEAM_MEMBER_ROLES = new Set(['member', 'coordinator', 'lead', ''])
 
 const WG_LEGACY_ROLES: Record<string, string> = {
@@ -462,10 +447,8 @@ const COY_LIAISON_TEAMS: Record<string, string> = {
   gcoy_liaison: 'coy.gcoy_liaison',
 }
 
-// Resolve a recorded (scopeType, scopeId, role) tuple to a registry role,
-// or null when unmapped. Every accepted tuple is explicit — unknown roles
-// are reported as unmapped and denied, never defaulted into a broader
-// role.
+// Resolve a recorded tuple to a registry role, or null when unmapped —
+// unknown roles are denied, never defaulted to a broader role.
 export function resolveLegacyRole(scopeType: string, scopeId: string, role: string): string | null {
   switch (normaliseScopeType(scopeType)) {
     case 'team': {
@@ -493,10 +476,8 @@ export function resolveLegacyRole(scopeType: string, scopeId: string, role: stri
   }
 }
 
-// Resolve an authority row to its registry role: a canonical stored key
-// wins — but only inside the scopes that role declares (a canonical key
-// recorded against the wrong scope grants nothing); recorded legacy
-// strings fall back to the explicit map.
+// Resolve a row to its registry role: canonical keys only inside their
+// declared scopes; legacy strings fall back to the explicit map.
 export function resolveRecordRole(row: {
   role?: string | null
   scopeType: string
@@ -506,8 +487,7 @@ export function resolveRecordRole(row: {
   return resolveLegacyRole(row.scopeType, row.scopeId, row.role ?? '')
 }
 
-// A record counts only while it is active and within its window.
-// Future, expired, revoked and inactive rows grant nothing — but they are
+// A record counts only while active and inside its window; other rows are
 // still reported so members can see pending or finished mandates.
 export function recordCurrent(
   row: { status: string; startsAt?: AnyValue; endsAt?: AnyValue },

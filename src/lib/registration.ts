@@ -1,8 +1,5 @@
-// Port of the registration validator from server/lib/accounts.js — kept
-// behaviour-identical so the SPA's registration form validates exactly as
-// before. Field shape checks are zod schemas; option lists (regions, genders,
-// nationalities, …) live in the `registration-options` content document,
-// edited via the database/console, so dynamic membership stays imperative.
+// Registration validation: zod shapes; option lists (regions, genders,
+// nationalities, …) live in the `registration-options` content document.
 import type { AnyValue, Doc } from './domain'
 import { z } from 'zod'
 import { getDocument } from './documents'
@@ -20,8 +17,7 @@ type RegistrationOptions = {
   nationalities?: string[]
 }
 
-// When the document is absent the whitelist degrades to a non-empty check so
-// a fresh install stays usable; once staff publish options they are enforced.
+// Without a managed list this degrades to non-empty so a fresh install works.
 function optionSets(options: RegistrationOptions) {
   return {
     regions: new Set(options.regions || []),
@@ -64,8 +60,7 @@ function parseYesNo(value: unknown): boolean | null {
   return null
 }
 
-// Normalising primitives — coerce the raw request body so constraint checks
-// and output mapping both see clean values.
+// Coerce the raw body so checks and output mapping see clean values.
 const str = <T extends z.ZodTypeAny>(inner: T) => z.preprocess((v) => String(v ?? ''), inner)
 const strTrim = <T extends z.ZodTypeAny>(inner: T) =>
   z.preprocess((v) => String(v ?? '').trim(), inner)
@@ -81,8 +76,7 @@ const strEmailOpt = () =>
 const yesNo = () => z.preprocess(parseYesNo, z.boolean().nullable())
 const strList = () => z.preprocess(asStringArray, z.array(z.string()))
 
-// Zod issues → the field-error map the SPA renders. Last write wins, matching
-// the previous sequential `fields[k] = …` assignments.
+// Zod issues → field-error map. Last write wins.
 function addIssues(error: z.ZodError, fields: Fields) {
   for (const issue of error.issues) {
     const key = String(issue.path[0] || '')
@@ -93,8 +87,7 @@ function addIssues(error: z.ZodError, fields: Fields) {
 const issue = (ctx: z.RefinementCtx, path: string, message: string) =>
   ctx.addIssue({ code: 'custom', path: [path], message })
 
-// Shared shape: entity/track/policy/password are validated regardless of
-// which entity branch runs.
+// Shape shared by both entity branches.
 const baseSchema = z
   .object({
     entityType: z.preprocess(
@@ -213,8 +206,7 @@ export async function validateRegistration(req: AnyValue, body: Body) {
   const membershipPolicyVersion = String(b.membershipPolicyVersion || '').trim()
   const password = String(b.password || '')
 
-  // Agreements and privacy consent are validated in both entity branches —
-  // any non-'organization' entity falls through to the individual path.
+  // Non-'organization' entities fall through to the individual path.
   const agreements = agreementFields(b, fields)
   let privacy: ReturnType<typeof privacyConsentFragment> | null = null
   const privacyError = privacyConsentError(b, notice)

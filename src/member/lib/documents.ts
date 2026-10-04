@@ -1,0 +1,79 @@
+import type { AnyValue, Doc } from './types'
+import { useApi } from './api'
+
+// Staff-editable records (`content-documents`) fetched via
+// GET /api/documents/:slug.
+
+export function useDocument(slug: AnyValue) {
+  const { data, error, loading, retry } = useApi(slug ? `/documents/${slug}` : null)
+  return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
+}
+
+// Event types + taxonomy from the `content-options` document; empty until
+// loaded.
+export function useContentOptions() {
+  const { doc } = useDocument('content-options')
+  return {
+    eventTypes: doc?.eventTypes || [],
+    resourcePathways: doc?.resourcePathways || [],
+    resourceTypes: doc?.resourceTypes || [],
+    resourceTopics: doc?.resourceTopics || [],
+    resourceRegions: doc?.resourceRegions || [],
+    resourceLanguages: doc?.resourceLanguages || [],
+    teamLabels: doc?.teamLabels || [],
+    assignmentLabels: doc?.assignmentLabels || [],
+    wgActivityKinds: doc?.wgActivityKinds || [],
+    resourceIssueKinds: doc?.resourceIssueKinds || [],
+  }
+}
+
+// {value,label} lists become lookup maps.
+export function useContentOptionLabels() {
+  const options = useContentOptions()
+  const toMap = (items: Doc) =>
+    Object.fromEntries((items || []).map((item: Doc) => [item.value, item.label]))
+  return {
+    teamLabels: toMap(options.teamLabels),
+    assignmentLabels: toMap(options.assignmentLabels),
+    wgActivityKinds: toMap(options.wgActivityKinds),
+    resourceIssueKinds: toMap(options.resourceIssueKinds),
+  }
+}
+
+// ── Pure helpers over fetched bodies ──────────────────────────────
+
+export function publishedLinks(links: AnyValue) {
+  return (links || []).filter((link: AnyValue) => link.url)
+}
+
+// Single {value,label} lookup for display labels.
+export function optionLabel(items: Doc, value: AnyValue) {
+  return items.find((item: Doc) => item.value === value)?.label || value
+}
+
+export function getWgOnboarding(wgOnboarding: AnyValue, slug: AnyValue) {
+  const base = wgOnboarding?.default || {}
+  const specific = slug === 'default' ? {} : wgOnboarding?.[slug] || {}
+  return {
+    presentation: specific.presentation || base.presentation || null,
+    rules: [...new Set([...(specific.rules || []), ...(base.rules || [])])],
+  }
+}
+
+export function deckStyle(brand: AnyValue, defaults = {}): Doc {
+  const colours = { ...defaults, ...brand }
+  return {
+    '--jt-mint': colours.mint,
+    '--jt-forest': colours.forest,
+    '--jt-deep': colours.deep,
+    '--jt-lime': colours.lime,
+    '--jt-ink': colours.ink,
+    '--jt-muted': colours.muted,
+    '--jt-blob': colours.blob,
+    '--jt-rule': colours.rule,
+    '--jt-section-a': colours.sectionA,
+    '--jt-section-b': colours.sectionB,
+    '--jt-section-c': colours.sectionC,
+    '--jt-section-d': colours.sectionD,
+  }
+}

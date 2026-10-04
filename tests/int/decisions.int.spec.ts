@@ -32,9 +32,8 @@ describe('decision engine (S09)', () => {
     expect((await api('/decisions', { cookie: pending.cookie })).status).toBe(403)
   })
 
-  // Drive a proposal into 'voting': present, raise a red flag (which the
-  // contact person responds to but which stays standing), then close —
-  // consensus fails and the state machine opens a ballot.
+  // Drive a proposal into 'voting': a standing red flag fails consensus,
+  // opening a ballot.
   async function makeVotingProposal() {
     const create = await api('/decisions', {
       method: 'POST',
@@ -273,9 +272,8 @@ describe('decision engine (S09)', () => {
   it('rejects concurrent duplicate ballots via the unique index', { timeout: 90000 }, async () => {
     const voting = await makeVotingProposal()
 
-    // The pre-check and the insert are separate queries, so parallel
-    // submissions can both observe "no ballot yet". The unique
-    // (proposal, account) index must turn every loser into 409 already_voted.
+    // Parallel submissions can both pass the pre-check; the unique index
+    // turns the loser into 409 already_voted.
     const attempts = await Promise.all(
       Array.from({ length: 4 }, () =>
         api(`/decisions/${voting.id}/ballots`, {

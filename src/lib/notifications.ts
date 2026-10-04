@@ -7,10 +7,8 @@ import { getDocument } from './documents'
 import { appBaseUrl } from './env'
 import type { Doc, AnyValue } from './domain'
 
-// Port of server/lib/notifications/{store,templates,transport,unsubscribe}.js
-// — the announcement broadcast surface (preview/send/outbox). The queue rows
-// live in `notification_outbox`; eligibility reads the v2 notification_prefs
-// model ({email:{digest,deadline,announcement}}) instead of per-channel rows.
+// Announcement broadcast surface (preview/send/outbox). Queue rows live in
+// `notification_outbox`; eligibility reads the notification_prefs model.
 
 const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
 
@@ -140,8 +138,7 @@ function templateContent(templateKey: string, data: Doc = {}) {
   }
 }
 
-// Same content as the legacy mjml renderer, emitted as a fixed, responsive
-// table layout so no html-minifier dependency is needed.
+// Fixed responsive table layout — no html-minifier dependency.
 export function renderEmailTemplate(
   templateKey: string,
   data: Doc = {},
@@ -354,13 +351,11 @@ export async function markNotificationFailed(id: AnyValue, code: string) {
 
 // ── Worker ───────────────────────────────────────────────────────
 
-// Terminal after five delivery attempts; earlier failures back off
-// exponentially (30s → 30m cap) so a slow gateway doesn't stall the queue.
+// Terminal after five attempts; earlier failures back off exponentially.
 const MAX_DELIVERY_ATTEMPTS = 5
 const retryDelayMs = (attempts: number) => Math.min(30_000 * 2 ** attempts, 30 * 60_000)
 
-// Claim due rows with a short lease so concurrent drains (after() tasks, the
-// cron endpoint, overlapping deployments) never double-deliver the same row.
+// Claim due rows under a short lease so concurrent drains never double-deliver.
 export async function claimNotificationBatch(limit = 50) {
   const pool = getPgPool()!
   const { rows } = await pool.query(
@@ -408,8 +403,7 @@ async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) 
     const payload =
       typeof row.payload === 'string' ? row.payload : JSON.stringify(row.payload || {})
     const result = await deliverPush(subscriptions, payload)
-    // deliverPush prunes dead endpoints itself; zero reachable devices means
-    // the member has nothing left to deliver to — retrying is pointless.
+    // Zero reachable devices after pruning means nothing to retry.
     if (!result.sent && result.failed)
       throw Object.assign(new Error(`Push delivery failed (${result.failed}/${result.total}).`), {
         code: 'push_delivery_failed',
@@ -433,9 +427,7 @@ async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) 
   })
 }
 
-// Bounded batch so a single invocation stays well under the platform's
-// request duration budget; whatever remains is picked up by the next drain
-// (another enqueue's after() task or the cron endpoint).
+// Bounded batch; the next drain picks up whatever remains.
 export async function drainNotificationOutbox(req: AnyValue, { limit = 50 } = {}) {
   const connectBody = (await getDocument(req, 'connect').catch(() => null))?.body
   const claimed = await claimNotificationBatch(limit)

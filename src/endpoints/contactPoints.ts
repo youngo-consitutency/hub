@@ -5,7 +5,7 @@ import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { getDocument } from '../lib/documents'
-import { TASK_FORCE_SLUGS } from '../../spa/shared/protocol'
+import { TASK_FORCE_SLUGS } from '../shared/protocol'
 import type { Doc, AnyValue } from '../lib/domain'
 
 function publicSlot(s: AnyValue, { withEmail = false } = {}) {

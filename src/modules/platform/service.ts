@@ -1,4 +1,4 @@
-import { bodyRoles } from '../../../spa/shared/protocol'
+import { bodyRoles } from '../../shared/protocol'
 import { type PoolClient } from 'pg'
 import { requirePgPool } from '../../lib/pg'
 import { AUTHORITY_LOCK_NS } from '../../lib/authorityLock'
@@ -97,12 +97,9 @@ async function audit(
     [actor.id, action, target, reason, after],
   )
 }
-// Lock every account this transaction may write, in ascending id order,
-// BEFORE permissions()' FOR SHARE reads. permissions() shares-locks the
-// actor's own rows while writes target another account's rows — locking
-// only the target would let a cross pair (A writes B while B writes A)
-// deadlock on each other's FOR SHARE. Locking {actor, target} in a fixed
-// order closes that cycle; see lib/authorityLock.ts for the contract.
+// Lock every account this transaction may write, ascending, BEFORE
+// permissions()' FOR SHARE reads — the fixed order closes the mirrored-pair
+// deadlock (A writes B while B writes A). See lib/authorityLock.ts.
 async function lockAuthority(client: Pick<PoolClient, 'query'>, ...accountIds: number[]) {
   for (const id of [...new Set(accountIds)].sort((a, b) => a - b))
     await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, id])
@@ -121,9 +118,8 @@ export async function permissions(actor: Actor, client: Pick<PoolClient, 'query'
     ['expired', 'terminated'].includes(current.membership_status)
   )
     fail(403, 'This membership is no longer active.')
-  // One authority store feeds the SAME derivation the Payload access
-  // layer uses (lib/authority.deriveAuthority) — one permission engine, no
-  // parallel scope-identifier logic.
+  // One authority store feeds lib/authority.deriveAuthority — one
+  // permission engine.
   const records = await client.query(
     `SELECT id,role,scope_type::text AS "scopeType",scope_id AS "scopeId",council_seat AS "councilSeat",status,starts_at AS "startsAt",ends_at AS "endsAt" FROM authority_records WHERE account_id=$1 AND status='active' AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now()) FOR SHARE`,
     [actor.id],
@@ -297,9 +293,8 @@ export async function publishBody(actor: Actor, id: string, version: unknown) {
     await audit(client, actor, 'body.published', id, 'Reviewed public information')
   })
 }
-// Scope/role vocabularies for recording mandates and participation. Every
-// record lands in `authority_records`; `recordKind` decides whether the
-// tuple is a mandate or member-joinable participation.
+// Scope/role vocabularies. `recordKind` decides mandate vs joinable
+// participation.
 const BODY_MANDATE_ROLES = ['coordinator', 'contact_point', 'liaison', 'council_representative']
 const TEAM_SCOPE_IDS = [
   'membership_team',
@@ -333,15 +328,12 @@ const GCT_AREAS = [
 export async function assign(actor: Actor, input: Input) {
   return transaction(async (client) => {
     const accountId = intId(input.accountId)
-    // The shared advisory locks come FIRST in the lock order — before
-    // permissions()' FOR SHARE reads on the actor's own rows — so no
-    // writer ever waits on a row lock while holding an authority lock.
-    // Self-targeting (actor === target) collapses to a single key.
+    // Advisory locks first (see lib/authorityLock.ts); self-targeting
+    // collapses to one key.
     await lockAuthority(client, intId(actor.id), accountId)
     const p = await permissions(actor, client)
     if (!p.officer) fail(403, 'Only platform administrators can record an evidenced assignment.')
-    // Accept both spellings; canonicalise to 'organisation' — the stored
-    // enum and registry vocabulary.
+    // Accept both spellings; canonicalise to 'organisation'.
     const scopeType = normaliseScopeType(text(input, 'scopeType')),
       scopeId = text(input, 'scopeId'),
       role = text(input, 'role'),
@@ -398,11 +390,9 @@ export async function assign(actor: Actor, input: Input) {
         : resolveLegacyRole(scopeType, scopeId, role)
     if (!resolvedRole) fail(400, 'Unknown role for this scope.')
 
-    // One store for mandates and participation. The partial unique index
-    // keeps a single active row per (account, role, scope); re-recording an
-    // active record refreshes term and evidence. The advisory lock taken at
-    // the top of this transaction serialises the insert against every other
-    // authority write on the account.
+    // Partial unique index keeps one active row per (account, role, scope);
+    // re-recording refreshes term and evidence. The advisory lock serialises
+    // this insert against other authority writes.
     const councilSeat = councilSeatFor(resolvedRole, { scopeId, councilSeat: null })
     const { rows } = await client.query(
       `INSERT INTO authority_records(account_id,kind,role,scope_type,scope_id,council_seat,starts_at,ends_at,evidence,recorded_by_id)
@@ -436,10 +426,8 @@ export async function assign(actor: Actor, input: Input) {
 export async function revoke(actor: Actor, id: string, reason: string) {
   return transaction(async (client) => {
     if (reason.length < 8) fail(400, 'Give a reason for ending this record.')
-    // Resolve the target account and take the shared advisory locks BEFORE
-    // permissions()' FOR SHARE reads — the lock order (advisory → row
-    // locks → writes) is what keeps concurrent and self-targeting writes
-    // deadlock-free.
+    // Advisory locks BEFORE permissions()' FOR SHARE reads — the lock
+    // order keeps concurrent and self-targeting writes deadlock-free.
     const target = await client.query('SELECT account_id FROM authority_records WHERE id=$1', [
       intId(id),
     ])
@@ -624,10 +612,7 @@ export async function publicPlatform() {
 
 export async function membershipAction(actor: Actor, id: string, input: Input) {
   return transaction(async (client) => {
-    // Lifecycle writes touch the TARGET account's rows; permissions()
-    // FOR SHAREs the actor's. Lock both accounts first, per the shared
-    // lock order — an expiry racing a grant on the same account must
-    // serialise, never deadlock.
+    // Lock both accounts first — an expiry racing a grant must serialise.
     await lockAuthority(client, intId(actor.id), intId(id))
     if (!(await permissions(actor, client)).membership)
       fail(403, 'An active Membership Team assignment is required.')
@@ -674,8 +659,7 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
         `UPDATE accounts SET membership_track='network',constituency_work_status=NULL,membership_status='active',hub_access_status='active',renewal_due_at=NULL WHERE id=$1`,
         [id],
       )
-      // Every authority record — mandate or participation — ends with the
-      // membership it derives from (S17).
+      // Every authority record ends with its membership (S17).
       await client.query(
         "UPDATE authority_records SET status='expired',ends_at=now(),updated_at=now() WHERE account_id=$1 AND status='active'",
         [id],
@@ -689,7 +673,7 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
   })
 }
 
-// Withdrawal changes public visibility, never the adopted outcome or audit record.
+// Withdrawal changes visibility only — never the outcome or audit record.
 export async function withdrawPublication(
   actor: Actor,
   kind: 'body' | 'decision',

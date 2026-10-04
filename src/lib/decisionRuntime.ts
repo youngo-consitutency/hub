@@ -16,10 +16,8 @@ import { audit } from './audit'
 import type { VetoRequest } from './decisions'
 import type { AccountLike, ActorLike, Doc, AnyValue } from './domain'
 
-// Shared runtime for the S09 decision workflow. Both the member endpoints
-// (src/endpoints/decisions.ts) and the platform bridge
-// (src/modules/platform/decisionsBridge.ts) drive proposals through these
-// helpers so there is exactly one state machine.
+// Shared S09 decision state machine — driven by the member endpoints and
+// the platform bridge so there is exactly one runtime.
 
 export const ids = (rel: AnyValue): number[] =>
   (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) => (typeof x === 'object' ? x.id : x))
@@ -89,23 +87,20 @@ export function isContactPerson(account: AccountLike, proposal: Doc): boolean {
   )
 }
 
-// Who may raise flags / vote in a body (S13 §1: council members; WG/OT members
-// for scoped bodies; CW members for constituency-wide).
+// Who may flag/vote in a body (S13 §1).
 export async function isBodyMember(
   req: PayloadRequest,
   account: AccountLike,
   proposal: Doc,
 ): Promise<boolean> {
-  // No title grants body membership — only an authority record does.
+  // Only an authority record grants body membership.
   const access = await getAccessProfile(req, account)
   const scopeIds = new Set(access.wgAssignments.map((w) => `working_group:${w.wgSlug}`))
   const teamIds = new Set(access.teamRoles)
   switch (proposal.body) {
     case 'council':
-      // Council = org reps + one seat per WG (shared by its CPs) + one per OT
-      // liaison + the two Focal Points (S13 §6). Membership is a recorded
-      // Council seat, not a title — seat-level vote deduplication is enforced
-      // at ballot time.
+      // Council = org reps + one seat per WG (shared by CPs) + one per OT
+      // liaison + two Focal Points (S13 §6). Seats deduplicate at ballot time.
       return access.councilSeats.length > 0
     case 'working_group':
       return (
@@ -129,7 +124,7 @@ export async function isBodyMember(
   }
 }
 
-// Rows "current" at `now` in either store (mirrors appointmentCurrent()).
+// Rows current at `now` in either store.
 const currentRow = (now: string): Doc[] => [
   { status: { equals: 'active' } },
   { or: [{ startsAt: { exists: false } }, { startsAt: { less_than_equal: now } }] },
@@ -138,9 +133,8 @@ const currentRow = (now: string): Doc[] => [
 const accountIdOf = (row: Doc) =>
   (typeof row.account === 'object' ? row.account?.id : row.account) as number
 
-// Accounts whose records still vote: every seat-carrying role requires
-// active Constituency Work membership, so a lapsed member's seat grants
-// no vote and is excluded from the electorate.
+// Lapsed CW members lose their seat's vote — every seat role requires
+// active CW.
 async function eligibleAccounts(req: PayloadRequest, accountIds: Set<number>) {
   if (!accountIds.size) return new Set<number>()
   const { docs: accounts } = await req.payload.find({
@@ -160,11 +154,9 @@ async function eligibleAccounts(req: PayloadRequest, accountIds: Set<number>) {
   return new Set<number>((accounts as Doc[]).map((a) => a.id))
 }
 
-// The Council electorate (S13 §6): distinct SEATS currently held, not
-// accounts — a substitute covers its principal's seat rather than adding
-// one, and seat holders whose CW membership lapsed do not vote. Focal
-// Point seats are personal (each of the two FPs votes), so they count
-// per holder while every other seat counts once.
+// Council electorate (S13 §6): distinct held seats, not accounts — a
+// substitute covers its principal's seat; lapsed CW holders don't vote.
+// Focal Point seats are personal and count per holder.
 async function councilElectorate(req: PayloadRequest, now: string): Promise<number> {
   const { docs } = await req.payload.find({
     collection: 'authority-records',
@@ -189,9 +181,7 @@ async function councilElectorate(req: PayloadRequest, now: string): Promise<numb
   const eligible = await eligibleAccounts(req, holderIds)
   let count = 0
   for (const holders of seats.values()) {
-    // Several records can share one seat (multiple WG Contact Points, a
-    // substitute covering a principal): the seat votes if ANY holder is
-    // eligible, and still only counts once.
+    // A shared seat votes if any holder is eligible, and counts once.
     for (const holder of holders) {
       if (eligible.has(holder)) {
         count += 1
@@ -204,14 +194,13 @@ async function councilElectorate(req: PayloadRequest, now: string): Promise<numb
 }
 
 export async function countEligible(req: PayloadRequest, proposal: Doc): Promise<number> {
-  // Eligible-voter registry snapshot for the 5% quorum (S09 §2 step 6).
+  // Eligible-voter snapshot for the 5% quorum (S09 §2 step 6).
   const now = new Date().toISOString()
   if (proposal.body === 'council') {
     return Math.max(await councilElectorate(req, now), 1)
   }
   if (proposal.body === 'constituency') {
-    // The whole Constituency Work membership is the electorate. A platform
-    // role does not add anyone — mandate holders must still be CW members.
+    // The whole CW membership is the electorate — mandates add no one.
     const { totalDocs } = await req.payload.find({
       collection: 'accounts',
       where: {
@@ -227,11 +216,8 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
     })
     return Math.max(totalDocs, 1)
   }
-  // Scoped bodies: distinct accounts with a current record for the scope —
-  // participation or mandate both enrol the member in that body's
-  // electorate, and the same CW eligibility applies as for Council.
-  // Platform-bridged bodies also count 'body'-scope rows; OTs may be
-  // recorded as team rows.
+  // Scoped bodies: accounts with a current record for the scope
+  // (participation or mandate). 'body' rows also count; OTs may be team rows.
   const scopeTypes =
     proposal.body === 'working_group'
       ? ['working_group', 'body']
@@ -256,8 +242,7 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
   return Math.max((await eligibleAccounts(req, accounts)).size, 1)
 }
 
-// Advance the proposal state machine according to wall-clock deadlines.
-// Idempotent: safe to call from reads and explicit close/advance calls.
+// Advance the state machine by wall-clock deadlines. Idempotent.
 export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
   const now = Date.now()
   const past = (d?: string | null) => d && new Date(d).getTime() <= now
@@ -372,8 +357,7 @@ export async function checkVeto(req: PayloadRequest, proposal: Doc) {
   return proposal
 }
 
-// Member-facing actor reference: id + display name only. Never expose raw
-// account docs (personal/contact fields stay inside the Hub).
+// Member-facing actor: id + display name only — never raw account docs.
 export const accountRef = (a: AnyValue) =>
   a == null
     ? null

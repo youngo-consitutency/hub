@@ -1,6 +1,6 @@
 # YOUNGO Hub agent guidance
 
-YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `spa/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
+YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `src/member/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
 
 ## Hub Intelligence invariants
 
@@ -59,6 +59,10 @@ officer role is `requiresCw`, so a grant to a lapsed account is ignored by
 in the database first, then re-run. Keep at least one operator in active
 Constituency Work so this stays a last resort; every use is auditable via
 `provenance.source = 'manual_recovery'`.
+
+## Task skills
+
+Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), `vault/` is the project memory (also reachable via the `.agent-vault` symlink), and `tool-cfg/` holds per-tool configs reached through the `.claude`/`.codex`/`.cursor` symlinks.
 
 ## Verification
 

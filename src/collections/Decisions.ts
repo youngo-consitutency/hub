@@ -1,11 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 
-// S09 Decision-Making Processes — proposals move through
-// consultation → revision → decision → (consensus | voting) via the
-// src/endpoints/decisions.ts state machine. Direct REST writes are staff-only;
-// members act through the endpoints so phase rules, eligibility and audit
-// logging are enforced in one place.
+// S09 decision-making: consultation → revision → decision → (consensus |
+// voting) via the src/endpoints/decisions.ts state machine. REST writes are
+// staff-only — members act through endpoints so rules and audit hold.
 
 export const DecisionProposals: CollectionConfig = {
   slug: 'decision-proposals',
@@ -32,21 +30,19 @@ export const DecisionProposals: CollectionConfig = {
       index: true,
     },
     {
-      // Working-group slug or team name for scoped bodies; null for
-      // council/constituency-wide decisions.
+      // WG slug / team name for scoped bodies; null for council-wide.
       name: 'bodyRef',
       type: 'text',
       index: true,
     },
     { name: 'snapJustification', type: 'textarea' },
     { name: 'snapDeadline', type: 'date' },
-    // Policy version the proposal was drafted under, and the snap window in
-    // hours — both carried for audit/publication displays.
+    // Drafting policy version + snap window hours (audit/publication).
     { name: 'policyVersion', type: 'text' },
     { name: 'snapHours', type: 'number' },
     // Optimistic-lock counter, incremented on every edit/transition.
     { name: 'version', type: 'number', defaultValue: 1 },
-    // Legacy platform_decisions uuid, kept so old links keep resolving.
+    // Legacy platform_decisions uuid for old links.
     { name: 'legacyRef', type: 'text', index: true },
     {
       name: 'status',
@@ -86,8 +82,7 @@ export const DecisionProposals: CollectionConfig = {
     { name: 'revisionEndsAt', type: 'date' },
     { name: 'decisionEndsAt', type: 'date' },
     { name: 'votingEndsAt', type: 'date' },
-    // Snapshot of the eligible-voter count taken when voting opens; the
-    // 5% quorum is computed against this (S09 §2 step 6).
+    // Eligible-voter snapshot at voting open — the 5% quorum base (S09 §2).
     { name: 'eligibleVoterCount', type: 'number' },
     {
       name: 'ballotOptions',
@@ -102,8 +97,7 @@ export const DecisionProposals: CollectionConfig = {
     { name: 'decidedAt', type: 'date' },
     { name: 'resultSummary', type: 'textarea' },
     { name: 'trackerUrl', type: 'text' },
-    // Outcome record: evidence link/note plus the recorded tally when a vote
-    // closed the proposal.
+    // Outcome: evidence link/note plus tally when a vote closed it.
     { name: 'outcomeEvidence', type: 'textarea' },
     { name: 'votesFor', type: 'number' },
     { name: 'votesAgainst', type: 'number' },
@@ -217,8 +211,7 @@ export const DecisionBallots: CollectionConfig = {
     read: isStaffOrMember,
     ...staffWrites,
   },
-  // One ballot per member per proposal — enforced at the database so
-  // concurrent submissions cannot double-count.
+  // One ballot per member per proposal — enforced at the database.
   indexes: [{ unique: true, fields: ['proposal', 'account'] }],
   fields: [
     {
@@ -261,7 +254,7 @@ export const DecisionVetoes: CollectionConfig = {
       options: ['org', 'org_global_south', 'wg_or_ot'],
     },
     {
-      // Organisation name or WG/OT slug — one request counts once per body.
+      // Org name or WG/OT slug — one request per body.
       name: 'groupKey',
       type: 'text',
       required: true,

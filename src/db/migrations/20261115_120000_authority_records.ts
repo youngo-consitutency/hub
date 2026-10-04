@@ -1,20 +1,12 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 // One authority store: `authority_records` replaces the appointments /
-// assignments split. Mandated responsibilities are kind='mandate',
-// member-joinable participation (WG/body/organisation/negotiation
-// membership) is kind='participation'. Every `assignments` row is copied
-// losslessly — its recorded role string, status and term window are
-// preserved verbatim; resolving a row to its authority role stays a
-// code-level concern (lib/authority.ts), so there is exactly one
-// implementation of the legacy-role map. Scope types are canonicalised on
-// copy ('organization'→'organisation', 'platform_body'→'body') so the store
-// holds a single spelling going forward.
+// assignments split (kind='mandate' or 'participation'). `assignments` rows
+// copy losslessly — role string, status and term window verbatim; resolving
+// roles stays in lib/authority.ts. Scope types canonicalise on copy.
 //
-// Renames carry history forward rather than copying: `appointments` becomes
-// `authority_records`, then the ledger rows are inserted. The
-// provenance->>'assignmentId' uniqueness carries across — one record per
-// source row, enforced by the database.
+// `appointments` renames to `authority_records` to carry history forward;
+// provenance->>'assignmentId' uniqueness keeps one record per source row.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   CREATE TYPE "public"."enum_authority_records_kind" AS ENUM('mandate', 'participation');
@@ -168,9 +160,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 }
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
-  // The assignments rows are folded into authority_records with provenance;
-  // rolling back restores the table shape but cannot un-migrate the data —
-  // restore from backup if a full revert is required.
+  // Rollback restores the table shape but cannot un-migrate data — restore
+  // from backup for a full revert.
   await db.execute(sql`
   ALTER TABLE "payload_locked_documents_rels" RENAME COLUMN "authority_records_id" TO "appointments_id";
   ALTER TABLE "payload_locked_documents_rels" RENAME CONSTRAINT "payload_locked_documents_rels_authority_records_fk" TO "payload_locked_documents_rels_appointments_fk";

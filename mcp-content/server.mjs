@@ -21,9 +21,7 @@ import { pathToFileURL } from 'node:url'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createHubMcpServer, SERVER_INFO } from './lib/mcpServer.mjs'
 
-// Load .env.local/.env when running from the repo checkout (dotenv is a root
-// dependency). Hosted deployments inject real env vars, which always win —
-// dotenv never overrides existing values.
+// Load .env.local/.env from the repo checkout; real env vars always win.
 try {
   const { config: loadEnv } = await import('dotenv')
   loadEnv({ path: ['.env.local', '.env'] })
@@ -142,10 +140,8 @@ export function createMcpHttpServer({ env = process.env } = {}) {
     }
     const got = providedToken(req, url, pathToken)
     if (!bearerMatches(`Bearer ${got}`, token)) {
-      // 401 with no WWW-Authenticate / OAuth metadata. Grok Connectors treat
-      // OAuth discovery as required when a protected-resource challenge is
-      // advertised; a bare 401 still may prompt OAuth, so prefer anonymous
-      // mode or a ?token= URL for phone clients.
+      // Bare 401, no OAuth metadata — some clients still prompt OAuth, so
+      // prefer anonymous mode or a ?token= URL.
       sendJson(
         res,
         401,
@@ -191,8 +187,7 @@ export function createMcpHttpServer({ env = process.env } = {}) {
       return
     }
 
-    // Stateless transport: one Server+transport pair per request, per the
-    // SDK's recommended pattern for servers without session state.
+    // Stateless: one Server+transport pair per request.
     const server = createHubMcpServer(env)
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
@@ -266,8 +261,7 @@ export function createMcpHttpServer({ env = process.env } = {}) {
       return
     }
 
-    // Stateless transport: GET streams and DELETE session teardown are
-    // meaningless without sessions — MCP clients POST only.
+    // GET/DELETE are meaningless without sessions — clients POST only.
     sendJson(
       res,
       405,

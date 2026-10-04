@@ -12,10 +12,8 @@ import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
 import type { Doc, AccountLike, AnyValue } from './domain'
 
-// Writes to the `authority-records` collection. Every grant is validated
-// against the role registry (scope type, term window, CW membership where
-// the role demands it) and audited; the database's partial unique index is
-// the backstop against duplicate active records under concurrency.
+// Writes to `authority-records`. Grants validate against the role registry
+// and are audited; the partial unique index backstops concurrent duplicates.
 
 export interface GrantInput {
   account: number
@@ -78,13 +76,10 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
     row.councilSeat = councilSeatFor(input.role, { scopeId, councilSeat: null })
   }
 
-  // Create + audit commit together under the shared authority lock: a
-  // grant without its audit record (or vice versa) must never persist,
-  // and the check→insert sequence serialises with every other authority
-  // writer on the account. Substitute grants additionally lock the
-  // PRINCIPAL's account — a revocation of the covered seat is an authority
-  // write on that account, so both keys are held (ascending order) before
-  // the principal is re-validated inside the transaction.
+  // Create + audit commit atomically under the shared lock. Substitute
+  // grants also lock the PRINCIPAL's account — revoking the covered seat is
+  // an authority write on that account, so both keys are held (ascending)
+  // before re-validating the principal inside the transaction.
   try {
     return await withAuthorityLock(req, lockAccounts, async () => {
       if (input.role === 'council.substitute') {
@@ -108,9 +103,8 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
         row.councilSeat = principal.councilSeat
         row.scopeId = `seat:${principal.councilSeat}`
       }
-      // Eligibility is verified UNDER the lock: a concurrent resignation or
-      // termination takes the same lock, so the account state checked here
-      // is the state the grant commits against.
+      // Eligibility is verified under the lock — concurrent exits take the
+      // same lock, so this check is what the grant commits against.
       const holder = await req.payload
         .findByID({ collection: 'accounts', id: input.account, overrideAccess: true, req })
         .catch(() => {
@@ -141,10 +135,8 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
       return created
     })
   } catch (error: AnyValue) {
-    // The partial unique index (account, role, scopeType, scopeId WHERE
-    // status='active') is the guard for concurrent grants; Payload wraps
-    // the Postgres violation in a ValidationError, so check the whole
-    // error chain for the constraint.
+    // The partial unique index guards concurrent grants; Payload wraps the
+    // violation in a ValidationError — check the whole error chain.
     const text = [error?.message, error?.cause?.message].filter(Boolean).join(' ')
     const uniqueViolation = (error?.data?.errors ?? []).some(
       (e: AnyValue) => e.tableName === 'authority_records' && /unique/i.test(e.message ?? ''),
@@ -159,10 +151,8 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
   }
 }
 
-// The revocation write itself. Callers must hold the record account's
-// advisory lock inside an active transaction — revokeAuthority does that
-// for standalone calls; composite flows (the admin team-role endpoint,
-// membership exits) call this directly so lookup and revocation share ONE
+// The revocation write. Callers must hold the account's advisory lock —
+// revokeAuthority does so; composite flows call this directly to share one
 // lock scope.
 export async function revokeAuthorityInTx(
   req: PayloadRequest,
@@ -209,9 +199,7 @@ export async function revokeAuthority(
     })
   if ((row as Doc).status !== 'active')
     throw fail.conflict('invalid_phase', 'This record is no longer active.')
-  // Serialise with every other authority write on this account before
-  // re-checking: two concurrent revocations (or a revoke racing a
-  // re-grant) must not both succeed.
+  // Serialise before re-checking — racing revoke/re-grant must not both win.
   const lockAccount =
     typeof (row as Doc).account === 'object' ? (row as Doc).account.id : (row as Doc).account
   return withAuthorityLock(req, lockAccount, () =>

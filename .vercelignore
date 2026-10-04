@@ -4,8 +4,6 @@ coverage/
 test-results/
 playwright-report/
 .local-demo/
-.codex-vault/
-docs/
 .agent-vault/
 .agents/
 .local/

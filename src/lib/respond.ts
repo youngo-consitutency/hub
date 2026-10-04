@@ -2,8 +2,7 @@ import type { Doc } from './domain'
 import * as Sentry from '@sentry/nextjs'
 import type { PayloadRequest } from 'payload'
 
-// Uniform error surface matching the legacy API contract:
-// { error: { code, message, fields? } } with the same HTTP statuses.
+// Uniform error surface: { error: { code, message, fields? } }.
 export class ApiError extends Error {
   code: string
   status: number
@@ -51,9 +50,8 @@ export function endpoint(handler: Handler): Handler {
           { status: err.status },
         )
       }
-      // Platform module + pg errors carry status/code on a plain Error.
-      // Payload errors (NotFound, Forbidden, Unauthorized) carry only status —
-      // give them the contract's code so the SPA sees a consistent shape.
+      // Platform/pg errors carry status+code; Payload errors carry only
+      // status — give them the contract's code.
       const anyErr = err as { status?: number; code?: string; message?: string }
       if (anyErr?.status) {
         const code =
@@ -85,8 +83,7 @@ export function endpoint(handler: Handler): Handler {
         )
       }
       req.payload.logger.error({ err, path: req.routeParams?.slug ?? req.url }, 'endpoint failed')
-      // Unhandled exception → error tracking. ApiError/status-coded branches
-      // above are expected responses and stay out of Sentry on purpose.
+      // Unhandled → error tracking; expected ApiError branches stay out.
       Sentry.captureException(err, {
         extra: { path: req.routeParams?.slug ?? req.url },
       })
@@ -108,19 +105,16 @@ export const json = (data: unknown, init?: ResponseInit) => Response.json(data, 
 /** Parsed request body — handlers validate the fields they read. */
 export type JsonBody = Doc
 
-// One call site for the body-parsing idiom: an absent body is an empty
-// object, a malformed one throws through the endpoint wrapper as 500.
+// Absent body → {}, malformed → throws through the wrapper as 500.
 export async function readBody<T extends JsonBody = JsonBody>(req: PayloadRequest): Promise<T> {
   return ((await req.json?.()) || {}) as T
 }
 
-// Route params are always strings; missing params surface as '' so the
-// handler's own not-found/validation branch decides the status.
+// Missing params surface as '' so the handler decides the status.
 export const param = (req: PayloadRequest, name: string): string =>
   String(req.routeParams?.[name] ?? '')
 
-// Shared-cache policy for anonymous-safe public reads — CDN/edge caches (and
-// SWR's client cache) hold them briefly; member data never takes this path.
+// Shared-cache policy for public reads; member data never takes this path.
 export const PUBLIC_CACHE = 'public, s-maxage=60, stale-while-revalidate=300'
 const NO_STORE = 'no-store'
 
