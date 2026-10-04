@@ -213,8 +213,7 @@ function AppRoutes() {
   if (locked) return <Shell>{locked}</Shell>
 
   const background = peekBackground()
-  const peekRoute =
-    canPeek(path) && typeof background === 'string' ? routeFor(background) : null
+  const peekRoute = canPeek(path) && typeof background === 'string' ? routeFor(background) : null
 
   const BackgroundPage = peekRoute?.Page || Page
   const backgroundSlug = peekRoute ? peekRoute.slug : slug

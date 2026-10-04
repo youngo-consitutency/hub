@@ -44,7 +44,9 @@ export function lockedFor(path: string, account: AnyValue) {
     )
   }
   if (path.startsWith('/admin') && account && !canManageAccounts) {
-    return <Locked title="Admin only" body="This workspace requires platform administration access." />
+    return (
+      <Locked title="Admin only" body="This workspace requires platform administration access." />
+    )
   }
   if (path.startsWith('/staff/content') && account) {
     if (!capabilities.includes('content.draft') && !capabilities.includes('content.review')) {
@@ -57,7 +59,9 @@ export function lockedFor(path: string, account: AnyValue) {
     }
   }
   if (path.startsWith('/focal') && account && !account.access?.isFocalPoint) {
-    return <Locked title="Focal Points only" body="This workspace is for the Global Focal Points." />
+    return (
+      <Locked title="Focal Points only" body="This workspace is for the Global Focal Points." />
+    )
   }
   // The NGO portal needs an organisation context — an active seat or an
   // organisation-scope authority record. Any signed-in account may open an
