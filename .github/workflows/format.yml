@@ -6,9 +6,15 @@ on:
 
 permissions:
   contents: write
-  # Auto-fix commits pushed with GITHUB_TOKEN do not trigger workflow events,
-  # so the final step re-dispatches the PR checks onto the new head commit.
+  # Without a PAT, auto-fix pushes emit no events and the final step
+  # re-dispatches the other workflows onto the new commit.
   actions: write
+
+env:
+  # Fine-grained PAT (contents:write, this repo) makes auto-fix pushes emit
+  # pull_request synchronize events so required checks run natively. With
+  # GITHUB_TOKEN the push is silent and required checks stay "expected".
+  AUTOFIX_TOKEN: ${{ secrets.AUTOFIX_TOKEN }}
 
 concurrency:
   group: format-${{ github.event.pull_request.number || github.ref_name }}
@@ -28,6 +34,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.AUTOFIX_TOKEN || github.token }}
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -53,11 +60,15 @@ jobs:
           git push
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
-      # Pushes made with GITHUB_TOKEN emit no events, so checks triggered by
-      # pull_request would never run on the auto-fix commit and required checks
-      # would stay "expected" forever. Dispatch them onto the new head instead.
-      - name: Retrigger PR checks on the auto-fix commit
-        if: steps.commit.outputs.pushed == 'true' && github.event_name == 'pull_request'
+      # GITHUB_TOKEN pushes emit no events, so pull_request checks would never
+      # run on the auto-fix commit. Re-dispatched runs report on the commit but
+      # cannot satisfy PR-scoped required checks — setting AUTOFIX_TOKEN is the
+      # real fix; this keeps verification visible on the commit meanwhile.
+      - name: Re-dispatch checks on the auto-fix commit
+        if: >-
+          steps.commit.outputs.pushed == 'true' &&
+          github.event_name == 'pull_request' &&
+          env.AUTOFIX_TOKEN == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ github.head_ref }}
