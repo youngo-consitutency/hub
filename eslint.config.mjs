@@ -32,6 +32,7 @@ const eslintConfig = [
     files: ['spa/**/*.{js,jsx,ts,tsx,mjs}'],
     rules: {
       '@next/next/no-html-link-for-pages': 'off',
+      '@next/next/no-img-element': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/static-components': 'warn',
       'react-hooks/purity': 'warn',

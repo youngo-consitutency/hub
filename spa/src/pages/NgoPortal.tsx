@@ -7,11 +7,7 @@ import { usePath } from '../lib/router'
 import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { DatePicker, SearchableSelect } from '../components/FormControls'
 import { NgoOpportunities } from '../components/NgoOpportunities'
-import {
-  TbAward as Award,
-  TbRosetteDiscountCheck as BadgeCheck,
-  TbUserPlus as UserPlus,
-} from 'react-icons/tb'
+import { TbUserPlus as UserPlus } from 'react-icons/tb'
 
 export function NgoPortal() {
   const [panel, setPanel] = useState<any>(null)

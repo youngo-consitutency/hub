@@ -12,8 +12,9 @@ const AccountContext = createContext<any>(null)
 export function AccountProvider({ initialAccount, children }: AccountProviderProps) {
   const [account, setAccountState] = useState(initialAccount || getCachedAccount())
 
+  const accountId = account?.id
   useEffect(() => {
-    if (!account) return
+    if (!accountId) return
     let alive = true
     apiGet('/member/access')
       .then((access) => {
@@ -26,7 +27,7 @@ export function AccountProvider({ initialAccount, children }: AccountProviderPro
     return () => {
       alive = false
     }
-  }, [account?.id])
+  }, [accountId])
 
   const setAccount = useCallback((acc: any) => {
     setAccountState(acc)
