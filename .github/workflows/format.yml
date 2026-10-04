@@ -2,25 +2,32 @@ name: Format
 
 on:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
+  # Auto-fix commits pushed with GITHUB_TOKEN do not trigger workflow events,
+  # so the final step re-dispatches the PR checks onto the new head commit.
+  actions: write
 
 concurrency:
-  group: format-${{ github.event.pull_request.number }}
+  group: format-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   prettier:
-    # Forks receive a read-only token and cannot push, so same-repo PRs only.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # Forks receive a read-only token and cannot push, so same-repo PRs and
+    # manual dispatches only.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -34,6 +41,7 @@ jobs:
         run: npx prettier --write .
 
       - name: Commit formatting changes
+        id: commit
         run: |
           if git diff --quiet; then
             echo "Working tree already formatted"
@@ -43,3 +51,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "chore: prettier auto-format"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      # Pushes made with GITHUB_TOKEN emit no events, so checks triggered by
+      # pull_request would never run on the auto-fix commit and required checks
+      # would stay "expected" forever. Dispatch them onto the new head instead.
+      - name: Retrigger PR checks on the auto-fix commit
+        if: steps.commit.outputs.pushed == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh workflow run verify.yml --ref "$HEAD_REF"
+          gh workflow run neon-preview.yml --ref "$HEAD_REF" -f pr-number="$PR_NUMBER"
+          gh workflow run format.yml --ref "$HEAD_REF"
