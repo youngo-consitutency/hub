@@ -16,8 +16,8 @@ import {
 } from './client.mjs'
 
 export const SERVER_INFO = {
-  name: 'youngo-hub-content',
-  version: '1.3.0',
+  name: 'youngo-hub',
+  version: '1.4.0',
 }
 
 // z.enum over a dynamic list — the vocabulary arrays are non-empty constants.
