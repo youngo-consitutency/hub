@@ -13,7 +13,7 @@ import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
 import { withAuthorityLock } from '../lib/authorityLock'
-import type { Doc, AccountLike } from '../lib/domain'
+import type { AnyValue, AccountLike } from '../lib/domain'
 import type { Handover } from '../payload-types'
 import type { AuditEntry } from '../lib/audit'
 
@@ -84,7 +84,7 @@ async function endRecords(
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
   return withAuthorityLock(req, accountId, async () => {
-    const and: Doc[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
+    const and: AnyValue[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
     if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
     const { docs } = await req.payload.find({
       collection: 'authority-records',
@@ -94,7 +94,7 @@ async function endRecords(
       req,
     })
     const ended = new Date().toISOString()
-    for (const doc of docs as Doc[]) {
+    for (const doc of docs as AnyValue[]) {
       await req.payload.update({
         collection: 'authority-records',
         id: doc.id,
@@ -118,10 +118,10 @@ export async function applyMembershipTransition(
   accountId: number,
   transition: {
     scopeTypes?: string[]
-    accountFields: Record<string, any>
+    accountFields: AnyValue
     handover: { reason: string; scopeLabel: string; items?: string[] }
     actor: AccountLike
-    auditEntry: (result: { ended: number; updated: any }) => AuditEntry
+    auditEntry: (result: { ended: number; updated: AnyValue }) => AuditEntry
   },
   hooks?: { beforeSweep?: () => Promise<void>; afterSweep?: () => Promise<void> },
 ) {
@@ -148,11 +148,11 @@ export async function applyMembershipTransition(
   })
 }
 
-const handoverView = (h: any) => ({
+const handoverView = (h: AnyValue) => ({
   id: h.id,
   reason: h.reason,
   scopeLabel: h.scopeLabel,
-  items: (h.items ?? []).map((i: any) => ({
+  items: (h.items ?? []).map((i: AnyValue) => ({
     label: i.label,
     done: Boolean(i.done),
     doneAt: i.doneAt,
@@ -198,7 +198,7 @@ export const membershipEndpoints: Endpoint[] = [
         membershipEndedAt: account.membershipEndedAt,
         // All authority — participation and mandates (WG Contact Points,
         // team roles, Council seats) — in one list.
-        records: (recordRes.docs as Doc[]).map((a) => ({
+        records: (recordRes.docs as AnyValue[]).map((a) => ({
           id: a.id,
           kind: a.kind,
           role: a.role,
@@ -209,7 +209,7 @@ export const membershipEndpoints: Endpoint[] = [
           startsAt: a.startsAt,
           endsAt: a.endsAt,
         })),
-        openHandovers: (handovers as Doc[]).map(handoverView),
+        openHandovers: (handovers as AnyValue[]).map(handoverView),
       })
     }),
   },
@@ -309,7 +309,7 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 20,
         overrideAccess: true,
       })
-      return json({ items: (docs as Doc[]).map(handoverView) })
+      return json({ items: (docs as AnyValue[]).map(handoverView) })
     }),
   },
   {
@@ -326,11 +326,11 @@ export const membershipEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Handover not found.')
         })
-      const owner = (h.account as Doc)?.id ?? h.account
+      const owner = (h.account as AnyValue)?.id ?? h.account
       if (owner !== account.id) throw fail.forbidden('This is not your handover.')
       if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
       const idx = Number(param(req, 'idx'))
-      const items = (h.items ?? []) as Doc[]
+      const items = (h.items ?? []) as AnyValue[]
       if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
         throw fail.validation({ idx: 'No such handover item.' })
       items[idx] = {
@@ -383,8 +383,8 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 10000,
         overrideAccess: true,
       })
-      const results: Doc[] = []
-      for (const row of docs as Doc[]) {
+      const results: AnyValue[] = []
+      for (const row of docs as AnyValue[]) {
         const { ended } = await applyMembershipTransition(req, row.id, {
           scopeTypes: CW_SCOPES,
           accountFields: { constituencyWorkStatus: '', renewalDueAt: null },
@@ -477,7 +477,7 @@ export const membershipEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Authority record not found.')
         })
-      const owner = (record.account as Doc)?.id ?? record.account
+      const owner = (record.account as AnyValue)?.id ?? record.account
       if (String(owner) !== param(req, 'id'))
         throw fail.validation({ id: 'Record does not belong to that account.' })
       if (record.status !== 'active')
@@ -493,7 +493,7 @@ export const membershipEndpoints: Endpoint[] = [
           id: record.id,
           overrideAccess: true,
           req,
-        })) as Doc
+        })) as AnyValue
         if (current.status !== 'active')
           throw fail.conflict('invalid_phase', `Record is already ${current.status}.`)
         const endsAt = new Date().toISOString()
@@ -548,7 +548,7 @@ export const membershipEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const items = []
-      for (const h of docs as Doc[]) {
+      for (const h of docs as AnyValue[]) {
         const acct =
           typeof h.account === 'object'
             ? { id: h.account.id, name: h.account.name }
@@ -623,7 +623,7 @@ export const membershipEndpoints: Endpoint[] = [
       if (account.membershipStatus !== 'rejected') {
         throw new ApiError(409, 'not_rejected', 'Only a rejected application can be appealed.')
       }
-      const bytes = Buffer.from(await (req as Doc).arrayBuffer())
+      const bytes = Buffer.from(await (req as AnyValue).arrayBuffer())
       const identityKind = String(req.headers.get('x-identity-kind') || '')
       const statement = decodeURIComponent(String(req.headers.get('x-appeal-statement') || ''))
       const appeal = await submitAppeal({

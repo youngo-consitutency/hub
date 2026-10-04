@@ -18,6 +18,14 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Doc = Record<string, any>
 
+/**
+ * An untyped scalar, object, or callable at a boundary — where `Doc` is
+ * wrong because the value is not necessarily an object. Named so remaining
+ * untyped edges stay greppable; tighten per-site as shapes land.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyValue = any
+
 /** Payload relationship field: an id, a populated doc, or empty. */
 export type Rel = number | string | { id: number | string } | null | undefined
 
@@ -41,7 +49,7 @@ export interface AccountLike {
   membershipStatus?: string | null
   hubAccessStatus?: string | null
   memberStatus?: string | null
-  [key: string]: any
+  [key: string]: AnyValue
 }
 
 /** The SPA-facing account projection produced by `accountView`. */
@@ -89,5 +97,5 @@ export interface AccountView {
   createdAt?: string
   lastLoginAt?: string | null
   mustChangePassword: boolean
-  [key: string]: any
+  [key: string]: AnyValue
 }

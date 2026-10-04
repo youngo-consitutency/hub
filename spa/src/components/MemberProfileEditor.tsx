@@ -1,14 +1,15 @@
 interface DetailProps {
-  term?: any
+  term?: AnyValue
   children?: import('react').ReactNode
 }
 
 interface MemberProfileEditorProps {
-  query?: any
-  account?: any
-  roleLabel?: any
+  query?: AnyValue
+  account?: AnyValue
+  roleLabel?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useDocument } from '../lib/documents'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useRef, useState } from 'react'
@@ -28,7 +29,7 @@ import {
 
 const MAX_PHOTO_BYTES = 768 * 1024
 
-function formFromProfile(profile: any) {
+function formFromProfile(profile: AnyValue) {
   return {
     displayName: profile.displayName || '',
     headline: profile.headline || '',
@@ -57,28 +58,28 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
   const { doc: privacyNotice } = useDocument('privacy-notice')
   const privacyContactEmail = privacyNotice?.PRIVACY_META?.contactEmail
 
-  const [form, setForm] = useState<any>(null)
+  const [form, setForm] = useState<AnyValue>(null)
   const [saving, setSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, any>>({})
-  const fileRef = useRef<any>(null)
+  const [fieldErrors, setFieldErrors] = useState<Doc>({})
+  const fileRef = useRef<AnyValue>(null)
   const profile = query.data?.profile
 
   useEffect(() => {
     if (profile) setForm(formFromProfile(profile))
   }, [profile])
 
-  const change = (event: any) => {
+  const change = (event: AnyValue) => {
     const { name, type, checked, value } = event.target
-    setForm((current: any) => ({
+    setForm((current: AnyValue) => ({
       ...current,
       [name]: type === 'checkbox' ? checked : value,
     }))
   }
 
-  const save = async (event: any) => {
+  const save = async (event: AnyValue) => {
     event.preventDefault()
     setSaving(true)
     setError('')
@@ -89,20 +90,20 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
         ...form,
         expertiseTags: form.expertiseTags
           .split(',')
-          .map((tag: any) => tag.trim())
+          .map((tag: AnyValue) => tag.trim())
           .filter(Boolean),
       })
       setMessage('Profile saved.')
       query.retry()
     } catch (caught) {
-      setError((caught as any).message)
-      setFieldErrors((caught as any).fields || {})
+      setError((caught as AnyValue).message)
+      setFieldErrors((caught as AnyValue).fields || {})
     } finally {
       setSaving(false)
     }
   }
 
-  const uploadPhoto = async (event: any) => {
+  const uploadPhoto = async (event: AnyValue) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
@@ -122,7 +123,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
       setMessage('Profile photo updated.')
       query.retry()
     } catch (caught) {
-      setError((caught as any).message)
+      setError((caught as AnyValue).message)
     } finally {
       setPhotoBusy(false)
     }
@@ -137,7 +138,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
       setMessage('Profile photo removed.')
       query.retry()
     } catch (caught) {
-      setError((caught as any).message)
+      setError((caught as AnyValue).message)
     } finally {
       setPhotoBusy(false)
     }
@@ -146,7 +147,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
   return (
     <section className="card memberProfileEditor" aria-labelledby="crm-profile-title">
       <Async query={query} skeletons={2}>
-        {(data: any) => {
+        {(data: Doc) => {
           const current = data.profile
           if (!form) return null
           return (

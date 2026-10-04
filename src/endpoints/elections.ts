@@ -6,12 +6,12 @@ import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
 import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 
 // S10 elections. See lib/governance.ts for shared helpers and the
 // credential-secrecy model.
 
-const candidateView = (c: any) => ({
+const candidateView = (c: AnyValue) => ({
   id: c.id,
   race: c.race,
   account: accountRef(c.account),
@@ -21,13 +21,13 @@ const candidateView = (c: any) => ({
   nominatedAt: c.nominatedAt,
 })
 
-const electionView = (e: any, extra?: any) => ({
+const electionView = (e: AnyValue, extra?: AnyValue) => ({
   id: e.id,
   title: e.title,
   kind: e.kind,
   status: e.status,
   description: e.description,
-  races: (e.races ?? []).map((r: any) => ({ slug: r.slug, label: r.label })),
+  races: (e.races ?? []).map((r: AnyValue) => ({ slug: r.slug, label: r.label })),
   nominationsOpenAt: e.nominationsOpenAt,
   nominationsCloseAt: e.nominationsCloseAt,
   votingOpensAt: e.votingOpensAt,
@@ -73,7 +73,7 @@ export const electionEndpoints: Endpoint[] = [
           kind: b.kind === 'other' ? 'other' : 'focal_point',
           status: 'announced',
           description: b.description?.trim() || null,
-          races: b.races.map((r: any) => ({
+          races: b.races.map((r: AnyValue) => ({
             slug: String(r.slug).trim(),
             label: String(r.label ?? r.slug).trim(),
           })),
@@ -132,7 +132,7 @@ export const electionEndpoints: Endpoint[] = [
       const next = flow[e.status]
       if (!next) throw fail.conflict('invalid_phase', `Cannot advance from ${e.status}.`)
       const now = new Date().toISOString()
-      const patch: any = { status: next }
+      const patch: AnyValue = { status: next }
       if (next === 'nominations') {
         patch.nominationsOpenAt = now
         patch.nominationsCloseAt = new Date(Date.now() + 7 * 86400000).toISOString()
@@ -185,7 +185,7 @@ export const electionEndpoints: Endpoint[] = [
         throw fail.conflict('invalid_phase', 'Nominations are not open.')
       const b = await readBody(req)
       const fields: Record<string, string> = {}
-      const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
+      const raceSlugs = (e.races ?? []).map((r: AnyValue) => r.slug)
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
       if (!b.statement?.trim()) fields.statement = 'A statement of motivation is required.'
       if (Object.keys(fields).length) throw fail.validation(fields)
@@ -307,7 +307,7 @@ export const electionEndpoints: Endpoint[] = [
         throw fail.conflict('invalid_phase', 'Voting is not open for this election.')
       const b = await readBody(req)
       const fields: Record<string, string> = {}
-      const raceSlugs = (e.races ?? []).map((r: any) => r.slug)
+      const raceSlugs = (e.races ?? []).map((r: AnyValue) => r.slug)
       if (!b.token?.trim()) fields.token = 'Required.'
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
       if (!Array.isArray(b.ranks))
@@ -427,7 +427,7 @@ export const electionEndpoints: Endpoint[] = [
       const ind = indSet.size
       const org = orgSet.size
       const quorumOk = ind >= (e.quorumIndividuals ?? 100) && org >= (e.quorumOrganisations ?? 25)
-      const result: any = {
+      const result: Doc = {
         talliedAt: new Date().toISOString(),
         ballotsCast: { individuals: ind, organisations: org },
         quorum: {

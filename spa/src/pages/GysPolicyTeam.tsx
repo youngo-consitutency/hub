@@ -1,8 +1,9 @@
 interface CountListProps {
   title?: string
-  items?: any
+  items?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbFileText as StatementIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -46,7 +47,7 @@ function CountList({ title, items }: CountListProps) {
     <div className="gysCountBlock">
       <strong>{title}</strong>
       <ul>
-        {items.slice(0, 8).map((item: any) => (
+        {items.slice(0, 8).map((item: Doc) => (
           <li key={item.label}>
             <span>{item.label}</span>
             <span className="mono">{item.count}</span>
@@ -58,16 +59,16 @@ function CountList({ title, items }: CountListProps) {
 }
 
 export function GysPolicyTeam() {
-  const [panel, setPanel] = useState<any>(null)
+  const [panel, setPanel] = useState<AnyValue>(null)
   const query = useApi('/member/team/gys/overview')
-  const [draft, setDraft] = useState<Record<string, any>>({ title: '', body: '', theme: '' })
+  const [draft, setDraft] = useState<Doc>({ title: '', body: '', theme: '' })
   const [csvText, setCsvText] = useState('')
-  const [preview, setPreview] = useState<any>(null)
+  const [preview, setPreview] = useState<AnyValue>(null)
   const [busy, setBusy] = useState(false)
-  const [actionError, setActionError] = useState<any>(null)
-  const [importMessage, setImportMessage] = useState<any>(null)
+  const [actionError, setActionError] = useState<AnyValue>(null)
+  const [importMessage, setImportMessage] = useState<AnyValue>(null)
 
-  const create = async (event: any) => {
+  const create = async (event: AnyValue) => {
     event.preventDefault()
     setBusy(true)
     try {
@@ -77,37 +78,37 @@ export function GysPolicyTeam() {
       setPanel(null)
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
   }
 
-  const move = async (id: any, status: any) => {
+  const move = async (id: AnyValue, status: AnyValue) => {
     setBusy(true)
     try {
       setActionError(null)
       await apiPatch(`/member/team/gys/contributions/${id}`, { status })
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
   }
 
-  const promoteBullet = async (bullet: any) => {
+  const promoteBullet = async (bullet: AnyValue) => {
     setBusy(true)
     try {
       setActionError(null)
       await apiPost('/member/team/gys/contributions', {
         title: bullet.theme ? `${bullet.theme} — synthesis demand` : 'Synthesis demand',
         theme: bullet.theme || '',
-        body: `${bullet.text}\n\nCited inputs: ${bullet.citations.map((c: any) => c.title).join('; ')}`,
+        body: `${bullet.text}\n\nCited inputs: ${bullet.citations.map((c: AnyValue) => c.title).join('; ')}`,
       })
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -124,7 +125,7 @@ export function GysPolicyTeam() {
       setPreview(result)
     } catch (error) {
       setPreview(null)
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -148,7 +149,7 @@ export function GysPolicyTeam() {
       setPreview(null)
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -187,7 +188,7 @@ export function GysPolicyTeam() {
         description="Turn youth inputs into a reviewed statement with a visible handover."
       />
       <Async query={query} skeletons={5}>
-        {(data: any) => (
+        {(data: Doc) => (
           <>
             <div className="cycleBanner card">
               <div>
@@ -280,7 +281,7 @@ export function GysPolicyTeam() {
                         <strong>{preview.columnMap?.body || '—'}</strong>
                       </p>
                       <div className="stackSm">
-                        {preview.preview.map((row: any) => (
+                        {preview.preview.map((row: Doc) => (
                           <div key={row.externalId} className="card cardTight">
                             <strong>{row.title}</strong>
                             <p className="meta">
@@ -318,12 +319,12 @@ export function GysPolicyTeam() {
                   </div>
                   {data.synthesis.bullets?.length > 0 && (
                     <ul className="gysSynthesisBullets">
-                      {data.synthesis.bullets.map((bullet: any, index: any) => (
+                      {data.synthesis.bullets.map((bullet: AnyValue, index: number) => (
                         <li key={`${bullet.citations[0]?.contributionId}-${index}`}>
                           <div>
                             <p>{bullet.text}</p>
                             <p className="meta">
-                              Cited: {bullet.citations.map((c: any) => c.title).join(', ')}
+                              Cited: {bullet.citations.map((c: AnyValue) => c.title).join(', ')}
                             </p>
                           </div>
                           <Button
@@ -345,7 +346,7 @@ export function GysPolicyTeam() {
 
             <Section label="Production cycle">
               <ol className="workflowSteps">
-                {data.process.map((step: any, index: any) => (
+                {data.process.map((step: AnyValue, index: number) => (
                   <li key={step.step} className={index === 0 ? 'active' : ''}>
                     <span>{index + 1}</span>
                     <div>
@@ -403,7 +404,7 @@ export function GysPolicyTeam() {
                 <Empty icon={PenTool} title="No tracked contributions yet" />
               ) : (
                 <div className="stackSm" style={{ marginTop: 12 }}>
-                  {data.contributions.map((item: any) => (
+                  {data.contributions.map((item: Doc) => (
                     <div key={item.id} className="card cardTight queueRow">
                       <div>
                         <strong>{item.title}</strong>
@@ -420,15 +421,15 @@ export function GysPolicyTeam() {
                           label={`Change status for ${item.title}`}
                           hideLabel
                           className="queueSelect"
-                          disabled={busy || !(NEXT as any)[item.status]?.length}
+                          disabled={busy || !(NEXT as AnyValue)[item.status]?.length}
                           value={item.status}
-                          onChange={(status: any) => move(item.id, status)}
+                          onChange={(status: AnyValue) => move(item.id, status)}
                           options={[
                             {
                               value: item.status,
                               label: item.status.replaceAll('_', ' '),
                             },
-                            ...((NEXT as any)[item.status] || []).map((status: any) => ({
+                            ...((NEXT as AnyValue)[item.status] || []).map((status: AnyValue) => ({
                               value: status,
                               label: status.replaceAll('_', ' '),
                             })),
@@ -446,7 +447,7 @@ export function GysPolicyTeam() {
                 <Empty icon={PenTool} title="No open inputs" />
               ) : (
                 <div className="stackSm">
-                  {data.submissions.map((item: any) => (
+                  {data.submissions.map((item: Doc) => (
                     <A
                       key={item.slug}
                       href={`/submissions/${item.slug}`}

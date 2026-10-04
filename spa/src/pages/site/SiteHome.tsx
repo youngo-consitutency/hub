@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../lib/types'
 import {
   TbBook as BookOpen,
   TbChevronRight as ChevronRight,
@@ -28,7 +29,7 @@ const ICONS = {
   Globe,
   HandHeart,
 }
-const iconFor = (name: any) => (ICONS as any)[name] || Users
+const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
 
 /** Render the public home page from the site document, with loading, retry and unpublished states. */
 export function SiteHome() {
@@ -96,7 +97,7 @@ export function SiteHome() {
             <p className="siteSectionLead">{mission.lead}</p>
           </div>
           <div className="siteMissionGrid">
-            {(mission.items || []).map(({ icon, title, body }: any) => {
+            {(mission.items || []).map(({ icon, title, body }: AnyValue) => {
               const Icon = iconFor(icon)
               return (
                 <article key={title} className="card siteMissionCard">
@@ -118,7 +119,7 @@ export function SiteHome() {
             <p className="siteSectionLead">{organisation.lead}</p>
           </div>
           <div className="siteOrganisationGrid">
-            {(organisation.stats || []).map(({ value, label }: any) => (
+            {(organisation.stats || []).map(({ value, label }: AnyValue) => (
               <article key={value} className="card siteOrgCard">
                 <strong>{value}</strong>
                 <p className="meta">{label}</p>
@@ -134,7 +135,7 @@ export function SiteHome() {
             <h2 id="what-heading">{takePart.title}</h2>
           </div>
           <div className="siteActivityGrid">
-            {(takePart.items || []).map(({ icon, title, body, href, link }: any) => {
+            {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
               const Icon = iconFor(icon)
               return (
                 <article key={title} className="card siteDoCard">
@@ -165,7 +166,7 @@ export function SiteHome() {
             <p className="siteSectionLead">{principles.lead}</p>
           </div>
           <ul className="sitePrincipleList" aria-label="YOUNGO principles">
-            {(principles.items || []).map((principle: any) => (
+            {(principles.items || []).map((principle: AnyValue) => (
               <li key={principle}>{principle}</li>
             ))}
           </ul>
@@ -177,7 +178,7 @@ export function SiteHome() {
             <h2 id="history-heading">{history.title}</h2>
           </div>
           <div className="siteTimeline">
-            {(history.items || []).map(({ year, title, body }: any) => (
+            {(history.items || []).map(({ year, title, body }: AnyValue) => (
               <article key={year} className="siteTimelineItem">
                 <span className="siteTimelineYear mono">{year}</span>
                 <div>

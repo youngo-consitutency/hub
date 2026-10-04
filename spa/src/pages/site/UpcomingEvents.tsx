@@ -1,3 +1,4 @@
+import type { AnyValue } from '../../lib/types'
 import { TbArrowUpRight, TbCalendarEvent } from 'react-icons/tb'
 import { A, Button } from '../../components/ui'
 import { DateStamp } from '../../components/DateStamp'
@@ -32,7 +33,7 @@ export function UpcomingEvents() {
           </div>
         ) : data?.events?.length ? (
           <ol className="siteEventList">
-            {data.events.map((event: any) => {
+            {data.events.map((event: AnyValue) => {
               const moment = fmtMoment(event.startsAt)
               return (
                 <li key={event.slug}>

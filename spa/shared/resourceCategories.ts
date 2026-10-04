@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../src/lib/types'
 export const RESOURCE_CATEGORIES = [
   { key: 'join', label: 'Join' },
   { key: 'channels', label: 'Channels' },
@@ -23,7 +24,7 @@ const PRIVATE_CHANNEL_HOSTS = [
   'discord.gg',
 ]
 
-function resourceUrl(resource: any) {
+function resourceUrl(resource: Doc) {
   try {
     return new URL(resource?.url || '')
   } catch {
@@ -33,9 +34,9 @@ function resourceUrl(resource: any) {
 
 // Exact host or a true subdomain — 'app.whatsapp.com' matches,
 // 'notwhatsapp.com' does not.
-const hostIs = (host: any, domain: any) => host === domain || host.endsWith(`.${domain}`)
+const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
 
-export function resourceCategory(resource: any) {
+export function resourceCategory(resource: Doc) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''
   const path = url?.pathname.toLowerCase() || ''
@@ -97,7 +98,7 @@ export function resourceCategory(resource: any) {
  * social media. Join forms, chat invites, link hubs, working documents, and
  * shared drives stay behind the member workspace gate.
  */
-export function isPublicGroupResource(resource: any) {
+export function isPublicGroupResource(resource: Doc) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''
   const category = resourceCategory(resource)

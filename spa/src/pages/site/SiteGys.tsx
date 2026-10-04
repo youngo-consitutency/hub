@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../../lib/types'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
@@ -17,7 +18,7 @@ export function SiteGys() {
   return (
     <div className="siteMain">
       <Async query={query} skeletons={4}>
-        {(gys: any) => (
+        {(gys: AnyValue) => (
           <>
             <header className="sitePageHeader">
               <p className="pageEyebrow">{gysCopy.eyebrow}</p>
@@ -29,7 +30,7 @@ export function SiteGys() {
               <h2 id="gys-process-heading">{processCopy.title}</h2>
               <p className="siteSectionLead">{processCopy.lead}</p>
               <ol className="siteGysSteps">
-                {(Array.isArray(gys.process) ? gys.process : []).map((item: any, index: any) => (
+                {(Array.isArray(gys.process) ? gys.process : []).map((item: Doc, index: number) => (
                   <li key={item.step} className="card">
                     <span className="stepNum" aria-hidden>
                       {index + 1}

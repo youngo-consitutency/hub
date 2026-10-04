@@ -1,8 +1,9 @@
 interface TrackResultsProps {
-  data?: any
-  search?: any
+  data?: AnyValue
+  search?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
 import { A, Async, Empty, PageHeader } from '../components/ui'
@@ -47,7 +48,7 @@ export function Negotiations() {
           </button>
         </div>
       </div>
-      <Async query={query}>{(data: any) => <TrackResults data={data} search={search} />}</Async>
+      <Async query={query}>{(data: Doc) => <TrackResults data={data} search={search} />}</Async>
     </div>
   )
 }
@@ -56,7 +57,7 @@ function TrackResults({ data, search }: TrackResultsProps) {
   const items = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase()
     if (!needle) return data.items
-    return data.items.filter((track: any) =>
+    return data.items.filter((track: AnyValue) =>
       [track.topic, track.summary, ...(track.workingGroupSlugs || [])]
         .join(' ')
         .toLocaleLowerCase()
@@ -75,14 +76,14 @@ function TrackResults({ data, search }: TrackResultsProps) {
 
   return (
     <div className="cardGrid">
-      {items.map((track: any) => (
+      {items.map((track: AnyValue) => (
         <A className="card entityCard" href={`/negotiations/${track.slug}`} key={track.id}>
           <div className="cardBody">
             <div className="eyebrow">{track.activityStatus}</div>
             <h2>{track.topic}</h2>
             <p className="meta">{track.summary}</p>
             <div className="pillRow">
-              {(track.workingGroupSlugs || []).map((slug: any) => (
+              {(track.workingGroupSlugs || []).map((slug: AnyValue) => (
                 <span className="chip chip-neutral" key={slug}>
                   {slug}
                 </span>

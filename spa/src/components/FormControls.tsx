@@ -1,40 +1,41 @@
 interface FieldErrorProps {
-  msg?: any
+  msg?: AnyValue
 }
 
 interface DatePickerProps {
   label?: string
-  value?: any
-  onChange?: any
+  value?: AnyValue
+  onChange?: AnyValue
   error?: string
-  min?: any
-  max?: any
+  min?: AnyValue
+  max?: AnyValue
 }
 
 interface SearchableSelectProps {
   label?: string
-  options?: any
-  value?: any
-  onChange?: any
+  options?: AnyValue
+  value?: AnyValue
+  onChange?: AnyValue
   error?: string
   placeholder?: string
-  searchPlaceholder?: any
-  onOpen?: any
+  searchPlaceholder?: AnyValue
+  onOpen?: AnyValue
   className?: string
-  hideLabel?: any
+  hideLabel?: AnyValue
   disabled?: boolean
   children?: import('react').ReactNode
 }
 
 interface MultiSelectDropdownProps {
   label?: string
-  options?: any
-  selected?: any
-  onToggle?: any
+  options?: AnyValue
+  selected?: AnyValue
+  onToggle?: AnyValue
   error?: string
-  hideLabel?: any
+  hideLabel?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { useState } from 'react'
 import { useCombobox } from 'downshift'
 
@@ -47,7 +48,7 @@ export function FieldError({ msg }: FieldErrorProps) {
   )
 }
 
-function matchingOptions(options: any, query: any) {
+function matchingOptions(options: AnyValue, query: AnyValue) {
   const list = Array.isArray(options) ? options : []
   const normalized = query.trim().toLocaleLowerCase()
   return normalized

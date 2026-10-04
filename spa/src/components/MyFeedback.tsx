@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { formatDateTime } from '../lib/time'
 import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
@@ -22,7 +23,7 @@ const STATUS_LABEL = {
 }
 
 export function MyFeedback() {
-  const [state, setState] = useState<Record<string, any>>({ items: null, error: null })
+  const [state, setState] = useState<Doc>({ items: null, error: null })
 
   const load = () => {
     apiGet('/member/feedback/mine')
@@ -46,20 +47,21 @@ export function MyFeedback() {
         />
       )}
       <div className="stackSm">
-        {(state.items || []).map((ticket: any) => (
-          <div key={(ticket as any).id} className="card cardTight">
+        {(state.items || []).map((ticket: Doc) => (
+          <div key={(ticket as AnyValue).id} className="card cardTight">
             <div className="rowGap" style={{ flexWrap: 'wrap' }}>
               <span className="chip chip-info">
-                {(KIND_LABEL as any)[(ticket as any).kind] || (ticket as any).kind}
+                {(KIND_LABEL as AnyValue)[(ticket as AnyValue).kind] || (ticket as AnyValue).kind}
               </span>
               <span className="chip chip-neutral">
-                {(STATUS_LABEL as any)[(ticket as any).status] || (ticket as any).status}
+                {(STATUS_LABEL as AnyValue)[(ticket as AnyValue).status] ||
+                  (ticket as AnyValue).status}
               </span>
             </div>
-            <h3 style={{ marginTop: 6 }}>{(ticket as any).title}</h3>
+            <h3 style={{ marginTop: 6 }}>{(ticket as AnyValue).title}</h3>
             <p className="metaMuted">
-              {(ticket as any).pagePath ? `${(ticket as any).pagePath} · ` : ''}
-              {(ticket as any).createdAt ? formatDateTime((ticket as any).createdAt) : ''}
+              {(ticket as AnyValue).pagePath ? `${(ticket as AnyValue).pagePath} · ` : ''}
+              {(ticket as AnyValue).createdAt ? formatDateTime((ticket as AnyValue).createdAt) : ''}
             </p>
           </div>
         ))}

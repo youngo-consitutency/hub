@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -34,8 +35,8 @@ const REGIONS = [
 
 /** Browse Conferences of Youth with search, type and region filters, sorting and catalogue layouts. */
 export function Coys() {
-  const [typeFilters, setTypeFilters] = useState<Record<string, any>>({})
-  const [regionFilters, setRegionFilters] = useState<Record<string, any>>({})
+  const [typeFilters, setTypeFilters] = useState<Doc>({})
+  const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('title')
   const query = useApi('/coys?type=all&region=all')
@@ -49,7 +50,7 @@ export function Coys() {
       />
       <Async
         query={query}
-        empty={(d: any) =>
+        empty={(d: AnyValue) =>
           d.items.length === 0 ? (
             <Empty
               icon={MapPin}
@@ -59,11 +60,11 @@ export function Coys() {
           ) : null
         }
       >
-        {(data: any) => {
+        {(data: Doc) => {
           const needle = search.trim().toLocaleLowerCase()
           const items = data.items
             .filter(
-              (coy: any) =>
+              (coy: AnyValue) =>
                 matchesFilters(coy.type, typeFilters) &&
                 matchesFilters(coy.region, regionFilters) &&
                 (!needle ||
@@ -72,7 +73,7 @@ export function Coys() {
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: any, b: any) => {
+            .sort((a: AnyValue, b: AnyValue) => {
               if (sort === 'region') {
                 const regionOrder = REGIONS.findIndex((region) => region.key === a.region)
                 const otherRegionOrder = REGIONS.findIndex((region) => region.key === b.region)
@@ -178,7 +179,7 @@ export function Coys() {
               <CatalogueResults count={items.length}>
                 {items.length ? (
                   <div className="cardGrid">
-                    {items.map((c: any) => (
+                    {items.map((c: AnyValue) => (
                       <CoyCard
                         key={c.slug}
                         coy={c}

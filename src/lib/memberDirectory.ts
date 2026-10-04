@@ -2,7 +2,7 @@ import { accountView } from './accounts'
 import { profileShape } from './membershipReview'
 import { AUTHORITY_ROLES } from './authority'
 import { requirePgPool, getPgPool } from './pg'
-import type { Doc, AccountLike, AccountView } from './domain'
+import type { Doc, AccountLike, AccountView, AnyValue } from './domain'
 
 // Member directory: profile rows, relationship maps and visibility-safe
 // person shapes for the member interface.
@@ -31,7 +31,7 @@ async function profileRow(accountId: number) {
 
 async function relationshipMaps(accounts: Doc[]) {
   const ids = accounts.map((account) => account.id)
-  const progressByAccount = new Map<number, any[]>(ids.map((id) => [id, []]))
+  const progressByAccount = new Map<number, AnyValue[]>(ids.map((id) => [id, []]))
   const orgByAccount = new Map<number, Doc>()
   const mandateByAccount = new Map<number, string>()
   if (!ids.length) return { progressByAccount, orgByAccount, mandateByAccount }
@@ -74,15 +74,15 @@ async function relationshipMaps(accounts: Doc[]) {
       seatRole: row.seat_role,
     })
   const workingGroupNames = Object.fromEntries(
-    (wgResult.rows || []).map((g: any) => [g.slug, g.name]),
+    (wgResult.rows || []).map((g: AnyValue) => [g.slug, g.name]),
   )
   const teamLabels = Object.fromEntries(
-    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: any) => [t.value, t.label]),
+    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: AnyValue) => [t.value, t.label]),
   )
   return { progressByAccount, orgByAccount, workingGroupNames, teamLabels, mandateByAccount }
 }
 
-function relationshipsFor(account: AccountLike, maps: any) {
+function relationshipsFor(account: AccountLike, maps: AnyValue) {
   const wgName = (slug: string) => maps.workingGroupNames?.[slug] || slug
   const progress = maps.progressByAccount.get(account.id) || []
   const bySlug = new Map<string, Doc>()
@@ -115,9 +115,9 @@ function relationshipsFor(account: AccountLike, maps: any) {
 }
 
 function safePerson(
-  profile: any,
+  profile: AnyValue,
   account: AccountLike,
-  relationships: any,
+  relationships: AnyValue,
   { duty = false, workingGroup = '' } = {},
 ) {
   const group = workingGroup
@@ -146,7 +146,7 @@ function safePerson(
   }
 }
 
-function cleanPageNumber(value: any) {
+function cleanPageNumber(value: AnyValue) {
   const n = Number.parseInt(value, 10) || 1
   return Math.min(50, Math.max(1, n))
 }
@@ -158,7 +158,7 @@ export async function listMemberPeople({
   workingGroupRole = '',
   page = 1,
   pageSize = 24,
-}: any = {}) {
+}: AnyValue = {}) {
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanTag = String(tag).trim().slice(0, 32)
   const cleanWg = String(workingGroup).trim().slice(0, 80)
@@ -172,14 +172,14 @@ export async function listMemberPeople({
   let accounts: AccountView[] = []
   let profileRows: Doc[] = []
 
-  const values: any[] = []
+  const values: AnyValue[] = []
   const where = [
     ...(dutyManagers ? [] : [`p.directory_visibility='members'`]),
     `a.entity_type='individual'`,
     `a.member_status='verified'`,
     `a.hub_access_status='active'`,
   ]
-  const add = (sql: string, value: any) => {
+  const add = (sql: string, value: AnyValue) => {
     values.push(value)
     where.push(sql.replaceAll('?', `$${values.length}`))
   }
@@ -263,7 +263,7 @@ export async function listMemberPeople({
   }
 }
 
-export async function getMemberPerson(viewer: AccountLike, accountId: any) {
+export async function getMemberPerson(viewer: AccountLike, accountId: AnyValue) {
   const pool = requirePgPool()
   const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [Number(accountId)])
   const account = accountView(rows[0])

@@ -2,6 +2,7 @@ interface CpManageProps {
   slug: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
 import { useContentOptionLabels, useContentOptions } from '../lib/documents'
@@ -17,15 +18,15 @@ export function CpManage({ slug }: CpManageProps) {
   const [activityOpen, setActivityOpen] = useState(false)
   const [filter, setFilter] = useState('pending')
   const groups = useApi('/groups')
-  const [members, setMembers] = useState<any[]>([])
-  const [error, setError] = useState<any>(null)
-  const [form, setForm] = useState<Record<string, any>>({
+  const [members, setMembers] = useState<AnyValue[]>([])
+  const [error, setError] = useState<AnyValue>(null)
+  const [form, setForm] = useState<Doc>({
     kind: 'call',
     title: '',
     body: '',
     startsAt: '',
   })
-  const [msg, setMsg] = useState<any>(null)
+  const [msg, setMsg] = useState<AnyValue>(null)
 
   const load = useCallback(() => {
     setError(null)
@@ -38,7 +39,7 @@ export function CpManage({ slug }: CpManageProps) {
     load()
   }, [load])
 
-  const setRole = async (accountId: any, role: any, status: any) => {
+  const setRole = async (accountId: AnyValue, role: AnyValue, status: AnyValue) => {
     try {
       await apiPost(`/member/cp/${encodeURIComponent(slug)}/members/${accountId}/role`, {
         role,
@@ -46,11 +47,11 @@ export function CpManage({ slug }: CpManageProps) {
       })
       load()
     } catch (e) {
-      setError((e as any).message)
+      setError((e as AnyValue).message)
     }
   }
 
-  const addActivity = async (e: any) => {
+  const addActivity = async (e: AnyValue) => {
     e.preventDefault()
     setMsg(null)
     setError(null)
@@ -64,7 +65,7 @@ export function CpManage({ slug }: CpManageProps) {
       setActivityOpen(false)
       setMsg('Activity registered.')
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     } finally {
       setActivityBusy(false)
     }
@@ -81,8 +82,8 @@ export function CpManage({ slug }: CpManageProps) {
       <BackLink href="/cp">Working Group workspaces</BackLink>
 
       <Async query={groups} skeletons={2}>
-        {(g: any) => {
-          const group = (g.items || []).find((x: any) => x.slug === slug)
+        {(g: AnyValue) => {
+          const group = (g.items || []).find((x: AnyValue) => x.slug === slug)
           return (
             <>
               <PageHeader
@@ -185,7 +186,7 @@ export function CpManage({ slug }: CpManageProps) {
                         label="Kind"
                         options={wgActivityKinds}
                         value={form.kind}
-                        onChange={(kind: any) => setForm((current) => ({ ...current, kind }))}
+                        onChange={(kind: AnyValue) => setForm((current) => ({ ...current, kind }))}
                         searchPlaceholder="Search activity types…"
                       />
                       <label className="field">

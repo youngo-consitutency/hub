@@ -1,8 +1,9 @@
+import type { AnyValue } from './types'
 import useSWR from 'swr'
 import { clearSession } from './session'
 
 // The browser sends the HttpOnly session cookie; no token is stored in JS.
-async function request(path: any, { method = 'GET', ...options }: any = {}) {
+async function request(path: AnyValue, { method = 'GET', ...options }: AnyValue = {}) {
   const res = await fetch(`/api${path}`, {
     ...options,
     method,
@@ -17,7 +18,7 @@ async function request(path: any, { method = 'GET', ...options }: any = {}) {
     if (res.status === 401 && method === 'GET' && path === '/auth/me') {
       clearSession()
     }
-    const thrown: any = new Error(data?.error?.message || `Request failed (${res.status})`)
+    const thrown: AnyValue = new Error(data?.error?.message || `Request failed (${res.status})`)
     thrown.status = res.status
     thrown.code = data?.error?.code
     thrown.fields = data?.error?.fields
@@ -26,11 +27,11 @@ async function request(path: any, { method = 'GET', ...options }: any = {}) {
   return data
 }
 
-export function apiGet(path: any) {
+export function apiGet(path: AnyValue) {
   return request(path)
 }
 
-export function apiPost(path: any, body?: any, extraHeaders = {}) {
+export function apiPost(path: AnyValue, body?: AnyValue, extraHeaders = {}) {
   return request(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...extraHeaders },
@@ -38,7 +39,7 @@ export function apiPost(path: any, body?: any, extraHeaders = {}) {
   })
 }
 
-export function apiPatch(path: any, body?: any) {
+export function apiPatch(path: AnyValue, body?: AnyValue) {
   return request(path, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -46,7 +47,7 @@ export function apiPatch(path: any, body?: any) {
   })
 }
 
-export function apiPut(path: any, body?: any) {
+export function apiPut(path: AnyValue, body?: AnyValue) {
   return request(path, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -54,7 +55,7 @@ export function apiPut(path: any, body?: any) {
   })
 }
 
-export function apiPutFile(path: any, file: any) {
+export function apiPutFile(path: AnyValue, file: AnyValue) {
   return request(path, {
     method: 'PUT',
     body: file,
@@ -62,7 +63,7 @@ export function apiPutFile(path: any, file: any) {
   })
 }
 
-export function apiPostFile(path: any, file: any, headers = {}) {
+export function apiPostFile(path: AnyValue, file: AnyValue, headers = {}) {
   return request(path, {
     method: 'POST',
     body: file,
@@ -70,13 +71,13 @@ export function apiPostFile(path: any, file: any, headers = {}) {
   })
 }
 
-export function apiDelete(path: any) {
+export function apiDelete(path: AnyValue) {
   return request(path, { method: 'DELETE' })
 }
 
 // Fetch state for independently rendered sections, backed by SWR (request
 // dedup, revalidation, retry). Keyed by [path, ...deps] so dep changes refetch.
-export function useApi(path: any, deps: any[] = []) {
+export function useApi(path: AnyValue, deps: AnyValue[] = []) {
   const { data, error, isLoading, mutate } = useSWR(path ? [path, ...deps] : null, ([p]) =>
     apiGet(p),
   )

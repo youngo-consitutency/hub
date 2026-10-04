@@ -2,6 +2,7 @@ interface SubmissionDetailProps {
   slug?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useApi } from '../lib/api'
 import {
   Async,
@@ -29,7 +30,7 @@ export function SubmissionDetail({ slug }: SubmissionDetailProps) {
     <div className="detailPage">
       <BackLink href="/submissions">Submissions</BackLink>
       <Async query={query}>
-        {(sub: any) => {
+        {(sub: AnyValue) => {
           const archived = !['open', 'drafting', 'internal_review'].includes(sub.status)
           return (
             <>
@@ -52,7 +53,10 @@ export function SubmissionDetail({ slug }: SubmissionDetailProps) {
                     showCountdown={!archived}
                     className="detailLifecycleTiming"
                   />
-                  <Timeline steps={STEPS} currentIndex={(STEP_INDEX as any)[sub.status] ?? 0} />
+                  <Timeline
+                    steps={STEPS}
+                    currentIndex={(STEP_INDEX as AnyValue)[sub.status] ?? 0}
+                  />
                 </div>
               </Section>
 

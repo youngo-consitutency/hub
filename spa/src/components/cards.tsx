@@ -1,8 +1,10 @@
+import type { AnyValue, Doc } from '../lib/types'
+import { createElement } from 'react'
 interface EntityHeaderProps {
   title?: string
-  status?: any
-  statusFilterState?: any
-  onStatusFilter?: any
+  status?: AnyValue
+  statusFilterState?: AnyValue
+  onStatusFilter?: AnyValue
   children?: import('react').ReactNode
 }
 
@@ -19,51 +21,51 @@ interface CardScheduleProps {
 }
 
 interface EventCardProps {
-  event?: any
+  event?: AnyValue
 }
 
 interface SubmissionCardProps {
-  sub?: any
-  statusFilterState?: any
-  groupFilterState?: any
-  onStatusFilter?: any
-  onGroupFilter?: any
+  sub?: AnyValue
+  statusFilterState?: AnyValue
+  groupFilterState?: AnyValue
+  onStatusFilter?: AnyValue
+  onGroupFilter?: AnyValue
 }
 
 interface ClosingCardProps {
-  item?: any
+  item?: AnyValue
 }
 
 interface CoyCardProps {
-  coy?: any
-  typeFilterState?: any
-  regionFilterState?: any
-  onTypeFilter?: any
-  onRegionFilter?: any
+  coy?: AnyValue
+  typeFilterState?: AnyValue
+  regionFilterState?: AnyValue
+  onTypeFilter?: AnyValue
+  onRegionFilter?: AnyValue
 }
 
 interface GroupCardProps {
-  group?: any
+  group?: AnyValue
   href?: string
-  statusLabel?: any
-  statusIcon?: any
-  topicFilterState?: any
-  onTopicFilter?: any
+  statusLabel?: AnyValue
+  statusIcon?: AnyValue
+  topicFilterState?: AnyValue
+  onTopicFilter?: AnyValue
 }
 
 interface PersonCardProps {
-  person?: any
-  onTagClick?: any
-  onOpen?: any
+  person?: AnyValue
+  onTagClick?: AnyValue
+  onOpen?: AnyValue
   expanded?: boolean
 }
 
 interface ContactCardProps {
-  contact?: any
+  contact?: AnyValue
 }
 
 interface WorkingGroupContactCardProps {
-  contact?: any
+  contact?: AnyValue
 }
 
 import { A, StatusChip, FilterChip, LifecycleTiming } from './ui'
@@ -163,14 +165,16 @@ export function CardSchedule({ iso, label }: CardScheduleProps) {
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const TypeIcon = (EVENT_ICONS as any)[event.type] || CalendarDays
+  const TypeIcon = (EVENT_ICONS as AnyValue)[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
     <A href={`/calendar/${event.slug}`} className="card entityCard eventCard" peek>
       <div className="eventCardIdentity">
         <DateStamp iso={event.startsAt} />
         <EntityHeader title={event.title}>
-          <FilterChip icon={TypeIcon}>{(EVENT_LABEL as any)[event.type] || event.type}</FilterChip>
+          <FilterChip icon={TypeIcon}>
+            {(EVENT_LABEL as AnyValue)[event.type] || event.type}
+          </FilterChip>
           {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
         </EntityHeader>
       </div>
@@ -233,12 +237,12 @@ export function CoyCard({
   onRegionFilter,
 }: CoyCardProps) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
-  const CoyIcon = (COY_ICONS as any)[coy.type] || Globe
+  const CoyIcon = (COY_ICONS as AnyValue)[coy.type] || Globe
   return (
     <LinkedEntityCard href={`/coys/${coy.slug}`} label={`Open ${coy.title}`} className="coyCard">
       <EntityHeader title={coy.title} status={coy.status}>
         <FilterChip state={typeFilterState} icon={CoyIcon} onClick={onTypeFilter}>
-          {(COY_LABEL as any)[coy.type]}
+          {(COY_LABEL as AnyValue)[coy.type]}
         </FilterChip>
         {coy.region && (
           <FilterChip
@@ -272,7 +276,6 @@ export function GroupCard({
   topicFilterState,
   onTopicFilter,
 }: GroupCardProps) {
-  const GroupIcon = workingGroupIcon(group.slug)
   const destination = href || `/groups/${group.slug}`
   const wg = useWorkingGroups()
   const topicLabel = group.topic ? wg.topicLabel(group.topic) : null
@@ -287,7 +290,11 @@ export function GroupCard({
       <div className="groupCardBody">
         <div className="groupCardCopy">
           <div className="groupCardTitle">
-            <GroupIcon size={19} strokeWidth={1.75} aria-hidden />
+            {createElement(workingGroupIcon(group.slug), {
+              size: 19,
+              strokeWidth: 1.75,
+              'aria-hidden': true,
+            })}
             <h3>{group.name}</h3>
           </div>
           <p className="meta groupCardFocus">{group.focusLine}</p>
@@ -364,7 +371,7 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
           <Briefcase size={15} aria-hidden />
           <span>
             {[
-              ...person.teams.map((team: any) => team.name),
+              ...person.teams.map((team: AnyValue) => team.name),
               person.platformRole?.replaceAll('_', ' '),
             ]
               .filter(Boolean)
@@ -374,8 +381,7 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
       )}
       {person.workingGroups?.length > 0 && (
         <div className="entityCardTags personGroupTags" aria-label="Working groups">
-          {person.workingGroups.slice(0, expanded ? undefined : 5).map((group: any) => {
-            const GroupIcon = workingGroupIcon(group.slug)
+          {person.workingGroups.slice(0, expanded ? undefined : 5).map((group: Doc) => {
             return (
               <A
                 key={group.slug}
@@ -383,7 +389,11 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
                 className="chip chip-neutral personLinkChip"
                 peek
               >
-                <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
+                {createElement(workingGroupIcon(group.slug), {
+                  size: 13,
+                  strokeWidth: 1.75,
+                  'aria-hidden': true,
+                })}
                 {group.name}
                 {['contact', 'lead'].includes(group.role)
                   ? ` · ${group.role === 'contact' ? 'Contact Point' : 'Legacy access'}`
@@ -395,7 +405,7 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
       )}
       {person.expertiseTags?.length > 0 && (
         <div className="entityCardTags personExpertiseTags" aria-label="Skills and topics">
-          {person.expertiseTags.map((tag: any) =>
+          {person.expertiseTags.map((tag: AnyValue) =>
             onTagClick ? (
               <button
                 key={tag}
@@ -480,7 +490,7 @@ export function ContactCard({ contact }: ContactCardProps) {
   )
 }
 
-function workingGroupContactSummary(contact: any) {
+function workingGroupContactSummary(contact: Doc) {
   const description = contact.description || ''
   const contactPointSentence = description
     .split(/(?=\s(?:Join:|Public entry:|LinkedIn|Email\s))/i)[0]
@@ -495,7 +505,6 @@ function workingGroupContactSummary(contact: any) {
 export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
-  const GroupIcon = workingGroupIcon(slug)
   return (
     <A
       href={`/groups/${slug}`}
@@ -506,7 +515,7 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
       <div className="workingGroupContactCopy">
         <div className="workingGroupContactTitle">
           <span className="workingGroupContactIcon" aria-hidden>
-            <GroupIcon size={18} strokeWidth={1.75} />
+            {createElement(workingGroupIcon(slug), { size: 18, strokeWidth: 1.75 })}
           </span>
           <h3>{name}</h3>
         </div>

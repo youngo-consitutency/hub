@@ -1,5 +1,5 @@
 import pg from 'pg'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
 // binary blobs). Lazily created so builds without DATABASE_URL still work.
@@ -36,15 +36,15 @@ export function requirePgPool(): pg.Pool {
 // converted ValidationError (data.collection = collection slug). The field
 // errors carry tableName when the constraint maps to a column, or only a
 // 'must be unique' message when it does not — accept both.
-export function isUniqueViolation(error: any, collection: string, table: string): boolean {
-  let current: any = error
+export function isUniqueViolation(error: AnyValue, collection: string, table: string): boolean {
+  let current: AnyValue = error
   while (current) {
     if (current?.code === '23505') return true
     if (
       current?.name === 'ValidationError' &&
       current?.data?.collection === collection &&
       (current.data.errors || []).some(
-        (e: any) => e?.tableName === table || /unique/i.test(e?.message || ''),
+        (e: AnyValue) => e?.tableName === table || /unique/i.test(e?.message || ''),
       )
     )
       return true

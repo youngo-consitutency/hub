@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { formatDateTime } from '../lib/time'
 import { SidePanel } from './SidePanel.tsx'
 import { useEffect, useState } from 'react'
@@ -44,9 +45,9 @@ const EMPTY = {
 
 export function NgoOpportunities() {
   const [editorOpen, setEditorOpen] = useState(false)
-  const [data, setData] = useState<any>(null)
-  const [error, setError] = useState<any>(null)
-  const [notice, setNotice] = useState<any>(null)
+  const [data, setData] = useState<AnyValue>(null)
+  const [error, setError] = useState<AnyValue>(null)
+  const [notice, setNotice] = useState<AnyValue>(null)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
 
@@ -61,12 +62,12 @@ export function NgoOpportunities() {
     load()
   }, [])
 
-  const field = (key: any) => (event: any) =>
+  const field = (key: AnyValue) => (event: AnyValue) =>
     setForm((current) => ({ ...current, [key]: event.target.value }))
 
-  const iso = (value: any) => (value ? new Date(value).toISOString() : null)
+  const iso = (value: AnyValue) => (value ? new Date(value).toISOString() : null)
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setSaving(true)
     setError(null)
@@ -82,17 +83,17 @@ export function NgoOpportunities() {
       setEditorOpen(false)
       load()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     }
     setSaving(false)
   }
 
-  const withdraw = async (id: any) => {
+  const withdraw = async (id: AnyValue) => {
     try {
       await apiPost(`/member/ngo/opportunities/${id}/withdraw`, {})
       load()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     }
   }
 
@@ -136,8 +137,8 @@ export function NgoOpportunities() {
           />
         ) : (
           <div className="stackSm">
-            {(data?.items || []).map((item: any) => {
-              const [chipClass, chipLabel] = (STATUS_CHIP as any)[item.status] || [
+            {(data?.items || []).map((item: Doc) => {
+              const [chipClass, chipLabel] = (STATUS_CHIP as AnyValue)[item.status] || [
                 'chip-neutral',
                 item.status,
               ]
@@ -175,7 +176,7 @@ export function NgoOpportunities() {
               label="Type"
               options={KIND_OPTIONS}
               value={form.kind}
-              onChange={(kind: any) => setForm((current) => ({ ...current, kind }))}
+              onChange={(kind: AnyValue) => setForm((current) => ({ ...current, kind }))}
               searchPlaceholder="Search posting types…"
             />
             <label className="field">
@@ -213,7 +214,7 @@ export function NgoOpportunities() {
               label="Format"
               options={FORMAT_OPTIONS}
               value={form.format}
-              onChange={(format: any) => setForm((current) => ({ ...current, format }))}
+              onChange={(format: AnyValue) => setForm((current) => ({ ...current, format }))}
               searchPlaceholder="Search formats…"
             />
             {form.format !== 'online' && (
@@ -242,18 +243,20 @@ export function NgoOpportunities() {
               <DatePicker
                 label="Starts"
                 value={form.startsAt}
-                onChange={(startsAt: any) => setForm((current) => ({ ...current, startsAt }))}
+                onChange={(startsAt: AnyValue) => setForm((current) => ({ ...current, startsAt }))}
               />
               <DatePicker
                 label="Ends"
                 value={form.endsAt}
-                onChange={(endsAt: any) => setForm((current) => ({ ...current, endsAt }))}
+                onChange={(endsAt: AnyValue) => setForm((current) => ({ ...current, endsAt }))}
               />
             </div>
             <DatePicker
               label="Application deadline"
               value={form.deadlineAt}
-              onChange={(deadlineAt: any) => setForm((current) => ({ ...current, deadlineAt }))}
+              onChange={(deadlineAt: AnyValue) =>
+                setForm((current) => ({ ...current, deadlineAt }))
+              }
             />
             <label className="field">
               <span>Link</span>

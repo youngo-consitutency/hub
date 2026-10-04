@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as UsersIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -11,7 +12,7 @@ import { TbAt as AtSign, TbSearch as Search, TbUsers as Users } from 'react-icon
 
 function PeopleDirectory() {
   const wg = useWorkingGroups()
-  const [selectedPerson, setSelectedPerson] = useState<any>(null)
+  const [selectedPerson, setSelectedPerson] = useState<AnyValue>(null)
   const [draftSearch, setDraftSearch] = useState('')
   const [search, setSearch] = useState('')
   const [workingGroup, setWorkingGroup] = useState('')
@@ -53,7 +54,7 @@ function PeopleDirectory() {
             onChange={(event) => setWorkingGroup(event.target.value)}
           >
             <option value="">All working groups</option>
-            {wg.groups.map((group: any) => (
+            {wg.groups.map((group: Doc) => (
               <option key={group.slug} value={group.slug}>
                 {group.name}
               </option>
@@ -86,7 +87,7 @@ function PeopleDirectory() {
       <Async
         query={query}
         skeletons={3}
-        empty={(data: any) =>
+        empty={(data: Doc) =>
           data.items.length === 0 ? (
             <Empty
               icon={Users}
@@ -96,13 +97,13 @@ function PeopleDirectory() {
           ) : null
         }
       >
-        {(data: any) => (
+        {(data: Doc) => (
           <div className="peopleGrid">
-            {data.items.map((person: any) => (
+            {data.items.map((person: AnyValue) => (
               <PersonCard
                 key={person.id}
                 person={person}
-                onTagClick={(value: any) => setTag(value)}
+                onTagClick={(value: AnyValue) => setTag(value)}
                 onOpen={() => setSelectedPerson(person)}
               />
             ))}
@@ -134,20 +135,20 @@ export function Directory() {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: any) =>
+        empty={(d: AnyValue) =>
           d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null
         }
       >
-        {(data: any) => {
+        {(data: Doc) => {
           const groups = new Map()
           for (const contact of data.items) {
             if (!groups.has(contact.group)) groups.set(contact.group, [])
             groups.get(contact.group).push(contact)
           }
-          const layers = DIRECTORY_LAYERS.map((layer: any) => ({
+          const layers = DIRECTORY_LAYERS.map((layer: AnyValue) => ({
             ...layer,
-            contacts: layer.groups.flatMap((group: any) => groups.get(group) || []),
-          })).filter((layer: any) => layer.contacts.length > 0)
+            contacts: layer.groups.flatMap((group: Doc) => groups.get(group) || []),
+          })).filter((layer: AnyValue) => layer.contacts.length > 0)
 
           return (
             <>
@@ -156,14 +157,14 @@ export function Directory() {
                 importance.
               </p>
               <ol className="directoryPyramid" aria-label="YOUNGO contact structure">
-                {layers.map((layer: any) => (
+                {layers.map((layer: AnyValue) => (
                   <li key={layer.id} className={`directoryLayer directoryLayer-${layer.level}`}>
                     <section aria-labelledby={`directory-${layer.id}`}>
                       <p className="pageEyebrow">{layer.eyebrow}</p>
                       <h2 id={`directory-${layer.id}`}>{layer.title}</h2>
                       <p className="meta directoryLayerDescription">{layer.description}</p>
                       <div className="directoryContacts">
-                        {layer.contacts.map((contact: any) =>
+                        {layer.contacts.map((contact: Doc) =>
                           layer.id === 'working-groups' && contact.wg ? (
                             <WorkingGroupContactCard
                               key={`${contact.group}-${contact.roleTitle}`}

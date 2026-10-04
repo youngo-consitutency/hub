@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../../lib/types'
 import { TbChevronRight as ChevronRight, TbUsers as Users } from 'react-icons/tb'
 import { A, Async, Empty, Skeletons } from '../../components/ui'
 import { useApi } from '../../lib/api'
@@ -25,17 +26,17 @@ export function SiteWorkingGroups() {
 
       <Async
         query={query}
-        empty={(data: any) =>
+        empty={(data: Doc) =>
           data.items.length === 0 ? (
             <Empty icon={Users} title={empty.title} body={empty.body} />
           ) : null
         }
       >
-        {(data: any) => {
+        {(data: Doc) => {
           return (
             <>
-              {topics.map((topic: any) => {
-                const groups = data.items.filter((g: any) => g.topic === topic.key)
+              {topics.map((topic: AnyValue) => {
+                const groups = data.items.filter((g: AnyValue) => g.topic === topic.key)
                 if (!groups.length) return null
                 return (
                   <section
@@ -45,7 +46,7 @@ export function SiteWorkingGroups() {
                   >
                     <h2 id={`topic-${topic.key}`}>{topic.label}</h2>
                     <div className="cardGrid">
-                      {groups.map((group: any) => {
+                      {groups.map((group: Doc) => {
                         const GroupIcon = workingGroupIcon(group.slug)
                         return (
                           <article key={group.slug} className="card siteWgCard">
@@ -57,7 +58,7 @@ export function SiteWorkingGroups() {
                               {group.focusLine && <p className="meta">{group.focusLine}</p>}
                               {group.tags?.length > 0 && (
                                 <ul className="siteWgTags" aria-label={`${group.name} topics`}>
-                                  {group.tags.slice(0, 3).map((tag: any) => (
+                                  {group.tags.slice(0, 3).map((tag: AnyValue) => (
                                     <li key={tag} className="chip chip-neutral">
                                       {tag}
                                     </li>

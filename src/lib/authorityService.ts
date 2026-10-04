@@ -10,7 +10,7 @@ import {
 } from './authority'
 import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
-import type { Doc, AccountLike } from './domain'
+import type { Doc, AccountLike, AnyValue } from './domain'
 
 // Writes to the `authority-records` collection. Every grant is validated
 // against the role registry (scope type, term window, CW membership where
@@ -24,7 +24,7 @@ export interface GrantInput {
   scopeId?: string
   startsAt?: Date | string
   endsAt?: Date | string | null
-  provenance?: Record<string, any>
+  provenance?: AnyValue
   recordedBy?: number
   evidence?: string
   substituteFor?: number
@@ -140,14 +140,14 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
       )
       return created
     })
-  } catch (error: any) {
+  } catch (error: AnyValue) {
     // The partial unique index (account, role, scopeType, scopeId WHERE
     // status='active') is the guard for concurrent grants; Payload wraps
     // the Postgres violation in a ValidationError, so check the whole
     // error chain for the constraint.
     const text = [error?.message, error?.cause?.message].filter(Boolean).join(' ')
     const uniqueViolation = (error?.data?.errors ?? []).some(
-      (e: any) => e.tableName === 'authority_records' && /unique/i.test(e.message ?? ''),
+      (e: AnyValue) => e.tableName === 'authority_records' && /unique/i.test(e.message ?? ''),
     )
     if (
       uniqueViolation ||

@@ -14,14 +14,14 @@ import {
 } from './decisions'
 import { audit } from './audit'
 import type { VetoRequest } from './decisions'
-import type { AccountLike, ActorLike, Doc } from './domain'
+import type { AccountLike, ActorLike, Doc, AnyValue } from './domain'
 
 // Shared runtime for the S09 decision workflow. Both the member endpoints
 // (src/endpoints/decisions.ts) and the platform bridge
 // (src/modules/platform/decisionsBridge.ts) drive proposals through these
 // helpers so there is exactly one state machine.
 
-export const ids = (rel: any): number[] =>
+export const ids = (rel: AnyValue): number[] =>
   (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) => (typeof x === 'object' ? x.id : x))
 
 // Resolve by numeric id, or by the imported legacy platform uuid.
@@ -59,7 +59,7 @@ export async function recordEvent(
   proposalId: number,
   type: string,
   actor: ActorLike | null,
-  detail?: any,
+  detail?: AnyValue,
 ) {
   await req.payload.create({
     collection: 'decision-events',
@@ -261,7 +261,7 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
 export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
   const now = Date.now()
   const past = (d?: string | null) => d && new Date(d).getTime() <= now
-  const update = async (data: any, type: string, detail?: any) => {
+  const update = async (data: Doc, type: string, detail?: AnyValue) => {
     proposal = await req.payload.update({
       collection: 'decision-proposals',
       id: proposal.id,
@@ -374,7 +374,7 @@ export async function checkVeto(req: PayloadRequest, proposal: Doc) {
 
 // Member-facing actor reference: id + display name only. Never expose raw
 // account docs (personal/contact fields stay inside the Hub).
-export const accountRef = (a: any) =>
+export const accountRef = (a: AnyValue) =>
   a == null
     ? null
     : {
@@ -382,7 +382,7 @@ export const accountRef = (a: any) =>
         name: typeof a === 'object' ? a.name : undefined,
       }
 
-export const flagView = (f: any) => ({
+export const flagView = (f: AnyValue) => ({
   id: f.id,
   kind: f.kind,
   rationaleCategory: f.rationaleCategory,
@@ -396,21 +396,21 @@ export const flagView = (f: any) => ({
   raisedAt: f.raisedAt,
 })
 
-export const commentView = (c: any) => ({
+export const commentView = (c: AnyValue) => ({
   id: c.id,
   account: accountRef(c.account),
   body: c.body,
   createdAt: c.createdAt,
 })
 
-export const ballotView = (b: any) => ({
+export const ballotView = (b: AnyValue) => ({
   id: b.id,
   account: accountRef(b.account),
   choice: b.choice,
   castAt: b.castAt,
 })
 
-export const vetoView = (v: any) => ({
+export const vetoView = (v: AnyValue) => ({
   id: v.id,
   requesterKind: v.requesterKind,
   groupKey: v.groupKey,
@@ -420,7 +420,7 @@ export const vetoView = (v: any) => ({
   createdAt: v.createdAt,
 })
 
-export const proposalView = (p: any, flags?: Doc[], counts?: any) => ({
+export const proposalView = (p: AnyValue, flags?: AnyValue[], counts?: AnyValue) => ({
   id: p.id,
   title: p.title,
   context: p.context,
@@ -439,7 +439,7 @@ export const proposalView = (p: any, flags?: Doc[], counts?: any) => ({
   decisionEndsAt: p.decisionEndsAt,
   votingEndsAt: p.votingEndsAt,
   eligibleVoterCount: p.eligibleVoterCount,
-  ballotOptions: (p.ballotOptions ?? []).map((o: any) => o.option),
+  ballotOptions: (p.ballotOptions ?? []).map((o: AnyValue) => o.option),
   adoptedVia: p.adoptedVia,
   decidedAt: p.decidedAt,
   resultSummary: p.resultSummary,

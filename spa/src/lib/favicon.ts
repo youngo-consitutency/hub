@@ -1,5 +1,6 @@
+import type { AnyValue } from './types'
 // Only request the public site's icon, never a resource path or its query string.
-export function faviconUrl(value: any) {
+export function faviconUrl(value: AnyValue) {
   try {
     const url = new URL(value)
     const host = url.hostname.toLowerCase()

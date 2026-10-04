@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useContentOptionLabels } from '../lib/documents'
 import { useState } from 'react'
 import { TbMail as Mail, TbSend as Send } from 'react-icons/tb'
@@ -10,7 +11,7 @@ const TEAM_ROLES = ['membership_team', 'gys_policy_team', 'content_editor', 'con
 export function AdminEmailBroadcast() {
   const { teamLabels } = useContentOptionLabels()
   const wg = useWorkingGroups()
-  const [form, setForm] = useState<Record<string, any>>({
+  const [form, setForm] = useState<Doc>({
     title: '',
     message: '',
     actionPath: '',
@@ -20,10 +21,10 @@ export function AdminEmailBroadcast() {
   })
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [preview, setPreview] = useState<any>(null)
+  const [result, setResult] = useState<AnyValue>(null)
+  const [preview, setPreview] = useState<AnyValue>(null)
 
-  const change = ({ target }: any) =>
+  const change = ({ target }: AnyValue) =>
     setForm((current) => ({ ...current, [target.name]: target.value }))
 
   const payload = () => ({
@@ -37,7 +38,7 @@ export function AdminEmailBroadcast() {
     },
   })
 
-  const run = async (mode: any) => {
+  const run = async (mode: AnyValue) => {
     setBusy(mode)
     setError('')
     setResult(null)
@@ -64,7 +65,7 @@ export function AdminEmailBroadcast() {
         }))
       }
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     } finally {
       setBusy('')
     }
@@ -107,7 +108,7 @@ export function AdminEmailBroadcast() {
               <span>Working group</span>
               <select className="input" name="scopeValue" value={form.scopeValue} onChange={change}>
                 <option value="">Choose a working group</option>
-                {wg.groups.map((group: any) => (
+                {wg.groups.map((group: Doc) => (
                   <option key={group.slug} value={group.slug}>
                     {group.name}
                   </option>

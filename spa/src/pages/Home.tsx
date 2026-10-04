@@ -1,16 +1,17 @@
 interface LiveBannerProps {
-  event?: any
+  event?: AnyValue
 }
 
 interface ResponsibilitySectionProps {
-  account?: any
+  account?: AnyValue
 }
 
 interface WorkspaceSectionProps {
-  groups?: any
-  workspaces?: any
+  groups?: AnyValue
+  workspaces?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { useApi } from '../lib/api'
 import { A, Async, LifecycleTiming, Section, PageHeader } from '../components/ui'
@@ -73,7 +74,7 @@ export function Home() {
   return (
     <div className="homePage">
       <Async query={feed} skeletons={4}>
-        {(data: any) => (
+        {(data: Doc) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
             <PageHeader
@@ -136,7 +137,7 @@ export function Home() {
                 }
               >
                 <div className="dashboardCardGrid">
-                  {data.closing.map((x: any) => (
+                  {data.closing.map((x: AnyValue) => (
                     <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
                   ))}
                 </div>
@@ -146,7 +147,7 @@ export function Home() {
             {data.pinned.length > 0 && (
               <Section label="Pinned">
                 <div className="pinnedStack">
-                  {data.pinned.map((a: any) => (
+                  {data.pinned.map((a: AnyValue) => (
                     <div key={a.slug || a.title} className="pinnedBanner">
                       <span className="pinnedBannerIcon" aria-hidden>
                         <Pin size={16} strokeWidth={2} />
@@ -189,7 +190,7 @@ export function Home() {
             >
               {data.week.length ? (
                 <div className="dashboardCardGrid">
-                  {data.week.map((e: any) => (
+                  {data.week.map((e: AnyValue) => (
                     <EventCard key={e.slug} event={e} />
                   ))}
                 </div>
@@ -208,7 +209,7 @@ export function Home() {
                 }
               >
                 <div className="dashboardCardGrid">
-                  {data.coys.map((c: any) => (
+                  {data.coys.map((c: AnyValue) => (
                     <CoyCard key={c.slug} coy={c} />
                   ))}
                 </div>
@@ -312,13 +313,13 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
       }
     >
       <Async query={workspaces} skeletons={2}>
-        {(workspaceData: any) => (
+        {(workspaceData: AnyValue) => (
           <Async query={groups} skeletons={2}>
-            {(groupData: any) => {
-              const progressBySlug = new Map<any, any>(
-                workspaceData.items.map((item: any) => [item.wg_slug, item]),
+            {(groupData: AnyValue) => {
+              const progressBySlug = new Map<AnyValue, AnyValue>(
+                workspaceData.items.map((item: Doc) => [item.wg_slug, item]),
               )
-              const joined = groupData.items.filter((group: any) => progressBySlug.has(group.slug))
+              const joined = groupData.items.filter((group: Doc) => progressBySlug.has(group.slug))
               if (!joined.length) {
                 return (
                   <A className="workspaceStart" href="/groups">
@@ -330,7 +331,7 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
               }
               return (
                 <div className="dashboardCardGrid">
-                  {joined.map((group: any) => {
+                  {joined.map((group: Doc) => {
                     const progress = progressBySlug.get(group.slug)
                     const ready = Boolean(progress?.presentation_ok && progress?.rules_ok)
                     return (

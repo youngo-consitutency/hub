@@ -1,33 +1,34 @@
 interface ResourceCardProps {
-  resource?: any
-  onReport?: any
-  onCorrect?: any
-  onReview?: any
+  resource?: AnyValue
+  onReport?: AnyValue
+  onCorrect?: AnyValue
+  onReview?: AnyValue
 }
 
 interface ResourceCatalogueProps {
-  heading?: any
-  onCorrect?: any
+  heading?: AnyValue
+  onCorrect?: AnyValue
 }
 
 interface ResourcePathwayGroupProps {
-  group?: any
-  items?: any
-  onReport?: any
-  onCorrect?: any
+  group?: AnyValue
+  items?: AnyValue
+  onReport?: AnyValue
+  onCorrect?: AnyValue
 }
 
 interface ResourceSubmissionPanelProps {
-  initialResource?: any
-  onCancel?: any
+  initialResource?: AnyValue
+  onCancel?: AnyValue
 }
 
 interface ResourceReportProps {
-  resource?: any
-  onClose?: any
-  onSaved?: any
+  resource?: AnyValue
+  onClose?: AnyValue
+  onSaved?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
@@ -75,7 +76,7 @@ const TYPE_ICONS = {
   opportunity: Briefcase,
 }
 
-const EMPTY_RESOURCE = (vocab: any) => ({
+const EMPTY_RESOURCE = (vocab: AnyValue) => ({
   title: '',
   url: '',
   summary: '',
@@ -90,7 +91,7 @@ const EMPTY_RESOURCE = (vocab: any) => ({
 
 export function ResourceCard({ resource, onReport, onCorrect, onReview }: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
-  const TypeIcon = (TYPE_ICONS as any)[resource.type] || BookOpen
+  const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
   return (
     <article className="card resourceHubCard">
       <div className="resourceHubCardTop">
@@ -114,7 +115,7 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: Resour
         <FilterChip icon={TypeIcon} tone="accent">
           {resourceLabel(RESOURCE_TYPES, resource.type)}
         </FilterChip>
-        {(resource.topics || [resource.topic]).map((topic: any) => (
+        {(resource.topics || [resource.topic]).map((topic: AnyValue) => (
           <FilterChip key={topic} icon={Filter}>
             {topic}
           </FilterChip>
@@ -166,7 +167,7 @@ export function ResourceCatalogue({
     resourceTopics: RESOURCE_TOPICS,
   } = useContentOptions()
   const { account } = useAccount()
-  const [reported, setReported] = useState<any>(null)
+  const [reported, setReported] = useState<AnyValue>(null)
   const [notice, setNotice] = useState('')
   const [limit, setLimit] = useState(12)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
@@ -178,7 +179,7 @@ export function ResourceCatalogue({
 
   const items = useMemo(() => {
     const words = search.toLowerCase().split(/\s+/).filter(Boolean)
-    return (query.data?.items || []).filter((item: any) => {
+    return (query.data?.items || []).filter((item: AnyValue) => {
       const haystack = [
         item.title,
         item.summary,
@@ -275,11 +276,11 @@ export function ResourceCatalogue({
                   >
                     All pathways
                   </FilterPill>
-                  {RESOURCE_PATHWAYS.map((item: any) => (
+                  {RESOURCE_PATHWAYS.map((item: AnyValue) => (
                     <FilterPill
                       key={item.value}
                       active={pathway === item.value}
-                      icon={(PATHWAY_ICONS as any)[item.value]}
+                      icon={(PATHWAY_ICONS as AnyValue)[item.value]}
                       onClick={() => {
                         setPathway(item.value)
                         setLimit(12)
@@ -302,7 +303,7 @@ export function ResourceCatalogue({
                     }}
                   >
                     <option value="all">All types</option>
-                    {RESOURCE_TYPES.map((item: any) => (
+                    {RESOURCE_TYPES.map((item: AnyValue) => (
                       <option key={item.value} value={item.value}>
                         {item.label}
                       </option>
@@ -320,7 +321,7 @@ export function ResourceCatalogue({
                     }}
                   >
                     <option value="all">All topics</option>
-                    {RESOURCE_TOPICS.map((item: any) => (
+                    {RESOURCE_TOPICS.map((item: AnyValue) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
@@ -368,9 +369,9 @@ export function ResourceCatalogue({
                 <div className="catalogGroups">
                   {[...RESOURCE_PATHWAYS, { value: 'other', label: 'Other resources' }].map(
                     (group) => {
-                      const matches = items.filter((item: any) =>
+                      const matches = items.filter((item: AnyValue) =>
                         group.value === 'other'
-                          ? !RESOURCE_PATHWAYS.some((path: any) => path.value === item.pathway)
+                          ? !RESOURCE_PATHWAYS.some((path: AnyValue) => path.value === item.pathway)
                           : item.pathway === group.value,
                       )
                       return matches.length ? (
@@ -387,7 +388,7 @@ export function ResourceCatalogue({
                 </div>
               ) : (
                 <div className="resourceHubGrid cardGrid">
-                  {items.slice(0, limit).map((resource: any) => (
+                  {items.slice(0, limit).map((resource: AnyValue) => (
                     <ResourceCard
                       key={resource.slug}
                       resource={resource}
@@ -432,7 +433,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePat
     <Section label={group.label} meta={`${items.length} resources`}>
       {group.description && <p className="catalogGroupDescription">{group.description}</p>}
       <div className="cardGrid resourceHubGrid">
-        {items.slice(0, visible).map((resource: any) => (
+        {items.slice(0, visible).map((resource: AnyValue) => (
           <ResourceCard
             key={resource.slug}
             resource={resource}
@@ -466,22 +467,22 @@ export function ResourceSubmissionPanel({
   const [payload, setPayload] = useState(
     initialResource ? { ...EMPTY_RESOURCE(vocab), ...initialResource } : EMPTY_RESOURCE(vocab),
   )
-  const [editingId, setEditingId] = useState<any>(null)
+  const [editingId, setEditingId] = useState<AnyValue>(null)
   const [open, setOpen] = useState(Boolean(initialResource))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [fields, setFields] = useState<Record<string, any>>({})
+  const [fields, setFields] = useState<AnyValue>({})
 
-  const set = (key: any, value: any) =>
-    setPayload((current: any) => ({
+  const set = (key: AnyValue, value: AnyValue) =>
+    setPayload((current: AnyValue) => ({
       ...current,
       [key]: value,
       ...(key === 'topic'
         ? {
             topics: [
               value,
-              ...current.topics.filter((t: any) => t !== current.topic && t !== value),
+              ...current.topics.filter((t: AnyValue) => t !== current.topic && t !== value),
             ],
           }
         : {}),
@@ -492,7 +493,7 @@ export function ResourceSubmissionPanel({
     setOpen(false)
     setFields({})
   }
-  const edit = (item: any) => {
+  const edit = (item: AnyValue) => {
     setPayload({
       ...EMPTY_RESOURCE(vocab),
       ...item.payload,
@@ -503,7 +504,7 @@ export function ResourceSubmissionPanel({
     setMessage('')
     setError('')
   }
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -519,8 +520,8 @@ export function ResourceSubmissionPanel({
       submissions.retry()
       if (initialResource) onCancel?.()
     } catch (submissionError) {
-      setError((submissionError as any).message)
-      setFields((submissionError as any).fields || {})
+      setError((submissionError as AnyValue).message)
+      setFields((submissionError as AnyValue).fields || {})
     } finally {
       setBusy(false)
     }
@@ -604,7 +605,7 @@ export function ResourceSubmissionPanel({
                   value={payload.pathway}
                   onChange={(event) => set('pathway', event.target.value)}
                 >
-                  {RESOURCE_PATHWAYS.map((item: any) => (
+                  {RESOURCE_PATHWAYS.map((item: AnyValue) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -619,7 +620,7 @@ export function ResourceSubmissionPanel({
                   value={payload.type}
                   onChange={(event) => set('type', event.target.value)}
                 >
-                  {RESOURCE_TYPES.map((item: any) => (
+                  {RESOURCE_TYPES.map((item: AnyValue) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -634,7 +635,7 @@ export function ResourceSubmissionPanel({
                   value={payload.topic}
                   onChange={(event) => set('topic', event.target.value)}
                 >
-                  {RESOURCE_TOPICS.map((item: any) => (
+                  {RESOURCE_TOPICS.map((item: AnyValue) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -649,7 +650,7 @@ export function ResourceSubmissionPanel({
                   value={payload.region}
                   onChange={(event) => set('region', event.target.value)}
                 >
-                  {RESOURCE_REGIONS.map((item: any) => (
+                  {RESOURCE_REGIONS.map((item: AnyValue) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -664,7 +665,7 @@ export function ResourceSubmissionPanel({
                   value={payload.language}
                   onChange={(event) => set('language', event.target.value)}
                 >
-                  {RESOURCE_LANGUAGES.map((item: any) => (
+                  {RESOURCE_LANGUAGES.map((item: AnyValue) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -688,7 +689,7 @@ export function ResourceSubmissionPanel({
                 <span className="metaMuted">(up to five including the main topic)</span>
               </legend>
               <div className="resourceTopicOptions">
-                {RESOURCE_TOPICS.map((topic: any) => (
+                {RESOURCE_TOPICS.map((topic: AnyValue) => (
                   <label key={topic} className="resourceCheck">
                     <input
                       type="checkbox"
@@ -702,7 +703,7 @@ export function ResourceSubmissionPanel({
                           'topics',
                           event.target.checked
                             ? [...payload.topics, topic]
-                            : payload.topics.filter((t: any) => t !== topic),
+                            : payload.topics.filter((t: AnyValue) => t !== topic),
                         )
                       }
                     />
@@ -734,10 +735,10 @@ export function ResourceSubmissionPanel({
       )}
 
       <Async query={submissions} skeletons={2}>
-        {(data: any) =>
+        {(data: AnyValue) =>
           data.items.length ? (
             <div className="resourceSubmissionList">
-              {data.items.map((item: any) => (
+              {data.items.map((item: AnyValue) => (
                 <article key={item.id} className="card cardTight resourceSubmissionItem">
                   <div>
                     <strong>{item.payload.title}</strong>
@@ -771,7 +772,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
   const [detail, setDetail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  async function submit(event: any) {
+  async function submit(event: AnyValue) {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -782,7 +783,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
       })
       onSaved()
     } catch (error) {
-      setError((error as any).message)
+      setError((error as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -799,7 +800,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
           value={selectedKind}
           onChange={(event) => setKind(event.target.value)}
         >
-          {resourceIssueKinds.map((item: any) => (
+          {resourceIssueKinds.map((item: AnyValue) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>

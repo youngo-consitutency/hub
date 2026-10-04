@@ -1,7 +1,8 @@
 interface AccessGateProps {
-  children?: import('react').ReactNode | ((data: any) => import('react').ReactNode)
+  children?: import('react').ReactNode | ((data: AnyValue) => import('react').ReactNode)
 }
 
+import type { AnyValue } from '../lib/types'
 import { useCallback, useEffect, useState } from 'react'
 import { MembershipMandateGate } from './MembershipMandateGate'
 import { AuthGate } from './AuthGate'
@@ -25,13 +26,13 @@ export function AccessGate({ children }: AccessGateProps) {
   const path = usePath()
   const [ready, setReady] = useState(false)
   const [policyOk, setPolicyOk] = useState(false)
-  const [account, setAccount] = useState<any>(null)
+  const [account, setAccount] = useState<AnyValue>(null)
   // The governing policy version lives in the CMS document, not the bundle.
   const { doc: membershipPolicy } = useDocument('membership-policy')
   const policyVersion = membershipPolicy?.POLICY_VERSION
 
   const handleAuthenticated = useCallback(
-    (acc: any) => {
+    (acc: AnyValue) => {
       setAccount(acc)
       if (
         path === '/join' ||
@@ -128,7 +129,7 @@ export function AccessGate({ children }: AccessGateProps) {
       return (
         <ChangePasswordGate
           account={account}
-          onChanged={(next: any) => {
+          onChanged={(next: AnyValue) => {
             if (next) {
               setAccount(next)
               setSession({ account: next })

@@ -2,6 +2,7 @@ interface EventDetailProps {
   slug?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, BackLink, StatusChip, A, PageHeader } from '../components/ui'
@@ -39,7 +40,7 @@ function CopyLinkButton() {
 }
 
 // live → concluded → upcoming, so a past event drops the Join button per spec §2.
-function phaseOf(event: any) {
+function phaseOf(event: AnyValue) {
   const now = Date.now()
   if (now >= new Date(event.startsAt).getTime() && now <= new Date(event.endsAt).getTime())
     return 'live'
@@ -53,7 +54,7 @@ export function EventDetail({ slug }: EventDetailProps) {
     <div className="detailPage eventDetailPage">
       <BackLink href="/calendar">Calendar</BackLink>
       <Async query={query}>
-        {(event: any) => {
+        {(event: AnyValue) => {
           const phase = phaseOf(event)
           const live = phase === 'live'
           const concluded = phase === 'concluded'

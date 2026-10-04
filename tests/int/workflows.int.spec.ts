@@ -1,12 +1,13 @@
+import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { api, session } from './helpers'
 
 describe('operational workflows', () => {
-  let member: { cookie: string; account: any }
-  let finance: { cookie: string; account: any }
-  let safeguarding: { cookie: string; account: any }
-  let dpo: { cookie: string; account: any }
+  let member: { cookie: string; account: AnyValue }
+  let finance: { cookie: string; account: AnyValue }
+  let safeguarding: { cookie: string; account: AnyValue }
+  let dpo: { cookie: string; account: AnyValue }
 
   beforeAll(async () => {
     member = await session({ membershipTrack: 'constituency_work' })
@@ -37,7 +38,7 @@ describe('operational workflows', () => {
     expect((await api(`/member/funding/${request.id}`, { cookie: member.cookie })).status).toBe(200)
     const queue = await api('/member/team/funding', { cookie: finance.cookie })
     expect(queue.status).toBe(200)
-    expect((await queue.json()).items.some((i: any) => i.id === request.id)).toBe(true)
+    expect((await queue.json()).items.some((i: AnyValue) => i.id === request.id)).toBe(true)
 
     // ordinary member cannot review
     expect(
@@ -102,7 +103,7 @@ describe('operational workflows', () => {
     const team = await api('/member/team/safeguarding', { cookie: safeguarding.cookie })
     expect(team.status).toBe(200)
     const cases = (await team.json()).items
-    const found = cases.find((c: any) => `SG-${c.id}` === caseRef)
+    const found = cases.find((c: AnyValue) => `SG-${c.id}` === caseRef)
     expect(found).toBeTruthy()
     expect(found.reporter).toBeNull()
 

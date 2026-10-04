@@ -3,7 +3,7 @@ import { fail } from './respond'
 import { requireVerifiedMember } from './accounts'
 import { getAccessProfile, hasCapability } from './access'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike } from './domain'
+import type { Doc, AccountLike, AnyValue } from './domain'
 
 // Organisation-scope helpers shared by the NGO, organisations and
 // opportunities endpoints. Access derives from the member's active
@@ -71,7 +71,7 @@ export async function requireOrgScope(
 }
 
 export const seatView = (row: Doc) => {
-  const r = toCamelCase<any>(row)
+  const r = toCamelCase<AnyValue>(row)
   return {
     id: r.id,
     orgAccountId:

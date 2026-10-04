@@ -1,16 +1,17 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import { useApi, apiPost } from '../lib/api'
 import { Button, ErrorCard, Section } from './ui'
 import { fmtDual } from '../lib/time'
 
-function toLocalInput(iso: any) {
+function toLocalInput(iso: AnyValue) {
   if (!iso) return ''
   const date = new Date(iso)
-  const pad = (n: any) => String(n).padStart(2, '0')
+  const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-function fromLocalInput(value: any) {
+function fromLocalInput(value: AnyValue) {
   if (!value) return null
   return new Date(value).toISOString()
 }
@@ -23,7 +24,7 @@ export function AdminCallSlots() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const onStart = (value: any) => {
+  const onStart = (value: AnyValue) => {
     setStartsAt(value)
     if (!endsAt && value) {
       const end = new Date(value)
@@ -32,7 +33,7 @@ export function AdminCallSlots() {
     }
   }
 
-  const add = async (event: any) => {
+  const add = async (event: AnyValue) => {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -46,20 +47,20 @@ export function AdminCallSlots() {
       setEndsAt('')
       query.retry()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     } finally {
       setBusy(false)
     }
   }
 
-  const cancel = async (id: any) => {
+  const cancel = async (id: AnyValue) => {
     setBusy(true)
     setError('')
     try {
       await apiPost(`/member/admin/cp-calls/${id}/cancel`, {})
       query.retry()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -109,7 +110,7 @@ export function AdminCallSlots() {
         </Button>
       </form>
       <div className="stackSm" style={{ marginTop: 16 }}>
-        {slots.map((slot: any) => (
+        {slots.map((slot: Doc) => (
           <div key={slot.id} className="card cardTight auditRow">
             <div>
               <strong>

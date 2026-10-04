@@ -1,9 +1,10 @@
 interface ChangePasswordFormProps {
-  onChanged?: any
-  submitLabel?: any
-  intro?: any
+  onChanged?: AnyValue
+  submitLabel?: AnyValue
+  intro?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import { apiPost } from '../lib/api'
 import { Button } from './ui'
@@ -19,12 +20,12 @@ export function ChangePasswordForm({
   const [currentPassword, setCurrentPassword] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [fields, setFields] = useState<Record<string, any>>({})
-  const [error, setError] = useState<any>(null)
+  const [fields, setFields] = useState<Doc>({})
+  const [error, setError] = useState<AnyValue>(null)
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
@@ -42,8 +43,8 @@ export function ChangePasswordForm({
       setMessage('Password updated.')
       onChanged?.(data.account)
     } catch (err) {
-      setFields((err as any).fields || {})
-      setError((err as any).message)
+      setFields((err as AnyValue).fields || {})
+      setError((err as AnyValue).message)
     } finally {
       setSubmitting(false)
     }

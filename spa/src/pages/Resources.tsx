@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { TbBooks as ResourcesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { ResourceGuides } from '../components/ResourceGuides'
@@ -11,7 +12,7 @@ export function Resources() {
   const search = useSearch()
   const guides = new URLSearchParams(search).get('view') === 'guides'
   const { account } = useAccount()
-  const [correction, setCorrection] = useState<any>(null)
+  const [correction, setCorrection] = useState<AnyValue>(null)
   const canReview = account?.access?.capabilities?.includes('content.review')
   return (
     <div>

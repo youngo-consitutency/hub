@@ -1,22 +1,23 @@
 interface SlideHeadProps {
-  slide?: any
+  slide?: AnyValue
 }
 
 interface PointsProps {
-  points?: any
-  variant?: any
+  points?: AnyValue
+  variant?: AnyValue
 }
 
 interface SlideFaceProps {
-  slide?: any
+  slide?: AnyValue
 }
 
 interface WgSelfPacedProps {
-  course?: any
-  storageKey?: any
-  onReachEnd?: any
+  course?: AnyValue
+  storageKey?: AnyValue
+  onReachEnd?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { deckStyle, useDocument } from '../lib/documents'
 import { TbChevronLeft as ChevronLeft, TbChevronRight as ChevronRight } from 'react-icons/tb'
@@ -24,7 +25,7 @@ import { TbChevronLeft as ChevronLeft, TbChevronRight as ChevronRight } from 're
 const ACCENTS = ['#e8943a', '#1f8a3b', '#2f6fed']
 const DeckBrand = createContext({})
 
-function readStoredIndex(storageKey: any, length: any) {
+function readStoredIndex(storageKey: AnyValue, length: AnyValue) {
   try {
     const saved = Number(sessionStorage.getItem(storageKey) || 0)
     if (!Number.isFinite(saved)) return 0
@@ -34,12 +35,12 @@ function readStoredIndex(storageKey: any, length: any) {
   }
 }
 
-function initials(label: any) {
+function initials(label: AnyValue) {
   return label
     .split(/\s+/)
-    .filter((word: any) => word[0] && /[A-Za-zÀ-ÿ]/.test(word[0]))
+    .filter((word: AnyValue) => word[0] && /[A-Za-zÀ-ÿ]/.test(word[0]))
     .slice(0, 2)
-    .map((word: any) => word[0].toUpperCase())
+    .map((word: AnyValue) => word[0].toUpperCase())
     .join('')
 }
 
@@ -48,7 +49,7 @@ function SlideMark() {
   return (
     <div className="jtMark">
       <img src="/brand/youngo-logo.png" alt="YOUNGO" />
-      <span>{(brand as any).label}</span>
+      <span>{(brand as AnyValue).label}</span>
     </div>
   )
 }
@@ -69,8 +70,8 @@ function Points({ points, variant }: PointsProps) {
   if (!points?.length) return null
   return (
     <ul className={`jtPoints jtPoints--${variant}`}>
-      {points.map((point: any, index: any) => (
-        <li key={point.label} style={{ '--jt-bar': ACCENTS[index % ACCENTS.length] } as any}>
+      {points.map((point: AnyValue, index: number) => (
+        <li key={point.label} style={{ '--jt-bar': ACCENTS[index % ACCENTS.length] } as AnyValue}>
           {variant === 'people' ? (
             <span className="jtAvatar" aria-hidden>
               {initials(point.label)}
@@ -108,7 +109,7 @@ function SlideFace({ slide }: SlideFaceProps) {
           </h3>
           <span className="jtCoverRule" />
           {lead ? <p className="jtCoverBox">{lead}</p> : null}
-          {rest.map((line: any) => (
+          {rest.map((line: AnyValue) => (
             <p key={line} className="jtCoverNote">
               {line}
             </p>
@@ -125,7 +126,7 @@ function SlideFace({ slide }: SlideFaceProps) {
         <div>
           <p>{slide.kicker}</p>
           <h3 id="wg-course-title">{slide.title}</h3>
-          {slide.body?.map((line: any) => (
+          {slide.body?.map((line: AnyValue) => (
             <p key={line}>{line}</p>
           ))}
         </div>
@@ -140,7 +141,7 @@ function SlideFace({ slide }: SlideFaceProps) {
         {layout === 'split' ? (
           <>
             <div className="jtLeadCard">
-              {slide.body?.map((line: any) => (
+              {slide.body?.map((line: AnyValue) => (
                 <p key={line}>{line}</p>
               ))}
             </div>
@@ -162,7 +163,7 @@ function SlideFace({ slide }: SlideFaceProps) {
             <Points points={slide.points} variant="rows" />
             {slide.links?.length ? (
               <ul className="jtLinks">
-                {slide.links.map((link: any) => (
+                {slide.links.map((link: AnyValue) => (
                   <li key={link.href}>
                     <a href={link.href} target="_blank" rel="noreferrer">
                       {link.label}
@@ -177,7 +178,7 @@ function SlideFace({ slide }: SlideFaceProps) {
           <>
             {lead ? <p className="jtBanner">{lead}</p> : null}
             <ol className="jtMonths">
-              {slide.months?.map((month: any) => (
+              {slide.months?.map((month: AnyValue) => (
                 <li key={month.name} className={month.ahead ? 'is-ahead' : undefined}>
                   <time>
                     {month.name}
@@ -191,14 +192,14 @@ function SlideFace({ slide }: SlideFaceProps) {
         ) : null}
         {layout === 'prose' ? (
           <div className="jtLeadCard jtLeadCard--wide">
-            {slide.body?.map((line: any) => (
+            {slide.body?.map((line: AnyValue) => (
               <p key={line}>{line}</p>
             ))}
           </div>
         ) : null}
         {layout === 'split' && slide.points?.length ? (
           <ul className="jtExamples">
-            {slide.points.slice(0, 3).map((point: any) => (
+            {slide.points.slice(0, 3).map((point: AnyValue) => (
               <li key={point.label}>
                 <strong>{point.label}</strong>
                 <span>{point.text}</span>
@@ -228,7 +229,7 @@ export function WgSelfPaced({ course, storageKey, onReachEnd }: WgSelfPacedProps
     if (last) onReachEnd()
   }, [index, last, onReachEnd, storageKey])
 
-  const go = (next: any) => {
+  const go = (next: AnyValue) => {
     setIndex(Math.min(slides.length - 1, Math.max(0, next)))
   }
 
@@ -274,7 +275,7 @@ export function WgSelfPaced({ course, storageKey, onReachEnd }: WgSelfPacedProps
           </button>
         </div>
         <div className="jtDots" role="tablist" aria-label="Onboarding slides">
-          {slides.map((item: any, itemIndex: any) => (
+          {slides.map((item: Doc, itemIndex: AnyValue) => (
             <button
               key={item.id}
               type="button"

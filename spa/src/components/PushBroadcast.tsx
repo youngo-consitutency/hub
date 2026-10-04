@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { useEffect, useMemo, useState } from 'react'
 import {
   TbBellRinging as BellRing,
@@ -13,8 +14,8 @@ const BODY_MAX = 180
 const ALL_CONFIRM = 'SEND'
 
 export function PushBroadcast() {
-  const [summary, setSummary] = useState<any>(null)
-  const [subscribers, setSubscribers] = useState<any[]>([])
+  const [summary, setSummary] = useState<AnyValue>(null)
+  const [subscribers, setSubscribers] = useState<AnyValue[]>([])
   const [audience, setAudience] = useState('one')
   const [accountId, setAccountId] = useState('')
   const [title, setTitle] = useState('YOUNGO Hub')
@@ -22,7 +23,7 @@ export function PushBroadcast() {
   const [confirmAll, setConfirmAll] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AnyValue>(null)
 
   const load = async () => {
     try {
@@ -34,7 +35,7 @@ export function PushBroadcast() {
       setSubscribers(nextSubscribers.items || [])
       setError('')
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     }
   }
 
@@ -73,7 +74,7 @@ export function PushBroadcast() {
       setConfirmAll('')
       await load()
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     } finally {
       setBusy(false)
     }

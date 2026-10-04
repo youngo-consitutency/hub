@@ -2,13 +2,14 @@ interface NegotiationDetailProps {
   slug?: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import { useAccount } from '../lib/accountContext'
 import { apiDelete, apiPut, useApi } from '../lib/api'
 import { Async, BackLink, PageHeader, Section } from '../components/ui'
 import { TbBell as Bell, TbExternalLink as ExternalLink } from 'react-icons/tb'
 
-function deadlineText(deadline: any) {
+function deadlineText(deadline: AnyValue) {
   if (!deadline?.date) return 'Deadline not specified'
   const date = new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
@@ -40,7 +41,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
         })
       setFollowing((value) => !value)
     } catch (error) {
-      setFollowError((error as any).message)
+      setFollowError((error as AnyValue).message)
     } finally {
       setSaving(false)
     }
@@ -50,7 +51,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
     <div className="detailPage">
       <BackLink href="/negotiations">Negotiations</BackLink>
       <Async query={query}>
-        {(track: any) => (
+        {(track: AnyValue) => (
           <>
             <PageHeader title={track.topic} description={track.summary}>
               {account?.isVerified && (
@@ -74,7 +75,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
 
             <Section label="Agenda lineage">
               <div className="cardGrid">
-                {track.agendaItems.map((item: any) => (
+                {track.agendaItems.map((item: Doc) => (
                   <article className="card" key={item.id}>
                     <div className="cardBody">
                       <div className="eyebrow">
@@ -99,7 +100,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
             <Section label="Calls for input">
               {track.calls.length ? (
                 <div className="cardGrid">
-                  {track.calls.map((call: any) => (
+                  {track.calls.map((call: AnyValue) => (
                     <article className="card" key={call.id}>
                       <div className="cardBody">
                         <div className="eyebrow">{call.status}</div>
@@ -120,7 +121,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
 
             <Section label="Documents and source health">
               <div className="cardGrid">
-                {track.documents.map((document: any) => {
+                {track.documents.map((document: AnyValue) => {
                   const uncertain = Number(document.latestVersion.extraction.confidence) < 0.9
                   return (
                     <article className="card" key={document.id}>

@@ -1,13 +1,14 @@
 interface OpportunityCardProps {
-  item?: any
-  kindFilterState?: any
-  formatFilterState?: any
-  regionFilterState?: any
-  onKindFilter?: any
-  onFormatFilter?: any
-  onRegionFilter?: any
+  item?: AnyValue
+  kindFilterState?: AnyValue
+  formatFilterState?: AnyValue
+  regionFilterState?: AnyValue
+  onKindFilter?: AnyValue
+  onFormatFilter?: AnyValue
+  onRegionFilter?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -44,15 +45,15 @@ import {
 } from 'react-icons/tb'
 import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions'
 
-function timestamp(value: any) {
+function timestamp(value: AnyValue) {
   if (!value) return null
   const time = new Date(value).getTime()
   return Number.isFinite(time) ? time : null
 }
 
-function groupOpportunitiesByStatus(items: any, now = Date.now()) {
+function groupOpportunitiesByStatus(items: Doc, now = Date.now()) {
   return items.reduce(
-    (groups: any, item: any) => {
+    (groups: Doc, item: Doc) => {
       const closesAt = timestamp(item.deadlineAt) ?? timestamp(item.endsAt)
       groups[closesAt != null && closesAt <= Number(now) ? 'closed' : 'open'].push(item)
       return groups
@@ -118,7 +119,7 @@ function OpportunityCard({
           {KIND_LABEL[item.kind] || item.kind}
         </FilterChip>
         <FilterChip state={formatFilterState} onClick={onFormatFilter}>
-          {(FORMAT_LABEL as any)[item.format] || item.format}
+          {(FORMAT_LABEL as AnyValue)[item.format] || item.format}
         </FilterChip>
         {item.region && (
           <FilterChip state={regionFilterState} onClick={onRegionFilter}>
@@ -145,9 +146,9 @@ function OpportunityCard({
 
 /** Browse opportunities with search, filters, sorting and layouts, grouped by open or closed status. */
 export function Opportunities() {
-  const [kindFilters, setKindFilters] = useState<Record<string, any>>({})
-  const [formatFilters, setFormatFilters] = useState<Record<string, any>>({})
-  const [regionFilters, setRegionFilters] = useState<Record<string, any>>({})
+  const [kindFilters, setKindFilters] = useState<Doc>({})
+  const [formatFilters, setFormatFilters] = useState<Doc>({})
+  const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
   const query = useApi('/member/opportunities?kind=all&format=all')
@@ -161,7 +162,7 @@ export function Opportunities() {
       />
       <Async
         query={query}
-        empty={(data: any) =>
+        empty={(data: Doc) =>
           data.items.length === 0 ? (
             <Empty
               icon={Megaphone}
@@ -171,18 +172,18 @@ export function Opportunities() {
           ) : null
         }
       >
-        {(data: any) => {
-          const normalizedItems = data.items.map((item: any) => ({
+        {(data: Doc) => {
+          const normalizedItems = data.items.map((item: Doc) => ({
             ...item,
             region: regionKey(item.region),
           }))
-          const regions = [...new Set(normalizedItems.map((item: any) => item.region))]
+          const regions = [...new Set(normalizedItems.map((item: Doc) => item.region))]
             .filter(Boolean)
             .sort((a, b) => regionLabel(a).localeCompare(regionLabel(b)))
           const needle = search.trim().toLocaleLowerCase()
           const items = normalizedItems
             .filter(
-              (item: any) =>
+              (item: Doc) =>
                 matchesFilters(item.kind, kindFilters) &&
                 matchesFilters(item.format, formatFilters) &&
                 matchesFilters(item.region, regionFilters) &&
@@ -198,7 +199,7 @@ export function Opportunities() {
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: any, b: any) => {
+            .sort((a: AnyValue, b: AnyValue) => {
               if (sort === 'title') return a.title.localeCompare(b.title)
               const now = Date.now()
               const aTime = new Date(a.deadlineAt || 0).getTime()
@@ -209,8 +210,8 @@ export function Opportunities() {
               return aUpcoming ? aTime - bTime : bTime - aTime
             })
           const groupedItems = groupOpportunitiesByStatus(items)
-          const renderCards = (group: any) =>
-            group.map((item: any) => (
+          const renderCards = (group: Doc) =>
+            group.map((item: Doc) => (
               <OpportunityCard
                 key={item.id}
                 item={item}
@@ -332,7 +333,7 @@ export function Opportunities() {
                           >
                             All regions
                           </FilterPill>
-                          {regions.map((region: any) => (
+                          {regions.map((region: AnyValue) => (
                             <FilterPill
                               key={region}
                               state={regionFilters[region] || 'neutral'}

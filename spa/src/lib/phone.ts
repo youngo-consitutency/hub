@@ -1,6 +1,7 @@
+import type { AnyValue } from './types'
 import { AsYouType, getCountries, parsePhoneNumberFromString } from 'libphonenumber-js/min'
 
-function displayNameForCountry(countryCode: any) {
+function displayNameForCountry(countryCode: AnyValue) {
   try {
     return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode
   } catch {
@@ -17,7 +18,7 @@ export function getCountryOptions() {
     .sort((a, b) => a.label.localeCompare(b.label))
 }
 
-export function formatPhoneWhileTyping(value: any, countryCode: any) {
+export function formatPhoneWhileTyping(value: AnyValue, countryCode: AnyValue) {
   const supplied = String(value || '')
   if (!supplied.replaceAll('+', '').trim()) return '+ '
 
@@ -27,7 +28,7 @@ export function formatPhoneWhileTyping(value: any, countryCode: any) {
   return international ? `+ ${formatted.slice(1).trimStart()}` : formatted
 }
 
-export function normalizePhone(value: any, countryCode: any) {
+export function normalizePhone(value: AnyValue, countryCode: AnyValue) {
   const raw = String(value || '').trim()
   if (!raw || !/\d/.test(raw)) return ''
 

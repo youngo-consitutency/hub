@@ -3,6 +3,7 @@
 // before. Field shape checks are zod schemas; option lists (regions, genders,
 // nationalities, …) live in the `registration-options` content document,
 // edited via the database/console, so dynamic membership stays imperative.
+import type { AnyValue, Doc } from './domain'
 import { z } from 'zod'
 import { getDocument } from './documents'
 
@@ -38,7 +39,7 @@ function allowed(set: Set<string>, value: string) {
 }
 
 type Fields = Record<string, string>
-type Body = Record<string, any>
+type Body = Doc
 
 function ageFromDob(dob: string | null): number | null {
   if (!dob) return null
@@ -184,7 +185,7 @@ function privacyConsentFragment(notice: { PRIVACY_VERSION?: string; CONSENT_STAT
   }
 }
 
-export async function validateRegistration(req: any, body: Body) {
+export async function validateRegistration(req: AnyValue, body: Body) {
   const [noticeDoc, optionsDoc] = await Promise.all([
     getDocument(req, 'privacy-notice'),
     getDocument(req, 'registration-options'),

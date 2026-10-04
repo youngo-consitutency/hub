@@ -4,14 +4,15 @@ interface GroupCommunityProps {
 
 interface GroupResourceGroupsProps {
   slug: string
-  resources?: any
-  locked?: any
+  resources?: AnyValue
+  locked?: AnyValue
 }
 
 interface GroupDetailProps {
   slug: string
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { useApi } from '../lib/api'
 import { A, Async, BackLink, Section, Empty, PageHeader } from '../components/ui'
 import { EventCard, PersonCard, SubmissionCard } from '../components/cards'
@@ -55,10 +56,10 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
     <>
       <Section label="Contact point">
         <Async query={contactQuery} skeletons={1}>
-          {(data: any) =>
+          {(data: Doc) =>
             data.items.length ? (
               <div className="peopleGrid groupContactAccountGrid">
-                {data.items.map((person: any) => (
+                {data.items.map((person: AnyValue) => (
                   <PersonCard key={person.id} person={person} />
                 ))}
               </div>
@@ -73,7 +74,7 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
         </Async>
       </Section>
       <Async query={memberQuery} skeletons={1}>
-        {(data: any) =>
+        {(data: Doc) =>
           data.items.length ? (
             <Section label="People in this group">
               <p className="meta groupPeopleNote">
@@ -81,7 +82,7 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
                 update from the workspace automatically.
               </p>
               <div className="peopleGrid groupPeopleGrid">
-                {data.items.map((person: any) => (
+                {data.items.map((person: AnyValue) => (
                   <PersonCard key={person.id} person={person} />
                 ))}
               </div>
@@ -111,7 +112,7 @@ function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsPro
         <div className="groupResourceColumn" key={columnIndex}>
           {column.map((category) => {
             const headingId = `resource-group-${slug}-${category.key}`
-            const CategoryIcon = (RESOURCE_CATEGORY_ICONS as any)[category.key]
+            const CategoryIcon = (RESOURCE_CATEGORY_ICONS as AnyValue)[category.key]
             return (
               <section
                 className="groupResourceGroup"
@@ -121,15 +122,15 @@ function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsPro
                 <h3 className="groupResourceGroupTitle" id={headingId}>
                   <CategoryIcon size={16} strokeWidth={1.75} aria-hidden />
                   {locked
-                    ? (PUBLIC_RESOURCE_LABELS as any)[category.key] || category.label
+                    ? (PUBLIC_RESOURCE_LABELS as AnyValue)[category.key] || category.label
                     : category.label}
                 </h3>
                 <div className="resourceList groupResourceList">
                   {category.resources.map((resource) => (
                     <ExternalResourceRow
-                      key={(resource as any).url}
-                      href={(resource as any).url}
-                      label={(resource as any).label}
+                      key={(resource as AnyValue).url}
+                      href={(resource as AnyValue).url}
+                      label={(resource as AnyValue).label}
                     />
                   ))}
                 </div>
@@ -161,7 +162,7 @@ export function GroupDetail({ slug }: GroupDetailProps) {
     <div className="detailPage">
       <BackLink href="/groups">Working groups</BackLink>
       <Async query={query}>
-        {(g: any) => (
+        {(g: AnyValue) => (
           <>
             <PageHeader title={g.name} description={g.focusLine}>
               {g.cadenceNote && <p className="metaMuted mono">{g.cadenceNote}</p>}
@@ -186,7 +187,7 @@ export function GroupDetail({ slug }: GroupDetailProps) {
             {g.taskForces?.length > 0 && (
               <Section label="Task forces">
                 <div className="cardGrid groupActivityGrid">
-                  {g.taskForces.map((force: any) => (
+                  {g.taskForces.map((force: AnyValue) => (
                     <A
                       key={force.slug}
                       href={`/groups/${g.slug}/${force.slug}`}
@@ -217,7 +218,7 @@ export function GroupDetail({ slug }: GroupDetailProps) {
             >
               {g.events?.length ? (
                 <div className="cardGrid groupActivityGrid">
-                  {g.events.map((e: any) => (
+                  {g.events.map((e: AnyValue) => (
                     <EventCard key={e.slug} event={e} />
                   ))}
                 </div>
@@ -233,7 +234,7 @@ export function GroupDetail({ slug }: GroupDetailProps) {
             {g.submissions?.length > 0 && (
               <Section label="Open submissions">
                 <div className="cardGrid groupActivityGrid">
-                  {g.submissions.map((s: any) => (
+                  {g.submissions.map((s: AnyValue) => (
                     <SubmissionCard key={s.slug} sub={s} />
                   ))}
                 </div>

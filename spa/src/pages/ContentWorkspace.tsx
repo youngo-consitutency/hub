@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbEdit as ContentIcon } from 'react-icons/tb'
 import { useMemo, useState } from 'react'
@@ -47,7 +48,7 @@ const EMPTY_ANNOUNCEMENT = {
   ctaDeadlineAt: '',
 }
 
-function localDateTime(value: any) {
+function localDateTime(value: AnyValue) {
   if (!value) return ''
   const date = new Date(value)
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -58,9 +59,9 @@ function eventForm(payload = {}) {
   return {
     ...EMPTY_EVENT,
     ...payload,
-    wg: (payload as any).wg?.slug || (payload as any).wg || '',
-    startsAt: localDateTime((payload as any).startsAt),
-    endsAt: localDateTime((payload as any).endsAt),
+    wg: (payload as AnyValue).wg?.slug || (payload as AnyValue).wg || '',
+    startsAt: localDateTime((payload as AnyValue).startsAt),
+    endsAt: localDateTime((payload as AnyValue).endsAt),
   }
 }
 
@@ -68,9 +69,9 @@ function announcementForm(payload = {}) {
   return {
     ...EMPTY_ANNOUNCEMENT,
     ...payload,
-    ctaUrl: (payload as any).ctaUrl || '',
-    ctaLabel: (payload as any).ctaLabel || '',
-    ctaDeadlineAt: localDateTime((payload as any).ctaDeadlineAt),
+    ctaUrl: (payload as AnyValue).ctaUrl || '',
+    ctaLabel: (payload as AnyValue).ctaLabel || '',
+    ctaDeadlineAt: localDateTime((payload as AnyValue).ctaDeadlineAt),
   }
 }
 
@@ -80,11 +81,11 @@ export function ContentWorkspace() {
   const query = useApi('/member/content')
   const { account } = useAccount()
   const [contentType, setContentType] = useState('event')
-  const [payload, setPayload] = useState<any>(EMPTY_EVENT)
-  const [editingId, setEditingId] = useState<any>(null)
-  const [busy, setBusy] = useState<any>(null)
-  const [actionError, setActionError] = useState<any>(null)
-  const [fields, setFields] = useState<Record<string, any>>({})
+  const [payload, setPayload] = useState<AnyValue>(EMPTY_EVENT)
+  const [editingId, setEditingId] = useState<AnyValue>(null)
+  const [busy, setBusy] = useState<AnyValue>(null)
+  const [actionError, setActionError] = useState<AnyValue>(null)
+  const [fields, setFields] = useState<AnyValue>({})
 
   const resetForm = (type = contentType) => {
     setContentType(type)
@@ -93,12 +94,12 @@ export function ContentWorkspace() {
     setFields({})
   }
 
-  const chooseType = (type: any) => {
+  const chooseType = (type: AnyValue) => {
     resetForm(type)
     setActionError(null)
   }
 
-  const editPayload = (type: any, value: any, id = null) => {
+  const editPayload = (type: AnyValue, value: AnyValue, id = null) => {
     setContentType(type)
     setPayload(type === 'event' ? eventForm(value) : announcementForm(value))
     setEditingId(id)
@@ -107,9 +108,10 @@ export function ContentWorkspace() {
     setEditorOpen(true)
   }
 
-  const set = (key: any, value: any) => setPayload((current: any) => ({ ...current, [key]: value }))
+  const set = (key: AnyValue, value: AnyValue) =>
+    setPayload((current: AnyValue) => ({ ...current, [key]: value }))
 
-  const save = async (event: any) => {
+  const save = async (event: AnyValue) => {
     event.preventDefault()
     setBusy('save')
     setActionError(null)
@@ -125,8 +127,8 @@ export function ContentWorkspace() {
             }
           : {
               ...payload,
-              ctaDeadlineAt: (payload as any).ctaDeadlineAt
-                ? new Date((payload as any).ctaDeadlineAt).toISOString()
+              ctaDeadlineAt: (payload as AnyValue).ctaDeadlineAt
+                ? new Date((payload as AnyValue).ctaDeadlineAt).toISOString()
                 : '',
             },
     }
@@ -140,29 +142,29 @@ export function ContentWorkspace() {
       setEditorOpen(false)
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
-      setFields((error as any).fields || {})
+      setActionError((error as AnyValue).message)
+      setFields((error as AnyValue).fields || {})
     } finally {
       setBusy(null)
     }
   }
 
-  const act = async (key: any, call: any) => {
+  const act = async (key: AnyValue, call: AnyValue) => {
     setBusy(key)
     setActionError(null)
     try {
       await call()
       query.retry()
     } catch (error) {
-      setActionError((error as any).message)
+      setActionError((error as AnyValue).message)
     } finally {
       setBusy(null)
     }
   }
 
-  const requestReview = (item: any) =>
+  const requestReview = (item: AnyValue) =>
     act(item.id, () => apiPost(`/member/content/drafts/${item.id}/submit`, {}))
-  const review = (item: any, decision: any) => {
+  const review = (item: AnyValue, decision: AnyValue) => {
     const note =
       decision === 'approve'
         ? ''
@@ -176,7 +178,7 @@ export function ContentWorkspace() {
     if (decision !== 'approve' && !note) return
     act(item.id, () => apiPost(`/member/content/drafts/${item.id}/review`, { decision, note }))
   }
-  const publish = (item: any) =>
+  const publish = (item: AnyValue) =>
     act(item.id, () => apiPost(`/member/content/drafts/${item.id}/publish`, {}))
 
   const title = editingId
@@ -221,7 +223,7 @@ export function ContentWorkspace() {
       />
 
       <Async query={query} skeletons={5}>
-        {(data: any) => (
+        {(data: AnyValue) => (
           <>
             {actionError && !editorOpen && <ErrorCard message={actionError} />}
 
@@ -277,7 +279,7 @@ export function ContentWorkspace() {
                           label="Event type"
                           options={eventTypes}
                           value={payload.type}
-                          onChange={(type: any) => set('type', type)}
+                          onChange={(type: AnyValue) => set('type', type)}
                           error={fields.type}
                           searchPlaceholder="Search event types…"
                         />
@@ -285,13 +287,13 @@ export function ContentWorkspace() {
                           label="Working group"
                           options={[
                             { value: '', label: 'Whole constituency' },
-                            ...data.groups.map((group: any) => ({
+                            ...data.groups.map((group: AnyValue) => ({
                               value: group.slug,
                               label: group.name,
                             })),
                           ]}
                           value={payload.wg}
-                          onChange={(wg: any) => set('wg', wg)}
+                          onChange={(wg: AnyValue) => set('wg', wg)}
                           error={fields.wg}
                           searchPlaceholder="Search working groups…"
                         />
@@ -363,7 +365,7 @@ export function ContentWorkspace() {
                           className="input textarea"
                           required
                           rows={5}
-                          value={(payload as any).body}
+                          value={(payload as AnyValue).body}
                           onChange={(event) => set('body', event.target.value)}
                         />
                         <FieldError msg={fields.body} />
@@ -371,7 +373,7 @@ export function ContentWorkspace() {
                       <label className="contentCheck">
                         <input
                           type="checkbox"
-                          checked={(payload as any).pinned}
+                          checked={(payload as AnyValue).pinned}
                           onChange={(event) => set('pinned', event.target.checked)}
                         />
                         Pin this announcement on the home feed
@@ -382,7 +384,7 @@ export function ContentWorkspace() {
                           <input
                             className="input"
                             type="url"
-                            value={(payload as any).ctaUrl}
+                            value={(payload as AnyValue).ctaUrl}
                             onChange={(event) => set('ctaUrl', event.target.value)}
                             placeholder="https://forms.gle/…"
                           />
@@ -392,7 +394,7 @@ export function ContentWorkspace() {
                           CTA label
                           <input
                             className="input"
-                            value={(payload as any).ctaLabel}
+                            value={(payload as AnyValue).ctaLabel}
                             onChange={(event) => set('ctaLabel', event.target.value)}
                             placeholder="Submit inputs"
                           />
@@ -404,7 +406,7 @@ export function ContentWorkspace() {
                         <input
                           className="input"
                           type="datetime-local"
-                          value={(payload as any).ctaDeadlineAt}
+                          value={(payload as AnyValue).ctaDeadlineAt}
                           onChange={(event) => set('ctaDeadlineAt', event.target.value)}
                         />
                         <FieldError msg={fields.ctaDeadlineAt} />
@@ -543,7 +545,7 @@ export function ContentWorkspace() {
                   <div className="card cardTight">
                     <h3>Events</h3>
                     <div className="contentLiveList">
-                      {data.live.events.map((event: any) => (
+                      {data.live.events.map((event: AnyValue) => (
                         <button
                           key={event.slug}
                           type="button"
@@ -559,7 +561,7 @@ export function ContentWorkspace() {
                   <div className="card cardTight">
                     <h3>Announcements</h3>
                     <div className="contentLiveList">
-                      {data.live.announcements.map((announcement: any) => (
+                      {data.live.announcements.map((announcement: AnyValue) => (
                         <button
                           key={announcement.slug}
                           type="button"

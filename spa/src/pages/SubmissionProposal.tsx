@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api'
 import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
@@ -21,14 +22,14 @@ const initialForm = {
 export function SubmissionProposal() {
   const tracks = useApi('/negotiations')
   const [form, setForm] = useState(initialForm)
-  const [trackDetail, setTrackDetail] = useState<any>(null)
+  const [trackDetail, setTrackDetail] = useState<AnyValue>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [created, setCreated] = useState<any>(null)
+  const [created, setCreated] = useState<AnyValue>(null)
   const [idempotency] = useState(() => crypto.randomUUID())
 
   const selectedTrack = useMemo(
-    () => tracks.data?.items.find((track: any) => track.id === form.trackId),
+    () => tracks.data?.items.find((track: AnyValue) => track.id === form.trackId),
     [tracks.data, form.trackId],
   )
 
@@ -52,10 +53,10 @@ export function SubmissionProposal() {
     }
   }, [selectedTrack])
 
-  const set = (name: any) => (event: any) =>
+  const set = (name: AnyValue) => (event: AnyValue) =>
     setForm((current) => ({ ...current, [name]: event.target.value }))
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setSaving(true)
     setError('')
@@ -83,7 +84,7 @@ export function SubmissionProposal() {
       })
       setCreated(result.project)
     } catch (requestError) {
-      setError((requestError as any).message)
+      setError((requestError as AnyValue).message)
     } finally {
       setSaving(false)
     }
@@ -118,7 +119,7 @@ export function SubmissionProposal() {
         description="Create an internal member proposal with an immutable first draft and source evidence. Saving does not claim YOUNGO endorsement or an external submission route."
       />
       <Async query={tracks}>
-        {(data: any) => (
+        {(data: Doc) => (
           <form onSubmit={submit}>
             <Section label="Scope and purpose">
               <div className="card detailPanel formGrid">
@@ -126,7 +127,7 @@ export function SubmissionProposal() {
                   <span>Negotiation track</span>
                   <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
-                    {data.items.map((track: any) => (
+                    {data.items.map((track: AnyValue) => (
                       <option value={track.id} key={track.id}>
                         {track.topic}
                       </option>
@@ -143,8 +144,8 @@ export function SubmissionProposal() {
                   >
                     <option value="">No call — save as an initiative</option>
                     {(trackDetail?.calls || [])
-                      .filter((call: any) => call.status === 'open')
-                      .map((call: any) => (
+                      .filter((call: AnyValue) => call.status === 'open')
+                      .map((call: AnyValue) => (
                         <option value={call.id} key={call.id}>
                           {call.title}
                         </option>
@@ -230,7 +231,7 @@ export function SubmissionProposal() {
                     disabled={!trackDetail}
                   >
                     <option value="">Select evidence</option>
-                    {(trackDetail?.documents || []).map((document: any) => (
+                    {(trackDetail?.documents || []).map((document: AnyValue) => (
                       <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>

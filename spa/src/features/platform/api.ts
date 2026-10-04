@@ -6,6 +6,7 @@ export const post = (path: string, body: unknown = {}) => apiPost(`/platform${pa
 export const patch = (path: string, body: unknown) => apiPatch(`/platform${path}`, body)
 export function usePlatform<T>(path: string) {
   const [data, setData] = useState<T | null>(null),
+    [asOf, setAsOf] = useState(0),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(true),
     [revision, setRevision] = useState(0)
@@ -21,7 +22,10 @@ export function usePlatform<T>(path: string) {
     setError('')
     get<T>(path)
       .then((value) => {
-        if (active) setData(value)
+        if (active) {
+          setData(value)
+          setAsOf(Date.now())
+        }
       })
       .catch((error) => {
         if (active)
@@ -34,7 +38,7 @@ export function usePlatform<T>(path: string) {
       active = false
     }
   }, [path, revision])
-  return { data, error, loading, reload }
+  return { data, asOf, error, loading, reload }
 }
 export function values(form: HTMLFormElement): Record<string, unknown> {
   const result: Record<string, unknown> = Object.fromEntries(new FormData(form))

@@ -1,10 +1,11 @@
+import type { AnyValue, Doc } from './types'
 import { useApi } from './api'
 
 // Content documents are staff-editable records (collection
 // `content-documents`) fetched through GET /api/documents/:slug.
 // Each body preserves the shape of the former spa/src/content module.
 
-export function useDocument(slug: any) {
+export function useDocument(slug: AnyValue) {
   const { data, error, loading, retry } = useApi(slug ? `/documents/${slug}` : null)
   return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
 }
@@ -30,8 +31,8 @@ export function useContentOptions() {
 // {value,label} lists become lookup maps: labels.teamLabels['membership_team'].
 export function useContentOptionLabels() {
   const options = useContentOptions()
-  const toMap = (items: any) =>
-    Object.fromEntries((items || []).map((item: any) => [item.value, item.label]))
+  const toMap = (items: Doc) =>
+    Object.fromEntries((items || []).map((item: Doc) => [item.value, item.label]))
   return {
     teamLabels: toMap(options.teamLabels),
     assignmentLabels: toMap(options.assignmentLabels),
@@ -42,17 +43,17 @@ export function useContentOptionLabels() {
 
 // ── Pure helpers over fetched bodies ──────────────────────────────
 
-export function publishedLinks(links: any) {
-  return (links || []).filter((link: any) => link.url)
+export function publishedLinks(links: AnyValue) {
+  return (links || []).filter((link: AnyValue) => link.url)
 }
 
 // Single {value,label} lookup used wherever an option list needs a display
 // label (documents-driven vocab and local option constants alike).
-export function optionLabel(items: any, value: any) {
-  return items.find((item: any) => item.value === value)?.label || value
+export function optionLabel(items: Doc, value: AnyValue) {
+  return items.find((item: Doc) => item.value === value)?.label || value
 }
 
-export function getWgOnboarding(wgOnboarding: any, slug: any) {
+export function getWgOnboarding(wgOnboarding: AnyValue, slug: AnyValue) {
   const base = wgOnboarding?.default || {}
   const specific = slug === 'default' ? {} : wgOnboarding?.[slug] || {}
   return {
@@ -61,7 +62,7 @@ export function getWgOnboarding(wgOnboarding: any, slug: any) {
   }
 }
 
-export function deckStyle(brand: any, defaults = {}): Record<string, any> {
+export function deckStyle(brand: AnyValue, defaults = {}): Doc {
   const colours = { ...defaults, ...brand }
   return {
     '--jt-mint': colours.mint,

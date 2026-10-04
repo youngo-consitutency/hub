@@ -1,9 +1,10 @@
 interface MemberAvatarProps {
-  person?: any
-  size?: any
+  person?: AnyValue
+  size?: AnyValue
   className?: string
 }
 
+import type { AnyValue } from '../lib/types'
 import { useEffect, useState } from 'react'
 
 export function MemberAvatar({ person, size = 'md', className = '' }: MemberAvatarProps) {

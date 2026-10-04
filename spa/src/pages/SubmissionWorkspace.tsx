@@ -6,12 +6,13 @@ interface SubmissionWorkspaceProps {
   slug?: string
 }
 
-import { useEffect, useState } from 'react'
+import type { AnyValue, Doc } from '../lib/types'
+import { useEffect, useRef, useState } from 'react'
 import { apiPost, useApi } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section, StatusChip } from '../components/ui'
 import { TbFileDescription as FileDescription, TbHistory as History } from 'react-icons/tb'
 
-const formatDate = (value: any) =>
+const formatDate = (value: AnyValue) =>
   value
     ? new Intl.DateTimeFormat(undefined, {
         dateStyle: 'medium',
@@ -34,7 +35,7 @@ function ProjectList() {
       </PageHeader>
       <Async
         query={query}
-        empty={(data: any) =>
+        empty={(data: Doc) =>
           data.items.length === 0 ? (
             <Empty
               icon={FileDescription}
@@ -49,9 +50,9 @@ function ProjectList() {
           ) : null
         }
       >
-        {(data: any) => (
+        {(data: Doc) => (
           <div className="cardGrid">
-            {data.items.map((project: any) => (
+            {data.items.map((project: Doc) => (
               <A
                 className="card entityCard"
                 href={`/submissions/workspace/${project.id}`}
@@ -86,19 +87,21 @@ function ProjectDetail({ id }: ProjectDetailProps) {
   const [location, setLocation] = useState('')
   const [quote, setQuote] = useState('')
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<any>(null)
+  const [message, setMessage] = useState<AnyValue>(null)
 
   const project = query.data?.project
   const latest = project?.versions?.[0]
+  const hydratedId = useRef<unknown>(null)
   useEffect(() => {
-    if (!latest) return
+    if (!latest || hydratedId.current === latest.id) return
+    hydratedId.current = latest.id
     setContent(latest.contentText)
     setSourceVersionId(latest.citations?.[0]?.sourceVersionId || '')
     setLocation(latest.citations?.[0]?.location?.paragraph || '')
     setQuote(latest.citations?.[0]?.quote || '')
-  }, [latest?.id])
+  }, [latest])
 
-  const saveRevision = async (event: any) => {
+  const saveRevision = async (event: AnyValue) => {
     event.preventDefault()
     setSaving(true)
     setMessage(null)
@@ -124,11 +127,11 @@ function ProjectDetail({ id }: ProjectDetailProps) {
       setMessage({
         tone: 'error',
         text:
-          (error as any).code === 'version_conflict'
+          (error as AnyValue).code === 'version_conflict'
             ? 'Someone saved a newer version. Reloaded the project so you can review it before trying again.'
-            : (error as any).message,
+            : (error as AnyValue).message,
       })
-      if ((error as any).code === 'version_conflict') query.retry()
+      if ((error as AnyValue).code === 'version_conflict') query.retry()
     } finally {
       setSaving(false)
     }
@@ -138,7 +141,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
     <div className="detailPage">
       <BackLink href="/submissions/workspace">My proposals</BackLink>
       <Async query={query}>
-        {({ project: item }: any) => (
+        {({ project: item }: AnyValue) => (
           <>
             <PageHeader title={item.title} description={item.purpose}>
               <div className="detailHeaderMeta">
@@ -211,7 +214,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
 
             <Section label="Version history">
               <div className="stackList">
-                {item.versions.map((version: any) => (
+                {item.versions.map((version: Doc) => (
                   <article className="card detailPanel" key={version.id}>
                     <div className="detailHeaderMeta">
                       <h3>Version {version.version}</h3>
@@ -219,7 +222,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
                     </div>
                     <p className="preWrap">{version.contentText}</p>
                     <p className="muted">Snapshot hash: {version.contentHash}</p>
-                    {version.citations.map((citation: any, index: any) => (
+                    {version.citations.map((citation: Doc, index: number) => (
                       <p className="muted" key={`${citation.sourceVersionId}-${index}`}>
                         Evidence: {citation.sourceVersionId}
                         {citation.location?.paragraph ? ` · ${citation.location.paragraph}` : ''}
@@ -234,7 +237,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
             <Section label="Paragraph amendment proposals">
               {item.amendments.length ? (
                 <div className="stackList">
-                  {item.amendments.map((amendment: any) => (
+                  {item.amendments.map((amendment: AnyValue) => (
                     <article className="card detailPanel" key={amendment.id}>
                       <div className="detailHeaderMeta">
                         <StatusChip status={amendment.decisionStatus} />

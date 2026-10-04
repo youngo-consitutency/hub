@@ -1,5 +1,5 @@
 import type { Payload, PayloadRequest } from 'payload'
-import type { Doc } from './domain'
+import type { Doc, AnyValue } from './domain'
 
 // Shared writer coordination for an account's authority records (S11/S13).
 //
@@ -31,7 +31,7 @@ import type { Doc } from './domain'
 // holding an advisory key another writer needs to acquire first.
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
-function txHandle(payload: Payload, transactionID: any) {
+function txHandle(payload: Payload, transactionID: AnyValue) {
   const tx = (payload.db as Doc).sessions?.[transactionID]?.db
   if (!tx) throw new Error('Authority locks require an open database transaction.')
   return tx
@@ -39,7 +39,7 @@ function txHandle(payload: Payload, transactionID: any) {
 
 export async function advisoryAuthorityLock(
   payload: Payload,
-  transactionID: any,
+  transactionID: AnyValue,
   accountId: number,
 ): Promise<void> {
   if (!Number.isInteger(accountId))
@@ -64,7 +64,7 @@ export async function withAuthorityLock<T>(
   fn: () => Promise<T>,
 ): Promise<T> {
   const accountIds = [...new Set([accountId].flat())].sort((a, b) => a - b)
-  const acquire = async (transactionID: any) => {
+  const acquire = async (transactionID: AnyValue) => {
     for (const id of accountIds) await advisoryAuthorityLock(req.payload, transactionID, id)
   }
   if (req.transactionID != null) {

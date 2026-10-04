@@ -2,11 +2,12 @@
  * "Add this event" deep links for major calendar clients via the
  * calendar-link package. ICS remains for Apple Calendar / desktop Outlook.
  */
+import type { AnyValue } from './types'
 import { google, outlook, office365 } from 'calendar-link'
 
 /** "Add this event" deep links via the calendar-link package. */
 
-const toCalEvent = (event: any) => ({
+const toCalEvent = (event: AnyValue) => ({
   title: event.title || 'YOUNGO event',
   start: new Date(event.startsAt).toISOString(),
   end: new Date(event.endsAt).toISOString(),
@@ -15,26 +16,26 @@ const toCalEvent = (event: any) => ({
 })
 
 /** Google Calendar "create event" template URL. */
-export function googleCalendarUrl(event: any) {
+export function googleCalendarUrl(event: AnyValue) {
   return google(toCalEvent(event))
 }
 
 /** Outlook on the web (live.com) compose deep link. */
-export function outlookWebUrl(event: any) {
+export function outlookWebUrl(event: AnyValue) {
   return outlook(toCalEvent(event))
 }
 
 /** Office 365 Outlook web. */
-export function outlookOfficeUrl(event: any) {
+export function outlookOfficeUrl(event: AnyValue) {
   return office365(toCalEvent(event))
 }
 
-export function icsDownloadPath(slug: any) {
+export function icsDownloadPath(slug: AnyValue) {
   return `/ics/event/${encodeURIComponent(slug)}.ics`
 }
 
 /** Absolute webcal URL for subscribe feeds (Apple / some clients). */
-export function webcalFeedUrl(path: any) {
+export function webcalFeedUrl(path: AnyValue) {
   if (typeof window === 'undefined') return path
   const abs = new URL(path, window.location.origin)
   abs.protocol = 'webcal:'
@@ -49,7 +50,7 @@ export function googleAddByUrlPage() {
  * One-click Google Calendar subscribe. Google adds the ICS URL to the
  * signed-in Google account — the Hub never receives Google credentials.
  */
-export function googleSubscribeUrl(path: any, origin?: any) {
+export function googleSubscribeUrl(path: AnyValue, origin?: AnyValue) {
   const base =
     origin ||
     (typeof window !== 'undefined' && window.location?.origin) ||

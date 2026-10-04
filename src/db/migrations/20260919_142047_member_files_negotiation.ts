@@ -1,6 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+export async function up({ db, payload: _payload, req: _req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_accounts_principal_type" AS ENUM('human', 'service');
   CREATE TYPE "public"."enum_ngo_requests_kind" AS ENUM('submit', 'endorse', 'represent', 'deadline', 'other', 'badge_support');
@@ -423,7 +423,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	WHERE target_type='official_document';`)
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({ db, payload: _payload, req: _req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    CREATE TABLE "negotiation_tracks" (
   	"id" serial PRIMARY KEY NOT NULL,

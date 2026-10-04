@@ -1,3 +1,4 @@
+import type { AnyValue, Doc } from '../lib/types'
 import { useEffect, useState } from 'react'
 import {
   TbCircleCheck as CheckCircle2,
@@ -28,8 +29,8 @@ const CATEGORIES = [
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function EmailNotificationSettings() {
-  const [state, setState] = useState<Record<string, any>>({ loading: true })
-  const [form, setForm] = useState<any>(null)
+  const [state, setState] = useState<Doc>({ loading: true })
+  const [form, setForm] = useState<AnyValue>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -46,7 +47,7 @@ export function EmailNotificationSettings() {
       })
     } catch (thrown) {
       setState({ loading: false })
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     }
   }
 
@@ -62,7 +63,7 @@ export function EmailNotificationSettings() {
       await apiPost('/member/notifications/verify-email/request')
       setMessage('Verification email sent. Open its link within 24 hours.')
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -77,7 +78,7 @@ export function EmailNotificationSettings() {
       setForm(result.preferences)
       setMessage('Email preferences saved.')
     } catch (thrown) {
-      setError((thrown as any).message)
+      setError((thrown as AnyValue).message)
     } finally {
       setBusy(false)
     }
@@ -114,9 +115,9 @@ export function EmailNotificationSettings() {
         <p className="meta" role="status">
           Loading email preferences…
         </p>
-      ) : !(state as any).deliveryConfigured ? (
+      ) : !(state as AnyValue).deliveryConfigured ? (
         <p className="metaMuted">Email delivery is not configured for this Hub deployment yet.</p>
-      ) : !(state as any).emailVerified ? (
+      ) : !(state as AnyValue).emailVerified ? (
         <div className="stackSm">
           <p className="meta">Confirm your account address before enabling digests or alerts.</p>
           <Button onClick={requestVerification} disabled={busy}>
@@ -131,7 +132,7 @@ export function EmailNotificationSettings() {
                 type="checkbox"
                 checked={Boolean(form.email[category.key])}
                 onChange={(event) =>
-                  setForm((current: any) => ({
+                  setForm((current: AnyValue) => ({
                     ...current,
                     email: {
                       ...current.email,
@@ -153,7 +154,7 @@ export function EmailNotificationSettings() {
                 className="input"
                 value={form.digestDay}
                 onChange={(event) =>
-                  setForm((current: any) => ({
+                  setForm((current: AnyValue) => ({
                     ...current,
                     digestDay: Number(event.target.value),
                   }))

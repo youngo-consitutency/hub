@@ -1,21 +1,22 @@
 interface AdminDialogProps {
   title: string
   children?: import('react').ReactNode
-  onClose?: any
+  onClose?: AnyValue
 }
 
 interface AccountManagerProps {
-  account?: any
-  onClose?: any
-  onChanged?: any
-  onReset?: any
+  account?: AnyValue
+  onClose?: AnyValue
+  onChanged?: AnyValue
+  onReset?: AnyValue
 }
 
 interface ResetHandoffProps {
-  reset?: any
-  onClose?: any
+  reset?: AnyValue
+  onClose?: AnyValue
 }
 
+import type { AnyValue, Doc } from '../lib/types'
 import { formatDateTime } from '../lib/time'
 import { WEBSITE_PERMISSIONS } from '../../shared/protocol'
 import { optionLabel as labelFor, useContentOptionLabels } from '../lib/documents'
@@ -98,7 +99,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
   const [error, setError] = useState('')
   const reasonReady = reason.trim().length >= 8
 
-  const run = async (key: any, request: any) => {
+  const run = async (key: AnyValue, request: AnyValue) => {
     setBusy(key)
     setError('')
     try {
@@ -106,7 +107,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
       await onChanged()
       return result
     } catch (requestError) {
-      setError((requestError as any).message)
+      setError((requestError as AnyValue).message)
       return null
     } finally {
       setBusy('')
@@ -121,7 +122,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
       }),
     )
 
-  const toggleTeamRole = (teamRole: any) => {
+  const toggleTeamRole = (teamRole: AnyValue) => {
     const enabled = !account.teamRoles?.includes(teamRole)
     return run(teamRole, () =>
       apiPost(`/member/admin/accounts/${account.id}/team-role`, {
@@ -244,9 +245,9 @@ function ResetHandoff({ reset, onClose }: ResetHandoffProps) {
 }
 
 export function Admin() {
-  const [composer, setComposer] = useState<any>(null)
-  const [data, setData] = useState<any>(null)
-  const [audit, setAudit] = useState<any[]>([])
+  const [composer, setComposer] = useState<AnyValue>(null)
+  const [data, setData] = useState<AnyValue>(null)
+  const [audit, setAudit] = useState<AnyValue[]>([])
   const [error, setError] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -256,8 +257,8 @@ export function Admin() {
   const [sort, setSort] = useState('newest')
   const [page, setPage] = useState(1)
   const [nonce, setNonce] = useState(0)
-  const [selected, setSelected] = useState<any>(null)
-  const [reset, setReset] = useState<any>(null)
+  const [selected, setSelected] = useState<AnyValue>(null)
+  const [reset, setReset] = useState<AnyValue>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 250)
@@ -293,7 +294,7 @@ export function Admin() {
       const history = await apiGet('/member/admin/audit?limit=30')
       setAudit(history.items || [])
     } catch (requestError) {
-      setError((requestError as any).message)
+      setError((requestError as AnyValue).message)
     }
   }
 
@@ -384,7 +385,7 @@ export function Admin() {
       >
         {data.items.length ? (
           <div className="cardGrid">
-            {data.items.map((account: any) => (
+            {data.items.map((account: Doc) => (
               <article key={account.id} className="card cardTight adminAccount">
                 <div>
                   <h3>{account.organizationName || account.name}</h3>

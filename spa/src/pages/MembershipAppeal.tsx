@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { useRef, useState } from 'react'
 import { useDocument } from '../lib/documents'
 import { apiPostFile, useApi } from '../lib/api'
@@ -27,14 +28,14 @@ export function MembershipAppeal() {
   const [identityKind, setIdentityKind] = useState('passport')
   const [statement, setStatement] = useState('')
   const [consent, setConsent] = useState(false)
-  const [file, setFile] = useState<any>(null)
+  const [file, setFile] = useState<AnyValue>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const fileRef = useRef<any>(null)
+  const fileRef = useRef<AnyValue>(null)
   const appeal = query.data?.appeal
   const reason = query.data?.membershipEndReason || account?.membershipEndReason || null
 
-  const submit = async (event: any) => {
+  const submit = async (event: AnyValue) => {
     event.preventDefault()
     setError('')
     if (!consent) {
@@ -61,7 +62,7 @@ export function MembershipAppeal() {
       if (fileRef.current) fileRef.current.value = ''
       query.retry()
     } catch (submitError) {
-      setError((submitError as any).message)
+      setError((submitError as AnyValue).message)
     } finally {
       setBusy(false)
     }

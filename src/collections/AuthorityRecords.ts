@@ -1,5 +1,6 @@
+import type { AnyValue } from '../lib/domain'
 import type { CollectionConfig } from 'payload'
-import { AUTHORITY_ROLE_KEYS, PARTICIPATION_SCOPES } from '../lib/authority'
+import { AUTHORITY_ROLE_KEYS } from '../lib/authority'
 import { staffWrites } from '../lib/collectionAccess'
 
 // The single authority store: every scoped responsibility an account holds —
@@ -105,7 +106,7 @@ export const AuthorityRecords: CollectionConfig = {
       hooks: {
         beforeChange: [
           ({ originalDoc, value }) =>
-            originalDoc ? ((originalDoc as any).provenance ?? value) : value,
+            originalDoc ? ((originalDoc as AnyValue).provenance ?? value) : value,
         ],
       },
     },

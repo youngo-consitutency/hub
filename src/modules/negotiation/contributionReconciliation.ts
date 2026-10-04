@@ -18,7 +18,7 @@ import {
   normalizeReconciliationSuggestionInput,
 } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
-import type { AccountLike } from '../../lib/domain'
+import type { AccountLike, Doc, AnyValue } from '../../lib/domain'
 
 export async function suggestAmendmentReconciliation({
   account,
@@ -28,7 +28,7 @@ export async function suggestAmendmentReconciliation({
 }: {
   account: AccountLike
   amendmentId: string
-  input: any
+  input: AnyValue
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationSuggestionInput(input)
@@ -135,7 +135,7 @@ export async function confirmAmendmentReconciliation({
   account: AccountLike
   amendmentId: string
   reconciliationId: string
-  input: any
+  input: AnyValue
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationConfirmationInput(input)
@@ -165,7 +165,7 @@ export async function confirmAmendmentReconciliation({
       throw new ContributionError(409, 'reconciliation_conflict', 'Mapping is no longer pending.')
     if (
       !data.citations.some(
-        (citation: any) =>
+        (citation: Doc) =>
           citation.sourceVersionId === String(reconciliation.rows[0].suggested_document_version_id),
       )
     )

@@ -4,7 +4,7 @@ import { isVerifiedAccount, requireAccount } from '../lib/accounts'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
-import type { Doc } from '../lib/domain'
+import type { Doc, AnyValue } from '../lib/domain'
 import type { ContentDraft } from '../payload-types'
 
 async function draftAccess(req: PayloadRequest) {
@@ -18,7 +18,7 @@ async function draftAccess(req: PayloadRequest) {
   return { account, access, canDraft, canReview, canPublish }
 }
 
-const draftView = (d: any) => ({
+const draftView = (d: AnyValue) => ({
   id: d.id,
   contentType: d.contentType,
   contentKey: d.contentKey,
@@ -51,13 +51,13 @@ async function getDraft(req: PayloadRequest, id: string) {
     })) as Doc
     if (!d) throw fail.notFound('Draft not found.')
     return d
-  } catch (e: any) {
+  } catch (e: AnyValue) {
     if (e instanceof ApiError) throw e
     throw fail.notFound('Draft not found.')
   }
 }
 
-const contentKeyFor = (contentType: string, payload: any) =>
+const contentKeyFor = (contentType: string, payload: AnyValue) =>
   String(payload?.slug || payload?.title || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -68,7 +68,7 @@ async function applyToLive(
   req: PayloadRequest,
   contentType: string,
   contentKey: string,
-  payload: any,
+  payload: AnyValue,
 ) {
   if (contentType === 'event') {
     const { docs } = await req.payload.find({
@@ -369,7 +369,7 @@ export const contentEndpoints: Endpoint[] = [
       if (contentType === 'event') item = await store.getEvent(req, slug)
       else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
       else if (contentType === 'resource')
-        item = (await store.listResources(req)).find((r: any) => r.slug === slug)
+        item = (await store.listResources(req)).find((r: AnyValue) => r.slug === slug)
       if (!item) throw fail.notFound()
       return json({ item })
     }),

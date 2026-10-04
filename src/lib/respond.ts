@@ -1,3 +1,4 @@
+import type { Doc } from './domain'
 import * as Sentry from '@sentry/nextjs'
 import type { PayloadRequest } from 'payload'
 
@@ -105,7 +106,7 @@ export function endpoint(handler: Handler): Handler {
 export const json = (data: unknown, init?: ResponseInit) => Response.json(data, init)
 
 /** Parsed request body — handlers validate the fields they read. */
-export type JsonBody = Record<string, any>
+export type JsonBody = Doc
 
 // One call site for the body-parsing idiom: an absent body is an empty
 // object, a malformed one throws through the endpoint wrapper as 500.

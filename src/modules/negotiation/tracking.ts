@@ -1,17 +1,17 @@
 // Public negotiation tracking reads — ported from server/lib/negotiations.js.
 // Relational model only; the JSON-fixture fallback path is not carried over.
 import { getPgPool } from '../../lib/pg'
-import type { Doc } from '../../lib/domain'
+import type { Doc, AnyValue } from '../../lib/domain'
 
 const MAX_PAGE_SIZE = 50
 
-function pagination(query: Record<string, any> = {}) {
+function pagination(query: Doc = {}) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1)
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(query.pageSize, 10) || 20))
   return { page, pageSize, offset: (page - 1) * pageSize }
 }
 
-function normalizeFollowPreferences(input: any = {}) {
+function normalizeFollowPreferences(input: AnyValue = {}) {
   const digestFrequency = ['none', 'daily', 'weekly'].includes(input.digestFrequency)
     ? input.digestFrequency
     : 'weekly'
@@ -22,7 +22,7 @@ function normalizeFollowPreferences(input: any = {}) {
   }
 }
 
-export async function listPublicTracks(filters: Record<string, any> = {}) {
+export async function listPublicTracks(filters: Doc = {}) {
   const pool = getPgPool()
   const paging = pagination(filters)
   if (!pool) {
@@ -31,7 +31,7 @@ export async function listPublicTracks(filters: Record<string, any> = {}) {
 
   const values: Doc[] = []
   const where = ["t.publication_status = 'published'"]
-  const add = (sql: string, value: any) => {
+  const add = (sql: string, value: AnyValue) => {
     values.push(value)
     where.push(sql.replace('?', `$${values.length}`))
   }
@@ -204,7 +204,7 @@ export async function getPublicTrack(slug: string) {
   }
 }
 
-export async function listPublicCalls(filters: Record<string, any> = {}) {
+export async function listPublicCalls(filters: Doc = {}) {
   const tracks = await listPublicTracks({ ...filters, pageSize: MAX_PAGE_SIZE })
   const details = await Promise.all(
     tracks.items
@@ -212,7 +212,7 @@ export async function listPublicCalls(filters: Record<string, any> = {}) {
       .map((item) => getPublicTrack(item.slug)),
   )
   const byId = new Map()
-  details.flatMap((item) => item?.calls ?? []).forEach((call: any) => byId.set(call.id, call))
+  details.flatMap((item) => item?.calls ?? []).forEach((call: AnyValue) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 
@@ -261,7 +261,7 @@ export async function putFollow({
 }: {
   accountId: number
   slug: string
-  preferences: any
+  preferences: AnyValue
 }) {
   const pool = getPgPool()
   if (!pool) return { unavailable: true }

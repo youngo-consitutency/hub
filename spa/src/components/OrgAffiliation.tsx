@@ -1,3 +1,4 @@
+import type { AnyValue } from '../lib/types'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 import { Button } from './ui'
@@ -32,11 +33,11 @@ const STATUS_COPY = {
  * confirms, and decides whether the link also opens its portal.
  */
 export function OrgAffiliation() {
-  const [mine, setMine] = useState<any>(null)
-  const [orgs, setOrgs] = useState<any[]>([])
+  const [mine, setMine] = useState<AnyValue>(null)
+  const [orgs, setOrgs] = useState<AnyValue[]>([])
   const [choice, setChoice] = useState('')
-  const [error, setError] = useState<any>(null)
-  const [done, setDone] = useState<any>(null)
+  const [error, setError] = useState<AnyValue>(null)
+  const [done, setDone] = useState<AnyValue>(null)
 
   const load = () => {
     apiGet('/member/ngo/affiliations')
@@ -63,12 +64,12 @@ export function OrgAffiliation() {
       setChoice('')
       load()
     } catch (err) {
-      setError((err as any).message)
+      setError((err as AnyValue).message)
     }
   }
 
   // Organisations already requested or joined should not be offered again.
-  const taken = new Set((mine || []).map((m: any) => m.orgAccountId))
+  const taken = new Set((mine || []).map((m: AnyValue) => m.orgAccountId))
   const options = orgs
     .filter((o) => !taken.has(o.id))
     .map((o) => ({
@@ -89,8 +90,8 @@ export function OrgAffiliation() {
       </div>
 
       <div className="organisationBody">
-        {(mine || []).map((seat: any) => {
-          const copy = (STATUS_COPY as any)[seat.status] || {
+        {(mine || []).map((seat: AnyValue) => {
+          const copy = (STATUS_COPY as AnyValue)[seat.status] || {
             chip: 'chip-neutral',
             label: seat.status,
             note: '',

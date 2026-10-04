@@ -4,22 +4,23 @@ interface ExtLinkProps {
 }
 
 interface DataCategoryProps {
-  category?: any
+  category?: AnyValue
 }
 
 interface BodyProps {
-  notice?: any
-  policies?: any
+  notice?: AnyValue
+  policies?: AnyValue
 }
 
 interface HeaderProps {
-  notice?: any
+  notice?: AnyValue
 }
 
 interface PrivacyProps {
-  standalone?: any
+  standalone?: AnyValue
 }
 
+import type { AnyValue } from '../lib/types'
 import { TbArrowLeft as ArrowLeft, TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { useDocument } from '../lib/documents'
 import { Brand } from '../components/Brand'
@@ -39,7 +40,7 @@ function DataCategory({ category }: DataCategoryProps) {
     <div className="privacyDataCategory">
       <h3>{category.label}</h3>
       <ul className="privacyFields">
-        {category.fields.map((field: any) => (
+        {category.fields.map((field: AnyValue) => (
           <li key={field} className="meta">
             {field}
           </li>
@@ -71,29 +72,29 @@ function Body({ notice, policies }: BodyProps) {
           change.
         </p>
         <div className="mandatePoints privacyDataList">
-          {DATA_CATEGORIES.map((category: any) => (
+          {DATA_CATEGORIES.map((category: AnyValue) => (
             <DataCategory key={category.id} category={category} />
           ))}
         </div>
       </section>
 
-      {PRIVACY_SECTIONS.map((section: any) => (
+      {PRIVACY_SECTIONS.map((section: AnyValue) => (
         <section
           key={section.id}
           className="mandateSection card privacySection"
           id={`privacy-${section.id}`}
         >
           <h2>{section.heading}</h2>
-          {section.paragraphs?.map((para: any, i: any) => (
+          {section.paragraphs?.map((para: AnyValue, i: number) => (
             <p key={`${section.id}-p-${i}`} className="meta mandatePara">
               {para}
             </p>
           ))}
-          {section.bullets?.map((group: any) => (
+          {section.bullets?.map((group: AnyValue) => (
             <div key={group.label} className="mandateBulletGroup">
               <h3>{group.label}</h3>
               <ul>
-                {group.items.map((item: any, i: any) => (
+                {group.items.map((item: AnyValue, i: number) => (
                   <li key={`${group.label}-${i}`} className="meta">
                     {item}
                   </li>
@@ -101,7 +102,7 @@ function Body({ notice, policies }: BodyProps) {
               </ul>
             </div>
           ))}
-          {section.paragraphsAfter?.map((para: any, i: any) => (
+          {section.paragraphsAfter?.map((para: AnyValue, i: number) => (
             <p key={`${section.id}-pa-${i}`} className="meta mandatePara">
               {para}
             </p>
@@ -116,7 +117,7 @@ function Body({ notice, policies }: BodyProps) {
           constituency has adopted, and does not replace them.
         </p>
         <ul className="mandateBulletGroup privacyBulletList">
-          {PRIVACY_META.relatedPolicies.map((related: any) => (
+          {PRIVACY_META.relatedPolicies.map((related: AnyValue) => (
             <li key={related.slug} className="meta">
               <ExtLink href={POLICY_BY_SLUG[related.slug]?.href}>{related.label}</ExtLink>
             </li>
@@ -124,7 +125,7 @@ function Body({ notice, policies }: BodyProps) {
         </ul>
         <h3>Who processes data on YOUNGO’s behalf</h3>
         <ul className="mandateBulletGroup privacyBulletList">
-          {PRIVACY_META.processors.map((processor: any) => (
+          {PRIVACY_META.processors.map((processor: AnyValue) => (
             <li key={processor.name} className="meta">
               <ExtLink href={processor.href}>{processor.name}</ExtLink> — {processor.role}
             </li>
