@@ -16,7 +16,9 @@ Member routes are real App Router paths under `src/app/(site)/(member)/`. Compon
 ```tsx
 'use client'
 import { Name } from '../../../../member/pages/Name'
-export default function Page() { return <Name /> }
+export default function Page() {
+  return <Name />
+}
 ```
 
 Dynamic segments use `useParams<{ slug: string }>()` and pass `slug`/`extra` props — same prop names the components take.
