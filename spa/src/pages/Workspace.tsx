@@ -42,7 +42,7 @@ export function Workspace({ slug }: WorkspaceProps) {
   const [saving, setSaving] = useState(false)
   const markCourseDone = useCallback(() => setCourseDone(true), [])
 
-  const load = () => {
+  const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
     apiGet(`/member/workspace/${encodeURIComponent(slug)}`)
       .then((data) => {
@@ -64,11 +64,11 @@ export function Workspace({ slug }: WorkspaceProps) {
           error: e.message,
         }),
       )
-  }
+  }, [slug])
 
   useEffect(() => {
     load()
-  }, [slug])
+  }, [load])
 
   const { doc: wgOnboardingDoc } = useDocument('wg-onboarding')
   const { doc: selfPacedMap } = useDocument('self-paced-map')

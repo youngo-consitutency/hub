@@ -301,7 +301,7 @@ export async function initPWA() {
   return { registration, isStandalone: isPWA() }
 }
 
-export default {
+const pwa = {
   registerServiceWorker,
   subscribeToPush,
   unsubscribeFromPush,
@@ -317,3 +317,4 @@ export default {
   isInstallPromptAvailable,
   initPWA,
 }
+export default pwa

@@ -116,7 +116,7 @@ interface AsyncProps {
 
 import { Fragment } from 'react'
 import { navigate, replace } from '../lib/router'
-import { countdown, fmtMoment, formatCountdownLabel } from '../lib/time'
+import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
   TbCalendarTime as CalendarTime,

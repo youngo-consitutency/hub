@@ -3,7 +3,7 @@ interface DirectMatchesProps {
   data?: any
 }
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   TbAddressBook as AddressBook,
   TbCalendar as CalendarDays,
@@ -131,7 +131,7 @@ export function Search() {
   const citations = useMemo(() => result?.synthesis?.citations || [], [result])
 
   const isOperator = (account?.access?.capabilities || []).includes('intelligence.operations.read')
-  const refreshReview = async () => {
+  const refreshReview = useCallback(async () => {
     if (!isOperator) return
     try {
       const [queue, metrics] = await Promise.all([
@@ -142,11 +142,11 @@ export function Search() {
     } catch (requestError) {
       setReview((current) => ({ ...current, error: (requestError as any).message }))
     }
-  }
+  }, [isOperator])
 
   useEffect(() => {
     refreshReview()
-  }, [isOperator])
+  }, [refreshReview])
 
   const submit = async (event: any) => {
     event.preventDefault()

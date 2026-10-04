@@ -5,7 +5,7 @@ interface CpManageProps {
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
 import { useContentOptionLabels, useContentOptions } from '../lib/documents'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost, useApi } from '../lib/api'
 import { Async, BackLink, Button, Empty, ErrorCard, PageHeader, FilterPill } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
@@ -27,16 +27,16 @@ export function CpManage({ slug }: CpManageProps) {
   })
   const [msg, setMsg] = useState<any>(null)
 
-  const load = () => {
+  const load = useCallback(() => {
     setError(null)
     apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
       .then((d) => setMembers(d.items || []))
       .catch((e) => setError(e.message))
-  }
+  }, [slug])
 
   useEffect(() => {
     load()
-  }, [slug])
+  }, [load])
 
   const setRole = async (accountId: any, role: any, status: any) => {
     try {

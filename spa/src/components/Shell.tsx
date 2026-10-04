@@ -28,8 +28,6 @@ import {
   TbClipboardCheck as ClipboardCheck,
   TbTools as PenTool,
   TbSitemap as Network,
-  TbAward as Award,
-  TbTrophy as Trophy,
   TbUserCircle as UserCircle,
   TbFilePencil as FilePenLine,
   TbSpeakerphone as Megaphone,
@@ -99,11 +97,12 @@ export function Shell({ children }: ShellProps) {
       }
     }
 
+    const menuButton = menuButtonRef.current
     window.addEventListener('keydown', handleKeyboard)
     return () => {
       window.removeEventListener('keydown', handleKeyboard)
       document.body.style.overflow = previousOverflow
-      menuButtonRef.current?.focus()
+      menuButton?.focus()
     }
   }, [sheet])
 
@@ -112,7 +111,6 @@ export function Shell({ children }: ShellProps) {
   const nav = useMemo(() => {
     const teamRoles = access.teamRoles || []
     const capabilities = access.capabilities || []
-    const isOfficer = capabilities.includes('platform.manage')
     const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
 
     const entries = [
@@ -283,11 +281,12 @@ export function Shell({ children }: ShellProps) {
   }, [
     account,
     verified,
+    path,
     access.ngo,
-    access.manageAllWgs,
-    access.teamRoles?.join(','),
-    access.capabilities?.join(','),
-    access.wgAssignments?.length,
+    access.canAdminister,
+    access.isFocalPoint,
+    access.capabilities,
+    access.teamRoles,
   ])
 
   const mobilePrimaryNav = verified
