@@ -27,7 +27,6 @@ Tags:
 - `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
 - `shrink:` same logic, fewer lines. Show the shorter form.
 
-
 ## Examples
 
 ❌ "This EmailValidator class might be more complex than necessary, have you
