@@ -25,8 +25,8 @@ Use Node.js 22.13 or later in the Node 22 series, or Node 24, and PostgreSQL.
 git clone https://github.com/youngo-consitutency/hub.git
 cd hub
 npm ci
-createdb youngo_dev
-export DATABASE_URL='postgres://localhost:5432/youngo_dev'
+docker run -d --name youngo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=youngo_dev -p 5433:5432 postgres:16
+export DATABASE_URL='postgres://postgres:postgres@localhost:5433/youngo_dev'
 export PAYLOAD_SECRET="$(openssl rand -hex 32)"
 npm run migrate
 npm run dev
