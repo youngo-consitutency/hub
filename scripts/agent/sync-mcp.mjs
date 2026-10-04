@@ -2,28 +2,23 @@
 // Render this project's agent MCP configuration into every supported tool.
 // The canonical server map lives here, not in per-tool files — never edit
 // those by hand. Secrets come from the environment or .env.local; nothing
-// this script writes lands in a tracked file.
+// this script writes lands in a tracked file (all outputs are gitignored —
+// keep them that way).
 //
-//   HINDSIGHT_API_KEY=hsk_… node scripts/agent/sync-mcp.mjs
+//   HINDSIGHT_API_KEY=hsk_… npm run sync:mcp
 //
 // Get the key from a maintainer or the Hindsight/Vectorize dashboard.
 // Restart agents afterwards — MCP clients read config at launch.
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import dotenv from 'dotenv'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
 // .env.local values lose to real env vars.
 const envPath = join(ROOT, '.env.local')
-const fromFile = existsSync(envPath)
-  ? Object.fromEntries(
-      readFileSync(envPath, 'utf8')
-        .split('\n')
-        .filter((l) => /^[A-Z_]+=/.test(l))
-        .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),
-    )
-  : {}
+const fromFile = existsSync(envPath) ? dotenv.parse(readFileSync(envPath)) : {}
 const env = (k) => process.env[k] || fromFile[k]
 
 const key = env('HINDSIGHT_API_KEY')
@@ -40,7 +35,7 @@ const canonical = {
     headers: { Authorization: `Bearer ${key}` },
   },
 }
-if (env('HUB_EMAIL') || env('HUB_TOKEN')) {
+if (env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))) {
   canonical['hub-content'] = {
     command: 'node',
     args: [join(ROOT, 'scripts/agent/hub-content-mcp.mjs')],
@@ -52,11 +47,15 @@ if (env('HUB_EMAIL') || env('HUB_TOKEN')) {
     },
   }
 }
+// Names this script owns — removed before rewriting even when absent from
+// the map above (a credential-less sync must still clear stale tables).
+const MANAGED = [...new Set([...Object.keys(canonical), 'memory', 'hub-content'])]
 
 const json = (o) => JSON.stringify(o, null, 2) + '\n'
 const write = (p, s) => {
   mkdirSync(dirname(p), { recursive: true })
-  writeFileSync(p, s)
+  if (existsSync(p)) chmodSync(p, 0o600)
+  writeFileSync(p, s, { mode: 0o600 })
 }
 
 // Devin (.devin -> .agents/tool-cfg/devin) and Cursor own their whole map.
@@ -69,28 +68,30 @@ for (const p of [
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
-// Zed (JSONC): upsert context_servers entries inside the existing block.
+// Index of the closing `}` of the object literal that opens at openIdx,
+// skipping strings and comments so braces inside them cannot miscount.
+const objEnd = (s, openIdx) => {
+  let depth = 0
+  for (let j = openIdx; j < s.length; j++) {
+    const c = s[j]
+    if (c === '"') {
+      for (j++; j < s.length && s[j] !== '"'; j++) if (s[j] === '\\') j++
+    } else if (c === '/' && s[j + 1] === '/') {
+      while (j < s.length && s[j] !== '\n') j++
+    } else if (c === '/' && s[j + 1] === '*') {
+      while (j < s.length && !(s[j] === '*' && s[j + 1] === '/')) j++
+      j++
+    } else if (c === '{') depth++
+    else if (c === '}' && --depth === 0) return j
+  }
+  return -1
+}
+
+// Zed (JSONC): upsert entries inside context_servers only, so a same-named
+// key elsewhere in settings is never touched.
 {
   const p = join(ROOT, '.zed/settings.json')
   let raw = existsSync(p) ? readFileSync(p, 'utf8') : '{\n}\n'
-  for (const name of Object.keys(canonical)) {
-    for (let i = raw.indexOf(`"${name}"`); i !== -1; i = raw.indexOf(`"${name}"`, i)) {
-      if (!new RegExp(`"${name}"\\s*:\\s*\\{`).test(raw.slice(i, i + name.length + 10))) {
-        i++
-        continue
-      }
-      let j = raw.indexOf('{', i),
-        depth = 0
-      for (; j < raw.length; j++) {
-        if (raw[j] === '{') depth++
-        else if (raw[j] === '}' && --depth === 0) break
-      }
-      let end = j + 1
-      while (raw[end] === ',' || raw[end] === ' ' || raw[end] === '\n') end++
-      raw = raw.slice(0, i) + raw.slice(end)
-      i = -1
-    }
-  }
   const entries = Object.entries(canonical)
     .map(([name, s]) => {
       const body = s.url
@@ -101,17 +102,45 @@ for (const p of [
       return `    "${name}": { ${body} }`
     })
     .join(',\n')
-  raw = /"context_servers"\s*:\s*\{/.test(raw)
-    ? raw.replace(/("context_servers"\s*:\s*\{)/, `$1\n${entries},`)
-    : raw.replace(/\{\s*\n?\}/, `{\n  "context_servers": {\n${entries}\n  }\n}`)
+  const keyIdx = raw.search(/"context_servers"\s*:/)
+  if (keyIdx !== -1) {
+    const openIdx = raw.indexOf('{', keyIdx)
+    const closeIdx = objEnd(raw, openIdx)
+    let block = raw.slice(openIdx, closeIdx + 1)
+    for (const name of MANAGED) {
+      for (let i = block.indexOf(`"${name}"`); i !== -1; i = block.indexOf(`"${name}"`, i)) {
+        if (!new RegExp(`"${name}"\\s*:\\s*\\{`).test(block.slice(i, i + name.length + 10))) {
+          i++
+          continue
+        }
+        const end = objEnd(block, block.indexOf('{', i)) + 1
+        let e = end
+        while (block[e] === ',' || block[e] === ' ' || block[e] === '\n') e++
+        block = block.slice(0, i) + block.slice(e)
+        i = -1
+      }
+    }
+    raw =
+      raw.slice(0, openIdx + 1) + '\n' + entries + ',' + block.slice(1) + raw.slice(closeIdx + 1)
+  } else {
+    const last = raw.lastIndexOf('}')
+    raw = raw.slice(0, last) + `,\n  "context_servers": {\n${entries}\n  }\n` + raw.slice(last + 1)
+  }
   write(p, raw)
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
-// Codex TOML (.codex -> .agents/tool-cfg/codex): replaces mcp_servers tables.
+// Codex TOML (.codex -> .agents/tool-cfg/codex): drop managed tables
+// section-wise so `[` inside array values cannot truncate a section.
 {
   const p = join(ROOT, '.agents/tool-cfg/codex/config.toml')
   const existing = existsSync(p) ? readFileSync(p, 'utf8') : ''
+  const kept = existing
+    .split(/^(?=\[)/m)
+    .filter(
+      (s) => !MANAGED.some((n) => new RegExp(`^\\[mcp_servers\\.${n}[.\\]]`).test(s.trimStart())),
+    )
+    .join('')
   const toml = Object.entries(canonical)
     .map(([name, s]) => {
       if (s.url) {
@@ -128,7 +157,7 @@ for (const p of [
       return `[mcp_servers.${name}]\ncommand = ${JSON.stringify(s.command)}\nargs = ${JSON.stringify(s.args)}${e ? `\nenv = { ${e} }` : ''}`
     })
     .join('\n\n')
-  write(p, existing.replace(/\[mcp_servers\.[^\]]*\][^[]*/g, '').trimEnd() + '\n\n' + toml + '\n')
+  write(p, kept.trimEnd() + '\n\n' + toml + '\n')
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
