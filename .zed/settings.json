@@ -1,1 +1,8 @@
-{"context_servers":{"memory":{"url": "https://api.hindsight.vectorize.io/mcp/youngo-hub/", "headers": {"Authorization": "Bearer hsk_eb1fd588bbc795cde1d2721439c7b09f_835fa8d4bff2496a"}}}}
+{
+  "context_servers": {
+    "memory": {
+      "url": "https://api.hindsight.vectorize.io/mcp/youngo-hub/",
+      "headers": { "Authorization": "Bearer hsk_eb1fd588bbc795cde1d2721439c7b09f_835fa8d4bff2496a" }
+    }
+  }
+}
