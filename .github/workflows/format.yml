@@ -6,8 +6,8 @@ on:
 
 permissions:
   contents: write
-  # Auto-fix commits pushed with GITHUB_TOKEN do not trigger workflow events,
-  # so the final step re-dispatches the PR checks onto the new head commit.
+  # Without a PAT, auto-fix pushes emit no events and the final step
+  # re-dispatches the other workflows onto the new commit.
   actions: write
 
 concurrency:
@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -50,14 +51,42 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "chore: prettier auto-format"
-          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # The PAT stays out of every step that runs PR code (npm ci lifecycle
+      # scripts could exfiltrate it) — it is bound only to this push step.
+      # A PAT push emits pull_request synchronize so required checks run
+      # natively; a GITHUB_TOKEN push is silent.
+      - name: Push formatting changes
+        id: push
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          AUTOFIX_TOKEN: ${{ secrets.AUTOFIX_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$AUTOFIX_TOKEN" ]; then
+            token="$AUTOFIX_TOKEN"
+            echo "used_pat=true" >> "$GITHUB_OUTPUT"
+          else
+            token="$GITHUB_TOKEN"
+            echo "used_pat=false" >> "$GITHUB_OUTPUT"
+          fi
+          auth=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
+          GIT_CONFIG_COUNT=1 \
+          GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+          GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" \
+            git push
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
-      # Pushes made with GITHUB_TOKEN emit no events, so checks triggered by
-      # pull_request would never run on the auto-fix commit and required checks
-      # would stay "expected" forever. Dispatch them onto the new head instead.
-      - name: Retrigger PR checks on the auto-fix commit
-        if: steps.commit.outputs.pushed == 'true' && github.event_name == 'pull_request'
+      # GITHUB_TOKEN pushes emit no events, so pull_request checks would never
+      # run on the auto-fix commit. Re-dispatched runs report on the commit but
+      # cannot satisfy PR-scoped required checks — setting AUTOFIX_TOKEN is the
+      # real fix; this keeps verification visible on the commit meanwhile.
+      - name: Re-dispatch checks on the auto-fix commit
+        if: >-
+          steps.push.outputs.pushed == 'true' &&
+          steps.push.outputs.used_pat == 'false' &&
+          github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ github.head_ref }}
