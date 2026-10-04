@@ -18,16 +18,22 @@ YOUNGO Hub is the current YOUNGO member and mission-control product — one Next
 - Store unauthenticated public queries as fingerprints only; never persist their raw text.
 - Routine deploys must never print reset URLs. `PRINT_ADMIN_RESET_URLS` is emergency opt-in and applies only to a newly created bootstrap admin.
 
-## Agent content MCP
+## Agent MCP
 
 Agents add Hub information (opportunities, resources, events, announcements)
-through `scripts/agent/hub-content-mcp.mjs` (stdio) or `mcp-content/server.mjs`
+through `scripts/agent/hub-mcp.mjs` (stdio) or `mcp-content/server.mjs`
 (HTTP) using a Hub account (`HUB_EMAIL` / `HUB_PASSWORD` or
 `HUB_TOKEN`). Writes go to the live HTTP API, so review queues and the audit
 trail still apply. Live events/announcements can be loaded with `get_content`
 and patched with `update_content` (draft pipeline or apply-now). Never give
 that MCP `DATABASE_URL`. The HTTP service is a separate process with
 `MCP_TOKEN`; do not mount it on the Hub web process. See the [Agent tools guide](https://github.com/youngo-consitutency/hub/wiki/Agent-tools).
+
+The stdio entry is the unified `hub` server: content tools plus the shared
+session-memory tools (`mcp-content/lib/memory.mjs`, attached when
+`HINDSIGHT_API_KEY` is set). The hosted HTTP service serves content tools
+only — never attach memory there, or external consumers' recall and retain
+would land in this project's bank.
 
 ## Negotiation agent proposals
 
@@ -64,7 +70,7 @@ Constituency Work so this stays a last resort; every use is auditable via
 
 Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains, and the shared `neon-*`, `ponytail-*`, `typesafe-ai` sets ship in the repo — restore them into your agent's skill dirs with `npx skills experimental_install`), and `tool-cfg/` holds generated per-tool MCP configs — it is a local convention reached through `.claude`/`.codex`/`.cursor` symlinks on the maintainer's machine, not a path tools discover on their own.
 
-Session memory uses the `memory` MCP server (Hindsight bank `youngo-hub`): `recall` with tag `project:youngo-hub` before substantive work, `retain` decisions/findings/state after. There is no local memory vault — do not create `.agent-vault/` or similar. Set `HINDSIGHT_API_KEY` in `.env.local` (ask a maintainer) and run `npm run sync:mcp` to write the `memory` server — and `hub-content` when Hub credentials are present — into `.mcp.json`, `.zed/settings.json`, and `.agents/tool-cfg/{devin,cursor,codex}`. Those files are gitignored; the script is the only place the wiring is defined, so never hand-edit its outputs.
+Session memory uses the Hindsight bank `youngo-hub`, exposed as tools on the `hub` MCP server: `recall` with tag `project:youngo-hub` before substantive work, `retain` decisions/findings/state after. There is no local memory vault — do not create `.agent-vault/` or similar. Set `HINDSIGHT_API_KEY` (and Hub credentials for content tools) in `.env.local`, then run `npm run sync:mcp` to write the `hub` server into `.mcp.json`, `.zed/settings.json`, and `.agents/tool-cfg/{devin,cursor,codex}`. Those files are gitignored; the script is the only place the wiring is defined, so never hand-edit its outputs.
 
 ## Verification
 
