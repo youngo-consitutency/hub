@@ -1,3 +1,8 @@
+interface AuthGateProps {
+  onAuthenticated?: any
+  initialMode?: any
+}
+
 import { useMemo, useState } from 'react'
 import { TbCheck as Check, TbKey as KeyRound, TbUserPlus as UserPlus } from 'react-icons/tb'
 import { apiPost } from '../lib/api'
@@ -24,7 +29,7 @@ import { RegisterOrgForm } from './auth/RegisterOrgForm'
 /**
  * Sign-in and registration for individuals and organisations.
  */
-export function AuthGate({ onAuthenticated, initialMode = 'register' }: any) {
+export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGateProps) {
   // Versions stamped on registration come from the CMS documents the user
   // actually read — the bundle no longer ships legal copy.
   const { doc: membershipPolicy } = useDocument('membership-policy')

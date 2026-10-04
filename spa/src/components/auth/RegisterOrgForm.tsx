@@ -1,3 +1,18 @@
+interface RegisterOrgFormProps {
+  form?: any
+  fields?: any
+  admitted?: any
+  nonAdmitted?: any
+  missionWords?: any
+  countryOptions?: any
+  setForm?: any
+  setReg?: any
+  setChoice?: any
+  setPhone?: any
+  toggleWg?: any
+  ensureCountryOptions?: any
+}
+
 import { useDocument } from '../../lib/documents'
 import { FieldError, SearchableSelect } from '../FormControls'
 import { asOptions, fieldClass, checkClass, loadPhoneSupport } from './helpers'
@@ -16,7 +31,7 @@ export function RegisterOrgForm({
   setPhone,
   toggleWg,
   ensureCountryOptions,
-}: any) {
+}: RegisterOrgFormProps) {
   const { doc: policiesDoc } = useDocument('policies')
   const { doc: connect } = useDocument('connect')
   const { doc: regOptions } = useDocument('registration-options')

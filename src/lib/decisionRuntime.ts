@@ -14,7 +14,7 @@ import {
 } from './decisions'
 import { audit } from './audit'
 import type { VetoRequest } from './decisions'
-import type { AccountLike, ActorLike, Doc, DocData } from './domain'
+import type { AccountLike, ActorLike, Doc } from './domain'
 
 // Shared runtime for the S09 decision workflow. Both the member endpoints
 // (src/endpoints/decisions.ts) and the platform bridge
@@ -66,10 +66,10 @@ export async function recordEvent(
     data: {
       proposal: proposalId,
       type,
-      actor: actor?.id ?? null,
+      actor: actor?.id != null ? Number(actor.id) : null,
       detail: detail ?? null,
       createdAt: new Date().toISOString(),
-    } as DocData,
+    },
     overrideAccess: true,
   })
   await audit(req, actor, {

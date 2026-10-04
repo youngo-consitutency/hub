@@ -13,7 +13,9 @@ import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
 import { withAuthorityLock } from '../lib/authorityLock'
-import type { Doc, DocData, AccountLike } from '../lib/domain'
+import type { Doc, AccountLike } from '../lib/domain'
+import type { Handover } from '../payload-types'
+import type { AuditEntry } from '../lib/audit'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
 // resignation, termination, and the two-week handover duty. Account status
@@ -55,14 +57,14 @@ async function openHandover(
     collection: 'handovers',
     data: {
       account: accountId,
-      reason,
+      reason: reason as Handover['reason'],
       scopeLabel,
       items: items.map((label) => ({ label, done: false })),
       dueAt: new Date(Date.now() + 14 * DAY).toISOString(),
       status: 'open',
       openedBy: actorId,
       openedAt: new Date().toISOString(),
-    } as DocData,
+    },
     overrideAccess: true,
     // Always bind to the request: inside an authority transaction an
     // unbound create runs on another pooled connection and deadlocks on
@@ -119,7 +121,7 @@ export async function applyMembershipTransition(
     accountFields: Record<string, any>
     handover: { reason: string; scopeLabel: string; items?: string[] }
     actor: AccountLike
-    auditEntry: (result: { ended: number; updated: any }) => Record<string, any>
+    auditEntry: (result: { ended: number; updated: any }) => AuditEntry
   },
   hooks?: { beforeSweep?: () => Promise<void>; afterSweep?: () => Promise<void> },
 ) {

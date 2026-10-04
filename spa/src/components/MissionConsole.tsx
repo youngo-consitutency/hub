@@ -1,6 +1,14 @@
+interface MissionMetricProps {
+  value?: any
+  label?: string
+  tone?: any
+  href?: string
+  icon?: import('react').ElementType
+}
+
 import { A } from './ui'
 
-export function MissionMetric({ value, label, tone, href, icon: Icon }: any) {
+export function MissionMetric({ value, label, tone, href, icon: Icon }: MissionMetricProps) {
   const className = `mcMetric${tone ? ` mcMetric-${tone}` : ''}${href ? ' mcMetricLink' : ''}`
   const inner = (
     <>

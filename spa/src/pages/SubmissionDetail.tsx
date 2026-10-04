@@ -1,3 +1,7 @@
+interface SubmissionDetailProps {
+  slug?: string
+}
+
 import { useApi } from '../lib/api'
 import {
   Async,
@@ -19,7 +23,7 @@ const STEP_INDEX = {
   archived: 3,
 }
 
-export function SubmissionDetail({ slug }: any) {
+export function SubmissionDetail({ slug }: SubmissionDetailProps) {
   const query = useApi(`/submissions/${slug}`)
   return (
     <div className="detailPage">

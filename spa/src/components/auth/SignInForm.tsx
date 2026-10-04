@@ -1,3 +1,14 @@
+interface SignInFormProps {
+  login?: any
+  fields?: any
+  error?: string
+  status?: any
+  setLog?: any
+  onSubmit?: any
+  onForgot?: any
+  className?: string
+}
+
 import { Button } from '../ui'
 import { FieldError } from '../FormControls'
 import { fieldClass } from './helpers'
@@ -12,7 +23,7 @@ export function SignInForm({
   onSubmit,
   onForgot,
   className = 'authForm card',
-}: any) {
+}: SignInFormProps) {
   return (
     <form className={className} onSubmit={onSubmit} noValidate>
       <FormAlert>{error}</FormAlert>

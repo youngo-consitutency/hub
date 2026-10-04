@@ -7,7 +7,7 @@ import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { slugify } from '../../spa/shared/slug'
 import { audit } from '../lib/audit'
-import type { AccountLike, Doc, DocData } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
 
 const canReview = async (req: PayloadRequest, account: AccountLike) => {
   const access = await getAccessProfile(req, account)
@@ -91,7 +91,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug },
           author: account.id,
           status: 'in_review',
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -130,7 +130,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug: draft.contentKey },
           status: 'in_review',
           revision: (draft.revision || 1) + 1,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -230,7 +230,7 @@ export const resourceEndpoints: Endpoint[] = [
           kind: b.kind,
           detail,
           reportedBy: account.id,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -285,7 +285,7 @@ export const resourceEndpoints: Endpoint[] = [
             tags: b.checks?.tags === true,
           },
           reviewedBy: account.id,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -306,7 +306,7 @@ export const resourceEndpoints: Endpoint[] = [
                   resolvedAt: new Date().toISOString(),
                   resolvedBy: account.id,
                   reviewId: String(review.id),
-                } as DocData,
+                },
                 overrideAccess: true,
                 req,
               })
@@ -338,7 +338,7 @@ export const resourceEndpoints: Endpoint[] = [
                     : 'verified',
               checkedAt: new Date().toISOString(),
               retiredAt: b.status === 'retired' ? new Date().toISOString() : null,
-            } as DocData,
+            },
             overrideAccess: true,
             req,
           })
@@ -371,7 +371,7 @@ export const resourceEndpoints: Endpoint[] = [
           payload: { ...b, slug },
           author: account.id,
           status: 'in_review',
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })

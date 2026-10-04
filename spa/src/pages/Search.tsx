@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+interface DirectMatchesProps {
+  query?: any
+  data?: any
+}
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   TbAddressBook as AddressBook,
   TbCalendar as CalendarDays,
@@ -69,7 +74,7 @@ function confidenceLabel(value: any) {
   return 'Insufficient evidence'
 }
 
-function DirectMatches({ query, data }: any) {
+function DirectMatches({ query, data }: DirectMatchesProps) {
   const total = GROUPS.reduce((count, group) => count + (data[group.key]?.length || 0), 0)
   if (!total)
     return (
@@ -126,7 +131,7 @@ export function Search() {
   const citations = useMemo(() => result?.synthesis?.citations || [], [result])
 
   const isOperator = (account?.access?.capabilities || []).includes('intelligence.operations.read')
-  const refreshReview = async () => {
+  const refreshReview = useCallback(async () => {
     if (!isOperator) return
     try {
       const [queue, metrics] = await Promise.all([
@@ -137,11 +142,11 @@ export function Search() {
     } catch (requestError) {
       setReview((current) => ({ ...current, error: (requestError as any).message }))
     }
-  }
+  }, [isOperator])
 
   useEffect(() => {
     refreshReview()
-  }, [isOperator])
+  }, [refreshReview])
 
   const submit = async (event: any) => {
     event.preventDefault()

@@ -1,3 +1,7 @@
+interface WgActivityCardProps {
+  activity?: any
+}
+
 import { AddToCalendar } from './AddToCalendar'
 import { DestinationIcon } from './DestinationLink'
 import { fmtMoment } from '../lib/time'
@@ -32,7 +36,7 @@ function calendarEvent(activity: any) {
   }
 }
 
-export function WgActivityCard({ activity }: any) {
+export function WgActivityCard({ activity }: WgActivityCardProps) {
   const item = activityFields(activity)
   const event = calendarEvent(item)
   const start = item.startsAt ? fmtMoment(item.startsAt) : null

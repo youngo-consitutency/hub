@@ -1,9 +1,14 @@
+interface ChangePasswordGateProps {
+  account?: any
+  onChanged?: any
+}
+
 import { TbKey as KeyRound } from 'react-icons/tb'
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { Button } from './ui'
 import { signOut } from '../lib/session'
 
-export function ChangePasswordGate({ account, onChanged }: any) {
+export function ChangePasswordGate({ account, onChanged }: ChangePasswordGateProps) {
   return (
     <div className="mandateGate">
       <div className="mandateShell" style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>

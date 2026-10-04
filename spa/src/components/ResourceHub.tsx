@@ -1,3 +1,33 @@
+interface ResourceCardProps {
+  resource?: any
+  onReport?: any
+  onCorrect?: any
+  onReview?: any
+}
+
+interface ResourceCatalogueProps {
+  heading?: any
+  onCorrect?: any
+}
+
+interface ResourcePathwayGroupProps {
+  group?: any
+  items?: any
+  onReport?: any
+  onCorrect?: any
+}
+
+interface ResourceSubmissionPanelProps {
+  initialResource?: any
+  onCancel?: any
+}
+
+interface ResourceReportProps {
+  resource?: any
+  onClose?: any
+  onSaved?: any
+}
+
 import { SidePanel } from './SidePanel.tsx'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
@@ -58,7 +88,7 @@ const EMPTY_RESOURCE = (vocab: any) => ({
   language: vocab.resourceLanguages[0] || '',
 })
 
-export function ResourceCard({ resource, onReport, onCorrect, onReview }: any) {
+export function ResourceCard({ resource, onReport, onCorrect, onReview }: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = (TYPE_ICONS as any)[resource.type] || BookOpen
   return (
@@ -125,7 +155,10 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: any) {
   )
 }
 
-export function ResourceCatalogue({ heading = 'Resource catalogue', onCorrect }: any) {
+export function ResourceCatalogue({
+  heading = 'Resource catalogue',
+  onCorrect,
+}: ResourceCatalogueProps) {
   const query = useApi('/resources')
   const {
     resourcePathways: RESOURCE_PATHWAYS,
@@ -393,7 +426,7 @@ export function ResourceCatalogue({ heading = 'Resource catalogue', onCorrect }:
   )
 }
 
-function ResourcePathwayGroup({ group, items, onReport, onCorrect }: any) {
+function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePathwayGroupProps) {
   const [visible, setVisible] = useState(3)
   return (
     <Section label={group.label} meta={`${items.length} resources`}>
@@ -417,7 +450,10 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }: any) {
   )
 }
 
-export function ResourceSubmissionPanel({ initialResource, onCancel }: any) {
+export function ResourceSubmissionPanel({
+  initialResource,
+  onCancel,
+}: ResourceSubmissionPanelProps) {
   const submissions = useApi('/member/resources/submissions/mine')
   const vocab = useContentOptions()
   const {
@@ -728,7 +764,7 @@ export function ResourceSubmissionPanel({ initialResource, onCancel }: any) {
   )
 }
 
-function ResourceReport({ resource, onClose, onSaved }: any) {
+function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
   const { resourceIssueKinds } = useContentOptions()
   const [kind, setKind] = useState('')
   const selectedKind = kind || resourceIssueKinds[0]?.value || ''

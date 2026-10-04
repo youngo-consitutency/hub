@@ -1,3 +1,7 @@
+interface CoyRowProps {
+  coy?: any
+}
+
 import { regionLabel } from '../../lib/regions'
 import {
   TbCalendar as CalendarDays,
@@ -26,7 +30,7 @@ const STATUS_LABEL = {
   cancelled: ['chip-danger', 'Cancelled'],
 }
 
-function CoyRow({ coy }: any) {
+function CoyRow({ coy }: CoyRowProps) {
   const status = resolveCoyStatus(coy)
   const [chipClass, chipLabel] = (STATUS_LABEL as any)[status] || ['chip-neutral', status]
   const place = [coy.city, coy.country].filter(Boolean).join(', ')

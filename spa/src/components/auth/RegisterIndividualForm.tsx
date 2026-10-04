@@ -1,3 +1,20 @@
+interface RegisterIndividualFormProps {
+  form?: any
+  fields?: any
+  under18?: any
+  countryOptions?: any
+  nationalityOptions?: any
+  setForm?: any
+  setReg?: any
+  setChoice?: any
+  setPhone?: any
+  setMinorityIdentity?: any
+  toggleMinority?: any
+  toggleWg?: any
+  ensureCountryOptions?: any
+  ensureNationalityOptions?: any
+}
+
 import { useDocument } from '../../lib/documents'
 import { Button } from '../ui'
 import { DatePicker, FieldError, MultiSelectDropdown, SearchableSelect } from '../FormControls'
@@ -19,7 +36,7 @@ export function RegisterIndividualForm({
   toggleWg,
   ensureCountryOptions,
   ensureNationalityOptions,
-}: any) {
+}: RegisterIndividualFormProps) {
   const { doc: policiesDoc } = useDocument('policies')
   const { doc: connect } = useDocument('connect')
   const { doc: regOptions } = useDocument('registration-options')

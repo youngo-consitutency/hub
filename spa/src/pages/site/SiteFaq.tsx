@@ -1,8 +1,14 @@
+interface FaqItemProps {
+  q?: any
+  a?: any
+  id?: string
+}
+
 import { TbChevronDown as ChevronDown } from 'react-icons/tb'
 import { A, Skeletons } from '../../components/ui'
 import { useDocument } from '../../lib/documents'
 
-function FaqItem({ q, a, id }: any) {
+function FaqItem({ q, a, id }: FaqItemProps) {
   return (
     <li>
       <details className="siteFaqItem" id={id}>

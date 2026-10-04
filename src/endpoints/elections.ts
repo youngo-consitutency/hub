@@ -6,7 +6,7 @@ import { isUniqueViolation } from '../lib/pg'
 import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
 import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 // S10 elections. See lib/governance.ts for shared helpers and the
 // credential-secrecy model.
@@ -79,7 +79,7 @@ export const electionEndpoints: Endpoint[] = [
           })),
           quorumIndividuals: b.quorumIndividuals ?? 100,
           quorumOrganisations: b.quorumOrganisations ?? 25,
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -209,7 +209,7 @@ export const electionEndpoints: Endpoint[] = [
           videoUrl: b.videoUrl?.trim() || null,
           status: 'pending',
           nominatedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -286,7 +286,7 @@ export const electionEndpoints: Endpoint[] = [
           kind,
           tokenHash: tokenHash(e.id, token),
           issuedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
       })
       await audit(req, account, {
@@ -367,7 +367,7 @@ export const electionEndpoints: Endpoint[] = [
             kind: voter.kind,
             ranks: ranks.map(Number),
             castAt: new Date().toISOString(),
-          } as DocData,
+          },
           overrideAccess: true,
         })
       } catch (error) {

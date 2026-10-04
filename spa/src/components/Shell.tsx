@@ -1,3 +1,7 @@
+interface ShellProps {
+  children?: import('react').ReactNode
+}
+
 import { canManageGroups } from '../lib/groupPermissions'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -24,8 +28,6 @@ import {
   TbClipboardCheck as ClipboardCheck,
   TbTools as PenTool,
   TbSitemap as Network,
-  TbAward as Award,
-  TbTrophy as Trophy,
   TbUserCircle as UserCircle,
   TbFilePencil as FilePenLine,
   TbSpeakerphone as Megaphone,
@@ -44,7 +46,7 @@ const SECTION = {
   mine: 'Your responsibilities',
 }
 
-export function Shell({ children }: any) {
+export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
   const menuButtonRef = useRef<any>(null)
@@ -95,11 +97,12 @@ export function Shell({ children }: any) {
       }
     }
 
+    const menuButton = menuButtonRef.current
     window.addEventListener('keydown', handleKeyboard)
     return () => {
       window.removeEventListener('keydown', handleKeyboard)
       document.body.style.overflow = previousOverflow
-      menuButtonRef.current?.focus()
+      menuButton?.focus()
     }
   }, [sheet])
 
@@ -108,7 +111,6 @@ export function Shell({ children }: any) {
   const nav = useMemo(() => {
     const teamRoles = access.teamRoles || []
     const capabilities = access.capabilities || []
-    const isOfficer = capabilities.includes('platform.manage')
     const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
 
     const entries = [
@@ -279,11 +281,12 @@ export function Shell({ children }: any) {
   }, [
     account,
     verified,
+    path,
     access.ngo,
-    access.manageAllWgs,
-    access.teamRoles?.join(','),
-    access.capabilities?.join(','),
-    access.wgAssignments?.length,
+    access.canAdminister,
+    access.isFocalPoint,
+    access.capabilities,
+    access.teamRoles,
   ])
 
   const mobilePrimaryNav = verified

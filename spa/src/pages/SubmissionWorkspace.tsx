@@ -1,3 +1,11 @@
+interface ProjectDetailProps {
+  id: string
+}
+
+interface SubmissionWorkspaceProps {
+  slug?: string
+}
+
 import { useEffect, useState } from 'react'
 import { apiPost, useApi } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section, StatusChip } from '../components/ui'
@@ -71,7 +79,7 @@ function ProjectList() {
   )
 }
 
-function ProjectDetail({ id }: any) {
+function ProjectDetail({ id }: ProjectDetailProps) {
   const query = useApi(`/negotiations/projects/${encodeURIComponent(id)}`)
   const [content, setContent] = useState('')
   const [sourceVersionId, setSourceVersionId] = useState('')
@@ -250,6 +258,6 @@ function ProjectDetail({ id }: any) {
   )
 }
 
-export function SubmissionWorkspace({ slug }: any) {
+export function SubmissionWorkspace({ slug }: SubmissionWorkspaceProps) {
   return slug ? <ProjectDetail id={slug} /> : <ProjectList />
 }

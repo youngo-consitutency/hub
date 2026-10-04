@@ -1,3 +1,7 @@
+interface MembershipMandateGateProps {
+  onComplete?: any
+}
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   TbBook as BookOpen,
@@ -16,7 +20,7 @@ import { Brand } from './Brand'
  * Landing is summary-first for readability; full legal text is available
  * in a collapsible section that still requires scroll-to-end.
  */
-export function MembershipMandateGate({ onComplete }: any) {
+export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps) {
   const { doc, loading, error, retry } = useDocument('membership-policy')
   const MANDATE_ANALYSIS = doc?.MANDATE_ANALYSIS
   const POLICY_META = doc?.POLICY_META

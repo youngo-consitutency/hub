@@ -1,7 +1,44 @@
+interface FieldErrorProps {
+  msg?: any
+}
+
+interface DatePickerProps {
+  label?: string
+  value?: any
+  onChange?: any
+  error?: string
+  min?: any
+  max?: any
+}
+
+interface SearchableSelectProps {
+  label?: string
+  options?: any
+  value?: any
+  onChange?: any
+  error?: string
+  placeholder?: string
+  searchPlaceholder?: any
+  onOpen?: any
+  className?: string
+  hideLabel?: any
+  disabled?: boolean
+  children?: import('react').ReactNode
+}
+
+interface MultiSelectDropdownProps {
+  label?: string
+  options?: any
+  selected?: any
+  onToggle?: any
+  error?: string
+  hideLabel?: any
+}
+
 import { useState } from 'react'
 import { useCombobox } from 'downshift'
 
-export function FieldError({ msg }: any) {
+export function FieldError({ msg }: FieldErrorProps) {
   if (!msg) return null
   return (
     <span className="fieldError" role="alert">
@@ -19,7 +56,7 @@ function matchingOptions(options: any, query: any) {
 }
 
 /** Native date field with the same field chrome as other form controls. */
-export function DatePicker({ label, value, onChange, error, min, max }: any) {
+export function DatePicker({ label, value, onChange, error, min, max }: DatePickerProps) {
   return (
     <label className={`field${error ? ' hasError' : ''}`}>
       <span>{label}</span>
@@ -50,7 +87,7 @@ export function SearchableSelect({
   hideLabel = false,
   disabled = false,
   children,
-}: any) {
+}: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const list = Array.isArray(options) ? options : []
   const selected = list.find((option) => option.value === value) || null
@@ -116,7 +153,7 @@ export function MultiSelectDropdown({
   onToggle,
   error,
   hideLabel = false,
-}: any) {
+}: MultiSelectDropdownProps) {
   const [query, setQuery] = useState('')
   const list = Array.isArray(options) ? options : []
   const selectedLabels = list

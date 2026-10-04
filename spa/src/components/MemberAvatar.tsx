@@ -1,6 +1,12 @@
+interface MemberAvatarProps {
+  person?: any
+  size?: any
+  className?: string
+}
+
 import { useEffect, useState } from 'react'
 
-export function MemberAvatar({ person, size = 'md', className = '' }: any) {
+export function MemberAvatar({ person, size = 'md', className = '' }: MemberAvatarProps) {
   const [failed, setFailed] = useState(false)
   const name = person?.displayName || person?.name || 'YOUNGO member'
   const photoUrl = person?.photoUrl

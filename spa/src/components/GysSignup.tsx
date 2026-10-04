@@ -1,3 +1,7 @@
+interface GysSignupProps {
+  embedded?: any
+}
+
 import { useState } from 'react'
 import { apiPost } from '../lib/api'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
@@ -10,7 +14,7 @@ const EMPTY = {
   website: '',
 }
 
-export function GysSignup({ embedded = false }: any) {
+export function GysSignup({ embedded = false }: GysSignupProps) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState('idle') // idle | submitting | done

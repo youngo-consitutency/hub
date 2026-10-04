@@ -1,3 +1,21 @@
+interface AdminDialogProps {
+  title: string
+  children?: import('react').ReactNode
+  onClose?: any
+}
+
+interface AccountManagerProps {
+  account?: any
+  onClose?: any
+  onChanged?: any
+  onReset?: any
+}
+
+interface ResetHandoffProps {
+  reset?: any
+  onClose?: any
+}
+
 import { formatDateTime } from '../lib/time'
 import { WEBSITE_PERMISSIONS } from '../../shared/protocol'
 import { optionLabel as labelFor, useContentOptionLabels } from '../lib/documents'
@@ -64,7 +82,7 @@ const SORT_OPTIONS = [
 ]
 const TEAM_ROLES = ['membership_team', 'gys_policy_team', ...WEBSITE_PERMISSIONS]
 
-function AdminDialog({ title, children, onClose }: any) {
+function AdminDialog({ title, children, onClose }: AdminDialogProps) {
   return (
     <SidePanel title={title} onClose={onClose}>
       {children}
@@ -72,7 +90,7 @@ function AdminDialog({ title, children, onClose }: any) {
   )
 }
 
-function AccountManager({ account, onClose, onChanged, onReset }: any) {
+function AccountManager({ account, onClose, onChanged, onReset }: AccountManagerProps) {
   const { teamLabels } = useContentOptionLabels()
   const [status, setStatus] = useState(account.membershipStatus)
   const [reason, setReason] = useState('')
@@ -205,7 +223,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: any) {
   )
 }
 
-function ResetHandoff({ reset, onClose }: any) {
+function ResetHandoff({ reset, onClose }: ResetHandoffProps) {
   return (
     <AdminDialog title="Password reset sent" onClose={onClose}>
       <p className="meta">

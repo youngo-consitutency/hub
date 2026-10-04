@@ -1,10 +1,15 @@
+interface TaskForceProps {
+  slug?: string
+  extra?: any
+}
+
 import { useApi } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
 import { WgActivityCard } from '../components/WgActivityCard'
 import { taskForceBySlug } from '../../shared/protocol'
 import { TbFlag as Flag, TbLock as Lock } from 'react-icons/tb'
 
-export function TaskForce({ slug, extra }: any) {
+export function TaskForce({ slug, extra }: TaskForceProps) {
   const groupQuery = useApi(`/groups/${encodeURIComponent(slug || '')}`, [slug])
   const workspaceQuery = useApi(`/member/workspace/${encodeURIComponent(slug || '')}`, [slug])
 

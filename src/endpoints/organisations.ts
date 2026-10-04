@@ -3,7 +3,7 @@ import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { AFFILIATION_ROLES, requireOrgScope, seatView } from '../lib/ngo'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 export const organisationEndpoints: Endpoint[] = [
   {
@@ -90,13 +90,13 @@ export const organisationEndpoints: Endpoint[] = [
       const seat = await req.payload.create({
         collection: 'ngo-seats',
         data: {
-          orgAccount: orgAccountId,
+          orgAccount: Number(orgAccountId),
           memberAccount: account.id,
           email: account.email,
           name: account.name,
           seatRole: 'affiliate',
           status: 'requested',
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -134,13 +134,13 @@ export const organisationEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'ngo-seats',
         id: seat.id,
-        data: (approve
+        data: approve
           ? {
               status: 'active',
               seatRole,
               acceptedAt: new Date().toISOString(),
             }
-          : { status: 'declined' }) as DocData,
+          : { status: 'declined' },
         overrideAccess: true,
         req,
       })

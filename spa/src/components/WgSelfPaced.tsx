@@ -1,3 +1,22 @@
+interface SlideHeadProps {
+  slide?: any
+}
+
+interface PointsProps {
+  points?: any
+  variant?: any
+}
+
+interface SlideFaceProps {
+  slide?: any
+}
+
+interface WgSelfPacedProps {
+  course?: any
+  storageKey?: any
+  onReachEnd?: any
+}
+
 import { createContext, useContext, useEffect, useState } from 'react'
 import { deckStyle, useDocument } from '../lib/documents'
 import { TbChevronLeft as ChevronLeft, TbChevronRight as ChevronRight } from 'react-icons/tb'
@@ -34,7 +53,7 @@ function SlideMark() {
   )
 }
 
-function SlideHead({ slide }: any) {
+function SlideHead({ slide }: SlideHeadProps) {
   return (
     <header className="jtHead">
       <div>
@@ -46,7 +65,7 @@ function SlideHead({ slide }: any) {
   )
 }
 
-function Points({ points, variant }: any) {
+function Points({ points, variant }: PointsProps) {
   if (!points?.length) return null
   return (
     <ul className={`jtPoints jtPoints--${variant}`}>
@@ -65,7 +84,7 @@ function Points({ points, variant }: any) {
   )
 }
 
-function SlideFace({ slide }: any) {
+function SlideFace({ slide }: SlideFaceProps) {
   const layout = slide.layout || 'prose'
   const lead = slide.body?.[0]
   const rest = slide.body?.slice(1) || []
@@ -192,7 +211,7 @@ function SlideFace({ slide }: any) {
   )
 }
 
-export function WgSelfPaced({ course, storageKey, onReachEnd }: any) {
+export function WgSelfPaced({ course, storageKey, onReachEnd }: WgSelfPacedProps) {
   const { doc: deckBrandDoc } = useDocument('wg-deck-brand')
   const WG_DECK_BRAND = deckBrandDoc?.WG_DECK_BRAND || {}
   const slides = course.slides

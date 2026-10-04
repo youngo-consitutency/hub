@@ -1,5 +1,10 @@
+interface TicketCardProps {
+  ticket?: any
+  onUpdate?: any
+}
+
 import { formatDateTime } from '../lib/time'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api'
 import { Button, Empty, ErrorCard, FilterPill, Section, Skeletons } from './ui'
 import { TbMessagePlus as MessageSquarePlus, TbExternalLink as ExternalLink } from 'react-icons/tb'
@@ -36,7 +41,7 @@ const SEVERITY_CHIP = {
   critical: 'chip-danger',
 }
 
-function TicketCard({ ticket, onUpdate }: any) {
+function TicketCard({ ticket, onUpdate }: TicketCardProps) {
   const [note, setNote] = useState(ticket.triageNote || '')
   const [saving, setSaving] = useState(false)
   const noteDirty = note !== (ticket.triageNote || '')
@@ -131,15 +136,15 @@ export function FeedbackQueue() {
   const [status, setStatus] = useState('new')
   const [state, setState] = useState<Record<string, any>>({ items: null, error: null })
 
-  const load = () => {
+  const load = useCallback(() => {
     apiGet(`/member/feedback${status ? `?status=${status}` : ''}`)
       .then((data) => setState({ items: data.items, error: null }))
       .catch((error) => setState({ items: null, error: error.message }))
-  }
+  }, [status])
 
   useEffect(() => {
     load()
-  }, [status])
+  }, [load])
 
   const updateTicket = async (id: any, body: any) => {
     try {

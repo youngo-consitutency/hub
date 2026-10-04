@@ -1,3 +1,9 @@
+interface ChangePasswordFormProps {
+  onChanged?: any
+  submitLabel?: any
+  intro?: any
+}
+
 import { useState } from 'react'
 import { apiPost } from '../lib/api'
 import { Button } from './ui'
@@ -5,7 +11,11 @@ import { FormAlert } from './auth/shared'
 import { fieldClass } from './auth/helpers'
 import { FieldError } from './FormControls'
 
-export function ChangePasswordForm({ onChanged, submitLabel = 'Save new password', intro }: any) {
+export function ChangePasswordForm({
+  onChanged,
+  submitLabel = 'Save new password',
+  intro,
+}: ChangePasswordFormProps) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')

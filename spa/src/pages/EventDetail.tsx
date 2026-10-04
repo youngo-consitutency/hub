@@ -1,3 +1,7 @@
+interface EventDetailProps {
+  slug?: string
+}
+
 import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, BackLink, StatusChip, A, PageHeader } from '../components/ui'
@@ -43,7 +47,7 @@ function phaseOf(event: any) {
   return 'upcoming'
 }
 
-export function EventDetail({ slug }: any) {
+export function EventDetail({ slug }: EventDetailProps) {
   const query = useApi(`/events/${slug}`)
   return (
     <div className="detailPage eventDetailPage">

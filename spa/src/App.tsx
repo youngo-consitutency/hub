@@ -1,3 +1,9 @@
+interface LockedProps {
+  title?: string
+  body?: any
+  course?: any
+}
+
 import { canManageGroup, canManageGroups } from './lib/groupPermissions'
 import { Shell } from './components/Shell'
 import { AccessGate } from './components/AccessGate'
@@ -211,7 +217,7 @@ function Locked({
   title = 'Complete your membership course',
   body = 'Your account is registered. Pass the short membership course to use the rest of the Hub.',
   course = false,
-}: any) {
+}: LockedProps) {
   return (
     <div>
       <PageHeader icon={Lock} title={title} />

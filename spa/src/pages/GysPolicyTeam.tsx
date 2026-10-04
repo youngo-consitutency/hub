@@ -1,3 +1,8 @@
+interface CountListProps {
+  title?: string
+  items?: any
+}
+
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbFileText as StatementIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -35,7 +40,7 @@ const NEXT = {
   published: [],
 }
 
-function CountList({ title, items }: any) {
+function CountList({ title, items }: CountListProps) {
   if (!items?.length) return null
   return (
     <div className="gysCountBlock">

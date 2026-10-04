@@ -1,3 +1,7 @@
+interface NegotiationDetailProps {
+  slug?: string
+}
+
 import { useState } from 'react'
 import { useAccount } from '../lib/accountContext'
 import { apiDelete, apiPut, useApi } from '../lib/api'
@@ -16,7 +20,7 @@ function deadlineText(deadline: any) {
   return `${date}, ${deadline.time} ${deadline.timezone}`
 }
 
-export function NegotiationDetail({ slug }: any) {
+export function NegotiationDetail({ slug }: NegotiationDetailProps) {
   const query = useApi(`/negotiations/${slug}`)
   const { account } = useAccount()
   const [following, setFollowing] = useState(false)

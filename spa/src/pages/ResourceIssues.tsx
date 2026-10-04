@@ -1,3 +1,23 @@
+interface ResourceQueueProps {
+  account?: any
+}
+
+interface LinkReviewProps {
+  item?: any
+  issues?: any
+  previous?: any
+  onClose?: any
+  onSaved?: any
+  onCorrect?: any
+}
+
+interface SubmissionReviewProps {
+  item?: any
+  account?: any
+  onClose?: any
+  onSaved?: any
+}
+
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions'
@@ -20,7 +40,7 @@ export function ResourceIssues() {
   return <ResourceQueue account={account} />
 }
 
-function ResourceQueue({ account }: any) {
+function ResourceQueue({ account }: ResourceQueueProps) {
   const query = useApi('/member/resources/issues')
   const [filter, setFilter] = useState('needs_verification')
   const [search, setSearch] = useState('')
@@ -175,7 +195,7 @@ function ResourceQueue({ account }: any) {
   )
 }
 
-function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: any) {
+function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: LinkReviewProps) {
   const {
     resourcePathways: RESOURCE_PATHWAYS,
     resourceTypes: RESOURCE_TYPES,
@@ -351,7 +371,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: any
   )
 }
 
-function SubmissionReview({ item, account, onClose, onSaved }: any) {
+function SubmissionReview({ item, account, onClose, onSaved }: SubmissionReviewProps) {
   const { resourcePathways: RESOURCE_PATHWAYS, resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)

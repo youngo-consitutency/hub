@@ -4,7 +4,8 @@ import { requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import * as store from '../lib/content'
 import { contributionsFromCsv, previewCsvImport, synthesizeGysContributions } from '../lib/gys.js'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { GysTrackedContribution } from '../payload-types'
 
 const GYS_STATUSES = [
   'submitted',
@@ -82,7 +83,7 @@ async function getGysWorkflow(req: PayloadRequest): Promise<{
         title: `Global Youth Statement ${year}`,
         year,
         status: 'intake',
-      } as DocData,
+      },
       overrideAccess: true,
       req,
     })
@@ -179,7 +180,7 @@ export const gysEndpoints: Endpoint[] = [
                 ...item,
                 author: staff.id,
                 status: 'submitted',
-              } as DocData,
+              },
               overrideAccess: true,
               req,
             }),
@@ -225,7 +226,7 @@ export const gysEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'gys-workflow-cycles',
         id: workflow.cycle.id,
-        data: { status: b.status } as DocData,
+        data: { status: b.status },
         overrideAccess: true,
         req,
       })
@@ -281,7 +282,7 @@ export const gysEndpoints: Endpoint[] = [
           author: staff.id,
           status: 'submitted',
           version: 1,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -317,10 +318,10 @@ export const gysEndpoints: Endpoint[] = [
         collection: 'gys-tracked-contributions',
         id: row.id,
         data: {
-          status,
+          status: status as GysTrackedContribution['status'],
           reviewer: staff.id,
           version: (row.version || 1) + (status !== row.status ? 1 : 0),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })

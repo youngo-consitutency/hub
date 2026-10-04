@@ -1,3 +1,7 @@
+interface PostingMetaProps {
+  item?: any
+}
+
 import { formatDateTime } from '../lib/time'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useState } from 'react'
@@ -14,7 +18,7 @@ const KIND_LABEL = {
   training: 'Training',
 }
 
-function PostingMeta({ item }: any) {
+function PostingMeta({ item }: PostingMetaProps) {
   return (
     <>
       <div className="rowGap" style={{ flexWrap: 'wrap' }}>

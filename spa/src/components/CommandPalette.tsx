@@ -1,3 +1,7 @@
+interface PaletteBodyProps {
+  onClose?: any
+}
+
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useApi } from '../lib/api'
 import { navigate } from '../lib/router'
@@ -105,7 +109,7 @@ const GROUPS = [
   },
 ]
 
-function PaletteBody({ onClose }: any) {
+function PaletteBody({ onClose }: PaletteBodyProps) {
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
   const query = useApi(`/search?q=${encodeURIComponent(q)}`, [q])

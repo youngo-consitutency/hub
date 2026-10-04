@@ -8,7 +8,8 @@ import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
-import type { Doc, DocData } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { Account } from '../payload-types'
 
 const OPPORTUNITY_KINDS = [
   { value: 'event', label: 'Event' },
@@ -208,11 +209,11 @@ export const opportunityEndpoints: Endpoint[] = [
           endsAt: endsAt ? new Date(endsAt).toISOString() : null,
           deadlineAt: b.deadlineAt ? new Date(Date.parse(b.deadlineAt)).toISOString() : null,
           linkUrl: safeUrl(b.linkUrl),
-          orgAccount: ctx.orgAccountId,
+          orgAccount: Number(ctx.orgAccountId),
           organizationName: org?.organizationName || org?.name || null,
           status,
           source: 'ngo',
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -255,7 +256,7 @@ export const opportunityEndpoints: Endpoint[] = [
       const updated = await req.payload.update({
         collection: 'opportunities',
         id: item.id,
-        data: { status: 'withdrawn' } as DocData,
+        data: { status: 'withdrawn' },
         overrideAccess: true,
         req,
       })
@@ -296,7 +297,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: approve ? 'published' : 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -335,9 +336,9 @@ export const opportunityEndpoints: Endpoint[] = [
         collection: 'accounts',
         id: org.id,
         data: {
-          postingTrust: state,
+          postingTrust: state as Account['postingTrust'],
           postingTrustNote: trimmed(b.note, 500) || null,
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })
@@ -376,7 +377,7 @@ export const opportunityEndpoints: Endpoint[] = [
           status: 'rejected',
           reviewNote,
           reviewedAt: new Date().toISOString(),
-        } as DocData,
+        },
         overrideAccess: true,
         req,
       })

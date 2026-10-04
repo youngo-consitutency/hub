@@ -1,3 +1,17 @@
+interface GroupCommunityProps {
+  slug: string
+}
+
+interface GroupResourceGroupsProps {
+  slug: string
+  resources?: any
+  locked?: any
+}
+
+interface GroupDetailProps {
+  slug: string
+}
+
 import { useApi } from '../lib/api'
 import { A, Async, BackLink, Section, Empty, PageHeader } from '../components/ui'
 import { EventCard, PersonCard, SubmissionCard } from '../components/cards'
@@ -28,7 +42,7 @@ const PUBLIC_RESOURCE_LABELS = {
   reference: 'Open resources',
 }
 
-function GroupCommunity({ slug }: any) {
+function GroupCommunity({ slug }: GroupCommunityProps) {
   const contactQuery = useApi(
     `/member/people?workingGroup=${encodeURIComponent(slug)}&workingGroupRole=manager&pageSize=12`,
     [slug],
@@ -79,7 +93,7 @@ function GroupCommunity({ slug }: any) {
   )
 }
 
-function GroupResourceGroups({ slug, resources, locked }: any) {
+function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsProps) {
   const categories = groupResourcesByCategory(resources)
   const publicCategories = groupResourcesByCategory(resources.filter(isPublicGroupResource))
   const midpoint = Math.ceil(categories.length / 2)
@@ -141,7 +155,7 @@ function GroupResourceGroups({ slug, resources, locked }: any) {
   )
 }
 
-export function GroupDetail({ slug }: any) {
+export function GroupDetail({ slug }: GroupDetailProps) {
   const query = useApi(`/groups/${slug}`)
   return (
     <div className="detailPage">
