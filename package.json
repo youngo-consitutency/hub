@@ -22,7 +22,8 @@
     "mcp:content": "node scripts/agent/hub-content-mcp.mjs",
     "mcp:content:http": "node mcp-content/server.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "sync:mcp": "node scripts/agent/sync-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
