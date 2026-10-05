@@ -4,17 +4,26 @@ interface AccessGateProps {
 
 import type { AnyValue } from '../lib/types'
 import { useCallback, useEffect, useState } from 'react'
-import { MembershipMandateGate } from './MembershipMandateGate'
-import { AuthGate } from './AuthGate'
-import { ResetPassword } from '../pages/ResetPassword'
-import { ChangePasswordGate } from './ChangePasswordGate'
-import { Privacy } from '../pages/Privacy'
-import { PublicSite } from '../pages/site/PublicSite'
+import dynamic from 'next/dynamic'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate'
 import { useDocument } from '../lib/documents'
 import { apiGet } from '../lib/api'
 import { clearSession, getCachedAccount, setSession } from '../lib/session'
 import { navigate, usePath } from '../lib/router'
+
+// Sign-in, registration and the public site are only rendered for signed-out
+// or gated sessions — dynamic imports keep them out of the chunk every
+// signed-in member downloads.
+const MembershipMandateGate = dynamic(() =>
+  import('./MembershipMandateGate').then((m) => m.MembershipMandateGate),
+)
+const AuthGate = dynamic(() => import('./AuthGate').then((m) => m.AuthGate))
+const ResetPassword = dynamic(() => import('../pages/ResetPassword').then((m) => m.ResetPassword))
+const ChangePasswordGate = dynamic(() =>
+  import('./ChangePasswordGate').then((m) => m.ChangePasswordGate),
+)
+const Privacy = dynamic(() => import('../pages/Privacy').then((m) => m.Privacy))
+const PublicSite = dynamic(() => import('../pages/site/PublicSite').then((m) => m.PublicSite))
 
 /**
  * Controls access before the main application loads. Signed-out visitors land
