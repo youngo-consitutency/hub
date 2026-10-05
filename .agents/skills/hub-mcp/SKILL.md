@@ -17,7 +17,7 @@ triggers: [user, model]
 ## The .js constraint
 
 - Everything it imports must load under plain `node`: `.mjs`/`.js` only. `src/shared/` exists for this — keep those files `.js`, no TypeScript syntax, no `process.env`, no Node-incompatible imports. Converting one to `.ts` breaks the service at runtime, not at build.
-- `scripts/agent/hub-content-mcp.mjs` is the stdio wrapper — keep its interface stable.
+- `scripts/agent/hub-mcp.mjs` is the stdio wrapper — keep its interface stable. It also attaches the session-memory tools (`lib/memory.mjs`, `HINDSIGHT_API_KEY` gated) so local agents configure one `hub` server; the hosted HTTP service must NOT attach them — external consumers' memory would land in this project's bank.
 
 ## Verify
 

@@ -6,30 +6,33 @@ export function localTz() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
+// Intl.DateTimeFormat construction is the expensive part of date formatting;
+// cache one instance per (tz, options) pair — every card in a list used to
+// build three or four of these per render.
+const formatterCache = new Map<string, Intl.DateTimeFormat>()
+
+function formatter(tz: AnyValue, options: Intl.DateTimeFormatOptions) {
+  const key = `${tz || ''}|${JSON.stringify(options)}`
+  let fmt = formatterCache.get(key)
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-GB', { ...options, ...(tz ? { timeZone: tz } : {}) })
+    formatterCache.set(key, fmt)
+  }
+  return fmt
+}
+
 export function fmtDay(iso: AnyValue, tz: AnyValue) {
-  return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    ...(tz ? { timeZone: tz } : {}),
-  }).format(new Date(iso))
+  return formatter(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
 }
 
 function hm(iso: AnyValue, tz: AnyValue) {
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: tz,
-  }).format(new Date(iso))
+  return formatter(tz, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
 }
 
 function zoneAbbr(iso: AnyValue, tz: AnyValue) {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    timeZone: tz,
-    timeZoneName: 'short',
-  }).formatToParts(new Date(iso))
+  const parts = formatter(tz, { hour: '2-digit', timeZoneName: 'short' }).formatToParts(
+    new Date(iso),
+  )
   return parts.find((p) => p.type === 'timeZoneName')?.value || tz
 }
 
@@ -57,11 +60,7 @@ export function fmtMoment(iso: AnyValue, tz = localTz()) {
 export function fmtDateRange(startsOn: AnyValue, endsOn: AnyValue, datesTbc: AnyValue) {
   if (!startsOn) return 'Dates TBC'
   const fmt = (d: AnyValue) =>
-    new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'UTC',
-    }).format(new Date(d + 'T00:00:00Z'))
+    formatter('UTC', { day: 'numeric', month: 'short' }).format(new Date(d + 'T00:00:00Z'))
   const year = startsOn.slice(0, 4)
   const range = endsOn && endsOn !== startsOn ? `${fmt(startsOn)}–${fmt(endsOn)}` : fmt(startsOn)
   return `${range} ${year}${datesTbc ? ' · TBC' : ''}`

@@ -96,7 +96,7 @@ describe('mcp http transport', () => {
       mcp: '/mcp',
       auth: 'token',
     })
-    expect(rootBody.server?.name).toBe('youngo-hub-content')
+    expect(rootBody.server?.name).toBe('youngo-hub')
   })
 
   it('rejects non-MCP paths and non-POST methods', async () => {

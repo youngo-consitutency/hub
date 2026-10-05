@@ -89,7 +89,7 @@ const init = await rpc(
     1,
   ),
 )
-if (init?.result?.serverInfo?.name !== 'youngo-hub-content')
+if (init?.result?.serverInfo?.name !== 'youngo-hub')
   fail(`unexpected initialize response: ${JSON.stringify(init)}`)
 
 await rpc(rpcBody('notifications/initialized'))

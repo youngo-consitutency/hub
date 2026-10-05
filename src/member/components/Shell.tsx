@@ -6,8 +6,8 @@ import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { A } from './ui'
-import { CommandPalette } from './CommandPalette'
 import { Brand } from './Brand'
 import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
@@ -38,6 +38,10 @@ import {
   TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
 
+// The palette only renders on Cmd/Ctrl+K — keep it out of the shell chunk
+// and fetch it on first use instead of shipping it to every member.
+const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette))
+
 // Home stands alone; browsing, people and shared work have distinct homes.
 const SECTION = {
   home: '',
@@ -50,6 +54,7 @@ const SECTION = {
 export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const menuButtonRef = useRef<AnyValue>(null)
   const sheetRef = useRef<AnyValue>(null)
   const { account } = useAccount()
@@ -61,6 +66,19 @@ export function Shell({ children }: ShellProps) {
   useEffect(() => {
     setSheet(false)
   }, [path])
+
+  // The shortcut lives here (not inside the palette) so it works before the
+  // lazily imported palette chunk has arrived — the chunk mounts already open.
+  useEffect(() => {
+    const onKey = (e: AnyValue) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     if (!sheet) return undefined
@@ -536,7 +554,7 @@ export function Shell({ children }: ShellProps) {
         ))}
       </nav>
 
-      <CommandPalette />
+      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
   )
 }

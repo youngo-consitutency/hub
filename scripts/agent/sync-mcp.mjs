@@ -23,34 +23,33 @@ const fromFile = existsSync(envPath) ? dotenv.parse(readFileSync(envPath)) : {}
 const env = (k) => process.env[k] || fromFile[k]
 
 const key = env('HINDSIGHT_API_KEY')
-if (!key) {
-  console.error('HINDSIGHT_API_KEY not found in environment or .env.local')
+const hasHubCreds = env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))
+if (!key && !hasHubCreds) {
+  console.error('Neither HINDSIGHT_API_KEY nor Hub credentials found in environment or .env.local')
   process.exit(1)
 }
 
-// Project-scoped servers only. Shared/agnostic servers (context7, supabase,
-// vercel, github) belong in each maintainer's global config — never here.
+// One unified `hub` server per tool: content tools + memory tools behind a
+// single stdio entry (memory attaches when HINDSIGHT_API_KEY is present).
+// Project-scoped only — shared/agnostic servers (context7, supabase, vercel,
+// github) belong in each maintainer's global config, never here.
 const canonical = {
-  memory: {
-    url: 'https://api.hindsight.vectorize.io/mcp/youngo-hub/',
-    headers: { Authorization: `Bearer ${key}` },
-  },
-}
-if (env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))) {
-  canonical['hub-content'] = {
+  hub: {
     command: 'node',
-    args: [join(ROOT, 'scripts/agent/hub-content-mcp.mjs')],
+    args: [join(ROOT, 'scripts/agent/hub-mcp.mjs')],
     env: {
       HUB_ORIGIN: env('HUB_ORIGIN') || 'http://localhost:3000',
+      ...(key ? { HINDSIGHT_API_KEY: key } : {}),
       ...(env('HUB_EMAIL') ? { HUB_EMAIL: env('HUB_EMAIL') } : {}),
       ...(env('HUB_PASSWORD') ? { HUB_PASSWORD: env('HUB_PASSWORD') } : {}),
       ...(env('HUB_TOKEN') ? { HUB_TOKEN: env('HUB_TOKEN') } : {}),
     },
-  }
+  },
 }
 // Names this script owns — removed before rewriting even when absent from
-// the map above (a credential-less sync must still clear stale tables).
-const MANAGED = [...new Set([...Object.keys(canonical), 'memory', 'hub-content'])]
+// the map above (a credential-less sync must still clear stale tables,
+// including the pre-unification `memory`/`hub-content` entries).
+const MANAGED = [...new Set([...Object.keys(canonical), 'hub', 'memory', 'hub-content'])]
 
 const json = (o) => JSON.stringify(o, null, 2) + '\n'
 // writeFileSync truncates before writing — a crash mid-write would leave a
