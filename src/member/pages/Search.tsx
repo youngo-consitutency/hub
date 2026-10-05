@@ -351,8 +351,11 @@ export function Search() {
         </div>
       )}
 
-      {query.trim() ? (
+      {debouncedQuery ? (
         <Section label="Direct matches">
+          {/* Async gates on loading, so `data` always belongs to the current
+              debounced query — keepPreviousData can only surface while the
+              key is null, which this branch already excludes. */}
           <Async query={direct} skeletons={3}>
             {(data: AnyValue) => data && <DirectMatches query={debouncedQuery} data={data} />}
           </Async>

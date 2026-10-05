@@ -2,6 +2,10 @@ interface PaletteBodyProps {
   onClose?: AnyValue
 }
 
+interface CommandPaletteProps {
+  onClose?: AnyValue
+}
+
 import type { AnyValue, Doc } from '../lib/types'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useApi } from '../lib/api'
@@ -118,6 +122,10 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
   // each call scans six collections server-side.
   const debounced = useDebouncedValue(q.trim())
   const query = useApi(debounced ? `/search?q=${encodeURIComponent(debounced)}` : null, [debounced])
+  // Remote results are only trustworthy once the debounce has caught up with
+  // the input and the fetch for the current key has finished — otherwise
+  // `data` still matches an older query string.
+  const settled = !query.loading && debounced === q.trim()
   const listRef = useRef<AnyValue>(null)
 
   // Flatten grouped results into a single navigable list, plus page shortcuts.
@@ -136,7 +144,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
       Icon: page.Icon,
       group: 'Pages',
     }))
-    const data = query.data
+    const data = settled ? query.data : null
     if (!data) return pages
     const content = GROUPS.flatMap((g) =>
       (data[g.key] || []).map((item: Doc) => ({
@@ -148,14 +156,14 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
       })),
     )
     return [...pages, ...content]
-  }, [query.data, q])
+  }, [query.data, settled, q])
 
   useEffect(() => {
     setActive(0)
   }, [flat.length])
 
   const go = (to: AnyValue) => {
-    onClose()
+    onClose?.()
     navigate(to)
   }
 
@@ -209,7 +217,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
             Type to search across the Hub.
           </p>
         )}
-        {q.trim() !== '' && flat.length === 0 && !query.loading && (
+        {q.trim() !== '' && flat.length === 0 && settled && (
           <p className="metaMuted" style={{ padding: '16px 14px' }}>
             No matches for “{q}”.
           </p>
@@ -252,34 +260,25 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
   )
 }
 
-export function CommandPalette() {
-  const [open, setOpen] = useState(false)
+// Mounted by Shell only while open — Shell owns the Cmd/Ctrl+K toggle, so the
+// shortcut still works before this lazy chunk arrives. Restores the focus it
+// found on mount when it unmounts.
+export function CommandPalette({ onClose }: CommandPaletteProps) {
   const dialogRef = useRef<AnyValue>(null)
   const returnFocusRef = useRef<AnyValue>(null)
 
   useEffect(() => {
-    const onKey = (e: AnyValue) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setOpen((current) => {
-          if (!current) {
-            returnFocusRef.current = document.activeElement
-          }
-          return !current
-        })
-      } else if (e.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    returnFocusRef.current = document.activeElement
+    return () => returnFocusRef.current?.focus?.()
   }, [])
 
   useEffect(() => {
-    if (open) return
-    returnFocusRef.current?.focus?.()
-    returnFocusRef.current = null
-  }, [open])
+    const onKey = (e: AnyValue) => {
+      if (e.key === 'Escape') onClose?.()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const keepFocusInside = (event: AnyValue) => {
     if (event.key !== 'Tab') return
@@ -300,9 +299,8 @@ export function CommandPalette() {
     }
   }
 
-  if (!open) return null
   return (
-    <div className="paletteBackdrop" onClick={() => setOpen(false)}>
+    <div className="paletteBackdrop" onClick={() => onClose?.()}>
       <div
         className="palette"
         role="dialog"
@@ -312,7 +310,7 @@ export function CommandPalette() {
         onKeyDown={keepFocusInside}
         onClick={(e) => e.stopPropagation()}
       >
-        <PaletteBody onClose={() => setOpen(false)} />
+        <PaletteBody onClose={onClose} />
       </div>
     </div>
   )
