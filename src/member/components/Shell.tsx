@@ -6,8 +6,8 @@ import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { A } from './ui'
-import { CommandPalette } from './CommandPalette'
 import { Brand } from './Brand'
 import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
@@ -37,6 +37,10 @@ import {
   TbHelpCircle as CircleHelp,
   TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
+
+// The palette only renders on Cmd/Ctrl+K — lazy-load it after hydration
+// instead of shipping it in the shell chunk.
+const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette))
 
 // Home stands alone; browsing, people and shared work have distinct homes.
 const SECTION = {

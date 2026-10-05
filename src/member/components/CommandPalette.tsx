@@ -5,6 +5,7 @@ interface PaletteBodyProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useApi } from '../lib/api'
+import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { navigate } from '../lib/router'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import {
@@ -113,7 +114,10 @@ const GROUPS = [
 function PaletteBody({ onClose }: PaletteBodyProps) {
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
-  const query = useApi(`/search?q=${encodeURIComponent(q)}`, [q])
+  // Debounced so typing does not fire a /search request per keystroke —
+  // each call scans six collections server-side.
+  const debounced = useDebouncedValue(q.trim())
+  const query = useApi(debounced ? `/search?q=${encodeURIComponent(debounced)}` : null, [debounced])
   const listRef = useRef<AnyValue>(null)
 
   // Flatten grouped results into a single navigable list, plus page shortcuts.

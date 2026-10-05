@@ -116,6 +116,7 @@ interface AsyncProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
+import Link from 'next/link'
 import { navigate, replace, peekBackground } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
 import {
@@ -139,9 +140,12 @@ export function A({
   peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(href || ''),
   ...rest
 }: AProps) {
+  // next/link prefetches the route chunk on viewport/hover, so soft
+  // navigations land without waiting on a fresh download. The click handler
+  // still owns the actual navigation (peek state, replace vs push).
   return (
-    <a
-      href={href}
+    <Link
+      href={href as string}
       className={className}
       target={target}
       onClick={(e) => {
@@ -175,7 +179,7 @@ export function A({
       {...rest}
     >
       {children}
-    </a>
+    </Link>
   )
 }
 

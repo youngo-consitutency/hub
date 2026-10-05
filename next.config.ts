@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   // Dockerfile and other self-hosted targets consume the standalone output.
   // Vercel and `next start` need the default output, so standalone is opt-in.
   output: process.env.STANDALONE_BUILD ? 'standalone' : undefined,
+  // React Compiler memoises components at build time — cuts redundant
+  // re-renders across the member UI without manual memo/useMemo churn.
+  reactCompiler: true,
   async rewrites() {
     return [
       // Static consultation microsite lives in public/consultation/ — legacy
