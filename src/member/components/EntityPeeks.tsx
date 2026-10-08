@@ -35,7 +35,7 @@ import { fmtDual, fmtDateRange } from '../lib/time'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel } from '../lib/regions'
 import { resolveCoyStatus, coyApplicationsAreOpen } from '../../shared/coyStatus'
-import type { AnyValue } from '../lib/types'
+import type { AnyValue, Doc } from '../lib/types'
 
 // ── Peek framework ─────────────────────────────────────────
 // Every entity peek is a declarative descriptor rendered by the same
@@ -99,9 +99,10 @@ function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
   return function EntityPeek(props: { item: T | null; onClose: () => void } & P) {
     const { item, onClose, ...rest } = props
     if (!item) return null
+    const doc = item as Doc
     return (
       <PeekBody
-        key={item.id ?? item.slug ?? item.url}
+        key={doc.id ?? doc.slug ?? doc.url ?? doc.title}
         item={item}
         extras={rest as unknown as P}
         onClose={onClose}
