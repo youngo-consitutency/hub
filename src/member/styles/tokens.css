@@ -1,24 +1,26 @@
-/* YOUNGO Hub design tokens — the only file where interface colors live. */
+/* YOUNGO Hub design tokens — the only file where interface colours live.
+   Follows European and international accessibility standards (WCAG 2.2 AA / EN 301 549).
+   British English conventions apply throughout. */
 :root {
-  --bg-page: #f6f7f2;
+  --bg-page: #f7f9f6;
   --bg-card: #ffffff;
-  --bg-raised: #eaf0e9;
+  --bg-raised: #edf3ec;
   --bg-popover: #ffffff;
   --brand-surface: #ffffff;
-  --text-1: #132b20;
-  --text-2: #354c3f;
-  --text-3: #4d6356;
-  --border: #d1ddd4;
-  --border-strong: #71887a;
+  --text-1: #0e231a;
+  --text-2: #2b4538;
+  --text-3: #4b6657;
+  --border: #d2ddd6;
+  --border-strong: #708c7c;
   --border-card: var(--border);
-  --accent: #006b4f;
-  --accent-hover: #004f39;
+  --accent: #006e52;
+  --accent-hover: #00543e;
   --on-accent: #ffffff;
-  --accent-tint: #c8e8d5;
-  --on-accent-tint: #004f39;
-  --success: #006b4f;
-  --success-tint: #c8e8d5;
-  --on-success-tint: #004f39;
+  --accent-tint: #ccf1de;
+  --on-accent-tint: #004d38;
+  --success: #006e52;
+  --success-tint: #ccf1de;
+  --on-success-tint: #004d38;
   --live: #65a30d;
   --live-tint: #ecfccb;
   --warn: #b45309;
@@ -27,16 +29,21 @@
   --danger-tint: #fee2e2;
   --info: #0369a1;
   --info-tint: #e0f2fe;
-  /* Content sits on flat surfaces; elevation is reserved for overlays. */
-  --shadow-card: none;
-  --shadow-popover: 0 4px 24px rgba(18, 32, 25, 0.14);
+
+  /* Natural, subtle ambient shadows for high readability and depth */
+  --shadow-card: 0 1px 3px rgba(14, 35, 26, 0.04), 0 1px 2px rgba(14, 35, 26, 0.02);
+  --shadow-card-hover: 0 6px 18px rgba(14, 35, 26, 0.08), 0 2px 4px rgba(14, 35, 26, 0.03);
+  --shadow-popover: 0 6px 28px rgba(14, 35, 26, 0.14);
+  --shadow-drawer: -6px 0 32px rgba(10, 24, 18, 0.14);
   --shadow-sticky: 0 -8px 24px rgba(18, 32, 25, 0.08);
-  --overlay: rgba(10, 18, 14, 0.56);
-  --glow-accent: none;
+  --overlay: rgba(10, 22, 16, 0.52);
+  --glow-accent: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+
   --radius-chip: 6px;
-  --radius-control: 10px;
+  --radius-control: 8px;
   --radius-card: 12px;
   --radius-modal: 16px;
+  --radius-pill: 9999px;
   --content-max: 1600px;
   --detail-max: 1120px;
   --catalog-card-min: 280px;
@@ -45,12 +52,16 @@
   --text-measure: 62ch;
   --card-padding: var(--space-4);
   --section-gap: var(--space-6);
+
+  /* Easing curves and motion tokens */
   --motion-fast: 120ms;
   --motion-standard: 180ms;
-  --motion-panel: 240ms;
+  --motion-panel: 280ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
   --motion-shift: 6px;
+
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -58,10 +69,12 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+
   --font-size-sm: 13px;
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --font-display: var(--font-ui);
-  --font-mono: var(--font-ui);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
   --calendar-gys: #6d28d9;
   --calendar-coordination: #4338ca;
   --landing-canvas: var(--bg-page);
@@ -100,37 +113,39 @@
 }
 
 [data-theme='dark'] {
-  --bg-page: #0d1715;
-  --bg-card: #172823;
-  --bg-raised: #20382f;
-  --bg-popover: #20392a;
+  --bg-page: #0b1411;
+  --bg-card: #14221c;
+  --bg-raised: #1c2e27;
+  --bg-popover: #1c2e27;
   --brand-surface: #ffffff;
-  --text-1: #f0f7f2;
-  --text-2: #c1d4c7;
-  --text-3: #a6bdae;
-  --border: #304b40;
-  --border-strong: #759985;
-  --accent: #66ddb0;
-  --accent-hover: #a7f3cf;
-  --on-accent: #062b1f;
-  --accent-tint: #183f30;
-  --on-accent-tint: #a7f3cf;
-  --success: #66ddb0;
-  --success-tint: #183f30;
-  --on-success-tint: #a7f3cf;
+  --text-1: #f1f8f3;
+  --text-2: #c4d7cc;
+  --text-3: #9fb7a9;
+  --border: #273e33;
+  --border-strong: #5f8370;
+  --accent: #4ade80;
+  --accent-hover: #86efac;
+  --on-accent: #052617;
+  --accent-tint: #133927;
+  --on-accent-tint: #86efac;
+  --success: #4ade80;
+  --success-tint: #133927;
+  --on-success-tint: #86efac;
   --live: #a3e635;
-  --live-tint: rgba(163, 230, 53, 0.12);
+  --live-tint: rgba(163, 230, 53, 0.15);
   --warn: #fbbf24;
-  --warn-tint: rgba(245, 158, 11, 0.12);
+  --warn-tint: rgba(245, 158, 11, 0.15);
   --danger: #f87171;
-  --danger-tint: rgba(239, 68, 68, 0.12);
+  --danger-tint: rgba(239, 68, 68, 0.15);
   --info: #7dd3fc;
-  --info-tint: rgba(14, 165, 233, 0.12);
-  --shadow-card: none;
-  --shadow-popover: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --info-tint: rgba(14, 165, 233, 0.15);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.42);
+  --shadow-popover: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --shadow-drawer: -8px 0 36px rgba(0, 0, 0, 0.6);
   --shadow-sticky: 0 -8px 24px rgba(0, 0, 0, 0.35);
-  --overlay: rgba(0, 0, 0, 0.68);
-  --glow-accent: none;
+  --overlay: rgba(0, 0, 0, 0.72);
+  --glow-accent: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
   --calendar-gys: #c4b5fd;
   --calendar-coordination: #a5b4fc;
   --landing-canvas: var(--bg-page);
@@ -143,7 +158,7 @@
   --landing-shadow: none;
 }
 
-/* Base */
+/* Base typography and standards */
 * {
   box-sizing: border-box;
   scrollbar-color: color-mix(in srgb, var(--text-3) 48%, transparent) transparent;
@@ -193,24 +208,26 @@ body {
   color: var(--text-1);
   font-family: var(--font-ui);
   font-size: 15px;
-  line-height: 1.47;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 30px;
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 32px;
+  letter-spacing: -0.015em;
   margin: 0;
 }
 
 h2 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 19px;
-  line-height: 26px;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 27px;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -219,6 +236,7 @@ h3 {
   font-weight: 600;
   font-size: 16px;
   line-height: 22px;
+  letter-spacing: -0.005em;
   margin: 0;
 }
 

@@ -1,14 +1,14 @@
-/* Subscribe, add-to-calendar and the command palette.
+/* Subscribe, add-to-calendar, command palette and Notion-style side peek.
    Colours come from tokens.css variables only. */
 
-/* ── Route quick view ─────────────────────────────── */
+/* ── Route quick view / Notion Side Peek ─────────────────────────── */
 /* Native dialog:modal UA styles cap max-width/height at
    calc(100% - 2em - 6px) and centre with margin: auto. Combined with the
    right-docked margin that leaves a left gutter on phones, so the sidebar
    shows through. Reset those constraints here. */
 .routePeek {
   inset: 0;
-  width: min(760px, calc(100% - 48px));
+  width: min(780px, calc(100% - 48px));
   max-width: none;
   height: 100dvh;
   max-height: none;
@@ -20,26 +20,29 @@
   border-radius: var(--radius-modal) 0 0 var(--radius-modal);
   background: var(--bg-page);
   color: var(--text-1);
-  box-shadow: var(--shadow-popover);
+  box-shadow: var(--shadow-drawer, var(--shadow-popover));
 }
 
 .routePeek::backdrop {
   background: var(--overlay);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
 .routePeekToolbar {
   position: sticky;
   top: 0;
-  z-index: 2;
-  min-height: 48px;
+  z-index: 10;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-5);
   border-bottom: 1px solid var(--border);
-  background: transparent;
+  background: color-mix(in srgb, var(--bg-page) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .sidePanelTitle {
@@ -63,6 +66,10 @@
 .routePeekBody {
   flex: 1;
   min-height: 0;
+  height: calc(100dvh - 52px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-6) var(--space-6) var(--space-8);
 }
 .routePeekBody > form.card {
   background: transparent;
@@ -83,15 +90,371 @@
   gap: var(--space-2);
 }
 
-.routePeekBody {
-  height: calc(100dvh - 48px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--space-5);
-}
-
 .routePeekBody > .detailPage > .backLink {
   display: none;
+}
+
+/* ── Notion-style Side Peek Specifics ────────────────────────────── */
+.notionSidePeek {
+  border-left: 1px solid var(--border-strong);
+}
+
+.notionPeekTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notionPeekBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.notionPeekBreadcrumbText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notionBreadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.notionBreadcrumbSep {
+  color: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.notionPeekTopActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.notionTopActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.notionTopActionBtn:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.notionActionLabel {
+  display: inline;
+}
+
+.notionPeekCloseBtn {
+  color: var(--text-2);
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.notionPeekCloseBtn:hover {
+  color: var(--text-1);
+  background: var(--bg-raised);
+}
+
+/* Header / Page block */
+.notionPeekHeader {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+}
+
+.notionPeekIconTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.notionPeekIconBadge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(10, 24, 18, 0.05);
+}
+
+.notionPeekHeadingText {
+  flex: 1;
+  min-width: 0;
+}
+
+.notionPeekBadgesRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.notionPeekTitle {
+  font-family: var(--font-display);
+  font-size: 23px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--text-1);
+  word-break: break-word;
+}
+
+.notionPeekSubtitle {
+  margin-top: 4px;
+  font-size: 14.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* Notion Database Properties Grid */
+.notionPropertiesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.notionPropertyRow {
+  display: grid;
+  grid-template-columns: 165px minmax(0, 1fr);
+  align-items: center;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-radius: var(--radius-chip);
+  font-size: 13.5px;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.notionPropertyRow:hover {
+  background: var(--bg-raised);
+}
+
+.notionPropertyLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.notionPropIcon {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.notionPropertyValue {
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Quick Action bar */
+.notionPeekQuickActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* Notion-style Segmented Tabs */
+.notionPeekTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: var(--space-5);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notionPeekTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.notionPeekTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.notionPeekTab:hover {
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--bg-card) 60%, transparent);
+}
+
+.notionPeekTab.isActive {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 1px 4px rgba(10, 24, 18, 0.08);
+}
+
+.notionTabBadge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Notion Callouts & Content Structure */
+.notionCallout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-1);
+}
+
+.notionCallout-default {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+
+.notionCallout-accent {
+  background: color-mix(in srgb, var(--accent-tint) 35%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.notionCallout-warn {
+  background: var(--warn-tint);
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+}
+
+.notionCallout-success {
+  background: var(--success-tint);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.notionCalloutIcon {
+  color: var(--accent);
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.notionCalloutBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.notionSection {
+  margin-bottom: var(--space-5);
+}
+
+.notionSectionHeading {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--text-3);
+  margin: 0 0 10px 0;
+}
+
+.notionBodyText {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+  margin: 0 0 12px 0;
+}
+
+.notionBulletList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.notionActionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.notionActionButtonsList {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notionInlineCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.notionCardGroup {
+  margin-bottom: var(--space-4);
+}
+
+.notionCalendarActionWrap {
+  display: inline-flex;
+}
+
+.textSuccess {
+  color: var(--success);
 }
 
 /* On phones the same side view uses the full viewport. */
@@ -107,20 +470,30 @@
   }
 
   .routePeekToolbar {
-    min-height: calc(48px + env(safe-area-inset-top));
+    min-height: calc(52px + env(safe-area-inset-top));
     padding-top: calc(var(--space-2) + env(safe-area-inset-top));
     padding-right: max(var(--space-4), env(safe-area-inset-right));
     padding-left: max(var(--space-4), env(safe-area-inset-left));
   }
 
   .routePeekBody {
-    height: calc(100dvh - 48px - env(safe-area-inset-top));
+    height: calc(100dvh - 52px - env(safe-area-inset-top));
     padding: var(--space-4);
-    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    padding-bottom: max(var(--space-5), env(safe-area-inset-bottom));
+  }
+
+  .notionActionLabel {
+    display: none;
+  }
+
+  .notionPropertyRow {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 6px;
   }
 }
 
-/* ── Subscribe (ICS) ───────────────────────────────── */
+/* ── Subscribe (ICS) ──────────────────────────────── */
 .subscribeWrap {
   position: relative;
 }
@@ -250,7 +623,7 @@
   }
 }
 
-/* ── Command palette ───────────────────────────────── */
+/* ── Command palette ──────────────────────────────── */
 .paletteBackdrop {
   position: fixed;
   inset: 0;
@@ -354,7 +727,7 @@
   box-shadow: none;
 }
 
-/* ── Feedback ──────────────────────────────────────── */
+/* ── Feedback ─────────────────────────────────────── */
 .feedbackTrigger {
   position: fixed;
   right: 20px;

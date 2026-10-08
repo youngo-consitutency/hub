@@ -9,6 +9,7 @@ import { useApi } from '../lib/api'
 import { useContentOptions } from '../lib/documents'
 import { Async, Empty, FilterMenu, FilterPill, PageHeader } from '../components/ui'
 import { EventCard } from '../components/cards'
+import { EventPeek } from '../components/EntityPeeks'
 import { CalendarSubscribe } from '../components/Subscribe'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
@@ -76,6 +77,7 @@ export function Calendar() {
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState<AnyValue>(null)
   const [agendaScope, setAgendaScope] = useState('month')
+  const [selectedEvent, setSelectedEvent] = useState<AnyValue | null>(null)
   const [calendarPanel, setCalendarPanel] = useState<AnyValue>(null)
   const [calendarHeight, setCalendarHeight] = useState<AnyValue>(null)
   const query = useApi('/events?type=all')
@@ -387,7 +389,11 @@ export function Calendar() {
                         )}
                         <div className="calendarAgendaCards">
                           {dateEvents.map((event: AnyValue) => (
-                            <EventCard key={event.slug} event={event} />
+                            <EventCard
+                              key={event.slug}
+                              event={event}
+                              onPeek={(selected) => setSelectedEvent(selected)}
+                            />
                           ))}
                         </div>
                       </section>
@@ -417,6 +423,7 @@ export function Calendar() {
           )
         }}
       </Async>
+      <EventPeek event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </div>
   )
 }

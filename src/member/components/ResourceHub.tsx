@@ -3,6 +3,7 @@ interface ResourceCardProps {
   onReport?: AnyValue
   onCorrect?: AnyValue
   onReview?: AnyValue
+  onPeek?: (r: AnyValue) => void
 }
 
 interface ResourceCatalogueProps {
@@ -15,6 +16,7 @@ interface ResourcePathwayGroupProps {
   items?: AnyValue
   onReport?: AnyValue
   onCorrect?: AnyValue
+  onPeek?: (r: AnyValue) => void
 }
 
 interface ResourceSubmissionPanelProps {
@@ -30,6 +32,8 @@ interface ResourceReportProps {
 
 import type { AnyValue } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
+import { ResourcePeek } from './EntityPeeks'
+import { TbLayoutSidebarRightExpand } from 'react-icons/tb'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
 import { useMemo, useState } from 'react'
@@ -89,11 +93,39 @@ const EMPTY_RESOURCE = (vocab: AnyValue) => ({
   language: vocab.resourceLanguages[0] || '',
 })
 
-export function ResourceCard({ resource, onReport, onCorrect, onReview }: ResourceCardProps) {
+export function ResourceCard({
+  resource,
+  onReport,
+  onCorrect,
+  onReview,
+  onPeek,
+}: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
   return (
-    <article className="card resourceHubCard">
+    <article className="card resourceHubCard linkedEntityCard">
+      {onPeek && (
+        <button
+          type="button"
+          className="entityCardLinkOverlay"
+          aria-label={`Open ${resource.title} in side peek`}
+          onClick={() => onPeek(resource)}
+        />
+      )}
+      {onPeek && (
+        <button
+          type="button"
+          className="cardPeekTrigger"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPeek(resource)
+          }}
+          aria-label={`Side peek for ${resource.title}`}
+        >
+          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
+          <span>Side peek</span>
+        </button>
+      )}
       <div className="resourceHubCardTop">
         <SiteFavicon url={resource.url} />
         <a
@@ -168,6 +200,7 @@ export function ResourceCatalogue({
   } = useContentOptions()
   const { account } = useAccount()
   const [reported, setReported] = useState<AnyValue>(null)
+  const [selectedResource, setSelectedResource] = useState<AnyValue | null>(null)
   const [notice, setNotice] = useState('')
   const [limit, setLimit] = useState(12)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
@@ -381,6 +414,7 @@ export function ResourceCatalogue({
                           items={matches}
                           onReport={account?.isVerified ? setReported : null}
                           onCorrect={onCorrect}
+                          onPeek={(r: AnyValue) => setSelectedResource(r)}
                         />
                       ) : null
                     },
@@ -394,6 +428,7 @@ export function ResourceCatalogue({
                       resource={resource}
                       onReport={account?.isVerified ? setReported : null}
                       onCorrect={onCorrect}
+                      onPeek={(r: AnyValue) => setSelectedResource(r)}
                     />
                   ))}
                 </div>
@@ -423,11 +458,22 @@ export function ResourceCatalogue({
           </div>
         )}
       </Section>
+      <ResourcePeek
+        resource={selectedResource}
+        onClose={() => setSelectedResource(null)}
+        onReport={account?.isVerified ? setReported : undefined}
+      />
     </>
   )
 }
 
-function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePathwayGroupProps) {
+function ResourcePathwayGroup({
+  group,
+  items,
+  onReport,
+  onCorrect,
+  onPeek,
+}: ResourcePathwayGroupProps) {
   const [visible, setVisible] = useState(3)
   return (
     <Section label={group.label} meta={`${items.length} resources`}>
@@ -439,6 +485,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePat
             resource={resource}
             onReport={onReport}
             onCorrect={onCorrect}
+            onPeek={onPeek}
           />
         ))}
       </div>

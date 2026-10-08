@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, Empty, A, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
 import { SubmissionCard } from '../components/cards'
+import { SubmissionPeek } from '../components/EntityPeeks'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
@@ -41,6 +42,7 @@ export function Submissions() {
   const [groupFilters, setGroupFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
+  const [selectedSubmission, setSelectedSubmission] = useState<AnyValue | null>(null)
   const query = useApi(`/submissions?state=${state}`, [state])
 
   const changeState = (nextState: AnyValue) => {
@@ -240,6 +242,7 @@ export function Submissions() {
                                 )
                             : undefined
                         }
+                        onPeek={(selected) => setSelectedSubmission(selected)}
                       />
                     ))}
                   </div>
@@ -255,6 +258,7 @@ export function Submissions() {
           )
         }}
       </Async>
+      <SubmissionPeek submission={selectedSubmission} onClose={() => setSelectedSubmission(null)} />
     </div>
   )
 }

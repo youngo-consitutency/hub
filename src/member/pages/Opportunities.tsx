@@ -6,10 +6,12 @@ interface OpportunityCardProps {
   onKindFilter?: AnyValue
   onFormatFilter?: AnyValue
   onRegionFilter?: AnyValue
+  onPeek?: (item: AnyValue) => void
 }
 
 import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
+import { OpportunityPeek } from '../components/EntityPeeks'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
@@ -42,6 +44,8 @@ import {
   TbSearch as Search,
   TbSparkles as Sparkles,
   TbVideo as Video,
+  TbLayoutSidebarRightExpand,
+  TbArrowUpRight,
 } from 'react-icons/tb'
 import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions'
 
@@ -97,19 +101,29 @@ function OpportunityCard({
   onKindFilter,
   onFormatFilter,
   onRegionFilter,
+  onPeek,
 }: OpportunityCardProps) {
   const where = item.format === 'online' ? null : item.location
   return (
-    <article className="card entityCard opportunityCard">
-      {item.linkUrl && (
-        <a
-          className="entityCardLinkOverlay"
-          href={item.linkUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-          aria-label={`${item.title} — open details`}
-        />
-      )}
+    <article className="card entityCard opportunityCard linkedEntityCard">
+      <button
+        type="button"
+        className="entityCardLinkOverlay"
+        aria-label={`${item.title} — open details in side peek`}
+        onClick={() => onPeek?.(item)}
+      />
+      <button
+        type="button"
+        className="cardPeekTrigger"
+        onClick={(e) => {
+          e.stopPropagation()
+          onPeek?.(item)
+        }}
+        aria-label={`Side peek for ${item.title}`}
+      >
+        <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
+        <span>Side peek</span>
+      </button>
       <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
         {item.organizationName && <p className="metaMuted">{item.organizationName}</p>}
@@ -134,12 +148,24 @@ function OpportunityCard({
           <span>{where}</span>
         </p>
       )}
-      {(item.startsAt || item.deadlineAt) && (
-        <div className="entityCardFooter">
-          {item.startsAt && <CardSchedule iso={item.startsAt} label="Starts" />}
-          {item.deadlineAt && <LifecycleTiming iso={item.deadlineAt} label="Apply by" />}
-        </div>
-      )}
+      <div className="entityCardFooter">
+        {item.startsAt && <CardSchedule iso={item.startsAt} label="Starts" />}
+        {item.deadlineAt && <LifecycleTiming iso={item.deadlineAt} label="Apply by" />}
+        {item.linkUrl && (
+          <a
+            className="btn btn-ghost btn-sm"
+            href={item.linkUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            onClick={(e) => e.stopPropagation()}
+            style={{ position: 'relative', zIndex: 2, marginLeft: 'auto' }}
+            aria-label={`Apply to ${item.title} (external link)`}
+          >
+            <span>Apply</span>
+            <TbArrowUpRight size={14} aria-hidden />
+          </a>
+        )}
+      </div>
     </article>
   )
 }
@@ -151,6 +177,7 @@ export function Opportunities() {
   const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
+  const [selectedOpportunity, setSelectedOpportunity] = useState<AnyValue | null>(null)
   const query = useApi('/member/opportunities?kind=all&format=all')
 
   return (
@@ -227,6 +254,7 @@ export function Opportunities() {
                     ? () => setRegionFilters((current) => toggleFilter(current, item.region))
                     : undefined
                 }
+                onPeek={(selected) => setSelectedOpportunity(selected)}
               />
             ))
 
@@ -387,6 +415,7 @@ export function Opportunities() {
           )
         }}
       </Async>
+      <OpportunityPeek item={selectedOpportunity} onClose={() => setSelectedOpportunity(null)} />
     </div>
   )
 }
