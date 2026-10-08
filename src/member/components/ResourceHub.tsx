@@ -414,6 +414,7 @@ export function ResourceCatalogue({
                           items={matches}
                           onReport={account?.isVerified ? setReported : null}
                           onCorrect={onCorrect}
+                          onPeek={(r: AnyValue) => setSelectedResource(r)}
                         />
                       ) : null
                     },

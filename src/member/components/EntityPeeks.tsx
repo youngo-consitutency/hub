@@ -54,9 +54,8 @@ export function OpportunityPeek({ item, onClose }: { item: AnyValue | null; onCl
 
   const kindLabel = OPPORTUNITY_KINDS[item.kind] || item.kind || 'Opportunity'
   const formatLabel = OPPORTUNITY_FORMATS[item.format] || item.format || 'Online'
-  const where =
-    item.format === 'online' ? 'Online / Remote' : item.location || 'Location specified in portal'
-  const region = item.region ? regionLabel(item.region) : 'Global / All regions'
+  const where = item.format === 'online' ? 'Online / Remote' : item.location || null
+  const region = item.region ? regionLabel(item.region) : null
 
   const properties = [
     {
@@ -69,16 +68,8 @@ export function OpportunityPeek({ item, onClose }: { item: AnyValue | null; onCl
       icon: item.format === 'online' ? TbVideo : TbMapPin,
       value: <span>{formatLabel}</span>,
     },
-    {
-      label: 'Location',
-      icon: TbMapPin,
-      value: <span>{where}</span>,
-    },
-    {
-      label: 'Region',
-      icon: TbGlobe,
-      value: <span>{region}</span>,
-    },
+    ...(where ? [{ label: 'Location', icon: TbMapPin, value: <span>{where}</span> }] : []),
+    ...(region ? [{ label: 'Region', icon: TbGlobe, value: <span>{region}</span> }] : []),
     ...(item.organizationName
       ? [
           {
@@ -125,11 +116,14 @@ export function OpportunityPeek({ item, onClose }: { item: AnyValue | null; onCl
             <h4 className="notionSectionHeading">Key particulars</h4>
             <ul className="notionBulletList">
               <li>
-                <strong>Delivery mode:</strong> {formatLabel} ({where})
+                <strong>Delivery mode:</strong> {formatLabel}
+                {where && where !== 'Online / Remote' ? ` (${where})` : ''}
               </li>
-              <li>
-                <strong>Regional scope:</strong> {region}
-              </li>
+              {region && (
+                <li>
+                  <strong>Regional scope:</strong> {region}
+                </li>
+              )}
               {item.startsAt && (
                 <li>
                   <strong>Commencement date:</strong> {fmtDual(item.startsAt)}
@@ -341,10 +335,9 @@ export function EventPeek({ event, onClose }: { event: AnyValue | null; onClose:
       icon: TbFileDescription,
       content: (
         <div className="notionTabContent">
-          {isLive && (
+          {isLive && event.meetingUrl && (
             <NotionCallout icon={TbVideo} tone="accent">
-              <strong>Meeting is live right now!</strong> Click the Join Meeting button below to
-              participate in the session.
+              <strong>This meeting is live now.</strong> Use the join button below to take part.
             </NotionCallout>
           )}
 

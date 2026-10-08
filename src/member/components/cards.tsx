@@ -255,9 +255,14 @@ export function SubmissionCard({
   groupFilterState,
   onStatusFilter,
   onGroupFilter,
+  onPeek,
 }: SubmissionCardProps) {
   return (
-    <LinkedEntityCard href={`/submissions/${sub.slug}`} label={`Open ${sub.title}`}>
+    <LinkedEntityCard
+      href={`/submissions/${sub.slug}`}
+      label={`Open ${sub.title}`}
+      onPeek={onPeek ? () => onPeek(sub) : undefined}
+    >
       <EntityHeader title={sub.title}>
         {sub.wg && (
           <FilterChip
@@ -299,11 +304,17 @@ export function CoyCard({
   regionFilterState,
   onTypeFilter,
   onRegionFilter,
+  onPeek,
 }: CoyCardProps) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   const CoyIcon = (COY_ICONS as AnyValue)[coy.type] || Globe
   return (
-    <LinkedEntityCard href={`/coys/${coy.slug}`} label={`Open ${coy.title}`} className="coyCard">
+    <LinkedEntityCard
+      href={`/coys/${coy.slug}`}
+      label={`Open ${coy.title}`}
+      className="coyCard"
+      onPeek={onPeek ? () => onPeek(coy) : undefined}
+    >
       <EntityHeader title={coy.title} status={coy.status}>
         <FilterChip state={typeFilterState} icon={CoyIcon} onClick={onTypeFilter}>
           {(COY_LABEL as AnyValue)[coy.type]}

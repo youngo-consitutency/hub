@@ -91,6 +91,7 @@ export function NotionSidePeek({
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [closing, setClosing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
   const [activeTab, setActiveTab] = useState<string>(
     initialTab || (tabs && tabs.length > 0 ? tabs[0].id : ''),
   )
@@ -172,10 +173,15 @@ export function NotionSidePeek({
       navigator.clipboard
         .writeText(targetUrl)
         .then(() => {
+          if (copiedTimer.current) clearTimeout(copiedTimer.current)
           setCopied(true)
           copiedTimer.current = setTimeout(() => setCopied(false), 2000)
         })
-        .catch(() => {})
+        .catch(() => {
+          if (copiedTimer.current) clearTimeout(copiedTimer.current)
+          setCopyFailed(true)
+          copiedTimer.current = setTimeout(() => setCopyFailed(false), 2000)
+        })
     }
   }
 
@@ -241,6 +247,11 @@ export function NotionSidePeek({
               <>
                 <TbCheck size={15} strokeWidth={2} className="textSuccess" aria-hidden />
                 <span className="notionActionLabel">Copied</span>
+              </>
+            ) : copyFailed ? (
+              <>
+                <TbX size={15} strokeWidth={2} aria-hidden />
+                <span className="notionActionLabel">Copy failed</span>
               </>
             ) : (
               <>
