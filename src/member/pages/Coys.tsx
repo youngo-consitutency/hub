@@ -209,7 +209,7 @@ export function Coys() {
           )
         }}
       </Async>
-      <CoyPeek coy={selectedCoy} onClose={() => setSelectedCoy(null)} />
+      <CoyPeek item={selectedCoy} onClose={() => setSelectedCoy(null)} />
     </div>
   )
 }

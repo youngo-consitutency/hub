@@ -459,7 +459,7 @@ export function ResourceCatalogue({
         )}
       </Section>
       <ResourcePeek
-        resource={selectedResource}
+        item={selectedResource}
         onClose={() => setSelectedResource(null)}
         onReport={account?.isVerified ? setReported : undefined}
       />
