@@ -56,8 +56,8 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "@sentry/core": "11.1.0",
-    "@types/node": "26.6.3",
+    "@sentry/core": "11.4.0",
+    "@types/node": "26.6.4",
     "@types/nodemailer": "^8.0.2",
     "@types/papaparse": "^5.5.2",
     "@types/pg": "8.23.1",
@@ -66,14 +66,14 @@
     "@types/web-push": "3.6.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.16.0",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.3.8",
     "jsonc-parser": "^3.3.1",
     "prettier": "^3.9.9",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vite": "^8.3.1",
+    "vite": "^8.3.2",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "5.0.2"
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": ">=22.13.0"
