@@ -12,10 +12,18 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import dotenv from 'dotenv'
-import { applyEdits, modify, parse } from 'jsonc-parser'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
+
+// This script itself needs dotenv + jsonc-parser — check deps before
+// importing them, so a fresh clone gets a readable error instead of
+// ERR_MODULE_NOT_FOUND. The generated `hub` server would fail the same way.
+if (!existsSync(join(ROOT, 'node_modules/@modelcontextprotocol/sdk'))) {
+  console.error('Dependencies not installed — run `npm ci` in the repo root')
+  process.exit(1)
+}
+const { default: dotenv } = await import('dotenv')
+const { applyEdits, modify, parse } = await import('jsonc-parser')
 
 // .env.local values lose to real env vars.
 const envPath = join(ROOT, '.env.local')
