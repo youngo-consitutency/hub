@@ -25,8 +25,15 @@ try {
   ;({ StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js'))
   ;({ createHubMcpServer } = await import('../../mcp-content/lib/mcpServer.mjs'))
   ;({ attachMemoryTools } = await import('../../mcp-content/lib/memory.mjs'))
-} catch {
-  console.error('[hub-mcp] dependencies not installed — run `npm ci` in the repo root')
+} catch (error) {
+  // Only blame missing deps for module-resolution failures — a syntax error
+  // or other startup fault must surface its real message.
+  const missing = ['ERR_MODULE_NOT_FOUND', 'MODULE_NOT_FOUND'].includes(error?.code)
+  console.error(
+    missing
+      ? '[hub-mcp] dependencies not installed — run `npm ci` in the repo root'
+      : `[hub-mcp] startup failed: ${error?.message || error}`,
+  )
   process.exit(1)
 }
 

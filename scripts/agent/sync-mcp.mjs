@@ -12,23 +12,23 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import dotenv from 'dotenv'
-import { applyEdits, modify, parse } from 'jsonc-parser'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
+
+// This script itself needs dotenv + jsonc-parser — check deps before
+// importing them, so a fresh clone gets a readable error instead of
+// ERR_MODULE_NOT_FOUND. The generated `hub` server would fail the same way.
+if (!existsSync(join(ROOT, 'node_modules/@modelcontextprotocol/sdk'))) {
+  console.error('Dependencies not installed — run `npm ci` in the repo root')
+  process.exit(1)
+}
+const { default: dotenv } = await import('dotenv')
+const { applyEdits, modify, parse } = await import('jsonc-parser')
 
 // .env.local values lose to real env vars.
 const envPath = join(ROOT, '.env.local')
 const fromFile = existsSync(envPath) ? dotenv.parse(readFileSync(envPath)) : {}
 const env = (k) => process.env[k] || fromFile[k]
-
-// The `hub` server is a node script in this repo — without dependencies
-// installed it fails at startup with an opaque module error in agent UIs.
-if (!existsSync(join(ROOT, 'node_modules/@modelcontextprotocol/sdk'))) {
-  console.warn(
-    'warn: dependencies not installed — the hub server will not start until `npm ci` runs',
-  )
-}
 
 const key = env('HINDSIGHT_API_KEY')
 const hasHubCreds = env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))
