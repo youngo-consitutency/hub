@@ -17,9 +17,25 @@
  * Remote / phone clients should use the hosted HTTP server instead:
  *   node mcp-content/server.mjs   (content tools only — memory stays local)
  */
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { createHubMcpServer } from '../../mcp-content/lib/mcpServer.mjs'
-import { attachMemoryTools } from '../../mcp-content/lib/memory.mjs'
+// Deps first: a bare `npm ci`-less checkout makes static imports throw a
+// raw ERR_MODULE_NOT_FOUND that agent UIs surface as an opaque crash.
+// Import dynamically so the failure is a readable message instead.
+let StdioServerTransport, createHubMcpServer, attachMemoryTools
+try {
+  ;({ StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js'))
+  ;({ createHubMcpServer } = await import('../../mcp-content/lib/mcpServer.mjs'))
+  ;({ attachMemoryTools } = await import('../../mcp-content/lib/memory.mjs'))
+} catch (error) {
+  // Only blame missing deps for module-resolution failures — a syntax error
+  // or other startup fault must surface its real message.
+  const missing = ['ERR_MODULE_NOT_FOUND', 'MODULE_NOT_FOUND'].includes(error?.code)
+  console.error(
+    missing
+      ? '[hub-mcp] dependencies not installed — run `npm ci` in the repo root'
+      : `[hub-mcp] startup failed: ${error?.message || error}`,
+  )
+  process.exit(1)
+}
 
 // Fall back to .env.local/.env for HUB_* credentials when the agent config
 // does not inject them. dotenv never overrides existing env vars.
@@ -31,6 +47,12 @@ try {
 }
 
 const server = createHubMcpServer()
+const hasContent = process.env.HUB_TOKEN || (process.env.HUB_EMAIL && process.env.HUB_PASSWORD)
+console.error(
+  `[hub-mcp] content credentials: ${
+    hasContent ? 'ok' : 'missing — set HUB_TOKEN or HUB_EMAIL+HUB_PASSWORD in .env.local'
+  }`,
+)
 try {
   const count = await attachMemoryTools(server)
   console.error(`[hub-mcp] ${count} memory tools attached`)

@@ -18,6 +18,7 @@ import {
   TbShieldCheck as ShieldCheck,
 } from 'react-icons/tb'
 import { apiGet, apiPost, useApi } from '../lib/api'
+import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { useAccount } from '../lib/accountContext'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui'
 import { fmtDual, fmtDateRange } from '../lib/time'
@@ -76,7 +77,7 @@ function confidenceLabel(value: AnyValue) {
 }
 
 function DirectMatches({ query, data }: DirectMatchesProps) {
-  const total = GROUPS.reduce((count, group) => count + (data[group.key]?.length || 0), 0)
+  const total = GROUPS.reduce((count, group) => count + (data?.[group.key]?.length || 0), 0)
   if (!total)
     return (
       <Empty
@@ -122,7 +123,12 @@ export function Search() {
   const { account } = useAccount()
   const initialQuery = new URLSearchParams(window.location.search).get('q') || ''
   const [query, setQuery] = useState(initialQuery)
-  const direct = useApi(`/search?q=${encodeURIComponent(query)}`, [query])
+  // Debounced: each /search call scans six collections — do not fire per
+  // keystroke.
+  const debouncedQuery = useDebouncedValue(query.trim())
+  const direct = useApi(debouncedQuery ? `/search?q=${encodeURIComponent(debouncedQuery)}` : null, [
+    debouncedQuery,
+  ])
   const [result, setResult] = useState<AnyValue>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -345,10 +351,13 @@ export function Search() {
         </div>
       )}
 
-      {query.trim() ? (
+      {debouncedQuery ? (
         <Section label="Direct matches">
+          {/* Async gates on loading, so `data` always belongs to the current
+              debounced query — keepPreviousData can only surface while the
+              key is null, which this branch already excludes. */}
           <Async query={direct} skeletons={3}>
-            {(data: AnyValue) => <DirectMatches query={query} data={data} />}
+            {(data: AnyValue) => data && <DirectMatches query={debouncedQuery} data={data} />}
           </Async>
         </Section>
       ) : (
