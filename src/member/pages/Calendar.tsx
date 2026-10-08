@@ -423,7 +423,7 @@ export function Calendar() {
           )
         }}
       </Async>
-      <EventPeek event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <EventPeek item={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </div>
   )
 }
