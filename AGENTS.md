@@ -35,6 +35,11 @@ session-memory tools (`mcp-content/lib/memory.mjs`, attached when
 only — never attach memory there, or external consumers' recall and retain
 would land in this project's bank.
 
+Project MCP servers authenticate with API keys or tokens from the
+environment — never OAuth browser flows. Expiring OAuth grants kill agent
+startup with a bare `Unauthorized`; a key in `.env.local` does not. Any new
+server added to `sync-mcp.mjs` must follow the same rule.
+
 ## Negotiation agent proposals
 
 The design direction is agents that prepare actionable proposals for human review. Existing negotiation code does not establish that every agent-proposal requirement below is implemented or deployed.
