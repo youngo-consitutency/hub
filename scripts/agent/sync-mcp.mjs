@@ -22,6 +22,14 @@ const envPath = join(ROOT, '.env.local')
 const fromFile = existsSync(envPath) ? dotenv.parse(readFileSync(envPath)) : {}
 const env = (k) => process.env[k] || fromFile[k]
 
+// The `hub` server is a node script in this repo — without dependencies
+// installed it fails at startup with an opaque module error in agent UIs.
+if (!existsSync(join(ROOT, 'node_modules/@modelcontextprotocol/sdk'))) {
+  console.warn(
+    'warn: dependencies not installed — the hub server will not start until `npm ci` runs',
+  )
+}
+
 const key = env('HINDSIGHT_API_KEY')
 const hasHubCreds = env('HUB_TOKEN') || (env('HUB_EMAIL') && env('HUB_PASSWORD'))
 if (!key && !hasHubCreds) {
