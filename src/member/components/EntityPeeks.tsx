@@ -72,12 +72,11 @@ interface PeekDef<T, P = object> {
 }
 
 function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
-  return function EntityPeek(props: { item: T | null; onClose: () => void } & P) {
-    const { item, onClose, ...rest } = props
+  // Keyed inner component: `now` is captured per opened entity, not per
+  // page mount, so live/concluded state is fresh each time a peek opens.
+  function PeekBody({ item, extras, onClose }: { item: T; extras: P; onClose: () => void }) {
     const [now] = useState(() => Date.now())
-    if (!item) return null
-
-    const ctx: PeekContext<T, P> = { item, extras: rest as unknown as P, now, onClose }
+    const ctx: PeekContext<T, P> = { item, extras, now, onClose }
     const icon = def.icon ?? def.iconFor?.(ctx)
     return (
       <NotionSidePeek
@@ -93,6 +92,19 @@ function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
         actions={def.actions?.(ctx)}
         properties={def.properties(ctx)}
         tabs={def.tabs(ctx)}
+      />
+    )
+  }
+
+  return function EntityPeek(props: { item: T | null; onClose: () => void } & P) {
+    const { item, onClose, ...rest } = props
+    if (!item) return null
+    return (
+      <PeekBody
+        key={item.id ?? item.slug ?? item.url}
+        item={item}
+        extras={rest as unknown as P}
+        onClose={onClose}
       />
     )
   }
