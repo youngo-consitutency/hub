@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // Dockerfile and other self-hosted targets consume the standalone output.
   // Vercel and `next start` need the default output, so standalone is opt-in.
   output: process.env.STANDALONE_BUILD ? 'standalone' : undefined,
+  // Allow local network origins in development (e.g. mobile testing on LAN).
+  allowedDevOrigins: ['10.10.127.126', 'localhost', '127.0.0.1'],
   // React Compiler memoises components at build time — cuts redundant
   // re-renders across the member UI without manual memo/useMemo churn.
   reactCompiler: true,

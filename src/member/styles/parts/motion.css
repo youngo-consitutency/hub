@@ -1,13 +1,20 @@
 /* Motion follows placement: side views slide horizontally, anchored menus
-   drop from their trigger, and centered dialogs fade in place. */
+   drop from their trigger, and centered dialogs fade in place.
+   Respects prefers-reduced-motion: reduce natively. */
 
 @keyframes hubFadeIn {
   from {
     opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes hubFadeOut {
+  from {
+    opacity: 1;
+  }
   to {
     opacity: 0;
   }
@@ -18,23 +25,42 @@
     opacity: 0;
     transform: translateY(calc(var(--motion-shift) * -1));
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes hubRightPanelIn {
   from {
     transform: translateX(100%);
+    opacity: 0.8;
   }
   to {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes hubRightPanelOut {
   from {
     transform: translateX(0);
+    opacity: 1;
   }
   to {
     transform: translateX(100%);
+    opacity: 0.8;
+  }
+}
+
+@keyframes hubPillPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
   }
 }
 
@@ -58,7 +84,7 @@
   animation: hubPopoverIn var(--motion-standard) var(--motion-ease-out) both;
 }
 
-/* The phone view fills the screen but keeps the same forward/back direction. */
+/* Side peeks and right-docked sliding drawers */
 .routePeek[open] {
   animation: hubRightPanelIn var(--motion-panel) var(--motion-ease-out) both;
 }
@@ -70,4 +96,9 @@
 
 .routePeek[data-closing]::backdrop {
   animation: hubFadeOut var(--motion-standard) var(--motion-ease) both;
+}
+
+/* Subtle tab switch fade */
+.notionPeekContentArea {
+  animation: hubFadeIn var(--motion-fast) var(--motion-ease-out) both;
 }

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
 import { GroupCard } from '../components/cards'
+import { GroupPeek } from '../components/EntityPeeks'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
   TbSortDescendingLetters as ArrowUpAZ,
@@ -36,6 +37,7 @@ export function Groups() {
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState<Doc>({})
   const [descending, setDescending] = useState(false)
+  const [selectedGroup, setSelectedGroup] = useState<AnyValue | null>(null)
   const query = useApi('/groups')
   const { doc: directory } = useDocument('directory')
   const topicList = directory?.topics || []
@@ -80,6 +82,7 @@ export function Groups() {
                 if (!topicKey) return
                 setTopics((current) => toggleFilter(current, topicKey))
               }}
+              onPeek={(selected) => setSelectedGroup(selected)}
             />
           )
 
@@ -152,6 +155,7 @@ export function Groups() {
           )
         }}
       </Async>
+      <GroupPeek group={selectedGroup} onClose={() => setSelectedGroup(null)} />
     </div>
   )
 }

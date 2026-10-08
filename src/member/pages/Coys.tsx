@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
 import { CoyCard } from '../components/cards'
+import { CoyPeek } from '../components/EntityPeeks'
 import { regionFilterPrefix, regionLabel } from '../lib/regions'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
@@ -39,6 +40,7 @@ export function Coys() {
   const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('title')
+  const [selectedCoy, setSelectedCoy] = useState<AnyValue | null>(null)
   const query = useApi('/coys?type=all&region=all')
 
   return (
@@ -191,6 +193,7 @@ export function Coys() {
                         onRegionFilter={() =>
                           setRegionFilters((current) => toggleFilter(current, c.region))
                         }
+                        onPeek={(selected) => setSelectedCoy(selected)}
                       />
                     ))}
                   </div>
@@ -206,6 +209,7 @@ export function Coys() {
           )
         }}
       </Async>
+      <CoyPeek coy={selectedCoy} onClose={() => setSelectedCoy(null)} />
     </div>
   )
 }

@@ -12,6 +12,7 @@ interface LinkedEntityCardProps {
   href?: string
   label?: string
   className?: string
+  onPeek?: () => void
   children?: import('react').ReactNode
 }
 
@@ -22,6 +23,7 @@ interface CardScheduleProps {
 
 interface EventCardProps {
   event?: AnyValue
+  onPeek?: (event: AnyValue) => void
 }
 
 interface SubmissionCardProps {
@@ -30,6 +32,7 @@ interface SubmissionCardProps {
   groupFilterState?: AnyValue
   onStatusFilter?: AnyValue
   onGroupFilter?: AnyValue
+  onPeek?: (sub: AnyValue) => void
 }
 
 interface ClosingCardProps {
@@ -42,6 +45,7 @@ interface CoyCardProps {
   regionFilterState?: AnyValue
   onTypeFilter?: AnyValue
   onRegionFilter?: AnyValue
+  onPeek?: (coy: AnyValue) => void
 }
 
 interface GroupCardProps {
@@ -51,6 +55,7 @@ interface GroupCardProps {
   statusIcon?: AnyValue
   topicFilterState?: AnyValue
   onTopicFilter?: AnyValue
+  onPeek?: (group: AnyValue) => void
 }
 
 interface PersonCardProps {
@@ -78,6 +83,7 @@ import { regionLabel, regionFilterPrefix } from '../lib/regions'
 import { DestinationIcon } from './DestinationLink'
 import {
   TbCalendar as CalendarDays,
+  TbLayoutSidebarRightExpand,
   TbMapPin as MapPin,
   TbUsersGroup as UsersRound,
   TbArrowUpRight as ArrowUpRight,
@@ -140,10 +146,33 @@ function EntityHeader({
   )
 }
 
-function LinkedEntityCard({ href, label, className = '', children }: LinkedEntityCardProps) {
+function LinkedEntityCard({ href, label, className = '', onPeek, children }: LinkedEntityCardProps) {
   return (
     <article className={`card entityCard linkedEntityCard ${className}`.trim()}>
-      <A href={href} className="entityCardLinkOverlay" aria-label={label} peek />
+      {onPeek ? (
+        <button
+          type="button"
+          className="entityCardLinkOverlay"
+          aria-label={label}
+          onClick={onPeek}
+        />
+      ) : (
+        <A href={href} className="entityCardLinkOverlay" aria-label={label} peek />
+      )}
+      {onPeek && (
+        <button
+          type="button"
+          className="cardPeekTrigger"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPeek()
+          }}
+          aria-label={`Side peek for ${label || 'item'}`}
+        >
+          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
+          <span>Side peek</span>
+        </button>
+      )}
       {children}
     </article>
   )
@@ -164,11 +193,40 @@ export function CardSchedule({ iso, label }: CardScheduleProps) {
   )
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, onPeek }: EventCardProps) {
   const TypeIcon = (EVENT_ICONS as AnyValue)[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
-    <A href={`/calendar/${event.slug}`} className="card entityCard eventCard" peek>
+    <article className="card entityCard eventCard linkedEntityCard">
+      {onPeek ? (
+        <button
+          type="button"
+          className="entityCardLinkOverlay"
+          aria-label={`Open ${event.title}`}
+          onClick={() => onPeek(event)}
+        />
+      ) : (
+        <A
+          href={`/calendar/${event.slug}`}
+          className="entityCardLinkOverlay"
+          aria-label={`Open ${event.title}`}
+          peek
+        />
+      )}
+      {onPeek && (
+        <button
+          type="button"
+          className="cardPeekTrigger"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPeek(event)
+          }}
+          aria-label={`Side peek for ${event.title}`}
+        >
+          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
+          <span>Side peek</span>
+        </button>
+      )}
       <div className="eventCardIdentity">
         <DateStamp iso={event.startsAt} />
         <EntityHeader title={event.title}>
@@ -181,7 +239,7 @@ export function EventCard({ event }: EventCardProps) {
       <div className="entityCardFooter">
         <CardSchedule iso={event.startsAt} label="Starts" />
       </div>
-    </A>
+    </article>
   )
 }
 
@@ -275,18 +333,42 @@ export function GroupCard({
   statusIcon: StatusIcon,
   topicFilterState,
   onTopicFilter,
+  onPeek,
 }: GroupCardProps) {
   const destination = href || `/groups/${group.slug}`
   const wg = useWorkingGroups()
   const topicLabel = group.topic ? wg.topicLabel(group.topic) : null
   return (
     <div className="card cardTight groupCard entityCard">
-      <A
-        href={destination}
-        className="groupCardLinkOverlay"
-        aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
-        peek
-      />
+      {onPeek ? (
+        <button
+          type="button"
+          className="groupCardLinkOverlay"
+          aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
+          onClick={() => onPeek(group)}
+        />
+      ) : (
+        <A
+          href={destination}
+          className="groupCardLinkOverlay"
+          aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
+          peek
+        />
+      )}
+      {onPeek && (
+        <button
+          type="button"
+          className="cardPeekTrigger"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPeek(group)
+          }}
+          aria-label={`Side peek for ${group.name}`}
+        >
+          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
+          <span>Side peek</span>
+        </button>
+      )}
       <div className="groupCardBody">
         <div className="groupCardCopy">
           <div className="groupCardTitle">

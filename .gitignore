@@ -29,6 +29,8 @@ tests/e2e/.credentials.json
 .local/
 .local-demo/
 data/
+# local reference material (governance documents etc.) — never committed
+youngo/
 *.seed.sql
 /media
 .neon
