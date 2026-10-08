@@ -146,7 +146,13 @@ function EntityHeader({
   )
 }
 
-function LinkedEntityCard({ href, label, className = '', onPeek, children }: LinkedEntityCardProps) {
+function LinkedEntityCard({
+  href,
+  label,
+  className = '',
+  onPeek,
+  children,
+}: LinkedEntityCardProps) {
   return (
     <article className={`card entityCard linkedEntityCard ${className}`.trim()}>
       {onPeek ? (

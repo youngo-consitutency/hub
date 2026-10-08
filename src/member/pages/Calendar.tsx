@@ -389,7 +389,11 @@ export function Calendar() {
                         )}
                         <div className="calendarAgendaCards">
                           {dateEvents.map((event: AnyValue) => (
-                            <EventCard key={event.slug} event={event} onPeek={(selected) => setSelectedEvent(selected)} />
+                            <EventCard
+                              key={event.slug}
+                              event={event}
+                              onPeek={(selected) => setSelectedEvent(selected)}
+                            />
                           ))}
                         </div>
                       </section>

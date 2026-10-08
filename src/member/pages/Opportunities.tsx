@@ -415,10 +415,7 @@ export function Opportunities() {
           )
         }}
       </Async>
-      <OpportunityPeek
-        item={selectedOpportunity}
-        onClose={() => setSelectedOpportunity(null)}
-      />
+      <OpportunityPeek item={selectedOpportunity} onClose={() => setSelectedOpportunity(null)} />
     </div>
   )
 }

@@ -93,7 +93,13 @@ const EMPTY_RESOURCE = (vocab: AnyValue) => ({
   language: vocab.resourceLanguages[0] || '',
 })
 
-export function ResourceCard({ resource, onReport, onCorrect, onReview, onPeek }: ResourceCardProps) {
+export function ResourceCard({
+  resource,
+  onReport,
+  onCorrect,
+  onReview,
+  onPeek,
+}: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
   return (
@@ -460,7 +466,13 @@ export function ResourceCatalogue({
   )
 }
 
-function ResourcePathwayGroup({ group, items, onReport, onCorrect, onPeek }: ResourcePathwayGroupProps) {
+function ResourcePathwayGroup({
+  group,
+  items,
+  onReport,
+  onCorrect,
+  onPeek,
+}: ResourcePathwayGroupProps) {
   const [visible, setVisible] = useState(3)
   return (
     <Section label={group.label} meta={`${items.length} resources`}>
