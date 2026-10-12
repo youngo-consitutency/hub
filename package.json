@@ -55,8 +55,8 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
-    "@sentry/core": "11.4.0",
+    "@playwright/test": "1.64.0",
+    "@sentry/core": "11.6.0",
     "@types/node": "26.6.4",
     "@types/nodemailer": "^8.0.2",
     "@types/papaparse": "^5.5.2",
@@ -71,7 +71,7 @@
     "prettier": "^3.9.9",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vite": "^8.3.2",
+    "vite": "^8.3.4",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "5.0.3"
   },
