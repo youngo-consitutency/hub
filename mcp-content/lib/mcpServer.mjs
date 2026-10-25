@@ -27,6 +27,7 @@ const enumOf = (values) => z.enum(/** @type {[string, ...string[]]} */ (values))
 const kindEnum = enumOf(OPPORTUNITY_KINDS.map((item) => item.value))
 const formatEnum = enumOf(OPPORTUNITY_FORMATS.map((item) => item.value))
 const contentType = z.enum(['event', 'announcement'])
+const feedbackStatus = z.enum(['new', 'triaged', 'in_progress', 'resolved', 'declined'])
 
 /**
  * Zod shapes per tool — validated by registerTool before dispatch.
@@ -60,6 +61,16 @@ const INPUT_SHAPES = {
     id: z.string(),
     decision: z.enum(['approve', 'reject']),
     note: z.string().optional(),
+  },
+  list_feedback_tickets: {
+    status: feedbackStatus.optional(),
+    kind: z.string().optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+  },
+  triage_feedback_ticket: {
+    id: z.string(),
+    status: feedbackStatus.optional(),
+    triageNote: z.string().max(2000).optional(),
   },
   submit_resource: {
     title: z.string().min(3).max(160),
