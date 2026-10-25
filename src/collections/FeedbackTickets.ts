@@ -37,6 +37,8 @@ export const FeedbackTickets: CollectionConfig = {
     { name: 'body', type: 'textarea', required: true },
     { name: 'pageUrl', type: 'text' },
     { name: 'contextNote', type: 'text' },
+    { name: 'userAgent', type: 'text' },
+    { name: 'viewport', type: 'text' },
     {
       name: 'account',
       type: 'relationship',

@@ -752,6 +752,8 @@ export interface FeedbackTicket {
   body: string;
   pageUrl?: string | null;
   contextNote?: string | null;
+  userAgent?: string | null;
+  viewport?: string | null;
   account?: (number | null) | Account;
   contactEmail?: string | null;
   status: 'new' | 'triaged' | 'in_progress' | 'resolved' | 'declined';
@@ -2444,6 +2446,8 @@ export interface FeedbackTicketsSelect<T extends boolean = true> {
   body?: T;
   pageUrl?: T;
   contextNote?: T;
+  userAgent?: T;
+  viewport?: T;
   account?: T;
   contactEmail?: T;
   status?: T;
