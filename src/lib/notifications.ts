@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { emailPlainText, sanitizeEmailHtml } from '../shared/emailHtml'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { sendEmail } from './email'
@@ -27,6 +28,23 @@ export function emailPreferences(stored: AnyValue) {
 }
 
 // ── Templates ────────────────────────────────────────────────────
+
+const EMAIL_TAG_STYLE: Record<string, string> = {
+  p: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px',
+  h2: 'font-size:20px;line-height:1.3;color:#14251d;margin:18px 0 8px',
+  h3: 'font-size:17px;line-height:1.3;color:#14251d;margin:16px 0 6px',
+  ul: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px;padding-left:20px',
+  ol: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px;padding-left:20px',
+  blockquote: 'border-left:3px solid #087f5b;margin:0 0 12px;padding:0 0 0 12px;color:#3b4a43',
+  a: 'color:#087f5b',
+}
+
+// sanitised markup gets inline styles, since email clients drop stylesheets
+const styleEmailHtml = (html: string) =>
+  html.replace(
+    /<(p|h2|h3|ul|ol|blockquote|a)\b/g,
+    (_, tag) => `<${tag} style="${EMAIL_TAG_STYLE[tag]}"`,
+  )
 
 const escapeHtml = (value: AnyValue) =>
   String(value ?? '')
@@ -136,6 +154,17 @@ function templateContent(templateKey: string, data: Doc = {}) {
   }
 
   const title = singleLine(data.title || 'YOUNGO Hub update')
+  if (data.html) {
+    // member-written mail: sanitised again here, whatever the caller stored
+    return {
+      subject: title,
+      eyebrow: data.eyebrow ? singleLine(data.eyebrow, 80) : 'Group mail',
+      title,
+      body: styleEmailHtml(sanitizeEmailHtml(data.html)),
+      action,
+      text: `${title}\n\n${emailPlainText(data.html)}${data.actionUrl ? `\n\n${data.actionUrl}` : ''}`,
+    }
+  }
   const message = String(data.message || '').slice(0, 4000)
   const labels: Record<string, string> = {
     announcement: 'Announcement',
