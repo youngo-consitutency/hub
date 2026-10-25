@@ -2518,3 +2518,113 @@ a.monogram:hover {
     grid-column: 2;
   }
 }
+
+/* Agent connector */
+.agentConnect {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.agentSteps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agentSteps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.agentSteps li.is-done {
+  color: var(--text-1);
+}
+
+.agentSteps li.is-current {
+  border-color: var(--accent);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.agentStepMark {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-raised);
+}
+
+.agentSteps li.is-done .agentStepMark {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.agentScope,
+.agentCreate,
+.agentSecret,
+.agentSnippet {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.agentTools,
+.agentKeys {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agentTools li {
+  display: grid;
+  gap: 2px;
+}
+
+.agentKey {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.agentKey > div {
+  display: grid;
+}
+
+.agentSecret {
+  border-left: 3px solid var(--warn);
+}
+
+.agentSecretValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agentSecretValue code,
+.agentSnippet pre {
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.agentSecretValue code {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}

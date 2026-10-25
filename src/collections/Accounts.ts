@@ -19,6 +19,15 @@ export const Accounts: CollectionConfig = {
       domain: undefined,
     },
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc, operation }) => {
+        if (operation === 'update' && data?.password)
+          data.credentialEpoch = (originalDoc?.credentialEpoch || 1) + 1
+        return data
+      },
+    ],
+  },
   access: {
     read: ({ req }) => {
       if (!req.user) return false
@@ -202,6 +211,14 @@ export const Accounts: CollectionConfig = {
       access: { update: isStaffField },
       type: 'checkbox',
       defaultValue: false,
+    },
+    // Bumped on every password change; agent keys minted under an older
+    // epoch stop working (src/lib/agentKeys.ts).
+    {
+      name: 'credentialEpoch',
+      access: { read: isStaffField, update: isStaffField },
+      type: 'number',
+      defaultValue: 1,
     },
     // Legacy credential support: on first login the legacy scrypt hash is
     // verified, the Payload password is set, and these are cleared.
