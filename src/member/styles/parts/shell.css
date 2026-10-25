@@ -196,6 +196,66 @@
   gap: 2px;
 }
 
+.themeControl {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+.themeControlLabel {
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.themeControlOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.themeControlOption {
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.themeControlOption > svg {
+  flex-shrink: 0;
+}
+
+.themeControlOption:hover {
+  background: var(--bg-raised);
+}
+
+.themeControlOption[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-weight: 600;
+}
+
+.sheetHeader .themeControl {
+  margin-bottom: 0;
+}
+
 .content {
   flex: 1;
   min-width: 0;

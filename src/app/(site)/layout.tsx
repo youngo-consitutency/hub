@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { appBaseUrl } from '../../lib/env'
+import { SITE_DESCRIPTION, SITE_NAME, isDemo, shareMetadata } from './seo'
 
 export const metadata: Metadata = {
-  title: 'YOUNGO Hub',
+  metadataBase: new URL(appBaseUrl()),
+  title: SITE_NAME,
   // NEXT_PUBLIC_HUB_DEMO is canonical (it also drives the client banner);
   // HUB_DEMO_MODE is kept as a legacy alias.
-  robots:
-    process.env.NEXT_PUBLIC_HUB_DEMO === 'true' || process.env.HUB_DEMO_MODE === 'true'
-      ? { index: false, follow: false }
-      : undefined,
-  description:
-    'YOUNGO Hub brings the work of the UNFCCC children and youth constituency into one shared platform — meetings, working groups, submissions, decisions, opportunities, and trusted knowledge.',
+  robots: isDemo() ? { index: false, follow: false } : undefined,
+  description: SITE_DESCRIPTION,
+  ...shareMetadata,
   manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/icons/favicon-32.png', type: 'image/png', sizes: '32x32' }],
