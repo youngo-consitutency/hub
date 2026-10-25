@@ -77,8 +77,8 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
         <h3 style={{ marginTop: 6 }}>{ticket.title}</h3>
         {ticket.body && <p className="meta">{ticket.body}</p>}
         <p className="metaMuted" style={{ marginTop: 4 }}>
-          {ticket.reporterName || ticket.reporterEmail || 'Unknown member'}
-          {ticket.pagePath ? ` · ${ticket.pagePath}` : ''}
+          {ticket.contactEmail || 'Unknown member'}
+          {ticket.pageUrl ? ` · ${ticket.pageUrl}` : ''}
           {ticket.viewport ? ` · ${ticket.viewport}` : ''}
           {ticket.createdAt ? ` · ${formatDateTime(ticket.createdAt)}` : ''}
         </p>
