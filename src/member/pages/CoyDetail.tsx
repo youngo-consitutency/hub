@@ -8,6 +8,7 @@ import { Async, BackLink, LifecycleTiming, StatusChip, PageHeader, Section } fro
 import { fmtDateRange } from '../lib/time'
 import { coyApplicationsAreOpen, resolveCoyStatus } from '../../shared/coyStatus'
 import { DestinationIcon } from '../components/DestinationLink'
+import { CoyLive } from '../components/CoyLive'
 import {
   TbBuilding as Building2,
   TbCalendar as CalendarDays,
@@ -131,6 +132,8 @@ export function CoyDetail({ slug }: CoyDetailProps) {
                   </div>
                 </Section>
               )}
+
+              {coy.liveOps && slug && <CoyLive slug={slug} />}
             </>
           )
         }}

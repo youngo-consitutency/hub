@@ -13,6 +13,7 @@ import {
   listQueuedNotifications,
   renderEmailTemplate,
   verifyUnsubscribeToken,
+  emailPreferences,
 } from '../lib/notifications'
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { audit } from '../lib/audit'
@@ -228,12 +229,7 @@ export const notificationEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const row = docs[0] as Doc
-      const email = {
-        digest: Boolean(row?.email?.digest),
-        deadline: Boolean(row?.email?.deadline),
-        announcement: Boolean(row?.email?.announcement),
-        [verified.category]: false,
-      }
+      const email = { ...emailPreferences(row?.email), [verified.category]: false }
       if (row) {
         await req.payload.update({
           collection: 'notification-prefs',
@@ -391,11 +387,7 @@ export const notificationEndpoints: Endpoint[] = [
         timezone: row?.timezone || 'UTC',
         digestDay: row?.digestDay ?? 1,
         digestHourUtc: row?.digestHourUtc ?? 6,
-        email: {
-          digest: Boolean(row?.email?.digest),
-          deadline: Boolean(row?.email?.deadline),
-          announcement: Boolean(row?.email?.announcement),
-        },
+        email: emailPreferences(row?.email),
         emailVerified: Boolean(account.emailVerifiedAt),
         deliveryConfigured: Boolean(process.env.SMTP_URL || process.env.SMTP_HOST),
       })
@@ -407,7 +399,10 @@ export const notificationEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
       const b = await readBody(req)
-      if (!account.emailVerifiedAt && Object.values(b?.email || {}).some(Boolean)) {
+      const email = emailPreferences(b?.email)
+      // group mail is on by default, so only an opt-in choice needs a verified inbox
+      const optedIn = ['digest', 'deadline', 'announcement'].some((category) => email[category])
+      if (!account.emailVerifiedAt && optedIn) {
         return json(
           {
             error: {
@@ -430,11 +425,6 @@ export const notificationEndpoints: Endpoint[] = [
         throw fail.validation({ digestDay: 'Digest day must be between 0 and 6.' })
       if (!Number.isInteger(digestHourUtc) || digestHourUtc < 0 || digestHourUtc > 23)
         throw fail.validation({ digestHourUtc: 'Digest hour must be between 0 and 23.' })
-      const email = {
-        digest: Boolean(b.email?.digest),
-        deadline: Boolean(b.email?.deadline),
-        announcement: Boolean(b.email?.announcement),
-      }
       const { docs } = await req.payload.find({
         collection: 'notification-prefs',
         where: { account: { equals: account.id } },
