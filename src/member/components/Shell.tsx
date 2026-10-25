@@ -4,6 +4,7 @@ interface ShellProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
+import { mailReach } from '../../shared/mailReach'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
@@ -32,6 +33,7 @@ import {
   TbUserCircle as UserCircle,
   TbFilePencil as FilePenLine,
   TbSpeakerphone as Megaphone,
+  TbMailForward as MailForward,
   TbRosetteDiscountCheck as BadgeCheck,
   TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
@@ -226,6 +228,13 @@ export function Shell({ children }: ShellProps) {
         label: 'WG Contact Point',
         icon: Briefcase,
         when: canManageGroups(account),
+      },
+      {
+        section: SECTION.mine,
+        href: '/mail',
+        label: 'Mail Desk',
+        icon: MailForward,
+        when: mailReach({ capabilities }).canDraft,
       },
       {
         section: SECTION.mine,
