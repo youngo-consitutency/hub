@@ -81,6 +81,7 @@ import { useWorkingGroups } from '../lib/workingGroups'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel, regionFilterPrefix } from '../lib/regions'
 import { DestinationIcon } from './DestinationLink'
+import { coyDisplayStatus } from '../../shared/coyStatus'
 import {
   TbCalendar as CalendarDays,
   TbLayoutSidebarRightExpand,
@@ -315,7 +316,7 @@ export function CoyCard({
       className="coyCard"
       onPeek={onPeek ? () => onPeek(coy) : undefined}
     >
-      <EntityHeader title={coy.title} status={coy.status}>
+      <EntityHeader title={coy.title} status={coyDisplayStatus(coy)}>
         <FilterChip state={typeFilterState} icon={CoyIcon} onClick={onTypeFilter}>
           {(COY_LABEL as AnyValue)[coy.type]}
         </FilterChip>
@@ -338,6 +339,12 @@ export function CoyCard({
           <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
           <span>{fmtDateRange(coy.startsOn, coy.endsOn, coy.datesTbc)}</span>
         </p>
+        {coy.organizerName && (
+          <p className="entityCardMetaRow">
+            <Building size={16} strokeWidth={1.75} aria-hidden />
+            <span>{coy.organizerName}</span>
+          </p>
+        )}
       </div>
     </LinkedEntityCard>
   )
