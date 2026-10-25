@@ -64,6 +64,7 @@ import {
   SelectionEvaluations,
 } from './collections/Governance'
 import { Handovers } from './collections/Handovers'
+import { GuardianEnquiries } from './collections/GuardianEnquiries'
 import {
   FundingRequests,
   SafeguardingCases,
@@ -137,6 +138,7 @@ export default buildConfig({
     SelectionApplications,
     SelectionEvaluations,
     Handovers,
+    GuardianEnquiries,
     FundingRequests,
     SafeguardingCases,
     CoiDeclarations,

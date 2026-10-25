@@ -91,14 +91,16 @@ describe('validateRegistration', () => {
     expect(res.fields?.privacyConsent).toMatch(/updated/i)
   })
 
-  it('requires guardian details for under-18 members', async () => {
-    const res = await validateRegistration(
-      req,
-      individual({ ageBand: 'under_18', dateOfBirth: '2012-01-01' }),
-    )
-    expect(res.fields?.guardianName).toBeTruthy()
-    expect(res.fields?.guardianEmail).toBeTruthy()
-    expect(res.fields?.guardianConsent).toBeTruthy()
+  it('stops under-18 applicants at the guardian pathway', async () => {
+    const byBand = await validateRegistration(req, individual({ ageBand: 'under_18' }))
+    expect(byBand.data).toBeUndefined()
+    expect(byBand.fields?.ageBand).toMatch(/guardian pathway/)
+    expect(byBand.fields?.guardianName).toBeUndefined()
+
+    const byDob = await validateRegistration(req, individual({ dateOfBirth: '2012-01-01' }))
+    expect(byDob.data).toBeUndefined()
+    expect(byDob.fields?.ageBand).toMatch(/guardian pathway/)
+    expect(byDob.fields?.dateOfBirth).toMatch(/guardian pathway/)
   })
 
   it('rejects members over 35', async () => {
