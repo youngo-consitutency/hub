@@ -32,3 +32,20 @@ export function resolveCoyStatus(coy: AnyValue, now = new Date()) {
 export function coyApplicationsAreOpen(coy: AnyValue, now = new Date()) {
   return OPEN_APPLICATIONS.has(resolveCoyStatus(coy, now))
 }
+
+/**
+ * Label status for a tracker card. A conference in progress reads as
+ * underway. An endorsed host with no published dates reads as endorsed.
+ */
+export function coyDisplayStatus(coy: AnyValue, now = new Date()) {
+  const status = resolveCoyStatus(coy, now)
+  if (status === 'cancelled' || status === 'concluded') return status
+  const start = coy?.startsOn
+    ? Date.parse(`${String(coy.startsOn).slice(0, 10)}T00:00:00.000Z`)
+    : NaN
+  const end = endOfUtcDay(coy?.endsOn || coy?.startsOn)
+  const nowMs = now.getTime()
+  if (Number.isFinite(start) && end != null && start <= nowMs && nowMs <= end) return 'underway'
+  if (status === 'announced' && coy?.datesTbc) return 'endorsed'
+  return status
+}

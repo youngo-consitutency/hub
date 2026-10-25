@@ -190,6 +190,18 @@ function SlideFace({ slide }: SlideFaceProps) {
             </ol>
           </>
         ) : null}
+        {layout === 'photos' ? (
+          <>
+            {lead ? <p className="jtBanner">{lead}</p> : null}
+            <ul className="jtPhotos">
+              {slide.photos?.map((photo: AnyValue) => (
+                <li key={photo.src}>
+                  <img src={photo.src} alt={photo.alt} loading="lazy" />
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
         {layout === 'prose' ? (
           <div className="jtLeadCard jtLeadCard--wide">
             {slide.body?.map((line: AnyValue) => (
