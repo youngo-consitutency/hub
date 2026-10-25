@@ -1098,3 +1098,14 @@ main#site-main {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.siteWithdrawn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.siteWithdrawn h2 {
+  font-size: 18px;
+  margin-bottom: var(--space-1);
+}

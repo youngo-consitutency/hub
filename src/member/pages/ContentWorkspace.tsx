@@ -25,7 +25,14 @@ import {
   TbSend as Send,
   TbUpload as Upload,
   TbBook2 as BookOpen,
+  TbFileText as FileText,
 } from 'react-icons/tb'
+import {
+  PageDraftPreview,
+  PublicPageEditor,
+  PublicPagesSection,
+  type PageEdit,
+} from '../components/PublicPages'
 
 const EMPTY_EVENT = {
   slug: '',
@@ -86,6 +93,7 @@ export function ContentWorkspace() {
   const [busy, setBusy] = useState<AnyValue>(null)
   const [actionError, setActionError] = useState<AnyValue>(null)
   const [fields, setFields] = useState<AnyValue>({})
+  const [pageEdit, setPageEdit] = useState<PageEdit | null>(null)
 
   const resetForm = (type = contentType) => {
     setContentType(type)
@@ -163,7 +171,9 @@ export function ContentWorkspace() {
   }
 
   const requestReview = (item: AnyValue) =>
-    act(item.id, () => apiPost(`/member/content/drafts/${item.id}/submit`, {}))
+    act(item.id, () =>
+      apiPost(`/member/content/drafts/${item.id}/submit`, { expectedVersion: item.revision }),
+    )
   const review = (item: AnyValue, decision: AnyValue) => {
     const note =
       decision === 'approve'
@@ -176,10 +186,18 @@ export function ContentWorkspace() {
             )
             ?.trim()
     if (decision !== 'approve' && !note) return
-    act(item.id, () => apiPost(`/member/content/drafts/${item.id}/review`, { decision, note }))
+    act(item.id, () =>
+      apiPost(`/member/content/drafts/${item.id}/review`, {
+        decision,
+        note,
+        expectedVersion: item.revision,
+      }),
+    )
   }
   const publish = (item: AnyValue) =>
-    act(item.id, () => apiPost(`/member/content/drafts/${item.id}/publish`, {}))
+    act(item.id, () =>
+      apiPost(`/member/content/drafts/${item.id}/publish`, { expectedVersion: item.revision }),
+    )
 
   const title = editingId
     ? 'Edit draft'
@@ -450,6 +468,8 @@ export function ContentWorkspace() {
                           <div className="rowGap">
                             {item.contentType === 'event' ? (
                               <CalendarDays size={18} aria-hidden />
+                            ) : item.contentType === 'page' ? (
+                              <FileText size={18} aria-hidden />
                             ) : item.contentType === 'resource' ? (
                               <BookOpen size={18} aria-hidden />
                             ) : (
@@ -467,13 +487,24 @@ export function ContentWorkspace() {
                           {item.reviewNote && (
                             <p className="contentReviewNote">Review note: {item.reviewNote}</p>
                           )}
+                          {item.contentType === 'page' && (
+                            <PageDraftPreview payload={item.payload} />
+                          )}
                         </div>
                         <div className="rowGap contentQueueActions">
                           {editable && item.contentType !== 'resource' && (
                             <Button
                               sm
                               variant="ghost"
-                              onClick={() => editPayload(item.contentType, item.payload, item.id)}
+                              onClick={() =>
+                                item.contentType === 'page'
+                                  ? setPageEdit({
+                                      payload: item.payload,
+                                      draftId: item.id,
+                                      revision: item.revision,
+                                    })
+                                  : editPayload(item.contentType, item.payload, item.id)
+                              }
                             >
                               Edit
                             </Button>
@@ -538,6 +569,27 @@ export function ContentWorkspace() {
                 </div>
               )}
             </Section>
+
+            {(data.permissions.canDraft || data.permissions.canPublish) && (
+              <PublicPagesSection
+                pages={data.pages || []}
+                canDraft={data.permissions.canDraft}
+                canPublish={data.permissions.canPublish}
+                onEdit={setPageEdit}
+                onChanged={query.retry}
+              />
+            )}
+
+            {pageEdit && (
+              <PublicPageEditor
+                edit={pageEdit}
+                onClose={() => setPageEdit(null)}
+                onSaved={() => {
+                  setPageEdit(null)
+                  query.retry()
+                }}
+              />
+            )}
 
             {data.permissions.canDraft && (
               <Section label="Live content">

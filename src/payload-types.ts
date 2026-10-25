@@ -905,7 +905,7 @@ export interface CpCallSlot {
  */
 export interface ContentDraft {
   id: number;
-  contentType: 'event' | 'announcement' | 'resource' | 'coy' | 'opportunity';
+  contentType: 'event' | 'announcement' | 'resource' | 'coy' | 'opportunity' | 'page';
   contentKey: string;
   status: 'draft' | 'in_review' | 'changes_requested' | 'approved' | 'published' | 'rejected';
   payload:
