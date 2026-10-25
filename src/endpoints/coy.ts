@@ -179,6 +179,16 @@ export const coyEndpoints: Endpoint[] = [
           result.inactive.push(email)
           continue
         }
+        const { totalDocs: listed } = await req.payload.count({
+          collection: 'coy-participants',
+          where: { coy: { equals: coy.id }, account: { equals: member.id } },
+          overrideAccess: true,
+        })
+        if (listed) {
+          result.already += 1
+          continue
+        }
+        // the unique (coy, account) index still settles a concurrent add
         try {
           await req.payload.create({
             collection: 'coy-participants',
