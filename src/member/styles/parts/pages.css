@@ -2605,3 +2605,144 @@ a.monogram:hover {
     grid-column: 2;
   }
 }
+
+/* Mail Desk */
+.mailDesk {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.mailComposer {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mailReach,
+.mailPeople {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mailAudience {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mailAudience legend {
+  margin-bottom: var(--space-2);
+}
+
+.mailChips,
+.mailResults,
+.mailDrafts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mailChips .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mailChips button,
+.mailResults button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mailResults {
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+
+.mailResults button {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+
+.mailResults button:hover {
+  background: var(--bg-raised);
+}
+
+.mailDrafts {
+  display: grid;
+}
+
+.mailDraft {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mailDraftHead,
+.mailActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.htmlMail {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.htmlMailToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.htmlMailLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.htmlMailLink .input {
+  width: 180px;
+  min-height: 32px;
+}
+
+.htmlMailBody {
+  min-height: 220px;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-1);
+  line-height: 1.6;
+  outline: none;
+}
+
+.htmlMailBody:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.mailPreview {
+  width: 100%;
+  min-height: 70vh;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: #f2f6f3;
+}
