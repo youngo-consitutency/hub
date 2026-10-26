@@ -1,3 +1,5 @@
+'use client'
+
 interface LiveBannerProps {
   event?: AnyValue
 }

@@ -8,13 +8,16 @@
     // Storage may be unavailable in privacy-restricted contexts.
   }
 
-  // Light is the default. Dark applies only when the member has chosen it.
-  const theme = saved === 'dark' ? 'dark' : 'light'
+  // Match the runtime (src/member/lib/theme.ts) before first paint so there
+  // is no light/dark flash: a saved choice wins, otherwise the device setting.
+  const theme =
+    saved === 'dark' || saved === 'light'
+      ? saved
+      : window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
 
   document.documentElement.dataset.theme = theme
-  // Warm member register is the safe default; the Shell promotes operational
-  // routes to the dense 'mission' surface on mount.
-  document.documentElement.dataset.surface = 'member'
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute('content', theme === 'dark' ? '#0A0F0C' : '#F5F9F6')
