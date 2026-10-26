@@ -8,6 +8,8 @@ import type { AnyValue, Doc } from '../../lib/types'
 import { TbChevronDown as ChevronDown } from 'react-icons/tb'
 import { A, Skeletons } from '../../components/ui'
 import { useDocument } from '../../lib/documents'
+import { useApi } from '../../lib/api'
+import { PageWithdrawn } from './PageWithdrawn'
 
 function FaqItem({ q, a, id }: FaqItemProps) {
   return (
@@ -25,19 +27,27 @@ function FaqItem({ q, a, id }: FaqItemProps) {
 
 export function SiteFaq() {
   const { doc: site, loading } = useDocument('site')
+  // title, intro and questions come from the reviewed page; the rest of the
+  // page furniture stays in the site document
+  const page = useApi('/pages/faq')
   const faq = site?.faq
-  if (!faq) return loading ? <Skeletons n={5} /> : null
+  if (!faq || page.loading) return loading || page.loading ? <Skeletons n={5} /> : null
+  if (page.data?.state === 'unpublished') return <PageWithdrawn title={faq.title} />
+  const doc = page.data?.document
+  const items = doc
+    ? doc.sections.map((section: Doc) => ({ q: section.title, a: section.body }))
+    : faq.items || []
   const more = faq.more || {}
   return (
     <div className="siteMain">
       <header className="sitePageHeader">
         <p className="pageEyebrow">{faq.eyebrow}</p>
-        <h1>{faq.title}</h1>
-        <p className="sitePageLead">{faq.lead}</p>
+        <h1>{doc?.title || faq.title}</h1>
+        <p className="sitePageLead">{doc?.intro || faq.lead}</p>
       </header>
 
       <ul className="siteFaqList">
-        {(faq.items || []).map((item: Doc, index: number) => (
+        {items.map((item: Doc, index: number) => (
           <FaqItem key={item.q} q={item.q} a={item.a} id={`faq-${index}`} />
         ))}
       </ul>

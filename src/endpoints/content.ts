@@ -6,6 +6,25 @@ import * as store from '../lib/content'
 import { audit } from '../lib/audit'
 import type { Doc, AnyValue } from '../lib/domain'
 import type { ContentDraft } from '../payload-types'
+import { PUBLIC_PAGE_KEYS, validatePublicPage } from '../shared/publicPages'
+import { publishPublicPage, readPublicPage, unpublishPublicPage } from '../lib/publicPages'
+import { cleanText } from '../lib/text'
+
+// Page drafts are versioned: every transition names the revision it acted
+// on, so two editors or reviewers cannot act on a stale view of the draft.
+function assertPageVersion(draft: Doc, b: AnyValue) {
+  if (draft.contentType !== 'page') return
+  if (!Number.isInteger(b?.expectedVersion))
+    throw fail.validation({ expectedVersion: 'Reload the draft and try again.' })
+  if (b.expectedVersion !== (draft.revision || 1))
+    throw new ApiError(409, 'conflict', 'Someone changed this draft. Reload it and try again.')
+}
+
+function pagePayload(payload: AnyValue) {
+  const result = validatePublicPage(payload)
+  if (!result.ok) throw fail.validation(result.errors)
+  return result.value
+}
 
 async function draftAccess(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -214,6 +233,9 @@ export const contentEndpoints: Endpoint[] = [
           events: await store.listEvents(req),
           announcements: await store.listAnnouncements(req),
         },
+        pages: await Promise.all(
+          PUBLIC_PAGE_KEYS.map(async (slug) => ({ slug, ...(await readPublicPage(req, slug)) })),
+        ),
       })
     }),
   },
@@ -225,10 +247,12 @@ export const contentEndpoints: Endpoint[] = [
       if (!canDraft) throw fail.forbidden('Content drafting is not assigned.')
       const b = await readBody(req)
       const contentType = String(b.contentType || '')
-      if (!['event', 'announcement', 'resource'].includes(contentType))
-        throw fail.validation({ contentType: 'Choose events, announcements, or resources.' })
-      const payload = b.payload || {}
-      const contentKey = contentKeyFor(contentType, payload)
+      if (!['event', 'announcement', 'resource', 'page'].includes(contentType))
+        throw fail.validation({
+          contentType: 'Choose events, announcements, resources, or a page.',
+        })
+      const payload = contentType === 'page' ? pagePayload(b.payload) : b.payload || {}
+      const contentKey = contentType === 'page' ? payload.slug : contentKeyFor(contentType, payload)
       if (!contentKey) throw fail.validation({ payload: 'A title is required.' })
       const created = await req.payload.create({
         collection: 'content-drafts',
@@ -257,11 +281,15 @@ export const contentEndpoints: Endpoint[] = [
       if (!['draft', 'changes_requested'].includes(draft.status))
         throw new ApiError(409, 'conflict', 'This draft is already in review.')
       const b = await readBody(req)
+      assertPageVersion(draft, b)
+      if (draft.contentType === 'page' && b.payload?.slug !== draft.contentKey)
+        throw fail.validation({ slug: 'A page draft cannot move to another page.' })
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
         data: {
-          payload: b.payload ?? draft.payload,
+          payload:
+            draft.contentType === 'page' ? pagePayload(b.payload) : (b.payload ?? draft.payload),
           revision: (draft.revision || 1) + 1,
         },
         overrideAccess: true,
@@ -281,12 +309,14 @@ export const contentEndpoints: Endpoint[] = [
         throw fail.forbidden('Only the author can submit this draft.')
       if (!['draft', 'changes_requested'].includes(draft.status))
         throw new ApiError(409, 'conflict', 'This draft is already in review.')
+      assertPageVersion(draft, await readBody(req))
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
         data: {
           status: 'in_review',
           submittedAt: new Date().toISOString(),
+          ...(draft.contentType === 'page' ? { revision: (draft.revision || 1) + 1 } : {}),
         },
         overrideAccess: true,
         req,
@@ -306,25 +336,31 @@ export const contentEndpoints: Endpoint[] = [
       if (String(draft.author?.id ?? draft.author) === String(account.id))
         throw fail.forbidden('Authors cannot review their own draft.')
       const b = await readBody(req)
-      const decision = ['approve', 'decline', 'request_changes'].includes(b.decision)
+      assertPageVersion(draft, b)
+      // the workspace has always sent 'reject'; 'decline' is kept for API callers
+      const decision = ['approve', 'decline', 'reject', 'request_changes'].includes(b.decision)
         ? b.decision
         : null
       if (!decision)
-        throw fail.validation({ decision: 'Choose approve, decline, or request changes.' })
+        throw fail.validation({ decision: 'Choose approve, reject, or request changes.' })
+      const note = cleanText(b.reviewNote ?? b.note, 2000)
+      if (decision !== 'approve' && note.length < 3)
+        throw fail.validation({ note: 'Say what should change, or why it is rejected.' })
       const status =
         decision === 'approve'
           ? 'approved'
-          : decision === 'decline'
-            ? 'rejected'
-            : 'changes_requested'
+          : decision === 'request_changes'
+            ? 'changes_requested'
+            : 'rejected'
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
         data: {
           status,
           reviewer: account.id,
-          reviewNote: String(b.reviewNote || '').slice(0, 2000),
+          reviewNote: note,
           reviewedAt: new Date().toISOString(),
+          ...(draft.contentType === 'page' ? { revision: (draft.revision || 1) + 1 } : {}),
         },
         overrideAccess: true,
         req,
@@ -343,6 +379,10 @@ export const contentEndpoints: Endpoint[] = [
         throw new ApiError(409, 'conflict', 'Only approved drafts can be published.')
       if (String(draft.author?.id ?? draft.author) === String(account.id))
         throw fail.forbidden('Authors cannot publish their own draft.')
+      if (draft.contentType === 'page') {
+        assertPageVersion(draft, await readBody(req))
+        return json({ item: draftView(await publishPublicPage(req, draft, account)) })
+      }
       await applyToLive(req, draft.contentType, draft.contentKey, draft.payload)
       const updated = await req.payload.update({
         collection: 'content-drafts',
@@ -391,6 +431,25 @@ export const contentEndpoints: Endpoint[] = [
         targetId: slug,
       })
       return json({ item })
+    }),
+  },
+  {
+    // Withdraws a published page; the public site then shows it as
+    // temporarily unpublished until a new revision is published.
+    path: '/member/content/pages/:slug/unpublish',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account, canPublish } = await draftAccess(req)
+      if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
+      const slug = param(req, 'slug')
+      if (!PUBLIC_PAGE_KEYS.includes(slug)) throw fail.notFound()
+      const b = await readBody(req)
+      const reason = cleanText(b.reason, 2000)
+      if (reason.length < 3) throw fail.validation({ reason: 'Say why the page is withdrawn.' })
+      if (!Number.isInteger(b.revisionId))
+        throw fail.validation({ revisionId: 'Reload the page and try again.' })
+      await unpublishPublicPage(req, slug, b.revisionId, reason, account)
+      return json({ page: { slug, ...(await readPublicPage(req, slug)) } })
     }),
   },
   {

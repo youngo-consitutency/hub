@@ -1,4 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
+import { PUBLIC_PAGE_KEYS } from '../shared/publicPages'
+import { readPublicPage } from '../lib/publicPages'
 import { endpoint, fail, json, PUBLIC_CACHE, viewCache, param, readBody } from '../lib/respond'
 import { isVerifiedAccount } from '../lib/accounts'
 import { eventView, groupView, feedView, searchView, directoryView } from '../lib/views'
@@ -37,6 +39,26 @@ const gysSignupLimit = rateLimit({
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 export const publicEndpoints: Endpoint[] = [
+  {
+    // Reviewed FAQ / contact page: the published revision, a withdrawn
+    // notice, or the baseline from the site document. Document only — no
+    // author or reviewer metadata.
+    path: '/pages/:slug',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      const slug = param(req, 'slug')
+      if (!PUBLIC_PAGE_KEYS.includes(slug)) throw fail.notFound()
+      const page = await readPublicPage(req, slug)
+      const res = json({
+        state: page.state,
+        revisionId: page.revisionId,
+        publishedAt: page.publishedAt,
+        document: page.state === 'unpublished' ? null : page.document,
+      })
+      res.headers.set('Cache-Control', 'no-store')
+      return res
+    }),
+  },
   {
     path: '/landing',
     method: 'get',
