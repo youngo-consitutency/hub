@@ -64,6 +64,7 @@ import {
   SelectionEvaluations,
 } from './collections/Governance'
 import { Handovers } from './collections/Handovers'
+import { AgentIdempotency, AgentKeys } from './collections/AgentKeys'
 import {
   FundingRequests,
   SafeguardingCases,
@@ -137,6 +138,8 @@ export default buildConfig({
     SelectionApplications,
     SelectionEvaluations,
     Handovers,
+    AgentKeys,
+    AgentIdempotency,
     FundingRequests,
     SafeguardingCases,
     CoiDeclarations,

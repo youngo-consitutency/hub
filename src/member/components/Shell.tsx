@@ -32,6 +32,7 @@ import {
   TbUserCircle as UserCircle,
   TbFilePencil as FilePenLine,
   TbSpeakerphone as Megaphone,
+  TbPlugConnected as PlugConnected,
   TbRosetteDiscountCheck as BadgeCheck,
   TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
@@ -226,6 +227,17 @@ export function Shell({ children }: ShellProps) {
         label: 'WG Contact Point',
         icon: Briefcase,
         when: canManageGroups(account),
+      },
+      {
+        section: SECTION.mine,
+        href: '/account/agent',
+        label: 'Agent connector',
+        icon: PlugConnected,
+        // mirrors the gateway's eligibility; the page explains any closed gate
+        when:
+          capabilities.some((cap: string) => cap.startsWith('wg.manage')) ||
+          capabilities.includes('accounts.manage') ||
+          Boolean(access.isFocalPoint),
       },
       {
         section: SECTION.mine,

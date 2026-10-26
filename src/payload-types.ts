@@ -119,6 +119,8 @@ export interface Config {
     'selection-applications': SelectionApplication;
     'selection-evaluations': SelectionEvaluation;
     handovers: Handover;
+    'agent-keys': AgentKey;
+    'agent-idempotency': AgentIdempotency;
     'funding-requests': FundingRequest;
     'safeguarding-cases': SafeguardingCase;
     'coi-declarations': CoiDeclaration;
@@ -183,6 +185,8 @@ export interface Config {
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
     'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
     handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'agent-keys': AgentKeysSelect<false> | AgentKeysSelect<true>;
+    'agent-idempotency': AgentIdempotencySelect<false> | AgentIdempotencySelect<true>;
     'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
     'safeguarding-cases': SafeguardingCasesSelect<false> | SafeguardingCasesSelect<true>;
     'coi-declarations': CoiDeclarationsSelect<false> | CoiDeclarationsSelect<true>;
@@ -399,6 +403,7 @@ export interface Account {
   emailVerifiedAt?: string | null;
   principalType?: ('human' | 'service') | null;
   mustChangePassword?: boolean | null;
+  credentialEpoch?: number | null;
   legacyPasswordHash?: string | null;
   legacyPasswordSalt?: string | null;
   lastLoginAt?: string | null;
@@ -1582,6 +1587,45 @@ export interface Handover {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-keys".
+ */
+export interface AgentKey {
+  id: number;
+  account: number | Account;
+  tokenHash: string;
+  prefix: string;
+  credentialEpoch: number;
+  expiresAt: string;
+  lastUsedAt?: string | null;
+  revokedAt?: string | null;
+  revokedReason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-idempotency".
+ */
+export interface AgentIdempotency {
+  id: number;
+  agentKey: number | AgentKey;
+  tool: string;
+  idempotencyKey: string;
+  argumentsHash: string;
+  response?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "funding-requests".
  */
 export interface FundingRequest {
@@ -1946,6 +1990,14 @@ export interface PayloadLockedDocument {
         value: number | Handover;
       } | null)
     | ({
+        relationTo: 'agent-keys';
+        value: number | AgentKey;
+      } | null)
+    | ({
+        relationTo: 'agent-idempotency';
+        value: number | AgentIdempotency;
+      } | null)
+    | ({
         relationTo: 'funding-requests';
         value: number | FundingRequest;
       } | null)
@@ -2134,6 +2186,7 @@ export interface AccountsSelect<T extends boolean = true> {
   emailVerifiedAt?: T;
   principalType?: T;
   mustChangePassword?: T;
+  credentialEpoch?: T;
   legacyPasswordHash?: T;
   legacyPasswordSalt?: T;
   lastLoginAt?: T;
@@ -3042,6 +3095,35 @@ export interface HandoversSelect<T extends boolean = true> {
   openedAt?: T;
   closedAt?: T;
   closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-keys_select".
+ */
+export interface AgentKeysSelect<T extends boolean = true> {
+  account?: T;
+  tokenHash?: T;
+  prefix?: T;
+  credentialEpoch?: T;
+  expiresAt?: T;
+  lastUsedAt?: T;
+  revokedAt?: T;
+  revokedReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-idempotency_select".
+ */
+export interface AgentIdempotencySelect<T extends boolean = true> {
+  agentKey?: T;
+  tool?: T;
+  idempotencyKey?: T;
+  argumentsHash?: T;
+  response?: T;
   updatedAt?: T;
   createdAt?: T;
 }

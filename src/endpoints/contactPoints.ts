@@ -4,8 +4,7 @@ import { accountView, requirePlatformOperator, requireVerifiedMember } from '../
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
-import { getDocument } from '../lib/documents'
-import { TASK_FORCE_SLUGS } from '../shared/protocol'
+import { createWgActivity } from '../lib/wgActivities'
 import type { Doc, AnyValue } from '../lib/domain'
 
 function publicSlot(s: AnyValue, { withEmail = false } = {}) {
@@ -123,47 +122,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const wg = param(req, 'wg')
       const access = await getAccessProfile(req, account)
       if (!canManageWg(access, wg)) throw fail.forbidden()
-      const b = await readBody(req)
-      const title = String(b.title || '')
-        .trim()
-        .slice(0, 200)
-      if (!title || !b.kind) throw fail.validation({ title: 'title and kind are required.' })
-      const options = await getDocument(req, 'content-options')
-      const kinds = (options?.body?.wgActivityKinds || []).map((k: AnyValue) => String(k.value))
-      if (!kinds.includes(String(b.kind)))
-        throw new ApiError(400, 'validation', 'Invalid activity kind.')
-      if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))
-        throw new ApiError(400, 'validation', 'Invalid start date.')
-      const taskForceSlug = b.taskForceSlug ? String(b.taskForceSlug) : null
-      if (taskForceSlug && !TASK_FORCE_SLUGS.has(taskForceSlug))
-        throw new ApiError(400, 'validation', 'Unknown task force.')
-      if (b.url && !/^https?:\/\//.test(String(b.url)))
-        throw fail.validation({
-          url: 'Link must be a full http:// or https:// URL.',
-        })
-      const created = await req.payload.create({
-        collection: 'wg-activities',
-        data: {
-          wgSlug: wg,
-          kind: String(b.kind),
-          title,
-          body: b.body ? String(b.body).slice(0, 2000) : null,
-          startsAt: b.startsAt || null,
-          endsAt: b.endsAt || null,
-          url: b.url ? String(b.url) : null,
-          taskForceSlug,
-          createdBy: account.id,
-        },
-        overrideAccess: true,
-        req,
-      })
-      const activity = wgActivityView(created)
-      await audit(req, account, {
-        action: 'wg.activity_created',
-        targetType: 'wg_activity',
-        targetId: String(created.id),
-        after: activity,
-      })
+      const activity = await createWgActivity(req, account, wg, await readBody(req))
       return json({ activity }, { status: 201 })
     }),
   },

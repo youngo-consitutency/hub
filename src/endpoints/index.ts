@@ -23,6 +23,7 @@ import { electionEndpoints } from './elections'
 import { selectionEndpoints } from './selections'
 import { membershipEndpoints } from './membership'
 import { operationEndpoints } from './operations'
+import { agentEndpoints } from './agent'
 
 export const domainEndpoints = [
   ...authEndpoints,
@@ -30,6 +31,7 @@ export const domainEndpoints = [
   ...memberEndpoints,
   ...peopleEndpoints,
   ...feedbackEndpoints,
+  ...agentEndpoints,
   ...opportunityEndpoints,
   ...adminEndpoints,
   ...membershipTeamEndpoints,
