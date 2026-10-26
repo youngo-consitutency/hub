@@ -50,6 +50,7 @@ describe('email html', () => {
 describe('mail desk api', () => {
   let payload: Payload
   let wg: string
+  let otherWg: string
   let contact: Awaited<ReturnType<typeof session>>
   let member: Awaited<ReturnType<typeof session>>
   const draftBody = (scope: object) => ({
@@ -61,11 +62,13 @@ describe('mail desk api', () => {
   beforeAll(async () => {
     payload = await testPayload()
     wg = `it-wg-${randomBytes(4).toString('hex')}`
-    await payload.create({
-      collection: 'working-groups',
-      data: { slug: wg, name: 'IT group' },
-      overrideAccess: true,
-    })
+    otherWg = `it-wg-${randomBytes(4).toString('hex')}`
+    for (const slug of [wg, otherWg])
+      await payload.create({
+        collection: 'working-groups',
+        data: { slug, name: `IT group ${slug}` },
+        overrideAccess: true,
+      })
     contact = await session({
       membershipTrack: 'constituency_work',
       wg: { slug: wg, role: 'contact' },
@@ -90,7 +93,7 @@ describe('mail desk api', () => {
         body: JSON.stringify(body),
       })
     expect((await post(draftBody({ type: 'constituency' }))).status).toBe(403)
-    expect((await post(draftBody({ type: 'working_group', wgSlug: 'ace' }))).status).toBe(403)
+    expect((await post(draftBody({ type: 'working_group', wgSlug: otherWg }))).status).toBe(403)
     const outsider = await session({})
     const res = await post(draftBody({ type: 'individual', accountIds: [outsider.account.id] }))
     expect(res.status).toBe(403)
