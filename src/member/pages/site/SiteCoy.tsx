@@ -19,10 +19,12 @@ import { useDocument } from '../../lib/documents'
 // Icon names are stored in the site document; components live here.
 const FORMAT_ICONS = { Globe, Map, MapPin, Video }
 import { useApi } from '../../lib/api'
-import { resolveCoyStatus } from '../../../shared/coyStatus'
+import { coyDisplayStatus } from '../../../shared/coyStatus'
 
 const STATUS_LABEL = {
-  announced: ['chip-neutral', 'Announced soon'],
+  announced: ['chip-neutral', 'Announced'],
+  endorsed: ['chip-neutral', 'Endorsed'],
+  underway: ['chip-accent', 'Under way'],
   registration_open: ['chip-accent', 'Registration open'],
   applications_open: ['chip-warn', 'Applications open'],
   applications_closed: ['chip-neutral', 'Applications closed'],
@@ -32,7 +34,7 @@ const STATUS_LABEL = {
 }
 
 function CoyRow({ coy }: CoyRowProps) {
-  const status = resolveCoyStatus(coy)
+  const status = coyDisplayStatus(coy)
   const [chipClass, chipLabel] = (STATUS_LABEL as AnyValue)[status] || ['chip-neutral', status]
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   return (

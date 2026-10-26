@@ -40,14 +40,14 @@ export function OrgAffiliation() {
   const [done, setDone] = useState<AnyValue>(null)
 
   const load = () => {
-    apiGet('/member/ngo/affiliations')
+    apiGet('/member/affiliations')
       .then((res) => setMine(res.items || []))
       .catch((e) => setError(e.message))
   }
 
   useEffect(() => {
     load()
-    apiGet('/member/ngo/organisations')
+    apiGet('/member/organisations')
       .then((res) => setOrgs(res.items || []))
       .catch(() => {
         /* the picker stays empty; the rest of the page still works */
@@ -59,7 +59,7 @@ export function OrgAffiliation() {
     setError(null)
     setDone(null)
     try {
-      await apiPost('/member/ngo/affiliations', { orgAccountId: choice })
+      await apiPost('/member/affiliations', { orgAccountId: choice })
       setDone('Request sent. The organisation will confirm it.')
       setChoice('')
       load()

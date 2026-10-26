@@ -34,7 +34,7 @@ import { DestinationIcon } from './DestinationLink'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel } from '../lib/regions'
-import { resolveCoyStatus, coyApplicationsAreOpen } from '../../shared/coyStatus'
+import { coyDisplayStatus, coyApplicationsAreOpen } from '../../shared/coyStatus'
 import type { AnyValue, Doc } from '../lib/types'
 
 // ── Peek framework ─────────────────────────────────────────
@@ -564,7 +564,7 @@ const coyPeek: PeekDef<AnyValue> = {
   subtitle: ({ item }) => [item.city, item.country].filter(Boolean).join(', ') || undefined,
   icon: TbMapPin,
   fullPageHref: ({ item }) => `/coys/${item.slug}`,
-  badge: ({ item }) => <StatusChip status={resolveCoyStatus(item)} />,
+  badge: ({ item }) => <StatusChip status={coyDisplayStatus(item)} />,
   properties: ({ item }) =>
     properties([
       prop(
@@ -576,7 +576,7 @@ const coyPeek: PeekDef<AnyValue> = {
         ? prop('Location', TbMapPin, text([item.city, item.country].filter(Boolean).join(', ')))
         : null,
       prop('Dates', TbCalendar, mono(fmtDateRange(item.startsOn, item.endsOn, item.datesTbc))),
-      prop('Status', TbShieldCheck, <StatusChip status={resolveCoyStatus(item)} />),
+      prop('Status', TbShieldCheck, <StatusChip status={coyDisplayStatus(item)} />),
       item.region && prop('Region', TbGlobe, text(regionLabel(item.region))),
     ]),
   tabs: ({ item }) => [
