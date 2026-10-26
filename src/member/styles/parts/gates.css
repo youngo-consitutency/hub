@@ -856,6 +856,95 @@ ul.mandateBulletGroup {
   margin-top: var(--space-1);
 }
 
+/* Under-18 guardian pathway: replaces the application, so it reads as a stop. */
+.guardianPathway {
+  display: grid;
+  gap: var(--space-3);
+  border-left: 3px solid var(--warn);
+}
+
+.guardianHead,
+.guardianDone {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.guardianHead p,
+.guardianPathway > .meta {
+  max-width: var(--text-measure);
+}
+
+.guardianDob {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--warn-tint);
+}
+
+.guardianSubhead {
+  font-size: 15px;
+  color: var(--text-1);
+}
+
+.guardianFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guardianFields li {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+}
+
+.guardianRelationship {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.guardianActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.guardianQueue {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guardianRequest {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.guardianRequestHead,
+.guardianRequestActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.guardianRequestHead {
+  justify-content: space-between;
+}
+
 /* Sign-in and password recovery share one compact surface. Registration stays wider. */
 .authShell[data-auth-mode='signin'],
 .authShell[data-auth-mode='forgot'] {

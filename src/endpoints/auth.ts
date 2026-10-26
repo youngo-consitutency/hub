@@ -1,6 +1,8 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody } from '../lib/respond'
 import { validateRegistration } from '../lib/registration'
+import { validateGuardianEnquiry } from '../shared/guardianEnquiry'
+import { createGuardianEnquiry } from '../lib/guardianEnquiries'
 import {
   accountView,
   requireAccount,
@@ -112,6 +114,32 @@ export const authEndpoints: Endpoint[] = [
         throw fail.unauthorized()
       }
       return noStore(json({ account: accountView(user) }))
+    }),
+  },
+  {
+    // Under-18 applicants cannot register; a parent or legal guardian asks the
+    // Membership Team to make contact instead. Logs carry no personal data.
+    path: '/auth/guardian-enquiry',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      await registerLimit(req)
+      const result = validateGuardianEnquiry(await readBody(req))
+      if (result.honeypot) {
+        req.payload.logger.info({ event: 'hub_guardian_enquiry_rejected_as_automated' })
+        return noStore(json({ ok: true }, { status: 201 }))
+      }
+      if (result.fields) throw fail.validation(result.fields)
+      await createGuardianEnquiry(req, result.data)
+      req.payload.logger.info({
+        event: 'hub_guardian_enquiry_received',
+        requestId: req.headers.get('x-request-id') || null,
+      })
+      return noStore(
+        json(
+          { ok: true, message: 'Request received. The Membership Team will contact the guardian.' },
+          { status: 201 },
+        ),
+      )
     }),
   },
   {
