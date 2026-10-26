@@ -64,6 +64,7 @@ import {
   SelectionEvaluations,
 } from './collections/Governance'
 import { Handovers } from './collections/Handovers'
+import { CoyNotices, CoyParticipants } from './collections/CoyLive'
 import {
   FundingRequests,
   SafeguardingCases,
@@ -137,6 +138,8 @@ export default buildConfig({
     SelectionApplications,
     SelectionEvaluations,
     Handovers,
+    CoyParticipants,
+    CoyNotices,
     FundingRequests,
     SafeguardingCases,
     CoiDeclarations,

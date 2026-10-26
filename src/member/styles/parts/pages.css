@@ -1527,6 +1527,93 @@ a.monogram:hover {
   gap: var(--space-3);
 }
 
+.coyNotices,
+.coyParticipants {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coyNotice {
+  display: grid;
+  gap: var(--space-2);
+  border-left: 3px solid var(--accent);
+}
+
+.coyNotice p {
+  max-width: var(--text-measure);
+}
+
+.coyNoticeHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.coyNoticeHead h3 {
+  font-size: 16px;
+}
+
+.coyTools {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.coyParticipants {
+  gap: 0;
+}
+
+.coyParticipant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.coyParticipant > div {
+  display: grid;
+  min-width: 0;
+}
+
+.coyParticipant .metaMuted {
+  overflow-wrap: anywhere;
+}
+
+.coyAddResult {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.coyAddResult p:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.coyChannels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.coyChannels legend {
+  margin-bottom: var(--space-2);
+}
+
+.coyConfirm {
+  max-width: 160px;
+  text-transform: uppercase;
+}
+
 .coyOrganiserCopy h3 {
   font-size: 16px;
 }
