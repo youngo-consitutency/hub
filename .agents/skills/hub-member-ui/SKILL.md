@@ -35,6 +35,6 @@ Dynamic segments use `useParams<{ slug: string }>()` and pass `slug`/`extra` pro
 
 - Navigation: the `A` component (not `<Link>`) — it preserves member-UI behaviour. Programmatic nav: `navigate()`/`replace()`/`usePath()` from `src/member/lib/router` (backed by `next/navigation`).
 - Data: `apiGet`/`apiPost`/`apiPatch` in `lib/api`; SWR via `useDocument`/feature hooks; account context via `useAccount()`.
-- Primitives: `PageHeader`, `Empty`, `Skeletons`, `Card`, `FilterPill`, `Async` — reuse them rather than new markup.
+- Primitives: `PageHeader`, `Empty`, `Skeletons`, `FilterPill`, `Async`, `Section`, `ErrorCard` from `src/member/components/ui.tsx` — reuse them rather than new markup. There is no `Card` component: cards are the `.card` class, and entity cards live in `src/member/components/cards.tsx`.
 - Styles: extend the existing stylesheets in `src/member/styles/`; no inline CSS frameworks.
 - Copy: British English, sentence case. No emoji unless requested.

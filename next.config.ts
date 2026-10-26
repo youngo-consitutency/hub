@@ -8,6 +8,9 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  // `next dev` otherwise appends its own rules block to AGENTS.md on every run;
+  // agent guidance lives in AGENTS.md and .agents/skills.
+  agentRules: false,
   // Dockerfile and other self-hosted targets consume the standalone output.
   // Vercel and `next start` need the default output, so standalone is opt-in.
   output: process.env.STANDALONE_BUILD ? 'standalone' : undefined,
