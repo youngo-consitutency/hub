@@ -10,7 +10,7 @@ triggers: [user, model]
 
 ## Read path
 
-- `deriveAuthority(records)` in `src/lib/authority.ts` → capabilities, `councilSeats`, `teamRoles`. `getAccessProfile(req, account)` in `src/lib/access.ts` is the memoised per-request entry point — use it, not ad-hoc record queries.
+- `deriveAuthority(records)` in `src/lib/authority.ts` → capabilities, `councilSeats`, `teamRoles`. `getAccessProfile(req, account)` in `src/lib/access.ts` is the entry point — use it, not ad-hoc record queries. It is not memoised: every call queries `authority-records`, so resolve it once per handler and pass `access` along.
 - `AUTHORITY_ROLES` is the controlled vocabulary — policy-cited per role. New roles get a registry entry first (scopeTypes, capabilities, `requiresCw`, `councilSeat` template), then grants.
 - Legacy recorded strings resolve through the explicit map in authority.ts. Unmapped → denied and reported, never defaulted.
 
