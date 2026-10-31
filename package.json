@@ -40,7 +40,7 @@
     "file-type": "^22.1.1",
     "ical-generator": "^11.1.2",
     "libphonenumber-js": "^1.13.14",
-    "next": "^16.4.0",
+    "next": "^16.4.3",
     "nodemailer": "^10.0.14",
     "papaparse": "^5.7.0",
     "payload": "3.90.2",
