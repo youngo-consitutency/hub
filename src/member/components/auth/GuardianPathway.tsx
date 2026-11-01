@@ -72,6 +72,7 @@ export function GuardianPathway({
     )
   }
 
+  const busy = status === 'submitting'
   const dobStopped = form.ageBand !== 'under_18' && Boolean(form.dateOfBirth)
 
   return (
@@ -106,6 +107,7 @@ export function GuardianPathway({
             value={form.dateOfBirth}
             onChange={setChoice('dateOfBirth')}
             error={dobError}
+            disabled={busy}
           />
         </div>
       )}
@@ -140,6 +142,7 @@ export function GuardianPathway({
           <input
             className="input"
             autoComplete="name"
+            disabled={busy}
             value={guardian.guardianName}
             onChange={(e) => set('guardianName', e.target.value)}
             aria-invalid={!!fields.guardianName}
@@ -152,6 +155,7 @@ export function GuardianPathway({
             className="input"
             type="email"
             autoComplete="email"
+            disabled={busy}
             value={guardian.guardianEmail}
             onChange={(e) => set('guardianEmail', e.target.value)}
             aria-invalid={!!fields.guardianEmail}
@@ -170,6 +174,7 @@ export function GuardianPathway({
               <input
                 type="radio"
                 name="guardianRelationship"
+                disabled={busy}
                 checked={guardian.relationship === opt.value}
                 onChange={() => set('relationship', opt.value)}
               />
@@ -182,6 +187,7 @@ export function GuardianPathway({
       <label className="authCheck">
         <input
           type="checkbox"
+          disabled={busy}
           checked={guardian.guardianAuthority}
           onChange={(e) => set('guardianAuthority', e.target.checked)}
         />
@@ -190,13 +196,7 @@ export function GuardianPathway({
       <FieldError msg={fields.guardianAuthority} />
       {error && <FormAlert>{error}</FormAlert>}
       <div className="guardianActions">
-        <Button
-          type="button"
-          variant="primary"
-          glow
-          disabled={status === 'submitting'}
-          onClick={submit}
-        >
+        <Button type="button" variant="primary" glow disabled={busy} onClick={submit}>
           <Check size={18} strokeWidth={1.75} aria-hidden />
           {status === 'submitting' ? 'Sending…' : 'Send guardian request'}
         </Button>
