@@ -128,7 +128,7 @@ export function CoyDetail({ slug }: CoyDetailProps) {
                 </section>
               </div>
 
-              {(coy.organizerName || coy.organizerOrg) && (
+              {(coy.organizerName || coy.organizerOrg || coy.organizerEmail) && (
                 <Section label="Organiser">
                   <div className="card coyOrganiserCard">
                     <span className="iconTile" aria-hidden>
