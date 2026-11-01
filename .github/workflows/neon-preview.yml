@@ -46,20 +46,33 @@ jobs:
           cache: npm
 
       - name: Create or reuse the PR Neon branch
+        id: branch
         run: |
           # stdout may contain connection details; keep it out of the log
           if ! $NEONCTL branches create \
             --project-id "$NEON_PROJECT_ID" \
             --name "$PR_BRANCH" > /tmp/neon_create.txt 2>&1; then
-            cat /tmp/neon_create.txt | sed -E 's#postgres(ql)?://[^ @]+@#postgres://***@#g'
+            sed -E 's#postgres(ql)?://[^ @]+@#postgres://***@#g' /tmp/neon_create.txt
           fi
-          $NEONCTL connection-string "$PR_BRANCH" \
+          if ! DSN=$($NEONCTL connection-string "$PR_BRANCH" \
             --project-id "$NEON_PROJECT_ID" \
-            --pooled > /tmp/neon_dsn.txt
-          echo "DATABASE_URL=$(cat /tmp/neon_dsn.txt)" >> "$GITHUB_ENV"
+            --pooled 2> /tmp/neon_dsn_err.txt); then
+            # free plan caps branches and a PR stack hits it fast; verify.yml still migrates
+            if grep -q 'branches limit exceeded' /tmp/neon_create.txt; then
+              echo "::warning::Neon branch cap reached, so $PR_BRANCH was not provisioned. Merge or close a PR, then re-run this job."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            cat /tmp/neon_dsn_err.txt
+            exit 1
+          fi
+          echo "::add-mask::$DSN"
+          echo "DATABASE_URL=$DSN" >> "$GITHUB_ENV"
 
       - run: npm ci
+        if: steps.branch.outputs.skip != 'true'
       - name: Apply migrations to the Neon branch
+        if: steps.branch.outputs.skip != 'true'
         run: npm run migrate
 
   cleanup:
