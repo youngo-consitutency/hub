@@ -2,8 +2,8 @@ import type { AnyValue } from './domain'
 import { retentionCutoff } from '../shared/guardianEnquiry'
 
 // Guardian requests are kept only while the Membership Team needs them:
-// expired rows are purged lazily on every create, list and close.
-async function purgeExpired(req: AnyValue) {
+// expired rows are purged on every create, list and close, and by the daily cron.
+export async function purgeExpiredGuardianEnquiries(req: AnyValue) {
   await req.payload.delete({
     collection: 'guardian-enquiries',
     where: { createdAt: { less_than: retentionCutoff().toISOString() } },
@@ -23,7 +23,7 @@ const view = (row: AnyValue) => ({
 })
 
 export async function createGuardianEnquiry(req: AnyValue, data: AnyValue) {
-  await purgeExpired(req)
+  await purgeExpiredGuardianEnquiries(req)
   const row = await req.payload.create({
     collection: 'guardian-enquiries',
     data,
@@ -34,7 +34,7 @@ export async function createGuardianEnquiry(req: AnyValue, data: AnyValue) {
 }
 
 export async function listGuardianEnquiries(req: AnyValue) {
-  await purgeExpired(req)
+  await purgeExpiredGuardianEnquiries(req)
   const { docs } = await req.payload.find({
     collection: 'guardian-enquiries',
     sort: 'createdAt',
@@ -47,7 +47,7 @@ export async function listGuardianEnquiries(req: AnyValue) {
 }
 
 export async function closeGuardianEnquiry(req: AnyValue, id: number) {
-  await purgeExpired(req)
+  await purgeExpiredGuardianEnquiries(req)
   const { docs } = await req.payload.delete({
     collection: 'guardian-enquiries',
     where: { id: { equals: id } },
