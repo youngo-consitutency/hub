@@ -4,10 +4,12 @@ interface ShellProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
+import { mailReach } from '../../shared/mailReach'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { A } from './ui'
+import { ThemeToggle } from './ThemeToggle'
 import { Brand } from './Brand'
 import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
@@ -32,6 +34,7 @@ import {
   TbUserCircle as UserCircle,
   TbFilePencil as FilePenLine,
   TbSpeakerphone as Megaphone,
+  TbMailForward as MailForward,
   TbRosetteDiscountCheck as BadgeCheck,
   TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
@@ -229,6 +232,13 @@ export function Shell({ children }: ShellProps) {
       },
       {
         section: SECTION.mine,
+        href: '/mail',
+        label: 'Mail Desk',
+        icon: MailForward,
+        when: mailReach({ capabilities }).canDraft,
+      },
+      {
+        section: SECTION.mine,
         href: '/team/membership',
         label: 'Membership Team',
         icon: ClipboardCheck,
@@ -371,6 +381,7 @@ export function Shell({ children }: ShellProps) {
           </div>
         ))}
         <div className="sidebarFooter">
+          <ThemeToggle />
           <A
             href="/help"
             className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
@@ -495,6 +506,7 @@ export function Shell({ children }: ShellProps) {
                   <ChevronRight size={17} strokeWidth={1.75} aria-hidden />
                 </A>
               )}
+              <ThemeToggle />
             </div>
             <div className="sheetSections">
               {nav.map((group: Doc) => (

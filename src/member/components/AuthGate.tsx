@@ -439,43 +439,48 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
                 />
               )}
 
-              <PrivacyConsentSection
-                notice={privacyNotice}
-                checked={form.privacyConsent}
-                onChange={setReg('privacyConsent')}
-                error={fields.privacyConsent}
-                isOrg={isOrg}
-              />
+              {/* the guardian pathway replaces the application, consent included */}
+              {!(under18 && !isOrg) && (
+                <>
+                  <PrivacyConsentSection
+                    notice={privacyNotice}
+                    checked={form.privacyConsent}
+                    onChange={setReg('privacyConsent')}
+                    error={fields.privacyConsent}
+                    isOrg={isOrg}
+                  />
 
-              {/* The hidden honeypot input that used to sit here was filled by
+                  {/* The hidden honeypot input that used to sit here was filled by
                   browser autofill and password managers, which silently voided
                   real registrations. Browsers cannot fill a field that is not
                   in the document, so the trap now lives only on the server —
                   scripted posts that blindly include `hpWebsite` are still
                   rejected there. */}
 
-              {error && <FormAlert>{error}</FormAlert>}
+                  {error && <FormAlert>{error}</FormAlert>}
 
-              <div className="authSubmitBar card cardTight">
-                <p className="metaMuted authSubmitCopy">
-                  {isOrg
-                    ? 'Creates a hub account for the contact on this form.'
-                    : 'Creates your YOUNGO Hub account.'}
-                </p>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  glow
-                  disabled={
-                    status === 'submitting' ||
-                    form.ageBand === '35_plus' ||
-                    (isOrg && !form.isUnfcccAdmitted)
-                  }
-                >
-                  <Check size={18} strokeWidth={1.75} aria-hidden />
-                  {status === 'submitting' ? 'Submitting…' : 'Submit & open hub'}
-                </Button>
-              </div>
+                  <div className="authSubmitBar card cardTight">
+                    <p className="metaMuted authSubmitCopy">
+                      {isOrg
+                        ? 'Creates a hub account for the contact on this form.'
+                        : 'Creates your YOUNGO Hub account.'}
+                    </p>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      glow
+                      disabled={
+                        status === 'submitting' ||
+                        form.ageBand === '35_plus' ||
+                        (isOrg && !form.isUnfcccAdmitted)
+                      }
+                    >
+                      <Check size={18} strokeWidth={1.75} aria-hidden />
+                      {status === 'submitting' ? 'Submitting…' : 'Submit & open hub'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </form>
           )}
         </div>

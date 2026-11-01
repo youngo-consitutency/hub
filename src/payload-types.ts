@@ -119,6 +119,10 @@ export interface Config {
     'selection-applications': SelectionApplication;
     'selection-evaluations': SelectionEvaluation;
     handovers: Handover;
+    'guardian-enquiries': GuardianEnquiry;
+    'coy-participants': CoyParticipant;
+    'coy-notices': CoyNotice;
+    'mail-drafts': MailDraft;
     'funding-requests': FundingRequest;
     'safeguarding-cases': SafeguardingCase;
     'coi-declarations': CoiDeclaration;
@@ -183,6 +187,10 @@ export interface Config {
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
     'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
     handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'guardian-enquiries': GuardianEnquiriesSelect<false> | GuardianEnquiriesSelect<true>;
+    'coy-participants': CoyParticipantsSelect<false> | CoyParticipantsSelect<true>;
+    'coy-notices': CoyNoticesSelect<false> | CoyNoticesSelect<true>;
+    'mail-drafts': MailDraftsSelect<false> | MailDraftsSelect<true>;
     'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
     'safeguarding-cases': SafeguardingCasesSelect<false> | SafeguardingCasesSelect<true>;
     'coi-declarations': CoiDeclarationsSelect<false> | CoiDeclarationsSelect<true>;
@@ -634,8 +642,12 @@ export interface ContentCoy {
   reviewStatus?: ('pending' | 'approved' | 'rejected') | null;
   organizerName?: string | null;
   organizerOrg?: string | null;
+  organizerEmail?: string | null;
   registerUrl?: string | null;
   websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  statementUrl?: string | null;
+  liveOps?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -747,6 +759,8 @@ export interface FeedbackTicket {
   body: string;
   pageUrl?: string | null;
   contextNote?: string | null;
+  userAgent?: string | null;
+  viewport?: string | null;
   account?: (number | null) | Account;
   contactEmail?: string | null;
   status: 'new' | 'triaged' | 'in_progress' | 'resolved' | 'declined';
@@ -1104,7 +1118,7 @@ export interface PushSubscription {
 export interface NotificationOutbox {
   id: number;
   account: number | Account;
-  category: 'digest' | 'deadline' | 'announcement';
+  category: 'digest' | 'deadline' | 'announcement' | 'group_mail';
   templateKey: string;
   sourceType?: string | null;
   sourceId?: string | null;
@@ -1582,6 +1596,85 @@ export interface Handover {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries".
+ */
+export interface GuardianEnquiry {
+  id: number;
+  guardianName: string;
+  guardianEmail: string;
+  relationship: 'parent' | 'legal_guardian';
+  consentStatement: string;
+  consentedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coy-participants".
+ */
+export interface CoyParticipant {
+  id: number;
+  coy: number | ContentCoy;
+  account: number | Account;
+  email: string;
+  note?: string | null;
+  addedBy?: (number | null) | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coy-notices".
+ */
+export interface CoyNotice {
+  id: number;
+  coy: number | ContentCoy;
+  title: string;
+  body: string;
+  channels?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  campaignId?: string | null;
+  author: number | Account;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mail-drafts".
+ */
+export interface MailDraft {
+  id: number;
+  author: number | Account;
+  title: string;
+  message: string;
+  actionUrl?: string | null;
+  scopeType: 'working_group' | 'constituency' | 'individual';
+  wgSlug?: string | null;
+  recipients?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'draft' | 'queued' | 'discarded';
+  campaignId?: string | null;
+  recipientCount?: number | null;
+  queuedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "funding-requests".
  */
 export interface FundingRequest {
@@ -1944,6 +2037,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'handovers';
         value: number | Handover;
+      } | null)
+    | ({
+        relationTo: 'guardian-enquiries';
+        value: number | GuardianEnquiry;
+      } | null)
+    | ({
+        relationTo: 'coy-participants';
+        value: number | CoyParticipant;
+      } | null)
+    | ({
+        relationTo: 'coy-notices';
+        value: number | CoyNotice;
+      } | null)
+    | ({
+        relationTo: 'mail-drafts';
+        value: number | MailDraft;
       } | null)
     | ({
         relationTo: 'funding-requests';
@@ -2326,8 +2435,12 @@ export interface ContentCoysSelect<T extends boolean = true> {
   reviewStatus?: T;
   organizerName?: T;
   organizerOrg?: T;
+  organizerEmail?: T;
   registerUrl?: T;
   websiteUrl?: T;
+  instagramUrl?: T;
+  statementUrl?: T;
+  liveOps?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2418,6 +2531,8 @@ export interface FeedbackTicketsSelect<T extends boolean = true> {
   body?: T;
   pageUrl?: T;
   contextNote?: T;
+  userAgent?: T;
+  viewport?: T;
   account?: T;
   contactEmail?: T;
   status?: T;
@@ -3042,6 +3157,65 @@ export interface HandoversSelect<T extends boolean = true> {
   openedAt?: T;
   closedAt?: T;
   closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries_select".
+ */
+export interface GuardianEnquiriesSelect<T extends boolean = true> {
+  guardianName?: T;
+  guardianEmail?: T;
+  relationship?: T;
+  consentStatement?: T;
+  consentedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coy-participants_select".
+ */
+export interface CoyParticipantsSelect<T extends boolean = true> {
+  coy?: T;
+  account?: T;
+  email?: T;
+  note?: T;
+  addedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coy-notices_select".
+ */
+export interface CoyNoticesSelect<T extends boolean = true> {
+  coy?: T;
+  title?: T;
+  body?: T;
+  channels?: T;
+  campaignId?: T;
+  author?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mail-drafts_select".
+ */
+export interface MailDraftsSelect<T extends boolean = true> {
+  author?: T;
+  title?: T;
+  message?: T;
+  actionUrl?: T;
+  scopeType?: T;
+  wgSlug?: T;
+  recipients?: T;
+  status?: T;
+  campaignId?: T;
+  recipientCount?: T;
+  queuedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
