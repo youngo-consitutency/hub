@@ -8,6 +8,7 @@ import { Async, BackLink, LifecycleTiming, StatusChip, PageHeader, Section } fro
 import { fmtDateRange } from '../lib/time'
 import { coyApplicationsAreOpen, coyDisplayStatus, resolveCoyStatus } from '../../shared/coyStatus'
 import { DestinationIcon } from '../components/DestinationLink'
+import { CoyLive } from '../components/CoyLive'
 import {
   TbBuilding as Building2,
   TbBrandInstagram as Instagram,
@@ -163,6 +164,8 @@ export function CoyDetail({ slug }: CoyDetailProps) {
                   </ul>
                 </Section>
               )}
+
+              {coy.liveOps && slug && <CoyLive slug={slug} />}
             </>
           )
         }}
