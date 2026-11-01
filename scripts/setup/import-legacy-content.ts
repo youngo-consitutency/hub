@@ -75,7 +75,7 @@ async function main() {
   const counts: Record<string, { created: number; updated: number }> = {}
   const seen: Record<string, Set<string>> = {}
 
-  async function upsert(collection: string, where: AnyValue, data: AnyValue) {
+  async function upsert(collection: string, where: AnyValue, data: AnyValue, req?: AnyValue) {
     const tally = (counts[collection] ||= { created: 0, updated: 0 })
     const existing = await payload.find({
       collection: collection as AnyValue,
@@ -83,6 +83,7 @@ async function main() {
       limit: 1,
       overrideAccess: true,
       pagination: false,
+      req,
     })
     const doc = existing.docs[0]
     tally[doc ? 'updated' : 'created'] += 1
@@ -93,8 +94,9 @@ async function main() {
           id: doc.id,
           data,
           overrideAccess: true,
+          req,
         })
-      : payload.create({ collection: collection as AnyValue, data, overrideAccess: true })
+      : payload.create({ collection: collection as AnyValue, data, overrideAccess: true, req })
   }
   const bySlug = (slug: string) => ({ slug: { equals: slug } })
   async function upsertBySlug(collection: string, data: AnyValue) {
@@ -226,11 +228,30 @@ async function main() {
   }
 
   const { current, priorities, process: gysProcess, archive } = fixtures.gys
-  await upsert(
-    'gys-cycles',
-    { year: { equals: current.year } },
-    { ...current, priorities, process: gysProcess, archive, isCurrent: true },
-  )
+  // only one cycle may be current, so retire the old one in the same transaction
+  const transactionID = dryRun ? null : await payload.db.beginTransaction()
+  const req = transactionID ? ({ transactionID } as AnyValue) : undefined
+  try {
+    if (!dryRun) {
+      await payload.update({
+        collection: 'gys-cycles',
+        where: { isCurrent: { equals: true }, year: { not_equals: current.year } },
+        data: { isCurrent: false },
+        overrideAccess: true,
+        req,
+      })
+    }
+    await upsert(
+      'gys-cycles',
+      { year: { equals: current.year } },
+      { ...current, priorities, process: gysProcess, archive, isCurrent: true },
+      req,
+    )
+    if (transactionID) await payload.db.commitTransaction(transactionID)
+  } catch (err) {
+    if (transactionID) await payload.db.rollbackTransaction(transactionID)
+    throw err
+  }
 
   for (const o of fixtures.opportunities) {
     await upsertBySlug('opportunities', {
