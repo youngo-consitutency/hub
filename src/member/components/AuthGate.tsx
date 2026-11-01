@@ -4,7 +4,7 @@ interface AuthGateProps {
 }
 
 import type { AnyValue, Doc } from '../lib/types'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { TbCheck as Check, TbKey as KeyRound, TbUserPlus as UserPlus } from 'react-icons/tb'
 import { apiPost } from '../lib/api'
 import { setSession } from '../lib/session'
@@ -45,7 +45,8 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   const [status, setStatus] = useState('idle')
   const [forgotMsg, setForgotMsg] = useState<AnyValue>(null)
 
-  const age = useMemo(() => ageFromDob(form.dateOfBirth), [form.dateOfBirth])
+  // not memoised: an open page should notice a birthday at midnight
+  const age = ageFromDob(form.dateOfBirth)
   const under18 = form.ageBand === 'under_18' || (age !== null && age < 18 && age >= 0)
   const isOrg = form.entityType === 'organization'
   const admitted = form.isUnfcccAdmitted === 'yes'
