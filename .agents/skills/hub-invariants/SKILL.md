@@ -26,8 +26,8 @@ Apply these on every change. They exist because real bugs shipped when they were
 
 - Members act through domain endpoints (`src/endpoints/*`), which authorise the actor then write via the Local API with `overrideAccess: true`. Generated REST/GraphQL writes stay staff-only — never open them to members.
 - Every authority/workflow transition writes an audit entry with actor, action, target, reason.
-- Free-text input goes through `cleanText` (strips markup to a fixpoint). Field validation is zod.
-- Never log or return credentials, sessions, guardian/minority data, or personal contact fields. Member-facing payloads use `publicAccount`/`accountRef` shapes.
+- Free-text input goes through `cleanText` (strips markup to a fixpoint). Fields are validated by hand into `fail.validation` (zod only in `src/lib/registration.ts`).
+- Never log or return credentials, sessions, guardian/minority data, or personal contact fields. Member-facing payloads use `accountView` (`src/lib/accounts.ts`) or `accountRef` shapes.
 
 ## MCP (`mcp-content/`)
 
@@ -39,7 +39,7 @@ Apply these on every change. They exist because real bugs shipped when they were
 - British English in docs, UI copy, and comments.
 - No AI-generated imagery.
 - Comments: concise — state the invariant or rationale, do not narrate the code.
-- Minimal-code skills (e.g. ponytail) apply to scaffolding only — never cut a capability gate, authority check, audit write, `cleanText`/zod validation, `overrideAccess` write, or lock-order step to save lines. Those look redundant; they are the invariant.
+- Minimal-code skills (e.g. ponytail) apply to scaffolding only — never cut a capability gate, authority check, audit write, `cleanText`/field validation, `overrideAccess` write, or lock-order step to save lines. Those look redundant; they are the invariant.
 
 ## Session memory
 
