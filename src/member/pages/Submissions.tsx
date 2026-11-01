@@ -258,7 +258,7 @@ export function Submissions() {
           )
         }}
       </Async>
-      <SubmissionPeek submission={selectedSubmission} onClose={() => setSelectedSubmission(null)} />
+      <SubmissionPeek item={selectedSubmission} onClose={() => setSelectedSubmission(null)} />
     </div>
   )
 }

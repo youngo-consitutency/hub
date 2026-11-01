@@ -155,7 +155,7 @@ export function Groups() {
           )
         }}
       </Async>
-      <GroupPeek group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+      <GroupPeek item={selectedGroup} onClose={() => setSelectedGroup(null)} />
     </div>
   )
 }
