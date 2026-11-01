@@ -20,6 +20,7 @@ import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
 import type { Doc, AnyValue } from '../lib/domain'
+import { purgeExpiredGuardianEnquiries } from '../lib/guardianEnquiries'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -203,6 +204,8 @@ export const notificationEndpoints: Endpoint[] = [
         !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
       )
         throw fail.unauthorized()
+      // same daily slot enforces guardian-request retention when nobody opens the queue
+      await purgeExpiredGuardianEnquiries(req)
       return json(await drainNotificationOutbox(req, { limit: 200 }))
     }),
   },
