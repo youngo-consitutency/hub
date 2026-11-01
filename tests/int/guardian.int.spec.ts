@@ -62,7 +62,22 @@ describe('guardian pathway rules', () => {
   })
 
   it('keeps requests for twelve months', () => {
-    expect(retentionCutoff(NOW).toISOString().slice(0, 7)).toBe('2025-10')
+    expect(retentionCutoff(NOW).toISOString().slice(0, 10)).toBe('2025-10-22')
+  })
+
+  it('accepts plain addresses only, since staff open them as mailto links', () => {
+    for (const guardianEmail of [
+      'a@b.test?cc=x@y.test',
+      'a&b@c.test',
+      'a@b.test#x',
+      'a%40b@c.test',
+    ])
+      expect(
+        validateGuardianEnquiry({ ...request, guardianEmail }).fields?.guardianEmail,
+      ).toBeTruthy()
+    expect(
+      validateGuardianEnquiry({ ...request, guardianEmail: "o'neil+kid@mail.example.org" }).data,
+    ).toBeTruthy()
   })
 })
 
@@ -123,6 +138,42 @@ describe('guardian pathway api', () => {
       cookie: team.cookie,
     })
     expect(again.status).toBe(404)
+  })
+
+  it('purges requests past the retention window on create and list', async () => {
+    const old = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString()
+    const seed = async (tag: string) =>
+      (
+        await payload.create({
+          collection: 'guardian-enquiries',
+          data: {
+            ...request,
+            guardianEmail: `${tag}-${Date.now()}@test.invalid`,
+            createdAt: old,
+          } as never,
+          overrideAccess: true,
+        })
+      ).id
+    const gone = async (id: number | string) =>
+      (
+        await payload.find({
+          collection: 'guardian-enquiries',
+          where: { id: { equals: id } },
+          overrideAccess: true,
+        })
+      ).totalDocs === 0
+
+    const beforeCreate = await seed('expired-create')
+    await api('/auth/guardian-enquiry', {
+      method: 'POST',
+      body: JSON.stringify({ ...request, guardianEmail: `fresh-${Date.now()}@test.invalid` }),
+    })
+    expect(await gone(beforeCreate)).toBe(true)
+
+    const beforeList = await seed('expired-list')
+    const team = await session({ membershipTrack: 'constituency_work', teams: ['membership_team'] })
+    await api('/member/team/membership/overview', { cookie: team.cookie })
+    expect(await gone(beforeList)).toBe(true)
   })
 
   it('answers the honeypot without storing anything', async () => {

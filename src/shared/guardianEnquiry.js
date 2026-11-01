@@ -43,7 +43,9 @@ export const GUARDIAN_FIELDS = [
   },
 ]
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+// plain address characters only: staff open it as a mailto link, so ? & = # % stay out
+const EMAIL_RE =
+  /^[a-z0-9._+'-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i
 const RELATIONSHIP_VALUES = new Set(GUARDIAN_RELATIONSHIPS.map((item) => item.value))
 
 export function retentionCutoff(now = new Date()) {

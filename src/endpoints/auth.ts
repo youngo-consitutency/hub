@@ -130,10 +130,7 @@ export const authEndpoints: Endpoint[] = [
       }
       if (result.fields) throw fail.validation(result.fields)
       await createGuardianEnquiry(req, result.data)
-      req.payload.logger.info({
-        event: 'hub_guardian_enquiry_received',
-        requestId: req.headers.get('x-request-id') || null,
-      })
+      req.payload.logger.info({ event: 'hub_guardian_enquiry_received' })
       return noStore(
         json(
           { ok: true, message: 'Request received. The Membership Team will contact the guardian.' },
