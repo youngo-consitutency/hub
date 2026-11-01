@@ -15,6 +15,7 @@ import {
   readAppealProof,
   reviewAppeal,
 } from '../lib/membershipAppeals'
+import { closeGuardianEnquiry, listGuardianEnquiries } from '../lib/guardianEnquiries'
 
 export const membershipTeamEndpoints: Endpoint[] = [
   // ── Membership team ───────────────────────────────────────────────
@@ -32,7 +33,38 @@ export const membershipTeamEndpoints: Endpoint[] = [
           profile: profiles.get(item.id),
           appeal: appeals.get(item.id) || null,
         })),
+        guardianEnquiries: await listGuardianEnquiries(req),
       })
+    }),
+  },
+  {
+    // Closing a guardian request deletes it; the audit row keeps no personal data.
+    path: '/member/team/membership/guardian-enquiries/:id/close',
+    method: 'post',
+    handler: endpoint(async (req) => {
+      const { account: staff } = await requireTeam(req, 'membership_team')
+      const id = Number(param(req, 'id'))
+      if (!Number.isInteger(id)) throw fail.notFound()
+      // the delete and its audit row land together or not at all
+      const transactionID = await req.payload.db.beginTransaction()
+      if (transactionID == null) throw new Error('Database transactions are unavailable.')
+      req.transactionID = transactionID
+      try {
+        if (!(await closeGuardianEnquiry(req, id))) throw fail.notFound()
+        await audit(req, staff, {
+          action: 'guardian_enquiry.closed',
+          targetType: 'guardian_enquiry',
+          targetId: String(id),
+          after: { deleted: true },
+        })
+        await req.payload.db.commitTransaction(transactionID)
+      } catch (error) {
+        await req.payload.db.rollbackTransaction(transactionID)
+        throw error
+      } finally {
+        delete req.transactionID
+      }
+      return json({ ok: true })
     }),
   },
   {

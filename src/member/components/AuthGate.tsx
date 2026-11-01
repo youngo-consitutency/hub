@@ -4,7 +4,7 @@ interface AuthGateProps {
 }
 
 import type { AnyValue, Doc } from '../lib/types'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { TbCheck as Check, TbKey as KeyRound, TbUserPlus as UserPlus } from 'react-icons/tb'
 import { apiPost } from '../lib/api'
 import { setSession } from '../lib/session'
@@ -45,7 +45,8 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   const [status, setStatus] = useState('idle')
   const [forgotMsg, setForgotMsg] = useState<AnyValue>(null)
 
-  const age = useMemo(() => ageFromDob(form.dateOfBirth), [form.dateOfBirth])
+  // not memoised: an open page should notice a birthday at midnight
+  const age = ageFromDob(form.dateOfBirth)
   const under18 = form.ageBand === 'under_18' || (age !== null && age < 18 && age >= 0)
   const isOrg = form.entityType === 'organization'
   const admitted = form.isUnfcccAdmitted === 'yes'
@@ -439,43 +440,48 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
                 />
               )}
 
-              <PrivacyConsentSection
-                notice={privacyNotice}
-                checked={form.privacyConsent}
-                onChange={setReg('privacyConsent')}
-                error={fields.privacyConsent}
-                isOrg={isOrg}
-              />
+              {/* the guardian pathway replaces the application, consent included */}
+              {!(under18 && !isOrg) && (
+                <>
+                  <PrivacyConsentSection
+                    notice={privacyNotice}
+                    checked={form.privacyConsent}
+                    onChange={setReg('privacyConsent')}
+                    error={fields.privacyConsent}
+                    isOrg={isOrg}
+                  />
 
-              {/* The hidden honeypot input that used to sit here was filled by
+                  {/* The hidden honeypot input that used to sit here was filled by
                   browser autofill and password managers, which silently voided
                   real registrations. Browsers cannot fill a field that is not
                   in the document, so the trap now lives only on the server —
                   scripted posts that blindly include `hpWebsite` are still
                   rejected there. */}
 
-              {error && <FormAlert>{error}</FormAlert>}
+                  {error && <FormAlert>{error}</FormAlert>}
 
-              <div className="authSubmitBar card cardTight">
-                <p className="metaMuted authSubmitCopy">
-                  {isOrg
-                    ? 'Creates a hub account for the contact on this form.'
-                    : 'Creates your YOUNGO Hub account.'}
-                </p>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  glow
-                  disabled={
-                    status === 'submitting' ||
-                    form.ageBand === '35_plus' ||
-                    (isOrg && !form.isUnfcccAdmitted)
-                  }
-                >
-                  <Check size={18} strokeWidth={1.75} aria-hidden />
-                  {status === 'submitting' ? 'Submitting…' : 'Submit & open hub'}
-                </Button>
-              </div>
+                  <div className="authSubmitBar card cardTight">
+                    <p className="metaMuted authSubmitCopy">
+                      {isOrg
+                        ? 'Creates a hub account for the contact on this form.'
+                        : 'Creates your YOUNGO Hub account.'}
+                    </p>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      glow
+                      disabled={
+                        status === 'submitting' ||
+                        form.ageBand === '35_plus' ||
+                        (isOrg && !form.isUnfcccAdmitted)
+                      }
+                    >
+                      <Check size={18} strokeWidth={1.75} aria-hidden />
+                      {status === 'submitting' ? 'Submitting…' : 'Submit & open hub'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </form>
           )}
         </div>

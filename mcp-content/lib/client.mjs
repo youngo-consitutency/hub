@@ -120,6 +120,39 @@ export const HUB_CONTENT_TOOLS = [
     },
   },
   {
+    name: 'list_feedback_tickets',
+    description:
+      'Feedback tickets members filed from the Hub, newest first. Platform operators and the Membership Team only.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['new', 'triaged', 'in_progress', 'resolved', 'declined'],
+        },
+        kind: { type: 'string' },
+        limit: { type: 'number' },
+      },
+    },
+  },
+  {
+    name: 'triage_feedback_ticket',
+    description:
+      'Set a feedback ticket status and/or triage note. Platform operators and the Membership Team only. Audited.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: {
+          type: 'string',
+          enum: ['new', 'triaged', 'in_progress', 'resolved', 'declined'],
+        },
+        triageNote: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
     name: 'submit_resource',
     description:
       'Suggest a science/resource Hub item for review. Any verified member may submit. It is not published until content review.',
@@ -444,6 +477,17 @@ export async function callHubContentTool(name, args, client) {
       return client.memberPost(`/api/member/opportunities/${encodeURIComponent(args.id)}/review`, {
         decision: args.decision,
         note: args.note,
+      })
+    case 'list_feedback_tickets':
+      return client.memberGet('/api/member/feedback', {
+        status: args.status,
+        kind: args.kind,
+        limit: args.limit,
+      })
+    case 'triage_feedback_ticket':
+      return client.memberPatch(`/api/member/feedback/${encodeURIComponent(args.id)}`, {
+        status: args.status,
+        triageNote: args.triageNote,
       })
     case 'submit_resource':
       return client.memberPost('/api/member/resources/submissions', {

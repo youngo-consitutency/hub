@@ -5,12 +5,29 @@ import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
+import { audit } from '../lib/audit'
+import { mirrorFeedbackIssue } from '../lib/githubIssues'
 
 const feedbackLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   scope: 'feedback',
 })
+
+const TRIAGE_STATUSES = ['new', 'triaged', 'in_progress', 'resolved', 'declined']
+// a same-origin path only: no scheme, no protocol-relative host
+const PAGE_PATH_RE = /^\/(?!\/)[\w\-/.?=&%]*$/
+const VIEWPORT_RE = /^\d{1,5}x\d{1,5}$/
+
+export function feedbackContext(b: AnyValue) {
+  const pagePath = trimmed(b.pagePath ?? b.pageUrl, 300)
+  const viewport = trimmed(b.viewport, 20)
+  return {
+    pageUrl: pagePath && PAGE_PATH_RE.test(pagePath) ? pagePath : null,
+    viewport: viewport && VIEWPORT_RE.test(viewport) ? viewport : null,
+    userAgent: trimmed(b.userAgent, 300) || null,
+  }
+}
 
 const FEEDBACK_KINDS = [
   { value: 'bug', label: 'Something is broken' },
@@ -77,14 +94,14 @@ export const feedbackEndpoints: Endpoint[] = [
           ...(body ? {} : { body: 'Tell us what happened.' }),
         })
       }
-      const ticket = await req.payload.create({
+      let ticket = await req.payload.create({
         collection: 'feedback-tickets',
         data: {
           title,
           kind,
           severity,
           body,
-          pageUrl: trimmed(b.pageUrl, 500) || null,
+          ...feedbackContext(b),
           contextNote: trimmed(b.contextNote, 200) || null,
           account: account.id,
           contactEmail: account.email,
@@ -93,6 +110,22 @@ export const feedbackEndpoints: Endpoint[] = [
         overrideAccess: true,
         req,
       })
+      await audit(req, account, {
+        action: 'feedback.submitted',
+        targetType: 'feedback_ticket',
+        targetId: String(ticket.id),
+        after: { kind, severity },
+      })
+      const issueUrl = await mirrorFeedbackIssue(ticket, req.payload.logger)
+      if (issueUrl) {
+        ticket = await req.payload.update({
+          collection: 'feedback-tickets',
+          id: ticket.id,
+          data: { githubIssueUrl: issueUrl },
+          overrideAccess: true,
+          req,
+        })
+      }
       return json({ item: ticket }, { status: 201 })
     }),
   },
@@ -122,21 +155,36 @@ export const feedbackEndpoints: Endpoint[] = [
     path: '/member/feedback/:id',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const { access } = await memberContext(req)
+      const { account, access } = await memberContext(req)
       const canTriage =
         hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage) throw fail.forbidden()
       const b = await readBody(req)
       const data: Doc = {}
-      if (b.status && ['new', 'triaged', 'in_progress', 'resolved', 'declined'].includes(b.status))
+      if (b.status !== undefined) {
+        if (!TRIAGE_STATUSES.includes(b.status))
+          throw fail.validation({ status: 'Unknown status.' })
         data.status = b.status
+      }
       if (b.triageNote !== undefined) data.triageNote = trimmed(b.triageNote, 2000)
+      if (!Object.keys(data).length) throw fail.validation({ status: 'Nothing to change.' })
+      const before = await req.payload
+        .findByID({ collection: 'feedback-tickets', id: param(req, 'id'), overrideAccess: true })
+        .catch(() => null)
+      if (!before) throw fail.notFound()
       const updated = await req.payload.update({
         collection: 'feedback-tickets',
-        id: param(req, 'id'),
+        id: before.id,
         data,
         overrideAccess: true,
         req,
+      })
+      await audit(req, account, {
+        action: 'feedback.triaged',
+        targetType: 'feedback_ticket',
+        targetId: String(before.id),
+        before: { status: before.status },
+        after: { status: updated.status, noted: b.triageNote !== undefined },
       })
       return json({ item: updated })
     }),
