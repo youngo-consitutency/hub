@@ -44,13 +44,26 @@ export const membershipTeamEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account: staff } = await requireTeam(req, 'membership_team')
       const id = Number(param(req, 'id'))
-      if (!Number.isInteger(id) || !(await closeGuardianEnquiry(req, id))) throw fail.notFound()
-      await audit(req, staff, {
-        action: 'guardian_enquiry.closed',
-        targetType: 'guardian_enquiry',
-        targetId: String(id),
-        after: { deleted: true },
-      })
+      if (!Number.isInteger(id)) throw fail.notFound()
+      // the delete and its audit row land together or not at all
+      const transactionID = await req.payload.db.beginTransaction()
+      if (transactionID == null) throw new Error('Database transactions are unavailable.')
+      req.transactionID = transactionID
+      try {
+        if (!(await closeGuardianEnquiry(req, id))) throw fail.notFound()
+        await audit(req, staff, {
+          action: 'guardian_enquiry.closed',
+          targetType: 'guardian_enquiry',
+          targetId: String(id),
+          after: { deleted: true },
+        })
+        await req.payload.db.commitTransaction(transactionID)
+      } catch (error) {
+        await req.payload.db.rollbackTransaction(transactionID)
+        throw error
+      } finally {
+        delete req.transactionID
+      }
       return json({ ok: true })
     }),
   },
