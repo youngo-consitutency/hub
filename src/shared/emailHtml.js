@@ -14,6 +14,20 @@ const ALLOWED = new Set([
   'blockquote',
 ])
 
+const RAW = new Set([
+  'script',
+  'style',
+  'iframe',
+  'object',
+  'embed',
+  'form',
+  'svg',
+  'math',
+  'noscript',
+  'textarea',
+  'title',
+])
+
 const SELF_ENDING = new Set(['li', 'p'])
 
 const RENAME = { b: 'strong', i: 'em', div: 'p' }
@@ -73,21 +87,18 @@ function parseTag(full) {
  * leaves its closing tag behind and truncated input still closes cleanly.
  */
 export function sanitizeEmailHtml(value) {
-  // strip to a fixpoint: one pass can leave `<scr<script>ipt>` behind
-  let source = String(value || '').slice(0, 20000)
-  for (let prev = ''; prev !== source;) {
-    prev = source
-    source = source
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(
-        /<\s*(script|style|iframe|object|embed|form|svg|math)\b[\s\S]*?<\s*\/\s*\1\s*>/gi,
-        '',
-      )
-      .replace(/<\s*(script|style|iframe|object|embed|form|svg|math)\b[^>]*\/?\s*>/gi, '')
-  }
+  const source = String(value || '').slice(0, 20000)
   const open = []
   let html = ''
-  for (const part of source.split(/(<[^>]+>)/g)) {
+  // inside a raw element like <script>, drop everything until it closes
+  let skip = ''
+  for (const part of source.split(/(<!--[\s\S]*?-->|<[^>]+>)/g)) {
+    if (part.startsWith('<!--')) continue
+    const name = /^<\s*(\/)?\s*([a-z0-9]+)/i.exec(part)
+    if (skip) {
+      if (name?.[1] && name[2].toLowerCase() === skip) skip = ''
+      continue
+    }
     if (!part.startsWith('<')) {
       // loose text from the editor gets a paragraph, so email clients style it
       if (part.trim() && !open.length) {
@@ -96,6 +107,10 @@ export function sanitizeEmailHtml(value) {
       }
       // the editor sends entity-encoded text; decode once, then escape once
       html += escapeHtml(decodeEntities(part))
+      continue
+    }
+    if (name && !name[1] && RAW.has(name[2].toLowerCase())) {
+      if (!/\/\s*>$/.test(part)) skip = name[2].toLowerCase()
       continue
     }
     const parsed = parseTag(part)
