@@ -26,6 +26,19 @@ describe('mail reach', () => {
 })
 
 describe('email html', () => {
+  it('strips nested script fragments to a fixpoint', () => {
+    expect(sanitizeEmailHtml('<scr<script>x</script>ipt>alert(1)</script><p>ok</p>')).toBe(
+      '<p>alert(1)</p><p>ok</p>',
+    )
+  })
+
+  it('escapes entity-encoded text once and decodes it once', () => {
+    const html = sanitizeEmailHtml('<p>Tom &amp; Jerry: &lt;b&gt;</p>')
+    expect(html).toBe('<p>Tom &amp; Jerry: &lt;b&gt;</p>')
+    expect(emailPlainText(html)).toBe('Tom & Jerry: <b>')
+    expect(emailPlainText('<p>&amp;lt;not a tag&amp;gt;</p>')).toBe('&lt;not a tag&gt;')
+  })
+
   it('wraps loose editor text in a paragraph', () => {
     expect(sanitizeEmailHtml('Loose text<p></p>')).toBe('<p>Loose text</p><p></p>')
   })
