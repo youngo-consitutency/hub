@@ -119,6 +119,7 @@ export interface Config {
     'selection-applications': SelectionApplication;
     'selection-evaluations': SelectionEvaluation;
     handovers: Handover;
+    'guardian-enquiries': GuardianEnquiry;
     'funding-requests': FundingRequest;
     'safeguarding-cases': SafeguardingCase;
     'coi-declarations': CoiDeclaration;
@@ -183,6 +184,7 @@ export interface Config {
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
     'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
     handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'guardian-enquiries': GuardianEnquiriesSelect<false> | GuardianEnquiriesSelect<true>;
     'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
     'safeguarding-cases': SafeguardingCasesSelect<false> | SafeguardingCasesSelect<true>;
     'coi-declarations': CoiDeclarationsSelect<false> | CoiDeclarationsSelect<true>;
@@ -634,8 +636,11 @@ export interface ContentCoy {
   reviewStatus?: ('pending' | 'approved' | 'rejected') | null;
   organizerName?: string | null;
   organizerOrg?: string | null;
+  organizerEmail?: string | null;
   registerUrl?: string | null;
   websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  statementUrl?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1584,6 +1589,20 @@ export interface Handover {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries".
+ */
+export interface GuardianEnquiry {
+  id: number;
+  guardianName: string;
+  guardianEmail: string;
+  relationship: 'parent' | 'legal_guardian';
+  consentStatement: string;
+  consentedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "funding-requests".
  */
 export interface FundingRequest {
@@ -1946,6 +1965,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'handovers';
         value: number | Handover;
+      } | null)
+    | ({
+        relationTo: 'guardian-enquiries';
+        value: number | GuardianEnquiry;
       } | null)
     | ({
         relationTo: 'funding-requests';
@@ -2328,8 +2351,11 @@ export interface ContentCoysSelect<T extends boolean = true> {
   reviewStatus?: T;
   organizerName?: T;
   organizerOrg?: T;
+  organizerEmail?: T;
   registerUrl?: T;
   websiteUrl?: T;
+  instagramUrl?: T;
+  statementUrl?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3046,6 +3072,19 @@ export interface HandoversSelect<T extends boolean = true> {
   openedAt?: T;
   closedAt?: T;
   closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries_select".
+ */
+export interface GuardianEnquiriesSelect<T extends boolean = true> {
+  guardianName?: T;
+  guardianEmail?: T;
+  relationship?: T;
+  consentStatement?: T;
+  consentedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
