@@ -111,7 +111,7 @@ export function NgoPortal() {
 
   const decideAffiliation = async (id: AnyValue, decision: AnyValue) => {
     try {
-      await apiPost(`/member/ngo/affiliations/${id}/decide`, {
+      await apiPost(`/member/affiliations/${id}/decide`, {
         decision,
         seatRole: decisionRole[id] || 'affiliate',
       })

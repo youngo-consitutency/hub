@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { emailPlainText, sanitizeEmailHtml } from '../shared/emailHtml'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { sendEmail } from './email'
@@ -10,9 +11,40 @@ import type { Doc, AnyValue } from './domain'
 // Announcement broadcast surface (preview/send/outbox). Queue rows live in
 // `notification_outbox`; eligibility reads the notification_prefs model.
 
-const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement', 'group_mail']
+// Mail from a group the member belongs to is on unless they turn it off;
+// the other categories stay opt-in.
+const OPT_OUT_EMAIL_CATEGORIES = ['group_mail']
+
+export function emailPreferences(stored: AnyValue) {
+  return Object.fromEntries(
+    OPTIONAL_EMAIL_CATEGORIES.map((category) => [
+      category,
+      OPT_OUT_EMAIL_CATEGORIES.includes(category)
+        ? stored?.[category] !== false
+        : Boolean(stored?.[category]),
+    ]),
+  ) as Record<string, boolean>
+}
 
 // ── Templates ────────────────────────────────────────────────────
+
+const EMAIL_TAG_STYLE: Record<string, string> = {
+  p: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px',
+  h2: 'font-size:20px;line-height:1.3;color:#14251d;margin:18px 0 8px',
+  h3: 'font-size:17px;line-height:1.3;color:#14251d;margin:16px 0 6px',
+  ul: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px;padding-left:20px',
+  ol: 'font-size:15px;line-height:1.6;color:#14251d;margin:0 0 12px;padding-left:20px',
+  blockquote: 'border-left:3px solid #087f5b;margin:0 0 12px;padding:0 0 0 12px;color:#3b4a43',
+  a: 'color:#087f5b',
+}
+
+// sanitised markup gets inline styles, since email clients drop stylesheets
+const styleEmailHtml = (html: string) =>
+  html.replace(
+    /<(p|h2|h3|ul|ol|blockquote|a)\b/g,
+    (_, tag) => `<${tag} style="${EMAIL_TAG_STYLE[tag]}"`,
+  )
 
 const escapeHtml = (value: AnyValue) =>
   String(value ?? '')
@@ -122,11 +154,23 @@ function templateContent(templateKey: string, data: Doc = {}) {
   }
 
   const title = singleLine(data.title || 'YOUNGO Hub update')
+  if (data.html) {
+    // member-written mail: sanitised again here, whatever the caller stored
+    return {
+      subject: title,
+      eyebrow: data.eyebrow ? singleLine(data.eyebrow, 80) : 'Group mail',
+      title,
+      body: styleEmailHtml(sanitizeEmailHtml(data.html)),
+      action,
+      text: `${title}\n\n${emailPlainText(data.html)}${data.actionUrl ? `\n\n${data.actionUrl}` : ''}`,
+    }
+  }
   const message = String(data.message || '').slice(0, 4000)
   const labels: Record<string, string> = {
     announcement: 'Announcement',
     digest: 'Your weekly digest',
     deadline: 'Deadline reminder',
+    'group-mail': 'Group mail',
   }
   return {
     subject: title,
@@ -477,9 +521,9 @@ export async function listEligibleNotificationAccountIds({
   const { rows } = await pool.query(
     `SELECT a.id
      FROM accounts a
-     JOIN notification_prefs p ON p.account_id=a.id
-       AND (p.email->>$1)::boolean = true
-     WHERE a.email_verified_at IS NOT NULL
+     LEFT JOIN notification_prefs p ON p.account_id=a.id
+     WHERE COALESCE((p.email->>$1)::boolean, ${OPT_OUT_EMAIL_CATEGORIES.includes(category)})
+       AND a.email_verified_at IS NOT NULL
        AND a.hub_access_status='active'
        AND a.membership_status NOT IN ('expired','terminated','rejected')
        AND ${filters[scope.type]}`,

@@ -15,7 +15,7 @@ export const ContentDrafts: CollectionConfig = {
       name: 'contentType',
       type: 'select',
       required: true,
-      options: ['event', 'announcement', 'resource', 'coy', 'opportunity'],
+      options: ['event', 'announcement', 'resource', 'coy', 'opportunity', 'page'],
       index: true,
     },
     { name: 'contentKey', type: 'text', required: true, index: true },
