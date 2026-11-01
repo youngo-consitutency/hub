@@ -636,8 +636,11 @@ export interface ContentCoy {
   reviewStatus?: ('pending' | 'approved' | 'rejected') | null;
   organizerName?: string | null;
   organizerOrg?: string | null;
+  organizerEmail?: string | null;
   registerUrl?: string | null;
   websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  statementUrl?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2346,8 +2349,11 @@ export interface ContentCoysSelect<T extends boolean = true> {
   reviewStatus?: T;
   organizerName?: T;
   organizerOrg?: T;
+  organizerEmail?: T;
   registerUrl?: T;
   websiteUrl?: T;
+  instagramUrl?: T;
+  statementUrl?: T;
   updatedAt?: T;
   createdAt?: T;
 }

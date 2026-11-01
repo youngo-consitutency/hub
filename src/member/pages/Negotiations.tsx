@@ -1,3 +1,5 @@
+'use client'
+
 interface TrackResultsProps {
   data?: AnyValue
   search?: AnyValue
