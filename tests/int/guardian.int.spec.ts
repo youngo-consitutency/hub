@@ -147,8 +147,11 @@ describe('guardian pathway api', () => {
         await payload.create({
           collection: 'guardian-enquiries',
           data: {
-            ...request,
-            guardianEmail: `${tag}-${Date.now()}@test.invalid`,
+            // stored shape, as the endpoint writes it
+            ...validateGuardianEnquiry({
+              ...request,
+              guardianEmail: `${tag}-${Date.now()}@test.invalid`,
+            }).data,
             createdAt: old,
           } as never,
           overrideAccess: true,
