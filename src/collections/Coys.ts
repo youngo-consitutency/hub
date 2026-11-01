@@ -40,5 +40,7 @@ export const Coys: CollectionConfig = {
     { name: 'websiteUrl', type: 'text' },
     { name: 'instagramUrl', type: 'text' },
     { name: 'statementUrl', type: 'text' },
+    // turns on the participant allowlist, notices and announcements
+    { name: 'liveOps', type: 'checkbox', defaultValue: false },
   ],
 }

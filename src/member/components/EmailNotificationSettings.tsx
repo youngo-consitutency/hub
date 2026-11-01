@@ -24,6 +24,11 @@ const CATEGORIES = [
     label: 'Hub announcements',
     description: 'Governed updates that the Hub team sends to your scope.',
   },
+  {
+    key: 'group_mail',
+    label: 'Group mail',
+    description: 'Messages from the contact points of groups and conferences you take part in.',
+  },
 ]
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']

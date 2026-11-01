@@ -65,6 +65,7 @@ import {
 } from './collections/Governance'
 import { Handovers } from './collections/Handovers'
 import { GuardianEnquiries } from './collections/GuardianEnquiries'
+import { CoyNotices, CoyParticipants } from './collections/CoyLive'
 import {
   FundingRequests,
   SafeguardingCases,
@@ -139,6 +140,8 @@ export default buildConfig({
     SelectionEvaluations,
     Handovers,
     GuardianEnquiries,
+    CoyParticipants,
+    CoyNotices,
     FundingRequests,
     SafeguardingCases,
     CoiDeclarations,

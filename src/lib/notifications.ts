@@ -10,7 +10,21 @@ import type { Doc, AnyValue } from './domain'
 // Announcement broadcast surface (preview/send/outbox). Queue rows live in
 // `notification_outbox`; eligibility reads the notification_prefs model.
 
-const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement']
+const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement', 'group_mail']
+// Mail from a group the member belongs to is on unless they turn it off;
+// the other categories stay opt-in.
+const OPT_OUT_EMAIL_CATEGORIES = ['group_mail']
+
+export function emailPreferences(stored: AnyValue) {
+  return Object.fromEntries(
+    OPTIONAL_EMAIL_CATEGORIES.map((category) => [
+      category,
+      OPT_OUT_EMAIL_CATEGORIES.includes(category)
+        ? stored?.[category] !== false
+        : Boolean(stored?.[category]),
+    ]),
+  ) as Record<string, boolean>
+}
 
 // ── Templates ────────────────────────────────────────────────────
 
@@ -127,6 +141,7 @@ function templateContent(templateKey: string, data: Doc = {}) {
     announcement: 'Announcement',
     digest: 'Your weekly digest',
     deadline: 'Deadline reminder',
+    'group-mail': 'Group mail',
   }
   return {
     subject: title,
@@ -477,9 +492,9 @@ export async function listEligibleNotificationAccountIds({
   const { rows } = await pool.query(
     `SELECT a.id
      FROM accounts a
-     JOIN notification_prefs p ON p.account_id=a.id
-       AND (p.email->>$1)::boolean = true
-     WHERE a.email_verified_at IS NOT NULL
+     LEFT JOIN notification_prefs p ON p.account_id=a.id
+     WHERE COALESCE((p.email->>$1)::boolean, ${OPT_OUT_EMAIL_CATEGORIES.includes(category)})
+       AND a.email_verified_at IS NOT NULL
        AND a.hub_access_status='active'
        AND a.membership_status NOT IN ('expired','terminated','rejected')
        AND ${filters[scope.type]}`,

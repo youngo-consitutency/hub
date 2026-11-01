@@ -102,7 +102,7 @@ export const NotificationOutbox: CollectionConfig = {
       name: 'category',
       type: 'select',
       required: true,
-      options: ['digest', 'deadline', 'announcement'],
+      options: ['digest', 'deadline', 'announcement', 'group_mail'],
     },
     { name: 'templateKey', type: 'text', required: true },
     { name: 'sourceType', type: 'text' },

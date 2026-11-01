@@ -18,3 +18,14 @@ export const cleanText = (v: unknown, max: number) => {
   }
   return s.replace(/\s+/g, ' ').trim().slice(0, max)
 }
+
+// cleanText per line, keeping paragraph breaks for message bodies.
+export const cleanParagraphs = (v: unknown, max: number) =>
+  String(v ?? '')
+    .slice(0, Math.max(max * 4, 8192))
+    .split(/\r?\n/)
+    .map((line) => cleanText(line, max))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, max)
