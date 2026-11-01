@@ -25,6 +25,7 @@ import { membershipEndpoints } from './membership'
 import { operationEndpoints } from './operations'
 import { coyEndpoints } from './coy'
 import { mailEndpoints } from './mail'
+import { agentEndpoints } from './agent'
 
 export const domainEndpoints = [
   ...authEndpoints,
@@ -34,6 +35,7 @@ export const domainEndpoints = [
   ...feedbackEndpoints,
   ...coyEndpoints,
   ...mailEndpoints,
+  ...agentEndpoints,
   ...opportunityEndpoints,
   ...adminEndpoints,
   ...membershipTeamEndpoints,

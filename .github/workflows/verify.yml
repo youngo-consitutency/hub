@@ -46,6 +46,8 @@ jobs:
       # Test-only opt-out: the suite drives more auth requests than a real
       # client. Never set this on a deployed environment.
       HUB_DISABLE_RATE_LIMIT: '1'
+      # Lets the agent gateway spec drive mcp-youngo against the test server.
+      HUB_AGENT_GATEWAY_TOKEN: ci-gateway-placeholder
 
     steps:
       - name: Check out repository
