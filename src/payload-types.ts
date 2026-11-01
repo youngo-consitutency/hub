@@ -119,6 +119,7 @@ export interface Config {
     'selection-applications': SelectionApplication;
     'selection-evaluations': SelectionEvaluation;
     handovers: Handover;
+    'guardian-enquiries': GuardianEnquiry;
     'coy-participants': CoyParticipant;
     'coy-notices': CoyNotice;
     'funding-requests': FundingRequest;
@@ -185,6 +186,7 @@ export interface Config {
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
     'selection-evaluations': SelectionEvaluationsSelect<false> | SelectionEvaluationsSelect<true>;
     handovers: HandoversSelect<false> | HandoversSelect<true>;
+    'guardian-enquiries': GuardianEnquiriesSelect<false> | GuardianEnquiriesSelect<true>;
     'coy-participants': CoyParticipantsSelect<false> | CoyParticipantsSelect<true>;
     'coy-notices': CoyNoticesSelect<false> | CoyNoticesSelect<true>;
     'funding-requests': FundingRequestsSelect<false> | FundingRequestsSelect<true>;
@@ -638,8 +640,11 @@ export interface ContentCoy {
   reviewStatus?: ('pending' | 'approved' | 'rejected') | null;
   organizerName?: string | null;
   organizerOrg?: string | null;
+  organizerEmail?: string | null;
   registerUrl?: string | null;
   websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  statementUrl?: string | null;
   liveOps?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -752,6 +757,8 @@ export interface FeedbackTicket {
   body: string;
   pageUrl?: string | null;
   contextNote?: string | null;
+  userAgent?: string | null;
+  viewport?: string | null;
   account?: (number | null) | Account;
   contactEmail?: string | null;
   status: 'new' | 'triaged' | 'in_progress' | 'resolved' | 'declined';
@@ -1587,6 +1594,20 @@ export interface Handover {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries".
+ */
+export interface GuardianEnquiry {
+  id: number;
+  guardianName: string;
+  guardianEmail: string;
+  relationship: 'parent' | 'legal_guardian';
+  consentStatement: string;
+  consentedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coy-participants".
  */
 export interface CoyParticipant {
@@ -1988,6 +2009,10 @@ export interface PayloadLockedDocument {
         value: number | Handover;
       } | null)
     | ({
+        relationTo: 'guardian-enquiries';
+        value: number | GuardianEnquiry;
+      } | null)
+    | ({
         relationTo: 'coy-participants';
         value: number | CoyParticipant;
       } | null)
@@ -2376,8 +2401,11 @@ export interface ContentCoysSelect<T extends boolean = true> {
   reviewStatus?: T;
   organizerName?: T;
   organizerOrg?: T;
+  organizerEmail?: T;
   registerUrl?: T;
   websiteUrl?: T;
+  instagramUrl?: T;
+  statementUrl?: T;
   liveOps?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2469,6 +2497,8 @@ export interface FeedbackTicketsSelect<T extends boolean = true> {
   body?: T;
   pageUrl?: T;
   contextNote?: T;
+  userAgent?: T;
+  viewport?: T;
   account?: T;
   contactEmail?: T;
   status?: T;
@@ -3093,6 +3123,19 @@ export interface HandoversSelect<T extends boolean = true> {
   openedAt?: T;
   closedAt?: T;
   closedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardian-enquiries_select".
+ */
+export interface GuardianEnquiriesSelect<T extends boolean = true> {
+  guardianName?: T;
+  guardianEmail?: T;
+  relationship?: T;
+  consentStatement?: T;
+  consentedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
