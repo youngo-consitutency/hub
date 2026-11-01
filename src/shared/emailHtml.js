@@ -18,6 +18,20 @@ const SELF_ENDING = new Set(['li', 'p'])
 
 const RENAME = { b: 'strong', i: 'em', div: 'p' }
 
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+
+// single pass, so `&amp;lt;` decodes to the text `&lt;`, never to `<`
+function decodeEntities(value) {
+  return String(value ?? '').replace(
+    /&(?:#(\d{1,7})|#x([\da-f]{1,6})|([a-z]+));/gi,
+    (match, dec, hex, name) => {
+      if (name) return ENTITIES[name.toLowerCase()] ?? match
+      const code = dec ? Number(dec) : parseInt(hex, 16)
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : ''
+    },
+  )
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -59,11 +73,18 @@ function parseTag(full) {
  * leaves its closing tag behind and truncated input still closes cleanly.
  */
 export function sanitizeEmailHtml(value) {
-  const source = String(value || '')
-    .slice(0, 20000)
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<\s*(script|style|iframe|object|embed|form|svg|math)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
-    .replace(/<\s*(script|style|iframe|object|embed|form|svg|math)\b[^>]*\/?\s*>/gi, '')
+  // strip to a fixpoint: one pass can leave `<scr<script>ipt>` behind
+  let source = String(value || '').slice(0, 20000)
+  for (let prev = ''; prev !== source;) {
+    prev = source
+    source = source
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(
+        /<\s*(script|style|iframe|object|embed|form|svg|math)\b[\s\S]*?<\s*\/\s*\1\s*>/gi,
+        '',
+      )
+      .replace(/<\s*(script|style|iframe|object|embed|form|svg|math)\b[^>]*\/?\s*>/gi, '')
+  }
   const open = []
   let html = ''
   for (const part of source.split(/(<[^>]+>)/g)) {
@@ -73,7 +94,8 @@ export function sanitizeEmailHtml(value) {
         open.push('p')
         html += '<p>'
       }
-      html += escapeHtml(part)
+      // the editor sends entity-encoded text; decode once, then escape once
+      html += escapeHtml(decodeEntities(part))
       continue
     }
     const parsed = parseTag(part)
@@ -99,14 +121,16 @@ export function sanitizeEmailHtml(value) {
 }
 
 export function emailPlainText(html) {
-  return sanitizeEmailHtml(html)
+  let text = sanitizeEmailHtml(html)
     .replace(/<br \/>/g, '\n')
     .replace(/<\/(p|h2|h3|li|blockquote)>/g, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
+  for (let prev = ''; prev !== text;) {
+    prev = text
+    text = text.replace(/<[^>]*>/g, '')
+  }
+  // one pass, so an escaped `&amp;lt;` stays literal text instead of becoming `<`
+  return text
+    .replace(/&(amp|lt|gt|quot);/g, (_, name) => ENTITIES[name])
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
