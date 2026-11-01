@@ -26,10 +26,12 @@ describe('mail reach', () => {
 })
 
 describe('email html', () => {
-  it('strips nested script fragments to a fixpoint', () => {
-    expect(sanitizeEmailHtml('<scr<script>x</script>ipt>alert(1)</script><p>ok</p>')).toBe(
-      '<p>alert(1)</p><p>ok</p>',
-    )
+  it('never lets a nested script fragment through', () => {
+    const html = sanitizeEmailHtml('<scr<script>x</script>ipt>alert(1)</script><p>ok</p>')
+    expect(html).not.toMatch(/<(?!\/?p>)/)
+    expect(html).toContain('<p>ok</p>')
+    expect(sanitizeEmailHtml('<script>never closed <p>gone</p>')).toBe('')
+    expect(sanitizeEmailHtml('<!-- <script>x</script> --><p>c</p>')).toBe('<p>c</p>')
   })
 
   it('escapes entity-encoded text once and decodes it once', () => {
