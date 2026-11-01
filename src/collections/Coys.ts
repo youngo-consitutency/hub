@@ -35,7 +35,7 @@ export const Coys: CollectionConfig = {
     },
     { name: 'organizerName', type: 'text', label: 'Organiser name' },
     { name: 'organizerOrg', type: 'text', label: 'Organiser organisation' },
-    { name: 'organizerEmail', type: 'text', label: 'Organiser email' },
+    { name: 'organizerEmail', type: 'email', label: 'Organiser email' },
     { name: 'registerUrl', type: 'text' },
     { name: 'websiteUrl', type: 'text' },
     { name: 'instagramUrl', type: 'text' },
