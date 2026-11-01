@@ -35,8 +35,11 @@ export const Coys: CollectionConfig = {
     },
     { name: 'organizerName', type: 'text', label: 'Organiser name' },
     { name: 'organizerOrg', type: 'text', label: 'Organiser organisation' },
+    { name: 'organizerEmail', type: 'text', label: 'Organiser email' },
     { name: 'registerUrl', type: 'text' },
     { name: 'websiteUrl', type: 'text' },
+    { name: 'instagramUrl', type: 'text' },
+    { name: 'statementUrl', type: 'text' },
     // turns on the participant allowlist, notices and announcements
     { name: 'liveOps', type: 'checkbox', defaultValue: false },
   ],

@@ -16,6 +16,11 @@ interface ApplicationResponsesProps {
   item?: AnyValue
 }
 
+interface GuardianRequestsProps {
+  items: Doc[]
+  onClosed: () => void
+}
+
 interface AppealPanelProps {
   item?: AnyValue
   busy?: boolean
@@ -36,6 +41,7 @@ import { useWorkingGroups } from '../lib/workingGroups'
 import {
   TbClipboardCheck as ClipboardCheck,
   TbClock as Clock3,
+  TbShieldLock as ShieldLock,
   TbStack3 as Layers3,
   TbRefresh as RefreshCw,
   TbSearch as Search,
@@ -370,6 +376,90 @@ function AppealPanel({ item, busy, onReview }: AppealPanelProps) {
   )
 }
 
+const RELATIONSHIP_LABEL: Record<string, string> = {
+  parent: 'Parent',
+  legal_guardian: 'Legal guardian',
+}
+
+// Under-18 safeguarding requests. Closing deletes the request outright;
+// open ones are purged after 12 months.
+function GuardianRequests({ items, onClosed }: GuardianRequestsProps) {
+  const [confirming, setConfirming] = useState<AnyValue>(null)
+  const [busy, setBusy] = useState<AnyValue>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const close = async (id: AnyValue) => {
+    setBusy(id)
+    setError(null)
+    try {
+      await apiPost(`/member/team/membership/guardian-enquiries/${id}/close`, {})
+      setConfirming(null)
+      onClosed()
+    } catch (e) {
+      setError((e as AnyValue).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Section label={`Guardian requests (under 18) · ${items.length}`}>
+      <p className="metaMuted">
+        Only the Membership Team sees these. Contact the guardian by email, then close the request
+        to delete it.
+      </p>
+      {error && <ErrorCard message={error} />}
+      {items.length === 0 ? (
+        <Empty
+          icon={ShieldLock}
+          title="No guardian requests"
+          body="Requests from parents or legal guardians of under-18 applicants appear here."
+        />
+      ) : (
+        <ul className="guardianQueue">
+          {items.map((item) => (
+            <li key={item.id} className="card guardianRequest">
+              <div className="guardianRequestHead">
+                <strong>{item.guardianName}</strong>
+                <span className="chip chip-neutral">
+                  {RELATIONSHIP_LABEL[item.relationship] || item.relationship}
+                </span>
+              </div>
+              <a className="mandateExtLink" href={`mailto:${item.guardianEmail}`}>
+                {item.guardianEmail}
+              </a>
+              <p className="metaMuted">
+                Sent {formatDateOnly(item.createdAt)} · confirmed: “{item.consentStatement}”
+              </p>
+              <div className="guardianRequestActions">
+                {confirming === item.id ? (
+                  <>
+                    <Button
+                      variant="danger"
+                      sm
+                      disabled={busy === item.id}
+                      onClick={() => close(item.id)}
+                    >
+                      {busy === item.id ? 'Deleting…' : 'Delete request'}
+                    </Button>
+                    <Button variant="ghost" sm onClick={() => setConfirming(null)}>
+                      Keep
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="secondary" sm onClick={() => setConfirming(item.id)}>
+                    Close and delete
+                  </Button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  )
+}
+
 export function MembershipTeam() {
   const { teamLabels } = useContentOptionLabels()
   const [ending, setEnding] = useState<AnyValue>(null)
@@ -589,6 +679,7 @@ export function MembershipTeam() {
                   </div>
                 )}
               </Section>
+              <GuardianRequests items={data.guardianEnquiries || []} onClosed={query.retry} />
             </>
           )
         }}
