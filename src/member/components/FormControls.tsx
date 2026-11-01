@@ -9,6 +9,7 @@ interface DatePickerProps {
   error?: string
   min?: AnyValue
   max?: AnyValue
+  disabled?: boolean
 }
 
 interface SearchableSelectProps {
@@ -57,7 +58,7 @@ function matchingOptions(options: AnyValue, query: AnyValue) {
 }
 
 /** Native date field with the same field chrome as other form controls. */
-export function DatePicker({ label, value, onChange, error, min, max }: DatePickerProps) {
+export function DatePicker({ label, value, onChange, error, min, max, disabled }: DatePickerProps) {
   return (
     <label className={`field${error ? ' hasError' : ''}`}>
       <span>{label}</span>
@@ -67,6 +68,7 @@ export function DatePicker({ label, value, onChange, error, min, max }: DatePick
         value={value || ''}
         min={min || undefined}
         max={max || undefined}
+        disabled={disabled}
         aria-invalid={!!error}
         onChange={(event) => onChange(event.target.value)}
       />

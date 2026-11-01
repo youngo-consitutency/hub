@@ -1,6 +1,8 @@
 // Registration validation: zod shapes; option lists (regions, genders,
 // nationalities, …) live in the `registration-options` content document.
 import type { AnyValue, Doc } from './domain'
+import { ageFromDob } from '../shared/age'
+import { UNDER18_STOP_MESSAGE } from '../shared/guardianEnquiry'
 import { z } from 'zod'
 import { getDocument } from './documents'
 
@@ -36,17 +38,6 @@ function allowed(set: Set<string>, value: string) {
 
 type Fields = Record<string, string>
 type Body = Doc
-
-function ageFromDob(dob: string | null): number | null {
-  if (!dob) return null
-  const d = new Date(dob)
-  if (Number.isNaN(d.getTime())) return null
-  const now = new Date()
-  let age = now.getFullYear() - d.getFullYear()
-  const m = now.getMonth() - d.getMonth()
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age -= 1
-  return age
-}
 
 function asStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean)
@@ -433,22 +424,24 @@ export async function validateRegistration(req: AnyValue, body: Body) {
       ),
       motivation: strTrim(z.string().max(2000, 'Please keep this under 2000 characters.')),
       memberOfAccreditedNgo: yesNo().refine((v) => v !== null, 'Please answer for statistics.'),
-      guardianName: strOpt(),
-      guardianEmail: strEmailOpt(),
-      guardianConsent: z.preprocess((v) => Boolean(v), z.boolean()),
     })
     .superRefine((v, ctx) => {
       if (v.gender === 'Other' && !v.genderOther) {
         issue(ctx, 'genderOther', 'Please specify.')
       }
-      let under18 = v.ageBand === 'under_18'
+      // Under 18 is a safeguarding stop, not a branch of the application:
+      // a parent or legal guardian uses /api/auth/guardian-enquiry instead.
+      if (v.ageBand === 'under_18') issue(ctx, 'ageBand', UNDER18_STOP_MESSAGE)
       if (v.dateOfBirth) {
         const age = ageFromDob(v.dateOfBirth)
         if (age === null) {
           issue(ctx, 'dateOfBirth', 'Enter a valid date of birth.')
         } else if (age >= 35) {
           issue(ctx, 'dateOfBirth', 'Individual membership expires at age 35.')
-        } else if (age < 18) under18 = true
+        } else if (age < 18) {
+          issue(ctx, 'ageBand', UNDER18_STOP_MESSAGE)
+          issue(ctx, 'dateOfBirth', UNDER18_STOP_MESSAGE)
+        }
       }
       if (opts.minorities.size) {
         if (v.minorityGroups.some((g) => !opts.minorities.has(g))) {
@@ -464,17 +457,6 @@ export async function validateRegistration(req: AnyValue, body: Body) {
       ) {
         issue(ctx, 'minorityOther', 'Please specify.')
       }
-      if (under18) {
-        if (!v.guardianName) {
-          issue(ctx, 'guardianName', 'Guardian name is required for members under 18.')
-        }
-        if (!EMAIL_RE.test(v.guardianEmail || '')) {
-          issue(ctx, 'guardianEmail', 'Guardian email is required for members under 18.')
-        }
-        if (!v.guardianConsent) {
-          issue(ctx, 'guardianConsent', 'Guardian permission is required for members under 18.')
-        }
-      }
     })
 
   const parsed = indSchema.safeParse(b)
@@ -487,11 +469,6 @@ export async function validateRegistration(req: AnyValue, body: Body) {
 
   const name = `${v.firstName} ${v.lastName}`.trim() || String(b.name || '').trim()
   const minorityGroups = v.minorityIdentity === false ? [] : v.minorityGroups
-  let under18 = v.ageBand === 'under_18'
-  if (v.dateOfBirth) {
-    const age = ageFromDob(v.dateOfBirth)
-    if (age !== null && age < 18) under18 = true
-  }
 
   return {
     data: {
@@ -505,7 +482,7 @@ export async function validateRegistration(req: AnyValue, body: Body) {
       phone: v.phone,
       gender: v.gender,
       genderOther: v.gender === 'Other' ? v.genderOther : null,
-      ageBand: under18 ? 'under_18' : '18_35',
+      ageBand: '18_35',
       dateOfBirth: v.dateOfBirth,
       minorityGroups,
       minorityOther: minorityGroups.includes('Other') ? v.minorityOther : null,
@@ -527,10 +504,10 @@ export async function validateRegistration(req: AnyValue, body: Body) {
       ycpName: null,
       ycpEmail: null,
       ycpPhone: null,
-      under18,
-      guardianName: under18 ? v.guardianName : null,
-      guardianEmail: under18 ? v.guardianEmail : null,
-      guardianConsent: under18 ? v.guardianConsent : false,
+      under18: false,
+      guardianName: null,
+      guardianEmail: null,
+      guardianConsent: false,
       ...agreements,
       ...privacy,
       coiDeclared: agreements.acceptCoiPolicy,
