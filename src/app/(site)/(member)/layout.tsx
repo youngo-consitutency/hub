@@ -24,12 +24,6 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
   return (
     <SWRConfig value={{ dedupingInterval: 5000, focusThrottleInterval: 60000, errorRetryCount: 3 }}>
       <RouterBridge />
-      {process.env.NEXT_PUBLIC_HUB_DEMO === 'true' && (
-        <div className="demoNotice">
-          <strong>Demo environment.</strong> Fictional accounts and records. Do not enter personal
-          information.
-        </div>
-      )}
       <AccessGate>
         {(account: Doc) => (
           <AccountProvider initialAccount={account}>

@@ -5,8 +5,7 @@ export const SITE_DESCRIPTION =
   'YOUNGO Hub brings the work of the UNFCCC children and youth constituency into one shared platform — meetings, working groups, submissions, decisions, opportunities, and trusted knowledge.'
 const SHARE_IMAGE = '/screenshots/home-wide.png'
 
-export const isDemo = () =>
-  process.env.NEXT_PUBLIC_HUB_DEMO === 'true' || process.env.HUB_DEMO_MODE === 'true'
+export { isIndexable } from '../../lib/environment'
 
 export const shareMetadata = {
   openGraph: {
