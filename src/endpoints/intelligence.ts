@@ -67,7 +67,12 @@ async function evidenceForQuery(
     push('council_decision', d.title, d.summary || '', `/decisions/${d.slug}`)
   if (hasCapability(access, 'intelligence.contacts.read')) {
     for (const c of await store.listDirectory(req))
-      push('contact', c.name, c.role || '', `/directory`)
+      push(
+        'contact',
+        c.roleTitle,
+        [c.group, c.description, c.publicEmail].filter(Boolean).join(' · '),
+        '/directory',
+      )
   }
   // Members always see their own role/record context
   if (access.accountId) {

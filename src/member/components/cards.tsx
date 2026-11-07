@@ -77,7 +77,7 @@ import { A, StatusChip, FilterChip, LifecycleTiming } from './ui'
 import { DateStamp } from './DateStamp'
 import { MemberAvatar } from './MemberAvatar'
 import { fmtMoment, fmtDateRange } from '../lib/time'
-import { useWorkingGroups } from '../lib/workingGroups'
+import { useContactPoints, useWorkingGroups } from '../lib/workingGroups'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel, regionFilterPrefix } from '../lib/regions'
 import { DestinationIcon } from './DestinationLink'
@@ -99,7 +99,6 @@ import {
   TbTag as Tag,
   TbMail as Mail,
   TbPhone as Phone,
-  TbUser as User,
 } from 'react-icons/tb'
 
 const EVENT_ICONS = {
@@ -550,7 +549,7 @@ export function ContactCard({ contact }: ContactCardProps) {
           ? `tel:${channel.replace(/[^+\d]/g, '')}`
           : null
     : null
-  const hasDirectContact = Boolean(contact.personName || contact.publicEmail || channel)
+  const hasDirectContact = Boolean(contact.publicEmail || channel)
 
   return (
     <div className="card cardTight contactCard">
@@ -558,12 +557,6 @@ export function ContactCard({ contact }: ContactCardProps) {
       {contact.description && <p className="meta contactDescription">{contact.description}</p>}
       {hasDirectContact ? (
         <div className="contactDetails">
-          {contact.personName && (
-            <p className="meta contactPerson">
-              <User size={15} strokeWidth={1.75} aria-hidden />
-              {contact.personName}
-            </p>
-          )}
           {contact.publicEmail && (
             <a className="inlineLink contactChannel" href={`mailto:${contact.publicEmail}`}>
               <Mail size={15} strokeWidth={1.75} aria-hidden />
@@ -596,21 +589,12 @@ export function ContactCard({ contact }: ContactCardProps) {
   )
 }
 
-function workingGroupContactSummary(contact: Doc) {
-  const description = contact.description || ''
-  const contactPointSentence = description
-    .split(/(?=\s(?:Join:|Public entry:|LinkedIn|Email\s))/i)[0]
-    .trim()
-  if (/contact points?/i.test(contactPointSentence)) return contactPointSentence
-  if (/not confirmed publicly/i.test(description)) {
-    return 'Current Contact Point names have not been confirmed publicly.'
-  }
-  return 'Contact Point details and public channels are organised in the group page.'
-}
-
 export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
+  // who holds the role comes from authority records, never from the row's text
+  const { people, loading } = useContactPoints(slug)
+  const holders = people.map((person) => person.displayName).filter(Boolean)
   return (
     <A
       href={`/groups/${slug}`}
@@ -625,7 +609,13 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
           </span>
           <h3>{name}</h3>
         </div>
-        <p className="meta">{workingGroupContactSummary(contact)}</p>
+        <p className="meta">
+          {loading
+            ? 'Loading Contact Points…'
+            : holders.length
+              ? `Contact Points: ${holders.join(', ')}`
+              : 'No Contact Point recorded yet.'}
+        </p>
         <span className="workingGroupContactMeta">
           {contact.publicEmail || 'Contact details and channels'}
         </span>

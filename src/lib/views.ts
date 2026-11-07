@@ -73,7 +73,6 @@ function contactView(
   if (!contact) return contact
   if (includePrivate) return { ...contact }
   const publicContact: Record<string, unknown> = { ...contact }
-  delete publicContact.personName
   delete publicContact.channelValue
   return publicContact
 }

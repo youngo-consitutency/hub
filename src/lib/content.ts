@@ -291,7 +291,6 @@ export async function listDirectory(req: Req): Promise<AnyRecord[]> {
     description: c.description,
     publicEmail: c.publicEmail || null,
     wg: wgRef(c.wg),
-    personName: c.personName || null,
     channelValue: c.channelValue || null,
   }))
 }
