@@ -508,10 +508,6 @@
   font-size: 15px;
 }
 
-.calendarAgendaCards > .entityCard .entityCardBody {
-  flex: 0;
-}
-
 .calendarAgendaCards > .entityCard .entityCardHeader {
   min-height: 0;
 }
@@ -532,18 +528,6 @@
 .calendarAgenda .empty {
   padding: 32px 12px;
   box-shadow: none;
-}
-
-.eventRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.eventIcon {
-  color: var(--accent);
-  flex-shrink: 0;
-  display: flex;
 }
 
 @media (max-width: 980px) {

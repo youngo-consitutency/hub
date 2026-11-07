@@ -252,10 +252,6 @@ main#site-main {
   margin-top: var(--space-4);
 }
 
-.siteResourceCatalogue > .resourceSourceCard {
-  margin-top: clamp(32px, 5vw, 48px);
-}
-
 .siteResourceCatalogue .section {
   margin-top: clamp(32px, 5vw, 48px);
 }
@@ -378,7 +374,6 @@ main#site-main {
   text-underline-offset: 2px;
 }
 
-.sitePrincipleChips,
 .siteWgTags,
 .siteSocialList {
   display: flex;
@@ -387,13 +382,6 @@ main#site-main {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.sitePrincipleChips .chip {
-  height: auto;
-  min-height: 32px;
-  padding: 5px 12px;
-  font-size: 13px;
 }
 
 .siteTimeline {
@@ -906,11 +894,6 @@ main#site-main {
   border-radius: var(--radius-card);
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--accent-tint) 30%, var(--bg-card));
-}
-.sitePrincipleChips .chip {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 999px;
 }
 .siteUpcoming {
   min-width: 0;

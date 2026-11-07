@@ -72,8 +72,7 @@
   }
 
   /* ── Navigation ───────────────────────────────────── */
-  .sheet .navItem,
-  .sheet .sheetAction {
+  .sheet .navItem {
     min-height: 48px;
   }
 
