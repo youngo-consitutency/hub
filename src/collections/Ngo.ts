@@ -1,19 +1,18 @@
 import type { CollectionConfig, Where } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 export const NgoSeats: CollectionConfig = {
   slug: 'ngo-seats',
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       const where: Where = {
         or: [{ memberAccount: { equals: req.user.id } }, { orgAccount: { equals: req.user.id } }],
       }
       return where
     },
     // Seat grants flow through the organisation endpoints.
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
@@ -53,11 +52,10 @@ export const NgoRequests: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { orgAccount: { equals: req.user.id } }
     },
     // Requests are filed and reviewed through the organisation endpoints.
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {

@@ -63,12 +63,10 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
     accounts: AccountAuthOperations;
   };
   blocks: {};
   collections: {
-    users: User;
     media: Media;
     accounts: Account;
     'authority-records': AuthorityRecord;
@@ -138,7 +136,6 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     accounts: AccountsSelect<false> | AccountsSelect<true>;
     'authority-records': AuthorityRecordsSelect<false> | AuthorityRecordsSelect<true>;
@@ -216,28 +213,10 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User | Account;
+  user: Account;
   jobs: {
     tasks: unknown;
     workflows: unknown;
-  };
-}
-export interface UserAuthOperations {
-  forgotPassword: {
-    email: string;
-    password: string;
-  };
-  login: {
-    email: string;
-    password: string;
-  };
-  registerFirstUser: {
-    email: string;
-    password: string;
-  };
-  unlock: {
-    email: string;
-    password: string;
   };
 }
 export interface AccountAuthOperations {
@@ -257,32 +236,6 @@ export interface AccountAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1879,10 +1832,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -2131,15 +2080,10 @@ export interface PayloadLockedDocument {
         value: number | PrivacyRequest;
       } | null);
   globalSlug?: string | null;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'accounts';
-        value: number | Account;
-      };
+  user: {
+    relationTo: 'accounts';
+    value: number | Account;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2149,15 +2093,10 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'accounts';
-        value: number | Account;
-      };
+  user: {
+    relationTo: 'accounts';
+    value: number | Account;
+  };
   key?: string | null;
   value?:
     | {
@@ -2181,29 +2120,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

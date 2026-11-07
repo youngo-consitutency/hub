@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 // Governed content workflow: draft → in_review → approved → published.
 // The author cannot review their own draft; publishing overlays the live
@@ -8,7 +8,7 @@ export const ContentDrafts: CollectionConfig = {
   slug: 'content-drafts',
   access: {
     read: ({ req }) => Boolean(req.user),
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {

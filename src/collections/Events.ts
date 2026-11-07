@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { isStaffField, staffWrites } from '../lib/collectionAccess'
+import { noFieldAccess, serverWrites } from '../lib/collectionAccess'
 
 export const Events: CollectionConfig = {
   slug: 'content-events',
   access: {
     read: () => true,
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
@@ -23,7 +23,7 @@ export const Events: CollectionConfig = {
     {
       name: 'meetingUrl',
       type: 'text',
-      access: { read: isStaffField },
+      access: { read: noFieldAccess },
     },
     { name: 'recordingUrl', type: 'text' },
     {

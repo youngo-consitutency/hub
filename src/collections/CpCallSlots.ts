@@ -1,12 +1,12 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 // CP office-hours slots members book (replaces cp_call_slots + bookings).
 export const CpCallSlots: CollectionConfig = {
   slug: 'cp-call-slots',
   access: {
     read: ({ req }) => Boolean(req.user),
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
