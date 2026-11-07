@@ -54,8 +54,11 @@ jobs:
             --name "$PR_BRANCH" > /tmp/neon_create.txt 2>&1; then
             sed -E 's#postgres(ql)?://[^ @]+@#postgres://***@#g' /tmp/neon_create.txt
           fi
+          # production holds the live `hub` database next to the archived demo
+          # `neondb`, so name it; previews copy the live schema
           if ! DSN=$($NEONCTL connection-string "$PR_BRANCH" \
             --project-id "$NEON_PROJECT_ID" \
+            --database-name hub \
             --pooled 2> /tmp/neon_dsn_err.txt); then
             # free plan caps branches and a PR stack hits it fast; verify.yml still migrates
             if grep -q 'branches limit exceeded' /tmp/neon_create.txt; then
