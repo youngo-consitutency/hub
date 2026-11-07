@@ -77,7 +77,7 @@
 }
 
 /* These surfaces all sit below their controls; no diagonal drift or zoom. */
-.comboMenu,
+.comboMenu[data-entering],
 .addCalPanel,
 .subscribePanel,
 .siteMobileNav,

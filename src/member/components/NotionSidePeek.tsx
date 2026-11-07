@@ -9,6 +9,7 @@ import {
   TbX,
   TbInfoCircle,
 } from 'react-icons/tb'
+import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
 import { A } from './ui'
 
 export interface NotionProperty {
@@ -202,6 +203,7 @@ export function NotionSidePeek({
 
   const currentTabContent = tabs?.find((t) => t.id === activeTab)?.content ?? children
 
+  // a modal dialog makes everything outside it inert, so popovers portal into it
   return (
     <dialog
       ref={dialogRef}
@@ -216,147 +218,154 @@ export function NotionSidePeek({
         if (event.target === event.currentTarget) requestClose()
       }}
     >
-      {/* Top action bar with breadcrumbs and view controls */}
-      <div className="routePeekToolbar notionPeekTopBar">
-        <div className="notionPeekBreadcrumb">
-          {eyebrow ? (
-            <span className="notionPeekBreadcrumbText">
-              {eyebrow.split('›').map((part, index) => (
-                <span key={index} className="notionBreadcrumbItem">
-                  {index > 0 && (
-                    <TbChevronRight size={13} className="notionBreadcrumbSep" aria-hidden />
-                  )}
-                  <span>{part.trim()}</span>
-                </span>
-              ))}
-            </span>
-          ) : (
-            <span className="notionPeekBreadcrumbText">Details</span>
-          )}
-        </div>
-
-        <div className="notionPeekTopActions">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm notionTopActionBtn"
-            title="Copy shareable link"
-            onClick={handleCopyLink}
-            aria-label="Copy link"
-          >
-            {copied ? (
-              <>
-                <TbCheck size={15} strokeWidth={2} className="textSuccess" aria-hidden />
-                <span className="notionActionLabel">Copied</span>
-              </>
-            ) : copyFailed ? (
-              <>
-                <TbX size={15} strokeWidth={2} aria-hidden />
-                <span className="notionActionLabel">Copy failed</span>
-              </>
+      <PortalProvider getContainer={() => dialogRef.current}>
+        {/* Top action bar with breadcrumbs and view controls */}
+        <div className="routePeekToolbar notionPeekTopBar">
+          <div className="notionPeekBreadcrumb">
+            {eyebrow ? (
+              <span className="notionPeekBreadcrumbText">
+                {eyebrow.split('›').map((part, index) => (
+                  <span key={index} className="notionBreadcrumbItem">
+                    {index > 0 && (
+                      <TbChevronRight size={13} className="notionBreadcrumbSep" aria-hidden />
+                    )}
+                    <span>{part.trim()}</span>
+                  </span>
+                ))}
+              </span>
             ) : (
-              <>
-                <TbLink size={15} strokeWidth={1.75} aria-hidden />
-                <span className="notionActionLabel">Copy link</span>
-              </>
+              <span className="notionPeekBreadcrumbText">Details</span>
             )}
-          </button>
+          </div>
 
-          {fullPageHref && (
-            <A
-              href={fullPageHref}
+          <div className="notionPeekTopActions">
+            <button
+              type="button"
               className="btn btn-ghost btn-sm notionTopActionBtn"
-              title="Open as full standalone page"
-              aria-label="Open as full page"
-              peek={false}
+              title="Copy shareable link"
+              onClick={handleCopyLink}
+              aria-label="Copy link"
             >
-              <TbArrowsMaximize size={15} strokeWidth={1.75} aria-hidden />
-              <span className="notionActionLabel">Open full page</span>
-            </A>
+              {copied ? (
+                <>
+                  <TbCheck size={15} strokeWidth={2} className="textSuccess" aria-hidden />
+                  <span className="notionActionLabel">Copied</span>
+                </>
+              ) : copyFailed ? (
+                <>
+                  <TbX size={15} strokeWidth={2} aria-hidden />
+                  <span className="notionActionLabel">Copy failed</span>
+                </>
+              ) : (
+                <>
+                  <TbLink size={15} strokeWidth={1.75} aria-hidden />
+                  <span className="notionActionLabel">Copy link</span>
+                </>
+              )}
+            </button>
+
+            {fullPageHref && (
+              <A
+                href={fullPageHref}
+                className="btn btn-ghost btn-sm notionTopActionBtn"
+                title="Open as full standalone page"
+                aria-label="Open as full page"
+                peek={false}
+              >
+                <TbArrowsMaximize size={15} strokeWidth={1.75} aria-hidden />
+                <span className="notionActionLabel">Open full page</span>
+              </A>
+            )}
+
+            <button
+              type="button"
+              className="iconButton notionPeekCloseBtn"
+              aria-label={`Close ${title}`}
+              onClick={requestClose}
+              title="Close (Esc)"
+            >
+              <TbX size={18} strokeWidth={1.8} aria-hidden />
+            </button>
+          </div>
+        </div>
+
+        {/* Main scrolling peek body */}
+        <div className="routePeekBody notionPeekBody">
+          {/* Cover / Header section */}
+          <header className="notionPeekHeader">
+            <div className="notionPeekIconTitleRow">
+              {IconProp && <div className="notionPeekIconBadge">{renderIcon()}</div>}
+              <div className="notionPeekHeadingText">
+                <div className="notionPeekBadgesRow">{badge}</div>
+                <h2 className="notionPeekTitle">{title}</h2>
+                {subtitle && <div className="notionPeekSubtitle">{subtitle}</div>}
+              </div>
+            </div>
+          </header>
+
+          {/* Notion-style Properties Block */}
+          {properties && properties.length > 0 && (
+            <div className="notionPropertiesBlock" aria-label="Properties">
+              {properties.map((prop, idx) => {
+                const PropIcon = prop.icon
+                return (
+                  <div key={prop.id || idx} className="notionPropertyRow">
+                    <div className="notionPropertyLabel">
+                      <PropIcon
+                        size={15}
+                        strokeWidth={1.75}
+                        className="notionPropIcon"
+                        aria-hidden
+                      />
+                      <span>{prop.label}</span>
+                    </div>
+                    <div className="notionPropertyValue">{prop.value}</div>
+                  </div>
+                )
+              })}
+            </div>
           )}
 
-          <button
-            type="button"
-            className="iconButton notionPeekCloseBtn"
-            aria-label={`Close ${title}`}
-            onClick={requestClose}
-            title="Close (Esc)"
+          {/* Quick action bar */}
+          {actions && <div className="notionPeekQuickActions">{actions}</div>}
+
+          {/* Inner Menus / Segmented Tabs */}
+          {tabs && tabs.length > 1 && (
+            <nav className="notionPeekTabs" role="tablist" aria-label="Inner navigation">
+              {tabs.map((tab) => {
+                const TabIcon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`notionPeekTab ${isActive ? 'isActive' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                    aria-selected={isActive}
+                    aria-controls={`peek-panel-${tab.id}`}
+                    id={`peek-tab-${tab.id}`}
+                    role="tab"
+                  >
+                    {TabIcon && <TabIcon size={16} strokeWidth={1.75} aria-hidden />}
+                    <span>{tab.label}</span>
+                    {tab.badge !== undefined && <span className="notionTabBadge">{tab.badge}</span>}
+                  </button>
+                )
+              })}
+            </nav>
+          )}
+
+          {/* Content area */}
+          <section
+            className="notionPeekContentArea"
+            role={tabs && tabs.length > 1 ? 'tabpanel' : undefined}
+            id={tabs && tabs.length > 1 ? `peek-panel-${activeTab}` : undefined}
+            aria-labelledby={tabs && tabs.length > 1 ? `peek-tab-${activeTab}` : undefined}
           >
-            <TbX size={18} strokeWidth={1.8} aria-hidden />
-          </button>
+            {currentTabContent}
+          </section>
         </div>
-      </div>
-
-      {/* Main scrolling peek body */}
-      <div className="routePeekBody notionPeekBody">
-        {/* Cover / Header section */}
-        <header className="notionPeekHeader">
-          <div className="notionPeekIconTitleRow">
-            {IconProp && <div className="notionPeekIconBadge">{renderIcon()}</div>}
-            <div className="notionPeekHeadingText">
-              <div className="notionPeekBadgesRow">{badge}</div>
-              <h2 className="notionPeekTitle">{title}</h2>
-              {subtitle && <div className="notionPeekSubtitle">{subtitle}</div>}
-            </div>
-          </div>
-        </header>
-
-        {/* Notion-style Properties Block */}
-        {properties && properties.length > 0 && (
-          <div className="notionPropertiesBlock" aria-label="Properties">
-            {properties.map((prop, idx) => {
-              const PropIcon = prop.icon
-              return (
-                <div key={prop.id || idx} className="notionPropertyRow">
-                  <div className="notionPropertyLabel">
-                    <PropIcon size={15} strokeWidth={1.75} className="notionPropIcon" aria-hidden />
-                    <span>{prop.label}</span>
-                  </div>
-                  <div className="notionPropertyValue">{prop.value}</div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Quick action bar */}
-        {actions && <div className="notionPeekQuickActions">{actions}</div>}
-
-        {/* Inner Menus / Segmented Tabs */}
-        {tabs && tabs.length > 1 && (
-          <nav className="notionPeekTabs" role="tablist" aria-label="Inner navigation">
-            {tabs.map((tab) => {
-              const TabIcon = tab.icon
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={`notionPeekTab ${isActive ? 'isActive' : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
-                  aria-selected={isActive}
-                  aria-controls={`peek-panel-${tab.id}`}
-                  id={`peek-tab-${tab.id}`}
-                  role="tab"
-                >
-                  {TabIcon && <TabIcon size={16} strokeWidth={1.75} aria-hidden />}
-                  <span>{tab.label}</span>
-                  {tab.badge !== undefined && <span className="notionTabBadge">{tab.badge}</span>}
-                </button>
-              )
-            })}
-          </nav>
-        )}
-
-        {/* Content area */}
-        <section
-          className="notionPeekContentArea"
-          role={tabs && tabs.length > 1 ? 'tabpanel' : undefined}
-          id={tabs && tabs.length > 1 ? `peek-panel-${activeTab}` : undefined}
-          aria-labelledby={tabs && tabs.length > 1 ? `peek-tab-${activeTab}` : undefined}
-        >
-          {currentTabContent}
-        </section>
-      </div>
+      </PortalProvider>
     </dialog>
   )
 }
