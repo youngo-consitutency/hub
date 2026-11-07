@@ -108,8 +108,7 @@
   padding-left: 42px;
 }
 
-.searchResults,
-.searchEmpty {
+.searchResults {
   margin-top: 16px;
 }
 
@@ -190,15 +189,6 @@
 .fieldLabel {
   font-size: 13px;
   font-weight: 600;
-}
-
-.adminResetUrl {
-  display: block;
-  padding: var(--space-3);
-  overflow-wrap: anywhere;
-  border-radius: var(--radius-control);
-  background: var(--bg-raised);
-  font-size: 12px;
 }
 
 .pushBroadcast {
@@ -316,24 +306,6 @@
 .workspaceIntroduction {
   display: grid;
   gap: var(--space-2);
-}
-
-.workspaceOnboardingSteps--stacked {
-  grid-template-columns: 1fr;
-}
-
-.workspaceOnboardingStep--stage {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-
-.workspaceOnboardingStep--stage > legend {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
 }
 
 .wgOnboard {
@@ -1030,13 +1002,6 @@
   gap: 6px;
 }
 
-.personRoleTitle {
-  margin: 2px 0 0;
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .workspaceActivityActions {
   display: flex;
   flex-wrap: wrap;
@@ -1045,16 +1010,9 @@
   z-index: 1;
 }
 
-.cpActivityList {
-  display: grid;
-  gap: 10px;
-  margin-top: 16px;
-}
-
 @media (max-width: 760px) {
   .workspaceOnboardingSteps,
-  .workspaceContactGrid,
-  .wgCourseMonths {
+  .workspaceContactGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -1155,23 +1113,6 @@ a.monogram:hover {
   filter: brightness(1.08);
 }
 
-.detailHero {
-  font-size: 18px;
-  margin-top: 10px;
-}
-
-.detailHeroRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.detailHeroRow .detailHero {
-  margin-top: 0;
-}
-
 .detailActions {
   display: flex;
   gap: 10px;
@@ -1207,14 +1148,6 @@ a.monogram:hover {
 .detailHelp {
   max-width: var(--text-measure);
   margin-top: var(--space-2);
-}
-
-.detailContact {
-  margin-top: var(--space-3);
-}
-
-.detailInlineAction {
-  align-self: flex-start;
 }
 
 .detailStandaloneActions {
@@ -1658,66 +1591,6 @@ a.monogram:hover {
 
 .detailPage .section > .empty {
   padding-block: var(--space-5);
-}
-
-.decisionTimeline {
-  list-style: none;
-  display: grid;
-  gap: 0;
-  max-width: 760px;
-  margin: 0;
-  padding: 0;
-}
-
-.decisionTimelineStep {
-  position: relative;
-  min-width: 0;
-  margin-left: 5px;
-  padding: 0 0 var(--space-4) 20px;
-  border-left: 1px solid var(--border-strong);
-}
-
-.decisionTimelineStep:last-child {
-  padding-bottom: 0;
-  border-left-color: transparent;
-}
-
-.decisionTimelineMarker {
-  position: absolute;
-  top: 3px;
-  left: -6px;
-  color: var(--border-strong);
-  background: var(--bg-card);
-}
-
-.decisionTimelineStep.done .decisionTimelineMarker {
-  color: var(--accent);
-}
-
-.decisionTimelineStep.current .decisionTimelineMarker,
-.decisionTimelineStep.current .decisionTimelineHead > span:first-child {
-  color: var(--accent);
-}
-
-.decisionTimelineCopy {
-  min-width: 0;
-}
-
-.decisionTimelineHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.decisionTimelineStep.future .decisionTimelineHead {
-  color: var(--text-3);
-}
-
-.decisionTimelineNote {
-  margin-top: 2px;
 }
 
 @media (max-width: 620px) {
@@ -2508,60 +2381,6 @@ a.monogram:hover {
   padding: 8px 12px;
 }
 
-.helpDestinationGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  overflow: hidden;
-  padding: 0;
-}
-
-.helpDestinationRow {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 17px;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-  min-height: 72px;
-  padding: var(--space-3);
-  color: var(--text-1);
-}
-
-.helpDestinationRow:nth-child(even) {
-  border-left: 1px solid var(--border);
-}
-
-.helpDestinationRow:nth-child(n + 3) {
-  border-top: 1px solid var(--border);
-}
-
-.helpDestinationRow:hover {
-  background: var(--bg-raised);
-}
-
-.helpDestinationRow > svg:first-child,
-.helpDestinationArrow {
-  color: var(--accent);
-}
-
-.helpDestinationCopy {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.helpDestinationCopy strong {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.helpDestinationArrow {
-  justify-self: end;
-}
-
-.helpPeopleIntro {
-  margin-bottom: var(--space-3);
-}
-
 .helpPeopleGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2621,18 +2440,6 @@ a.monogram:hover {
   .helpActionControl {
     grid-column: 2;
     justify-self: end;
-  }
-
-  .helpDestinationGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .helpDestinationRow:nth-child(even) {
-    border-left: 0;
-  }
-
-  .helpDestinationRow:nth-child(n + 2) {
-    border-top: 1px solid var(--border);
   }
 
   .helpAboutStrip {

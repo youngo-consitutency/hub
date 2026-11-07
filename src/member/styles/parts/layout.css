@@ -76,12 +76,6 @@
   margin-top: var(--space-1);
 }
 
-.filterHierarchy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
 .filterLevel {
   min-width: 0;
   margin: 0;
@@ -435,15 +429,6 @@
   text-transform: none;
 }
 
-.subsectionHeading {
-  margin-bottom: var(--space-2);
-  color: var(--text-3);
-  font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .sectionAction {
   color: var(--text-3);
   font-weight: 500;
@@ -583,150 +568,6 @@
 }
 
 /* Recognition */
-.recognitionRank,
-.recognitionRankIdentity {
-  display: flex;
-  align-items: center;
-}
-
-.recognitionRank {
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.recognitionRankIdentity {
-  min-width: 0;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-
-.recognitionRankNumber {
-  min-width: 32px;
-  color: var(--text-3);
-  font-weight: 600;
-}
-
-.recognitionRankTier {
-  margin-top: var(--space-1);
-}
-
-.recognitionPoints {
-  flex: 0 0 auto;
-  text-align: right;
-}
-
-.recognitionPointsValue {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.recognitionLadder {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 280px));
-  grid-auto-rows: 1fr;
-  align-items: stretch;
-  gap: 32px;
-  padding: 0;
-  list-style: none;
-}
-
-.recognitionRankGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 280px));
-  gap: var(--space-3);
-}
-
-.recognitionEmpty {
-  width: min(100%, 720px);
-}
-
-.recognitionTier {
-  position: relative;
-  min-width: 0;
-  min-height: 146px;
-  display: grid;
-  align-content: start;
-  gap: var(--space-3);
-  height: 100%;
-}
-
-.recognitionTierTopline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.recognitionTierMarker {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-  font: 600 12px/1 var(--font-mono);
-}
-
-.recognitionTierCopy {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-1);
-}
-
-.recognitionTierCopy h3,
-.recognitionTierCopy p {
-  margin: 0;
-}
-
-.recognitionTierArrow {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: calc(100% + 7px);
-  width: 18px;
-  height: 18px;
-  color: var(--accent);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.recognitionNote {
-  margin-top: var(--section-gap);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-control);
-  background: var(--bg-raised);
-}
-
-@media (max-width: 560px) {
-  .recognitionLadder,
-  .recognitionRankGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .recognitionTierArrow {
-    top: calc(100% + 7px);
-    left: 50%;
-    transform: translateX(-50%) rotate(90deg);
-  }
-}
-
-@media (min-width: 561px) and (max-width: 1100px) {
-  .recognitionLadder {
-    grid-template-columns: minmax(0, 560px);
-  }
-
-  .recognitionRankGrid {
-    grid-template-columns: repeat(2, minmax(0, 280px));
-  }
-
-  .recognitionTierArrow {
-    top: calc(100% + 7px);
-    left: 50%;
-    transform: translateX(-50%) rotate(90deg);
-  }
-}
 
 .metricCard strong {
   font-family: var(--font-display);
@@ -737,20 +578,6 @@
 .metricCard span {
   color: var(--text-2);
   font-size: 12px;
-}
-
-.roleCard {
-  border-top: 3px solid var(--accent);
-}
-
-.roleCardAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .queueToolbar {
@@ -1013,11 +840,6 @@
   background: var(--success-tint);
 }
 
-.taskState-blocked {
-  color: var(--danger);
-  background: var(--danger-tint);
-}
-
 .cycleBanner {
   display: flex;
   align-items: center;
@@ -1088,15 +910,6 @@
   border: 0;
 }
 
-.hscroll {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 260px;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
 @media (max-width: 560px) {
   .pageHeader {
     margin-bottom: 16px;
@@ -1119,10 +932,6 @@
   .rowBetween {
     align-items: flex-start;
     flex-wrap: wrap;
-  }
-
-  .archiveRow > :last-child {
-    margin-left: auto;
   }
 
   .sectionLabel {
@@ -1198,53 +1007,6 @@
 }
 
 /* Home "Connect" panel: outward links and the beta credit. */
-.connectCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.betaCount {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.connectLinks,
-.contributorList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.connectLinks a {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border: 0;
-  background: var(--bg-raised);
-  border-radius: 999px;
-  font-size: 13px;
-  color: var(--text-2);
-}
-
-.connectLinks a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.contributorList li {
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-  font-size: 13px;
-  font-weight: 500;
-}
 
 /* Section links wrap in reading order instead of widening the page. */
 .pageSectionNav {
@@ -1282,9 +1044,6 @@
 }
 
 /* Resources use the shared card widths and open, labelled controls. */
-.resourceAttribution {
-  margin: 0 0 var(--space-4);
-}
 .resourceCardFooter {
   margin-top: auto;
   display: grid;
@@ -1535,24 +1294,6 @@
     grid-template-columns: 1fr;
   }
 }
-
-.homeNextEvent {
-  position: relative;
-  min-width: 0;
-  padding: var(--space-6);
-}
-.homeNextEvent h2 {
-  margin: 8px 0 12px;
-  font-size: clamp(23px, 2.5vw, 32px);
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  overflow-wrap: anywhere;
-}
-.homeNextEvent > p:not(.pageEyebrow) {
-  color: var(--text-2);
-  margin-bottom: 20px;
-  font-size: 14px;
-}
 .demoNotice {
   padding: 8px 20px;
   text-align: center;
@@ -1569,9 +1310,6 @@
   .pageHeaderAction {
     max-width: 100%;
   }
-  .homeNextEvent {
-    padding: 8px;
-  }
 }
 
 .resourceMoreFilters summary {
@@ -1586,11 +1324,6 @@
 .resourceMoreFilters summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-}
-
-.homeNextEvent > .dateStamp {
-  float: right;
-  margin: 0 0 16px 16px;
 }
 
 .pageHeader:has(.pageSectionNav) {

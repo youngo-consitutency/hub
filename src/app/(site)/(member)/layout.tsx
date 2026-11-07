@@ -5,7 +5,6 @@
 // AccountProvider → MemberGate (route guards) → Shell → page.
 import { useEffect } from 'react'
 import { SWRConfig } from 'swr'
-import '../../../member/styles/tokens.css'
 import '../../../member/styles/app.css'
 import { AccessGate } from '../../../member/components/AccessGate'
 import { MemberGate } from '../../../member/components/MemberGate'
