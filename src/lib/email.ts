@@ -1,11 +1,12 @@
 import nodemailer, { type Transporter } from 'nodemailer'
 import { defaultEmailFrom } from './env'
+import { deliveryDisabled } from './environment'
 // Outbound email. Mirrors EMAIL_* / SMTP_* envs from the legacy service; when
 // unconfigured, messages are logged and dropped (delivery-failure pattern from
 // server/lib/notifications/transport.js).
 export function emailConfigured(): boolean {
   return (
-    process.env.HUB_DEMO_MODE !== 'true' &&
+    !deliveryDisabled() &&
     Boolean(process.env.SMTP_URL || (process.env.SMTP_HOST && process.env.EMAIL_FROM))
   )
 }
@@ -54,7 +55,7 @@ export async function sendEmail({
   text: string
   html?: string
 }) {
-  if (process.env.HUB_DEMO_MODE === 'true') return { delivered: false }
+  if (deliveryDisabled()) return { delivered: false }
   const t = getEmailTransport()
   if (!t) {
     console.warn('email not configured; dropping message to', to)

@@ -3,6 +3,7 @@ import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
 import type { Doc, AnyValue } from './domain'
+import { deliveryDisabled } from './environment'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
 // Rows live in the Payload `push-subscriptions` table; endpoints are validated
@@ -16,8 +17,7 @@ if (vapidPublicKey && vapidPrivateKey) {
   webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
 }
 
-export const pushConfigured =
-  process.env.HUB_DEMO_MODE !== 'true' && Boolean(vapidPublicKey && vapidPrivateKey)
+export const pushConfigured = !deliveryDisabled() && Boolean(vapidPublicKey && vapidPrivateKey)
 
 const publicRow = (row: Doc) => {
   const r = toCamelCase<Doc>(row)
@@ -174,8 +174,7 @@ export async function pruneEndpoints(endpoints: string[]) {
 
 /** Send a notification and prune endpoints the push service reports expired. */
 export async function deliverPush(rows: Doc[], payload: string) {
-  if (process.env.HUB_DEMO_MODE === 'true')
-    return { sent: 0, failed: 0, pruned: 0, total: rows.length }
+  if (deliveryDisabled()) return { sent: 0, failed: 0, pruned: 0, total: rows.length }
 
   const results: PromiseSettledResult<AnyValue>[] = []
   for (let offset = 0; offset < rows.length; offset += 10) {

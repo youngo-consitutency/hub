@@ -74,6 +74,7 @@ import {
   PrivacyRequests,
 } from './collections/Operations'
 import { domainEndpoints } from './endpoints'
+import { deliveryDisabled } from './lib/environment'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
 // immutable version rows, join tables, and uuid identity.
@@ -151,24 +152,23 @@ export default buildConfig({
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
   // Payload's own emails (staff password resets, verifications) share the
-  // app's SMTP settings via the nodemailer adapter. Demo mode keeps a no-op
-  // adapter so nothing leaves the environment; without SMTP config the
-  // default adapter logs messages, which suits local development.
-  email:
-    process.env.HUB_DEMO_MODE === 'true'
-      ? () => ({
-          name: 'demo-disabled',
-          defaultFromAddress: defaultEmailFrom(),
+  // app's SMTP settings via the nodemailer adapter. With delivery disabled a
+  // no-op adapter keeps anything from leaving the environment; without SMTP
+  // config the default adapter logs messages, which suits local development.
+  email: deliveryDisabled()
+    ? () => ({
+        name: 'delivery-disabled',
+        defaultFromAddress: defaultEmailFrom(),
+        defaultFromName: 'YOUNGO Hub',
+        sendEmail: async () => undefined,
+      })
+    : emailConfigured()
+      ? nodemailerAdapter({
+          defaultFromAddress: process.env.EMAIL_FROM || defaultEmailFrom(),
           defaultFromName: 'YOUNGO Hub',
-          sendEmail: async () => undefined,
+          transport: getEmailTransport()!,
         })
-      : emailConfigured()
-        ? nodemailerAdapter({
-            defaultFromAddress: process.env.EMAIL_FROM || defaultEmailFrom(),
-            defaultFromName: 'YOUNGO Hub',
-            transport: getEmailTransport()!,
-          })
-        : undefined,
+      : undefined,
   // Canonical origin for generated links (emails). Cross-site cookie
   // requests are already blocked by SameSite=Lax on the session cookie.
   serverURL: process.env.APP_BASE_URL || undefined,

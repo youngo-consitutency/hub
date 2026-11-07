@@ -27,7 +27,7 @@ const TOOL_COPY: Record<string, string> = {
 }
 
 const GATE_COPY: Record<string, string> = {
-  demo: 'Agent keys are switched off on this demo deployment.',
+  delivery_disabled: 'Agent keys are switched off on this deployment.',
   service_account: 'Service accounts cannot hold a personal agent key.',
   pending_email: 'Confirm the email address on this account, then come back.',
   membership_blocked: 'This membership is not active, so it cannot connect an agent.',
