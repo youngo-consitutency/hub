@@ -1,7 +1,7 @@
 import type { AnyValue } from '../lib/domain'
 import type { CollectionConfig } from 'payload'
 import { AUTHORITY_ROLE_KEYS } from '../lib/authority'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 // The single authority store: mandated (S13/S14/S25/S15) or participation
 // records, one row per (account, role, scope); the partial unique index
@@ -12,11 +12,10 @@ export const AuthorityRecords: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     // Records are created through governed flows — never the generated API.
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {

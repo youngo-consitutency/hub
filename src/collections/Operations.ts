@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { grantsCapability, isStaff, isStaffField, staffWrites } from '../lib/collectionAccess'
+import { grantsCapability, noAccess, noFieldAccess, serverWrites } from '../lib/collectionAccess'
 
 // Operational workflow records — members act via src/endpoints/operations.ts;
 // generated REST writes are staff-only; safeguarding is staff-read.
@@ -10,11 +10,10 @@ export const FundingRequests: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
@@ -71,8 +70,8 @@ export const FundingRequests: CollectionConfig = {
 export const SafeguardingCases: CollectionConfig = {
   slug: 'safeguarding-cases',
   access: {
-    read: isStaff,
-    ...staffWrites,
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     {
@@ -114,7 +113,7 @@ export const SafeguardingCases: CollectionConfig = {
     {
       name: 'updates',
       type: 'array',
-      access: { read: isStaffField },
+      access: { read: noFieldAccess },
       fields: [
         { name: 'note', type: 'textarea', required: true },
         { name: 'status', type: 'text' },
@@ -126,7 +125,7 @@ export const SafeguardingCases: CollectionConfig = {
         { name: 'at', type: 'date' },
       ],
     },
-    { name: 'outcomeNote', type: 'textarea', access: { read: isStaffField } },
+    { name: 'outcomeNote', type: 'textarea', access: { read: noFieldAccess } },
     { name: 'receivedAt', type: 'date', required: true },
     { name: 'closedAt', type: 'date' },
   ],
@@ -138,11 +137,10 @@ export const CoiDeclarations: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
@@ -180,11 +178,10 @@ export const RecognitionRequests: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
@@ -229,11 +226,10 @@ export const PartnershipRequests: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {
@@ -284,11 +280,10 @@ export const PrivacyRequests: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       if (await grantsCapability(req, 'platform.manage')) return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {

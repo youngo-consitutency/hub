@@ -84,12 +84,6 @@
   margin: 0;
 }
 
-.routePeekActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .routePeekBody > .detailPage > .backLink {
   display: none;
 }

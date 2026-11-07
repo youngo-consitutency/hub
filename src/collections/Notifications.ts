@@ -5,19 +5,16 @@ export const NotificationPrefs: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       return req.user?.collection === 'accounts' && data?.account === req.user.id
     },
     update: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    delete: ({ req }) => req.user?.collection === 'users',
+    delete: () => false,
   },
   fields: [
     {
@@ -57,21 +54,17 @@ export const PushSubscriptions: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       return req.user?.collection === 'accounts' && data?.account === req.user.id
     },
     update: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     delete: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
   },
@@ -89,7 +82,6 @@ export const NotificationOutbox: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     create: () => false,

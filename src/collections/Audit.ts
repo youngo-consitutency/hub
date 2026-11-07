@@ -6,7 +6,6 @@ export const AuditLog: CollectionConfig = {
   access: {
     read: async ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return grantsCapability(req, 'audit.read')
     },
     create: () => false,
