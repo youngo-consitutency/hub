@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
+import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
 
 // S10 elections: ballots key on random voter credentials, never accounts —
 // server-trust secrecy, not end-to-end verifiable like Belenios (see vault
@@ -8,8 +8,8 @@ import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 export const Elections: CollectionConfig = {
   slug: 'elections',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -66,8 +66,8 @@ export const Elections: CollectionConfig = {
 export const ElectionCandidates: CollectionConfig = {
   slug: 'election-candidates',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -105,8 +105,8 @@ export const ElectionCandidates: CollectionConfig = {
 export const ElectionVoters: CollectionConfig = {
   slug: 'election-voters',
   access: {
-    read: isStaff,
-    ...staffWrites,
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     {
@@ -139,8 +139,8 @@ export const ElectionVoters: CollectionConfig = {
 export const ElectionBallots: CollectionConfig = {
   slug: 'election-ballots',
   access: {
-    read: isStaff,
-    ...staffWrites,
+    read: noAccess,
+    ...serverWrites,
   },
   // One ballot per credential per race — enforced at the database.
   indexes: [{ unique: true, fields: ['election', 'race', 'voterTokenHash'] }],
@@ -171,8 +171,8 @@ export const ElectionBallots: CollectionConfig = {
 export const Selections: CollectionConfig = {
   slug: 'selections',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -232,8 +232,8 @@ export const Selections: CollectionConfig = {
 export const SelectionCommittee: CollectionConfig = {
   slug: 'selection-committee',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -260,8 +260,8 @@ export const SelectionCommittee: CollectionConfig = {
 export const SelectionApplications: CollectionConfig = {
   slug: 'selection-applications',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -298,8 +298,8 @@ export const SelectionEvaluations: CollectionConfig = {
   slug: 'selection-evaluations',
   access: {
     // Evaluations stay confidential to the committee and staff.
-    read: isStaff,
-    ...staffWrites,
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     {

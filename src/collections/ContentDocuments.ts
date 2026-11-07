@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 // Structured content documents — onboarding courses, policy catalogues,
 // contact lists — edited in the console and served read-only to the member UI.
@@ -8,7 +8,7 @@ export const ContentDocuments: CollectionConfig = {
   slug: 'content-documents',
   access: {
     read: () => true,
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },

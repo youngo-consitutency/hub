@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, staffWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 // Mail Desk drafts. Authors write through src/endpoints/mail.ts, which
 // checks reach from authority capabilities; nothing sends until queued.
 export const MailDrafts: CollectionConfig = {
   slug: 'mail-drafts',
-  access: { read: isStaff, ...staffWrites },
+  access: { read: noAccess, ...serverWrites },
   fields: [
     { name: 'author', type: 'relationship', relationTo: 'accounts', required: true, index: true },
     { name: 'title', type: 'text', required: true },

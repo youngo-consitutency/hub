@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 // Per-account working-group membership progress — replaces
 // wg_workspace_progress. The presentation/rules gates decide when a member
@@ -9,10 +9,9 @@ export const WgProgress: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     {

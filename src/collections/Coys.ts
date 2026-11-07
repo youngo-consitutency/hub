@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 export const Coys: CollectionConfig = {
   slug: 'content-coys',
   access: {
     read: () => true,
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
