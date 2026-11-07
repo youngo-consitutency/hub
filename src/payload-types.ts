@@ -110,8 +110,6 @@ export interface Config {
     'decision-events': DecisionEvent;
     elections: Election;
     'election-candidates': ElectionCandidate;
-    'election-voters': ElectionVoter;
-    'election-ballots': ElectionBallot;
     selections: Selection;
     'selection-committee': SelectionCommittee;
     'selection-applications': SelectionApplication;
@@ -179,8 +177,6 @@ export interface Config {
     'decision-events': DecisionEventsSelect<false> | DecisionEventsSelect<true>;
     elections: ElectionsSelect<false> | ElectionsSelect<true>;
     'election-candidates': ElectionCandidatesSelect<false> | ElectionCandidatesSelect<true>;
-    'election-voters': ElectionVotersSelect<false> | ElectionVotersSelect<true>;
-    'election-ballots': ElectionBallotsSelect<false> | ElectionBallotsSelect<true>;
     selections: SelectionsSelect<false> | SelectionsSelect<true>;
     'selection-committee': SelectionCommitteeSelect<false> | SelectionCommitteeSelect<true>;
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
@@ -1391,44 +1387,6 @@ export interface ElectionCandidate {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-voters".
- */
-export interface ElectionVoter {
-  id: number;
-  election: number | Election;
-  account: number | Account;
-  kind: 'individual' | 'organisation';
-  tokenHash: string;
-  issuedAt: string;
-  votedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-ballots".
- */
-export interface ElectionBallot {
-  id: number;
-  election: number | Election;
-  race: string;
-  voterTokenHash: string;
-  kind: 'individual' | 'organisation';
-  ranks:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  castAt: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "selections".
  */
 export interface Selection {
@@ -2002,14 +1960,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'election-candidates';
         value: number | ElectionCandidate;
-      } | null)
-    | ({
-        relationTo: 'election-voters';
-        value: number | ElectionVoter;
-      } | null)
-    | ({
-        relationTo: 'election-ballots';
-        value: number | ElectionBallot;
       } | null)
     | ({
         relationTo: 'selections';
@@ -3002,34 +2952,6 @@ export interface ElectionCandidatesSelect<T extends boolean = true> {
   status?: T;
   screeningNote?: T;
   nominatedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-voters_select".
- */
-export interface ElectionVotersSelect<T extends boolean = true> {
-  election?: T;
-  account?: T;
-  kind?: T;
-  tokenHash?: T;
-  issuedAt?: T;
-  votedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-ballots_select".
- */
-export interface ElectionBallotsSelect<T extends boolean = true> {
-  election?: T;
-  race?: T;
-  voterTokenHash?: T;
-  kind?: T;
-  ranks?: T;
-  castAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -55,8 +55,6 @@ import {
 import {
   Elections,
   ElectionCandidates,
-  ElectionVoters,
-  ElectionBallots,
   Selections,
   SelectionCommittee,
   SelectionApplications,
@@ -132,8 +130,6 @@ export default buildConfig({
     DecisionEvents,
     Elections,
     ElectionCandidates,
-    ElectionVoters,
-    ElectionBallots,
     Selections,
     SelectionCommittee,
     SelectionApplications,

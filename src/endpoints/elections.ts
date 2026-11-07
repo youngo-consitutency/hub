@@ -1,15 +1,19 @@
-import crypto from 'node:crypto'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
-import { isUniqueViolation } from '../lib/pg'
-import { tallyIrv } from '../lib/decisions'
 import { audit } from '../lib/audit'
-import { accountRef, isFacilitator, loadElection, tokenHash } from '../lib/governance'
+import {
+  accountRef,
+  beleniosVoterList,
+  eligibleVoters,
+  isFacilitator,
+  loadElection,
+} from '../lib/governance'
 import type { Doc, AnyValue } from '../lib/domain'
 
-// S10 elections. See lib/governance.ts for shared helpers and the
-// credential-secrecy model.
+// S10 elections. the hub runs nominations and screening, decides who may
+// vote and records the result; the vote itself happens on belenios, whose
+// ballots are secret and publicly verifiable (see lib/governance.ts)
 
 const candidateView = (c: AnyValue) => ({
   id: c.id,
@@ -34,6 +38,7 @@ const electionView = (e: AnyValue, extra?: AnyValue) => ({
   votingCloseAt: e.votingCloseAt,
   quorumIndividuals: e.quorumIndividuals,
   quorumOrganisations: e.quorumOrganisations,
+  ballotUrl: e.externalRef || null,
   result: e.status === 'completed' || e.status === 'restart_required' ? e.result : null,
   ...(extra ?? {}),
 })
@@ -137,28 +142,18 @@ export const electionEndpoints: Endpoint[] = [
         patch.nominationsCloseAt = new Date(Date.now() + 7 * 86400000).toISOString()
       }
       if (next === 'voting') {
+        if (!e.externalRef)
+          throw fail.conflict(
+            'ballot_missing',
+            'Set the Belenios election link before voting opens.',
+          )
         patch.nominationsCloseAt = e.nominationsCloseAt ?? now
         patch.votingOpensAt = now
         patch.votingCloseAt = new Date(Date.now() + 5 * 86400000).toISOString()
-        // Snapshot the eligible registry for quorum reporting (S10 §3.4).
-        const ind = await req.payload.find({
-          collection: 'election-voters',
-          where: {
-            and: [{ election: { equals: e.id } }, { kind: { equals: 'individual' } }],
-          },
-          limit: 0,
-          overrideAccess: true,
-        })
-        const org = await req.payload.find({
-          collection: 'election-voters',
-          where: {
-            and: [{ election: { equals: e.id } }, { kind: { equals: 'organisation' } }],
-          },
-          limit: 0,
-          overrideAccess: true,
-        })
-        patch.eligibleIndividualCount = ind.totalDocs
-        patch.eligibleOrgCount = org.totalDocs
+        // snapshot the eligible registry for quorum reporting (S10 §3.4)
+        const voters = await eligibleVoters()
+        patch.eligibleIndividualCount = voters.filter((v) => v.kind === 'individual').length
+        patch.eligibleOrgCount = voters.filter((v) => v.kind === 'organisation').length
       }
       const updated = await req.payload.update({
         collection: 'elections',
@@ -257,229 +252,142 @@ export const electionEndpoints: Endpoint[] = [
     }),
   },
   {
-    path: '/governance/elections/:id/credential',
-    method: 'post',
+    // the belenios election this vote runs on
+    path: '/governance/elections/:id/ballot',
+    method: 'put',
     handler: endpoint(async (req) => {
-      const account = requireCwMember(req)
+      const account = requireVerifiedMember(req)
+      if (!(await isFacilitator(req, account)))
+        throw fail.forbidden('Only the Election Facilitation Team may set the ballot.')
       const e = await loadElection(req, param(req, 'id'))
-      // Credentials may be issued once voting is scheduled (or in advance).
-      if (!['nominations', 'voting', 'tallying'].includes(e.status))
-        throw fail.conflict('invalid_phase', 'Voter credentials are not yet being issued.')
-      const existing = await req.payload.find({
-        collection: 'election-voters',
-        where: {
-          and: [{ election: { equals: e.id } }, { account: { equals: account.id } }],
-        },
-        limit: 1,
-        overrideAccess: true,
-      })
-      if (existing.totalDocs)
-        throw fail.conflict('already_issued', 'A voter credential was already issued to you.')
-      const kind = account.entityType === 'organization' ? 'organisation' : 'individual'
-      const token = crypto.randomBytes(24).toString('base64url')
-      await req.payload.create({
-        collection: 'election-voters',
-        data: {
-          election: e.id,
-          account: account.id,
-          kind,
-          tokenHash: tokenHash(e.id, token),
-          issuedAt: new Date().toISOString(),
-        },
+      if (!['announced', 'nominations', 'voting'].includes(e.status))
+        throw fail.conflict(
+          'invalid_phase',
+          `Cannot change the ballot while status is ${e.status}.`,
+        )
+      const url = httpsUrl((await readBody(req)).url)
+      if (!url) throw fail.validation({ url: 'Use the https link of the Belenios election.' })
+      const updated = await req.payload.update({
+        collection: 'elections',
+        id: e.id,
+        data: { externalRef: url },
         overrideAccess: true,
       })
       await audit(req, account, {
-        action: 'election.credential_issued',
+        action: 'election.ballot_set',
         targetType: 'governance',
         targetId: String(e.id),
       })
-      // The token is returned once and never stored in raw form.
-      return json({ token, kind }, { status: 201 })
+      return json({ election: electionView(updated) })
     }),
   },
   {
-    path: '/governance/elections/:id/vote',
-    method: 'post',
+    // voter list to upload into belenios, which emails each voter a credential
+    path: '/governance/elections/:id/voters',
+    method: 'get',
     handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      if (!(await isFacilitator(req, account)))
+        throw fail.forbidden('Only the Election Facilitation Team may export voters.')
       const e = await loadElection(req, param(req, 'id'))
-      if (e.status !== 'voting')
-        throw fail.conflict('invalid_phase', 'Voting is not open for this election.')
-      const b = await readBody(req)
-      const fields: Record<string, string> = {}
-      const raceSlugs = (e.races ?? []).map((r: AnyValue) => r.slug)
-      if (!b.token?.trim()) fields.token = 'Required.'
-      if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
-      if (!Array.isArray(b.ranks))
-        fields.ranks = 'Must be an array of candidate ids (empty for a blank ballot).'
-      if (Object.keys(fields).length) throw fail.validation(fields)
-      const hash = tokenHash(e.id, String(b.token).trim())
-      const { docs: voters } = await req.payload.find({
-        collection: 'election-voters',
-        where: {
-          and: [{ election: { equals: e.id } }, { tokenHash: { equals: hash } }],
+      const voters = await eligibleVoters()
+      await audit(req, account, {
+        action: 'election.voters_exported',
+        targetType: 'governance',
+        targetId: String(e.id),
+        after: { voters: voters.length },
+      })
+      return new Response(beleniosVoterList(voters), {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="election-${e.id}-voters.txt"`,
+          'Cache-Control': 'no-store',
         },
-        limit: 1,
-        overrideAccess: true,
       })
-      if (!voters.length) throw fail.forbidden('Invalid voter credential.')
-      const voter = voters[0] as Doc
-      const { totalDocs: cast } = await req.payload.find({
-        collection: 'election-ballots',
-        where: {
-          and: [
-            { election: { equals: e.id } },
-            { race: { equals: b.race } },
-            { voterTokenHash: { equals: hash } },
-          ],
-        },
-        limit: 0,
-        overrideAccess: true,
-      })
-      if (cast > 0)
-        throw fail.conflict('already_voted', 'This credential has already voted in that race.')
-      // Validate ranked ids against screened candidates in this race.
-      const { docs: cands } = await req.payload.find({
-        collection: 'election-candidates',
-        where: {
-          and: [
-            { election: { equals: e.id } },
-            { race: { equals: b.race } },
-            { status: { equals: 'screened_in' } },
-          ],
-        },
-        limit: 500,
-        overrideAccess: true,
-      })
-      const valid = new Set((cands as Doc[]).map((c) => c.id))
-      const ranks = (b.ranks as Doc[]).map(String).filter(Boolean)
-      if (ranks.some((r) => !valid.has(Number(r))))
-        throw fail.validation({ ranks: 'Contains an unknown or unscreened candidate id.' })
-      if (new Set(ranks).size !== ranks.length)
-        throw fail.validation({ ranks: 'Duplicate candidate in ranking.' })
-      try {
-        await req.payload.create({
-          collection: 'election-ballots',
-          data: {
-            election: e.id,
-            race: b.race,
-            voterTokenHash: hash,
-            kind: voter.kind,
-            ranks: ranks.map(Number),
-            castAt: new Date().toISOString(),
-          },
-          overrideAccess: true,
-        })
-      } catch (error) {
-        // The count check races; the unique index is the real guard, so
-        // re-confirm against the table — a row after a failed insert means
-        // the race was lost.
-        const { totalDocs } = await req.payload.find({
-          collection: 'election-ballots',
-          where: {
-            and: [
-              { election: { equals: e.id } },
-              { race: { equals: b.race } },
-              { voterTokenHash: { equals: hash } },
-            ],
-          },
-          limit: 0,
-          overrideAccess: true,
-        })
-        if (isUniqueViolation(error, 'election-ballots', 'election_ballots') || totalDocs > 0)
-          throw fail.conflict('already_voted', 'This credential has already voted in that race.')
-        throw error
-      }
-      await req.payload.update({
-        collection: 'election-voters',
-        id: voter.id,
-        data: { votedAt: new Date().toISOString() },
-        overrideAccess: true,
-      })
-      return json({ cast: true })
     }),
   },
   {
-    path: '/governance/elections/:id/tally',
+    // record the result belenios published; quorum still decides restart
+    path: '/governance/elections/:id/result',
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
       if (!(await isFacilitator(req, account)))
-        throw fail.forbidden('Only the Election Facilitation Team may tally.')
-      let e = await loadElection(req, param(req, 'id'))
+        throw fail.forbidden('Only the Election Facilitation Team may record results.')
+      const e = await loadElection(req, param(req, 'id'))
       if (!['voting', 'tallying'].includes(e.status))
-        throw fail.conflict('invalid_phase', `Cannot tally while status is ${e.status}.`)
-      const { docs: ballots } = await req.payload.find({
-        collection: 'election-ballots',
-        where: { election: { equals: e.id } },
-        limit: 100000,
+        throw fail.conflict('invalid_phase', `Cannot record a result while status is ${e.status}.`)
+      if (!e.externalRef)
+        throw fail.conflict('ballot_missing', 'This election has no Belenios link.')
+      const b = await readBody(req)
+      const fields: Record<string, string> = {}
+      const archiveUrl = httpsUrl(b.archiveUrl)
+      if (!archiveUrl) fields.archiveUrl = 'Use the https link of the published Belenios result.'
+      const individuals = Number(b.ballotsCast?.individuals)
+      const organisations = Number(b.ballotsCast?.organisations)
+      if (!Number.isInteger(individuals) || individuals < 0)
+        fields.individuals = 'Ballots cast by individuals.'
+      if (!Number.isInteger(organisations) || organisations < 0)
+        fields.organisations = 'Ballots cast by organisations.'
+      const { docs: screened } = await req.payload.find({
+        collection: 'election-candidates',
+        where: {
+          and: [{ election: { equals: e.id } }, { status: { equals: 'screened_in' } }],
+        },
+        limit: 500,
         overrideAccess: true,
       })
-      // Quorum counts distinct voters who participated in the election,
-      // not per-race ballots (a voter may vote in several races).
-      const indSet = new Set(
-        (ballots as Doc[]).filter((b) => b.kind === 'individual').map((b) => b.voterTokenHash),
-      )
-      const orgSet = new Set(
-        (ballots as Doc[]).filter((b) => b.kind === 'organisation').map((b) => b.voterTokenHash),
-      )
-      const ind = indSet.size
-      const org = orgSet.size
-      const quorumOk = ind >= (e.quorumIndividuals ?? 100) && org >= (e.quorumOrganisations ?? 25)
-      const result: Doc = {
-        talliedAt: new Date().toISOString(),
-        ballotsCast: { individuals: ind, organisations: org },
-        quorum: {
-          individualsMet: ind >= (e.quorumIndividuals ?? 100),
-          organisationsMet: org >= (e.quorumOrganisations ?? 25),
-        },
-        races: {},
-      }
-      let anyRestart = false
+      const races: Doc = {}
       for (const race of e.races ?? []) {
-        const { docs: cands } = await req.payload.find({
-          collection: 'election-candidates',
-          where: {
-            and: [
-              { election: { equals: e.id } },
-              { race: { equals: race.slug } },
-              { status: { equals: 'screened_in' } },
-            ],
-          },
-          limit: 500,
-          overrideAccess: true,
-        })
-        const raceBallots = (ballots as Doc[])
-          .filter((b) => b.race === race.slug)
-          .map((b) => ({ ranks: (b.ranks ?? []).map(String) }))
-        const tally = tallyIrv(
-          raceBallots,
-          (cands as Doc[]).map((c) => String(c.id)),
-        )
-        result.races[race.slug] = {
-          candidates: (cands as Doc[]).map((c) => ({
-            id: c.id,
-            name: accountRef(c.account)?.name,
-          })),
-          ballots: raceBallots.length,
-          ...tally,
+        const elected = (b.races?.[race.slug]?.elected ?? []).map(Number)
+        const pool = (screened as Doc[]).filter((c) => c.race === race.slug)
+        const unknown = elected.filter((id: number) => !pool.some((c) => c.id === id))
+        if (unknown.length) fields[race.slug] = 'Elected ids must be screened-in candidates.'
+        races[race.slug] = {
+          elected: pool
+            .filter((c) => elected.includes(c.id))
+            .map((c) => ({ id: c.id, name: accountRef(c.account)?.name })),
         }
-        if (tally.outcome === 'restart' || !quorumOk) anyRestart = true
       }
-      e = await req.payload.update({
+      if (Object.keys(fields).length) throw fail.validation(fields)
+      const quorum = {
+        individualsMet: individuals >= (e.quorumIndividuals ?? 100),
+        organisationsMet: organisations >= (e.quorumOrganisations ?? 25),
+      }
+      const updated = await req.payload.update({
         collection: 'elections',
         id: e.id,
         data: {
-          status: anyRestart ? 'restart_required' : 'completed',
-          result,
+          status:
+            quorum.individualsMet && quorum.organisationsMet ? 'completed' : 'restart_required',
+          result: {
+            source: 'belenios',
+            ballotUrl: e.externalRef,
+            archiveUrl,
+            recordedAt: new Date().toISOString(),
+            ballotsCast: { individuals, organisations },
+            quorum,
+            races,
+          },
         },
         overrideAccess: true,
       })
       await audit(req, account, {
-        action: `election.${e.status}`,
+        action: `election.${updated.status}`,
         targetType: 'governance',
         targetId: String(e.id),
       })
-      return json({ election: electionView(e) })
+      return json({ election: electionView(updated) })
     }),
   },
 ]
+
+// only https links: these are shown to members and opened in their browsers
+function httpsUrl(value: unknown): string | null {
+  try {
+    const url = new URL(String(value ?? '').trim())
+    return url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
