@@ -3,8 +3,7 @@ interface ShellProps {
 }
 
 import type { AnyValue, Doc } from '../lib/types'
-import { canManageGroups } from '../lib/groupPermissions'
-import { mailReach } from '../../shared/mailReach'
+import { mobileNavFor, navFor, viewerOf } from '../lib/routes'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
@@ -15,31 +14,12 @@ import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { AlertSetupNotice } from './AlertSetupNotice'
 import {
-  TbHome as Home,
-  TbCalendar as CalendarDays,
-  TbFileText as FileText,
-  TbGavel as Gavel,
-  TbMapPin as MapPin,
-  TbUsers as Users,
   TbSearch as Search,
   TbMenu2 as Menu,
-  TbSchool as GraduationCap,
-  TbLibrary as Library,
-  TbBuilding as Building2,
-  TbShield as Shield,
-  TbBriefcase as Briefcase,
-  TbClipboardCheck as ClipboardCheck,
-  TbTools as PenTool,
-  TbSitemap as Network,
   TbUserCircle as UserCircle,
-  TbFilePencil as FilePenLine,
-  TbSpeakerphone as Megaphone,
-  TbMailForward as MailForward,
-  TbPlugConnected as PlugConnected,
   TbRosetteDiscountCheck as BadgeCheck,
   TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
-  TbWorldSearch as WorldSearch,
 } from 'react-icons/tb'
 
 // The palette only renders on Cmd/Ctrl+K — keep it out of the shell chunk
@@ -47,14 +27,6 @@ import {
 const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette))
 
 // Home stands alone; browsing, people and shared work have distinct homes.
-const SECTION = {
-  home: '',
-  now: 'Explore',
-  act: 'Work & decisions',
-  people: 'People & groups',
-  mine: 'Your responsibilities',
-}
-
 export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
@@ -131,224 +103,10 @@ export function Shell({ children }: ShellProps) {
 
   const verified = Boolean(account?.isVerified)
 
-  const nav = useMemo(() => {
-    const teamRoles = access.teamRoles || []
-    const capabilities = access.capabilities || []
-    const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
-
-    const entries = [
-      // Before the course is passed only these two are reachable.
-      {
-        section: SECTION.now,
-        href: '/onboarding',
-        label: 'Onboarding',
-        icon: GraduationCap,
-        when: !verified,
-      },
-      {
-        section: SECTION.now,
-        href: '/resources',
-        label: 'Resources',
-        icon: Library,
-        when: !verified,
-      },
-
-      { section: SECTION.home, href: '/', label: 'Home', icon: Home },
-      {
-        section: SECTION.now,
-        href: '/calendar',
-        label: 'Calendar',
-        icon: CalendarDays,
-      },
-      {
-        section: SECTION.now,
-        href: '/coys',
-        label: 'COY tracker',
-        icon: MapPin,
-      },
-      {
-        section: SECTION.now,
-        href: '/opportunities',
-        label: 'Opportunities',
-        icon: Megaphone,
-      },
-      {
-        section: SECTION.now,
-        href: '/resources',
-        label: 'Resources',
-        icon: Library,
-      },
-
-      {
-        section: SECTION.act,
-        href: '/work',
-        label: 'Tasks',
-        icon: ClipboardCheck,
-      },
-      {
-        section: SECTION.act,
-        href: '/council',
-        label: 'Decisions',
-        icon: Gavel,
-      },
-      {
-        section: SECTION.act,
-        href: '/negotiations',
-        label: 'Negotiations',
-        icon: WorldSearch,
-        when: verified || path.startsWith('/negotiations'),
-      },
-      {
-        section: SECTION.act,
-        href: '/submissions',
-        label: 'Policy & statements',
-        icon: FileText,
-      },
-      {
-        section: SECTION.people,
-        href: '/groups',
-        label: 'Groups',
-        icon: Users,
-      },
-      {
-        section: SECTION.people,
-        href: '/directory/people',
-        label: 'Directory',
-        icon: UserCircle,
-      },
-      {
-        section: SECTION.mine,
-        href: '/platform/partnerships',
-        label: 'Partnerships',
-        icon: Building2,
-        when: teamRoles.includes('partnerships'),
-      },
-
-      {
-        section: SECTION.mine,
-        href: '/cp',
-        label: 'WG Contact Point',
-        icon: Briefcase,
-        when: canManageGroups(account),
-      },
-      {
-        section: SECTION.mine,
-        href: '/mail',
-        label: 'Mail Desk',
-        icon: MailForward,
-        when: mailReach({ capabilities }).canDraft,
-      },
-      {
-        section: SECTION.mine,
-        href: '/account/agent',
-        label: 'Agent connector',
-        icon: PlugConnected,
-        // mirrors the gateway's eligibility; the page explains any closed gate
-        when:
-          capabilities.some((cap: string) => cap.startsWith('wg.manage')) ||
-          capabilities.includes('accounts.manage') ||
-          Boolean(access.isFocalPoint),
-      },
-      {
-        section: SECTION.mine,
-        href: '/team/membership',
-        label: 'Membership Team',
-        icon: ClipboardCheck,
-        when: teamRoles.includes('membership_team'),
-      },
-      {
-        section: SECTION.mine,
-        href: '/team/gys',
-        label: 'GYS Policy Team',
-        icon: PenTool,
-        when: teamRoles.includes('gys_policy_team'),
-      },
-      {
-        section: SECTION.mine,
-        href: '/staff/content',
-        label: 'Content studio',
-        icon: FilePenLine,
-        when: capabilities.includes('content.draft') || capabilities.includes('content.review'),
-      },
-      {
-        section: SECTION.mine,
-        href: '/focal',
-        label: 'Global Focal Point',
-        icon: Network,
-        when: access.isFocalPoint,
-      },
-      {
-        section: SECTION.mine,
-        href: '/ngo',
-        label: 'NGO platform',
-        icon: Building2,
-        when: access.ngo,
-      },
-      {
-        section: SECTION.mine,
-        href: '/staff/review',
-        label: 'Review queue',
-        icon: ClipboardCheck,
-        when: canManageAccounts || teamRoles.includes('membership_team'),
-      },
-      {
-        section: SECTION.mine,
-        href: '/admin',
-        label: 'Admin',
-        icon: Shield,
-        when: canManageAccounts,
-      },
-    ]
-
-    const seen = new Set()
-    const sections: AnyValue = []
-    for (const entry of entries) {
-      // `when: undefined` means "any verified member"; the pre-course entries
-      // above set it explicitly.
-      const allowed = entry.when === undefined ? verified : Boolean(entry.when)
-      if (!allowed || seen.has(entry.href)) continue
-      seen.add(entry.href)
-      const group = sections.find((s: AnyValue) => s.section === entry.section)
-      const item = {
-        href: entry.href,
-        label: entry.label,
-        icon: entry.icon,
-      }
-      if (group) group.items.push(item)
-      else sections.push({ section: entry.section, items: [item] })
-    }
-    const order = [SECTION.home, SECTION.now, SECTION.people, SECTION.act, SECTION.mine]
-    return sections.sort(
-      (a: AnyValue, b: AnyValue) => order.indexOf(a.section) - order.indexOf(b.section),
-    )
-  }, [
-    account,
-    verified,
-    path,
-    access.ngo,
-    access.canAdminister,
-    access.isFocalPoint,
-    access.capabilities,
-    access.teamRoles,
-  ])
-
-  const mobilePrimaryNav = verified
-    ? [
-        { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-        {
-          href: '/opportunities',
-          label: 'Opportunities',
-          mobileLabel: 'Calls',
-          icon: Megaphone,
-        },
-        { href: '/', label: 'Home', icon: Home },
-        { href: '/groups', label: 'Groups', icon: Users },
-        { href: '/profile', label: 'Profile', icon: UserCircle },
-      ]
-    : [
-        { href: '/onboarding', label: 'Onboarding', icon: GraduationCap },
-        { href: '/resources', label: 'Resources', icon: Library },
-      ]
+  // every entry comes from the route registry, filtered for this account
+  const viewer = useMemo(() => viewerOf(account), [account])
+  const nav = useMemo(() => navFor(viewer, path), [viewer, path])
+  const mobilePrimaryNav = mobileNavFor(viewer, path)
 
   return (
     <div className="shell">

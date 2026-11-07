@@ -11,6 +11,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useApi } from '../lib/api'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { navigate } from '../lib/router'
+import { useAccount } from '../lib/accountContext'
+import { paletteRoutesFor, viewerOf } from '../lib/routes'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import {
   TbSearch as Search,
@@ -20,48 +22,7 @@ import {
   TbMapPin as MapPin,
   TbUsers as Users,
   TbCornerDownLeft as CornerDownLeft,
-  TbSpeakerphone as Megaphone,
 } from 'react-icons/tb'
-
-// Hub pages that are useful as palette shortcuts even when search returns nothing.
-const PAGE_SHORTCUTS = [
-  {
-    to: '/work',
-    title: 'Work & follow-up',
-    line: 'Tasks, owners, deadlines and follow-up',
-    keywords: 'tasks work follow-up owners deadlines',
-    Icon: Gavel,
-  },
-  {
-    to: '/directory/people',
-    title: 'Members',
-    line: 'Find people by working group, skills and interests',
-    keywords: 'members community people directory skills',
-    Icon: Users,
-  },
-
-  {
-    to: '/opportunities',
-    title: 'Opportunities',
-    line: 'Events, workshops and open calls from organisations',
-    keywords: 'ngo opportunity workshop hackathon open call training',
-    Icon: Megaphone,
-  },
-  {
-    to: '/calendar',
-    title: 'Calendar',
-    line: 'Meetings and constituency events',
-    keywords: 'calendar meetings events schedule',
-    Icon: CalendarDays,
-  },
-  {
-    to: '/groups',
-    title: 'Working groups',
-    line: 'Find a group and its onboarding',
-    keywords: 'working groups wg',
-    Icon: Users,
-  },
-]
 
 // Same content groups as the /search page, in palette result order.
 const GROUPS = [
@@ -127,23 +88,28 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
   // `data` still matches an older query string.
   const settled = !query.loading && debounced === q.trim()
   const listRef = useRef<AnyValue>(null)
+  const { account } = useAccount()
+  const viewer = useMemo(() => viewerOf(account), [account])
 
   // Flatten grouped results into a single navigable list, plus page shortcuts.
   const flat = useMemo(() => {
     const needle = q.trim().toLowerCase()
     if (!needle) return []
-    const pages = PAGE_SHORTCUTS.filter(
-      (page) =>
-        page.title.toLowerCase().includes(needle) ||
-        page.keywords.includes(needle) ||
-        page.keywords.split(' ').some((word) => word.startsWith(needle)),
-    ).map((page) => ({
-      to: page.to,
-      title: page.title,
-      line: page.line,
-      Icon: page.Icon,
-      group: 'Pages',
-    }))
+    // page shortcuts come from the route registry, limited to what this account can open
+    const pages = paletteRoutesFor(viewer)
+      .filter(
+        (route) =>
+          route.label.toLowerCase().includes(needle) ||
+          route.palette!.keywords.includes(needle) ||
+          route.palette!.keywords.split(' ').some((word) => word.startsWith(needle)),
+      )
+      .map((route) => ({
+        to: route.href,
+        title: route.label,
+        line: route.palette!.line,
+        Icon: route.icon,
+        group: 'Pages',
+      }))
     const data = settled ? query.data : null
     if (!data) return pages
     const content = GROUPS.flatMap((g) =>
@@ -156,7 +122,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
       })),
     )
     return [...pages, ...content]
-  }, [query.data, settled, q])
+  }, [query.data, settled, q, viewer])
 
   useEffect(() => {
     setActive(0)
