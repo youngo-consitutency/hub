@@ -10,7 +10,8 @@ import { AccessGate } from '../../../member/components/AccessGate'
 import { MemberGate } from '../../../member/components/MemberGate'
 import { AccountProvider } from '../../../member/lib/accountContext'
 import { disablePWAInDevelopment, initPWA } from '../../../member/lib/pwa'
-import { RouterBridge } from '../../../member/lib/router'
+import { RouterProvider } from 'react-aria-components'
+import { navigate, RouterBridge } from '../../../member/lib/router'
 import { watchSystemTheme } from '../../../member/lib/theme'
 import type { Doc } from '../../../member/lib/types'
 
@@ -21,22 +22,19 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     else disablePWAInDevelopment()
     return () => stopThemeSync?.()
   }, [])
+  // react aria links and menu items navigate through the app router
   return (
     <SWRConfig value={{ dedupingInterval: 5000, focusThrottleInterval: 60000, errorRetryCount: 3 }}>
       <RouterBridge />
-      {process.env.NEXT_PUBLIC_HUB_DEMO === 'true' && (
-        <div className="demoNotice">
-          <strong>Demo environment.</strong> Fictional accounts and records. Do not enter personal
-          information.
-        </div>
-      )}
-      <AccessGate>
-        {(account: Doc) => (
-          <AccountProvider initialAccount={account}>
-            <MemberGate>{children}</MemberGate>
-          </AccountProvider>
-        )}
-      </AccessGate>
+      <RouterProvider navigate={(href) => navigate(href)}>
+        <AccessGate>
+          {(account: Doc) => (
+            <AccountProvider initialAccount={account}>
+              <MemberGate>{children}</MemberGate>
+            </AccountProvider>
+          )}
+        </AccessGate>
+      </RouterProvider>
     </SWRConfig>
   )
 }

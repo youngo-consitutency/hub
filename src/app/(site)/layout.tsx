@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { appBaseUrl } from '../../lib/env'
-import { SITE_DESCRIPTION, SITE_NAME, isDemo, shareMetadata } from './seo'
+import { SITE_DESCRIPTION, SITE_NAME, isIndexable, shareMetadata } from './seo'
 
 export const metadata: Metadata = {
   metadataBase: new URL(appBaseUrl()),
   title: SITE_NAME,
-  // NEXT_PUBLIC_HUB_DEMO is canonical (it also drives the client banner);
-  // HUB_DEMO_MODE is kept as a legacy alias.
-  robots: isDemo() ? { index: false, follow: false } : undefined,
+  // only production is indexed; previews keep out of search results
+  robots: !isIndexable() ? { index: false, follow: false } : undefined,
   description: SITE_DESCRIPTION,
   ...shareMetadata,
   manifest: '/manifest.json',

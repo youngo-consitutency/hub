@@ -1,6 +1,6 @@
 /**
- * Shared account-provisioning primitive for the demo-accounts script and
- * the integration-test fixture helpers. Applies a declarative account spec
+ * Shared account-provisioning primitive for provisioning scripts and the
+ * integration-test fixture helpers. Applies a declarative account spec
  * to the database (account row + authority records). Contains no
  * identities or credentials — callers supply those.
  *

@@ -100,8 +100,7 @@ export const ElectionCandidates: CollectionConfig = {
   ],
 }
 
-// Voter registry: one credential per eligible voter per election. Only the
-// token's HMAC is stored — the raw token is returned once at issuance.
+// ── Selections (S24) ──
 export const Selections: CollectionConfig = {
   slug: 'selections',
   access: {

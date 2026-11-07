@@ -402,7 +402,7 @@ export const memberEndpoints: Endpoint[] = [
         store.listSubmissions(req, 'open'),
         store.listDecisions(req, 'all', true),
         store.listGroups(req),
-        store.listDirectory(req),
+        store.listDirectory(req, { withHolders: true }),
       ])
       return json({
         feed,

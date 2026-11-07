@@ -15,3 +15,15 @@ export function useWorkingGroups() {
   const topicLabel = (key: AnyValue) => topics.find((t: AnyValue) => t.key === key)?.label || null
   return { query, groups, topics, bySlug, label, topicLabel }
 }
+
+// a group's current contact points with their profiles, from authority
+// records through the people endpoint (same source as the directory)
+export function useContactPoints(slug?: string | null) {
+  const query = useApi(
+    slug
+      ? `/member/people?workingGroup=${encodeURIComponent(slug)}&workingGroupRole=manager&pageSize=12`
+      : null,
+    [slug],
+  )
+  return { ...query, people: (query.data?.items || []) as AnyValue[] }
+}

@@ -99,7 +99,6 @@ import {
   TbTag as Tag,
   TbMail as Mail,
   TbPhone as Phone,
-  TbUser as User,
 } from 'react-icons/tb'
 
 const EVENT_ICONS = {
@@ -535,6 +534,9 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
   )
 }
 
+const holderNames = (contact: Doc): string[] =>
+  (contact.holders || []).map((holder: Doc) => holder.displayName).filter(Boolean)
+
 export function ContactCard({ contact }: ContactCardProps) {
   const rawChannel = contact.channelValue?.trim()
   const channel =
@@ -550,7 +552,8 @@ export function ContactCard({ contact }: ContactCardProps) {
           ? `tel:${channel.replace(/[^+\d]/g, '')}`
           : null
     : null
-  const hasDirectContact = Boolean(contact.personName || contact.publicEmail || channel)
+  const holders = holderNames(contact)
+  const hasDirectContact = Boolean(holders.length || contact.publicEmail || channel)
 
   return (
     <div className="card cardTight contactCard">
@@ -558,12 +561,7 @@ export function ContactCard({ contact }: ContactCardProps) {
       {contact.description && <p className="meta contactDescription">{contact.description}</p>}
       {hasDirectContact ? (
         <div className="contactDetails">
-          {contact.personName && (
-            <p className="meta contactPerson">
-              <User size={15} strokeWidth={1.75} aria-hidden />
-              {contact.personName}
-            </p>
-          )}
+          {holders.length > 0 && <p className="meta contactPerson">{holders.join(', ')}</p>}
           {contact.publicEmail && (
             <a className="inlineLink contactChannel" href={`mailto:${contact.publicEmail}`}>
               <Mail size={15} strokeWidth={1.75} aria-hidden />
@@ -596,21 +594,11 @@ export function ContactCard({ contact }: ContactCardProps) {
   )
 }
 
-function workingGroupContactSummary(contact: Doc) {
-  const description = contact.description || ''
-  const contactPointSentence = description
-    .split(/(?=\s(?:Join:|Public entry:|LinkedIn|Email\s))/i)[0]
-    .trim()
-  if (/contact points?/i.test(contactPointSentence)) return contactPointSentence
-  if (/not confirmed publicly/i.test(description)) {
-    return 'Current Contact Point names have not been confirmed publicly.'
-  }
-  return 'Contact Point details and public channels are organised in the group page.'
-}
-
 export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
+  // holders come from authority records on the server, never from the row's text
+  const holders = holderNames(contact)
   return (
     <A
       href={`/groups/${slug}`}
@@ -625,7 +613,11 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
           </span>
           <h3>{name}</h3>
         </div>
-        <p className="meta">{workingGroupContactSummary(contact)}</p>
+        <p className="meta">
+          {holders.length
+            ? `Contact Points: ${holders.join(', ')}`
+            : 'No Contact Point recorded yet.'}
+        </p>
         <span className="workingGroupContactMeta">
           {contact.publicEmail || 'Contact details and channels'}
         </span>

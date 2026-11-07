@@ -27,6 +27,21 @@ test.describe('Public site', () => {
     )
   })
 
+  test('the header groups pages under menus that navigate', async ({ page }) => {
+    await page.goto(BASE)
+    await page.getByRole('button', { name: 'Take part' }).click()
+    await expect(page.getByRole('menuitem')).toHaveText(['COY', 'GYS', 'Resources'])
+    await page.getByRole('menuitem', { name: 'COY' }).click()
+    await expect(page).toHaveURL(`${BASE}/about/coy`)
+    await expect(page.getByRole('button', { name: 'Take part' })).toHaveClass(/active/)
+  })
+
+  test('the retired landing preview redirects home', async ({ request }) => {
+    const res = await request.get(`${BASE}/landingV2/anything`, { maxRedirects: 0 })
+    expect(res.status()).toBe(308)
+    expect(res.headers().location).toBe('/')
+  })
+
   test.describe('Public event preview', () => {
     // Network failures are mocked here; service workers bypass page routes.
     test.use({ serviceWorkers: 'block' })

@@ -141,19 +141,26 @@ export const electionEndpoints: Endpoint[] = [
         patch.nominationsOpenAt = now
         patch.nominationsCloseAt = new Date(Date.now() + 7 * 86400000).toISOString()
       }
+      // a restart is a new vote: the old belenios election and its voter
+      // snapshot are spent
+      if (e.status === 'restart_required') {
+        patch.externalRef = null
+        patch.eligibleIndividualCount = null
+        patch.eligibleOrgCount = null
+      }
       if (next === 'voting') {
         if (!e.externalRef)
           throw fail.conflict(
             'ballot_missing',
             'Set the Belenios election link before voting opens.',
           )
+        // the exported list is the electorate belenios holds, so quorum
+        // reporting uses that snapshot rather than recounting (S10 §3.4)
+        if (e.eligibleIndividualCount == null)
+          throw fail.conflict('voters_missing', 'Export the voter list before voting opens.')
         patch.nominationsCloseAt = e.nominationsCloseAt ?? now
         patch.votingOpensAt = now
         patch.votingCloseAt = new Date(Date.now() + 5 * 86400000).toISOString()
-        // snapshot the eligible registry for quorum reporting (S10 §3.4)
-        const voters = await eligibleVoters()
-        patch.eligibleIndividualCount = voters.filter((v) => v.kind === 'individual').length
-        patch.eligibleOrgCount = voters.filter((v) => v.kind === 'organisation').length
       }
       const updated = await req.payload.update({
         collection: 'elections',
@@ -260,7 +267,8 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may set the ballot.')
       const e = await loadElection(req, param(req, 'id'))
-      if (!['announced', 'nominations', 'voting'].includes(e.status))
+      // fixed once voting opens: members are already being sent there
+      if (!['announced', 'nominations'].includes(e.status))
         throw fail.conflict(
           'invalid_phase',
           `Cannot change the ballot while status is ${e.status}.`,
@@ -277,6 +285,8 @@ export const electionEndpoints: Endpoint[] = [
         action: 'election.ballot_set',
         targetType: 'governance',
         targetId: String(e.id),
+        before: { ballotUrl: e.externalRef || null },
+        after: { ballotUrl: url },
       })
       return json({ election: electionView(updated) })
     }),
@@ -290,7 +300,18 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may export voters.')
       const e = await loadElection(req, param(req, 'id'))
+      if (!['announced', 'nominations'].includes(e.status))
+        throw fail.conflict('invalid_phase', `Cannot export voters while status is ${e.status}.`)
       const voters = await eligibleVoters()
+      await req.payload.update({
+        collection: 'elections',
+        id: e.id,
+        data: {
+          eligibleIndividualCount: voters.filter((v) => v.kind === 'individual').length,
+          eligibleOrgCount: voters.filter((v) => v.kind === 'organisation').length,
+        },
+        overrideAccess: true,
+      })
       await audit(req, account, {
         action: 'election.voters_exported',
         targetType: 'governance',
@@ -323,12 +344,12 @@ export const electionEndpoints: Endpoint[] = [
       const fields: Record<string, string> = {}
       const archiveUrl = httpsUrl(b.archiveUrl)
       if (!archiveUrl) fields.archiveUrl = 'Use the https link of the published Belenios result.'
-      const individuals = Number(b.ballotsCast?.individuals)
-      const organisations = Number(b.ballotsCast?.organisations)
-      if (!Number.isInteger(individuals) || individuals < 0)
-        fields.individuals = 'Ballots cast by individuals.'
-      if (!Number.isInteger(organisations) || organisations < 0)
-        fields.organisations = 'Ballots cast by organisations.'
+      const count = (value: unknown) =>
+        typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
+      const individuals = count(b.ballotsCast?.individuals)
+      const organisations = count(b.ballotsCast?.organisations)
+      if (individuals === null) fields.individuals = 'Ballots cast by individuals.'
+      if (organisations === null) fields.organisations = 'Ballots cast by organisations.'
       const { docs: screened } = await req.payload.find({
         collection: 'election-candidates',
         where: {
@@ -337,22 +358,31 @@ export const electionEndpoints: Endpoint[] = [
         limit: 500,
         overrideAccess: true,
       })
+      const raceSlugs: string[] = (e.races ?? []).map((race: AnyValue) => race.slug)
+      for (const slug of Object.keys(b.races ?? {}))
+        if (!raceSlugs.includes(slug)) fields[slug] = 'Not a race in this election.'
       const races: Doc = {}
-      for (const race of e.races ?? []) {
-        const elected = (b.races?.[race.slug]?.elected ?? []).map(Number)
-        const pool = (screened as Doc[]).filter((c) => c.race === race.slug)
-        const unknown = elected.filter((id: number) => !pool.some((c) => c.id === id))
-        if (unknown.length) fields[race.slug] = 'Elected ids must be screened-in candidates.'
-        races[race.slug] = {
+      for (const slug of raceSlugs) {
+        const elected = b.races?.[slug]?.elected
+        // every race needs its published winners; nothing is filled in silently
+        if (!Array.isArray(elected) || !elected.length) {
+          fields[slug] = 'List the elected candidate ids for this race.'
+          continue
+        }
+        const pool = (screened as Doc[]).filter((c) => c.race === slug)
+        const ids = elected.map(Number)
+        if (ids.some((id) => !pool.some((c) => c.id === id)))
+          fields[slug] = 'Elected ids must be screened-in candidates.'
+        races[slug] = {
           elected: pool
-            .filter((c) => elected.includes(c.id))
+            .filter((c) => ids.includes(c.id))
             .map((c) => ({ id: c.id, name: accountRef(c.account)?.name })),
         }
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
       const quorum = {
-        individualsMet: individuals >= (e.quorumIndividuals ?? 100),
-        organisationsMet: organisations >= (e.quorumOrganisations ?? 25),
+        individualsMet: individuals! >= (e.quorumIndividuals ?? 100),
+        organisationsMet: organisations! >= (e.quorumOrganisations ?? 25),
       }
       const updated = await req.payload.update({
         collection: 'elections',
