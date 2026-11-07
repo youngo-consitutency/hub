@@ -687,6 +687,8 @@ export interface DirectoryContact {
   description?: string | null;
   publicEmail?: string | null;
   wg?: (number | null) | WorkingGroup;
+  role?: string | null;
+  scopeId?: string | null;
   personName?: string | null;
   channelValue?: string | null;
   sortOrder?: number | null;
@@ -2518,6 +2520,8 @@ export interface DirectoryContactsSelect<T extends boolean = true> {
   description?: T;
   publicEmail?: T;
   wg?: T;
+  role?: T;
+  scopeId?: T;
   personName?: T;
   channelValue?: T;
   sortOrder?: T;

@@ -77,7 +77,7 @@ import { A, StatusChip, FilterChip, LifecycleTiming } from './ui'
 import { DateStamp } from './DateStamp'
 import { MemberAvatar } from './MemberAvatar'
 import { fmtMoment, fmtDateRange } from '../lib/time'
-import { useContactPoints, useWorkingGroups } from '../lib/workingGroups'
+import { useWorkingGroups } from '../lib/workingGroups'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel, regionFilterPrefix } from '../lib/regions'
 import { DestinationIcon } from './DestinationLink'
@@ -534,6 +534,9 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
   )
 }
 
+const holderNames = (contact: Doc): string[] =>
+  (contact.holders || []).map((holder: Doc) => holder.displayName).filter(Boolean)
+
 export function ContactCard({ contact }: ContactCardProps) {
   const rawChannel = contact.channelValue?.trim()
   const channel =
@@ -549,7 +552,8 @@ export function ContactCard({ contact }: ContactCardProps) {
           ? `tel:${channel.replace(/[^+\d]/g, '')}`
           : null
     : null
-  const hasDirectContact = Boolean(contact.publicEmail || channel)
+  const holders = holderNames(contact)
+  const hasDirectContact = Boolean(holders.length || contact.publicEmail || channel)
 
   return (
     <div className="card cardTight contactCard">
@@ -557,6 +561,7 @@ export function ContactCard({ contact }: ContactCardProps) {
       {contact.description && <p className="meta contactDescription">{contact.description}</p>}
       {hasDirectContact ? (
         <div className="contactDetails">
+          {holders.length > 0 && <p className="meta contactPerson">{holders.join(', ')}</p>}
           {contact.publicEmail && (
             <a className="inlineLink contactChannel" href={`mailto:${contact.publicEmail}`}>
               <Mail size={15} strokeWidth={1.75} aria-hidden />
@@ -592,9 +597,8 @@ export function ContactCard({ contact }: ContactCardProps) {
 export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
   const slug = contact.wg?.slug || contact.wg
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
-  // who holds the role comes from authority records, never from the row's text
-  const { people, loading } = useContactPoints(slug)
-  const holders = people.map((person) => person.displayName).filter(Boolean)
+  // holders come from authority records on the server, never from the row's text
+  const holders = holderNames(contact)
   return (
     <A
       href={`/groups/${slug}`}
@@ -610,11 +614,9 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
           <h3>{name}</h3>
         </div>
         <p className="meta">
-          {loading
-            ? 'Loading Contact Points…'
-            : holders.length
-              ? `Contact Points: ${holders.join(', ')}`
-              : 'No Contact Point recorded yet.'}
+          {holders.length
+            ? `Contact Points: ${holders.join(', ')}`
+            : 'No Contact Point recorded yet.'}
         </p>
         <span className="workingGroupContactMeta">
           {contact.publicEmail || 'Contact details and channels'}

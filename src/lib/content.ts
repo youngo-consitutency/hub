@@ -4,6 +4,7 @@ import { assembleFeed } from './feed'
 import { resolveCoyStatus } from '../shared/coyStatus'
 import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
+import { holderKey, holdersFor, type RoleTarget } from './roleHolders'
 
 type AnyRecord = Doc
 type Req = PayloadRequest | Payload
@@ -284,14 +285,25 @@ export async function getCoy(req: Req, slug: string) {
   return coy && coy.reviewStatus === 'approved' ? coyView(coy) : null
 }
 
+// the role a contact row stands for: explicit, or a working group's contact point
+function contactTarget(c: AnyRecord): RoleTarget | null {
+  if (c.role && c.scopeId) return { role: c.role, scopeId: c.scopeId }
+  const slug = wgRef(c.wg)?.slug
+  return slug ? { role: 'wg.contact_point', scopeId: slug } : null
+}
+
 export async function listDirectory(req: Req): Promise<AnyRecord[]> {
-  return (await findAll(req, 'directory-contacts', undefined, 'sortOrder')).map((c) => ({
+  const contacts = await findAll(req, 'directory-contacts', undefined, 'sortOrder')
+  const targets = contacts.map(contactTarget)
+  const holders = await holdersFor(targets.filter((t): t is RoleTarget => t !== null))
+  return contacts.map((c, i) => ({
     group: c.group,
     roleTitle: c.roleTitle,
     description: c.description,
     publicEmail: c.publicEmail || null,
     wg: wgRef(c.wg),
     channelValue: c.channelValue || null,
+    holders: targets[i] ? (holders.get(holderKey(targets[i])) ?? []) : [],
   }))
 }
 
