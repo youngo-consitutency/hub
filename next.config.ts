@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
   // React Compiler memoises components at build time — cuts redundant
   // re-renders across the member UI without manual memo/useMemo churn.
   reactCompiler: true,
+  async redirects() {
+    // the old landing-page preview; its links should still land somewhere
+    return [{ source: '/landingV2/:path*', destination: '/', permanent: true }]
+  },
   async rewrites() {
     return [
       // Static consultation microsite lives in public/consultation/ — legacy

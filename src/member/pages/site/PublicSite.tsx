@@ -1,6 +1,19 @@
 import type { AnyValue } from '../../lib/types'
 import { useEffect, useRef, useState } from 'react'
-import { TbArrowRight as ArrowRight, TbMenu2 as Menu, TbX as X } from 'react-icons/tb'
+import {
+  TbArrowRight as ArrowRight,
+  TbChevronDown as ChevronDown,
+  TbMenu2 as Menu,
+  TbX as X,
+} from 'react-icons/tb'
+import { Button, Menu as AriaMenu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
+import {
+  SITE_MENUS,
+  SITE_ROUTES,
+  isSiteHome,
+  isSiteRouteActive,
+  type SiteMenu,
+} from '../../../shared/publicRoutes'
 import { A } from '../../components/ui'
 import { Brand } from '../../components/Brand'
 import { DestinationIcon } from '../../components/DestinationLink'
@@ -15,21 +28,36 @@ import { SiteResources } from './SiteResources'
 import { SiteFaq } from './SiteFaq'
 import { SiteContact } from './SiteContact'
 
-const NAV = [
-  { href: '/', label: 'Home' },
-  { href: '/about/working-groups', label: 'Working groups' },
-  { href: '/about/resources', label: 'Resources' },
-  { href: '/about/gys', label: 'GYS' },
-  { href: '/about/coy', label: 'COY' },
-  { href: '/about/faq', label: 'FAQs' },
-  { href: '/about/organisation', label: 'Organisation & partners' },
-  { href: '/about/contact', label: 'Contact' },
-]
+// top-level header links; everything else sits under a menu (home is the logo)
+const TOP_LINKS = SITE_ROUTES.filter((route) => !route.menu && route.href !== '/')
+const routesIn = (menu: SiteMenu) => SITE_ROUTES.filter((route) => route.menu === menu)
 
-function isActive(path: AnyValue, href: AnyValue) {
-  return href === '/'
-    ? ['/', '/about', '/about/', '/landingV2', '/landingV2/'].includes(path)
-    : path.startsWith(href)
+// a header dropdown of page links; react aria handles keyboard, focus and dismissal
+function SiteNavMenu({ id, label, path }: { id: SiteMenu; label: string; path: string }) {
+  const routes = routesIn(id)
+  const active = routes.some((route) => isSiteRouteActive(path, route.href))
+  return (
+    <MenuTrigger>
+      <Button className={`siteNavItem siteNavMenuButton ${active ? 'active' : ''}`}>
+        {label}
+        <ChevronDown size={14} strokeWidth={1.75} aria-hidden />
+      </Button>
+      <Popover className="siteNavPopover" placement="bottom start" offset={6}>
+        <AriaMenu className="siteNavMenu" aria-label={label} items={routes}>
+          {(route) => (
+            <MenuItem
+              id={route.href}
+              href={route.href}
+              className="siteNavMenuItem"
+              aria-current={isSiteRouteActive(path, route.href) ? 'page' : undefined}
+            >
+              {route.label}
+            </MenuItem>
+          )}
+        </AriaMenu>
+      </Popover>
+    </MenuTrigger>
+  )
 }
 
 function SiteHeader() {
@@ -59,15 +87,18 @@ function SiteHeader() {
           <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
-          {NAV.map(({ href, label }) => (
+          {TOP_LINKS.map(({ href, label }) => (
             <A
               key={href}
               href={href}
-              className={`siteNavItem ${isActive(path, href) ? 'active' : ''}`}
-              aria-current={isActive(path, href) ? 'page' : undefined}
+              className={`siteNavItem ${isSiteRouteActive(path, href) ? 'active' : ''}`}
+              aria-current={isSiteRouteActive(path, href) ? 'page' : undefined}
             >
               {label}
             </A>
+          ))}
+          {SITE_MENUS.map((menu) => (
+            <SiteNavMenu key={menu.id} id={menu.id} label={menu.label} path={path} />
           ))}
         </nav>
         <A className="siteSignInLink" href="/signin">
@@ -95,16 +126,24 @@ function SiteHeader() {
       </div>
       {open && (
         <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="About YOUNGO">
-          {NAV.map(({ href, label }) => (
-            <A
-              key={href}
-              href={href}
-              className={`siteMobileNavItem ${isActive(path, href) ? 'active' : ''}`}
-              aria-current={isActive(path, href) ? 'page' : undefined}
-            >
-              {label}
-              <ArrowRight size={15} strokeWidth={1.75} aria-hidden />
-            </A>
+          {[
+            { label: '', routes: SITE_ROUTES.filter((route) => !route.menu) },
+            ...SITE_MENUS.map((menu) => ({ label: menu.label, routes: routesIn(menu.id) })),
+          ].map((group) => (
+            <div key={group.label || 'pages'} className="siteMobileNavGroup">
+              {group.label && <p className="siteMobileNavHeading">{group.label}</p>}
+              {group.routes.map(({ href, label }) => (
+                <A
+                  key={href}
+                  href={href}
+                  className={`siteMobileNavItem ${isSiteRouteActive(path, href) ? 'active' : ''}`}
+                  aria-current={isSiteRouteActive(path, href) ? 'page' : undefined}
+                >
+                  {label}
+                  <ArrowRight size={15} strokeWidth={1.75} aria-hidden />
+                </A>
+              ))}
+            </div>
           ))}
           <A className="siteMobileNavItem siteMobileSignIn" href="/signin">
             Sign in to the Hub
@@ -131,7 +170,7 @@ function SiteFooter() {
         </div>
         <nav className="siteFooterCol" aria-label="Site pages">
           <h2>{footer.exploreTitle}</h2>
-          {NAV.map(({ href, label }) => (
+          {SITE_ROUTES.map(({ href, label }) => (
             <A key={href} href={href}>
               {label}
             </A>
@@ -213,8 +252,7 @@ export function PublicSite() {
   const { doc: site } = useDocument('site')
   const consult = site?.consultBanner
   let Page: AnyValue = SiteNotFound
-  if (path === '/' || path === '/about' || path === '/about/' || /^\/landingV2(?:\/|$)/.test(path))
-    Page = SiteHome
+  if (isSiteHome(path)) Page = SiteHome
   else if (path.startsWith('/about/working-groups')) Page = SiteWorkingGroups
   else if (path.startsWith('/about/resources')) Page = SiteResources
   else if (path.startsWith('/about/gys')) Page = SiteGys

@@ -43,14 +43,7 @@ export function AccessGate({ children }: AccessGateProps) {
   const handleAuthenticated = useCallback(
     (acc: AnyValue) => {
       setAccount(acc)
-      if (
-        path === '/join' ||
-        path === '/signin' ||
-        path === '/landingV2' ||
-        path.startsWith('/landingV2/')
-      ) {
-        navigate('/')
-      }
+      if (path === '/join' || path === '/signin') navigate('/')
     },
     [path],
   )
@@ -96,11 +89,6 @@ export function AccessGate({ children }: AccessGateProps) {
   // Public website: browsable before any gate; data comes from the redacting
   // public API.
   if (path.startsWith('/about')) {
-    return <PublicSite />
-  }
-
-  // Keep the old preview URL as an alias to the current public front page.
-  if (path === '/landingV2' || path.startsWith('/landingV2/')) {
     return <PublicSite />
   }
 

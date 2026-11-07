@@ -33,24 +33,8 @@ export function publicPage(path: string): Metadata {
   }
 }
 
-// Public routes listed in the sitemap; everything signed-in is disallowed.
-export const PUBLIC_PATHS = [
-  '/',
-  '/about',
-  '/about/working-groups',
-  '/about/resources',
-  '/about/gys',
-  '/about/coy',
-  '/about/faq',
-  '/about/organisation',
-  '/about/contact',
-  '/privacy',
-  '/join',
-  '/signin',
-  '/negotiations',
-  '/consultation',
-  '/consultation/recap',
-]
+// the sitemap lists the public pages; everything signed-in is disallowed
+export { PUBLIC_PATHS } from '../../shared/publicRoutes'
 
 export const PRIVATE_PATHS = [
   '/account',
@@ -66,7 +50,6 @@ export const PRIVATE_PATHS = [
   '/gys',
   '/help',
   '/intelligence',
-  '/landingV2',
   '/library',
   '/mail',
   '/membership',
