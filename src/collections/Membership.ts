@@ -1,3 +1,4 @@
+import { noAccess } from '../lib/collectionAccess'
 import type { CollectionConfig } from 'payload'
 
 export const MembershipAppeals: CollectionConfig = {
@@ -5,15 +6,13 @@ export const MembershipAppeals: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       return req.user?.collection === 'accounts' && data?.account === req.user.id
     },
-    update: ({ req }) => req.user?.collection === 'users',
-    delete: ({ req }) => req.user?.collection === 'users',
+    update: noAccess,
+    delete: () => false,
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },

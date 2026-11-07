@@ -63,12 +63,10 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
     accounts: AccountAuthOperations;
   };
   blocks: {};
   collections: {
-    users: User;
     media: Media;
     accounts: Account;
     'authority-records': AuthorityRecord;
@@ -112,8 +110,6 @@ export interface Config {
     'decision-events': DecisionEvent;
     elections: Election;
     'election-candidates': ElectionCandidate;
-    'election-voters': ElectionVoter;
-    'election-ballots': ElectionBallot;
     selections: Selection;
     'selection-committee': SelectionCommittee;
     'selection-applications': SelectionApplication;
@@ -138,7 +134,6 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     accounts: AccountsSelect<false> | AccountsSelect<true>;
     'authority-records': AuthorityRecordsSelect<false> | AuthorityRecordsSelect<true>;
@@ -182,8 +177,6 @@ export interface Config {
     'decision-events': DecisionEventsSelect<false> | DecisionEventsSelect<true>;
     elections: ElectionsSelect<false> | ElectionsSelect<true>;
     'election-candidates': ElectionCandidatesSelect<false> | ElectionCandidatesSelect<true>;
-    'election-voters': ElectionVotersSelect<false> | ElectionVotersSelect<true>;
-    'election-ballots': ElectionBallotsSelect<false> | ElectionBallotsSelect<true>;
     selections: SelectionsSelect<false> | SelectionsSelect<true>;
     'selection-committee': SelectionCommitteeSelect<false> | SelectionCommitteeSelect<true>;
     'selection-applications': SelectionApplicationsSelect<false> | SelectionApplicationsSelect<true>;
@@ -216,28 +209,10 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User | Account;
+  user: Account;
   jobs: {
     tasks: unknown;
     workflows: unknown;
-  };
-}
-export interface UserAuthOperations {
-  forgotPassword: {
-    email: string;
-    password: string;
-  };
-  login: {
-    email: string;
-    password: string;
-  };
-  registerFirstUser: {
-    email: string;
-    password: string;
-  };
-  unlock: {
-    email: string;
-    password: string;
   };
 }
 export interface AccountAuthOperations {
@@ -257,32 +232,6 @@ export interface AccountAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1440,44 +1389,6 @@ export interface ElectionCandidate {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-voters".
- */
-export interface ElectionVoter {
-  id: number;
-  election: number | Election;
-  account: number | Account;
-  kind: 'individual' | 'organisation';
-  tokenHash: string;
-  issuedAt: string;
-  votedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-ballots".
- */
-export interface ElectionBallot {
-  id: number;
-  election: number | Election;
-  race: string;
-  voterTokenHash: string;
-  kind: 'individual' | 'organisation';
-  ranks:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  castAt: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "selections".
  */
 export interface Selection {
@@ -1881,10 +1792,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -2057,14 +1964,6 @@ export interface PayloadLockedDocument {
         value: number | ElectionCandidate;
       } | null)
     | ({
-        relationTo: 'election-voters';
-        value: number | ElectionVoter;
-      } | null)
-    | ({
-        relationTo: 'election-ballots';
-        value: number | ElectionBallot;
-      } | null)
-    | ({
         relationTo: 'selections';
         value: number | Selection;
       } | null)
@@ -2133,15 +2032,10 @@ export interface PayloadLockedDocument {
         value: number | PrivacyRequest;
       } | null);
   globalSlug?: string | null;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'accounts';
-        value: number | Account;
-      };
+  user: {
+    relationTo: 'accounts';
+    value: number | Account;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2151,15 +2045,10 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'accounts';
-        value: number | Account;
-      };
+  user: {
+    relationTo: 'accounts';
+    value: number | Account;
+  };
   key?: string | null;
   value?:
     | {
@@ -2183,29 +2072,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3090,34 +2956,6 @@ export interface ElectionCandidatesSelect<T extends boolean = true> {
   status?: T;
   screeningNote?: T;
   nominatedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-voters_select".
- */
-export interface ElectionVotersSelect<T extends boolean = true> {
-  election?: T;
-  account?: T;
-  kind?: T;
-  tokenHash?: T;
-  issuedAt?: T;
-  votedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "election-ballots_select".
- */
-export interface ElectionBallotsSelect<T extends boolean = true> {
-  election?: T;
-  race?: T;
-  voterTokenHash?: T;
-  kind?: T;
-  ranks?: T;
-  castAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

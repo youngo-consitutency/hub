@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { isStaffField, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
+import { noFieldAccess, isMember, serverWrites } from '../lib/collectionAccess'
 
 export const WorkingGroups: CollectionConfig = {
   slug: 'working-groups',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
@@ -25,7 +25,7 @@ export const WorkingGroups: CollectionConfig = {
       // generated API must not bypass that gate, so REST reads are staff-only.
       name: 'resources',
       type: 'array',
-      access: { read: isStaffField },
+      access: { read: noFieldAccess },
       fields: [
         { name: 'label', type: 'text', required: true },
         { name: 'description', type: 'textarea' },
@@ -33,10 +33,10 @@ export const WorkingGroups: CollectionConfig = {
         { name: 'visibility', type: 'text' },
       ],
     },
-    { name: 'taskForces', type: 'json', access: { read: isStaffField } },
-    { name: 'whatsappUrl', type: 'text', access: { read: isStaffField } },
-    { name: 'groupUrl', type: 'text', access: { read: isStaffField } },
-    { name: 'driveUrl', type: 'text', access: { read: isStaffField } },
+    { name: 'taskForces', type: 'json', access: { read: noFieldAccess } },
+    { name: 'whatsappUrl', type: 'text', access: { read: noFieldAccess } },
+    { name: 'groupUrl', type: 'text', access: { read: noFieldAccess } },
+    { name: 'driveUrl', type: 'text', access: { read: noFieldAccess } },
     {
       name: 'publicSpace',
       type: 'checkbox',

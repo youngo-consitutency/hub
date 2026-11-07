@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, staffWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 export const Resources: CollectionConfig = {
   slug: 'catalogue-resources',
   access: {
     read: () => true,
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
@@ -37,11 +37,10 @@ export const ResourceIssues: CollectionConfig = {
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       return req.user?.collection === 'accounts' && data?.reportedBy === req.user.id
     },
-    update: isStaff,
-    delete: isStaff,
+    update: noAccess,
+    delete: noAccess,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
@@ -64,11 +63,10 @@ export const ResourceReviews: CollectionConfig = {
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       return req.user?.collection === 'accounts' && data?.reviewedBy === req.user.id
     },
-    update: isStaff,
-    delete: isStaff,
+    update: noAccess,
+    delete: noAccess,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
