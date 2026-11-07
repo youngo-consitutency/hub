@@ -1,6 +1,7 @@
 import { accountView } from './accounts'
 import { profileShape } from './membershipReview'
 import { AUTHORITY_ROLES } from './authority'
+import { holderKey, holdersFor } from './roleHolders'
 import { requirePgPool, getPgPool } from './pg'
 import type { Doc, AccountLike, AccountView, AnyValue } from './domain'
 
@@ -200,26 +201,17 @@ export async function listMemberPeople({
           AND w.status IN ('interested','pending_approval','active')
       ))`,
     )
-    if (cleanWgRole === 'manager')
+    if (cleanWgRole) {
+      // contact points come from authority records, the same source as the
+      // directory and the permission checks, never from participation rows
+      const target = { role: 'wg.contact_point', scopeType: 'working_group', scopeId: cleanWg }
+      const ids = ((await holdersFor([target])).get(holderKey(target)) ?? []).map((h) => h.id)
+      values.push(ids)
+      const idSlot = `$${values.length}::int[]`
       where.push(
-        `EXISTS (
-          SELECT 1 FROM wg_progress manager_wg
-          WHERE manager_wg.account_id=a.id
-            AND manager_wg.wg_slug=${slot}
-            AND manager_wg.status='active'
-            AND manager_wg.role_in_wg IN ('contact','lead')
-        )`,
+        cleanWgRole === 'manager' ? `a.id = ANY(${idSlot})` : `NOT (a.id = ANY(${idSlot}))`,
       )
-    if (cleanWgRole === 'participant')
-      where.push(
-        `NOT EXISTS (
-          SELECT 1 FROM wg_progress manager_wg
-          WHERE manager_wg.account_id=a.id
-            AND manager_wg.wg_slug=${slot}
-            AND manager_wg.status='active'
-            AND manager_wg.role_in_wg IN ('contact','lead')
-        )`,
-      )
+    }
   }
   const fromSql = dutyManagers
     ? `accounts a

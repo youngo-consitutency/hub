@@ -1,6 +1,6 @@
 // one registry for every member page: the sidebar, the mobile bar, the command
-// palette and the route guards all read from here, so they can't drift apart.
-// it only shapes the interface; the api still enforces every permission
+// palette, the home cards and the route guards all read from here, so they
+// can't drift apart. it only shapes the interface; the api enforces permissions
 import type { ComponentType } from 'react'
 import type { AnyValue } from './types'
 import { canManageGroup, canManageGroups } from './groupPermissions'
@@ -45,7 +45,7 @@ export function viewerOf(account: AnyValue): Viewer {
   const capabilities: string[] = access.capabilities || []
   return {
     verified: Boolean(account?.isVerified),
-    teamRoles: access.teamRoles || [],
+    teamRoles: access.teamRoles || account?.teamRoles || [],
     capabilities,
     isFocalPoint: Boolean(access.isFocalPoint),
     ngo: Boolean(access.ngo),
@@ -79,8 +79,10 @@ export interface HubRoute {
   locked?: { title: string; body: string }
   // command palette entry; omitted routes don't appear there
   palette?: { line: string; keywords: string }
-  // position in the mobile bottom bar
+  // position in the mobile bottom bar, unique across routes
   mobile?: { order: number; label?: string }
+  // one line for the home page's responsibility card
+  summary?: string
 }
 
 const teamRole = (role: string) => (viewer: Viewer) => viewer.teamRoles.includes(role)
@@ -104,7 +106,7 @@ export const ROUTES: HubRoute[] = [
     mobile: { order: 2 },
   },
 
-  { href: '/', label: 'Home', group: 'home', icon: Home, mobile: { order: 3 } },
+  { href: '/', label: 'Home', group: 'home', icon: Home, mobile: { order: 5 } },
   {
     href: '/calendar',
     label: 'Calendar',
@@ -114,7 +116,7 @@ export const ROUTES: HubRoute[] = [
       line: 'Meetings and constituency events',
       keywords: 'calendar meetings events schedule',
     },
-    mobile: { order: 1 },
+    mobile: { order: 3 },
   },
   { href: '/coys', label: 'COY tracker', group: 'explore', icon: MapPin },
   {
@@ -126,7 +128,7 @@ export const ROUTES: HubRoute[] = [
       line: 'Events, workshops and open calls from organisations',
       keywords: 'ngo opportunity workshop hackathon open call training',
     },
-    mobile: { order: 2, label: 'Calls' },
+    mobile: { order: 4, label: 'Calls' },
   },
   { href: '/resources', label: 'Resources', group: 'explore', icon: Library },
 
@@ -136,7 +138,7 @@ export const ROUTES: HubRoute[] = [
     group: 'people',
     icon: Users,
     palette: { line: 'Find a group and its onboarding', keywords: 'working groups wg' },
-    mobile: { order: 4 },
+    mobile: { order: 6 },
   },
   {
     href: '/directory/people',
@@ -175,6 +177,7 @@ export const ROUTES: HubRoute[] = [
     label: 'WG Contact Point',
     group: 'mandates',
     icon: Briefcase,
+    summary: 'Manage your working groups, calls, channels, and member access.',
     allow: (viewer) => viewer.canManageGroups,
     locked: {
       title: 'WG Contact Points only',
@@ -186,6 +189,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Global Focal Point',
     group: 'mandates',
     icon: Network,
+    summary: 'Coordinate constituency-wide mandates and UNFCCC-facing work.',
     allow: (viewer) => viewer.isFocalPoint,
     locked: { title: 'Focal Points only', body: 'This workspace is for the Global Focal Points.' },
   },
@@ -194,6 +198,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Mail Desk',
     group: 'mandates',
     icon: MailForward,
+    summary: 'Draft mail to the people your mandate reaches.',
     allow: (viewer) => viewer.canDraftMail,
   },
   {
@@ -201,6 +206,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Agent connector',
     group: 'mandates',
     icon: PlugConnected,
+    summary: 'Connect a personal agent to the Hub.',
     // mirrors the gateway's eligibility; the page explains any closed gate
     allow: (viewer) =>
       viewer.capabilities.some((cap) => cap.startsWith('wg.manage')) ||
@@ -212,8 +218,8 @@ export const ROUTES: HubRoute[] = [
     label: 'NGO platform',
     group: 'mandates',
     icon: Building2,
-    // anyone signed in may open a seat invite before holding a seat
-    allow: (viewer, path) => viewer.ngo || path.startsWith('/ngo/accept'),
+    allow: (viewer) => viewer.ngo,
+    summary: 'Manage organisation participation and representatives.',
     locked: {
       title: 'NGO access required',
       body: 'An approved organisation seat is required. You can also accept a seat invite.',
@@ -225,6 +231,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Partnerships',
     group: 'teams',
     icon: Building2,
+    summary: 'Track partnership requests and organisations.',
     allow: teamRole('partnerships'),
   },
   {
@@ -232,6 +239,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Membership Team',
     group: 'teams',
     icon: ClipboardCheck,
+    summary: 'Review membership and onboarding work.',
     allow: teamRole('membership_team'),
     locked: {
       title: 'Membership Team only',
@@ -243,6 +251,7 @@ export const ROUTES: HubRoute[] = [
     label: 'GYS Policy Team',
     group: 'teams',
     icon: PenTool,
+    summary: 'Coordinate Global Youth Statement drafting.',
     allow: teamRole('gys_policy_team'),
     locked: {
       title: 'GYS Policy Team only',
@@ -254,6 +263,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Content studio',
     group: 'teams',
     icon: FilePenLine,
+    summary: 'Draft, review, and publish Hub content.',
     allow: (viewer) =>
       viewer.capabilities.includes('content.draft') ||
       viewer.capabilities.includes('content.review'),
@@ -267,6 +277,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Review queue',
     group: 'teams',
     icon: ClipboardCheck,
+    summary: 'Review reported feedback and organisation postings.',
     allow: (viewer) => viewer.canManageAccounts || viewer.teamRoles.includes('membership_team'),
     locked: {
       title: 'Review team only',
@@ -279,6 +290,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Admin',
     group: 'operate',
     icon: Shield,
+    summary: 'Manage system-wide access and operations.',
     allow: (viewer) => viewer.canManageAccounts,
     locked: {
       title: 'Admin only',
@@ -298,17 +310,19 @@ export interface NavItem {
 
 // sidebar sections for this viewer, empty sections dropped
 export function navFor(viewer: Viewer, path: string) {
-  const seen = new Set<string>()
   return GROUPS.map((group) => ({
     section: group.label,
-    items: ROUTES.filter((route) => {
-      if (route.group !== group.id || seen.has(route.href) || !allowed(route, viewer, path)) {
-        return false
-      }
-      seen.add(route.href)
-      return true
-    }).map(({ href, label, icon }): NavItem => ({ href, label, icon })),
+    items: ROUTES.filter((route) => route.group === group.id && allowed(route, viewer, path)).map(
+      ({ href, label, icon }): NavItem => ({ href, label, icon }),
+    ),
   })).filter((group) => group.items.length > 0)
+}
+
+// home page cards: the mandate, team and operator pages this viewer holds
+export function responsibilitiesFor(viewer: Viewer) {
+  return ROUTES.filter(
+    (route) => ['mandates', 'teams', 'operate'].includes(route.group) && allowed(route, viewer, ''),
+  )
 }
 
 export interface MobileTab extends NavItem {
@@ -340,8 +354,13 @@ function guardFor(path: string) {
 
 // the locked screen this account would see on `path`, or null
 export function lockFor(path: string, account: AnyValue) {
-  if (!account) return null
+  // access loads after the account; until it arrives the api decides, so a
+  // role holder never sees a locked screen flash (or stay) while it loads
+  if (account && !account.access) return null
+  // no account means no roles: every guarded page locks
   const viewer = viewerOf(account)
+  // anyone signed in may open a seat invite before holding a seat
+  if (path.startsWith('/ngo/accept')) return null
   // a contact point only manages the groups they hold a mandate for
   if (path.startsWith('/cp/')) {
     return canManageGroup(account, path.split('/')[2])

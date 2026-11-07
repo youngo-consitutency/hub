@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
   // React Compiler memoises components at build time — cuts redundant
   // re-renders across the member UI without manual memo/useMemo churn.
   reactCompiler: true,
+  // previews keep out of search results, static microsite pages included
+  async headers() {
+    if (process.env.VERCEL_ENV !== 'preview') return []
+    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] }]
+  },
   async redirects() {
     // the old landing-page preview; its links should still land somewhere
     return [{ source: '/landingV2/:path*', destination: '/', permanent: true }]

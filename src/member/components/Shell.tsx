@@ -26,7 +26,6 @@ import {
 // and fetch it on first use instead of shipping it to every member.
 const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette))
 
-// Home stands alone; browsing, people and shared work have distinct homes.
 export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
@@ -34,11 +33,6 @@ export function Shell({ children }: ShellProps) {
   const menuButtonRef = useRef<AnyValue>(null)
   const sheetRef = useRef<AnyValue>(null)
   const { account } = useAccount()
-  const access = account?.access || {
-    teamRoles: account?.teamRoles || [],
-    wgAssignments: [],
-    manageAllWgs: false,
-  }
   useEffect(() => {
     setSheet(false)
   }, [path])
@@ -106,7 +100,7 @@ export function Shell({ children }: ShellProps) {
   // every entry comes from the route registry, filtered for this account
   const viewer = useMemo(() => viewerOf(account), [account])
   const nav = useMemo(() => navFor(viewer, path), [viewer, path])
-  const mobilePrimaryNav = mobileNavFor(viewer, path)
+  const mobilePrimaryNav = useMemo(() => mobileNavFor(viewer, path), [viewer, path])
 
   return (
     <div className="shell">
@@ -184,7 +178,7 @@ export function Shell({ children }: ShellProps) {
                   aria-hidden
                 />
               </span>
-              {access.isFocalPoint && <span className="metaMuted">Global Focal Point</span>}
+              {viewer.isFocalPoint && <span className="metaMuted">Global Focal Point</span>}
             </A>
           )}
           {account && !verified && (

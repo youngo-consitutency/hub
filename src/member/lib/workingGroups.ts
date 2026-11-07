@@ -16,8 +16,8 @@ export function useWorkingGroups() {
   return { query, groups, topics, bySlug, label, topicLabel }
 }
 
-// a group's current contact points, from authority records. it's the same
-// request the group page makes, so swr shares one fetch between them
+// a group's current contact points with their profiles, from authority
+// records through the people endpoint (same source as the directory)
 export function useContactPoints(slug?: string | null) {
   const query = useApi(
     slug

@@ -151,10 +151,9 @@ export default buildConfig({
   ],
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
-  // Payload's own emails (staff password resets, verifications) share the
-  // app's SMTP settings via the nodemailer adapter. With delivery disabled a
-  // no-op adapter keeps anything from leaving the environment; without SMTP
-  // config the default adapter logs messages, which suits local development.
+  // payload's own emails share the app's smtp settings. with delivery off a
+  // no-op adapter keeps anything from leaving; without smtp the default
+  // adapter logs messages, which suits local development
   email: deliveryDisabled()
     ? () => ({
         name: 'delivery-disabled',

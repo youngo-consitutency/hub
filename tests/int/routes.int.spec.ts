@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ROUTES,
   lockFor,
+  responsibilitiesFor,
   mobileNavFor,
   navFor,
   paletteRoutesFor,
@@ -82,7 +83,6 @@ describe('route registry', () => {
     // a seat invite opens before the seat exists
     expect(lockFor('/ngo/accept', member)).toBeNull()
     expect(lockFor('/calendar', member)).toBeNull()
-    expect(lockFor('/admin', null)).toBeNull()
   })
 
   it('limits contact points to their own groups', () => {
@@ -92,16 +92,50 @@ describe('route registry', () => {
     expect(lockFor('/cp/energy', contactPoint)?.body).toMatch(/this working group/)
   })
 
-  it('never lists a page the guard would lock, and the reverse', () => {
-    for (const account of [unverified, member, contactPoint, focalPoint, membershipTeam]) {
-      const visible = new Set(
-        navFor(viewerOf(account), '/').flatMap((g) => g.items.map((i) => i.href)),
-      )
-      for (const route of ROUTES.filter((r) => r.locked)) {
-        if (!account.isVerified) continue
-        expect(visible.has(route.href), `${route.href}`).toBe(lockFor(route.href, account) === null)
+  it('never lists a page the guard would lock, and the reverse, on any path', () => {
+    const accounts = [member, contactPoint, focalPoint, membershipTeam]
+    const paths = ['/', ...ROUTES.map((route) => route.href), '/ngo/accept/token']
+    for (const account of accounts) {
+      for (const path of paths) {
+        const visible = new Set(
+          navFor(viewerOf(account), path).flatMap((g) => g.items.map((i) => i.href)),
+        )
+        for (const route of ROUTES.filter((r) => r.locked)) {
+          expect(visible.has(route.href), `${route.href} on ${path}`).toBe(
+            lockFor(route.href, account) === null,
+          )
+        }
       }
     }
+  })
+
+  it('lists each page once per account', () => {
+    for (const account of [unverified, member, contactPoint, focalPoint, membershipTeam]) {
+      const hrefs = navFor(viewerOf(account), '/').flatMap((g) => g.items.map((i) => i.href))
+      expect(new Set(hrefs).size).toBe(hrefs.length)
+    }
+  })
+
+  it('opens seat invites without showing the NGO platform to non-members', () => {
+    expect(lockFor('/ngo/accept/token', member)).toBeNull()
+    const sections = navFor(viewerOf(member), '/ngo/accept/token')
+    expect(sections.flatMap((g) => g.items.map((i) => i.href))).not.toContain('/ngo')
+  })
+
+  it('waits for access before locking, and locks everything without an account', () => {
+    // access arrives after the account; a role holder must not see a lock meanwhile
+    expect(lockFor('/team/membership', { isVerified: true })).toBeNull()
+    expect(lockFor('/staff/review', null)?.title).toBe('Review team only')
+    expect(lockFor('/admin', null)?.title).toBe('Admin only')
+  })
+
+  it('builds home responsibility cards from the same rules as the sidebar', () => {
+    const cards = responsibilitiesFor(viewerOf(focalPoint)).map((r) => r.href)
+    const sidebar = navFor(viewerOf(focalPoint), '/')
+      .filter((g) => ['Your responsibilities', 'Teams', 'Operate the Hub'].includes(g.section))
+      .flatMap((g) => g.items.map((i) => i.href))
+    expect(cards).toEqual(sidebar)
+    expect(responsibilitiesFor(viewerOf(focalPoint)).every((r) => r.summary)).toBe(true)
   })
 
   it('offers palette shortcuts only for pages the account can open', () => {

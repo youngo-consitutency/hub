@@ -23,5 +23,6 @@ describe('notification outbox with delivery disabled', () => {
       [key],
     )
     expect(rows[0]).toEqual({ status: 'queued', attempts: 0 })
+    await pool.query('DELETE FROM notification_outbox WHERE deduplication_key=$1', [key])
   })
 })

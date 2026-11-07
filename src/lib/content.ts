@@ -5,6 +5,7 @@ import { resolveCoyStatus } from '../shared/coyStatus'
 import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
 import { holderKey, holdersFor, type RoleTarget } from './roleHolders'
+import { AUTHORITY_ROLES } from './authority'
 
 type AnyRecord = Doc
 type Req = PayloadRequest | Payload
@@ -287,15 +288,21 @@ export async function getCoy(req: Req, slug: string) {
 
 // the role a contact row stands for: explicit, or a working group's contact point
 function contactTarget(c: AnyRecord): RoleTarget | null {
-  if (c.role && c.scopeId) return { role: c.role, scopeId: c.scopeId }
+  if (c.role && c.scopeId) {
+    const scopeType = AUTHORITY_ROLES[c.role]?.scopeTypes[0]
+    return scopeType ? { role: c.role, scopeType, scopeId: c.scopeId } : null
+  }
   const slug = wgRef(c.wg)?.slug
-  return slug ? { role: 'wg.contact_point', scopeId: slug } : null
+  return slug ? { role: 'wg.contact_point', scopeType: 'working_group', scopeId: slug } : null
 }
 
-export async function listDirectory(req: Req): Promise<AnyRecord[]> {
+// holders are members-only, so only callers that show them pay for the join
+export async function listDirectory(req: Req, { withHolders = false } = {}): Promise<AnyRecord[]> {
   const contacts = await findAll(req, 'directory-contacts', undefined, 'sortOrder')
   const targets = contacts.map(contactTarget)
-  const holders = await holdersFor(targets.filter((t): t is RoleTarget => t !== null))
+  const holders = withHolders
+    ? await holdersFor(targets.filter((t): t is RoleTarget => t !== null))
+    : new Map()
   return contacts.map((c, i) => ({
     group: c.group,
     roleTitle: c.roleTitle,
@@ -303,7 +310,9 @@ export async function listDirectory(req: Req): Promise<AnyRecord[]> {
     publicEmail: c.publicEmail || null,
     wg: wgRef(c.wg),
     channelValue: c.channelValue || null,
-    holders: targets[i] ? (holders.get(holderKey(targets[i])) ?? []) : [],
+    ...(withHolders && {
+      holders: targets[i] ? (holders.get(holderKey(targets[i])) ?? []) : [],
+    }),
   }))
 }
 
