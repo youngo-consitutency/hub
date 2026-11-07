@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { grantsCapability, staffWrites } from '../lib/collectionAccess'
+import { grantsCapability, serverWrites } from '../lib/collectionAccess'
 
 // Under-18 safeguarding stop: a parent or legal guardian asks the Membership
 // Team to make contact. No link to an account and no child data; rows are
@@ -8,7 +8,7 @@ export const GuardianEnquiries: CollectionConfig = {
   slug: 'guardian-enquiries',
   access: {
     read: ({ req }) => grantsCapability(req, 'membership.review'),
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'guardianName', type: 'text', required: true },

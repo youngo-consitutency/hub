@@ -1,3 +1,4 @@
+import { noAccess } from '../lib/collectionAccess'
 import type { CollectionConfig } from 'payload'
 
 // Global Youth Statement cycle: static reference content (current edition,
@@ -32,7 +33,7 @@ export const GysWorkflowCycles: CollectionConfig = {
   slug: 'gys-workflow-cycles',
   access: {
     read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => req.user?.collection === 'users',
+    create: noAccess,
     update: ({ req }) => Boolean(req.user),
   },
   fields: [
@@ -111,7 +112,7 @@ export const GysTrackedContributions: CollectionConfig = {
 export const GysContributions: CollectionConfig = {
   slug: 'gys-contributions',
   access: {
-    read: ({ req }) => req.user?.collection === 'users',
+    read: noAccess,
     create: () => true, // public signup form
   },
   fields: [

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaffOrMember, staffWrites } from '../lib/collectionAccess'
+import { isMember, serverWrites } from '../lib/collectionAccess'
 
 // role contact channels: a role's mailbox and member-only channel. who holds
 // the role comes from authority-records; personName is superseded and no
@@ -8,8 +8,8 @@ import { isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 export const DirectoryContacts: CollectionConfig = {
   slug: 'directory-contacts',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     { name: 'group', type: 'text', required: true, index: true },

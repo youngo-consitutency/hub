@@ -5,13 +5,13 @@ import { api, session } from './helpers'
 
 describe('elections (S10) and selections (S24)', () => {
   let facilitator: { cookie: string }
-  let cwMember: { cookie: string }
+  let cwMember: { cookie: string; account: AnyValue }
   let wgContact: { cookie: string }
   let wgLead: { cookie: string }
-  let voter1: { cookie: string }
-  let voter2: { cookie: string }
-  let member: { cookie: string }
-  let pending: { cookie: string }
+  let voter1: { cookie: string; account: AnyValue }
+  let voter2: { cookie: string; account: AnyValue }
+  let member: { cookie: string; account: AnyValue }
+  let pending: { cookie: string; account: AnyValue }
 
   beforeAll(async () => {
     facilitator = await session({
@@ -70,7 +70,7 @@ describe('elections (S10) and selections (S24)', () => {
   })
 
   it(
-    'runs a full secret election: nominate → screen → credential → ranked ballot → IRV tally',
+    'runs an election: nominate → screen → belenios ballot → voter list → recorded result',
     { timeout: 90000 },
     async () => {
       // Create (facilitator only).
@@ -126,19 +126,54 @@ describe('elections (S10) and selections (S24)', () => {
         expect(res.status).toBe(200)
       }
 
-      // Advance to voting; issue voter credentials.
-      await api(`/governance/elections/${election.id}/advance`, {
+      // Voting cannot open until the Belenios election is linked.
+      const early = await api(`/governance/elections/${election.id}/advance`, {
         method: 'POST',
         cookie: facilitator.cookie,
       })
-      const cred1 = await api(`/governance/elections/${election.id}/credential`, {
+      expect(early.status).toBe(409)
+      expect((await early.json()).error.code).toBe('ballot_missing')
+      const setBallot = (cookie: string, url: string) =>
+        api(`/governance/elections/${election.id}/ballot`, {
+          method: 'PUT',
+          cookie,
+          body: JSON.stringify({ url }),
+        })
+      const ballotUrl = 'https://vote.belenios.example/elections/abc123/'
+      expect((await setBallot(cwMember.cookie, ballotUrl)).status).toBe(403)
+      expect((await setBallot(facilitator.cookie, 'http://insecure.example/')).status).toBe(400)
+      const linked = await setBallot(facilitator.cookie, ballotUrl)
+      expect(linked.status).toBe(200)
+      expect((await linked.json()).election.ballotUrl).toBe(ballotUrl)
+
+      const voting = await api(`/governance/elections/${election.id}/advance`, {
         method: 'POST',
-        cookie: voter1.cookie,
+        cookie: facilitator.cookie,
       })
-      expect(cred1.status).toBe(201)
-      const { token: token1 } = await cred1.json()
-      expect(token1).toBeTruthy()
-      // One credential per voter.
+      expect(voting.status).toBe(200)
+      expect((await voting.json()).election.status).toBe('voting')
+
+      // The voter list holds active Constituency Work members only.
+      expect(
+        (await api(`/governance/elections/${election.id}/voters`, { cookie: cwMember.cookie }))
+          .status,
+      ).toBe(403)
+      const voters = await api(`/governance/elections/${election.id}/voters`, {
+        cookie: facilitator.cookie,
+      })
+      expect(voters.status).toBe(200)
+      expect(voters.headers.get('content-type')).toMatch(/text\/plain/)
+      const lines = (await voters.text()).trim().split('\n')
+      const ids = lines.map((line) => line.split(',')[1])
+      for (const voter of [voter1, voter2, cwMember]) {
+        expect(ids).toContain(`hub-${voter.account.id}`)
+      }
+      for (const outsider of [member, pending]) {
+        expect(ids).not.toContain(`hub-${outsider.account.id}`)
+      }
+      expect(lines.every((line) => /^[^,\s]+@[^,\s]+,hub-\d+$/.test(line))).toBe(true)
+
+      // The Hub no longer runs its own ballot box.
       expect(
         (
           await api(`/governance/elections/${election.id}/credential`, {
@@ -146,90 +181,33 @@ describe('elections (S10) and selections (S24)', () => {
             cookie: voter1.cookie,
           })
         ).status,
-      ).toBe(409)
-      const cred2 = await api(`/governance/elections/${election.id}/credential`, {
-        method: 'POST',
-        cookie: wgContact.cookie,
-      })
-      const { token: token2 } = await cred2.json()
-      const cred3 = await api(`/governance/elections/${election.id}/credential`, {
-        method: 'POST',
-        cookie: voter2.cookie,
-      })
-      const { token: token3 } = await cred3.json()
+      ).toBe(404)
 
-      // Cast ranked ballots via token — not via the account session.
-      const vote1 = await api(`/governance/elections/${election.id}/vote`, {
-        method: 'POST',
-        body: JSON.stringify({
-          token: token1,
-          race: 'seat',
-          ranks: [candA.id, candB.id],
-        }),
-      })
-      expect(vote1.status).toBe(200)
-      const vote2 = await api(`/governance/elections/${election.id}/vote`, {
-        method: 'POST',
-        body: JSON.stringify({
-          token: token2,
-          race: 'seat',
-          ranks: [candB.id, candA.id],
-        }),
-      })
-      expect(vote2.status).toBe(200)
-      const vote3 = await api(`/governance/elections/${election.id}/vote`, {
-        method: 'POST',
-        body: JSON.stringify({
-          token: token3,
-          race: 'seat',
-          ranks: [candA.id],
-        }),
-      })
-      expect(vote3.status).toBe(200)
-      // One ballot per credential per race.
+      // Record what Belenios published; elected ids must be screened in.
+      const record = (cookie: string, body: AnyValue) =>
+        api(`/governance/elections/${election.id}/result`, {
+          method: 'POST',
+          cookie,
+          body: JSON.stringify(body),
+        })
+      const result = {
+        archiveUrl: `${ballotUrl}archive`,
+        ballotsCast: { individuals: 3, organisations: 0 },
+        races: { seat: { elected: [candA.id] } },
+      }
+      expect((await record(cwMember.cookie, result)).status).toBe(403)
       expect(
-        (
-          await api(`/governance/elections/${election.id}/vote`, {
-            method: 'POST',
-            body: JSON.stringify({
-              token: token1,
-              race: 'seat',
-              ranks: [candB.id],
-            }),
-          })
-        ).status,
-      ).toBe(409)
-      // Bogus token rejected.
-      expect(
-        (
-          await api(`/governance/elections/${election.id}/vote`, {
-            method: 'POST',
-            body: JSON.stringify({
-              token: 'bogus',
-              race: 'seat',
-              ranks: [candA.id],
-            }),
-          })
-        ).status,
-      ).toBe(403)
-
-      // Only the facilitation team tallies. 2-1 on first preferences → A
-      // wins outright; the result is published on the election record.
-      const deniedTally = await api(`/governance/elections/${election.id}/tally`, {
-        method: 'POST',
-        cookie: cwMember.cookie,
-      })
-      expect(deniedTally.status).toBe(403)
-      const tally = await api(`/governance/elections/${election.id}/tally`, {
-        method: 'POST',
-        cookie: facilitator.cookie,
-      })
-      expect(tally.status).toBe(200)
-      const tallied = (await tally.json()).election
-      expect(tallied.status).toBe('completed')
-      expect(tallied.result.races.seat.outcome).toBe('elected')
-      expect(tallied.result.races.seat.winner).toBe(String(candA.id))
-      expect(tallied.result.ballotsCast.individuals).toBe(3)
+        (await record(facilitator.cookie, { ...result, races: { seat: { elected: [999999] } } }))
+          .status,
+      ).toBe(400)
+      const recorded = await record(facilitator.cookie, result)
+      expect(recorded.status).toBe(200)
+      const done = (await recorded.json()).election
+      expect(done.status).toBe('completed')
+      expect(done.result.source).toBe('belenios')
+      expect(done.result.races.seat.elected.map((c: AnyValue) => c.id)).toEqual([candA.id])
+      expect(done.result.races.seat.elected.map((c: AnyValue) => c.id)).not.toContain(candB.id)
+      expect(done.result.ballotsCast.individuals).toBe(3)
     },
   )
 

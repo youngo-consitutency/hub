@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffField } from '../lib/collectionAccess'
+import { noAccess, noFieldAccess } from '../lib/collectionAccess'
 
 // Member accounts — replaces hub_accounts + hub_sessions + password/verify
 // token tables. Payload auth provides login/logout/me/forgot/reset and
@@ -28,18 +28,27 @@ export const Accounts: CollectionConfig = {
       },
     ],
   },
+  // payload adds a first-register endpoint to every auth collection; on an
+  // empty database it would create a verified account with any fields,
+  // skipping registration. accounts only come from the registration flow
+  endpoints: [
+    {
+      path: '/first-register',
+      method: 'post',
+      handler: () => Response.json({ errors: [{ message: 'Not found.' }] }, { status: 404 }),
+    },
+  ],
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { id: { equals: req.user.id } }
     },
-    unlock: ({ req }) => req.user?.collection === 'users',
+    unlock: noAccess,
     // Member writes go through domain endpoints (registration, profile,
     // lifecycle review) which authorise the actor and use overrideAccess.
-    create: isStaff,
-    update: isStaff,
-    delete: isStaff,
+    create: noAccess,
+    update: noAccess,
+    delete: noAccess,
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -68,7 +77,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'postingTrust',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       options: [
         { label: 'Trusted — postings go live immediately', value: 'trusted' },
@@ -77,12 +86,12 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'postingTrustNote',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'textarea',
     },
     {
       name: 'membershipTrack',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       required: true,
       options: [
@@ -109,7 +118,7 @@ export const Accounts: CollectionConfig = {
     { name: 'guardianEmail', type: 'text' },
     {
       name: 'guardianConsent',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'checkbox',
       defaultValue: false,
     },
@@ -123,37 +132,37 @@ export const Accounts: CollectionConfig = {
     { name: 'acceptCoiPolicy', type: 'checkbox', defaultValue: false },
     {
       name: 'policiesAccepted',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'checkbox',
       defaultValue: false,
     },
-    { name: 'membershipPolicyVersion', access: { update: isStaffField }, type: 'text' },
+    { name: 'membershipPolicyVersion', access: { update: noFieldAccess }, type: 'text' },
     {
       name: 'privacyConsent',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'checkbox',
       defaultValue: false,
     },
-    { name: 'privacyConsentAt', access: { update: isStaffField }, type: 'date' },
-    { name: 'privacyNoticeVersion', access: { update: isStaffField }, type: 'text' },
-    { name: 'privacyConsentWithdrawnAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'privacyConsentAt', access: { update: noFieldAccess }, type: 'date' },
+    { name: 'privacyNoticeVersion', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'privacyConsentWithdrawnAt', access: { update: noFieldAccess }, type: 'date' },
     {
       name: 'memberStatus',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       defaultValue: 'pending_course',
       options: ['pending_course', 'verified', 'suspended'],
     },
     {
       name: 'hubAccessStatus',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       defaultValue: 'pending_course',
       options: ['pending_course', 'active', 'suspended'],
     },
     {
       name: 'membershipStatus',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       defaultValue: 'registered',
       options: [
@@ -170,7 +179,7 @@ export const Accounts: CollectionConfig = {
     },
     {
       name: 'constituencyWorkStatus',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       options: [
         { label: '—', value: '' },
@@ -178,37 +187,37 @@ export const Accounts: CollectionConfig = {
         { label: 'Active', value: 'active' },
       ],
     },
-    { name: 'onboardingCohort', access: { update: isStaffField }, type: 'text' },
-    { name: 'renewalDueAt', access: { update: isStaffField }, type: 'date' },
-    { name: 'membershipEndedAt', access: { update: isStaffField }, type: 'date' },
-    { name: 'membershipEndReason', access: { update: isStaffField }, type: 'text' },
+    { name: 'onboardingCohort', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'renewalDueAt', access: { update: noFieldAccess }, type: 'date' },
+    { name: 'membershipEndedAt', access: { update: noFieldAccess }, type: 'date' },
+    { name: 'membershipEndReason', access: { update: noFieldAccess }, type: 'text' },
     {
       // Technical account kind only — authority lives in authority_records.
       name: 'role',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       required: true,
       defaultValue: 'member',
       options: [{ label: 'Member', value: 'member' }],
     },
     { name: 'wgInterests', type: 'json' },
-    { name: 'appointmentEvidence', access: { update: isStaffField }, type: 'json' },
-    { name: 'coursePassedAt', access: { update: isStaffField }, type: 'date' },
-    { name: 'courseScore', access: { update: isStaffField }, type: 'number' },
-    { name: 'verifiedAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'appointmentEvidence', access: { update: noFieldAccess }, type: 'json' },
+    { name: 'coursePassedAt', access: { update: noFieldAccess }, type: 'date' },
+    { name: 'courseScore', access: { update: noFieldAccess }, type: 'number' },
+    { name: 'verifiedAt', access: { update: noFieldAccess }, type: 'date' },
     // Legacy stores the reviewer email, not a FK.
-    { name: 'verifiedBy', access: { update: isStaffField }, type: 'text' },
-    { name: 'emailVerifiedAt', access: { update: isStaffField }, type: 'date' },
+    { name: 'verifiedBy', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'emailVerifiedAt', access: { update: noFieldAccess }, type: 'date' },
     {
       name: 'principalType',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'select',
       defaultValue: 'human',
       options: ['human', 'service'],
     },
     {
       name: 'mustChangePassword',
-      access: { update: isStaffField },
+      access: { update: noFieldAccess },
       type: 'checkbox',
       defaultValue: false,
     },
@@ -216,15 +225,15 @@ export const Accounts: CollectionConfig = {
     // epoch stop working (src/lib/agentKeys.ts).
     {
       name: 'credentialEpoch',
-      access: { read: isStaffField, update: isStaffField },
+      access: { read: noFieldAccess, update: noFieldAccess },
       type: 'number',
       defaultValue: 1,
     },
     // Legacy credential support: on first login the legacy scrypt hash is
     // verified, the Payload password is set, and these are cleared.
-    { name: 'legacyPasswordHash', access: { update: isStaffField }, type: 'text' },
-    { name: 'legacyPasswordSalt', access: { update: isStaffField }, type: 'text' },
-    { name: 'lastLoginAt', access: { update: isStaffField }, type: 'date' },
-    { name: 'legacyId', access: { update: isStaffField }, type: 'text', index: true },
+    { name: 'legacyPasswordHash', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'legacyPasswordSalt', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'lastLoginAt', access: { update: noFieldAccess }, type: 'date' },
+    { name: 'legacyId', access: { update: noFieldAccess }, type: 'text', index: true },
   ],
 }

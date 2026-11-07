@@ -78,7 +78,6 @@ jobs:
       - name: Prepare the disposable test database
         run: |
           npm run migrate
-          npm run seed
 
       - name: Create temporary push keys for tests
         run: |
