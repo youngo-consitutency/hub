@@ -1,46 +1,37 @@
-interface FieldErrorProps {
-  msg?: AnyValue
+import type { Key, ReactNode } from 'react'
+import {
+  Button,
+  ComboBox,
+  ComboBoxValue,
+  Group,
+  Input,
+  Label,
+  ListBox,
+  ListBoxItem,
+  Popover,
+  Tag,
+  TagGroup,
+  TagList,
+  useFilter,
+} from 'react-aria-components'
+import { TbSelector, TbX } from 'react-icons/tb'
+
+// react aria owns the combobox pattern (keyboard, aria, focus, positioning);
+// these wrappers keep the props every form already passes. anatomy follows the
+// docs: label + group(input, button) + popover(listbox)
+
+export interface Option {
+  value: string
+  label: string
 }
 
-interface DatePickerProps {
-  label?: string
-  value?: AnyValue
-  onChange?: AnyValue
-  error?: string
-  min?: AnyValue
-  max?: AnyValue
-  disabled?: boolean
-}
+const asList = (options: unknown): Option[] => (Array.isArray(options) ? options : [])
 
-interface SearchableSelectProps {
-  label?: string
-  options?: AnyValue
-  value?: AnyValue
-  onChange?: AnyValue
-  error?: string
-  placeholder?: string
-  searchPlaceholder?: AnyValue
-  onOpen?: AnyValue
-  className?: string
-  hideLabel?: AnyValue
-  disabled?: boolean
-  children?: import('react').ReactNode
-}
+// map a react aria key back to the caller's original value (could be a number)
+const valueFor = (list: Option[], key: Key | null) =>
+  list.find((option) => String(option.value) === String(key))?.value
 
-interface MultiSelectDropdownProps {
-  label?: string
-  options?: AnyValue
-  selected?: AnyValue
-  onToggle?: AnyValue
-  error?: string
-  hideLabel?: AnyValue
-}
-
-import type { AnyValue } from '../lib/types'
-import { useState } from 'react'
-import { useCombobox } from 'downshift'
-
-export function FieldError({ msg }: FieldErrorProps) {
+export function FieldError({ msg }: { msg?: ReactNode }) {
   if (!msg) return null
   return (
     <span className="fieldError" role="alert">
@@ -49,16 +40,24 @@ export function FieldError({ msg }: FieldErrorProps) {
   )
 }
 
-function matchingOptions(options: AnyValue, query: AnyValue) {
-  const list = Array.isArray(options) ? options : []
-  const normalized = query.trim().toLocaleLowerCase()
-  return normalized
-    ? list.filter((option) => option.label.toLocaleLowerCase().includes(normalized))
-    : list
-}
-
-/** Native date field with the same field chrome as other form controls. */
-export function DatePicker({ label, value, onChange, error, min, max, disabled }: DatePickerProps) {
+// native date input: already accessible and localised by the browser
+export function DatePicker({
+  label,
+  value,
+  onChange,
+  error,
+  min,
+  max,
+  disabled,
+}: {
+  label?: string
+  value?: string | null
+  onChange: (value: string) => void
+  error?: string
+  min?: string | null
+  max?: string | null
+  disabled?: boolean
+}) {
   return (
     <label className={`field${error ? ' hasError' : ''}`}>
       <span>{label}</span>
@@ -77,6 +76,36 @@ export function DatePicker({ label, value, onChange, error, min, max, disabled }
   )
 }
 
+function InputRow({ placeholder }: { placeholder: string }) {
+  return (
+    <Group className="comboInput">
+      <Input className="input" placeholder={placeholder} />
+      <Button className="comboButton">
+        <TbSelector size={16} aria-hidden />
+      </Button>
+    </Group>
+  )
+}
+
+function OptionList({ list }: { list: Option[] }) {
+  return (
+    <Popover className="comboMenu" offset={4}>
+      <ListBox
+        items={list}
+        renderEmptyState={() => (
+          <span className="metaMuted comboEmpty">{list.length ? 'No matches' : 'Loading…'}</span>
+        )}
+      >
+        {(option) => (
+          <ListBoxItem id={String(option.value)} textValue={option.label} className="comboOption">
+            {option.label}
+          </ListBoxItem>
+        )}
+      </ListBox>
+    </Popover>
+  )
+}
+
 export function SearchableSelect({
   label,
   options,
@@ -90,136 +119,113 @@ export function SearchableSelect({
   hideLabel = false,
   disabled = false,
   children,
-}: SearchableSelectProps) {
-  const [query, setQuery] = useState('')
-  const list = Array.isArray(options) ? options : []
-  const selected = list.find((option) => option.value === value) || null
-  const visibleOptions = matchingOptions(list, query)
-
-  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
-    items: visibleOptions,
-    itemToString: (item) => item?.label || '',
-    selectedItem: selected,
-    onSelectedItemChange: ({ selectedItem }) => {
-      setQuery('')
-      if (selectedItem) onChange(selectedItem.value)
-    },
-    onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
-    onIsOpenChange: ({ isOpen }) => {
-      if (isOpen) onOpen?.()
-    },
-  })
-
+}: {
+  label?: string
+  options?: unknown
+  value?: string | null
+  onChange: (value: string) => void
+  error?: string
+  placeholder?: string
+  searchPlaceholder?: string
+  onOpen?: () => void
+  className?: string
+  hideLabel?: boolean
+  disabled?: boolean
+  children?: ReactNode
+}) {
+  const { contains } = useFilter({ sensitivity: 'base' })
+  const list = asList(options)
   return (
-    <div className={`field${error ? ' hasError' : ''} comboField ${className}`.trim()}>
-      <span {...getLabelProps()} className={hideLabel ? 'srOnly' : undefined}>
-        {label}
-      </span>
-      <input
-        {...getInputProps({
-          className: 'input',
-          type: 'search',
-          'aria-invalid': !!error,
-          disabled,
-          placeholder: isOpen ? searchPlaceholder : placeholder,
-        })}
-      />
-      <div {...getMenuProps()} className="comboMenu" role="listbox" hidden={!isOpen}>
-        {visibleOptions.length ? (
-          visibleOptions.map((option, index) => (
-            <button
-              {...getItemProps({ item: option, index })}
-              key={option.value}
-              className="comboOption"
-              type="button"
-              role="option"
-              aria-selected={option.value === value}
-              title={option.label}
-            >
-              {option.label}
-            </button>
-          ))
-        ) : (
-          <span className="metaMuted comboEmpty">{list.length ? 'No matches' : 'Loading…'}</span>
-        )}
-      </div>
-      <FieldError msg={error} />
-      {children}
-    </div>
+    <ComboBox
+      className={`field${error ? ' hasError' : ''} ${className}`.trim()}
+      items={list}
+      value={value == null || value === '' ? null : String(value)}
+      onChange={(key) => {
+        const next = valueFor(list, key)
+        if (next != null) onChange(next)
+      }}
+      defaultFilter={contains}
+      allowsEmptyCollection
+      isDisabled={disabled}
+      isInvalid={!!error}
+      onOpenChange={(open) => open && onOpen?.()}
+    >
+      {({ isOpen }) => (
+        <>
+          <Label className={hideLabel ? 'srOnly' : undefined}>{label}</Label>
+          <InputRow placeholder={isOpen ? searchPlaceholder : placeholder} />
+          <OptionList list={list} />
+          <FieldError msg={error} />
+          {children}
+        </>
+      )}
+    </ComboBox>
   )
 }
 
 export function MultiSelectDropdown({
   label,
   options,
-  selected,
+  selected = [],
   onToggle,
   error,
   hideLabel = false,
-}: MultiSelectDropdownProps) {
-  const [query, setQuery] = useState('')
-  const list = Array.isArray(options) ? options : []
-  const selectedLabels = list
-    .filter((option) => selected.includes(option.value))
-    .map((option) => option.label)
-  const visibleOptions = matchingOptions(list, query)
-
-  const { isOpen, getLabelProps, getMenuProps, getInputProps, getItemProps } = useCombobox({
-    items: visibleOptions,
-    itemToString: () => '',
-    selectedItem: null,
-    inputValue: query,
-    stateReducer: (state, { type, changes }) =>
-      type === useCombobox.stateChangeTypes.ItemClick
-        ? { ...changes, isOpen: true, inputValue: '' }
-        : changes,
-    onSelectedItemChange: ({ selectedItem }) => {
-      setQuery('')
-      if (selectedItem) onToggle(selectedItem.value)
-    },
-    onInputValueChange: ({ inputValue }) => setQuery(inputValue || ''),
-  })
-
+}: {
+  label?: string
+  options?: unknown
+  selected?: string[]
+  onToggle: (value: string) => void
+  error?: string
+  hideLabel?: boolean
+}) {
+  const { contains } = useFilter({ sensitivity: 'base' })
+  const list = asList(options)
   return (
-    <div className={`field${error ? ' hasError' : ''} comboField`}>
-      <span {...getLabelProps()} className={hideLabel ? 'srOnly' : undefined}>
-        {label}
-      </span>
-      <input
-        {...getInputProps({
-          className: 'input',
-          type: 'search',
-          'aria-invalid': !!error,
-          placeholder: selectedLabels.length
-            ? `${selectedLabels.length} selected: ${selectedLabels.join(', ')}`
-            : 'Type to search…',
-        })}
-      />
-      <div {...getMenuProps()} className="comboMenu" aria-multiselectable="true" hidden={!isOpen}>
-        {visibleOptions.length ? (
-          visibleOptions.map((option, index) => (
-            <div
-              key={option.value}
-              {...getItemProps({ item: option, index })}
-              className="comboOption comboOptionMulti"
-              role="option"
-              aria-selected={selected.includes(option.value)}
-            >
-              <input
-                key="checkbox"
-                type="checkbox"
-                checked={selected.includes(option.value)}
-                readOnly
-                tabIndex={-1}
-              />
-              <span key="label">{option.label}</span>
-            </div>
-          ))
-        ) : (
-          <span className="metaMuted comboEmpty">No matches</span>
+    <ComboBox
+      className={`field${error ? ' hasError' : ''}`}
+      selectionMode="multiple"
+      items={list}
+      value={selected.map(String)}
+      // callers toggle one value at a time, so report just what changed
+      onChange={(keys) => {
+        const next = new Set(keys.map(String))
+        for (const option of list) {
+          if (next.has(String(option.value)) !== selected.includes(option.value)) {
+            onToggle(option.value)
+          }
+        }
+      }}
+      defaultFilter={contains}
+      isInvalid={!!error}
+    >
+      <Label className={hideLabel ? 'srOnly' : undefined}>{label}</Label>
+      <InputRow placeholder="Type to search…" />
+      <ComboBoxValue<Option> className="comboTags">
+        {({ selectedItems }) => (
+          <TagGroup
+            aria-label={`Selected ${label?.toLowerCase() || 'options'}`}
+            onRemove={(keys) => {
+              for (const key of keys) {
+                const value = valueFor(list, key)
+                if (value != null) onToggle(value)
+              }
+            }}
+          >
+            <TagList items={selectedItems.filter((item): item is Option => item != null)}>
+              {(option) => (
+                <Tag id={String(option.value)} textValue={option.label} className="chip comboTag">
+                  {option.label}
+                  <Button slot="remove" className="comboTagRemove">
+                    <TbX size={12} aria-hidden />
+                  </Button>
+                </Tag>
+              )}
+            </TagList>
+          </TagGroup>
         )}
-      </div>
+      </ComboBoxValue>
+      <OptionList list={list} />
       <FieldError msg={error} />
-    </div>
+    </ComboBox>
   )
 }

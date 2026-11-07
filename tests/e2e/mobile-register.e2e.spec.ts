@@ -17,23 +17,30 @@ async function passMandateGate(page: Page) {
   await expect(page.getByRole('heading', { name: /individual registration/i })).toBeVisible()
 }
 
+// react aria closes a combobox popover when the page scrolls, so bring the
+// field into view first, then tap its toggle like a person would
+async function openOptions(page: Page, label: string) {
+  const field = page.getByRole('combobox', { name: label })
+  await field.scrollIntoViewIfNeeded()
+  await page.getByRole('button', { name: `Show suggestions ${label}` }).tap()
+  const option = page.getByRole('listbox').getByRole('option').first()
+  // ios waits for the virtual keyboard before placing the popover
+  await expect(option).toBeInViewport()
+  return { field, option, label: (await option.innerText()).trim() }
+}
+
 test('register: touch taps register option selections', async ({ page }) => {
   await page.goto(BASE + '/join')
   await passMandateGate(page)
 
   // SearchableSelect
-  const gender = page.getByRole('combobox', { name: /gender/i })
-  await gender.tap()
-  const genderOption = page.getByRole('option').first()
-  const genderLabel = (await genderOption.innerText()).trim()
-  await genderOption.tap()
-  await expect(gender).toHaveValue(genderLabel)
+  const gender = await openOptions(page, 'Gender *')
+  await gender.option.tap()
+  await expect(gender.field).toHaveValue(gender.label)
 
-  // MultiSelectDropdown
-  const wg = page.getByRole('combobox', { name: /working groups/i })
-  await wg.tap()
-  const wgOption = page.getByRole('option').first()
-  const wgLabel = await wgOption.locator('span').innerText()
-  await wgOption.tap()
-  await expect(wg).toHaveAttribute('placeholder', new RegExp(wgLabel))
+  // MultiSelectDropdown keeps the list open and shows each choice as a tag
+  const wg = await openOptions(page, 'Working groups')
+  await wg.option.tap()
+  await expect(wg.option).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.comboTag').first()).toContainText(wg.label)
 })

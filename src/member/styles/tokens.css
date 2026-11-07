@@ -59,6 +59,15 @@
   --motion-panel: 280ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* stacking layers, low to high; 1-2 inside a component stay local */
+  --z-dropdown: 30;
+  --z-float: 40;
+  --z-sticky: 45;
+  --z-sheet: 60;
+  --z-popover: 80;
+  --z-palette: 100;
+  --z-skip-link: 500;
   --motion-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
   --motion-shift: 6px;
 
