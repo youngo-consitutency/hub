@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
 
-// S10 elections: ballots key on random voter credentials, never accounts —
-// server-trust secrecy, not end-to-end verifiable like Belenios (see vault
-// OSS evaluation). Externally-run elections link via elections.externalRef.
+// S10 elections: nominations, screening, eligibility and results live here.
+// votes are cast on belenios (secret, publicly verifiable ballots); the
+// election's belenios link is externalRef
 
 export const Elections: CollectionConfig = {
   slug: 'elections',
@@ -102,72 +102,6 @@ export const ElectionCandidates: CollectionConfig = {
 
 // Voter registry: one credential per eligible voter per election. Only the
 // token's HMAC is stored — the raw token is returned once at issuance.
-export const ElectionVoters: CollectionConfig = {
-  slug: 'election-voters',
-  access: {
-    read: noAccess,
-    ...serverWrites,
-  },
-  fields: [
-    {
-      name: 'election',
-      type: 'relationship',
-      relationTo: 'elections',
-      required: true,
-      index: true,
-    },
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
-    {
-      name: 'kind',
-      type: 'select',
-      required: true,
-      options: ['individual', 'organisation'],
-    },
-    { name: 'tokenHash', type: 'text', required: true, index: true },
-    { name: 'issuedAt', type: 'date', required: true },
-    { name: 'votedAt', type: 'date' },
-  ],
-}
-
-// Secret ballot: keyed by election + race + token hash. No account column.
-export const ElectionBallots: CollectionConfig = {
-  slug: 'election-ballots',
-  access: {
-    read: noAccess,
-    ...serverWrites,
-  },
-  // One ballot per credential per race — enforced at the database.
-  indexes: [{ unique: true, fields: ['election', 'race', 'voterTokenHash'] }],
-  fields: [
-    {
-      name: 'election',
-      type: 'relationship',
-      relationTo: 'elections',
-      required: true,
-      index: true,
-    },
-    { name: 'race', type: 'text', required: true, index: true },
-    { name: 'voterTokenHash', type: 'text', required: true, index: true },
-    {
-      name: 'kind',
-      type: 'select',
-      required: true,
-      options: ['individual', 'organisation'],
-    },
-    // Ordered candidate ids; empty array = blank ballot.
-    { name: 'ranks', type: 'json', required: true },
-    { name: 'castAt', type: 'date', required: true },
-  ],
-}
-
-// ── Selections (S24) ─────────────────────────────────────────────────────
-
 export const Selections: CollectionConfig = {
   slug: 'selections',
   access: {
