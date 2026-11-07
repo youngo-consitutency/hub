@@ -32,7 +32,7 @@
     "@payloadcms/next": "3.92.1",
     "@payloadcms/richtext-lexical": "3.92.1",
     "@payloadcms/ui": "3.92.1",
-    "@sentry/nextjs": "^11.10.0",
+    "@sentry/nextjs": "11.10.0",
     "calendar-link": "^2.11.6",
     "cross-env": "^10.1.0",
     "dotenv": "^18.0.9",
