@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
 import { TbX } from 'react-icons/tb'
 
 let openPanels = 0
@@ -63,6 +64,7 @@ export function SidePanel({
   }, [closing])
 
   const close = () => setClosing(true)
+  // a modal dialog makes everything outside it inert, so popovers portal into it
   return (
     <dialog
       ref={dialogRef}
@@ -77,19 +79,21 @@ export function SidePanel({
         if (event.target === event.currentTarget) close()
       }}
     >
-      <div className="routePeekToolbar">
-        {showTitle && <h2 className="sidePanelTitle">{title}</h2>}
-        {actions}
-        <button
-          type="button"
-          className="iconButton"
-          aria-label={`Close ${title.toLowerCase()}`}
-          onClick={close}
-        >
-          <TbX size={18} strokeWidth={1.75} aria-hidden />
-        </button>
-      </div>
-      <div className="routePeekBody">{children}</div>
+      <PortalProvider getContainer={() => dialogRef.current}>
+        <div className="routePeekToolbar">
+          {showTitle && <h2 className="sidePanelTitle">{title}</h2>}
+          {actions}
+          <button
+            type="button"
+            className="iconButton"
+            aria-label={`Close ${title.toLowerCase()}`}
+            onClick={close}
+          >
+            <TbX size={18} strokeWidth={1.75} aria-hidden />
+          </button>
+        </div>
+        <div className="routePeekBody">{children}</div>
+      </PortalProvider>
     </dialog>
   )
 }

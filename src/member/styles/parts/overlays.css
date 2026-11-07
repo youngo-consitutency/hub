@@ -502,7 +502,7 @@
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  z-index: 20;
+  z-index: var(--z-dropdown);
   width: 380px;
   max-width: min(92vw, 380px);
   display: flex;
@@ -580,7 +580,7 @@
   position: absolute;
   left: 0;
   top: calc(100% + 6px);
-  z-index: 30;
+  z-index: var(--z-dropdown);
   min-width: 240px;
   width: max-content;
   max-width: min(92vw, 300px);
@@ -627,7 +627,7 @@
 .paletteBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: var(--z-palette);
   background: var(--overlay);
   display: flex;
   align-items: flex-start;
@@ -732,7 +732,7 @@
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 40;
+  z-index: var(--z-float);
   display: inline-flex;
   align-items: center;
   gap: 8px;
