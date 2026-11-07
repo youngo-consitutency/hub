@@ -8,7 +8,6 @@ import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { defaultEmailFrom } from './lib/env'
 import { emailConfigured, getEmailTransport } from './lib/email'
 
-import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Accounts } from './collections/Accounts'
 import { AuthorityRecords } from './collections/AuthorityRecords'
@@ -56,8 +55,6 @@ import {
 import {
   Elections,
   ElectionCandidates,
-  ElectionVoters,
-  ElectionBallots,
   Selections,
   SelectionCommittee,
   SelectionApplications,
@@ -85,12 +82,11 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  // No admin UI: the generated page routes are deleted, so the console does
-  // not exist. Staff operations run through the Payload local API (scripts,
-  // terminal sessions) and direct database access; `users` stays only as the
-  // auth collection that backs isStaff access checks.
+  // No admin UI and no console login: staff operations run through the
+  // Payload local API (scripts, terminal sessions) and direct database access.
+  // `accounts` is the only auth collection.
+  admin: { user: 'accounts' },
   collections: [
-    Users,
     Media,
     Accounts,
     AuthorityRecords,
@@ -134,8 +130,6 @@ export default buildConfig({
     DecisionEvents,
     Elections,
     ElectionCandidates,
-    ElectionVoters,
-    ElectionBallots,
     Selections,
     SelectionCommittee,
     SelectionApplications,

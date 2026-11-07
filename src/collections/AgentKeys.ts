@@ -1,12 +1,12 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, staffWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 // Personal agent keys for the YOUNGO MCP gateway. Only the sha256 of the
 // secret is stored; the secret is shown once at creation. Keys die with the
 // password epoch they were minted under, and on expiry or revocation.
 export const AgentKeys: CollectionConfig = {
   slug: 'agent-keys',
-  access: { read: isStaff, ...staffWrites },
+  access: { read: noAccess, ...serverWrites },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
     { name: 'tokenHash', type: 'text', required: true, unique: true, index: true },
@@ -23,7 +23,7 @@ export const AgentKeys: CollectionConfig = {
 // the stored result; different arguments under the same key are a conflict.
 export const AgentIdempotency: CollectionConfig = {
   slug: 'agent-idempotency',
-  access: { read: isStaff, ...staffWrites },
+  access: { read: noAccess, ...serverWrites },
   fields: [
     { name: 'agentKey', type: 'relationship', relationTo: 'agent-keys', required: true },
     { name: 'tool', type: 'text', required: true },

@@ -1,23 +1,21 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff } from '../lib/collectionAccess'
+import { noAccess } from '../lib/collectionAccess'
 
 export const FeedbackTickets: CollectionConfig = {
   slug: 'feedback-tickets',
   access: {
     read: ({ req }) => {
       if (!req.user) return false
-      if (req.user.collection === 'users') return true
       return { account: { equals: req.user.id } }
     },
     create: ({ req, data }) => {
-      if (req.user?.collection === 'users') return true
       // Members may only file tickets under their own account.
       return (
         req.user?.collection === 'accounts' && (!data?.account || data?.account === req.user.id)
       )
     },
-    update: isStaff,
-    delete: isStaff,
+    update: noAccess,
+    delete: noAccess,
   },
   fields: [
     { name: 'title', type: 'text', required: true },

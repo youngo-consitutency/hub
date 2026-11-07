@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { staffWrites } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 export const ResearchNotes: CollectionConfig = {
   slug: 'research-notes',
   access: {
     read: ({ req }) => Boolean(req.user),
-    ...staffWrites,
+    ...serverWrites,
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },

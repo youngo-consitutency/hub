@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
+import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
 
 // S09 decision-making: consultation → revision → decision → (consensus |
 // voting) via the src/endpoints/decisions.ts state machine. REST writes are
@@ -8,8 +8,8 @@ import { isStaff, isStaffOrMember, staffWrites } from '../lib/collectionAccess'
 export const DecisionProposals: CollectionConfig = {
   slug: 'decision-proposals',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -119,8 +119,8 @@ export const DecisionProposals: CollectionConfig = {
 export const DecisionFlags: CollectionConfig = {
   slug: 'decision-flags',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -182,8 +182,8 @@ export const DecisionFlags: CollectionConfig = {
 export const DecisionComments: CollectionConfig = {
   slug: 'decision-comments',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -208,8 +208,8 @@ export const DecisionComments: CollectionConfig = {
 export const DecisionBallots: CollectionConfig = {
   slug: 'decision-ballots',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   // One ballot per member per proposal — enforced at the database.
   indexes: [{ unique: true, fields: ['proposal', 'account'] }],
@@ -236,8 +236,8 @@ export const DecisionBallots: CollectionConfig = {
 export const DecisionVetoes: CollectionConfig = {
   slug: 'decision-vetoes',
   access: {
-    read: isStaffOrMember,
-    ...staffWrites,
+    read: isMember,
+    ...serverWrites,
   },
   fields: [
     {
@@ -281,8 +281,8 @@ export const DecisionVetoes: CollectionConfig = {
 export const DecisionEvents: CollectionConfig = {
   slug: 'decision-events',
   access: {
-    read: isStaffOrMember,
-    create: isStaff,
+    read: isMember,
+    create: noAccess,
     update: () => false,
     delete: () => false,
   },

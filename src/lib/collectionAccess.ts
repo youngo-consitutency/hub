@@ -2,28 +2,27 @@ import type { AnyValue } from './domain'
 import type { Access, FieldAccess } from 'payload'
 import { getAccessProfile, hasCapability } from './access'
 
-// Access model for generated REST/GraphQL surfaces. Domain endpoints
-// authorise actors then write via the Local API with overrideAccess;
-// collection access exists so generated APIs can't bypass that — reads stay
-// scoped, writes are staff-only or disabled.
+// access for the generated rest/graphql surfaces. domain endpoints authorise
+// the actor, then write through the local api with overrideAccess; these rules
+// keep the generated api from bypassing that
 
-export const isStaff: Access = ({ req }) => req.user?.collection === 'users'
+// there is no console login: nothing writes through the generated api, and
+// only signed-in member accounts read where a collection allows it
+export const noAccess: Access = () => false
 
-export const isStaffOrMember: Access = ({ req }) =>
-  req.user?.collection === 'users' || req.user?.collection === 'accounts'
+export const isMember: Access = ({ req }) => req.user?.collection === 'accounts'
 
-// Field-level equivalents (field access takes a different args shape).
-export const isStaffField: FieldAccess = ({ req }) => req.user?.collection === 'users'
+// field-level equivalents (field access takes a different args shape)
+export const noFieldAccess: FieldAccess = () => false
 
-export const isStaffOrMemberField: FieldAccess = ({ req }) =>
-  req.user?.collection === 'users' || req.user?.collection === 'accounts'
+export const isMemberField: FieldAccess = ({ req }) => req.user?.collection === 'accounts'
 
-// Any authenticated principal reads; only console staff writes. Domain
-// endpoints write via overrideAccess, so legitimate flows are unaffected.
-export const staffWrites = {
-  create: isStaff,
-  update: isStaff,
-  delete: isStaff,
+// domain endpoints write through the local api with overrideAccess, so the
+// generated api never needs to
+export const serverWrites = {
+  create: noAccess,
+  update: noAccess,
+  delete: noAccess,
 } as const
 
 // Capability check for generated-API reads, same as the endpoint guards.
