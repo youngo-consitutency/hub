@@ -354,22 +354,28 @@ function guardFor(path: string) {
 
 // the locked screen this account would see on `path`, or null
 export function lockFor(path: string, account: AnyValue) {
-  // access loads after the account; until it arrives the api decides, so a
-  // role holder never sees a locked screen flash (or stay) while it loads
-  if (account && !account.access) return null
   // no account means no roles: every guarded page locks
   const viewer = viewerOf(account)
   // anyone signed in may open a seat invite before holding a seat
   if (path.startsWith('/ngo/accept')) return null
   // a contact point only manages the groups they hold a mandate for
-  if (path.startsWith('/cp/')) {
-    return canManageGroup(account, path.split('/')[2])
+  const lock = path.startsWith('/cp/')
+    ? canManageGroup(account, path.split('/')[2])
       ? null
       : {
           title: 'WG Contact Points only',
           body: 'A current Contact Point assignment for this working group is required.',
         }
-  }
-  const route = guardFor(path)
-  return route && !allowed(route, viewer, path) ? route.locked! : null
+    : (() => {
+        const route = guardFor(path)
+        return route && !allowed(route, viewer, path) ? route.locked! : null
+      })()
+  // guarded pages open only on explicit access: while it loads or if it failed, stay locked with a retry
+  if (lock && account && !account.access)
+    return {
+      title: 'Checking your access',
+      body: 'We could not confirm your access yet. Retry if this does not clear.',
+      retry: true,
+    }
+  return lock
 }

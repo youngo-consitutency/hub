@@ -85,6 +85,13 @@ describe('route registry', () => {
     expect(lockFor('/calendar', member)).toBeNull()
   })
 
+  it('keeps guarded pages locked, with a retry, until access arrives', () => {
+    const loading = { isVerified: true }
+    expect(lockFor('/admin', loading)).toMatchObject({ retry: true })
+    expect(lockFor('/cp/finance', loading)).toMatchObject({ retry: true })
+    expect(lockFor('/calendar', loading)).toBeNull()
+  })
+
   it('limits contact points to their own groups', () => {
     expect(lockFor('/cp', member)?.title).toBe('WG Contact Points only')
     expect(lockFor('/cp', contactPoint)).toBeNull()
@@ -122,9 +129,8 @@ describe('route registry', () => {
     expect(sections.flatMap((g) => g.items.map((i) => i.href))).not.toContain('/ngo')
   })
 
-  it('waits for access before locking, and locks everything without an account', () => {
-    // access arrives after the account; a role holder must not see a lock meanwhile
-    expect(lockFor('/team/membership', { isVerified: true })).toBeNull()
+  it('locks everything without an account, and until access arrives', () => {
+    expect(lockFor('/team/membership', { isVerified: true })).toMatchObject({ retry: true })
     expect(lockFor('/staff/review', null)?.title).toBe('Review team only')
     expect(lockFor('/admin', null)?.title).toBe('Admin only')
   })

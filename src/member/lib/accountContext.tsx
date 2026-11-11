@@ -14,6 +14,8 @@ export function AccountProvider({ initialAccount, children }: AccountProviderPro
   const [account, setAccountState] = useState(initialAccount || getCachedAccount())
 
   const accountId = account?.id
+  const [accessTry, setAccessTry] = useState(0)
+  const reloadAccess = useCallback(() => setAccessTry((n) => n + 1), [])
   useEffect(() => {
     if (!accountId) return
     let alive = true
@@ -23,24 +25,27 @@ export function AccountProvider({ initialAccount, children }: AccountProviderPro
         setAccountState((current: AnyValue) => (current ? { ...current, access } : current))
       })
       .catch(() => {
-        /* role workspaces remain hidden if access cannot load */
+        /* role workspaces stay locked if access cannot load; the lock offers a retry */
       })
     return () => {
       alive = false
     }
-  }, [accountId])
+  }, [accountId, accessTry])
 
   const setAccount = useCallback((acc: AnyValue) => {
     setAccountState(acc)
     if (acc) setSession({ account: acc })
   }, [])
 
-  const value = useMemo(() => ({ account, setAccount }), [account, setAccount])
+  const value = useMemo(
+    () => ({ account, setAccount, reloadAccess }),
+    [account, setAccount, reloadAccess],
+  )
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
 }
 
 export function useAccount() {
   const ctx = useContext(AccountContext)
-  if (!ctx) return { account: getCachedAccount(), setAccount: () => {} }
+  if (!ctx) return { account: getCachedAccount(), setAccount: () => {}, reloadAccess: () => {} }
   return ctx
 }
