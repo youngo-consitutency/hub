@@ -614,9 +614,11 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
           <h3>{name}</h3>
         </div>
         <p className="meta">
-          {holders.length
-            ? `Contact Points: ${holders.join(', ')}`
-            : 'No Contact Point recorded yet.'}
+          {!contact.holders
+            ? 'Sign in to see the Contact Points.'
+            : holders.length
+              ? `Contact Points: ${holders.join(', ')}`
+              : 'No Contact Point recorded yet.'}
         </p>
         <span className="workingGroupContactMeta">
           {contact.publicEmail || 'Contact details and channels'}
