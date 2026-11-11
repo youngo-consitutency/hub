@@ -12,8 +12,9 @@ import type { Doc, AccountLike, AccountView, AnyValue } from './domain'
 
 const WEBSITE_PERMISSIONS = ['content_editor', 'content_publisher']
 
-const wgDutyRoleLabel = (role: string | null | undefined) =>
-  role === 'lead' ? 'Lead' : role === 'contact' ? 'Contact Point' : null
+// contact points come from current authority records, never the participation row
+const wgDutyRoleLabel = (role: string | null | undefined, isContactPoint: boolean) =>
+  isContactPoint ? 'Contact Point' : role === 'lead' ? 'Lead' : null
 
 async function profileRow(accountId: number) {
   const pool = getPgPool()
@@ -119,12 +120,15 @@ function safePerson(
   profile: AnyValue,
   account: AccountLike,
   relationships: AnyValue,
-  { duty = false, workingGroup = '' } = {},
+  { duty = false, workingGroup = '', contactPointIds = new Set<number>() } = {},
 ) {
   const group = workingGroup
     ? relationships.workingGroups.find((item: Doc) => item.slug === workingGroup)
     : null
-  const contactRole = wgDutyRoleLabel(group?.role)
+  const contactRole = wgDutyRoleLabel(
+    group?.role,
+    Boolean(workingGroup) && contactPointIds.has(account.id),
+  )
   const showLocation = duty || profile.showCountry
   const directoryOpen = profile.directoryVisibility === 'members'
   return {
@@ -191,26 +195,31 @@ export async function listMemberPeople({
     )
   if (cleanTag)
     add(`EXISTS (SELECT 1 FROM unnest(p.expertise_tags) t WHERE lower(t)=lower(?))`, cleanTag)
+  let contactPointIds = new Set<number>()
   if (cleanWg) {
-    values.push(cleanWg)
-    const slot = `$${values.length}`
-    where.push(
-      `(a.wg_interests ? ${slot} OR EXISTS (
+    // contact points come from authority records, the same source as the
+    // directory and the permission checks, never from participation rows
+    const target = { role: 'wg.contact_point', scopeType: 'working_group', scopeId: cleanWg }
+    const ids = ((await holdersFor([target])).get(holderKey(target)) ?? []).map((h) => h.id)
+    contactPointIds = new Set(ids)
+    // only bind ids when the sql uses them, pg can't type an unused param (42P18)
+    const idSlot = () => {
+      values.push(ids)
+      return `$${values.length}::int[]`
+    }
+    if (cleanWgRole === 'manager') {
+      where.push(`a.id = ANY(${idSlot()})`)
+    } else {
+      values.push(cleanWg)
+      const slot = `$${values.length}`
+      where.push(
+        `(a.wg_interests ? ${slot} OR EXISTS (
         SELECT 1 FROM wg_progress w
         WHERE w.account_id=a.id AND w.wg_slug=${slot}
           AND w.status IN ('interested','pending_approval','active')
       ))`,
-    )
-    if (cleanWgRole) {
-      // contact points come from authority records, the same source as the
-      // directory and the permission checks, never from participation rows
-      const target = { role: 'wg.contact_point', scopeType: 'working_group', scopeId: cleanWg }
-      const ids = ((await holdersFor([target])).get(holderKey(target)) ?? []).map((h) => h.id)
-      values.push(ids)
-      const idSlot = `$${values.length}::int[]`
-      where.push(
-        cleanWgRole === 'manager' ? `a.id = ANY(${idSlot})` : `NOT (a.id = ANY(${idSlot}))`,
       )
+      if (cleanWgRole) where.push(`NOT (a.id = ANY(${idSlot()}))`)
     }
   }
   const fromSql = dutyManagers
@@ -246,6 +255,7 @@ export async function listMemberPeople({
       return safePerson(profile, account, relationshipsFor(account, maps), {
         duty: dutyManagers,
         workingGroup: cleanWg,
+        contactPointIds,
       })
     }),
     total,
