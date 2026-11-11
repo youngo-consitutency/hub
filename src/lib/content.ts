@@ -5,7 +5,7 @@ import { resolveCoyStatus } from '../shared/coyStatus'
 import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
 import { holderKey, holdersFor, type RoleTarget } from './roleHolders'
-import { AUTHORITY_ROLES } from './authority'
+import { AUTHORITY_ROLES, normaliseScopeType } from './authority'
 
 type AnyRecord = Doc
 type Req = PayloadRequest | Payload
@@ -289,8 +289,14 @@ export async function getCoy(req: Req, slug: string) {
 // the role a contact row stands for: explicit, or a working group's contact point
 function contactTarget(c: AnyRecord): RoleTarget | null {
   if (c.role && c.scopeId) {
-    const scopeType = AUTHORITY_ROLES[c.role]?.scopeTypes[0]
-    return scopeType ? { role: c.role, scopeType, scopeId: c.scopeId } : null
+    // stored roles may be stale: own keys only, and the scope type must fit the role
+    const spec = Object.hasOwn(AUTHORITY_ROLES, c.role) ? AUTHORITY_ROLES[c.role] : null
+    const scopeType = normaliseScopeType(
+      c.scopeType || (spec?.scopeTypes.length === 1 ? spec.scopeTypes[0] : ''),
+    )
+    return spec?.scopeTypes.includes(scopeType)
+      ? { role: c.role, scopeType, scopeId: c.scopeId }
+      : null
   }
   const slug = wgRef(c.wg)?.slug
   return slug ? { role: 'wg.contact_point', scopeType: 'working_group', scopeId: slug } : null

@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isMember, serverWrites } from '../lib/collectionAccess'
-import { AUTHORITY_ROLES } from '../lib/authority'
+import { AUTHORITY_ROLES, normaliseScopeType } from '../lib/authority'
 
 // role contact channels: a mailbox plus a member-only channel per role
 // holders come from authority-records via role + scopeId (working-group rows
@@ -28,7 +28,7 @@ export const DirectoryContacts: CollectionConfig = {
       type: 'text',
       // an authority registry key, e.g. focal_point
       validate: (value: unknown) =>
-        !value || Boolean(AUTHORITY_ROLES[String(value)]) || 'Unknown authority role.',
+        !value || Object.hasOwn(AUTHORITY_ROLES, String(value)) || 'Unknown authority role.',
     },
     {
       name: 'scopeId',
@@ -36,6 +36,22 @@ export const DirectoryContacts: CollectionConfig = {
       // a role without its scope can't resolve to anyone
       validate: (value: unknown, { siblingData }: { siblingData?: { role?: string } }) =>
         !siblingData?.role || Boolean(value) || 'Set the scope this role applies to.',
+    },
+    {
+      name: 'scopeType',
+      type: 'text',
+      // needed when the role can sit under more than one scope type
+      validate: (value: unknown, { siblingData }: { siblingData?: { role?: string } }) => {
+        if (!value) return true
+        const spec =
+          siblingData?.role && Object.hasOwn(AUTHORITY_ROLES, siblingData.role)
+            ? AUTHORITY_ROLES[siblingData.role]
+            : null
+        return (
+          Boolean(spec?.scopeTypes.includes(normaliseScopeType(String(value)))) ||
+          'Scope type does not fit this role.'
+        )
+      },
     },
     { name: 'personName', type: 'text' },
     { name: 'channelValue', type: 'text' },
