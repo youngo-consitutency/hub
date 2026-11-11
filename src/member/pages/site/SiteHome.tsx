@@ -104,7 +104,7 @@ export function SiteHome() {
 
       <div className="siteMain">
         <section className="siteSection" aria-labelledby="mission-heading">
-          <SectionIntro id="mission-heading" {...mission} />
+          <SectionIntro {...mission} id="mission-heading" />
           <ul className="siteIdeas">
             {(mission.items || []).map(({ icon, title, body }: AnyValue) => {
               const Icon = iconFor(icon)
@@ -122,7 +122,7 @@ export function SiteHome() {
 
       <section className="siteBand" aria-labelledby="organised-heading">
         <div className="siteMain siteBandInner">
-          <SectionIntro id="organised-heading" {...organisation} />
+          <SectionIntro {...organisation} id="organised-heading" />
           <dl className="siteFacts">
             {(organisation.stats || []).map(({ value, label }: AnyValue) => (
               <div key={value}>
@@ -137,7 +137,7 @@ export function SiteHome() {
 
       <div className="siteMain">
         <section className="siteSection" aria-labelledby="what-heading">
-          <SectionIntro id="what-heading" {...takePart} />
+          <SectionIntro {...takePart} id="what-heading" />
           <ul className="siteTiles">
             {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
               const Icon = iconFor(icon)
@@ -161,7 +161,7 @@ export function SiteHome() {
         </section>
 
         <section className="siteSection siteSplit" aria-labelledby="values-heading">
-          <SectionIntro id="values-heading" {...principles} />
+          <SectionIntro {...principles} id="values-heading" />
           <ul className="sitePrinciples" aria-label="YOUNGO principles">
             {(principles.items || []).map((principle: AnyValue) => (
               <li key={principle}>{principle}</li>
@@ -170,7 +170,7 @@ export function SiteHome() {
         </section>
 
         <section className="siteSection" aria-labelledby="history-heading">
-          <SectionIntro id="history-heading" {...history} />
+          <SectionIntro {...history} id="history-heading" />
           <ol className="siteHistory">
             {(history.items || []).map(({ year, title, body }: AnyValue) => (
               <li key={year}>

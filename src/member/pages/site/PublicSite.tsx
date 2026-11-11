@@ -49,7 +49,13 @@ function SiteNavMenu({ id, label, path }: { id: SiteMenu; label: string; path: s
               id={route.href}
               href={route.href}
               className="siteNavMenuItem"
-              aria-current={isSiteRouteActive(path, route.href) ? 'page' : undefined}
+              // react aria drops aria-current, so set it on the anchor itself
+              ref={(el: HTMLElement | null) => {
+                if (!el) return
+                // clear it too, the element can outlive a client-side nav
+                if (isSiteRouteActive(path, route.href)) el.setAttribute('aria-current', 'page')
+                else el.removeAttribute('aria-current')
+              }}
             >
               {route.label}
             </MenuItem>
@@ -253,13 +259,13 @@ export function PublicSite() {
   const consult = site?.consultBanner
   let Page: AnyValue = SiteNotFound
   if (isSiteHome(path)) Page = SiteHome
-  else if (path.startsWith('/about/working-groups')) Page = SiteWorkingGroups
-  else if (path.startsWith('/about/resources')) Page = SiteResources
-  else if (path.startsWith('/about/gys')) Page = SiteGys
-  else if (path.startsWith('/about/coy')) Page = SiteCoy
-  else if (path.startsWith('/about/faq')) Page = SiteFaq
-  else if (path.startsWith('/about/contact')) Page = SiteContact
-  else if (path.startsWith('/about/organisation')) Page = PublicPlatform
+  else if (isSiteRouteActive(path, '/about/working-groups')) Page = SiteWorkingGroups
+  else if (isSiteRouteActive(path, '/about/resources')) Page = SiteResources
+  else if (isSiteRouteActive(path, '/about/gys')) Page = SiteGys
+  else if (isSiteRouteActive(path, '/about/coy')) Page = SiteCoy
+  else if (isSiteRouteActive(path, '/about/faq')) Page = SiteFaq
+  else if (isSiteRouteActive(path, '/about/contact')) Page = SiteContact
+  else if (isSiteRouteActive(path, '/about/organisation')) Page = PublicPlatform
 
   return (
     <div className="siteShell">
