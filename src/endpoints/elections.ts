@@ -147,6 +147,8 @@ export const electionEndpoints: Endpoint[] = [
         patch.externalRef = null
         patch.eligibleIndividualCount = null
         patch.eligibleOrgCount = null
+        patch.votingOpensAt = null
+        patch.votingCloseAt = null
       }
       if (next === 'voting') {
         if (!e.externalRef)
@@ -350,12 +352,25 @@ export const electionEndpoints: Endpoint[] = [
       const organisations = count(b.ballotsCast?.organisations)
       if (individuals === null) fields.individuals = 'Ballots cast by individuals.'
       if (organisations === null) fields.organisations = 'Ballots cast by organisations.'
+      // turnout can't exceed the electorate belenios holds
+      if (
+        individuals !== null &&
+        e.eligibleIndividualCount != null &&
+        individuals > e.eligibleIndividualCount
+      )
+        fields.individuals = 'More ballots than eligible individuals.'
+      if (
+        organisations !== null &&
+        e.eligibleOrgCount != null &&
+        organisations > e.eligibleOrgCount
+      )
+        fields.organisations = 'More ballots than eligible organisations.'
       const { docs: screened } = await req.payload.find({
         collection: 'election-candidates',
         where: {
           and: [{ election: { equals: e.id } }, { status: { equals: 'screened_in' } }],
         },
-        limit: 500,
+        pagination: false,
         overrideAccess: true,
       })
       const raceSlugs: string[] = (e.races ?? []).map((race: AnyValue) => race.slug)
