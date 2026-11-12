@@ -54,11 +54,14 @@ const OPTIONS: sanitizeHtml.IOptions = {
 function wrapLooseText(html: string) {
   let out = ''
   let run = ''
+  // track text as it's collected, so we never regex-strip tags to find it
+  let runHasText = false
   let depth = 0
   let list = false
   const flush = () => {
-    out += run.replace(/<[^>]+>/g, '').trim() ? `<p>${run}</p>` : run
+    out += runHasText ? `<p>${run}</p>` : run
     run = ''
+    runHasText = false
   }
   for (const part of html.split(/(<[^>]+>)/)) {
     const tag = /^<(\/)?(\w+)/.exec(part)
@@ -77,7 +80,10 @@ function wrapLooseText(html: string) {
       depth += tag[1] ? -1 : 1
       out += part
     } else if (depth) out += part
-    else run += part
+    else {
+      run += part
+      if (!tag && part.trim()) runHasText = true
+    }
   }
   flush()
   return list ? `${out}</ul>` : out
