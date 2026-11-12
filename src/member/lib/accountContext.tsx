@@ -19,13 +19,23 @@ export function AccountProvider({ initialAccount, children }: AccountProviderPro
   useEffect(() => {
     if (!accountId) return
     let alive = true
+    // a retry goes back to the calm loading lock
+    setAccountState((current: AnyValue) =>
+      current?.accessFailed ? { ...current, accessFailed: false } : current,
+    )
     apiGet('/member/access')
       .then((access) => {
         if (!alive) return
-        setAccountState((current: AnyValue) => (current ? { ...current, access } : current))
+        setAccountState((current: AnyValue) =>
+          current ? { ...current, access, accessFailed: false } : current,
+        )
       })
       .catch(() => {
-        /* role workspaces stay locked if access cannot load; the lock offers a retry */
+        // role workspaces stay locked; the lock switches to a retry
+        if (!alive) return
+        setAccountState((current: AnyValue) =>
+          current ? { ...current, accessFailed: true } : current,
+        )
       })
     return () => {
       alive = false

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ACCESS_FAILED,
+  CHECKING_ACCESS,
   ROUTES,
   lockFor,
   responsibilitiesFor,
@@ -85,11 +87,16 @@ describe('route registry', () => {
     expect(lockFor('/calendar', member)).toBeNull()
   })
 
-  it('keeps guarded pages locked, with a retry, until access arrives', () => {
+  it('keeps guarded pages calmly locked until access arrives, with a retry only on failure', () => {
     const loading = { isVerified: true }
-    expect(lockFor('/admin', loading)).toMatchObject({ retry: true })
-    expect(lockFor('/cp/finance', loading)).toMatchObject({ retry: true })
+    expect(lockFor('/admin', loading)).toBe(CHECKING_ACCESS)
+    expect(lockFor('/cp/finance', loading)).toBe(CHECKING_ACCESS)
+    expect(CHECKING_ACCESS).not.toHaveProperty('retry')
     expect(lockFor('/calendar', loading)).toBeNull()
+    const failed = { isVerified: true, accessFailed: true }
+    expect(lockFor('/admin', failed)).toBe(ACCESS_FAILED)
+    expect(lockFor('/cp/finance', failed)).toBe(ACCESS_FAILED)
+    expect(lockFor('/calendar', failed)).toBeNull()
   })
 
   it('limits contact points to their own groups', () => {
@@ -130,7 +137,7 @@ describe('route registry', () => {
   })
 
   it('locks everything without an account, and until access arrives', () => {
-    expect(lockFor('/team/membership', { isVerified: true })).toMatchObject({ retry: true })
+    expect(lockFor('/team/membership', { isVerified: true })).toBe(CHECKING_ACCESS)
     expect(lockFor('/staff/review', null)?.title).toBe('Review team only')
     expect(lockFor('/admin', null)?.title).toBe('Admin only')
   })

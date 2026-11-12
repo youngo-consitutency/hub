@@ -210,6 +210,15 @@ describe('elections (S10) and selections (S24)', () => {
       ]) {
         expect((await record(facilitator.cookie, bad)).status).toBe(400)
       }
+      // turnout can't exceed the exported electorate, for either kind
+      for (const [kind, ballotsCast] of [
+        ['individuals', { individuals: 1_000_000, organisations: 0 }],
+        ['organisations', { individuals: 3, organisations: 1_000_000 }],
+      ] as const) {
+        const over = await record(facilitator.cookie, { ...result, ballotsCast })
+        expect(over.status).toBe(400)
+        expect((await over.json()).error.fields[kind]).toMatch(/More ballots than eligible/)
+      }
       const recorded = await record(facilitator.cookie, result)
       expect(recorded.status).toBe(200)
       const done = (await recorded.json()).election
@@ -262,11 +271,16 @@ describe('elections (S10) and selections (S24)', () => {
         races: { seat: { elected: [cand.id] } },
       }),
     })
-    expect((await failed.json()).election.status).toBe('restart_required')
+    const restart = (await failed.json()).election
+    expect(restart.status).toBe('restart_required')
+    expect(restart.votingOpensAt).toBeTruthy()
     const reopened = await call('/advance', { method: 'POST' })
     const again = (await reopened.json()).election
     expect(again.status).toBe('nominations')
     expect(again.ballotUrl).toBeNull()
+    // the old voting window goes with the spent ballot
+    expect(again.votingOpensAt).toBeNull()
+    expect(again.votingCloseAt).toBeNull()
     // the spent ballot can't be reused: voting needs a new link
     const stale = await call('/advance', { method: 'POST' })
     expect((await stale.json()).error.code).toBe('ballot_missing')

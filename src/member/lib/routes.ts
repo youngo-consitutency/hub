@@ -352,6 +352,20 @@ function guardFor(path: string) {
   ).sort((a, b) => b.href.length - a.href.length)[0]
 }
 
+// shown on guarded pages while access loads
+export const CHECKING_ACCESS = {
+  title: 'Checking your access…',
+  body: 'This page opens once your access has loaded.',
+  busy: true,
+} as const
+
+// shown on guarded pages when the access request failed
+export const ACCESS_FAILED = {
+  title: 'Access not confirmed',
+  body: 'We could not confirm your access. Check your connection and retry.',
+  retry: true,
+} as const
+
 // the locked screen this account would see on `path`, or null
 export function lockFor(path: string, account: AnyValue) {
   // no account means no roles: every guarded page locks
@@ -370,12 +384,8 @@ export function lockFor(path: string, account: AnyValue) {
         const route = guardFor(path)
         return route && !allowed(route, viewer, path) ? route.locked! : null
       })()
-  // guarded pages open only on explicit access: while it loads or if it failed, stay locked with a retry
+  // guarded pages open only on explicit access: stay locked while it loads, retry if it failed
   if (lock && account && !account.access)
-    return {
-      title: 'Checking your access',
-      body: 'We could not confirm your access yet. Retry if this does not clear.',
-      retry: true,
-    }
+    return account.accessFailed ? ACCESS_FAILED : CHECKING_ACCESS
   return lock
 }
