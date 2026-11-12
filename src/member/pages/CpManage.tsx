@@ -31,7 +31,10 @@ export function CpManage({ slug }: CpManageProps) {
   const load = useCallback(() => {
     setError(null)
     apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
-      .then((d) => setMembers(d.items || []))
+      // flatten to progress fields plus the { id, name } account ref
+      .then((d) =>
+        setMembers((d.members || []).map((m: AnyValue) => ({ ...m.progress, account: m.account }))),
+      )
       .catch((e) => setError(e.message))
   }, [slug])
 
@@ -140,14 +143,12 @@ export function CpManage({ slug }: CpManageProps) {
                           m.status === 'pending_approval' || m.status === 'interested'
                         return (
                           <div
-                            key={`${m.account_id}-${m.wg_slug}`}
+                            key={`${m.account?.id}-${m.wg_slug}`}
                             className={`mcQueueRow${needsReview ? ' mcQueueRowWarn' : ''}`}
                           >
                             <div className="mcQueueCopy">
-                              <strong>{m.name || m.email}</strong>
+                              <strong>{m.account?.name || 'Unnamed member'}</strong>
                               <p className="mcQueueMeta mono">
-                                {m.email}
-                                <span aria-hidden> · </span>
                                 {m.status.replaceAll('_', ' ')}
                                 <span aria-hidden> · </span>
                                 {assignmentLabels[m.role_in_wg] || m.role_in_wg}
@@ -158,14 +159,14 @@ export function CpManage({ slug }: CpManageProps) {
                                 <Button
                                   sm
                                   variant="secondary"
-                                  onClick={() => setRole(m.account_id, 'member', 'active')}
+                                  onClick={() => setRole(m.account?.id, 'member', 'active')}
                                 >
                                   Approve
                                 </Button>
                                 <Button
                                   sm
                                   variant="ghost"
-                                  onClick={() => setRole(m.account_id, 'member', 'rejected')}
+                                  onClick={() => setRole(m.account?.id, 'member', 'rejected')}
                                 >
                                   Reject
                                 </Button>

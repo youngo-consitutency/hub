@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
 import { getAccessProfile, hasCapability } from './access'
-import type { AccountLike, AnyValue } from './domain'
+import type { AccountLike } from './domain'
 import { isCwActive, isVerifiedAccount } from './accountStatus'
 import { getPgPool } from './pg'
 
@@ -18,11 +18,6 @@ export async function isSelector(req: PayloadRequest, account: AccountLike) {
   const access = await getAccessProfile(req, account)
   return hasCapability(access, 'selection.manage')
 }
-
-export const accountRef = (a: AnyValue) =>
-  a == null
-    ? null
-    : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
 export interface EligibleVoter {
   id: number

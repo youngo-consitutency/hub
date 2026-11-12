@@ -42,8 +42,9 @@ export function CpOverview() {
       assigned.map(async (group: Doc) => {
         try {
           const data = await apiGet(`/member/cp/${encodeURIComponent(group.slug)}/members`)
-          const pending = (data.items || []).filter(
-            (m: AnyValue) => m.status === 'pending_approval' || m.status === 'interested',
+          const pending = (data.members || []).filter(
+            ({ progress }: AnyValue) =>
+              progress.status === 'pending_approval' || progress.status === 'interested',
           ).length
           return [group.slug, pending]
         } catch {

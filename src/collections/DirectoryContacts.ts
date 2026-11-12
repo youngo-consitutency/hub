@@ -1,12 +1,12 @@
 import type { CollectionConfig } from 'payload'
-import { isMember, serverWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 // Public contact directory. personName/channelValue are members-only fields —
 // the /api/directory view strips them for anonymous callers.
 export const DirectoryContacts: CollectionConfig = {
   slug: 'directory-contacts',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
