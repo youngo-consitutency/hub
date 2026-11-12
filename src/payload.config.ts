@@ -74,6 +74,7 @@ import {
   PrivacyRequests,
 } from './collections/Operations'
 import { domainEndpoints } from './endpoints'
+import { noAccess, serverWrites } from './lib/collectionAccess'
 // Negotiation tracking/contributions use the relational negotiation_* tables
 // (migration-managed), not Payload collections — the source pipeline needs
 // immutable version rows, join tables, and uuid identity.
@@ -186,4 +187,10 @@ export default buildConfig({
   }),
   sharp,
   plugins: [],
+}).then((config) => {
+  // payload adds its lock collection during sanitize (after plugins) with member
+  // write access; there's no console to lock anything, so shut it here
+  const locks = config.collections.find((c) => c.slug === 'payload-locked-documents')
+  if (locks) locks.access = { ...locks.access, read: noAccess, ...serverWrites }
+  return config
 })

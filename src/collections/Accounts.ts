@@ -2,8 +2,8 @@ import type { CollectionConfig } from 'payload'
 import { noAccess, noFieldAccess } from '../lib/collectionAccess'
 
 // Member accounts — replaces hub_accounts + hub_sessions + password/verify
-// token tables. Payload auth provides login/logout/me/forgot/reset and
-// httpOnly cookie sessions; the fields below carry YOUNGO's registration and
+// token tables. Payload auth provides password hashing and httpOnly cookie
+// sessions behind /api/auth/*; the fields below carry YOUNGO's registration and
 // lifecycle model.
 export const Accounts: CollectionConfig = {
   slug: 'accounts',
@@ -28,16 +28,10 @@ export const Accounts: CollectionConfig = {
       },
     ],
   },
-  // payload adds a first-register endpoint to every auth collection; on an
-  // empty database it would create a verified account with any fields,
-  // skipping registration. accounts only come from the registration flow
-  endpoints: [
-    {
-      path: '/first-register',
-      method: 'post',
-      handler: () => Response.json({ errors: [{ message: 'Not found.' }] }, { status: 404 }),
-    },
-  ],
+  // no generated rest here: payload's login/forgot/reset/first-register/unlock
+  // skip our rate limits and reset flow. /api/auth/* is the only way in;
+  // payload.login and cookie sessions still work without these
+  endpoints: false,
   access: {
     read: ({ req }) => {
       if (!req.user) return false

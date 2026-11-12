@@ -20,7 +20,8 @@ describe('generated auth surface', () => {
   })
 
   it('never creates an account through first-register', async () => {
+    // accounts has no generated endpoints at all
     const res = await attempt('accounts')
-    expect(res.status).toBe(404)
+    expect(res.status).toBe(501)
   })
 })

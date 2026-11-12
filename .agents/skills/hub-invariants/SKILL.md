@@ -26,7 +26,7 @@ Apply these on every change. They exist because real bugs shipped when they were
 
 - Members act through domain endpoints (`src/endpoints/*`), which authorise the actor then write via the Local API with `overrideAccess: true`. Generated REST/GraphQL writes stay staff-only — never open them to members.
 - Every authority/workflow transition writes an audit entry with actor, action, target, reason.
-- Free-text input goes through `cleanText` (strips markup to a fixpoint). Fields are validated by hand into `fail.validation` (zod only in `src/lib/registration.ts`).
+- Free-text input goes through `cleanText` (strips markup to a fixpoint). Fields are validated into `fail.validation` — by hand, or with zod for request validation.
 - Never log or return credentials, sessions, guardian/minority data, or personal contact fields. Member-facing payloads use `accountView` (`src/lib/accounts.ts`) or `accountRef` shapes.
 
 ## MCP (`mcp-content/`)

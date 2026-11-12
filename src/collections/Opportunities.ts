@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
-import { isMemberField, serverWrites } from '../lib/collectionAccess'
+import { noFieldAccess, serverWrites } from '../lib/collectionAccess'
 import { OPPORTUNITY_FORMAT_VALUES, OPPORTUNITY_KIND_VALUES } from '../shared/opportunities'
 
 // Shared opportunity board + NGO-posted opportunities.
 export const Opportunities: CollectionConfig = {
   slug: 'opportunities',
   access: {
-    read: ({ req }) => Boolean(req.user) || { status: { equals: 'published' } },
+    // drafts and review queues are served by /api/member/opportunities/*
+    read: () => ({ status: { equals: 'published' } }),
     ...serverWrites,
   },
   fields: [
@@ -49,7 +50,7 @@ export const Opportunities: CollectionConfig = {
       options: ['draft', 'pending_review', 'published', 'withdrawn', 'rejected'],
       index: true,
     },
-    { name: 'reviewNote', type: 'textarea', access: { read: isMemberField } },
+    { name: 'reviewNote', type: 'textarea', access: { read: noFieldAccess } },
     { name: 'reviewedAt', type: 'date' },
     { name: 'source', type: 'text' },
   ],

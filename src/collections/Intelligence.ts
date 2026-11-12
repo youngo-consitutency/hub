@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload'
-import { serverWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 export const ResearchNotes: CollectionConfig = {
   slug: 'research-notes',
   access: {
-    read: ({ req }) => Boolean(req.user),
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
