@@ -30,6 +30,7 @@ import {
 
 // what the signed-in account can do, flattened once from account.access
 export interface Viewer {
+  signedIn: boolean
   verified: boolean
   teamRoles: string[]
   capabilities: string[]
@@ -44,6 +45,7 @@ export function viewerOf(account: AnyValue): Viewer {
   const access = account?.access || {}
   const capabilities: string[] = access.capabilities || []
   return {
+    signedIn: Boolean(account),
     verified: Boolean(account?.isVerified),
     teamRoles: access.teamRoles || account?.teamRoles || [],
     capabilities,
@@ -88,13 +90,14 @@ export interface HubRoute {
 const teamRole = (role: string) => (viewer: Viewer) => viewer.teamRoles.includes(role)
 
 export const ROUTES: HubRoute[] = [
-  // before the course is passed only these two are reachable
+  // before the course is passed only these two are reachable; signed-out
+  // visitors (on the public negotiations page) get neither
   {
     href: '/onboarding',
     label: 'Onboarding',
     group: 'explore',
     icon: GraduationCap,
-    allow: (viewer) => !viewer.verified,
+    allow: (viewer) => viewer.signedIn && !viewer.verified,
     mobile: { order: 1 },
   },
   {
@@ -102,7 +105,7 @@ export const ROUTES: HubRoute[] = [
     label: 'Resources',
     group: 'explore',
     icon: Library,
-    allow: (viewer) => !viewer.verified,
+    allow: (viewer) => viewer.signedIn && !viewer.verified,
     mobile: { order: 2 },
   },
 

@@ -1,6 +1,6 @@
 import type { AnyValue } from '../lib/types'
-import { useEffect, useState } from 'react'
-import { apiGet, apiPost } from '../lib/api'
+import { useState } from 'react'
+import { apiPost, useApi } from '../lib/api'
 import { Button } from './ui'
 import { SearchableSelect } from './FormControls'
 import { TbBuilding as Building2 } from 'react-icons/tb'
@@ -33,26 +33,14 @@ const STATUS_COPY = {
  * confirms, and decides whether the link also opens its portal.
  */
 export function OrgAffiliation() {
-  const [mine, setMine] = useState<AnyValue>(null)
-  const [orgs, setOrgs] = useState<AnyValue[]>([])
+  const affiliations = useApi('/member/affiliations')
+  const mine: AnyValue[] | null = affiliations.data ? affiliations.data.items || [] : null
+  // a failed list leaves the picker empty; the rest still works
+  const orgs: AnyValue[] = useApi('/member/organisations').data?.items || []
   const [choice, setChoice] = useState('')
-  const [error, setError] = useState<AnyValue>(null)
+  const [actionError, setError] = useState<AnyValue>(null)
+  const error = actionError || affiliations.error
   const [done, setDone] = useState<AnyValue>(null)
-
-  const load = () => {
-    apiGet('/member/affiliations')
-      .then((res) => setMine(res.items || []))
-      .catch((e) => setError(e.message))
-  }
-
-  useEffect(() => {
-    load()
-    apiGet('/member/organisations')
-      .then((res) => setOrgs(res.items || []))
-      .catch(() => {
-        /* the picker stays empty; the rest of the page still works */
-      })
-  }, [])
 
   const request = async () => {
     if (!choice) return
@@ -62,7 +50,7 @@ export function OrgAffiliation() {
       await apiPost('/member/affiliations', { orgAccountId: choice })
       setDone('Request sent. The organisation will confirm it.')
       setChoice('')
-      load()
+      affiliations.retry()
     } catch (err) {
       setError((err as AnyValue).message)
     }

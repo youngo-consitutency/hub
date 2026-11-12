@@ -1,5 +1,4 @@
 interface AccountProviderProps {
-  initialAccount?: AnyValue
   children?: import('react').ReactNode
 }
 
@@ -10,8 +9,9 @@ import { apiGet } from './api'
 
 const AccountContext = createContext<AnyValue>(null)
 
-export function AccountProvider({ initialAccount, children }: AccountProviderProps) {
-  const [account, setAccountState] = useState(initialAccount || getCachedAccount())
+export function AccountProvider({ children }: AccountProviderProps) {
+  // cached profile first so a signed-in member doesn't flash the signed-out shell
+  const [account, setAccountState] = useState(getCachedAccount)
 
   const accountId = account?.id
   const [accessTry, setAccessTry] = useState(0)
@@ -42,8 +42,15 @@ export function AccountProvider({ initialAccount, children }: AccountProviderPro
     }
   }, [accountId, accessTry])
 
+  // endpoints hand back a bare accountView: keep the access we hold for the same
+  // account. a new id refetches via the effect; mutations that move access
+  // (course pass, seat) call reloadAccess themselves
   const setAccount = useCallback((acc: AnyValue) => {
-    setAccountState(acc)
+    setAccountState((current: AnyValue) =>
+      acc && !acc.access && current?.access && current.id === acc.id
+        ? { ...acc, access: current.access }
+        : acc,
+    )
     if (acc) setSession({ account: acc })
   }, [])
 

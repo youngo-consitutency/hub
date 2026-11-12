@@ -19,6 +19,7 @@ import {
 } from 'react-icons/tb'
 import { apiGet, apiPost, useApi } from '../lib/api'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
+import { replace } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui'
 import { fmtDual, fmtDateRange } from '../lib/time'
@@ -162,7 +163,7 @@ export function Search() {
     setLoading(true)
     setError('')
     setProposal({ status: 'idle', message: '' })
-    window.history.replaceState({}, '', `/search?q=${encodeURIComponent(clean)}`)
+    replace(`/search?q=${encodeURIComponent(clean)}`, { scroll: false })
     try {
       setResult(await apiPost('/intelligence/query', { query: clean, limit: 10 }))
     } catch (requestError) {

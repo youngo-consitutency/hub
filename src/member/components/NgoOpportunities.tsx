@@ -7,20 +7,7 @@ import { Button, Empty, ErrorCard, Section, Skeletons } from './ui'
 import { DatePicker, SearchableSelect } from './FormControls'
 import { TbSpeakerphone as Megaphone } from 'react-icons/tb'
 
-const KIND_OPTIONS = [
-  { value: 'event', label: 'Event' },
-  { value: 'workshop', label: 'Online workshop' },
-  { value: 'hackathon', label: 'Hackathon' },
-  { value: 'opportunity', label: 'Opportunity' },
-  { value: 'call', label: 'Open call' },
-  { value: 'training', label: 'Training' },
-]
-
-const FORMAT_OPTIONS = [
-  { value: 'online', label: 'Online' },
-  { value: 'in_person', label: 'In person' },
-  { value: 'hybrid', label: 'Hybrid' },
-]
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../shared/opportunities.js'
 
 const STATUS_CHIP = {
   published: ['chip-accent', 'Live'],
@@ -174,7 +161,7 @@ export function NgoOpportunities() {
           <form className="stack" onSubmit={submit}>
             <SearchableSelect
               label="Type"
-              options={KIND_OPTIONS}
+              options={[...OPPORTUNITY_KINDS]}
               value={form.kind}
               onChange={(kind: AnyValue) => setForm((current) => ({ ...current, kind }))}
               searchPlaceholder="Search posting types…"
@@ -212,7 +199,7 @@ export function NgoOpportunities() {
             </label>
             <SearchableSelect
               label="Format"
-              options={FORMAT_OPTIONS}
+              options={[...OPPORTUNITY_FORMATS]}
               value={form.format}
               onChange={(format: AnyValue) => setForm((current) => ({ ...current, format }))}
               searchPlaceholder="Search formats…"

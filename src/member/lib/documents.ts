@@ -33,6 +33,7 @@ export function useContentOptionLabels() {
   const toMap = (items: Doc) =>
     Object.fromEntries((items || []).map((item: Doc) => [item.value, item.label]))
   return {
+    eventTypes: toMap(options.eventTypes),
     teamLabels: toMap(options.teamLabels),
     assignmentLabels: toMap(options.assignmentLabels),
     wgActivityKinds: toMap(options.wgActivityKinds),

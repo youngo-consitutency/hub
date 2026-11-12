@@ -15,6 +15,7 @@ import { OpportunityPeek } from '../components/EntityPeeks'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
+import { OPPORTUNITY_FORMAT_LABELS, OPPORTUNITY_KIND_LABELS } from '../../shared/opportunities.js'
 import { CardSchedule } from '../components/cards'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
@@ -83,16 +84,6 @@ const FORMATS = [
   { key: 'hybrid', label: 'Hybrid', icon: Blend },
 ]
 
-const KIND_LABEL = Object.fromEntries(
-  KINDS.filter((k) => k.key !== 'all').map((k) => [k.key, k.label]),
-)
-
-const FORMAT_LABEL = {
-  online: 'Online',
-  in_person: 'In person',
-  hybrid: 'Hybrid',
-}
-
 function OpportunityCard({
   item,
   kindFilterState,
@@ -130,10 +121,10 @@ function OpportunityCard({
       </div>
       <div className="entityCardTags">
         <FilterChip tone="accent" state={kindFilterState} onClick={onKindFilter}>
-          {KIND_LABEL[item.kind] || item.kind}
+          {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind}
         </FilterChip>
         <FilterChip state={formatFilterState} onClick={onFormatFilter}>
-          {(FORMAT_LABEL as AnyValue)[item.format] || item.format}
+          {OPPORTUNITY_FORMAT_LABELS[item.format] || item.format}
         </FilterChip>
         {item.region && (
           <FilterChip state={regionFilterState} onClick={onRegionFilter}>

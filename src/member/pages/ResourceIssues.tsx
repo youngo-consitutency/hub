@@ -26,11 +26,16 @@ import { useState } from 'react'
 import { optionLabel as resourceLabel, useContentOptions } from '../lib/documents'
 import { ResourceCard, ResourceSubmissionPanel } from '../components/ResourceHub'
 import { A, Async, Button, Empty, ErrorCard, PageHeader } from '../components/ui'
+import { Locked } from '../components/Locked'
+import { ACCESS_FAILED, CHECKING_ACCESS } from '../lib/routes'
 import { useAccount } from '../lib/accountContext'
 import { apiPost, useApi } from '../lib/api'
 
 export function ResourceIssues() {
   const { account } = useAccount()
+  // access still loading: don't flash the denial
+  if (account && !account.access)
+    return <Locked {...(account.accessFailed ? ACCESS_FAILED : CHECKING_ACCESS)} />
   if (!account?.access?.capabilities?.includes('content.review'))
     return (
       <Empty

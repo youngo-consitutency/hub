@@ -74,7 +74,15 @@ export function AdminCallSlots() {
         Publish times Contact Points can book on the Hub. Your name shows on the slot. 45 minutes is
         the default.
       </p>
-      {error && <ErrorCard message={error} onRetry={() => setError('')} />}
+      {(error || query.error) && (
+        <ErrorCard
+          message={error || query.error}
+          onRetry={() => {
+            setError('')
+            query.retry()
+          }}
+        />
+      )}
       <form className="authForm" onSubmit={add}>
         <label className="field">
           <span>Shown as</span>
