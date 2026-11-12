@@ -10,9 +10,9 @@
     "start": "node server.mjs"
   },
   "dependencies": {
-    "@hono/mcp": "0.3.2",
-    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@hono/node-server": "2.1.6",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "hono": "4.13.11",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   }
 }

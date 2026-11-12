@@ -1,4 +1,5 @@
 import { accountView } from './accounts'
+import { hasCapability, hasTeamRole } from './access'
 import { profileShape } from './membershipReview'
 import { AUTHORITY_ROLES } from './authority'
 import { holderKey, holdersFor } from './roleHolders'
@@ -274,8 +275,8 @@ export async function getMemberPerson(viewer: AccountLike, accountId: AnyValue) 
   const profile = profileShape(row, account)
   const canOverride =
     viewer.id === account.id ||
-    viewer.access?.capabilities?.includes('accounts.manage') ||
-    viewer.access?.teamRoles?.includes('membership_team')
+    hasCapability(viewer.access, 'accounts.manage') ||
+    hasTeamRole(viewer.access, 'membership_team')
   if (profile.directoryVisibility !== 'members' && !canOverride) return null
   const maps = await relationshipMaps([account])
   return safePerson(profile, account, relationshipsFor(account, maps))

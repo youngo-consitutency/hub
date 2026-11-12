@@ -4,7 +4,8 @@ import { noFieldAccess, serverWrites } from '../lib/collectionAccess'
 export const Events: CollectionConfig = {
   slug: 'content-events',
   access: {
-    read: () => true,
+    // unpublished items stay behind the content endpoints
+    read: () => ({ state: { equals: 'published' } }),
     ...serverWrites,
   },
   fields: [

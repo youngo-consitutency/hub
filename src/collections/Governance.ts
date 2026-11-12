@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 // S10 elections: nominations, screening, eligibility and results live here.
 // votes are cast on belenios (secret, publicly verifiable ballots); the
@@ -8,7 +8,7 @@ import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
 export const Elections: CollectionConfig = {
   slug: 'elections',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -66,7 +66,7 @@ export const Elections: CollectionConfig = {
 export const ElectionCandidates: CollectionConfig = {
   slug: 'election-candidates',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -104,7 +104,7 @@ export const ElectionCandidates: CollectionConfig = {
 export const Selections: CollectionConfig = {
   slug: 'selections',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -165,7 +165,7 @@ export const Selections: CollectionConfig = {
 export const SelectionCommittee: CollectionConfig = {
   slug: 'selection-committee',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -193,7 +193,7 @@ export const SelectionCommittee: CollectionConfig = {
 export const SelectionApplications: CollectionConfig = {
   slug: 'selection-applications',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [

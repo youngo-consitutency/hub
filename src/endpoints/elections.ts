@@ -1,14 +1,8 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import {
-  accountRef,
-  beleniosVoterList,
-  eligibleVoters,
-  isFacilitator,
-  loadElection,
-} from '../lib/governance'
+import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
 import type { Doc, AnyValue } from '../lib/domain'
 
 // S10 elections. the hub runs nominations and screening, decides who may

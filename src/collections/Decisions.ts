@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
 // S09 decision-making: consultation → revision → decision → (consensus |
 // voting) via the src/endpoints/decisions.ts state machine. REST writes are
@@ -8,7 +8,7 @@ import { noAccess, isMember, serverWrites } from '../lib/collectionAccess'
 export const DecisionProposals: CollectionConfig = {
   slug: 'decision-proposals',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -119,7 +119,7 @@ export const DecisionProposals: CollectionConfig = {
 export const DecisionFlags: CollectionConfig = {
   slug: 'decision-flags',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -182,7 +182,7 @@ export const DecisionFlags: CollectionConfig = {
 export const DecisionComments: CollectionConfig = {
   slug: 'decision-comments',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -208,7 +208,7 @@ export const DecisionComments: CollectionConfig = {
 export const DecisionBallots: CollectionConfig = {
   slug: 'decision-ballots',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   // One ballot per member per proposal — enforced at the database.
@@ -236,7 +236,7 @@ export const DecisionBallots: CollectionConfig = {
 export const DecisionVetoes: CollectionConfig = {
   slug: 'decision-vetoes',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [
@@ -281,7 +281,7 @@ export const DecisionVetoes: CollectionConfig = {
 export const DecisionEvents: CollectionConfig = {
   slug: 'decision-events',
   access: {
-    read: isMember,
+    read: noAccess,
     create: noAccess,
     update: () => false,
     delete: () => false,

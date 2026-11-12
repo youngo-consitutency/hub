@@ -1,4 +1,4 @@
-import { noAccess } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 import type { CollectionConfig } from 'payload'
 
 // Global Youth Statement cycle: static reference content (current edition,
@@ -7,6 +7,7 @@ export const GysCycles: CollectionConfig = {
   slug: 'gys-cycles',
   access: {
     read: () => true,
+    ...serverWrites,
   },
   fields: [
     { name: 'year', type: 'number', required: true, unique: true },
@@ -32,9 +33,8 @@ export const GysCycles: CollectionConfig = {
 export const GysWorkflowCycles: CollectionConfig = {
   slug: 'gys-workflow-cycles',
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: noAccess,
-    update: ({ req }) => Boolean(req.user),
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     { name: 'code', type: 'text', required: true, unique: true },
@@ -65,9 +65,8 @@ export const GysWorkflowCycles: CollectionConfig = {
 export const GysTrackedContributions: CollectionConfig = {
   slug: 'gys-tracked-contributions',
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     {
@@ -113,7 +112,8 @@ export const GysContributions: CollectionConfig = {
   slug: 'gys-contributions',
   access: {
     read: noAccess,
-    create: () => true, // public signup form
+    // the public signup form posts to /api/gys/signup
+    ...serverWrites,
   },
   fields: [
     { name: 'cycle', type: 'text', required: true },

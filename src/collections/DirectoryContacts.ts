@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isMember, serverWrites } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 import { AUTHORITY_ROLES, normaliseScopeType } from '../lib/authority'
 
 // role contact channels: a mailbox plus a member-only channel per role
@@ -10,7 +10,7 @@ import { AUTHORITY_ROLES, normaliseScopeType } from '../lib/authority'
 export const DirectoryContacts: CollectionConfig = {
   slug: 'directory-contacts',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [

@@ -1,11 +1,15 @@
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import {
+  accountRef,
+  requireCwMember,
+  requireVerifiedMember,
+  verifiedContext,
+} from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
 import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
 import { hasCapability } from '../lib/access'
 import {
-  accountRef,
   advanceIfDue,
   ballotView,
   checkVeto,
@@ -18,6 +22,7 @@ import {
   proposalFlags,
   proposalView,
   recordEvent,
+  transition,
   vetoView,
 } from '../lib/decisionRuntime'
 import type { Doc, AnyValue } from '../lib/domain'
@@ -107,17 +112,17 @@ export const decisionEndpoints: Endpoint[] = [
       p = await advanceIfDue(req, p)
       p = await checkVeto(req, p)
       const flags = await proposalFlags(req, p.id)
-      const { docs: comments } = await req.payload.find({
+      // capped: comment volume is member-driven
+      const { docs: comments, totalDocs: commentCount } = await req.payload.find({
         collection: 'decision-comments',
         where: { proposal: { equals: p.id } },
         sort: 'createdAt',
         limit: 500,
         overrideAccess: true,
       })
-      const { totalDocs: ballots } = await req.payload.find({
+      const { totalDocs: ballots } = await req.payload.count({
         collection: 'decision-ballots',
         where: { proposal: { equals: p.id } },
-        limit: 0,
         overrideAccess: true,
       })
       const { docs: mine } = await req.payload.find({
@@ -130,7 +135,7 @@ export const decisionEndpoints: Endpoint[] = [
       })
       return json({
         proposal: proposalView(p, flags, {
-          comments: (comments as Doc[]).length,
+          comments: commentCount,
           ballots,
         }),
         comments: (comments as Doc[]).map(commentView),
@@ -143,7 +148,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      let p = await loadProposal(req, param(req, 'id'))
+      const p = await loadProposal(req, param(req, 'id'))
       if (!isContactPerson(account, p))
         throw fail.forbidden('Only the contact person(s) may present the proposal.')
       if (p.status !== 'draft')
@@ -153,18 +158,16 @@ export const decisionEndpoints: Endpoint[] = [
         new Date(),
         p.snapDeadline ? new Date(p.snapDeadline) : null,
       )
-      p = await req.payload.update({
-        collection: 'decision-proposals',
-        id: p.id,
-        data: {
-          status: 'consultation',
-          presentedAt: new Date().toISOString(),
-          ...windows,
-        },
-        overrideAccess: true,
-      })
-      await recordEvent(req, p.id, 'presented', account, windows)
-      return json({ proposal: proposalView(p) })
+      const presented = await transition(
+        req,
+        p,
+        { status: 'consultation', presentedAt: new Date().toISOString(), ...windows },
+        'presented',
+        account,
+        windows,
+      )
+      if (!presented) throw fail.conflict('invalid_phase', 'Only draft proposals can be presented.')
+      return json({ proposal: proposalView(presented) })
     }),
   },
   {
@@ -346,12 +349,11 @@ export const decisionEndpoints: Endpoint[] = [
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
       const hasBallot = async () => {
-        const { totalDocs } = await req.payload.find({
+        const { totalDocs } = await req.payload.count({
           collection: 'decision-ballots',
           where: {
             and: [{ proposal: { equals: p.id } }, { account: { equals: account.id } }],
           },
-          limit: 0,
           overrideAccess: true,
         })
         return totalDocs > 0
@@ -452,13 +454,15 @@ export const decisionEndpoints: Endpoint[] = [
         throw fail.forbidden('Only contact person(s) may withdraw the proposal.')
       if (['adopted', 'vetoed', 'rejected', 'failed_quorum', 'withdrawn'].includes(p.status))
         throw fail.conflict('invalid_phase', 'Decision already concluded.')
-      const updated = await req.payload.update({
-        collection: 'decision-proposals',
-        id: p.id,
-        data: { status: 'withdrawn', decidedAt: new Date().toISOString() },
-        overrideAccess: true,
-      })
-      await recordEvent(req, p.id, 'withdrawn', account)
+      const updated = await transition(
+        req,
+        p,
+        { status: 'withdrawn', decidedAt: new Date().toISOString() },
+        'withdrawn',
+        account,
+      )
+      // lost the race to an overdue close or another withdraw
+      if (!updated) throw fail.conflict('invalid_phase', 'Decision already concluded.')
       return json({ proposal: proposalView(updated) })
     }),
   },
@@ -472,7 +476,7 @@ export const decisionEndpoints: Endpoint[] = [
         collection: 'decision-events',
         where: { proposal: { equals: p.id } },
         sort: 'createdAt',
-        limit: 500,
+        pagination: false,
         overrideAccess: true,
       })
       return json({

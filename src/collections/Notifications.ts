@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { serverWrites } from '../lib/collectionAccess'
 
 export const NotificationPrefs: CollectionConfig = {
   slug: 'notification-prefs',
@@ -7,14 +8,7 @@ export const NotificationPrefs: CollectionConfig = {
       if (!req.user) return false
       return { account: { equals: req.user.id } }
     },
-    create: ({ req, data }) => {
-      return req.user?.collection === 'accounts' && data?.account === req.user.id
-    },
-    update: ({ req }) => {
-      if (!req.user) return false
-      return { account: { equals: req.user.id } }
-    },
-    delete: () => false,
+    ...serverWrites,
   },
   fields: [
     {
@@ -56,17 +50,7 @@ export const PushSubscriptions: CollectionConfig = {
       if (!req.user) return false
       return { account: { equals: req.user.id } }
     },
-    create: ({ req, data }) => {
-      return req.user?.collection === 'accounts' && data?.account === req.user.id
-    },
-    update: ({ req }) => {
-      if (!req.user) return false
-      return { account: { equals: req.user.id } }
-    },
-    delete: ({ req }) => {
-      if (!req.user) return false
-      return { account: { equals: req.user.id } }
-    },
+    ...serverWrites,
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
