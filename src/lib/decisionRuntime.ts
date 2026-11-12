@@ -13,6 +13,9 @@ import {
   VOTING_WINDOW_MS,
 } from './decisions'
 import { audit } from './audit'
+import { accountRef } from './accounts'
+import { sql } from '@payloadcms/db-postgres'
+import { txHandle } from './pg'
 import type { VetoRequest } from './decisions'
 import type { AccountLike, ActorLike, Doc, AnyValue } from './domain'
 
@@ -46,7 +49,7 @@ export async function proposalFlags(req: PayloadRequest, proposalId: number) {
   const { docs } = await req.payload.find({
     collection: 'decision-flags',
     where: { proposal: { equals: proposalId } },
-    limit: 500,
+    pagination: false,
     overrideAccess: true,
   })
   return docs as Doc[]
@@ -69,6 +72,7 @@ export async function recordEvent(
       createdAt: new Date().toISOString(),
     },
     overrideAccess: true,
+    req,
   })
   await audit(req, actor, {
     action: `decision.${type}`,
@@ -201,7 +205,7 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
   }
   if (proposal.body === 'constituency') {
     // The whole CW membership is the electorate — mandates add no one.
-    const { totalDocs } = await req.payload.find({
+    const { totalDocs } = await req.payload.count({
       collection: 'accounts',
       where: {
         and: [
@@ -211,7 +215,6 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
           { membershipStatus: { in: ['active', 'renewal_due'] } },
         ],
       },
-      limit: 0,
       overrideAccess: true,
     })
     return Math.max(totalDocs, 1)
@@ -242,18 +245,65 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
   return Math.max((await eligibleAccounts(req, accounts)).size, 1)
 }
 
-// Advance the state machine by wall-clock deadlines. Idempotent.
-export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
-  const now = Date.now()
-  const past = (d?: string | null) => d && new Date(d).getTime() <= now
-  const update = async (data: Doc, type: string, detail?: AnyValue) => {
-    proposal = await req.payload.update({
+// compare-and-set on status: every status writer goes through here, so
+// concurrent racers (deadline reads, withdraw, facilitator moves) can't
+// overwrite each other. only the one that moves the row off its current
+// status writes the rest + the event, all in one tx (same join/commit shape
+// as withAuthorityLock). null means someone else got there first
+export async function transition(
+  req: PayloadRequest,
+  proposal: Doc,
+  data: Doc,
+  type: string,
+  actor: ActorLike | null = null,
+  detail?: AnyValue,
+): Promise<Doc | null> {
+  const apply = async (transactionID: AnyValue) => {
+    // the row lock from this UPDATE holds racers until commit, then they miss
+    const { rows } = await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`UPDATE decision_proposals SET status=${data.status}
+               WHERE id=${proposal.id} AND status=${proposal.status} RETURNING id`,
+    })
+    if (!rows.length) return null
+    const updated = await req.payload.update({
       collection: 'decision-proposals',
       id: proposal.id,
       data,
       overrideAccess: true,
+      req,
     })
-    await recordEvent(req, proposal.id, type, null, detail)
+    await recordEvent(req, proposal.id, type, actor, detail)
+    return updated
+  }
+  // joined tx: the caller owns commit/rollback
+  if (req.transactionID != null) return apply(req.transactionID)
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    const updated = await apply(transactionID)
+    if (updated) await req.payload.db.commitTransaction(transactionID)
+    else await req.payload.db.rollbackTransaction(transactionID)
+    return updated
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
+}
+
+// Advance the state machine by wall-clock deadlines. Safe to call
+// concurrently: each step is a status compare-and-set.
+export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
+  const now = Date.now()
+  const past = (d?: string | null) => d && new Date(d).getTime() <= now
+  // losers reload and carry on from whatever the winner committed
+  const update = async (data: Doc, type: string, detail?: AnyValue) => {
+    proposal =
+      (await transition(req, proposal, data, type, null, detail)) ??
+      (await loadProposal(req, proposal.id))
     return proposal
   }
   if (proposal.status === 'consultation' && past(proposal.consultationEndsAt)) {
@@ -288,14 +338,18 @@ export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
     }
   }
   if (proposal.status === 'voting' && past(proposal.votingEndsAt)) {
-    const { docs: ballots } = await req.payload.find({
-      collection: 'decision-ballots',
-      where: { proposal: { equals: proposal.id } },
-      limit: 10000,
-      overrideAccess: true,
-    })
-    const cast = ballots.length
-    const votesFor = (ballots as Doc[]).filter((b) => b.choice === 'for').length
+    const [{ totalDocs: cast }, { totalDocs: votesFor }] = await Promise.all([
+      req.payload.count({
+        collection: 'decision-ballots',
+        where: { proposal: { equals: proposal.id } },
+        overrideAccess: true,
+      }),
+      req.payload.count({
+        collection: 'decision-ballots',
+        where: { and: [{ proposal: { equals: proposal.id } }, { choice: { equals: 'for' } }] },
+        overrideAccess: true,
+      }),
+    ])
     if (
       requiresQuorum(proposal.decisionType) &&
       !quorumMet(cast, proposal.eligibleVoterCount ?? 0)
@@ -340,31 +394,23 @@ export async function checkVeto(req: PayloadRequest, proposal: Doc) {
     where: {
       and: [{ proposal: { equals: proposal.id } }, { status: { equals: 'confirmed' } }],
     },
-    limit: 500,
+    pagination: false,
     overrideAccess: true,
   })
   if (proposal.status === 'voting' && vetoThresholdMet(docs as unknown as VetoRequest[])) {
-    proposal = await req.payload.update({
-      collection: 'decision-proposals',
-      id: proposal.id,
-      data: { status: 'vetoed', decidedAt: new Date().toISOString() },
-      overrideAccess: true,
-    })
-    await recordEvent(req, proposal.id, 'vetoed', null, {
-      confirmedRequests: docs.length,
-    })
+    return (
+      (await transition(
+        req,
+        proposal,
+        { status: 'vetoed', decidedAt: new Date().toISOString() },
+        'vetoed',
+        null,
+        { confirmedRequests: docs.length },
+      )) ?? loadProposal(req, proposal.id)
+    )
   }
   return proposal
 }
-
-// Member-facing actor: id + display name only — never raw account docs.
-export const accountRef = (a: AnyValue) =>
-  a == null
-    ? null
-    : {
-        id: typeof a === 'object' ? a.id : a,
-        name: typeof a === 'object' ? a.name : undefined,
-      }
 
 export const flagView = (f: AnyValue) => ({
   id: f.id,
