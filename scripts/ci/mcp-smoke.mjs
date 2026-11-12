@@ -1,38 +1,77 @@
 #!/usr/bin/env node
 // CI smoke: boot mcp-content/server.mjs and complete the MCP handshake. The
-// Hub API is deliberately unreachable — tools/list must never need it.
+// Hub API is deliberately unreachable — tools/list must never need it. Also
+// proves the isolation contract: db secrets never reach the process, the
+// .env loader is allow-listed, and memory tools stay off the http surface.
 import { spawn } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const PORT = Number(process.env.MCP_SMOKE_PORT || 18080)
 const base = `http://127.0.0.1:${PORT}`
+const SECRETS = ['DATABASE_URL', 'PAYLOAD_SECRET']
 
-const server = spawn('node', ['mcp-content/server.mjs'], {
-  cwd: root,
-  env: {
-    ...process.env,
-    PORT: String(PORT),
-    MCP_ALLOW_ANONYMOUS: '1',
-    HUB_ORIGIN: 'http://127.0.0.1:9',
+// a .env with db secrets beside one allow-listed key: only the latter may load
+const cwd = mkdtempSync(path.join(tmpdir(), 'mcp-smoke-'))
+writeFileSync(
+  path.join(cwd, '.env'),
+  'DATABASE_URL=postgres://smoke@127.0.0.1:9/smoke\nPAYLOAD_SECRET=smoke\nMCP_ALLOW_ANONYMOUS=1\n',
+)
+
+// preload reports which secret names survived (names only, never values)
+const probe = `process.on('SIGTERM', () => {
+  console.log('mcp-smoke-env ' + JSON.stringify(${JSON.stringify(SECRETS)}.filter((k) => k in process.env)))
+  process.exit(0)
+})`
+
+// anonymous must come from the .env file, not the runner
+const inherited = { ...process.env }
+for (const key of ['MCP_ALLOW_ANONYMOUS', 'MCP_TOKEN', 'HUB_MCP_TOKEN']) delete inherited[key]
+const server = spawn(
+  'node',
+  [
+    '--import',
+    `data:text/javascript,${encodeURIComponent(probe)}`,
+    path.join(root, 'mcp-content/server.mjs'),
+  ],
+  {
+    cwd,
+    env: {
+      ...inherited,
+      PORT: String(PORT),
+      HUB_ORIGIN: 'http://127.0.0.1:9',
+      // real env too: the server must drop these at startup
+      DATABASE_URL: 'postgres://smoke@127.0.0.1:9/smoke',
+      PAYLOAD_SECRET: 'smoke',
+      // set so a regression that attaches memory over http would show up
+      HINDSIGHT_API_KEY: 'smoke-not-a-key',
+    },
+    stdio: ['ignore', 'pipe', 'inherit'],
   },
-  stdio: ['ignore', 'inherit', 'inherit'],
+)
+let stdout = ''
+server.stdout.on('data', (chunk) => {
+  stdout += chunk
 })
 
 function fail(message) {
   console.error(`mcp-smoke: ${message}`)
-  server.kill('SIGTERM')
   process.exit(1)
 }
 
-process.on('exit', () => server.kill('SIGTERM'))
+process.on('exit', () => {
+  server.kill('SIGTERM')
+  rmSync(cwd, { recursive: true, force: true })
+})
 
 async function waitReady() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
       const res = await fetch(`${base}/healthz`)
-      if (res.ok) return
+      if (res.ok) return res.json()
     } catch {
       /* not listening yet */
     }
@@ -76,7 +115,8 @@ async function rpc(message) {
   fail(`unexpected content-type '${type}' (status ${res.status})`)
 }
 
-await waitReady()
+const health = await waitReady()
+if (health?.anonymous !== true) fail('allow-listed MCP_ALLOW_ANONYMOUS was not loaded from .env')
 
 const init = await rpc(
   rpcBody(
@@ -101,6 +141,17 @@ for (const required of ['list_opportunities', 'get_content', 'update_content']) 
     fail(`missing tool '${required}' in tools/list: ${names.join(', ')}`)
 }
 
-console.log(`mcp-smoke: handshake ok, ${names.length} tools exposed (${names.join(', ')})`)
+for (const forbidden of ['recall', 'retain']) {
+  if (names.includes(forbidden)) fail(`memory tool '${forbidden}' exposed over http`)
+}
+
+const exited = new Promise((resolve) => server.once('exit', resolve))
 server.kill('SIGTERM')
+await exited
+const leaked = stdout.match(/^mcp-smoke-env (.*)$/m)
+if (!leaked) fail('env probe did not report')
+if (JSON.parse(leaked[1]).length) fail(`db secrets reached the process: ${leaked[1]}`)
+
+console.log(`mcp-smoke: handshake ok, ${names.length} tools exposed (${names.join(', ')})`)
+console.log('mcp-smoke: no db secrets in process.env, no memory tools over http')
 process.exit(0)

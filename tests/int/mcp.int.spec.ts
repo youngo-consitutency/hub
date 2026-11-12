@@ -32,16 +32,8 @@ async function startMcp(env: Record<string, string>) {
   }
 }
 
-// Stateless transport responds with SSE frames; peel the JSON-RPC message
-// out of the data: lines. Plain JSON responses (error paths) parse directly.
-function parseRpcBody(text: string, contentType: string) {
-  if (contentType.includes('text/event-stream')) {
-    const messages = text
-      .split('\n')
-      .filter((line) => line.startsWith('data:'))
-      .map((line) => JSON.parse(line.slice(5).trim()))
-    return messages.at(-1)
-  }
+// json responses throughout; non-json bodies come back undefined
+function parseRpcBody(text: string) {
   try {
     return JSON.parse(text)
   } catch {
@@ -66,7 +58,7 @@ async function rpc(
   const text = await res.text()
   return {
     status: res.status,
-    body: parseRpcBody(text, res.headers.get('content-type') || ''),
+    body: parseRpcBody(text),
   }
 }
 
