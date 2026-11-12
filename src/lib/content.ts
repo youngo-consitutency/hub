@@ -208,9 +208,11 @@ export async function listSubmissions(req: Req, state = 'open') {
   const subs = await listSubmissionsRaw(req)
   return subs
     .filter((s) =>
-      state === 'archive'
-        ? !OPEN_SUB_STATES.includes(s.status)
-        : OPEN_SUB_STATES.includes(s.status),
+      state === 'all'
+        ? true
+        : state === 'archive'
+          ? !OPEN_SUB_STATES.includes(s.status)
+          : OPEN_SUB_STATES.includes(s.status),
     )
     .sort((a, b) => new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime())
 }

@@ -387,46 +387,45 @@ export function Search() {
           <div className="stackSm searchReviewQueue">
             {review.items.length === 0 && <p className="metaMuted">No research-note proposals.</p>}
             {review.items.map((item: AnyValue) => {
-              const proposedBy = (item as AnyValue).proposed_by || (item as AnyValue).proposedBy
-              const payload = (item as AnyValue).payload || {}
+              // writebackView: account is { id, name }, approvedBy an id
+              const own = String(item.account?.id) === String(account.id)
+              const reviewable = item.status === 'pending_review' || item.status === 'draft'
               return (
-                <div className="intelligenceQueueItem" key={(item as AnyValue).id}>
+                <div className="intelligenceQueueItem" key={item.id}>
                   <div>
-                    <strong>{payload.title || (item as AnyValue).action}</strong>
+                    <strong>{item.title}</strong>
                     <p className="metaMuted">
-                      {(item as AnyValue).status} · proposed by{' '}
-                      {proposedBy === account.id ? 'you' : proposedBy}
+                      {item.status.replaceAll('_', ' ')} · proposed by{' '}
+                      {own ? 'you' : item.account?.name || 'another member'}
                     </p>
                   </div>
-                  {(item as AnyValue).status === 'proposed' && proposedBy !== account.id && (
+                  {reviewable && !own && (
                     <input
                       className="input"
                       placeholder="Approval reason (required)"
-                      value={reasons[(item as AnyValue).id] || ''}
+                      value={reasons[item.id] || ''}
                       onChange={(event) =>
                         setReasons((current: AnyValue) => ({
                           ...current,
-                          [(item as AnyValue).id]: event.target.value,
+                          [item.id]: event.target.value,
                         }))
                       }
                     />
                   )}
                   <div className="rowGap">
-                    {(item as AnyValue).status === 'proposed' && (
+                    {reviewable && (
                       <button
                         className="btn btn-secondary btn-sm"
-                        disabled={
-                          proposedBy === account.id ||
-                          (reasons[(item as AnyValue).id] || '').trim().length < 8
-                        }
+                        disabled={own || (reasons[item.id] || '').trim().length < 8}
                         onClick={() => reviewWriteback(item, 'approve')}
                       >
                         Approve
                       </button>
                     )}
-                    {(item as AnyValue).status === 'approved' && (
+                    {item.status === 'approved' && (
                       <button
                         className="btn btn-primary btn-sm"
+                        disabled={String(item.approvedBy) === String(account.id)}
                         onClick={() => reviewWriteback(item, 'apply')}
                       >
                         Apply note

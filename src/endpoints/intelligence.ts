@@ -1,11 +1,14 @@
 import type { Endpoint, PayloadRequest } from 'payload'
+import { z } from 'zod'
+import { sql } from '@payloadcms/db-postgres'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { accountRef, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
+import { isUniqueViolation, txHandle } from '../lib/pg'
 import type { Doc, AnyValue } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
@@ -67,7 +70,7 @@ async function evidenceForQuery(
     push('council_decision', d.title, d.summary || '', `/decisions/${d.slug}`)
   if (hasCapability(access, 'intelligence.contacts.read')) {
     for (const c of await store.listDirectory(req))
-      push('contact', c.name, c.role || '', `/directory`)
+      push('contact', c.personName || c.roleTitle, c.roleTitle || '', `/directory`)
   }
   // Members always see their own role/record context
   if (access.accountId) {
@@ -90,8 +93,7 @@ const writebackView = (row: Doc) => ({
   note: row.note,
   citations: row.citations,
   status: row.status,
-  accountId: typeof row.account === 'object' ? row.account?.id : row.account,
-  accountEmail: typeof row.account === 'object' ? row.account?.email : null,
+  account: accountRef(row.account),
   idempotencyKey: row.idempotencyKey || null,
   approvedBy: typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy,
   appliedBy: typeof row.appliedBy === 'object' ? row.appliedBy?.id : row.appliedBy,
@@ -99,6 +101,64 @@ const writebackView = (row: Doc) => ({
   reviewedAt: row.reviewedAt || null,
   createdAt: row.createdAt,
 })
+
+// evidence ids from the search page, or full { title, url } sources
+const text = (max: number) => z.string().transform((v) => cleanText(v, max))
+const citationsSchema = z
+  .array(
+    z.union([
+      text(120).pipe(z.string().min(1)),
+      z.object({
+        evidenceId: text(120).optional(),
+        sourceType: text(40).optional(),
+        title: text(300).pipe(z.string().min(1)),
+        snippet: text(400).optional(),
+        // same-origin path or http(s) only
+        url: z
+          .string()
+          .max(500)
+          // no `//` or `/\` after the leading slash: browsers read both as protocol-relative
+          .regex(/^(\/(?![/\\])|https?:\/\/)/),
+      }),
+    ]),
+  )
+  .min(1)
+  .max(50)
+
+const reloadNote = (req: PayloadRequest, id: AnyValue) =>
+  req.payload.findByID({ collection: 'research-notes', id, depth: 0, overrideAccess: true })
+
+// compare-and-set the status and audit it in one tx (same join/commit shape as
+// withAuthorityLock); no row claimed → 409, which rolls back
+async function transition(
+  req: PayloadRequest,
+  claim: ReturnType<typeof sql>,
+  conflict: string,
+  record: () => Promise<void>,
+) {
+  const apply = async (transactionID: AnyValue) => {
+    const { rows } = await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: claim,
+    })
+    if (!rows?.length) throw new ApiError(409, 'conflict', conflict)
+    await record()
+  }
+  // joined tx: the caller owns commit/rollback
+  if (req.transactionID != null) return apply(req.transactionID)
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    await apply(transactionID)
+    await req.payload.db.commitTransaction(transactionID)
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
+}
 
 export const intelligenceEndpoints: Endpoint[] = [
   {
@@ -111,7 +171,8 @@ export const intelligenceEndpoints: Endpoint[] = [
       const query = String(b.query || '').trim()
       if (query.length < 3 || query.length > 500)
         throw fail.validation({ query: 'Ask a question of 3–500 characters.' })
-      const limit = Number(b.limit || 10)
+      // junk limits fall back to 10; evidenceForQuery clamps to 1–25
+      const limit = Math.trunc(Number(b.limit)) || 10
       const evidence = await evidenceForQuery(req, query, access, limit)
       const bullets = evidence.slice(0, 4).map((e, i) => ({
         text: `${e.title} — ${e.snippet || e.sourceType}`,
@@ -155,6 +216,7 @@ export const intelligenceEndpoints: Endpoint[] = [
         sort: '-createdAt',
         limit: 100,
         overrideAccess: true,
+        // depth 1 so accountRef carries the author's name for the review queue
         depth: 1,
       })
       return json({ items: docs.map(writebackView) })
@@ -171,39 +233,58 @@ export const intelligenceEndpoints: Endpoint[] = [
         throw fail.validation({ action: 'Unsupported writeback action.' })
       const title = cleanText(b.title, 160)
       const note = cleanText(b.note || b.body, 4000)
-      const citations = Array.isArray(b.citations) ? b.citations.slice(0, 50) : []
-      if (!title || !note || !citations.length)
+      const parsed = citationsSchema.safeParse(b.citations)
+      if (!parsed.success)
         throw fail.validation({
-          note: 'A research note needs a title, body, and at least one citation.',
+          citations: 'Give 1–50 citations, each an evidence id or a { title, url } source.',
         })
+      const citations = parsed.data
+      if (!title || !note)
+        throw fail.validation({ note: 'A research note needs a title and a body.' })
       const idempotencyKey = String(
         req.headers.get('idempotency-key') || b.idempotencyKey || '',
       ).slice(0, 120)
+      const existing = async () =>
+        (
+          await req.payload.find({
+            collection: 'research-notes',
+            where: {
+              account: { equals: account.id },
+              idempotencyKey: { equals: idempotencyKey },
+            },
+            limit: 1,
+            depth: 0,
+            overrideAccess: true,
+          })
+        ).docs[0]
       if (idempotencyKey) {
-        const dup = await req.payload.find({
-          collection: 'research-notes',
-          where: {
-            account: { equals: account.id },
-            idempotencyKey: { equals: idempotencyKey },
-          },
-          limit: 1,
-          overrideAccess: true,
-        })
-        if (dup.docs[0]) return json({ item: writebackView(dup.docs[0]) }, { status: 200 })
+        const dup = await existing()
+        if (dup) return json({ item: writebackView(dup) }, { status: 200 })
       }
-      const item = await req.payload.create({
-        collection: 'research-notes',
-        data: {
-          account: account.id,
-          title,
-          note,
-          citations,
-          status: 'pending_review',
-          idempotencyKey: idempotencyKey || null,
-        },
-        overrideAccess: true,
-        req,
-      })
+      let item
+      try {
+        item = await req.payload.create({
+          collection: 'research-notes',
+          data: {
+            account: account.id,
+            title,
+            note,
+            citations,
+            status: 'pending_review',
+            idempotencyKey: idempotencyKey || null,
+          },
+          depth: 0,
+          overrideAccess: true,
+          req,
+        })
+      } catch (error) {
+        // a concurrent retry won the (account, key) unique index — hand back its note
+        if (!idempotencyKey || !isUniqueViolation(error, 'research-notes', 'research_notes'))
+          throw error
+        const dup = await existing()
+        if (!dup) throw error
+        return json({ item: writebackView(dup) }, { status: 200 })
+      }
       await audit(req, account, {
         action: 'intelligence.writeback_proposed',
         targetType: 'research_note',
@@ -220,6 +301,9 @@ export const intelligenceEndpoints: Endpoint[] = [
       if (!hasCapability(access, 'intelligence.writeback.approve'))
         throw fail.forbidden('Research notes are approved by platform officers.')
       const id = param(req, 'id')
+      const reason = cleanText((await readBody(req)).reason, 500)
+      if (reason.length < 8)
+        throw fail.validation({ reason: 'A reason of at least 8 characters is required.' })
       const row = (await req.payload.findByID({
         collection: 'research-notes',
         id,
@@ -236,24 +320,25 @@ export const intelligenceEndpoints: Endpoint[] = [
           'separation_of_duties',
           'A research note must be approved by an operator other than its author.',
         )
-      if (!['pending_review', 'draft'].includes(row.status))
-        throw new ApiError(409, 'conflict', 'This note was already reviewed.')
-      const updated = await req.payload.update({
-        collection: 'research-notes',
-        id,
-        data: {
-          status: 'approved',
-          approvedBy: account.id,
-          reviewedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      // a concurrent approval claims zero rows here
+      await transition(
         req,
-      })
-      await audit(req, account, {
-        action: 'intelligence.writeback_approved',
-        targetType: 'research_note',
-        targetId: id,
-      })
+        sql`UPDATE research_notes
+               SET status = 'approved', approved_by_id = ${account.id},
+                   reviewed_at = now(), updated_at = now()
+             WHERE id = ${row.id} AND status IN ('pending_review', 'draft')
+               AND account_id <> ${account.id}
+         RETURNING id`,
+        'This note was already reviewed.',
+        () =>
+          audit(req, account, {
+            action: 'intelligence.writeback_approved',
+            targetType: 'research_note',
+            targetId: id,
+            reason,
+          }),
+      )
+      const updated = await reloadNote(req, row.id)
       return json({ item: writebackView(updated) })
     }),
   },
@@ -272,8 +357,6 @@ export const intelligenceEndpoints: Endpoint[] = [
         req,
       })) as Doc
       if (!row) throw fail.notFound()
-      if (row.status !== 'approved')
-        throw new ApiError(409, 'conflict', 'Only approved notes can be applied.')
       const approverId = typeof row.approvedBy === 'object' ? row.approvedBy?.id : row.approvedBy
       if (String(approverId) === String(account.id))
         throw new ApiError(
@@ -281,22 +364,24 @@ export const intelligenceEndpoints: Endpoint[] = [
           'separation_of_duties',
           'A research note must be applied by a different operator than its approver.',
         )
-      const updated = await req.payload.update({
-        collection: 'research-notes',
-        id,
-        data: {
-          status: 'applied',
-          appliedBy: account.id,
-          appliedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      // only an approved note moves, and only once
+      await transition(
         req,
-      })
-      await audit(req, account, {
-        action: 'intelligence.writeback_applied',
-        targetType: 'research_note',
-        targetId: id,
-      })
+        sql`UPDATE research_notes
+               SET status = 'applied', applied_by_id = ${account.id},
+                   applied_at = now(), updated_at = now()
+             WHERE id = ${row.id} AND status = 'approved'
+               AND approved_by_id IS DISTINCT FROM ${account.id}
+         RETURNING id`,
+        'Only approved notes can be applied.',
+        () =>
+          audit(req, account, {
+            action: 'intelligence.writeback_applied',
+            targetType: 'research_note',
+            targetId: id,
+          }),
+      )
+      const updated = await reloadNote(req, row.id)
       return json({ item: writebackView(updated) })
     }),
   },
