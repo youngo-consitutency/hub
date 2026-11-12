@@ -1,8 +1,8 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import { accountRef, isSelector, loadSelection } from '../lib/governance'
+import { isSelector, loadSelection } from '../lib/governance'
 import type { AccountLike, AnyValue } from '../lib/domain'
 
 // S24 selections.

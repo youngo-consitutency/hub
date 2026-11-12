@@ -1,6 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { accountRef, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
 import type { AccountLike, Doc, AnyValue } from '../lib/domain'
@@ -17,11 +17,6 @@ async function requireOpsCapability(req: PayloadRequest, capabilities: string[])
     throw fail.forbidden('This workspace is not assigned to your account.')
   return { account }
 }
-
-const accountRef = (a: AnyValue) =>
-  a == null
-    ? null
-    : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
 const own = (doc: Doc) => {
   const id = doc?.account?.id ?? doc?.reporter?.id ?? doc?.account ?? doc?.reporter
