@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { describe, it, beforeAll, expect } from 'vitest'
 
 import { mailReach } from '../../src/shared/mailReach'
-import { emailPlainText, sanitizeEmailHtml } from '../../src/shared/emailHtml'
+import { emailPlainText, sanitizeEmailHtml } from '../../src/lib/emailHtml'
 import { getPgPool } from '../../src/lib/pg'
 import { testPayload } from './provision'
 import { api, session } from './helpers'

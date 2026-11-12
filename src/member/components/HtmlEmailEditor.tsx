@@ -23,7 +23,7 @@ const COMMANDS = [
 
 /**
  * Minimal rich-text field for member-written email. The server sanitises
- * whatever this produces (src/shared/emailHtml.js), so the toolbar only
+ * whatever this produces (src/lib/emailHtml.ts), so the toolbar only
  * offers what survives: emphasis, lists, a heading and safe links.
  */
 export function HtmlEmailEditor({
