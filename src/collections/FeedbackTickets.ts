@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { noAccess } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 
 export const FeedbackTickets: CollectionConfig = {
   slug: 'feedback-tickets',
@@ -8,14 +8,8 @@ export const FeedbackTickets: CollectionConfig = {
       if (!req.user) return false
       return { account: { equals: req.user.id } }
     },
-    create: ({ req, data }) => {
-      // Members may only file tickets under their own account.
-      return (
-        req.user?.collection === 'accounts' && (!data?.account || data?.account === req.user.id)
-      )
-    },
-    update: noAccess,
-    delete: noAccess,
+    // members file through /api/member/feedback, never the generated api
+    ...serverWrites,
   },
   fields: [
     { name: 'title', type: 'text', required: true },

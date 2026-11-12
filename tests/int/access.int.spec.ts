@@ -44,7 +44,8 @@ describe('generated API access control', () => {
     }
   })
 
-  it('lets a member file only their own feedback ticket', async () => {
+  it('refuses member feedback tickets over REST', async () => {
+    // members file through /api/member/feedback
     const res = await api('/feedback-tickets', {
       method: 'POST',
       cookie: member.cookie,
@@ -54,38 +55,22 @@ describe('generated API access control', () => {
         body: 'access contract test',
       }),
     })
-    expect([200, 201]).toContain(res.status)
-    const forged = await api('/feedback-tickets', {
-      method: 'POST',
-      cookie: member.cookie,
-      body: JSON.stringify({
-        title: 'forged',
-        kind: 'other',
-        body: 'x',
-        account: '1',
-      }),
-    })
-    expect(forged.status).toBe(403)
+    expect(res.status).toBe(403)
   })
 
-  it('prevents members patching privileged account fields via REST', async () => {
+  it('offers no generated REST for accounts', async () => {
     const res = await api(`/accounts/${memberAccountId}`, {
       method: 'PATCH',
       cookie: member.cookie,
       body: JSON.stringify({ role: 'admin', teamRoles: ['membership_team'] }),
     })
-    expect(res.status).toBe(403)
-    const me = await api(`/accounts/${memberAccountId}`, {
-      cookie: member.cookie,
-    })
-    const doc = await me.json()
-    expect(doc.role).not.toBe('admin')
+    expect(res.status).toBe(501)
+    expect((await api(`/accounts/${memberAccountId}`, { cookie: member.cookie })).status).toBe(501)
   })
 
-  it('hides gated working-group channels from members via REST', async () => {
-    // Members can read working groups over REST; the gated contact-channel
-    // fields are staff-only. Provision the group with those fields set so
-    // the assertion runs on real data.
+  it('keeps working groups and their gated channels off REST', async () => {
+    // the public groups endpoint fronts this collection; provision the gated
+    // fields so the assertion runs on real data
     const payload = await testPayload()
     const slug = `gated-${Math.random().toString(36).slice(2, 8)}`
     await payload.create({
@@ -100,14 +85,8 @@ describe('generated API access control', () => {
       overrideAccess: true,
     })
     const res = await api('/working-groups?limit=50', { cookie: member.cookie })
-    expect(res.status).toBe(200)
-    const body = await res.json()
-    const doc = body.docs?.find((d: AnyValue) => d.slug === slug)
-    expect(doc).toBeTruthy()
-    expect(doc.whatsappUrl).toBeUndefined()
-    expect(doc.groupUrl).toBeUndefined()
-    expect(doc.driveUrl).toBeUndefined()
-    expect(doc.taskForces).toBeUndefined()
+    expect(res.status).toBe(403)
+    expect(JSON.stringify(await res.json())).not.toContain('fixture')
   })
 
   it('grants wg.manage only for coordination authority records', async () => {

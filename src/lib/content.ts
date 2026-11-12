@@ -86,10 +86,8 @@ function decisionShape(d: AnyRecord): AnyRecord {
     title: d.title,
     status: DECISION_STAGE[d.status] || d.status,
     summary: d.context || null,
-    proposer:
-      (d.proposedBy && typeof d.proposedBy === 'object'
-        ? d.proposedBy.name || d.proposedBy.email
-        : null) || null,
+    // never fall back to the email: this feeds the public council register
+    proposer: (d.proposedBy && typeof d.proposedBy === 'object' ? d.proposedBy.name : null) || null,
     outcomeNote: d.resultSummary || null,
     windowDeadline: d[DECISION_PHASE_DEADLINE[d.status] || ''] || null,
     decidedAt: d.decidedAt || null,
