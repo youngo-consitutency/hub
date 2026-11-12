@@ -240,6 +240,22 @@ describe.skipIf(!GATEWAY_TOKEN)('agent gateway', () => {
       const names = JSON.parse(text).result.tools.map((t: { name: string }) => t.name)
       expect(names).toEqual((await (await call('describe_tools')).json()).tools)
       expect(text).not.toContain(GATEWAY_TOKEN)
+
+      // prototype keys and junk names get the sdk's not-found, never a 500
+      for (const name of ['constructor', '__proto__', 'bad name!'.repeat(20)]) {
+        const bad = await fetch(`http://127.0.0.1:${port}/mcp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'tools/call',
+            params: { name, arguments: {} },
+          }),
+        })
+        expect(bad.status).toBe(200)
+        expect(await bad.json()).toMatchObject({ id: 2, result: { isError: true } })
+      }
     } finally {
       server.kill()
     }

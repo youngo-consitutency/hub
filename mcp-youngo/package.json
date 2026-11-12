@@ -1,12 +1,18 @@
 {
   "name": "youngo-mcp",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.6",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "hono": "4.13.11",
+    "zod": "4.6.7"
   }
 }
