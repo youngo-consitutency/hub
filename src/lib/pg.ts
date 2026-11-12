@@ -1,4 +1,5 @@
 import pg from 'pg'
+import type { Payload } from 'payload'
 import type { Doc, AnyValue } from './domain'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
@@ -29,6 +30,14 @@ export function requirePgPool(): pg.Pool {
     throw error
   }
   return found
+}
+
+// drizzle handle for an open payload tx, so raw sql joins it. a missing
+// session means the caller forgot to begin one, fail loud not silently
+export function txHandle(payload: Payload, transactionID: AnyValue) {
+  const tx = (payload.db as Doc).sessions?.[transactionID]?.db
+  if (!tx) throw new Error('This write requires an open database transaction.')
+  return tx
 }
 
 // Unique violations surface as raw 23505 in the cause chain or a converted
