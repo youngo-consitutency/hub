@@ -105,7 +105,7 @@ export const notificationEndpoints: Endpoint[] = [
       }
       const connect = (await getDocument(req, 'connect'))?.body
       return json(
-        renderEmailTemplate('announcement', {
+        await renderEmailTemplate('announcement', {
           title: input.title,
           message: input.message,
           actionUrl: input.actionUrl,

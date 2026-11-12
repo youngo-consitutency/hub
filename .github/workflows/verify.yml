@@ -64,6 +64,14 @@ jobs:
       - name: Install exact dependencies
         run: npm ci
 
+      # the agent gateway spec spawns mcp-youngo; don't lean on sdk transitive deps
+      - name: Install connector-service dependencies
+        run: npm ci --prefix mcp-youngo
+
+      # mcp.int.spec imports mcp-content/server.mjs, which needs hono
+      - name: Install content-service dependencies
+        run: npm ci --prefix mcp-content
+
       - name: Lint
         run: npm run lint
 

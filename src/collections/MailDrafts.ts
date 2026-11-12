@@ -9,7 +9,7 @@ export const MailDrafts: CollectionConfig = {
   fields: [
     { name: 'author', type: 'relationship', relationTo: 'accounts', required: true, index: true },
     { name: 'title', type: 'text', required: true },
-    // sanitised by src/shared/emailHtml.js
+    // sanitised by src/lib/emailHtml.ts
     { name: 'message', type: 'textarea', required: true },
     { name: 'actionUrl', type: 'text' },
     {
