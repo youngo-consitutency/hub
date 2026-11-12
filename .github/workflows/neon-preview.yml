@@ -19,6 +19,8 @@ concurrency:
 env:
   NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
   NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+  # the project holds more than one database, so neonctl needs telling which
+  NEON_DATABASE: ${{ vars.NEON_DATABASE || 'hub' }}
   NEONCTL: npx --yes neonctl@6.0.0
   PR_BRANCH: pr-${{ github.event.pull_request.number || inputs.pr-number }}
 
@@ -56,6 +58,7 @@ jobs:
           fi
           if ! DSN=$($NEONCTL connection-string "$PR_BRANCH" \
             --project-id "$NEON_PROJECT_ID" \
+            --database-name "$NEON_DATABASE" \
             --pooled 2> /tmp/neon_dsn_err.txt); then
             # free plan caps branches and a PR stack hits it fast; verify.yml still migrates
             if grep -q 'branches limit exceeded' /tmp/neon_create.txt; then
