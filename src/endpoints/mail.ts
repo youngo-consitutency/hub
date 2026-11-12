@@ -14,7 +14,7 @@ import {
   renderEmailTemplate,
 } from '../lib/notifications'
 import { MAX_INDIVIDUAL_RECIPIENTS, mailReach } from '../shared/mailReach'
-import { emailPlainText, sanitizeEmailHtml } from '../shared/emailHtml'
+import { emailTextLength, sanitizeEmailHtml } from '../lib/emailHtml'
 
 const queueLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, scope: 'mail-queue' })
 const INACTIVE_MEMBERSHIP = ['expired', 'terminated', 'rejected']
@@ -105,7 +105,7 @@ function cleanDraft(b: AnyValue) {
   const actionUrl = cleanText(b.actionUrl, 500) || null
   const fields: Record<string, string> = {}
   if (!title || title.length < 4) fields.title = 'Give the email a subject.'
-  if (emailPlainText(message).length < 12) fields.message = 'Write the message.'
+  if (emailTextLength(message) < 12) fields.message = 'Write the message.'
   if (actionUrl && !/^https:\/\//.test(actionUrl))
     fields.actionUrl = 'Links must start with https://'
   if (Object.keys(fields).length) throw fail.validation(fields)
@@ -196,7 +196,7 @@ export const mailEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await mailContext(req)
       const draft = cleanDraft(await readBody(req))
-      const { subject, html } = renderEmailTemplate('group-mail', {
+      const { subject, html } = await renderEmailTemplate('group-mail', {
         title: draft.title,
         html: draft.message,
         actionUrl: draft.actionUrl,
