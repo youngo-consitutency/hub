@@ -1,5 +1,6 @@
 import type { AnyValue } from './domain'
-import type { ErrorEvent } from '@sentry/core'
+// from nextjs, not @sentry/core: a separate core copy drifts and the types clash
+import type { ErrorEvent } from '@sentry/nextjs'
 
 // Shared beforeSend scrubbing: credentials and member-identifying fields
 // never leave the process — this strips anything arriving via payloads,
