@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload'
-import { serverWrites } from '../lib/collectionAccess'
+import { noFieldAccess, serverWrites } from '../lib/collectionAccess'
 
 export const Coys: CollectionConfig = {
   slug: 'content-coys',
   access: {
-    read: () => true,
+    read: () => ({ reviewStatus: { equals: 'approved' } }),
     ...serverWrites,
   },
   fields: [
@@ -35,7 +35,12 @@ export const Coys: CollectionConfig = {
     },
     { name: 'organizerName', type: 'text', label: 'Organiser name' },
     { name: 'organizerOrg', type: 'text', label: 'Organiser organisation' },
-    { name: 'organizerEmail', type: 'email', label: 'Organiser email' },
+    {
+      name: 'organizerEmail',
+      type: 'email',
+      label: 'Organiser email',
+      access: { read: noFieldAccess },
+    },
     { name: 'registerUrl', type: 'text' },
     { name: 'websiteUrl', type: 'text' },
     { name: 'instagramUrl', type: 'text' },

@@ -1,15 +1,13 @@
 import type { CollectionConfig } from 'payload'
-import { noAccess } from '../lib/collectionAccess'
+import { noAccess, serverWrites } from '../lib/collectionAccess'
 
-// Consultation intake (replaces consultation_contributions). Public POST,
-// staff-only read.
+// Consultation intake (replaces consultation_contributions). Public POST goes
+// through /api/consultation/contributions, staff-only read.
 export const ConsultationContributions: CollectionConfig = {
   slug: 'consultation-contributions',
   access: {
     read: noAccess,
-    create: () => true,
-    update: noAccess,
-    delete: noAccess,
+    ...serverWrites,
   },
   fields: [
     { name: 'kind', type: 'text', required: true, index: true },

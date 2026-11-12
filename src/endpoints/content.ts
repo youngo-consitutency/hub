@@ -46,7 +46,6 @@ const draftView = (d: AnyValue) => ({
   createdBy: typeof d.author === 'object' ? d.author?.id : d.author,
   creatorName:
     typeof d.author === 'object' ? d.author?.name || d.author?.displayName || null : null,
-  creatorEmail: typeof d.author === 'object' ? d.author?.email : null,
   reviewedBy: typeof d.reviewer === 'object' ? d.reviewer?.id : d.reviewer,
   reviewerName:
     typeof d.reviewer === 'object' ? d.reviewer?.name || d.reviewer?.displayName || null : null,

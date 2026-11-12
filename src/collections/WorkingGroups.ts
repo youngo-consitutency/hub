@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload'
-import { noFieldAccess, isMember, serverWrites } from '../lib/collectionAccess'
+import { noAccess, noFieldAccess, serverWrites } from '../lib/collectionAccess'
 
 export const WorkingGroups: CollectionConfig = {
   slug: 'working-groups',
   access: {
-    read: isMember,
+    read: noAccess,
     ...serverWrites,
   },
   fields: [

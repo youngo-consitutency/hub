@@ -1,4 +1,4 @@
-import { noAccess } from '../lib/collectionAccess'
+import { serverWrites } from '../lib/collectionAccess'
 import type { CollectionConfig } from 'payload'
 
 export const MembershipAppeals: CollectionConfig = {
@@ -8,11 +8,7 @@ export const MembershipAppeals: CollectionConfig = {
       if (!req.user) return false
       return { account: { equals: req.user.id } }
     },
-    create: ({ req, data }) => {
-      return req.user?.collection === 'accounts' && data?.account === req.user.id
-    },
-    update: noAccess,
-    delete: () => false,
+    ...serverWrites,
   },
   fields: [
     { name: 'account', type: 'relationship', relationTo: 'accounts', required: true, index: true },
