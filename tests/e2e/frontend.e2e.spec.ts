@@ -72,8 +72,7 @@ test.describe('Public site', () => {
 
 test.describe('Member app', () => {
   test('member can sign in and reach the member home', async ({ page }) => {
-    await page.goto(`${BASE}/member`)
-    // The SPA shows a sign-in gate when unauthenticated.
+    await page.goto(`${BASE}/signin`)
     const email = page.locator('input[type="email"], input[name="email"]').first()
     await email.fill(memberEmail)
     const password = page.locator('input[type="password"], input[name="password"]').first()
