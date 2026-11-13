@@ -82,6 +82,15 @@ Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e
 
 The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 
+## Production database
+
+Production data lives in the Neon Postgres database `hub` (the `production` branch), served by the Vercel project `youngo-hub`. Local development uses `youngo_dev` on localhost; the retired demo database `neondb` is never a target.
+
+- The schema changes only through `src/db/migrations`. Production builds run `payload migrate` first (`scripts/ci/vercel-build.mjs`); previews never migrate.
+- Before a risky or destructive migration, create a Neon branch named `pre-migrate-YYYY-MM-DD` from production.
+- Agents do not write to production. Data scripts in `scripts/setup/` are dry runs unless given `--apply`, read `DATABASE_URL` from `.env.local` (check which database it names), and are run by a maintainer.
+- The legacy Vite/Express hub (`Genn25369/YOUNGO-HUB`) has its own PostgreSQL on Railway. It is a content source for `scripts/setup/import-legacy-content.ts`, not a shared database.
+
 ## Documentation and contributions
 
 Keep the README and contributor guides concise. Longer guides live in the [GitHub wiki](https://github.com/youngo-consitutency/hub/wiki). Do not add local agent notes, private records, or review output to the repository. Follow CONTRIBUTING.md and submit future changes through pull requests.

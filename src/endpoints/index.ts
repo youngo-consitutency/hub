@@ -13,7 +13,6 @@ import { ngoEndpoints } from './ngo'
 import { organisationEndpoints } from './organisations'
 import { resourceEndpoints } from './resources'
 import { negotiationEndpoints } from './negotiations'
-import { consultationEndpoints } from './consultation'
 import { pushEndpoints } from './push'
 import { notificationEndpoints } from './notifications'
 import { intelligenceEndpoints } from './intelligence'
@@ -46,7 +45,6 @@ export const domainEndpoints = [
   ...organisationEndpoints,
   ...resourceEndpoints,
   ...negotiationEndpoints,
-  ...consultationEndpoints,
   ...pushEndpoints,
   ...notificationEndpoints,
   ...intelligenceEndpoints,
