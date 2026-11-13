@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/notifications-drain",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/decisions-sweep",
+      "schedule": "30 6 * * *"
     }
   ]
 }

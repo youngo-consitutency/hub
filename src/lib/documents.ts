@@ -6,6 +6,7 @@ import type { Doc, AnyValue } from './domain'
 export async function getDocument(
   req: PayloadRequest,
   slug: string,
+  { answerKey = false }: { answerKey?: boolean } = {},
 ): Promise<{ slug: string; title: string; body: AnyValue } | null> {
   const { docs } = await req.payload.find({
     collection: 'content-documents' as never,
@@ -13,6 +14,8 @@ export async function getDocument(
     limit: 1,
     depth: 0,
     pagination: false,
+    // only the grading code may see quiz answers (ContentDocuments strips them)
+    context: { answerKey },
     req,
   })
   const doc = docs[0] as Doc

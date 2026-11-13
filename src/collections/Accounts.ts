@@ -225,8 +225,8 @@ export const Accounts: CollectionConfig = {
     },
     // Legacy credential support: on first login the legacy scrypt hash is
     // verified, the Payload password is set, and these are cleared.
-    { name: 'legacyPasswordHash', access: { update: noFieldAccess }, type: 'text' },
-    { name: 'legacyPasswordSalt', access: { update: noFieldAccess }, type: 'text' },
+    { name: 'legacyPasswordHash', access: { update: noFieldAccess }, hidden: true, type: 'text' },
+    { name: 'legacyPasswordSalt', access: { update: noFieldAccess }, hidden: true, type: 'text' },
     { name: 'lastLoginAt', access: { update: noFieldAccess }, type: 'date' },
     { name: 'legacyId', access: { update: noFieldAccess }, type: 'text', index: true },
   ],

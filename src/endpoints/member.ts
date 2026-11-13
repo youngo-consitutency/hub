@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { hasCapability } from '../lib/access'
 import {
   accountView,
@@ -11,6 +11,7 @@ import {
 import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
+import { ENDED_MEMBERSHIP_STATUSES } from '../lib/membership'
 import { getOwnMemberProfile } from '../lib/memberDirectory'
 import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
@@ -28,8 +29,12 @@ type CourseDoc = {
   quiz: { id: string; prompt: string; choices: AnyValue[]; correct: string }[]
 }
 
+const COURSE_MAX_FAILURES = 5
+const COURSE_WINDOW_MS = 60 * 60 * 1000
+
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
-  const course = (await getDocument(req, 'membership-course'))?.body as CourseDoc | undefined
+  const course = (await getDocument(req, 'membership-course', { answerKey: true }))?.body as
+    CourseDoc | undefined
   if (!course?.quiz?.length) {
     throw fail.notFound('The onboarding course is not configured yet.')
   }
@@ -63,8 +68,8 @@ async function upsertWgProgress(
     presentationOk && rulesOk
       ? existing?.unlockedAt || new Date().toISOString()
       : existing?.unlockedAt || null
-  const status =
-    p.status ?? (presentationOk && rulesOk ? 'active' : existing?.status || 'interested')
+  // never derived from the onboarding flags: a contact point approves membership
+  const status = p.status ?? existing?.status ?? 'interested'
   const data = {
     account: Number(accountId),
     wgSlug,
@@ -95,7 +100,7 @@ async function upsertWgProgress(
   })
 }
 
-function wgProgressView(d: AnyValue, accountId?: string | number) {
+export function wgProgressView(d: AnyValue, accountId?: string | number) {
   if (!d) return null
   return {
     account_id: accountId ?? (typeof d.account === 'object' ? d.account?.id : d.account),
@@ -166,7 +171,32 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireAccount(req)
+      // rejected, terminated, resigned and suspended accounts are reinstated
+      // by the Membership Team (or an appeal), never by passing the quiz
+      if (
+        ENDED_MEMBERSHIP_STATUSES.includes(String(account.membershipStatus ?? '')) ||
+        account.hubAccessStatus === 'suspended'
+      )
+        throw fail.forbidden('This account cannot take the course. Contact the Membership Team.')
       const course = await getCourse(req)
+      // attempts are counted from the audit trail so the cap survives restarts
+      const { totalDocs: recentFailures } = await req.payload.count({
+        collection: 'audit-log',
+        where: {
+          and: [
+            { actor: { equals: account.id } },
+            { action: { equals: 'member.course_failed' } },
+            { createdAt: { greater_than: new Date(Date.now() - COURSE_WINDOW_MS).toISOString() } },
+          ],
+        },
+        overrideAccess: true,
+      })
+      if (recentFailures >= COURSE_MAX_FAILURES)
+        throw new ApiError(
+          429,
+          'too_many_attempts',
+          'Too many unsuccessful attempts. Review the modules and try again later.',
+        )
       const b = await readBody(req)
       const answers = b?.answers || {}
       let score = 0
@@ -174,6 +204,12 @@ export const memberEndpoints: Endpoint[] = [
       const total = course.quiz.length
       const passed = score >= course.passScore
       if (!passed) {
+        await audit(req, account, {
+          action: 'member.course_failed',
+          targetType: 'account',
+          targetId: String(account.id),
+          after: { score, total },
+        })
         return json(
           {
             error: {
@@ -207,6 +243,13 @@ export const memberEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
         req,
+      })
+      await audit(req, account, {
+        action: 'member.course_passed',
+        targetType: 'account',
+        targetId: String(account.id),
+        before: { membershipStatus: status },
+        after: { membershipStatus: nextStatus, score },
       })
       return json({
         ok: true,
@@ -268,7 +311,6 @@ export const memberEndpoints: Endpoint[] = [
       const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
         presentationOk: Boolean(b.presentationOk),
         rulesOk: Boolean(b.rulesOk),
-        status: 'active',
       })
       return json({ progress: wgProgressView(progress, account.id) })
     }),
@@ -278,7 +320,12 @@ export const memberEndpoints: Endpoint[] = [
     method: 'post',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const progress = await upsertWgProgress(req, account.id, param(req, 'wg'), {
+      const wg = param(req, 'wg')
+      // a repeat request must not downgrade an approval or undo a rejection
+      const existing = await wgProgress(req, account.id, wg)
+      if (existing && ['active', 'rejected', 'pending_approval'].includes(existing.status))
+        return json({ progress: wgProgressView(existing, account.id) })
+      const progress = await upsertWgProgress(req, account.id, wg, {
         status: 'pending_approval',
       })
       return json({ progress: wgProgressView(progress, account.id) })

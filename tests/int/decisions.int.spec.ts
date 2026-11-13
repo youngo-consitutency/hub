@@ -3,6 +3,7 @@ import { describe, it, beforeAll, expect } from 'vitest'
 
 import { testPayload } from './provision'
 import { api, session } from './helpers'
+import { expireVote, expireWindows, makeVotingProposal } from './decisionFixtures'
 
 describe('decision engine (S09)', () => {
   let cwMember: { cookie: string }
@@ -32,54 +33,7 @@ describe('decision engine (S09)', () => {
     expect((await api('/decisions', { cookie: pending.cookie })).status).toBe(403)
   })
 
-  // Drive a proposal into 'voting': a standing red flag fails consensus,
-  // opening a ballot.
-  async function makeVotingProposal() {
-    const create = await api('/decisions', {
-      method: 'POST',
-      cookie: wgContact.cookie,
-      body: JSON.stringify({
-        title: `Ballot test ${Date.now()}`,
-        context: 'contract test',
-        proposalText: 'Do the test thing.',
-        decisionType: 'snap',
-        snapJustification: 'test',
-        snapDeadline: new Date(Date.now() + 2 * 86400000).toISOString(),
-        body: 'working_group',
-        bodyRef: 'finance',
-      }),
-    })
-    expect(create.status).toBe(201)
-    const { proposal } = await create.json()
-    await api(`/decisions/${proposal.id}/present`, {
-      method: 'POST',
-      cookie: wgContact.cookie,
-    })
-    const flag = await api(`/decisions/${proposal.id}/flags`, {
-      method: 'POST',
-      cookie: cwMember.cookie,
-      body: JSON.stringify({
-        kind: 'red',
-        rationaleCategory: 'mission_misalignment',
-        reason: 'test flag',
-        alternative: 'test alternative',
-      }),
-    })
-    expect(flag.status).toBe(201)
-    const flagId = (await flag.json()).flag.id
-    await api(`/decisions/${proposal.id}/flags/${flagId}/respond`, {
-      method: 'POST',
-      cookie: wgContact.cookie,
-      body: JSON.stringify({ responseNote: 'noted' }),
-    })
-    const close = await api(`/decisions/${proposal.id}/close`, {
-      method: 'POST',
-      cookie: wgContact.cookie,
-    })
-    const closed = (await close.json()).proposal
-    expect(closed.status).toBe('voting')
-    return closed
-  }
+  const makeVoting = () => makeVotingProposal(wgContact, cwMember)
 
   it('lists proposals for verified members without leaking account fields', async () => {
     const create = await api('/decisions', {
@@ -196,12 +150,11 @@ describe('decision engine (S09)', () => {
         ).status,
       ).toBe(200)
 
-      // close → no standing flags → consensus
-      const close = await api(`/decisions/${proposal.id}/close`, {
-        method: 'POST',
-        cookie: cwMember.cookie,
-      })
-      const closed = (await close.json()).proposal
+      // windows elapse → no standing flags → consensus on the next read
+      await expireWindows(proposal.id)
+      const closed = (
+        await (await api(`/decisions/${proposal.id}`, { cookie: cwMember.cookie })).json()
+      ).proposal
       expect(closed.status).toBe('adopted')
       expect(closed.adoptedVia).toBe('consensus')
 
@@ -226,7 +179,7 @@ describe('decision engine (S09)', () => {
 
   it('gates ballots by membership track and body scope', { timeout: 90000 }, async () => {
     // A finance-WG snap decision in its voting phase.
-    const voting = await makeVotingProposal()
+    const voting = await makeVoting()
 
     // network-track member has no decision rights (S17)
     expect(
@@ -270,7 +223,7 @@ describe('decision engine (S09)', () => {
   })
 
   it('rejects concurrent duplicate ballots via the unique index', { timeout: 90000 }, async () => {
-    const voting = await makeVotingProposal()
+    const voting = await makeVoting()
 
     // Parallel submissions can both pass the pre-check; the unique index
     // turns the loser into 409 already_voted.
@@ -314,16 +267,9 @@ describe('decision engine (S09)', () => {
   })
 
   it('closes an overdue vote exactly once under concurrent reads', { timeout: 90000 }, async () => {
-    const voting = await makeVotingProposal()
+    const voting = await makeVoting()
     // backdate the deadline so every read below tries to close the vote
-    await (
-      await testPayload()
-    ).update({
-      collection: 'decision-proposals',
-      id: voting.id,
-      data: { votingEndsAt: new Date(Date.now() - 1000).toISOString() },
-      overrideAccess: true,
-    })
+    await expireVote(voting.id)
 
     const reads = await Promise.all(
       Array.from({ length: 6 }, () => api(`/decisions/${voting.id}`, { cookie: cwMember.cookie })),
@@ -350,15 +296,8 @@ describe('decision engine (S09)', () => {
     'lets a withdraw race an overdue close without a second outcome',
     { timeout: 90000 },
     async () => {
-      const voting = await makeVotingProposal()
-      await (
-        await testPayload()
-      ).update({
-        collection: 'decision-proposals',
-        id: voting.id,
-        data: { votingEndsAt: new Date(Date.now() - 1000).toISOString() },
-        overrideAccess: true,
-      })
+      const voting = await makeVoting()
+      await expireVote(voting.id)
 
       const [withdraw, ...reads] = await Promise.all([
         api(`/decisions/${voting.id}/withdraw`, { method: 'POST', cookie: wgContact.cookie }),
@@ -385,7 +324,7 @@ describe('decision engine (S09)', () => {
   )
 
   it('validates veto request shape', { timeout: 90000 }, async () => {
-    const voting = await makeVotingProposal()
+    const voting = await makeVoting()
     const bad = await api(`/decisions/${voting.id}/vetoes`, {
       method: 'POST',
       cookie: cwMember.cookie,
