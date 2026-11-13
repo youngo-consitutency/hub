@@ -128,8 +128,10 @@ export function AccessGate({ children }: AccessGateProps) {
     )
   }
 
-  // nothing cached to fall back on, so we can't tell signed-in from signed-out
-  if (sessionFailed && !account) {
+  // nothing cached to fall back on, so we can't tell signed-in from signed-out.
+  // public pages still render signed-out rather than blocking a first visit
+  const publicPath = path === '/' || path.startsWith('/negotiations')
+  if (sessionFailed && !account && !publicPath) {
     return (
       <main className="mandateGate">
         <div className="mandateShell" style={{ justifyContent: 'center', padding: 24 }}>
