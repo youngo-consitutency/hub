@@ -39,6 +39,4 @@ export const PUBLIC_PATHS = [
   '/join',
   '/signin',
   '/negotiations',
-  '/consultation',
-  '/consultation/recap',
 ]
