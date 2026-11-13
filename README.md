@@ -54,4 +54,4 @@ Production runs on the `youngo-hub` Vercel project at [youngo-hub.vercel.app](ht
 
 ## Licence
 
-[GPL-3.0](LICENSE). Third-party notices still apply. The package’s inherited MIT label remains unresolved.
+[GPL-3.0-only](LICENSE), matching the `license` field in `package.json`. Third-party notices still apply.

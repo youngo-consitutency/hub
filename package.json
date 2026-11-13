@@ -2,7 +2,7 @@
   "name": "youngo-hub",
   "version": "1.0.0",
   "description": "YOUNGO Hub — member platform and mission control (Next.js + Payload CMS)",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
