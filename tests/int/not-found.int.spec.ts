@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BASE } from './helpers'
 
-// the member app is client-rendered, so the status has to come from the server catch-all
+// the member layout is client-gated, so the 404 comes from the catch-all route handler
 describe('unknown routes', () => {
   it('answers 404 for a path no page owns', async () => {
     const res = await fetch(`${BASE}/definitely-not-a-page`)
