@@ -14,9 +14,7 @@ interface ForgotPasswordFormProps {
 import type { AnyValue } from '../../lib/types'
 import { TbArrowLeft as ArrowLeft } from 'react-icons/tb'
 import { Button } from '../ui'
-import { FieldError } from '../FormControls'
-import { fieldClass } from './helpers'
-import { FormAlert } from './shared'
+import { FormAlert, Honeypot, LoginEmailField } from './shared'
 
 export function ForgotPasswordForm({
   login,
@@ -33,26 +31,8 @@ export function ForgotPasswordForm({
   return (
     <form className={className} onSubmit={onSubmit} noValidate>
       <FormAlert>{error}</FormAlert>
-      <label className={fieldClass(fields.email)}>
-        <span>Email *</span>
-        <input
-          className="input"
-          type="email"
-          autoComplete="email"
-          value={login.email}
-          onChange={setLog('email')}
-          aria-invalid={!!fields.email}
-        />
-        <FieldError msg={fields.email} />
-      </label>
-      <input
-        className="hp"
-        tabIndex={-1}
-        autoComplete="off"
-        aria-hidden="true"
-        value={login.website}
-        onChange={setLog('website')}
-      />
+      <LoginEmailField login={login} fields={fields} setLog={setLog} />
+      <Honeypot value={login.website} onChange={setLog('website')} />
       {forgotMsg && (
         <p className="meta" style={{ color: 'var(--accent)' }} role="status">
           {forgotMsg}

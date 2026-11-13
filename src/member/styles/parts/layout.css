@@ -111,6 +111,11 @@
   align-items: stretch;
 }
 
+/* few cards: fill the row and wrap evenly instead of leaving an orphan */
+.cardGrid.cardGridFit {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
 .cardGrid > * {
   min-width: 0;
   max-width: 100%;
