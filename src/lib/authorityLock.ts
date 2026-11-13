@@ -20,7 +20,7 @@ import { txHandle, withTransaction } from './pg'
 // holding an advisory key another writer needs first.
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
-export async function advisoryAuthorityLock(
+async function advisoryAuthorityLock(
   payload: Payload,
   transactionID: AnyValue,
   accountId: number,
