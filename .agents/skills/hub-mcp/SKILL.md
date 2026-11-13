@@ -12,7 +12,7 @@ triggers: [user, model]
 
 - It signs in as a normal Hub account (`HUB_EMAIL`/`HUB_PASSWORD` or `HUB_TOKEN`) and writes through the live HTTP API (`HUB_ORIGIN`), so review queues and the audit trail apply unchanged.
 - **Never pass `DATABASE_URL` to it.** If a tool "needs" the database, the tool is wrong — add an API endpoint instead.
-- Auth on the HTTP service: `MCP_TOKEN` via `Bearer`, `?token=`, or `/t/<token>/mcp`; `MCP_ALLOW_ANONYMOUS=1` for no-auth connectors. `POST /mcp` only — it's stateless.
+- Auth on the HTTP service: `MCP_TOKEN` is required (the server refuses to start without it) and is accepted only as `Authorization: Bearer` (hono `bearerAuth`) — never in the URL. There is no anonymous mode. `POST /mcp` only — it's stateless.
 
 ## The .js constraint
 
