@@ -25,12 +25,14 @@ Use Node.js 22.13 or later in the Node 22 series, or Node 24, and PostgreSQL.
 git clone https://github.com/youngo-consitutency/hub.git
 cd hub
 npm ci
-docker run -d --name youngo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=youngo_dev -p 5433:5432 postgres:16
+docker run -d --name youngo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=youngo_dev -p 127.0.0.1:5433:5432 postgres:16
 export DATABASE_URL='postgres://postgres:postgres@localhost:5433/youngo_dev'
 export PAYLOAD_SECRET="$(openssl rand -hex 32)"
 npm run migrate
 npm run dev
 ```
+
+The container publishes Postgres on 127.0.0.1 only, and `postgres` is a throwaway local-only password: never reuse it, and never publish the port on a shared network. `docker-compose.yml` does the same but requires you to export `POSTGRES_PASSWORD` first.
 
 Open <http://localhost:3000>. Keep `PAYLOAD_SECRET` stable between sessions and private. Use a separate development database; do not run migrations against an existing member database without a tested migration plan.
 
