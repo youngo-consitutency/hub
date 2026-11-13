@@ -1,7 +1,7 @@
 import type { PointerEvent } from 'react'
 
-// surfaces that glow where the pointer is: cards, and the deep hero, page header and footer bands
-const GLOW = '.ldCard, .ldDark, .sitePageHeader, .siteFooter'
+// surfaces that glow where the pointer is: cards, and the deep hero, page header, footer and sidebar
+const GLOW = '.ldCard, .entityCard, .ldDark, .sitePageHeader, .siteFooter, .sidebar'
 
 // one delegated handler on the page shell: the nearest glowing surface gets --mx/--my
 export function trackPointer(e: PointerEvent<HTMLElement>) {

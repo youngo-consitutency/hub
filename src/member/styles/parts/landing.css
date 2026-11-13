@@ -24,7 +24,8 @@
 /* deep sections re-scope the tokens so buttons, cards and links inside theme themselves */
 .ldDark,
 .sitePageHeader,
-.siteFooter {
+.siteFooter,
+.sidebar {
   --brand-dark-display: inline-block;
   --brand-light-display: none;
   --bg-page: rgba(234, 246, 238, 0.06);
