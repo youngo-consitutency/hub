@@ -15,6 +15,7 @@ function SectionNav({ sections }: { sections: PageSection[] }) {
   const [current, setCurrent] = useState(sections[0]?.id)
   useEffect(() => {
     const seen = new Map<string, boolean>()
+    const watched = new Set<string>()
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) seen.set(entry.target.id, entry.isIntersecting)
@@ -24,11 +25,26 @@ function SectionNav({ sections }: { sections: PageSection[] }) {
       },
       { rootMargin: '-20% 0px -65% 0px' },
     )
-    for (const { id } of sections) {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
+    // a section can mount after its data loads, so pick up late arrivals too
+    const attach = () => {
+      for (const { id } of sections) {
+        const element = document.getElementById(id)
+        if (element && !watched.has(id)) {
+          watched.add(id)
+          observer.observe(element)
+        }
+      }
     }
-    return () => observer.disconnect()
+    attach()
+    const mutations = new MutationObserver(attach)
+    mutations.observe(document.getElementById('site-main') ?? document.body, {
+      childList: true,
+      subtree: true,
+    })
+    return () => {
+      mutations.disconnect()
+      observer.disconnect()
+    }
   }, [sections])
   return (
     <nav className="siteSectionNav" aria-label="On this page">

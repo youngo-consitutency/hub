@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { createElement, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ToggleButton, ToggleButtonGroup } from 'react-aria-components'
 import type { AnyValue, Doc } from '../../lib/types'
@@ -117,6 +117,13 @@ export function WorkingGroupsSection() {
   const { doc: site, loading } = useDocument('site')
   const { doc: directory } = useDocument('directory')
   const wg = site?.workingGroups
+  const ready = Boolean(wg && directory)
+  // the section only exists once its documents load, so a deep link scrolls here afterwards
+  useEffect(() => {
+    if (ready && window.location.hash === '#working-groups') {
+      document.getElementById('working-groups')?.scrollIntoView({ block: 'start' })
+    }
+  }, [ready])
   if (!wg || !directory) return loading ? <Skeletons n={4} /> : null
   const empty = wg.empty || {}
   const footnote = wg.footnote || {}

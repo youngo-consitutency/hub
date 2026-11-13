@@ -235,8 +235,8 @@ export function PublicSite() {
     document.getElementById('site-main')?.focus({ preventScroll: true })
   }, [path])
 
-  const match = Object.keys(PAGES).find((href) => isSiteRouteActive(path, href))
-  const Page = isSiteHome(path) ? SiteHome : match ? PAGES[match] : legacy ? Nothing : SiteNotFound
+  // exact paths only: an unknown /about/x is a 404, not the About page
+  const Page = isSiteHome(path) ? SiteHome : (PAGES[path] ?? (legacy ? Nothing : SiteNotFound))
 
   return (
     <MotionConfig reducedMotion="user">

@@ -1,3 +1,4 @@
+import { useDocument } from '../../lib/documents'
 import { OrganisationSection } from '../../features/platform/PublicPlatform'
 import { ContactSection } from './SiteContact'
 import { FaqSection } from './SiteFaq'
@@ -11,10 +12,12 @@ const SECTIONS: PageSection[] = [
 
 // who YOUNGO is, the questions people ask, and where to write
 export function SiteAbout() {
+  const { doc: site } = useDocument('site')
+  const about = site?.about
   return (
     <SitePage
-      title="About YOUNGO"
-      lead="How the constituency is organised, answers to common questions, and where to get in touch."
+      title={about?.title ?? 'About YOUNGO'}
+      lead={about?.lead}
       motif="arcs"
       sections={SECTIONS}
     >

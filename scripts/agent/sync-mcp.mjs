@@ -77,6 +77,23 @@ const write = (p, s) => {
   console.log('wrote', p.replace(ROOT, '.'))
 }
 
+// Devin and Cursor are no longer targets. Older runs left credentials in their files, so
+// drop only the names this script owns and keep anything else a maintainer added.
+for (const rel of ['.agents/tool-cfg/devin/mcp_config.json', '.agents/tool-cfg/cursor/mcp.json']) {
+  const p = join(ROOT, rel)
+  if (!existsSync(p)) continue
+  try {
+    const config = JSON.parse(readFileSync(p, 'utf8'))
+    const kept = Object.fromEntries(
+      Object.entries(config.mcpServers ?? {}).filter(([name]) => !MANAGED.includes(name)),
+    )
+    write(p, json({ ...config, mcpServers: kept }))
+    console.log('cleared managed entries in', rel)
+  } catch {
+    console.warn('left', rel, 'alone: not valid JSON')
+  }
+}
+
 // Zed (JSONC): merge into context_servers through a real JSONC edit, so
 // comments, strings and same-named keys elsewhere are never touched.
 {

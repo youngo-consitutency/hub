@@ -16,13 +16,9 @@ const SECTIONS: PageSection[] = [
 export function SiteWork() {
   const { doc: site } = useDocument('site')
   const cta = site?.workingGroups?.cta
+  const work = site?.work
   return (
-    <SitePage
-      title="Our work"
-      lead="Working groups, conferences and the Global Youth Statement: how young people shape climate policy together."
-      motif="rings"
-      sections={SECTIONS}
-    >
+    <SitePage title={work?.title ?? 'Our work'} lead={work?.lead} motif="rings" sections={SECTIONS}>
       <WorkReach />
       <WorkingGroupsSection />
       <ConferencesSection />

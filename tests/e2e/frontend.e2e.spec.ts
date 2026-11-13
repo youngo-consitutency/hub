@@ -37,6 +37,12 @@ test.describe('Public site', () => {
     await expect(page).toHaveURL(`${BASE}/our-work#conferences`)
   })
 
+  test('an unknown path under /about is not the About page', async ({ page }) => {
+    await page.goto(`${BASE}/about/not-a-real-page`)
+    await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('About YOUNGO')
+    await expect(page.getByRole('link', { name: 'Home' }).first()).toBeVisible()
+  })
+
   test('the retired landing preview redirects home', async ({ request }) => {
     const res = await request.get(`${BASE}/landingV2/anything`, { maxRedirects: 0 })
     expect(res.status()).toBe(308)
