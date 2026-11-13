@@ -39,32 +39,20 @@
 .brandLockup {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   min-width: 0;
 }
 
-.brandLogoPlate {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 6px;
-  border-radius: var(--radius-chip);
-  background: var(--brand-surface);
-  /* Define the plate edge so it doesn't vanish white-on-near-white in light. */
-  border: 1px solid var(--border);
+.brandLogo {
+  height: 34px;
+  width: auto;
 }
 
-.brandLogoPlate img {
-  display: block;
-  height: 30px;
-  object-fit: contain;
+.brandLogoLight {
+  display: var(--brand-light-display);
 }
 
-.brandLockup[data-brand='hub'] .brandLogoPlate img {
-  width: 142px;
-}
-
-.brandLockup[data-brand='youngo'] .brandLogoPlate img {
-  width: 103px;
+.brandLogoDark {
+  display: var(--brand-dark-display);
 }
 
 .skipLink {
