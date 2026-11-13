@@ -1,5 +1,11 @@
 import type { CollectionConfig } from 'payload'
-import { grantsCapability, noAccess, noFieldAccess, serverWrites } from '../lib/collectionAccess'
+import {
+  accountField,
+  noAccess,
+  noFieldAccess,
+  ownRowsOrStaffRead,
+  serverWrites,
+} from '../lib/collectionAccess'
 
 // Operational workflow records — members act via src/endpoints/operations.ts;
 // generated REST writes are staff-only; safeguarding is staff-read.
@@ -8,21 +14,11 @@ import { grantsCapability, noAccess, noFieldAccess, serverWrites } from '../lib/
 export const FundingRequests: CollectionConfig = {
   slug: 'funding-requests',
   access: {
-    read: async ({ req }) => {
-      if (!req.user) return false
-      if (await grantsCapability(req, 'platform.manage')) return true
-      return { account: { equals: req.user.id } }
-    },
+    read: ownRowsOrStaffRead,
     ...serverWrites,
   },
   fields: [
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
+    accountField,
     { name: 'title', type: 'text', required: true },
     { name: 'purpose', type: 'textarea', required: true },
     { name: 'amountNumeric', type: 'number', required: true },
@@ -135,21 +131,11 @@ export const SafeguardingCases: CollectionConfig = {
 export const CoiDeclarations: CollectionConfig = {
   slug: 'coi-declarations',
   access: {
-    read: async ({ req }) => {
-      if (!req.user) return false
-      if (await grantsCapability(req, 'platform.manage')) return true
-      return { account: { equals: req.user.id } }
-    },
+    read: ownRowsOrStaffRead,
     ...serverWrites,
   },
   fields: [
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
+    accountField,
     { name: 'interest', type: 'text', required: true },
     { name: 'details', type: 'textarea', required: true },
     { name: 'relatedScope', type: 'text' },
@@ -176,21 +162,11 @@ export const CoiDeclarations: CollectionConfig = {
 export const RecognitionRequests: CollectionConfig = {
   slug: 'recognition-requests',
   access: {
-    read: async ({ req }) => {
-      if (!req.user) return false
-      if (await grantsCapability(req, 'platform.manage')) return true
-      return { account: { equals: req.user.id } }
-    },
+    read: ownRowsOrStaffRead,
     ...serverWrites,
   },
   fields: [
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
+    accountField,
     {
       name: 'kind',
       type: 'select',
@@ -224,21 +200,11 @@ export const RecognitionRequests: CollectionConfig = {
 export const PartnershipRequests: CollectionConfig = {
   slug: 'partnership-requests',
   access: {
-    read: async ({ req }) => {
-      if (!req.user) return false
-      if (await grantsCapability(req, 'platform.manage')) return true
-      return { account: { equals: req.user.id } }
-    },
+    read: ownRowsOrStaffRead,
     ...serverWrites,
   },
   fields: [
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
+    accountField,
     { name: 'organisationName', type: 'text', required: true },
     {
       name: 'kind',
@@ -278,21 +244,11 @@ export const PartnershipRequests: CollectionConfig = {
 export const PrivacyRequests: CollectionConfig = {
   slug: 'privacy-requests',
   access: {
-    read: async ({ req }) => {
-      if (!req.user) return false
-      if (await grantsCapability(req, 'platform.manage')) return true
-      return { account: { equals: req.user.id } }
-    },
+    read: ownRowsOrStaffRead,
     ...serverWrites,
   },
   fields: [
-    {
-      name: 'account',
-      type: 'relationship',
-      relationTo: 'accounts',
-      required: true,
-      index: true,
-    },
+    accountField,
     {
       name: 'kind',
       type: 'select',
