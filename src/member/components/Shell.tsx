@@ -3,6 +3,7 @@ interface ShellProps {
 }
 
 import type { AnyValue, Doc } from '../lib/types'
+import { trackPointer } from '../lib/pointerGlow'
 import { mobileNavFor, navFor, viewerOf } from '../lib/routes'
 import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -107,7 +108,7 @@ export function Shell({ children }: ShellProps) {
   const mobilePrimaryNav = useMemo(() => mobileNavFor(viewer, path), [viewer, path])
 
   return (
-    <div className="shell">
+    <div className="shell" onPointerMove={trackPointer}>
       <a className="skipLink" href="#main-content">
         Skip to main content
       </a>

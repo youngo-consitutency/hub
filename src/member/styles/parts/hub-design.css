@@ -1,0 +1,31 @@
+/* the signed-in hub speaks the public site's language: display type, a deep sidebar built from
+   the same dark scope as the footer and hero, and cards that glow where the pointer is */
+
+.shell {
+  --font-display: var(--font-space-grotesk), var(--font-ui);
+}
+
+.sidebar {
+  border-right: 1px solid var(--ld-line-deep);
+  background: var(--glow-spot), linear-gradient(170deg, var(--ld-deep) 25%, var(--ld-deep-2));
+  color: var(--ld-on-deep);
+}
+
+/* entity cards share the landing's pointer glow: the layer has no size until the pointer is on it */
+.entityCard {
+  --mx: 50%;
+  --my: 0%;
+  background-image: radial-gradient(
+    240px circle at var(--mx) var(--my),
+    var(--ld-spot),
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+  background-size: 0 0;
+}
+
+@media (hover: hover) {
+  .entityCard:hover {
+    background-size: 100% 100%;
+  }
+}

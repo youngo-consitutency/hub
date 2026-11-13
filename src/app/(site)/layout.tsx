@@ -5,7 +5,7 @@ import { appBaseUrl } from '../../lib/env'
 import { SITE_DESCRIPTION, SITE_NAME, isIndexable, shareMetadata } from './seo'
 
 // display face for the public landing; self-hosted by next at build, no runtime request to google
-const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
+const display = Space_Grotesk({ subsets: ['latin', 'latin-ext'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
   metadataBase: new URL(appBaseUrl()),
