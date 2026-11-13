@@ -13,6 +13,7 @@
 @import './parts/overlays.css' layer(components);
 @import './parts/gates.css' layer(components);
 @import './parts/site.css' layer(components);
+@import './parts/landing.css' layer(components);
 @import './parts/search.css' layer(components);
 @import './parts/surfaces.css' layer(components);
 /* motion then touch come last: they adjust the sheets above */
