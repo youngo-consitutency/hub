@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload'
+import { hubUrl } from '../lib/hubUrl'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
@@ -178,7 +179,7 @@ export const ngoEndpoints: Endpoint[] = [
         req,
       })
       const base = appBaseUrl()
-      const inviteUrl = `${base}/#/ngo/accept?token=${token}`
+      const inviteUrl = `${base}${hubUrl(`/ngo/accept?token=${token}`)}`
       const { delivered } = await sendEmail({
         to: email,
         subject: 'YOUNGO Hub organisation invitation',

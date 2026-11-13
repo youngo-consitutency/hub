@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload'
+import { hubUrl } from '../lib/hubUrl'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
@@ -115,7 +116,7 @@ export const pushEndpoints: Endpoint[] = [
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-72.png',
         tag: 'test-notification',
-        data: { url: '/' },
+        data: { url: hubUrl() },
       })
       return json({ ok: true, ...(await deliverPush(rows, payload)) })
     }),
@@ -146,7 +147,7 @@ export const pushEndpoints: Endpoint[] = [
         icon: icon || '/icons/icon-192.png',
         badge: badge || '/icons/icon-72.png',
         tag: tag || 'youngo-notification',
-        data: data || { url: '/' },
+        data: data || { url: hubUrl() },
         requireInteraction: Boolean(requireInteraction),
       })
       // One outbox job per member — delivery, endpoint pruning and retries

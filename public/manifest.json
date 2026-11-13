@@ -2,7 +2,7 @@
   "name": "YOUNGO Hub",
   "short_name": "YOUNGO Hub",
   "description": "Meetings, working groups, submissions, contacts, and member work for the UNFCCC youth constituency.",
-  "start_url": "/",
+  "start_url": "/hub",
   "display": "standalone",
   "background_color": "#0A0F0C",
   "theme_color": "#0A0F0C",
