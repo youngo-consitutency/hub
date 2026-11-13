@@ -4,7 +4,13 @@ import { noAccess, serverWrites } from '../lib/collectionAccess'
 export const Resources: CollectionConfig = {
   slug: 'catalogue-resources',
   access: {
-    read: () => true,
+    // same filter as the public /resources listing
+    read: () => ({
+      or: [
+        { verificationStatus: { not_equals: 'retired' } },
+        { verificationStatus: { exists: false } },
+      ],
+    }),
     ...serverWrites,
   },
   fields: [
@@ -35,12 +41,9 @@ export const Resources: CollectionConfig = {
 export const ResourceIssues: CollectionConfig = {
   slug: 'resource-issues',
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: ({ req, data }) => {
-      return req.user?.collection === 'accounts' && data?.reportedBy === req.user.id
-    },
-    update: noAccess,
-    delete: noAccess,
+    read: noAccess,
+    // members file through /api/member/resources/*, never the generated api
+    ...serverWrites,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },
@@ -61,12 +64,8 @@ export const ResourceIssues: CollectionConfig = {
 export const ResourceReviews: CollectionConfig = {
   slug: 'resource-reviews',
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: ({ req, data }) => {
-      return req.user?.collection === 'accounts' && data?.reviewedBy === req.user.id
-    },
-    update: noAccess,
-    delete: noAccess,
+    read: noAccess,
+    ...serverWrites,
   },
   fields: [
     { name: 'resourceSlug', type: 'text', required: true, index: true },

@@ -1,14 +1,10 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadRequest } from 'payload'
+import { sql } from '@payloadcms/db-postgres'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireCwMember, requireVerifiedMember } from '../lib/accounts'
+import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
-import {
-  accountRef,
-  beleniosVoterList,
-  eligibleVoters,
-  isFacilitator,
-  loadElection,
-} from '../lib/governance'
+import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
+import { txHandle } from '../lib/pg'
 import type { Doc, AnyValue } from '../lib/domain'
 
 // S10 elections. the hub runs nominations and screening, decides who may
@@ -164,16 +160,20 @@ export const electionEndpoints: Endpoint[] = [
         patch.votingOpensAt = now
         patch.votingCloseAt = new Date(Date.now() + 5 * 86400000).toISOString()
       }
-      const updated = await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: patch,
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: `election.${next}`,
-        targetType: 'governance',
-        targetId: String(e.id),
+      const updated = await withPhase(req, e.id, [e.status], next, async () => {
+        const doc = await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: patch,
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: `election.${next}`,
+          targetType: 'governance',
+          targetId: String(e.id),
+        })
+        return doc
       })
       return json({ election: electionView(updated) })
     }),
@@ -305,20 +305,24 @@ export const electionEndpoints: Endpoint[] = [
       if (!['announced', 'nominations'].includes(e.status))
         throw fail.conflict('invalid_phase', `Cannot export voters while status is ${e.status}.`)
       const voters = await eligibleVoters()
-      await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: {
-          eligibleIndividualCount: voters.filter((v) => v.kind === 'individual').length,
-          eligibleOrgCount: voters.filter((v) => v.kind === 'organisation').length,
-        },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: 'election.voters_exported',
-        targetType: 'governance',
-        targetId: String(e.id),
-        after: { voters: voters.length },
+      // re-checked under the row lock: an advance that opened voting meanwhile wins
+      await withPhase(req, e.id, ['announced', 'nominations'], null, async () => {
+        await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: {
+            eligibleIndividualCount: voters.filter((v) => v.kind === 'individual').length,
+            eligibleOrgCount: voters.filter((v) => v.kind === 'organisation').length,
+          },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'election.voters_exported',
+          targetType: 'governance',
+          targetId: String(e.id),
+          after: { voters: voters.length },
+        })
       })
       return new Response(beleniosVoterList(voters), {
         headers: {
@@ -373,14 +377,19 @@ export const electionEndpoints: Endpoint[] = [
         pagination: false,
         overrideAccess: true,
       })
+      const quorum = {
+        individualsMet: individuals !== null && individuals >= (e.quorumIndividuals ?? 100),
+        organisationsMet: organisations !== null && organisations >= (e.quorumOrganisations ?? 25),
+      }
+      const quorumMet = quorum.individualsMet && quorum.organisationsMet
       const raceSlugs: string[] = (e.races ?? []).map((race: AnyValue) => race.slug)
       for (const slug of Object.keys(b.races ?? {}))
         if (!raceSlugs.includes(slug)) fields[slug] = 'Not a race in this election.'
       const races: Doc = {}
       for (const slug of raceSlugs) {
-        const elected = b.races?.[slug]?.elected
-        // every race needs its published winners; nothing is filled in silently
-        if (!Array.isArray(elected) || !elected.length) {
+        const elected = b.races?.[slug]?.elected ?? []
+        // winners are required only when quorum holds; without it the vote restarts
+        if (!Array.isArray(elected) || (quorumMet && !elected.length)) {
           fields[slug] = 'List the elected candidate ids for this race.'
           continue
         }
@@ -395,16 +404,11 @@ export const electionEndpoints: Endpoint[] = [
         }
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const quorum = {
-        individualsMet: individuals! >= (e.quorumIndividuals ?? 100),
-        organisationsMet: organisations! >= (e.quorumOrganisations ?? 25),
-      }
       const updated = await req.payload.update({
         collection: 'elections',
         id: e.id,
         data: {
-          status:
-            quorum.individualsMet && quorum.organisationsMet ? 'completed' : 'restart_required',
+          status: quorumMet ? 'completed' : 'restart_required',
           result: {
             source: 'belenios',
             ballotUrl: e.externalRef,
@@ -426,6 +430,46 @@ export const electionEndpoints: Endpoint[] = [
     }),
   },
 ]
+
+// compare-and-set on status, then fn in the same tx. the UPDATE's row lock
+// makes export and advance serialise: whoever loses re-reads the committed
+// status and misses. next=null just locks the row without moving it. joins
+// an open req tx like withAuthorityLock
+async function withPhase<T>(
+  req: PayloadRequest,
+  id: number,
+  from: string[],
+  next: string | null,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const apply = async (transactionID: AnyValue) => {
+    const { rows } = await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`UPDATE elections SET status=${next ?? sql`status`}
+               WHERE id=${id} AND status IN (${sql.join(
+                 from.map((s) => sql`${s}`),
+                 sql`, `,
+               )}) RETURNING id`,
+    })
+    if (!rows.length)
+      throw fail.conflict('invalid_phase', 'The election moved to another phase. Reload and retry.')
+    return fn()
+  }
+  if (req.transactionID != null) return apply(req.transactionID)
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    const result = await apply(transactionID)
+    await req.payload.db.commitTransaction(transactionID)
+    return result
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
+}
 
 // only https links: these are shown to members and opened in their browsers
 function httpsUrl(value: unknown): string | null {

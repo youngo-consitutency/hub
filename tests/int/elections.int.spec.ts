@@ -1,7 +1,17 @@
 import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
+import { getPgPool } from '../../src/lib/pg'
 import { api, session } from './helpers'
+
+// the snapshot isn't in the api view, so read it straight from the row
+const counts = async (id: number) => {
+  const { rows } = await getPgPool()!.query(
+    'SELECT eligible_individual_count AS i, eligible_org_count AS o, status FROM elections WHERE id=$1',
+    [id],
+  )
+  return rows[0]
+}
 
 describe('elections (S10) and selections (S24)', () => {
   let facilitator: { cookie: string }
@@ -284,6 +294,88 @@ describe('elections (S10) and selections (S24)', () => {
     // the spent ballot can't be reused: voting needs a new link
     const stale = await call('/advance', { method: 'POST' })
     expect((await stale.json()).error.code).toBe('ballot_missing')
+  })
+
+  it('keeps the voter snapshot fixed once voting opens, even under a race', async () => {
+    const create = await api('/governance/elections', {
+      method: 'POST',
+      cookie: facilitator.cookie,
+      body: JSON.stringify({
+        title: `Race election ${Date.now()}`,
+        kind: 'other',
+        races: [{ slug: 'seat', label: 'Seat' }],
+      }),
+    })
+    const { election } = await create.json()
+    const call = (path: string, init: AnyValue = {}) =>
+      api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
+    await call('/advance', { method: 'POST' })
+    await call('/ballot', {
+      method: 'PUT',
+      body: JSON.stringify({ url: 'https://vote.belenios.example/elections/race/' }),
+    })
+    expect((await call('/voters')).status).toBe(200)
+    // sentinel so we can tell whether the racing export wrote
+    await getPgPool()!.query(
+      'UPDATE elections SET eligible_individual_count=-7, eligible_org_count=-7 WHERE id=$1',
+      [election.id],
+    )
+    const [exported, advanced] = await Promise.all([
+      call('/voters'),
+      call('/advance', { method: 'POST' }),
+    ])
+    expect(advanced.status).toBe(200)
+    const row = await counts(election.id)
+    expect(row.status).toBe('voting')
+    if (exported.status === 200) expect(row.i).not.toBe(-7)
+    else {
+      expect(exported.status).toBe(409)
+      expect(row).toMatchObject({ i: -7, o: -7 })
+    }
+    // after voting opened the export is refused and the snapshot stays put
+    const late = await call('/voters')
+    expect(late.status).toBe(409)
+    expect(await counts(election.id)).toEqual(row)
+  })
+
+  it('accepts a quorum-failed result with no winners and restarts', async () => {
+    const create = await api('/governance/elections', {
+      method: 'POST',
+      cookie: facilitator.cookie,
+      body: JSON.stringify({
+        title: `No-quorum election ${Date.now()}`,
+        kind: 'other',
+        races: [{ slug: 'seat', label: 'Seat' }],
+        quorumIndividuals: 1000,
+        quorumOrganisations: 0,
+      }),
+    })
+    const { election } = await create.json()
+    const call = (path: string, init: AnyValue = {}) =>
+      api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
+    await call('/advance', { method: 'POST' })
+    await call('/ballot', {
+      method: 'PUT',
+      body: JSON.stringify({ url: 'https://vote.belenios.example/elections/noquorum/' }),
+    })
+    await call('/voters')
+    await call('/advance', { method: 'POST' })
+    const result = (races: AnyValue) =>
+      call('/result', {
+        method: 'POST',
+        body: JSON.stringify({
+          archiveUrl: 'https://vote.belenios.example/elections/noquorum/archive',
+          ballotsCast: { individuals: 2, organisations: 0 },
+          races,
+        }),
+      })
+    // submitted ids still have to be screened in, quorum or not
+    expect((await result({ seat: { elected: [999999] } })).status).toBe(400)
+    const res = await result({ seat: { elected: [] } })
+    expect(res.status).toBe(200)
+    const done = (await res.json()).election
+    expect(done.status).toBe('restart_required')
+    expect(done.result.races.seat.elected).toEqual([])
   })
 
   it(

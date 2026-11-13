@@ -303,6 +303,87 @@ describe('decision engine (S09)', () => {
     expect(totalDocs).toBe(1)
   })
 
+  it('answers a malformed JSON body with 400, not 500', async () => {
+    const res = await api('/decisions', {
+      method: 'POST',
+      cookie: wgContact.cookie,
+      body: '{not json',
+    })
+    expect(res.status).toBe(400)
+    expect((await res.json()).error.code).toBe('validation')
+  })
+
+  it('closes an overdue vote exactly once under concurrent reads', { timeout: 90000 }, async () => {
+    const voting = await makeVotingProposal()
+    // backdate the deadline so every read below tries to close the vote
+    await (
+      await testPayload()
+    ).update({
+      collection: 'decision-proposals',
+      id: voting.id,
+      data: { votingEndsAt: new Date(Date.now() - 1000).toISOString() },
+      overrideAccess: true,
+    })
+
+    const reads = await Promise.all(
+      Array.from({ length: 6 }, () => api(`/decisions/${voting.id}`, { cookie: cwMember.cookie })),
+    )
+    const statuses = await Promise.all(
+      reads.map(async (r) => {
+        expect(r.status).toBe(200)
+        return (await r.json()).proposal.status
+      }),
+    )
+    expect(new Set(statuses).size, JSON.stringify(statuses)).toBe(1)
+    expect(['adopted', 'rejected', 'failed_quorum']).toContain(statuses[0])
+
+    const { items } = await (
+      await api(`/decisions/${voting.id}/events`, { cookie: cwMember.cookie })
+    ).json()
+    const closes = items.filter((e: AnyValue) =>
+      ['adopted', 'rejected', 'failed_quorum'].includes(e.type),
+    )
+    expect(closes.map((e: AnyValue) => e.type)).toEqual([statuses[0]])
+  })
+
+  it(
+    'lets a withdraw race an overdue close without a second outcome',
+    { timeout: 90000 },
+    async () => {
+      const voting = await makeVotingProposal()
+      await (
+        await testPayload()
+      ).update({
+        collection: 'decision-proposals',
+        id: voting.id,
+        data: { votingEndsAt: new Date(Date.now() - 1000).toISOString() },
+        overrideAccess: true,
+      })
+
+      const [withdraw, ...reads] = await Promise.all([
+        api(`/decisions/${voting.id}/withdraw`, { method: 'POST', cookie: wgContact.cookie }),
+        ...Array.from({ length: 4 }, () =>
+          api(`/decisions/${voting.id}`, { cookie: cwMember.cookie }),
+        ),
+      ])
+      // whoever lost the claim gets a clean 409, never a second write
+      expect([200, 409]).toContain(withdraw.status)
+      for (const r of reads) expect(r.status).toBe(200)
+
+      const final = (
+        await (await api(`/decisions/${voting.id}`, { cookie: cwMember.cookie })).json()
+      ).proposal.status
+      const { items } = await (
+        await api(`/decisions/${voting.id}/events`, { cookie: cwMember.cookie })
+      ).json()
+      const terminal = items
+        .map((e: AnyValue) => e.type)
+        .filter((t: string) => ['adopted', 'rejected', 'failed_quorum', 'withdrawn'].includes(t))
+      expect(terminal).toEqual([final])
+      expect(final === 'withdrawn').toBe(withdraw.status === 200)
+    },
+  )
+
   it('validates veto request shape', { timeout: 90000 }, async () => {
     const voting = await makeVotingProposal()
     const bad = await api(`/decisions/${voting.id}/vetoes`, {

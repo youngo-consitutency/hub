@@ -105,9 +105,14 @@ export const json = (data: unknown, init?: ResponseInit) => Response.json(data, 
 /** Parsed request body — handlers validate the fields they read. */
 export type JsonBody = Doc
 
-// Absent body → {}, malformed → throws through the wrapper as 500.
+// absent body → {}, malformed json is the caller's fault, not a 500
 export async function readBody<T extends JsonBody = JsonBody>(req: PayloadRequest): Promise<T> {
-  return ((await req.json?.()) || {}) as T
+  try {
+    return ((await req.json?.()) || {}) as T
+  } catch (error) {
+    if (error instanceof SyntaxError) throw fail.validation({ body: 'Malformed JSON.' })
+    throw error
+  }
 }
 
 // Missing params surface as '' so the handler decides the status.

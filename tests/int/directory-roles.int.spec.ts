@@ -68,4 +68,21 @@ describe('directory role holders', () => {
     expect(focalRow).toBeDefined()
     expect(focalRow?.holders).toBeUndefined()
   })
+
+  it('makes a multi-scope role say which scope type it uses', async () => {
+    const payload = await testPayload()
+    const create = (extra: AnyValue) =>
+      payload.create({
+        collection: 'directory-contacts',
+        data: { group: 'working_groups', roleTitle: `Scoped ${tag}`, ...extra } as AnyValue,
+        overrideAccess: true,
+      })
+    // wg.contact_point can sit under a working group or a body
+    await expect(create({ role: 'wg.contact_point', scopeId: 'x' })).rejects.toThrow()
+    const ok = await create({ role: 'wg.contact_point', scopeType: 'working_group', scopeId: 'x' })
+    // a single-scope role still falls back without one
+    const single = await create({ role: 'focal_point', scopeId: 'platform' })
+    for (const id of [ok.id, single.id])
+      await payload.delete({ collection: 'directory-contacts', id, overrideAccess: true })
+  })
 })

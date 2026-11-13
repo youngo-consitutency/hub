@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { accountView, requirePlatformOperator, requireVerifiedMember } from '../lib/accounts'
+import { accountRef, requirePlatformOperator, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
@@ -55,7 +55,8 @@ export const contactPointEndpoints: Endpoint[] = [
             rules_ok: d.rulesOk,
             unlocked_at: d.unlockedAt,
           },
-          account: d.account && typeof d.account === 'object' ? accountView(d.account) : null,
+          // id + name only: contact points don't get members' contact or profile data
+          account: d.account && typeof d.account === 'object' ? accountRef(d.account) : null,
         })),
       })
     }),

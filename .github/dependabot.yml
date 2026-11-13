@@ -20,8 +20,7 @@ updates:
         update-types:
           - version-update:semver-major
     groups:
-      # @sentry/nextjs (prod) and @sentry/core (dev) must move together, or two
-      # cores ship and their types clash. first matching group wins
+      # sentry packages pin each other exactly; split bumps ship two cores
       sentry:
         patterns:
           - '@sentry/*'
@@ -30,13 +29,32 @@ updates:
         patterns:
           - 'payload'
           - '@payloadcms/*'
+      # eslint-config-next tracks the next release it ships with
+      next:
+        patterns:
+          - 'next'
+          - 'eslint-config-next'
+      # the type groups still grabbed sentry/payload in #128/#129, so exclude the
+      # families explicitly instead of trusting first-match
       production-minor-and-patch:
         dependency-type: production
+        exclude-patterns:
+          - '@sentry/*'
+          - 'payload'
+          - '@payloadcms/*'
+          - 'next'
+          - 'eslint-config-next'
         update-types:
           - minor
           - patch
       development-minor-and-patch:
         dependency-type: development
+        exclude-patterns:
+          - '@sentry/*'
+          - 'payload'
+          - '@payloadcms/*'
+          - 'next'
+          - 'eslint-config-next'
         update-types:
           - minor
           - patch

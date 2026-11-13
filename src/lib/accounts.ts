@@ -90,6 +90,12 @@ export function accountView(row: AccountLike | Doc | null | undefined): AccountV
   }
 }
 
+// member-facing actor: id + display name only, never the raw account doc
+export const accountRef = (a: AnyValue) =>
+  a == null
+    ? null
+    : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
+
 // Bearer token (agent/MCP) as well as the cookie — req.user covers both.
 export function requireAccount(req: PayloadRequest): AccountLike {
   const user = req.user

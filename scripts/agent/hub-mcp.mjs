@@ -20,11 +20,12 @@
 // Deps first: a bare `npm ci`-less checkout makes static imports throw a
 // raw ERR_MODULE_NOT_FOUND that agent UIs surface as an opaque crash.
 // Import dynamically so the failure is a readable message instead.
-let StdioServerTransport, createHubMcpServer, attachMemoryTools
+let StdioServerTransport, createHubMcpServer, attachMemoryTools, loadMcpEnv
 try {
   ;({ StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js'))
   ;({ createHubMcpServer } = await import('../../mcp-content/lib/mcpServer.mjs'))
   ;({ attachMemoryTools } = await import('../../mcp-content/lib/memory.mjs'))
+  ;({ loadMcpEnv } = await import('../../mcp-content/lib/env.mjs'))
 } catch (error) {
   // Only blame missing deps for module-resolution failures — a syntax error
   // or other startup fault must surface its real message.
@@ -37,14 +38,9 @@ try {
   process.exit(1)
 }
 
-// Fall back to .env.local/.env for HUB_* credentials when the agent config
-// does not inject them. dotenv never overrides existing env vars.
-try {
-  const { config: loadEnv } = await import('dotenv')
-  loadEnv({ path: ['.env.local', '.env'] })
-} catch {
-  /* running outside the repo checkout */
-}
+// fall back to .env.local/.env for HUB_*/HINDSIGHT_* when the agent config
+// doesn't inject them — allow-listed, so DATABASE_URL never comes along
+loadMcpEnv()
 
 const server = createHubMcpServer()
 const hasContent = process.env.HUB_TOKEN || (process.env.HUB_EMAIL && process.env.HUB_PASSWORD)

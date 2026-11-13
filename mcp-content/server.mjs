@@ -5,276 +5,142 @@
  *
  * Run as a hosted HTTP service so remote clients (e.g. phone connectors) can reach it.
  * Signs in as a Hub account and calls the live member API. Never uses
- * DATABASE_URL.
+ * DATABASE_URL, and never attaches the session-memory tools.
  *
  * Env:
  *   PORT                 default 8080
  *   MCP_ALLOW_ANONYMOUS  1/true — Grok Connectors can use the URL with no
  *                        OAuth and no bearer token. Hub login stays server-side.
  *   MCP_TOKEN            optional shared secret (Bearer, ?token=, or /t/<token>/mcp)
+ *   MCP_ALLOWED_ORIGINS  comma-separated browser origins that get CORS headers
  *   HUB_ORIGIN           default http://localhost:3000
  *   HUB_EMAIL / HUB_PASSWORD  or HUB_TOKEN
  */
-import http from 'node:http'
-import { timingSafeEqual } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { createAdaptorServer } from '@hono/node-server'
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
+import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
+import { cors } from 'hono/cors'
+import { loadMcpEnv } from './lib/env.mjs'
 import { createHubMcpServer, SERVER_INFO } from './lib/mcpServer.mjs'
-
-// Load .env.local/.env from the repo checkout; real env vars always win.
-try {
-  const { config: loadEnv } = await import('dotenv')
-  loadEnv({ path: ['.env.local', '.env'] })
-} catch {
-  /* standalone deployment without the repo's node_modules */
-}
 
 const MAX_BODY_BYTES = 256 * 1024
 
-/** @param {Partial<NodeJS.ProcessEnv>} [env] */
-function mcpToken(env = process.env) {
-  return String(env.MCP_TOKEN || env.HUB_MCP_TOKEN || '').trim()
-}
+// hash first so length differences don't leak through the compare
+const digest = (value) => createHash('sha256').update(value).digest()
+const tokensMatch = (got, expected) =>
+  Boolean(got && expected) && timingSafeEqual(digest(got), digest(expected))
 
-/** @param {Partial<NodeJS.ProcessEnv>} [env] */
-function allowAnonymous(env = process.env) {
-  const raw = String(env.MCP_ALLOW_ANONYMOUS || '')
-    .trim()
-    .toLowerCase()
-  return raw === '1' || raw === 'true' || raw === 'yes'
-}
-
-function parseMcpPath(pathname) {
-  const path = pathname.replace(/\/+$/, '') || '/'
-  if (path === '/mcp') return { isMcp: true, pathToken: '' }
-  const match = path.match(/^\/t\/([^/]+)\/mcp$/)
-  if (match) {
-    return { isMcp: true, pathToken: decodeURIComponent(match[1]) }
-  }
-  return { isMcp: false, pathToken: '' }
-}
-
-function providedToken(req, url, pathToken) {
-  const header = String(req.headers.authorization || '')
-  if (header.startsWith('Bearer ')) return header.slice('Bearer '.length).trim()
-  const query = url.searchParams.get('token') || url.searchParams.get('access_token')
-  if (query) return query.trim()
-  return String(pathToken || '').trim()
-}
-
-function bearerMatches(header, token) {
-  if (!token || !header) return false
-  const prefix = 'Bearer '
-  if (!header.startsWith(prefix)) return false
-  const got = Buffer.from(header.slice(prefix.length))
-  const expected = Buffer.from(token)
-  if (got.length !== expected.length) {
-    timingSafeEqual(expected, expected)
-    return false
-  }
-  return timingSafeEqual(got, expected)
-}
-
-function sendJson(res, status, body, extraHeaders = {}) {
-  const payload = JSON.stringify(body)
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(payload),
-    'Cache-Control': 'no-store',
-    ...extraHeaders,
-  })
-  res.end(payload)
-}
-
-function corsHeaders(req) {
-  const origin = req.headers.origin
-  const headers = {
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers':
-      'Authorization, Content-Type, Accept, mcp-session-id, Mcp-Session-Id, MCP-Protocol-Version',
-    'Access-Control-Expose-Headers': 'mcp-session-id, Mcp-Session-Id',
-    'Access-Control-Max-Age': '600',
-  }
-  if (origin) headers['Access-Control-Allow-Origin'] = origin
-  return headers
-}
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = []
-    let size = 0
-    req.on('data', (chunk) => {
-      size += chunk.length
-      if (size > MAX_BODY_BYTES) {
-        reject(Object.assign(new Error('payload too large'), { status: 413 }))
-        req.destroy()
-        return
-      }
-      chunks.push(chunk)
-    })
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
-    req.on('error', reject)
-  })
-}
+const fail = (c, status, code, message) => c.json({ error: { code, message } }, status)
 
 /** @param {{ env?: Partial<NodeJS.ProcessEnv> }} [options] */
-export function createMcpHttpServer({ env = process.env } = {}) {
-  const token = mcpToken(env)
-  const anonymous = allowAnonymous(env)
+export function createMcpApp({ env = process.env } = {}) {
+  const token = String(env.MCP_TOKEN || env.HUB_MCP_TOKEN || '').trim()
+  const anonymous = /^(1|true|yes)$/i.test(String(env.MCP_ALLOW_ANONYMOUS || '').trim())
+  const origins = String(env.MCP_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
 
-  function requireAuth(req, res, url, pathToken) {
-    if (anonymous) return true
-    if (!token) {
-      sendJson(
-        res,
-        500,
-        {
-          error: {
-            code: 'mcp_token_missing',
-            message: 'Set MCP_ALLOW_ANONYMOUS=1 or MCP_TOKEN.',
-          },
-        },
-        corsHeaders(req),
-      )
-      return false
-    }
-    const got = providedToken(req, url, pathToken)
-    if (!bearerMatches(`Bearer ${got}`, token)) {
-      // Bare 401, no OAuth metadata — some clients still prompt OAuth, so
-      // prefer anonymous mode or a ?token= URL.
-      sendJson(
-        res,
+  const app = new Hono({ strict: false })
+
+  app.use(async (c, next) => {
+    await next()
+    c.header('Cache-Control', 'no-store')
+  })
+  // never reflect arbitrary origins — anonymous mode would hand the hub
+  // account to any web page
+  app.use(
+    cors({
+      origin: origins,
+      allowMethods: ['POST', 'OPTIONS'],
+      allowHeaders: ['Authorization', 'Content-Type', 'Accept', 'MCP-Protocol-Version'],
+      maxAge: 600,
+    }),
+  )
+
+  const health = (c) => c.json({ ok: true, server: SERVER_INFO.name, anonymous })
+  app.get('/healthz', health)
+  app.get('/health', health)
+  app.get('/', (c) =>
+    c.json({
+      ok: true,
+      server: SERVER_INFO,
+      mcp: '/mcp',
+      healthz: '/healthz',
+      auth: anonymous ? 'none' : 'token',
+    }),
+  )
+
+  const requireAuth = async (c, next) => {
+    if (anonymous) return next()
+    if (!token) return fail(c, 500, 'mcp_token_missing', 'Set MCP_ALLOW_ANONYMOUS=1 or MCP_TOKEN.')
+    const bearer = c.req.header('authorization')?.match(/^Bearer (.*)$/)?.[1]
+    const got =
+      bearer ?? c.req.query('token') ?? c.req.query('access_token') ?? c.req.param('token')
+    // bare 401, no oauth metadata — some clients still prompt oauth on it
+    if (!tokensMatch(String(got || '').trim(), token))
+      return fail(
+        c,
         401,
-        {
-          error: {
-            code: 'unauthorized',
-            message: 'Pass ?token= on the MCP URL, or set MCP_ALLOW_ANONYMOUS=1. No OAuth.',
-          },
-        },
-        corsHeaders(req),
+        'unauthorized',
+        'Pass ?token= on the MCP URL, or set MCP_ALLOW_ANONYMOUS=1. No OAuth.',
       )
-      return false
-    }
-    return true
+    return next()
   }
 
-  async function handleMcpPost(req, res, url, pathToken) {
-    if (!requireAuth(req, res, url, pathToken)) return
+  const limit = bodyLimit({
+    maxSize: MAX_BODY_BYTES,
+    onError: (c) => fail(c, 413, 'bad_request', 'payload too large'),
+  })
 
-    let raw
-    try {
-      raw = await readBody(req)
-    } catch (error) {
-      sendJson(
-        res,
-        error.status || 400,
-        { error: { code: 'bad_request', message: error.message } },
-        corsHeaders(req),
-      )
-      return
-    }
-
+  const handleMcp = async (c) => {
     let body
     try {
-      body = raw ? JSON.parse(raw) : undefined
+      body = await c.req.json()
     } catch {
-      sendJson(
-        res,
-        400,
-        { error: { code: 'invalid_json', message: 'Body must be JSON.' } },
-        corsHeaders(req),
-      )
-      return
+      return fail(c, 400, 'invalid_json', 'Body must be JSON.')
     }
-
-    // Stateless: one Server+transport pair per request.
+    // stateless: one server+transport per request; json responses mean the
+    // reply is complete once handleRequest resolves, so closing is safe
     const server = createHubMcpServer(env)
-    const transport = new StreamableHTTPServerTransport({
+    const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
-    })
-    res.on('close', () => {
-      transport.close()
-      server.close()
+      enableJsonResponse: true,
     })
     try {
       await server.connect(transport)
-      await transport.handleRequest(req, res, body)
-    } catch (error) {
-      console.error('mcp: request handling failed', error)
-      if (!res.headersSent) {
-        sendJson(
-          res,
-          500,
-          { error: { code: 'server_error', message: 'Internal server error' } },
-          corsHeaders(req),
-        )
-      }
+      return await transport.handleRequest(c.req.raw, { parsedBody: body })
+    } finally {
+      await server.close()
     }
   }
 
-  return http.createServer(async (req, res) => {
-    let url, mcp
-    try {
-      url = new URL(req.url || '/', 'http://localhost')
-      mcp = parseMcpPath(url.pathname)
-    } catch {
-      sendJson(res, 400, {
-        error: { code: 'invalid_path', message: 'Invalid request path.' },
-      })
-      return
-    }
-    const path = url.pathname.replace(/\/+$/, '') || '/'
+  const mcpPaths = ['/mcp', '/t/:token/mcp']
+  app.on('POST', mcpPaths, requireAuth, limit, handleMcp)
+  // get/delete are meaningless without sessions — clients POST only
+  app.on(['GET', 'DELETE', 'PUT', 'PATCH'], mcpPaths, (c) =>
+    fail(c, 405, 'method_not_allowed', 'POST only.'),
+  )
 
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204, corsHeaders(req))
-      res.end()
-      return
-    }
-
-    if (req.method === 'GET' && (path === '/healthz' || path === '/health')) {
-      sendJson(res, 200, {
-        ok: true,
-        server: SERVER_INFO.name,
-        anonymous: anonymous,
-      })
-      return
-    }
-
-    if (req.method === 'GET' && path === '/') {
-      sendJson(res, 200, {
-        ok: true,
-        server: SERVER_INFO,
-        mcp: '/mcp',
-        healthz: '/healthz',
-        auth: anonymous ? 'none' : 'token',
-      })
-      return
-    }
-
-    if (!mcp.isMcp) {
-      sendJson(res, 404, { error: { code: 'not_found', message: 'Not found' } })
-      return
-    }
-
-    if (req.method === 'POST') {
-      await handleMcpPost(req, res, url, mcp.pathToken)
-      return
-    }
-
-    // GET/DELETE are meaningless without sessions — clients POST only.
-    sendJson(
-      res,
-      405,
-      { error: { code: 'method_not_allowed', message: 'POST only.' } },
-      corsHeaders(req),
-    )
+  app.notFound((c) => fail(c, 404, 'not_found', 'Not found'))
+  app.onError((error, c) => {
+    console.error('mcp: request handling failed', error)
+    return fail(c, 500, 'server_error', 'Internal server error')
   })
+  return app
 }
 
+/** @param {{ env?: Partial<NodeJS.ProcessEnv> }} [options] */
+export const createMcpHttpServer = (options) =>
+  createAdaptorServer({ fetch: createMcpApp(options).fetch })
+
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  loadMcpEnv()
   const port = Number(process.env.PORT || 8080)
-  const server = createMcpHttpServer()
-  server.listen(port, () => {
+  createMcpHttpServer().listen(port, () => {
     console.log(`[mcp] listening on :${port} (mcp at /mcp)`)
   })
 }

@@ -9,6 +9,7 @@ import {
   loadProposal,
   proposalFlags,
   recordEvent,
+  transition as transitionStatus,
 } from '../../lib/decisionRuntime'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
 import type { Doc, AnyValue } from '../../lib/domain'
@@ -425,13 +426,15 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
 
   const version = (proposal.version ?? 1) + 1
   const bump = async (data: Doc, event: string, detail?: AnyValue) => {
-    const updated = await req.payload.update({
-      collection: 'decision-proposals',
-      id: proposal.id,
-      data: { version, ...data },
-      overrideAccess: true,
-    })
-    await recordEvent(req, proposal.id, event, actor, detail)
+    const updated = await transitionStatus(
+      req,
+      proposal,
+      { version, ...data },
+      event,
+      actor,
+      detail,
+    )
+    if (!updated) fail(409, 'The proposal changed. Review its current version.')
     await syncProjection(updated)
     return updated
   }

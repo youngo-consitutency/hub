@@ -1,5 +1,6 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { Doc, AnyValue } from './domain'
+import { txHandle } from './pg'
 
 // Shared writer coordination for authority records (S11/S13). Every path
 // that creates or ends a record takes the same transaction-scoped advisory
@@ -18,12 +19,6 @@ import type { Doc, AnyValue } from './domain'
 // (A writes B while B writes A). No transaction waits on a row lock while
 // holding an advisory key another writer needs first.
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
-
-function txHandle(payload: Payload, transactionID: AnyValue) {
-  const tx = (payload.db as Doc).sessions?.[transactionID]?.db
-  if (!tx) throw new Error('Authority locks require an open database transaction.')
-  return tx
-}
 
 export async function advisoryAuthorityLock(
   payload: Payload,

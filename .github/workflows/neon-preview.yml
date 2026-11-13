@@ -44,18 +44,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # install before the DSN lands in GITHUB_ENV so install scripts never see it
+      - run: npm ci
 
       - name: Create or reuse the PR Neon branch
         id: branch
         run: |
+          # the reset step below drops the schema, so only ever touch pr-<n> branches
+          [[ "$PR_BRANCH" =~ ^pr-[0-9]+$ ]] || { echo "unexpected branch $PR_BRANCH"; exit 1; }
+          # schema-only so PR code never sees live member or guardian rows.
           # stdout may contain connection details; keep it out of the log
           if ! $NEONCTL branches create \
             --project-id "$NEON_PROJECT_ID" \
+            --schema-only \
             --name "$PR_BRANCH" > /tmp/neon_create.txt 2>&1; then
             sed -E 's#postgres(ql)?://[^ @]+@#postgres://***@#g' /tmp/neon_create.txt
           fi
           # production holds the live `hub` database next to the archived demo
-          # `neondb`, so name it; previews copy the live schema
+          # `neondb`, so name it
           if ! DSN=$($NEONCTL connection-string "$PR_BRANCH" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name hub \
@@ -72,8 +78,15 @@ jobs:
           echo "::add-mask::$DSN"
           echo "DATABASE_URL=$DSN" >> "$GITHUB_ENV"
 
-      - run: npm ci
+      # a schema-only copy has the tables but not payload_migrations' rows, so
+      # migrate would replay over them. build from migrations instead, like CI.
+      # also wipes any older pr branch that was copied with data
+      - name: Reset the preview schema
         if: steps.branch.outputs.skip != 'true'
+        run: >-
+          node -e "const {Client}=require('pg');const c=new Client({connectionString:process.env.DATABASE_URL});
+          c.connect().then(()=>c.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public')).then(()=>c.end())
+          .catch(e=>{console.error(e.message);process.exit(1)})"
       - name: Apply migrations to the Neon branch
         if: steps.branch.outputs.skip != 'true'
         run: npm run migrate

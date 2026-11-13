@@ -4,7 +4,8 @@ import { serverWrites } from '../lib/collectionAccess'
 export const Announcements: CollectionConfig = {
   slug: 'content-announcements',
   access: {
-    read: () => true,
+    // unpublished items stay behind the content endpoints
+    read: () => ({ state: { equals: 'published' } }),
     ...serverWrites,
   },
   fields: [
