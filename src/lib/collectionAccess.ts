@@ -1,5 +1,5 @@
 import type { AnyValue } from './domain'
-import type { Access, FieldAccess } from 'payload'
+import type { Access, Field, FieldAccess } from 'payload'
 import { getAccessProfile, hasCapability } from './access'
 
 // access for the generated rest/graphql surfaces. domain endpoints authorise
@@ -28,4 +28,20 @@ export const grantsCapability = async (req: AnyValue, capability: string) => {
   if (!req.user || req.user.collection !== 'accounts') return false
   const profile = await getAccessProfile(req, req.user)
   return hasCapability(profile, capability)
+}
+
+// staff with platform.manage read every row; members only their own
+export const ownRowsOrStaffRead: Access = async ({ req }) => {
+  if (!req.user) return false
+  if (await grantsCapability(req, 'platform.manage')) return true
+  return { account: { equals: req.user.id } }
+}
+
+// the owning member, shared by the per-account workflow collections
+export const accountField: Field = {
+  name: 'account',
+  type: 'relationship',
+  relationTo: 'accounts',
+  required: true,
+  index: true,
 }
