@@ -3,9 +3,11 @@ import { Ripple } from '../../components/fx/Ripple'
 import { BorderBeam } from '../../components/fx/BorderBeam'
 import { MotionConfig, motion } from 'motion/react'
 import {
+  TbAward as Award,
   TbBook as BookOpen,
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
+  TbCompass as Compass,
   TbGavel as Gavel,
   TbLeaf as Leaf,
   TbWorld as Globe,
@@ -15,6 +17,8 @@ import {
   TbMapPin as MapPin,
   TbSpeakerphone as Megaphone,
   TbScript as ScrollText,
+  TbTimeline as Timeline,
+  TbUserCheck as UserCheck,
   TbUsers as Users,
 } from 'react-icons/tb'
 import { A, Skeletons, ErrorCard, Empty } from '../../components/ui'
@@ -39,16 +43,25 @@ const ICONS = {
 }
 const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
 
-// eyebrow, heading and optional lead shared by every home section
-function SectionIntro({ id, eyebrow, title, lead }: AnyValue) {
+// icon tile, heading and optional lead shared by every home section
+function SectionIntro({ id, icon: Icon, title, lead }: AnyValue) {
   return (
     <header className="ldIntro">
-      {eyebrow && <p className="ldEyebrow">{eyebrow}</p>}
-      <h2 id={id}>{title}</h2>
+      <div className="ldIntroTitle">
+        {Icon && (
+          <span className="ldIntroIcon" aria-hidden>
+            <Icon size={22} strokeWidth={1.5} />
+          </span>
+        )}
+        <h2 id={id}>{title}</h2>
+      </div>
       {lead && <p className="ldLead">{lead}</p>}
     </header>
   )
 }
+
+// the four milestones are in a fixed order, so icons follow position
+const MILESTONE_ICONS = [Leaf, UserCheck, Award, Globe]
 
 // the public home page, rendered from the cms `site` document
 export function SiteHome() {
@@ -72,14 +85,7 @@ export function SiteHome() {
         <Empty title="About YOUNGO" body="This page has not been published yet." />
       </div>
     )
-  const {
-    hero = {},
-    organisation = {},
-    takePart = {},
-    principles = {},
-    history = {},
-    cta = {},
-  } = home
+  const { hero = {}, takePart = {}, principles = {}, history = {}, cta = {} } = home
 
   // the last two words of the headline carry the gradient
   const words: string[] = (hero.title || '').split(' ')
@@ -90,7 +96,6 @@ export function SiteHome() {
   return (
     <MotionConfig reducedMotion="user">
       <section className="ldHero ldDark">
-        <div className="ldContour" aria-hidden />
         <div className="ldAurora" aria-hidden />
         <div className="ldWrap ldHeroGrid">
           <div className="ldHeroCopy">
@@ -127,26 +132,8 @@ export function SiteHome() {
           </ul>
         </div>
       </section>
-      <section className="ldBand ldDark" aria-labelledby="organised-heading">
-        <div className="ldGridLines" aria-hidden />
-        <div className="ldWrap ldBandInner">
-          <SectionIntro
-            eyebrow={organisation.eyebrow}
-            title={organisation.title}
-            id="organised-heading"
-          />
-          <motion.dl className="ldFacts" {...reveal}>
-            {(organisation.stats || []).map(({ value, label }: AnyValue) => (
-              <motion.div key={value} variants={rise}>
-                <dt>{value}</dt>
-                <dd>{label}</dd>
-              </motion.div>
-            ))}
-          </motion.dl>
-        </div>
-      </section>
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
-        <SectionIntro {...takePart} id="what-heading" />
+        <SectionIntro {...takePart} icon={Compass} id="what-heading" />
         <motion.ul className="ldGrid ldGrid3" {...reveal}>
           {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
             const Icon = iconFor(icon)
@@ -175,7 +162,7 @@ export function SiteHome() {
         <HubPulse />
       </section>
       <section className="ldSection ldWrap" aria-labelledby="history-heading">
-        <SectionIntro {...history} id="history-heading" />
+        <SectionIntro {...history} icon={Timeline} id="history-heading" />
         <div className="ldTimeline">
           <motion.span
             className="ldRail"
@@ -186,13 +173,19 @@ export function SiteHome() {
             transition={{ duration: 1.2, ease: 'easeOut' }}
           />
           <motion.ol {...reveal}>
-            {(history.items || []).map(({ year, title, body }: AnyValue) => (
-              <motion.li key={year} variants={rise}>
-                <span className="ldYear">{year}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </motion.li>
-            ))}
+            {(history.items || []).map(({ year, title, body }: AnyValue, i: number) => {
+              const MilestoneIcon = MILESTONE_ICONS[i % MILESTONE_ICONS.length]
+              return (
+                <motion.li key={year} variants={rise}>
+                  <span className="ldYear">
+                    <MilestoneIcon size={20} strokeWidth={1.5} aria-hidden />
+                    {year}
+                  </span>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </motion.li>
+              )
+            })}
           </motion.ol>
         </div>
       </section>

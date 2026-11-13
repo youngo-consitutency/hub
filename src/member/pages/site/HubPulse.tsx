@@ -24,16 +24,16 @@ function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
   if (!count) return null
   return (
     <A href={href} className="ldCard ldStat">
-      <span className="ldTileTop">
-        <span className="ldIcon" aria-hidden>
-          <Icon size={22} strokeWidth={1.5} />
-        </span>
-        <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
+      <span className="ldIcon" aria-hidden>
+        <Icon size={22} strokeWidth={1.5} />
       </span>
-      <strong>
-        <NumberTicker value={count} />
-      </strong>
-      <span>{label}</span>
+      <span className="ldStatText">
+        <strong>
+          <NumberTicker value={count} />
+        </strong>
+        <span>{label}</span>
+      </span>
+      <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
     </A>
   )
 }

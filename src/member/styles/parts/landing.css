@@ -76,46 +76,13 @@
 }
 
 /* ── backdrop: contour rings and a slow aurora, no imagery ───────── */
-.ldContour,
 .ldAurora,
-.ldGridLines {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.ldContour {
-  inset: -20%;
-  background: repeating-radial-gradient(
-    circle at 72% 40%,
-    transparent 0 22px,
-    rgba(169, 232, 196, 0.1) 22px 23px
-  );
-  mask-image: radial-gradient(circle at 72% 40%, #000 8%, transparent 62%);
-  animation: ldDrift 40s linear infinite alternate;
-}
-
 .ldAurora {
   background:
     radial-gradient(40% 50% at 82% 8%, rgba(45, 212, 160, 0.34), transparent 70%),
     radial-gradient(34% 44% at 12% 88%, rgba(163, 230, 53, 0.2), transparent 70%),
     radial-gradient(30% 40% at 60% 100%, rgba(56, 189, 248, 0.16), transparent 70%);
   animation: ldBreathe 14s ease-in-out infinite alternate;
-}
-
-.ldGridLines {
-  background-image:
-    linear-gradient(var(--ld-line-deep) 1px, transparent 1px),
-    linear-gradient(90deg, var(--ld-line-deep) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse at 50% 0%, #000, transparent 75%);
-}
-
-@keyframes ldDrift {
-  to {
-    transform: translate3d(-3%, 2%, 0) scale(1.06);
-  }
 }
 
 @keyframes ldBreathe {
@@ -127,6 +94,7 @@
 
 /* ── hero ─────────────────────────────────────────── */
 .ldHero {
+  border-radius: 0 0 var(--radius-surface) var(--radius-surface);
   margin-top: calc(var(--ld-header-h) * -1);
   padding-block: calc(var(--ld-header-h) + clamp(32px, 6vw, 80px)) clamp(24px, 4vw, 40px);
 }
@@ -138,9 +106,16 @@
 /* header over the hero: transparent, light text; solid again once scrolled or the menu is open.
    :has keeps the loading and error states, which have no dark hero, on the normal header */
 .siteHeader {
+  border-radius: 0 0 var(--radius-modal) var(--radius-modal);
   transition:
     background var(--motion-standard) var(--motion-ease),
-    border-color var(--motion-standard) var(--motion-ease);
+    border-color var(--motion-standard) var(--motion-ease),
+    box-shadow var(--motion-standard) var(--motion-ease);
+}
+
+/* once scrolled the bar is solid, so it needs an edge to read against the page */
+.siteHeader:not([data-overlay]) {
+  box-shadow: var(--shadow-card-hover);
 }
 
 .siteShell:has(.ldHero, .sitePageHeader) .siteHeader[data-overlay] {
@@ -233,9 +208,19 @@
   justify-self: center;
   width: min(100%, 460px);
   aspect-ratio: 1;
-  background: repeating-radial-gradient(circle, transparent 0 26px, var(--ld-line-deep) 26px 27px);
+  isolation: isolate;
+}
+
+/* the only rings on the hero, concentric with the avatars and fading out behind them */
+.ldCommunity::before {
+  content: '';
+  position: absolute;
+  inset: -70%;
+  z-index: -1;
   border-radius: 50%;
-  mask-image: radial-gradient(circle, #000 55%, transparent 72%);
+  background: repeating-radial-gradient(circle, transparent 0 26px, var(--ld-line-deep) 26px 27px);
+  mask-image: radial-gradient(circle, #000 20%, transparent 60%);
+  pointer-events: none;
 }
 
 .ldOrbit {
@@ -260,7 +245,7 @@
   height: auto;
   border: 1px solid var(--ld-line-deep);
   border-radius: 50%;
-  background: var(--ld-glass);
+  background: var(--ld-deep-2);
 }
 
 .ldSeat {
@@ -297,15 +282,6 @@
   margin-bottom: clamp(28px, 4vw, 48px);
 }
 
-.ldEyebrow {
-  margin-bottom: var(--space-3);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .ldIntro h2 {
   font-size: clamp(28px, 4vw, 46px);
   font-weight: 700;
@@ -321,6 +297,15 @@
 }
 
 /* live section: the calendar card beside count tiles that link into the Hub */
+.ldPulse > .siteUpcoming {
+  display: flex;
+  flex-direction: column;
+}
+
+.ldPulse > .siteUpcoming .siteUpcomingBody {
+  flex: 1;
+}
+
 .ldPulse {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
@@ -329,18 +314,35 @@
 
 .ldStats {
   display: grid;
+  grid-auto-rows: 1fr;
   gap: var(--space-4);
-  align-content: start;
 }
 
-.ldStat strong {
+/* a stat is one row (icon, number and label, arrow) so the column is as tall as the calendar card */
+.ldCard.ldStat {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ldStatText {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+}
+
+.ldStatText strong {
   font-family: var(--font-display);
-  font-size: clamp(36px, 4vw, 52px);
+  font-size: clamp(32px, 3.4vw, 44px);
   line-height: 1;
   letter-spacing: -0.03em;
 }
 
-.ldStat span:last-child {
+.ldStatText strong .fxTicker {
+  font-variant-numeric: lining-nums;
+}
+
+.ldStatText > span {
   color: var(--text-2);
   font-size: 15px;
 }
@@ -454,49 +456,6 @@
   }
 }
 
-/* ── organisation stats ───────────────────────────── */
-.ldBand {
-  padding-block: clamp(40px, 6vw, 80px);
-  border-top: 1px solid var(--ld-line-deep);
-}
-
-.ldBand .ldEyebrow {
-  color: var(--ld-accent-deep);
-}
-
-.ldBand .ldLead {
-  color: var(--ld-on-deep-muted);
-}
-
-.ldFacts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  margin: 0;
-  border-top: 1px solid var(--ld-line-deep);
-}
-
-.ldFacts > div {
-  padding: var(--space-6) var(--space-5) var(--space-2) 0;
-  border-bottom: 1px solid var(--ld-line-deep);
-}
-
-.ldFacts dt {
-  font-size: clamp(26px, 3.2vw, 40px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  background: linear-gradient(95deg, var(--ld-on-deep), var(--ld-glow-green));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.ldFacts dd {
-  margin: var(--space-2) 0 var(--space-4);
-  color: var(--ld-on-deep-muted);
-  font-size: 15px;
-  line-height: 1.5;
-}
-
 /* ── principles ticker, at the foot of the hero ───── */
 .ldMarquee {
   display: flex;
@@ -604,6 +563,9 @@
 }
 
 .ldYear {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--accent);
   font-family: var(--font-display);
   font-size: 28px;
@@ -632,7 +594,7 @@
   margin-top: clamp(56px, 8vw, 112px);
   width: calc(min(100%, 1240px) - 2 * var(--ld-gutter));
   padding-inline: 0;
-  border-radius: 28px;
+  border-radius: var(--radius-surface);
 }
 
 .ldCtaInner {
@@ -680,10 +642,6 @@
     flex: 1 1 100%;
     justify-content: center;
   }
-
-  .ldCta {
-    border-radius: 20px;
-  }
 }
 
 /* ── inner public pages: the shared page header becomes the same deep band as the home hero ── */
@@ -692,6 +650,11 @@
   padding-top: calc(var(--ld-header-h) + clamp(32px, 6vw, 72px));
   padding-bottom: clamp(36px, 6vw, 64px);
   color: var(--ld-on-deep);
+}
+
+.sitePageHeader::before,
+.sitePageHeader::after {
+  border-radius: 0 0 var(--radius-surface) var(--radius-surface);
 }
 
 .sitePageHeader::before {
@@ -755,6 +718,7 @@
 
 /* ── footer: the closing deep band, mirroring the hero ── */
 .siteFooter {
+  border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -856,4 +820,53 @@
   width: 56%;
   height: 150%;
   transform: translateY(-50%);
+}
+
+/* a figure's role appears on hover, and is not repeated for assistive tech (the ring is decoration) */
+.ldPeep::after {
+  content: attr(data-role);
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  padding: 4px 10px;
+  border: 1px solid var(--ld-line-deep);
+  border-radius: var(--radius-pill);
+  background: var(--ld-deep);
+  color: var(--ld-on-deep);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity var(--motion-standard) var(--motion-ease);
+}
+
+.ldPeep:hover::after {
+  opacity: 1;
+}
+
+/* section headings carry an icon tile */
+.ldIntroTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ldIntroTitle h2 {
+  flex: 1;
+  max-width: none;
+  text-wrap: balance;
+}
+
+.ldIntroIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
 }
