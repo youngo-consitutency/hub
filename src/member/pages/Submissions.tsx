@@ -4,7 +4,16 @@ import { TbFileText as PolicyIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, A, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
+import {
+  Async,
+  Empty,
+  A,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+  SearchBox,
+} from '../components/ui'
 import { SubmissionCard } from '../components/cards'
 import { SubmissionPeek } from '../components/EntityPeeks'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
@@ -132,17 +141,12 @@ export function Submissions() {
             <>
               <div className="catalogTools">
                 <div className="catalogSearchRow">
-                  <label className="searchInputWrap">
-                    <span className="srOnly">Search submissions</span>
-                    <Search size={18} strokeWidth={1.75} aria-hidden />
-                    <input
-                      className="input"
-                      type="search"
-                      placeholder="Search submissions or working groups"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
-                  </label>
+                  <SearchBox
+                    label="Search submissions"
+                    placeholder="Search submissions or working groups"
+                    value={search}
+                    onChange={setSearch}
+                  />
                   <div className="sortControl" aria-label="Sort submissions">
                     <SortButton
                       active={sort === 'date'}

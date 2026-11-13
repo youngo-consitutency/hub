@@ -8,12 +8,8 @@ interface TrackResultsProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
-import { A, Async, Empty, PageHeader } from '../components/ui'
-import {
-  TbArrowUpRight as ArrowUpRight,
-  TbSearch as Search,
-  TbWorldSearch as WorldSearch,
-} from 'react-icons/tb'
+import { A, Async, Empty, PageHeader, SearchBox } from '../components/ui'
+import { TbArrowUpRight as ArrowUpRight, TbWorldSearch as WorldSearch } from 'react-icons/tb'
 
 /** Browse negotiation tracks with text search and an optional open-calls filter. */
 export function Negotiations() {
@@ -29,17 +25,12 @@ export function Negotiations() {
       />
       <div className="catalogTools">
         <div className="catalogSearchRow">
-          <label className="searchInputWrap">
-            <span className="srOnly">Search negotiation tracks</span>
-            <Search size={18} strokeWidth={1.75} aria-hidden />
-            <input
-              className="input"
-              type="search"
-              placeholder="Search track topics or working groups"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
+          <SearchBox
+            label="Search negotiation tracks"
+            placeholder="Search track topics or working groups"
+            value={search}
+            onChange={setSearch}
+          />
           <button
             className={`btn btn-sm ${openOnly ? 'btn-primary' : 'btn-secondary'}`}
             type="button"
