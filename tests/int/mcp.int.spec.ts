@@ -115,8 +115,11 @@ describe('mcp http transport', () => {
     const none = await listTools(mcp.port)
     expect(none.status).toBe(401)
     expect(none.body?.error?.code).toBe('unauthorized')
-    // No WWW-Authenticate: OAuth discovery must not be advertised.
     expect(none.body?.error?.message).toMatch(/token/i)
+    // no challenge header: OAuth discovery must not be advertised
+    const raw = await fetch(`http://127.0.0.1:${mcp.port}/mcp`, { method: 'POST', body: '{}' })
+    expect(raw.status).toBe(401)
+    expect(raw.headers.get('www-authenticate')).toBeNull()
 
     const wrong = await listTools(mcp.port, { token: 'wrong-token' })
     expect(wrong.status).toBe(401)

@@ -115,7 +115,13 @@ export function createMcpApp({ env = process.env } = {}) {
 
   app.notFound((c) => fail(c, 404, 'not_found', 'Not found'))
   app.onError((error, c) => {
-    if (error instanceof HTTPException) return error.getResponse()
+    if (error instanceof HTTPException) {
+      const response = error.getResponse()
+      // bearerAuth advertises a Bearer challenge; some clients answer a challenge with an
+      // oauth prompt, and these servers never use oauth
+      response.headers.delete('WWW-Authenticate')
+      return response
+    }
     console.error('mcp: request handling failed', error)
     return fail(c, 500, 'server_error', 'Internal server error')
   })
