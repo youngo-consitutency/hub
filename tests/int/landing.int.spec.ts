@@ -61,24 +61,33 @@ describe('Public landing feed', () => {
   })
 })
 
-describe('Demo delivery guard', () => {
+describe('Delivery guard', () => {
   it('does not attempt email delivery even with SMTP configured', async () => {
-    vi.stubEnv('HUB_DEMO_MODE', 'true')
+    vi.stubEnv('HUB_DELIVERY_DISABLED', 'true')
     vi.stubEnv('SMTP_URL', 'smtp://127.0.0.1:1')
     expect(emailConfigured()).toBe(false)
-    expect(await sendEmail({ to: 'demo@example.invalid', subject: 'Demo', text: 'Demo' })).toEqual({
+    expect(
+      await sendEmail({ to: 'guard@example.invalid', subject: 'Guard', text: 'Guard' }),
+    ).toEqual({
       delivered: false,
     })
   })
 
   it('does not contact push endpoints', async () => {
-    vi.stubEnv('HUB_DEMO_MODE', 'true')
+    vi.stubEnv('HUB_DELIVERY_DISABLED', 'true')
     expect(await deliverPush([{ endpoint: 'https://invalid.example.invalid' }], '{}')).toEqual({
       sent: 0,
       failed: 0,
       pruned: 0,
       total: 1,
     })
+  })
+
+  it('stays off on vercel previews without the switch', async () => {
+    // preview databases copy real members, so they must never send
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('SMTP_URL', 'smtp://127.0.0.1:1')
+    expect(emailConfigured()).toBe(false)
   })
 })
 

@@ -3,6 +3,7 @@ import type { AccountLike, AnyValue, Doc } from './domain'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { getAccessProfile, hasCapability } from './access'
 import { ApiError } from './respond'
+import { deliveryDisabled } from './environment'
 
 // Personal agent keys for the YOUNGO MCP gateway. Eligibility is derived
 // from authority records on every use, never stored: a key works only
@@ -48,7 +49,7 @@ export type Eligibility = {
   ok: boolean
   gate:
     | 'ready'
-    | 'demo'
+    | 'delivery_disabled'
     | 'service_account'
     | 'pending_email'
     | 'membership_blocked'
@@ -73,8 +74,7 @@ export function decideEligibility(account: AnyValue, access: AnyValue): Eligibil
     wgSlugs: [],
     tools: [],
   })
-  if (process.env.NEXT_PUBLIC_HUB_DEMO === 'true' || process.env.HUB_DEMO_MODE === 'true')
-    return deny('demo')
+  if (deliveryDisabled()) return deny('delivery_disabled')
   if (!account) return deny('no_mandate')
   if (account.accountKind === 'service') return deny('service_account')
   if (

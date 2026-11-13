@@ -2,9 +2,9 @@ import type { AnyValue } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbBuildingCommunity as OrganisationIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
-import { apiGet, apiPost, apiPatch } from '../lib/api'
+import { apiPost, apiPatch, useApi } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
-import { usePath } from '../lib/router'
+import { replace, usePath } from '../lib/router'
 import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { DatePicker, SearchableSelect } from '../components/FormControls'
 import { NgoOpportunities } from '../components/NgoOpportunities'
@@ -12,10 +12,11 @@ import { TbUserPlus as UserPlus } from 'react-icons/tb'
 
 export function NgoPortal() {
   const [panel, setPanel] = useState<AnyValue>(null)
-  const { account, setAccount } = useAccount()
+  const { account, setAccount, reloadAccess } = useAccount()
   const path = usePath()
-  const [data, setData] = useState<AnyValue>(null)
-  const [error, setError] = useState<AnyValue>(null)
+  const requests = useApi(path.includes('accept') ? null : '/member/ngo/requests')
+  const data = requests.data
+  const [actionError, setError] = useState<AnyValue>(null)
   const [form, setForm] = useState<AnyValue>({
     kind: 'endorse',
     title: '',
@@ -32,29 +33,21 @@ export function NgoPortal() {
   const [inviteResult, setInviteResult] = useState<AnyValue>(null)
   const [acceptMsg, setAcceptMsg] = useState<AnyValue>(null)
   const [inviteToken, setInviteToken] = useState<AnyValue>(null)
-  const [invitePreview, setInvitePreview] = useState<AnyValue>(null)
+  // preview first; accepting requires an explicit user action
+  const preview = useApi(
+    inviteToken ? `/member/ngo/invite/${encodeURIComponent(inviteToken)}` : null,
+  )
+  const invitePreview = inviteToken ? preview.data?.seat : null
+  const error = actionError || requests.error || (inviteToken && preview.error)
 
   const load = () => {
     setError(null)
-    apiGet('/member/ngo/requests')
-      .then(setData)
-      .catch((e) => setError(e.message))
+    requests.retry()
+    preview.retry()
   }
 
   useEffect(() => {
-    if (!path.includes('accept')) load()
-  }, [path])
-
-  // Preview first; accepting requires an explicit user action.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const token = params.get('token')
-    if (!path.includes('accept') && !token) return
-    if (!token) return
-    setInviteToken(token)
-    apiGet(`/member/ngo/invite/${encodeURIComponent(token)}`)
-      .then(({ seat }) => setInvitePreview(seat))
-      .catch((e) => setError(e.message))
+    setInviteToken(new URLSearchParams(window.location.search).get('token'))
   }, [path])
 
   const acceptInvite = () => {
@@ -64,10 +57,11 @@ export function NgoPortal() {
       .then((res) => {
         setAcceptMsg('You joined the organisation team.')
         if (res.account) setAccount(res.account)
-        setInvitePreview(null)
+        // the new seat changes access
+        reloadAccess()
         setInviteToken(null)
-        load()
-        window.history.replaceState({}, '', '/ngo')
+        // leaving /ngo/accept switches the requests fetch on
+        replace('/ngo')
       })
       .catch((e) => setError(e.message))
   }

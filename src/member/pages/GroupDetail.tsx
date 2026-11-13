@@ -14,6 +14,7 @@ interface GroupDetailProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { useApi } from '../lib/api'
+import { useContactPoints } from '../lib/workingGroups'
 import { A, Async, BackLink, Section, Empty, PageHeader } from '../components/ui'
 import { EventCard, PersonCard, SubmissionCard } from '../components/cards'
 import { CopyFeedButton } from '../components/Subscribe'
@@ -44,10 +45,7 @@ const PUBLIC_RESOURCE_LABELS = {
 }
 
 function GroupCommunity({ slug }: GroupCommunityProps) {
-  const contactQuery = useApi(
-    `/member/people?workingGroup=${encodeURIComponent(slug)}&workingGroupRole=manager&pageSize=12`,
-    [slug],
-  )
+  const contactQuery = useContactPoints(slug)
   const memberQuery = useApi(
     `/member/people?workingGroup=${encodeURIComponent(slug)}&workingGroupRole=participant&pageSize=6`,
     [slug],

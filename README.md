@@ -48,9 +48,9 @@ Optional environment variables:
 - `SMTP_URL` or `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` + `EMAIL_FROM` — outbound email; broadcasts are queued in `notification_outbox` and delivered asynchronously with retries.
 - `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — web push delivery.
 
-## Demo data
+## Deployments
 
-The [hosted demo](https://youngo-hub.vercel.app) uses the existing `youngo-hub` Vercel project and a separate database of fictional accounts and content. The interface always loads records through the normal API; there are no bundled fictional listings or sign-in shortcuts. See [demo environments](https://github.com/youngo-consitutency/hub/wiki/Demo-environments) for setup, delivery controls and account handling.
+Production runs on the `youngo-hub` Vercel project at [youngo-hub.vercel.app](https://youngo-hub.vercel.app). Pull requests get Vercel previews backed by Neon database branches. Previews never send email or push and are kept out of search results; set `HUB_DELIVERY_DISABLED=true` to switch delivery off on any other deployment. The repository carries no data: content lives in the database.
 
 ## Licence
 

@@ -1,8 +1,11 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadRequest } from 'payload'
+import { sql } from '@payloadcms/db-postgres'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
+import { txHandle } from '../lib/pg'
+import { cleanText } from '../lib/text'
 import type { Doc, AnyValue } from '../lib/domain'
 
 // S10 elections. the hub runs nominations and screening, decides who may
@@ -135,30 +138,43 @@ export const electionEndpoints: Endpoint[] = [
         patch.nominationsOpenAt = now
         patch.nominationsCloseAt = new Date(Date.now() + 7 * 86400000).toISOString()
       }
+      // a restart is a new vote: the old belenios election and its voter
+      // snapshot are spent
+      if (e.status === 'restart_required') {
+        patch.externalRef = null
+        patch.eligibleIndividualCount = null
+        patch.eligibleOrgCount = null
+        patch.votingOpensAt = null
+        patch.votingCloseAt = null
+      }
       if (next === 'voting') {
         if (!e.externalRef)
           throw fail.conflict(
             'ballot_missing',
             'Set the Belenios election link before voting opens.',
           )
+        // the exported list is the electorate belenios holds, so quorum
+        // reporting uses that snapshot rather than recounting (S10 §3.4)
+        if (e.eligibleIndividualCount == null)
+          throw fail.conflict('voters_missing', 'Export the voter list before voting opens.')
         patch.nominationsCloseAt = e.nominationsCloseAt ?? now
         patch.votingOpensAt = now
         patch.votingCloseAt = new Date(Date.now() + 5 * 86400000).toISOString()
-        // snapshot the eligible registry for quorum reporting (S10 §3.4)
-        const voters = await eligibleVoters()
-        patch.eligibleIndividualCount = voters.filter((v) => v.kind === 'individual').length
-        patch.eligibleOrgCount = voters.filter((v) => v.kind === 'organisation').length
       }
-      const updated = await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: patch,
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: `election.${next}`,
-        targetType: 'governance',
-        targetId: String(e.id),
+      const updated = await withPhase(req, e.id, [e.status], next, async () => {
+        const doc = await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: patch,
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: `election.${next}`,
+          targetType: 'governance',
+          targetId: String(e.id),
+        })
+        return doc
       })
       return json({ election: electionView(updated) })
     }),
@@ -175,35 +191,44 @@ export const electionEndpoints: Endpoint[] = [
       const fields: Record<string, string> = {}
       const raceSlugs = (e.races ?? []).map((r: AnyValue) => r.slug)
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
-      if (!b.statement?.trim()) fields.statement = 'A statement of motivation is required.'
+      const statement = typeof b.statement === 'string' ? cleanText(b.statement, 4000) : ''
+      if (!statement) fields.statement = 'A statement of motivation is required.'
+      if (b.videoUrl != null && typeof b.videoUrl !== 'string') fields.videoUrl = 'Use a link.'
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const existing = await req.payload.find({
-        collection: 'election-candidates',
-        where: {
-          and: [{ election: { equals: e.id } }, { account: { equals: account.id } }],
-        },
-        limit: 1,
-        overrideAccess: true,
-      })
-      if (existing.totalDocs)
-        throw fail.conflict('already_nominated', 'You have already submitted a candidacy.')
-      const candidate = await req.payload.create({
-        collection: 'election-candidates',
-        data: {
-          election: e.id,
-          race: b.race,
-          account: account.id,
-          statement: b.statement.trim(),
-          videoUrl: b.videoUrl?.trim() || null,
-          status: 'pending',
-          nominatedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: 'election.candidate_nominated',
-        targetType: 'governance',
-        targetId: String(e.id),
+      // the row lock serialises nominations per election, so the duplicate
+      // check can't race a double-click and nothing lands after voting opens
+      const candidate = await withPhase(req, e.id, ['nominations'], null, async () => {
+        const existing = await req.payload.find({
+          collection: 'election-candidates',
+          where: {
+            and: [{ election: { equals: e.id } }, { account: { equals: account.id } }],
+          },
+          limit: 1,
+          overrideAccess: true,
+          req,
+        })
+        if (existing.totalDocs)
+          throw fail.conflict('already_nominated', 'You have already submitted a candidacy.')
+        const doc = await req.payload.create({
+          collection: 'election-candidates',
+          data: {
+            election: e.id,
+            race: b.race,
+            account: account.id,
+            statement,
+            videoUrl: b.videoUrl?.trim() || null,
+            status: 'pending',
+            nominatedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'election.candidate_nominated',
+          targetType: 'governance',
+          targetId: String(e.id),
+        })
+        return doc
       })
       return json({ candidate: candidateView(candidate) }, { status: 201 })
     }),
@@ -228,19 +253,38 @@ export const electionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Candidate not found.')
         })
-      const updated = await req.payload.update({
-        collection: 'election-candidates',
-        id: candidate.id,
-        data: {
-          status: b.status,
-          screeningNote: b.screeningNote?.trim() || null,
-        },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: `election.candidate_${b.status}`,
-        targetType: 'governance',
-        targetId: String(e.id),
+      // a candidate id from another election must not be screened through this one
+      const owner = candidate.election
+      if ((typeof owner === 'object' ? owner.id : owner) !== e.id)
+        throw fail.notFound('Candidate not found.')
+      // the screened-in list is what goes on the ballot, so it freezes when voting opens
+      const updated = await withPhase(req, e.id, ['nominations'], null, async () => {
+        // two screens can both load before either locks: audit what was really there
+        const current = await req.payload.findByID({
+          collection: 'election-candidates',
+          id: candidate.id,
+          overrideAccess: true,
+          req,
+        })
+        const doc = await req.payload.update({
+          collection: 'election-candidates',
+          id: candidate.id,
+          data: {
+            status: b.status,
+            screeningNote:
+              typeof b.screeningNote === 'string' ? cleanText(b.screeningNote, 2000) || null : null,
+          },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: `election.candidate_${b.status}`,
+          targetType: 'governance',
+          targetId: String(e.id),
+          before: { candidate: candidate.id, status: current.status },
+          after: { candidate: candidate.id, status: b.status },
+        })
+        return doc
       })
       return json({ candidate: candidateView(updated) })
     }),
@@ -254,23 +298,31 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may set the ballot.')
       const e = await loadElection(req, param(req, 'id'))
-      if (!['announced', 'nominations', 'voting'].includes(e.status))
+      // fixed once voting opens: members are already being sent there
+      if (!['announced', 'nominations'].includes(e.status))
         throw fail.conflict(
           'invalid_phase',
           `Cannot change the ballot while status is ${e.status}.`,
         )
       const url = httpsUrl((await readBody(req)).url)
       if (!url) throw fail.validation({ url: 'Use the https link of the Belenios election.' })
-      const updated = await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: { externalRef: url },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: 'election.ballot_set',
-        targetType: 'governance',
-        targetId: String(e.id),
+      // re-checked under the row lock: voting may have opened while we read the body
+      const updated = await withPhase(req, e.id, ['announced', 'nominations'], null, async () => {
+        const doc = await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: { externalRef: url },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'election.ballot_set',
+          targetType: 'governance',
+          targetId: String(e.id),
+          before: { ballotUrl: e.externalRef || null },
+          after: { ballotUrl: url },
+        })
+        return doc
       })
       return json({ election: electionView(updated) })
     }),
@@ -284,12 +336,27 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may export voters.')
       const e = await loadElection(req, param(req, 'id'))
+      if (!['announced', 'nominations'].includes(e.status))
+        throw fail.conflict('invalid_phase', `Cannot export voters while status is ${e.status}.`)
       const voters = await eligibleVoters()
-      await audit(req, account, {
-        action: 'election.voters_exported',
-        targetType: 'governance',
-        targetId: String(e.id),
-        after: { voters: voters.length },
+      // re-checked under the row lock: an advance that opened voting meanwhile wins
+      await withPhase(req, e.id, ['announced', 'nominations'], null, async () => {
+        await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: {
+            eligibleIndividualCount: voters.filter((v) => v.kind === 'individual').length,
+            eligibleOrgCount: voters.filter((v) => v.kind === 'organisation').length,
+          },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'election.voters_exported',
+          targetType: 'governance',
+          targetId: String(e.id),
+          after: { voters: voters.length },
+        })
       })
       return new Response(beleniosVoterList(voters), {
         headers: {
@@ -317,64 +384,149 @@ export const electionEndpoints: Endpoint[] = [
       const fields: Record<string, string> = {}
       const archiveUrl = httpsUrl(b.archiveUrl)
       if (!archiveUrl) fields.archiveUrl = 'Use the https link of the published Belenios result.'
-      const individuals = Number(b.ballotsCast?.individuals)
-      const organisations = Number(b.ballotsCast?.organisations)
-      if (!Number.isInteger(individuals) || individuals < 0)
-        fields.individuals = 'Ballots cast by individuals.'
-      if (!Number.isInteger(organisations) || organisations < 0)
-        fields.organisations = 'Ballots cast by organisations.'
+      const count = (value: unknown) =>
+        typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
+      const individuals = count(b.ballotsCast?.individuals)
+      const organisations = count(b.ballotsCast?.organisations)
+      if (individuals === null) fields.individuals = 'Ballots cast by individuals.'
+      if (organisations === null) fields.organisations = 'Ballots cast by organisations.'
+      // turnout can't exceed the electorate belenios holds
+      if (
+        individuals !== null &&
+        e.eligibleIndividualCount != null &&
+        individuals > e.eligibleIndividualCount
+      )
+        fields.individuals = 'More ballots than eligible individuals.'
+      if (
+        organisations !== null &&
+        e.eligibleOrgCount != null &&
+        organisations > e.eligibleOrgCount
+      )
+        fields.organisations = 'More ballots than eligible organisations.'
       const { docs: screened } = await req.payload.find({
         collection: 'election-candidates',
         where: {
           and: [{ election: { equals: e.id } }, { status: { equals: 'screened_in' } }],
         },
-        limit: 500,
+        pagination: false,
         overrideAccess: true,
       })
+      const quorum = {
+        individualsMet: individuals !== null && individuals >= (e.quorumIndividuals ?? 100),
+        organisationsMet: organisations !== null && organisations >= (e.quorumOrganisations ?? 25),
+      }
+      const quorumMet = quorum.individualsMet && quorum.organisationsMet
+      const raceSlugs: string[] = (e.races ?? []).map((race: AnyValue) => race.slug)
+      for (const slug of Object.keys(b.races ?? {}))
+        if (!raceSlugs.includes(slug)) fields[slug] = 'Not a race in this election.'
       const races: Doc = {}
-      for (const race of e.races ?? []) {
-        const elected = (b.races?.[race.slug]?.elected ?? []).map(Number)
-        const pool = (screened as Doc[]).filter((c) => c.race === race.slug)
-        const unknown = elected.filter((id: number) => !pool.some((c) => c.id === id))
-        if (unknown.length) fields[race.slug] = 'Elected ids must be screened-in candidates.'
-        races[race.slug] = {
-          elected: pool
-            .filter((c) => elected.includes(c.id))
-            .map((c) => ({ id: c.id, name: accountRef(c.account)?.name })),
+      for (const slug of raceSlugs) {
+        const elected = b.races?.[slug]?.elected ?? []
+        // winners are required only when quorum holds; without it the vote restarts
+        if (!Array.isArray(elected) || (quorumMet && !elected.length)) {
+          fields[slug] = 'List the elected candidate ids for this race.'
+          continue
+        }
+        const pool = (screened as Doc[]).filter((c) => c.race === slug)
+        const ids = elected.map(Number)
+        if (ids.some((id) => !pool.some((c) => c.id === id)))
+          fields[slug] = 'Elected ids must be screened-in candidates.'
+        races[slug] = {
+          // a failed vote names nobody
+          elected: !quorumMet
+            ? []
+            : pool
+                .filter((c) => ids.includes(c.id))
+                .map((c) => ({ id: c.id, name: accountRef(c.account)?.name })),
         }
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const quorum = {
-        individualsMet: individuals >= (e.quorumIndividuals ?? 100),
-        organisationsMet: organisations >= (e.quorumOrganisations ?? 25),
-      }
-      const updated = await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: {
-          status:
-            quorum.individualsMet && quorum.organisationsMet ? 'completed' : 'restart_required',
-          result: {
-            source: 'belenios',
-            ballotUrl: e.externalRef,
-            archiveUrl,
-            recordedAt: new Date().toISOString(),
-            ballotsCast: { individuals, organisations },
-            quorum,
-            races,
+      const status = quorumMet ? 'completed' : 'restart_required'
+      // a double submit or a concurrent restart loses here with 409
+      const updated = await withPhase(req, e.id, ['voting', 'tallying'], status, async () => {
+        // status alone can't tell rounds apart: a restart and a new ballot put it back
+        // in voting. the round is its open time and ballot, so a stale request can't
+        // record the old vote's result on the new one
+        const round = await req.payload.findByID({
+          collection: 'elections',
+          id: e.id,
+          overrideAccess: true,
+          req,
+        })
+        if (round.votingOpensAt !== e.votingOpensAt || round.externalRef !== e.externalRef)
+          throw fail.conflict(
+            'invalid_phase',
+            'The vote changed while this result was being recorded. Reload and retry.',
+          )
+        const doc = await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: {
+            status,
+            result: {
+              source: 'belenios',
+              ballotUrl: e.externalRef,
+              archiveUrl,
+              recordedAt: new Date().toISOString(),
+              ballotsCast: { individuals, organisations },
+              quorum,
+              races,
+            },
           },
-        },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: `election.${updated.status}`,
-        targetType: 'governance',
-        targetId: String(e.id),
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: `election.${status}`,
+          targetType: 'governance',
+          targetId: String(e.id),
+        })
+        return doc
       })
       return json({ election: electionView(updated) })
     }),
   },
 ]
+
+// compare-and-set on status, then fn in the same tx. the UPDATE's row lock
+// makes export and advance serialise: whoever loses re-reads the committed
+// status and misses. next=null just locks the row without moving it. joins
+// an open req tx like withAuthorityLock
+async function withPhase<T>(
+  req: PayloadRequest,
+  id: number,
+  from: string[],
+  next: string | null,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const apply = async (transactionID: AnyValue) => {
+    const { rows } = await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`UPDATE elections SET status=${next ?? sql`status`}
+               WHERE id=${id} AND status IN (${sql.join(
+                 from.map((s) => sql`${s}`),
+                 sql`, `,
+               )}) RETURNING id`,
+    })
+    if (!rows.length)
+      throw fail.conflict('invalid_phase', 'The election moved to another phase. Reload and retry.')
+    return fn()
+  }
+  if (req.transactionID != null) return apply(req.transactionID)
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    const result = await apply(transactionID)
+    await req.payload.db.commitTransaction(transactionID)
+    return result
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
+}
 
 // only https links: these are shown to members and opened in their browsers
 function httpsUrl(value: unknown): string | null {

@@ -220,7 +220,7 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const opts = viewOptions(req)
-      const items = await store.listDirectory(req)
+      const items = await store.listDirectory(req, { withHolders: opts.includePrivate })
       return viewCache(
         json({
           items: directoryView(items, {

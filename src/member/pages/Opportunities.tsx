@@ -15,6 +15,12 @@ import { OpportunityPeek } from '../components/EntityPeeks'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
+import {
+  OPPORTUNITY_FORMATS,
+  OPPORTUNITY_FORMAT_LABELS,
+  OPPORTUNITY_KINDS,
+  OPPORTUNITY_KIND_LABELS,
+} from '../../shared/opportunities.js'
 import { CardSchedule } from '../components/cards'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
@@ -66,32 +72,38 @@ function groupOpportunitiesByStatus(items: Doc, now = Date.now()) {
   )
 }
 
+// labels come from the shared vocabulary; icons are ours, with a fallback for new kinds
+const KIND_ICONS: Record<string, typeof Layers3> = {
+  event: CalendarDays,
+  workshop: Presentation,
+  hackathon: Code2,
+  opportunity: Sparkles,
+  call: Megaphone,
+  training: GraduationCap,
+}
+const FORMAT_ICONS: Record<string, typeof Layers3> = {
+  online: Video,
+  in_person: MapPin,
+  hybrid: Blend,
+}
+
 const KINDS = [
   { key: 'all', label: 'All types', icon: Layers3 },
-  { key: 'event', label: 'Event', icon: CalendarDays },
-  { key: 'workshop', label: 'Workshop', icon: Presentation },
-  { key: 'hackathon', label: 'Hackathon', icon: Code2 },
-  { key: 'opportunity', label: 'Opportunity', icon: Sparkles },
-  { key: 'call', label: 'Open call', icon: Megaphone },
-  { key: 'training', label: 'Training', icon: GraduationCap },
+  ...OPPORTUNITY_KINDS.map(({ value, label }) => ({
+    key: value,
+    label,
+    icon: KIND_ICONS[value] ?? Sparkles,
+  })),
 ]
 
 const FORMATS = [
   { key: 'all', label: 'Any format', icon: MonitorSmartphone },
-  { key: 'online', label: 'Online', icon: Video },
-  { key: 'in_person', label: 'In person', icon: MapPin },
-  { key: 'hybrid', label: 'Hybrid', icon: Blend },
+  ...OPPORTUNITY_FORMATS.map(({ value, label }) => ({
+    key: value,
+    label,
+    icon: FORMAT_ICONS[value] ?? MonitorSmartphone,
+  })),
 ]
-
-const KIND_LABEL = Object.fromEntries(
-  KINDS.filter((k) => k.key !== 'all').map((k) => [k.key, k.label]),
-)
-
-const FORMAT_LABEL = {
-  online: 'Online',
-  in_person: 'In person',
-  hybrid: 'Hybrid',
-}
 
 function OpportunityCard({
   item,
@@ -130,10 +142,10 @@ function OpportunityCard({
       </div>
       <div className="entityCardTags">
         <FilterChip tone="accent" state={kindFilterState} onClick={onKindFilter}>
-          {KIND_LABEL[item.kind] || item.kind}
+          {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind}
         </FilterChip>
         <FilterChip state={formatFilterState} onClick={onFormatFilter}>
-          {(FORMAT_LABEL as AnyValue)[item.format] || item.format}
+          {OPPORTUNITY_FORMAT_LABELS[item.format] || item.format}
         </FilterChip>
         {item.region && (
           <FilterChip state={regionFilterState} onClick={onRegionFilter}>

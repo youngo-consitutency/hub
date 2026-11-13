@@ -4,6 +4,8 @@ import { assembleFeed } from './feed'
 import { resolveCoyStatus } from '../shared/coyStatus'
 import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
+import { holderKey, holdersFor, type RoleTarget } from './roleHolders'
+import { AUTHORITY_ROLES, normaliseScopeType, recordKind } from './authority'
 
 type AnyRecord = Doc
 type Req = PayloadRequest | Payload
@@ -284,15 +286,40 @@ export async function getCoy(req: Req, slug: string) {
   return coy && coy.reviewStatus === 'approved' ? coyView(coy) : null
 }
 
-export async function listDirectory(req: Req): Promise<AnyRecord[]> {
-  return (await findAll(req, 'directory-contacts', undefined, 'sortOrder')).map((c) => ({
+// the role a contact row stands for: explicit, or a working group's contact point
+function contactTarget(c: AnyRecord): RoleTarget | null {
+  if (c.role && c.scopeId) {
+    // stored roles may be stale: own keys only, and the scope type must fit the role
+    const spec = Object.hasOwn(AUTHORITY_ROLES, c.role) ? AUTHORITY_ROLES[c.role] : null
+    const scopeType = normaliseScopeType(
+      c.scopeType || (spec?.scopeTypes.length === 1 ? spec.scopeTypes[0] : ''),
+    )
+    // mandates only: a participation role would publish a whole member roster
+    return spec?.scopeTypes.includes(scopeType) && recordKind(scopeType, c.role) === 'mandate'
+      ? { role: c.role, scopeType, scopeId: c.scopeId }
+      : null
+  }
+  const slug = wgRef(c.wg)?.slug
+  return slug ? { role: 'wg.contact_point', scopeType: 'working_group', scopeId: slug } : null
+}
+
+// holders are members-only, so only callers that show them pay for the join
+export async function listDirectory(req: Req, { withHolders = false } = {}): Promise<AnyRecord[]> {
+  const contacts = await findAll(req, 'directory-contacts', undefined, 'sortOrder')
+  const targets = contacts.map(contactTarget)
+  const holders = withHolders
+    ? await holdersFor(targets.filter((t): t is RoleTarget => t !== null))
+    : new Map()
+  return contacts.map((c, i) => ({
     group: c.group,
     roleTitle: c.roleTitle,
     description: c.description,
     publicEmail: c.publicEmail || null,
     wg: wgRef(c.wg),
-    personName: c.personName || null,
     channelValue: c.channelValue || null,
+    ...(withHolders && {
+      holders: targets[i] ? (holders.get(holderKey(targets[i])) ?? []) : [],
+    }),
   }))
 }
 

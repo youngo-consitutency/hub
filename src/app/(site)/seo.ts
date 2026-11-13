@@ -5,8 +5,7 @@ export const SITE_DESCRIPTION =
   'YOUNGO Hub brings the work of the UNFCCC children and youth constituency into one shared platform — meetings, working groups, submissions, decisions, opportunities, and trusted knowledge.'
 const SHARE_IMAGE = '/screenshots/home-wide.png'
 
-export const isDemo = () =>
-  process.env.NEXT_PUBLIC_HUB_DEMO === 'true' || process.env.HUB_DEMO_MODE === 'true'
+export { isIndexable } from '../../lib/environment'
 
 export const shareMetadata = {
   openGraph: {
@@ -33,24 +32,8 @@ export function publicPage(path: string): Metadata {
   }
 }
 
-// Public routes listed in the sitemap; everything signed-in is disallowed.
-export const PUBLIC_PATHS = [
-  '/',
-  '/about',
-  '/about/working-groups',
-  '/about/resources',
-  '/about/gys',
-  '/about/coy',
-  '/about/faq',
-  '/about/organisation',
-  '/about/contact',
-  '/privacy',
-  '/join',
-  '/signin',
-  '/negotiations',
-  '/consultation',
-  '/consultation/recap',
-]
+// the sitemap lists the public pages; everything signed-in is disallowed
+export { PUBLIC_PATHS } from '../../shared/publicRoutes'
 
 export const PRIVATE_PATHS = [
   '/account',
@@ -66,7 +49,6 @@ export const PRIVATE_PATHS = [
   '/gys',
   '/help',
   '/intelligence',
-  '/landingV2',
   '/library',
   '/mail',
   '/membership',

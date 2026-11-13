@@ -1,6 +1,6 @@
 import type { AnyValue, Doc } from '../lib/types'
-import { useEffect, useState } from 'react'
-import { apiGet, apiPost } from '../lib/api'
+import { useState } from 'react'
+import { apiPost, useApi } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import { A, Button, Skeletons, ErrorCard, PageHeader } from '../components/ui'
 import { navigate } from '../lib/router'
@@ -12,9 +12,11 @@ import {
 } from 'react-icons/tb'
 
 export function Course() {
-  const { account, setAccount } = useAccount()
-  const [data, setData] = useState<AnyValue>(null)
-  const [error, setError] = useState<AnyValue>(null)
+  const { account, setAccount, reloadAccess } = useAccount()
+  const course = useApi('/member/course')
+  const data = course.data
+  const [submitError, setError] = useState<AnyValue>(null)
+  const error = submitError || course.error
   const [step, setStep] = useState('modules') // modules | quiz | done
   const [moduleIdx, setModuleIdx] = useState(0)
   const [answers, setAnswers] = useState<Doc>({})
@@ -23,14 +25,8 @@ export function Course() {
 
   const load = () => {
     setError(null)
-    apiGet('/member/course')
-      .then(setData)
-      .catch((e) => setError(e.message))
+    course.retry()
   }
-
-  useEffect(() => {
-    load()
-  }, [])
 
   if (error) return <ErrorCard message={error} onRetry={load} />
   if (!data) return <Skeletons n={4} />
@@ -46,6 +42,7 @@ export function Course() {
       const res = await apiPost('/member/course/submit', { answers })
       setResult(res)
       setAccount(res.account)
+      reloadAccess()
       setStep('done')
     } catch (err) {
       setError((err as AnyValue).message)

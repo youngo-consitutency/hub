@@ -5,6 +5,7 @@ import { requireAccount, memberContext } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { getDocument } from '../lib/documents'
 import { emailConfigured, sendEmail } from '../lib/email'
+import { deliveryDisabled } from '../lib/environment'
 import { hasCapability } from '../lib/access'
 import {
   drainNotificationOutbox,
@@ -315,6 +316,12 @@ export const notificationEndpoints: Endpoint[] = [
       await verificationLimit(req)
       const account = requireAccount(req)
       if (account.emailVerifiedAt) return json({ ok: true, verified: true })
+      if (deliveryDisabled())
+        throw new ApiError(
+          503,
+          'email_delivery_disabled',
+          'Email delivery is switched off on this deployment.',
+        )
       if (!emailConfigured())
         throw new ApiError(
           503,
@@ -393,6 +400,8 @@ export const notificationEndpoints: Endpoint[] = [
         email: emailPreferences(row?.email),
         emailVerified: Boolean(account.emailVerifiedAt),
         deliveryConfigured: Boolean(process.env.SMTP_URL || process.env.SMTP_HOST),
+        // switched off on purpose (previews), not just missing smtp
+        deliveryDisabled: deliveryDisabled(),
       })
     }),
   },

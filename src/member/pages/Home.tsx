@@ -15,6 +15,7 @@ interface WorkspaceSectionProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
+import { responsibilitiesFor, viewerOf } from '../lib/routes'
 import { useApi } from '../lib/api'
 import { A, Async, LifecycleTiming, Section, PageHeader } from '../components/ui'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
@@ -27,13 +28,8 @@ import {
   TbUsers as Users,
   TbArrowUpRight as ArrowUpRight,
   TbPin as Pin,
-  TbBriefcase as Briefcase,
   TbClipboardCheck as ClipboardCheck,
-  TbTools as PenTool,
-  TbFilePencil as FilePenLine,
   TbSitemap as Network,
-  TbBuilding as Building2,
-  TbShield as Shield,
   TbCircleCheck as CircleCheck,
   TbProgress as Progress,
   TbAlarm as Alarm,
@@ -225,75 +221,21 @@ export function Home() {
 }
 
 function ResponsibilitySection({ account }: ResponsibilitySectionProps) {
-  const access = account?.access || {}
-  const teamRoles = access.teamRoles || account?.teamRoles || []
-  const capabilities = access.capabilities || []
-  const canManageAccounts = access.canAdminister || capabilities.includes('accounts.manage')
-  const responsibilities = [
-    {
-      href: '/cp',
-      label: 'WG Contact Point',
-      detail: 'Manage your working groups, calls, channels, and member access.',
-      icon: Briefcase,
-      visible: canManageGroups(account),
-    },
-    {
-      href: '/focal',
-      label: 'Global Focal Point',
-      detail: 'Coordinate constituency-wide mandates and UNFCCC-facing work.',
-      icon: Network,
-      visible: access.isFocalPoint,
-    },
-    {
-      href: '/team/membership',
-      label: 'Membership Team',
-      detail: 'Review membership and onboarding work.',
-      icon: ClipboardCheck,
-      visible: teamRoles.includes('membership_team'),
-    },
-    {
-      href: '/team/gys',
-      label: 'GYS Policy Team',
-      detail: 'Coordinate Global Youth Statement drafting.',
-      icon: PenTool,
-      visible: teamRoles.includes('gys_policy_team'),
-    },
-    {
-      href: '/staff/content',
-      label: 'Content operations',
-      detail: 'Draft, review, and publish Hub content.',
-      icon: FilePenLine,
-      visible: capabilities.includes('content.draft') || capabilities.includes('content.review'),
-    },
-    {
-      href: '/ngo',
-      label: 'NGO workspace',
-      detail: 'Manage organisation participation and representatives.',
-      icon: Building2,
-      visible: Boolean(access.ngo),
-    },
-    {
-      href: '/admin',
-      label: 'Platform administration',
-      detail: 'Manage system-wide access and operations.',
-      icon: Shield,
-      visible: canManageAccounts,
-    },
-  ].filter((item) => item.visible)
-
+  // same routes and rules as the sidebar's mandate, team and operator sections
+  const responsibilities = responsibilitiesFor(viewerOf(account))
   if (!responsibilities.length) return null
 
   return (
     <Section label="Your responsibilities">
       <div className="roleHubGrid">
-        {responsibilities.map(({ href, label, detail, icon: Icon }) => (
+        {responsibilities.map(({ href, label, summary, icon: Icon }) => (
           <A key={href} href={href} className="card cardTight roleHubCard">
             <span className="iconTile" aria-hidden>
               <Icon size={20} strokeWidth={1.75} />
             </span>
             <span className="roleHubCopy">
               <strong>{label}</strong>
-              <span className="meta">{detail}</span>
+              <span className="meta">{summary}</span>
             </span>
             <ArrowUpRight size={17} strokeWidth={1.75} aria-hidden />
           </A>

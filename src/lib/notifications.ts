@@ -7,6 +7,7 @@ import { getDocument } from './documents'
 import { appBaseUrl } from './env'
 import { renderEmailTemplate } from './emailTemplate'
 import type { Doc, AnyValue } from './domain'
+import { deliveryDisabled } from './environment'
 
 // Announcement broadcast surface (preview/send/outbox). Queue rows live in
 // `notification_outbox`; eligibility reads the notification_prefs model.
@@ -286,6 +287,9 @@ async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) 
 
 // Bounded batch; the next drain picks up whatever remains.
 export async function drainNotificationOutbox(req: AnyValue, { limit = 50 } = {}) {
+  // delivery is off: claim nothing, so the queue drains once it's back on
+  // instead of marking unsent notifications as sent
+  if (deliveryDisabled()) return { claimed: 0, sent: 0, retried: 0, failed: 0, paused: true }
   const connectBody = (await getDocument(req, 'connect').catch(() => null))?.body
   const claimed = await claimNotificationBatch(limit)
   const results = { claimed: claimed.length, sent: 0, retried: 0, failed: 0 }

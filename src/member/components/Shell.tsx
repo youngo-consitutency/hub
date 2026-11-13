@@ -13,6 +13,7 @@ import { Brand } from './Brand'
 import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { AlertSetupNotice } from './AlertSetupNotice'
+import { useSessionCheck } from './AccessGate'
 import {
   TbSearch as Search,
   TbMenu2 as Menu,
@@ -26,7 +27,6 @@ import {
 // and fetch it on first use instead of shipping it to every member.
 const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette))
 
-// Home stands alone; browsing, people and shared work have distinct homes.
 export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
@@ -34,11 +34,6 @@ export function Shell({ children }: ShellProps) {
   const menuButtonRef = useRef<AnyValue>(null)
   const sheetRef = useRef<AnyValue>(null)
   const { account } = useAccount()
-  const access = account?.access || {
-    teamRoles: account?.teamRoles || [],
-    wgAssignments: [],
-    manageAllWgs: false,
-  }
   useEffect(() => {
     setSheet(false)
   }, [path])
@@ -102,11 +97,14 @@ export function Shell({ children }: ShellProps) {
   }, [sheet])
 
   const verified = Boolean(account?.isVerified)
+  const sessionCheck = useSessionCheck()
+  // signed-out visitors (public negotiations) go back to the public homepage
+  const home = account && !verified ? '/onboarding' : '/'
 
   // every entry comes from the route registry, filtered for this account
   const viewer = useMemo(() => viewerOf(account), [account])
   const nav = useMemo(() => navFor(viewer, path), [viewer, path])
-  const mobilePrimaryNav = mobileNavFor(viewer, path)
+  const mobilePrimaryNav = useMemo(() => mobileNavFor(viewer, path), [viewer, path])
 
   return (
     <div className="shell">
@@ -120,11 +118,7 @@ export function Shell({ children }: ShellProps) {
         aria-hidden={sheet ? 'true' : undefined}
       >
         <div className="sidebarBrandRow">
-          <A
-            href={verified ? '/' : '/onboarding'}
-            className="wordmark"
-            aria-label="YOUNGO Hub home"
-          >
+          <A href={home} className="wordmark" aria-label="YOUNGO Hub home">
             <Brand />
           </A>
         </div>
@@ -184,7 +178,7 @@ export function Shell({ children }: ShellProps) {
                   aria-hidden
                 />
               </span>
-              {access.isFocalPoint && <span className="metaMuted">Global Focal Point</span>}
+              {viewer.isFocalPoint && <span className="metaMuted">Global Focal Point</span>}
             </A>
           )}
           {account && !verified && (
@@ -198,11 +192,7 @@ export function Shell({ children }: ShellProps) {
 
       <div className="content">
         <header className="topbar">
-          <A
-            href={verified ? '/' : '/onboarding'}
-            className="wordmark"
-            aria-label="YOUNGO Hub home"
-          >
+          <A href={home} className="wordmark" aria-label="YOUNGO Hub home">
             <Brand />
           </A>
           <div className="rowGap">
@@ -225,7 +215,29 @@ export function Shell({ children }: ShellProps) {
           inert={sheet ? true : undefined}
           aria-hidden={sheet ? 'true' : undefined}
         >
-          {!verified && (
+          {!account && (
+            <div className="noticeBanner">
+              <span className="noticeDot" />
+              <div className="noticeCopy">
+                <p>Sign in to take part in the Hub</p>
+              </div>
+              <A href="/signin" className="btn btn-primary btn-sm">
+                Sign in
+              </A>
+            </div>
+          )}
+          {sessionCheck.failed && (
+            <div className="noticeBanner noticeBannerWarn" role="status">
+              <span className="noticeDot" />
+              <div className="noticeCopy">
+                <p>We couldn’t reach the Hub. You may be seeing saved details.</p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={sessionCheck.retry}>
+                Retry
+              </button>
+            </div>
+          )}
+          {account && !verified && (
             <div className="noticeBanner noticeBannerWarn">
               <span className="noticeDot" />
               <div className="noticeCopy">
@@ -316,25 +328,27 @@ export function Shell({ children }: ShellProps) {
         </>
       )}
 
-      <nav
-        className={`mobileBottomNav ${verified ? '' : 'mobileBottomNavCompact'}`}
-        aria-label="Quick navigation"
-        inert={sheet ? true : undefined}
-        aria-hidden={sheet ? 'true' : undefined}
-      >
-        {mobilePrimaryNav.map(({ href, label, mobileLabel, icon: Icon }) => (
-          <A
-            key={href}
-            href={href}
-            className={`mobileBottomItem ${isActive(path, href) ? 'active' : ''}`}
-            aria-current={isActive(path, href) ? 'page' : undefined}
-            aria-label={mobileLabel ? label : undefined}
-          >
-            <Icon size={20} strokeWidth={1.75} aria-hidden />
-            <span>{mobileLabel || label}</span>
-          </A>
-        ))}
-      </nav>
+      {mobilePrimaryNav.length > 0 && (
+        <nav
+          className={`mobileBottomNav ${verified ? '' : 'mobileBottomNavCompact'}`}
+          aria-label="Quick navigation"
+          inert={sheet ? true : undefined}
+          aria-hidden={sheet ? 'true' : undefined}
+        >
+          {mobilePrimaryNav.map(({ href, label, mobileLabel, icon: Icon }) => (
+            <A
+              key={href}
+              href={href}
+              className={`mobileBottomItem ${isActive(path, href) ? 'active' : ''}`}
+              aria-current={isActive(path, href) ? 'page' : undefined}
+              aria-label={mobileLabel ? label : undefined}
+            >
+              <Icon size={20} strokeWidth={1.75} aria-hidden />
+              <span>{mobileLabel || label}</span>
+            </A>
+          ))}
+        </nav>
+      )}
 
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
