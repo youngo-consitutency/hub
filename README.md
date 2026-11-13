@@ -19,7 +19,7 @@ The separate [content service](https://github.com/youngo-consitutency/hub/wiki/A
 
 ## Run locally
 
-Use Node.js 22.13 or later in the Node 22 series, or Node 24, and PostgreSQL.
+Use Node.js 22.23.4 or later in the Node 22 series, or Node 24.22.1 or later (the `engines` range in `package.json`; `.nvmrc` pins 22.23), and PostgreSQL.
 
 ```sh
 git clone https://github.com/youngo-consitutency/hub.git
