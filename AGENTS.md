@@ -79,7 +79,7 @@ Session memory uses the Hindsight bank `youngo-hub`, exposed as tools on the `hu
 
 ## Verification
 
-Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through provisioning scripts or direct database access. Production is the existing Vercel `youngo-hub` project at `youngo-hub.vercel.app`; do not create another project. Previews never send email or push. Confirm the target and database before deploying.
+Run `npm run lint` and `npm run build`. `npm run test:int` and `npm run test:e2e` need a running server with a migrated PostgreSQL database; tests provision their own accounts and content. The repository carries no data — content lives in the database and is managed through provisioning scripts or direct database access. Production is the existing Vercel `youngo-hub` project at `youngo-hub.vercel.app`; do not create another project. Production builds run pending migrations first (`vercel-build`); previews never migrate, send email or push. Confirm the target and database before deploying.
 
 The historical Intelligence proposal is not included in this public checkout; preserve the invariants above and verify behaviour against source and tests.
 
