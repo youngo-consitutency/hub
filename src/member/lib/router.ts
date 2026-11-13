@@ -13,7 +13,7 @@ const PEEK_KEY = 'youngo.peekBackground'
 
 let bound: AppRouterInstance | null = null
 
-export function bindRouter(router: AppRouterInstance) {
+function bindRouter(router: AppRouterInstance) {
   bound = router
 }
 

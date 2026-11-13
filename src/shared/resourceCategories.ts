@@ -1,5 +1,5 @@
 import type { AnyValue, Doc } from '../member/lib/types'
-export const RESOURCE_CATEGORIES = [
+const RESOURCE_CATEGORIES = [
   { key: 'join', label: 'Join' },
   { key: 'channels', label: 'Channels' },
   { key: 'workspace', label: 'Working files' },
@@ -36,7 +36,7 @@ function resourceUrl(resource: Doc) {
 // 'notwhatsapp.com' does not.
 const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
 
-export function resourceCategory(resource: Doc) {
+function resourceCategory(resource: Doc) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''
   const path = url?.pathname.toLowerCase() || ''

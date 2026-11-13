@@ -13,7 +13,7 @@ export { slugify }
 
 // Vocab + working groups are live Hub data — fetched per call so the MCP
 // advertises what the database actually accepts, not a bundled snapshot.
-export async function catalogOptions(client) {
+async function catalogOptions(client) {
   const [options, groups] = await Promise.all([
     client.memberGet('/api/documents/content-options').catch(() => null),
     client.memberGet('/api/groups').catch(() => null),
