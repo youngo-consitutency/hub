@@ -8,7 +8,7 @@ import { requirePgPool, getPgPool } from './pg'
 const MEMBER_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MEMBER_PHOTO_MAX_BYTES = 768 * 1024
 
-export async function validateMemberPhoto(bytes: Buffer, contentType: string) {
+async function validateMemberPhoto(bytes: Buffer, contentType: string) {
   const type = String(contentType || '')
     .split(';')[0]
     .trim()
