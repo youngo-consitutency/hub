@@ -1,4 +1,5 @@
 import type { AnyValue } from '../../lib/types'
+import { HUB_ROOT } from '../../../lib/hubUrl'
 import { Ripple } from '../../components/fx/Ripple'
 import { BorderBeam } from '../../components/fx/BorderBeam'
 import { MotionConfig, motion } from 'motion/react'
@@ -104,7 +105,7 @@ export function SiteHome() {
             </h1>
             <p className="ldHeroLead">{hero.lead}</p>
             <div className="ldActions">
-              <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? '/' : '/join'}>
+              <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
                 {signedIn ? 'Open your Hub' : hero.joinLabel}
                 <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
               </A>
@@ -114,7 +115,7 @@ export function SiteHome() {
             </div>
             <p className="ldFine">{hero.reassurance}</p>
           </div>
-          <HeroCommunity href={signedIn ? '/' : '/join'} label="Your seat" />
+          <HeroCommunity href={signedIn ? HUB_ROOT : '/join'} label="Your seat" />
         </div>
         {/* the track repeats once so the loop is seamless; the copy is hidden from readers */}
         <div className="ldMarquee">
@@ -219,7 +220,7 @@ export function SiteHome() {
         <div className="ldCtaInner">
           <h2 id="cta-heading">{cta.title}</h2>
           <p>{cta.body}</p>
-          <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? '/' : '/join'}>
+          <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
             {signedIn ? 'Open your Hub' : cta.label}
             <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
           </A>

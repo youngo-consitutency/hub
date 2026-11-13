@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload'
+import { hubUrl } from '../lib/hubUrl'
 import { after } from 'next/server'
 import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
 import { requireAccount, memberContext } from '../lib/accounts'
@@ -306,7 +307,7 @@ export const notificationEndpoints: Endpoint[] = [
           targetId: String(accountId),
         },
       )
-      return Response.redirect(`${appBaseUrl()}/profile?emailVerified=1`, 303)
+      return Response.redirect(`${appBaseUrl()}${hubUrl('/profile?emailVerified=1')}`, 303)
     },
   },
   {

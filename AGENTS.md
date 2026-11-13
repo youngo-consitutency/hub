@@ -4,7 +4,7 @@ YOUNGO Hub is the current YOUNGO member and mission-control product — one Next
 
 ## Hub Intelligence invariants
 
-- Adapter: `POST /api/intelligence/query` (authenticated, `src/endpoints/intelligence.ts`) and the member UI at `/intelligence`. There is no public (unauthenticated) route today; if one is added, keep the fingerprint-only rule below.
+- Adapter: `POST /api/intelligence/query` (authenticated, `src/endpoints/intelligence.ts`) and the member UI (Hub search, `/hub#/search`). There is no public (unauthenticated) route today; if one is added, keep the fingerprint-only rule below.
 - Authorisation is source-side and derived in `src/lib/access.ts`.
 - Never index or return credentials, sessions, private messages, raw account records, guardian data, minority data, or personal account email/phone fields.
 - Ordinary members receive public evidence plus only their own role/assignment context.

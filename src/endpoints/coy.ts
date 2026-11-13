@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/domain'
+import { hubUrl } from '../lib/hubUrl'
 import type { Endpoint, PayloadRequest } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
@@ -281,7 +282,7 @@ export const coyEndpoints: Endpoint[] = [
       if (replay.docs[0]) return json({ ok: true, campaignId, replay: true }, { status: 202 })
 
       const subject = /^coy\b/i.test(title) ? title : `COY · ${title}`
-      const actionUrl = `${appBaseUrl()}/coys/${coy.slug}`
+      const actionUrl = `${appBaseUrl()}${hubUrl(`/coys/${coy.slug}`)}`
       const audience = await audienceSummary(rows)
       const notice = channels.includes('hub')
         ? await req.payload.create({
@@ -317,7 +318,7 @@ export const coyEndpoints: Endpoint[] = [
           icon: '/icons/icon-192.png',
           badge: '/icons/icon-72.png',
           tag: 'coy-announce',
-          data: { url: `/coys/${coy.slug}` },
+          data: { url: hubUrl(`/coys/${coy.slug}`) },
         })
         for (const id of new Set(devices.map((row: Doc) => String(row.accountId)))) {
           const { created } = await enqueueNotification({

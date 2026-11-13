@@ -69,7 +69,7 @@ test.describe('Public site', () => {
       await expect(preview.getByText('No upcoming events have been published.')).toBeVisible()
       await expect(preview.getByRole('link', { name: 'Open the Hub calendar' })).toHaveAttribute(
         'href',
-        '/calendar',
+        '/hub#/calendar',
       )
     })
   })
@@ -85,7 +85,7 @@ test.describe('Member app', () => {
     await page.locator('button[type="submit"], button:has-text("Sign in")').first().click()
     // Signed-in members land on the member workspace; the gate disappears.
     await expect(email).toBeHidden({ timeout: 15000 })
-    await page.goto(BASE)
+    await page.goto(`${BASE}/hub`)
     await expect(page.getByRole('heading', { name: 'Your Hub', exact: true })).toBeVisible()
     await page.evaluate(() => localStorage.clear())
     await page.reload()

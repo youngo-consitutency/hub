@@ -1,11 +1,10 @@
-'use client'
-
 import { useEffect } from 'react'
-import { replace } from '../../../../../member/lib/router'
-import { useAccount } from '../../../../../member/lib/accountContext'
-import { Skeletons } from '../../../../../member/components/ui'
+import { useAccount } from '../lib/accountContext'
+import { replace } from '../lib/router'
+import { Skeletons } from '../components/ui'
 
-export default function Page() {
+// the membership team lands on renewals; everyone else on the people directory
+export function PeopleRedirect() {
   const { account } = useAccount()
   const membershipTeam = (account?.access?.teamRoles || account?.teamRoles || []).includes(
     'membership_team',

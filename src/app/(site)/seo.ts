@@ -36,6 +36,7 @@ export function publicPage(path: string): Metadata {
 export { PUBLIC_PATHS } from '../../shared/publicRoutes'
 
 export const PRIVATE_PATHS = [
+  '/hub',
   '/account',
   '/admin',
   '/book',

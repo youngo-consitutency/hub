@@ -53,9 +53,9 @@ export function ResetPassword() {
               an admin for a new link.
             </p>
             <div className="detailActions">
-              <Button variant="primary" onClick={() => navigate('/')}>
+              <Button variant="primary" onClick={() => navigate('/signin')}>
                 <ArrowLeft size={18} strokeWidth={2} aria-hidden />
-                Back to Hub
+                Back to sign in
               </Button>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function ResetPassword() {
             </div>
             <p className="meta">Sign in with your email and new password.</p>
             <div className="detailActions">
-              <Button variant="primary" glow onClick={() => navigate('/')}>
+              <Button variant="primary" glow onClick={() => navigate('/signin')}>
                 Go to sign in
               </Button>
             </div>

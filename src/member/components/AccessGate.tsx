@@ -10,7 +10,8 @@ import { useDocument } from '../lib/documents'
 import { apiGet } from '../lib/api'
 import { clearSession } from '../lib/session'
 import { useAccount } from '../lib/accountContext'
-import { navigate, usePath } from '../lib/router'
+import { HUB_ROOT } from '../../lib/hubUrl'
+import { navigate, useInHub, usePath } from '../lib/router'
 import { ErrorCard } from './ui'
 
 // Sign-in, registration and the public site are only rendered for signed-out
@@ -32,6 +33,11 @@ const PublicSite = dynamic(() => import('../pages/site/PublicSite').then((m) => 
 const SessionCheck = createContext({ failed: false, retry: () => {} })
 export const useSessionCheck = () => useContext(SessionCheck)
 
+function GoToHub() {
+  useEffect(() => navigate(HUB_ROOT), [])
+  return null
+}
+
 /**
  * Controls access before the main application loads. Signed-out visitors land
  * on the public YOUNGO homepage. New members still accept the
@@ -40,6 +46,7 @@ export const useSessionCheck = () => useContext(SessionCheck)
  */
 export function AccessGate({ children }: AccessGateProps) {
   const path = usePath()
+  const inHub = useInHub()
   const [ready, setReady] = useState(false)
   const [policyOk, setPolicyOk] = useState(false)
   // one account for the whole tree: a refresh here reaches every page
@@ -52,9 +59,9 @@ export function AccessGate({ children }: AccessGateProps) {
   const handleAuthenticated = useCallback(
     (acc: AnyValue) => {
       setAccount(acc)
-      if (path === '/join' || path === '/signin') navigate('/')
+      if (!inHub && (path === '/join' || path === '/signin')) navigate(HUB_ROOT)
     },
-    [path, setAccount],
+    [inHub, path, setAccount],
   )
 
   const refreshSession = useCallback(async () => {
@@ -94,19 +101,15 @@ export function AccessGate({ children }: AccessGateProps) {
     if (policyVersion) setPolicyOk(hasAcknowledgedMembershipPolicy(policyVersion))
   }, [policyVersion])
 
-  if (path.startsWith('/reset-password')) {
-    return <ResetPassword />
-  }
-
-  // The privacy notice must be readable before someone is asked for personal data.
-  if (path.startsWith('/privacy')) {
-    return <Privacy standalone />
-  }
-
-  // Public website: browsable before any gate; data comes from the redacting
-  // public API.
-  if (path.startsWith('/about')) {
-    return <PublicSite />
+  // site pages are real routes and never wait on the session; inside /hub the
+  // same paths mean Hub pages
+  if (!inHub) {
+    if (path.startsWith('/reset-password')) return <ResetPassword />
+    // The privacy notice must be readable before someone is asked for personal data.
+    if (path.startsWith('/privacy')) return <Privacy standalone />
+    // Public website: browsable before any gate, for members too; data comes from the
+    // redacting public API.
+    if (path === '/' || path.startsWith('/about')) return <PublicSite />
   }
 
   if (!ready) {
@@ -130,7 +133,7 @@ export function AccessGate({ children }: AccessGateProps) {
 
   // nothing cached to fall back on, so we can't tell signed-in from signed-out.
   // public pages still render signed-out rather than blocking a first visit
-  const publicPath = path === '/' || path.startsWith('/negotiations')
+  const publicPath = path.startsWith('/negotiations')
   if (sessionFailed && !account && !publicPath) {
     return (
       <main className="mandateGate">
@@ -165,19 +168,16 @@ export function AccessGate({ children }: AccessGateProps) {
         />
       )
     }
+    // signed in already: the sign-in and join pages have nothing left to do
+    if (!inHub && (path === '/signin' || path === '/join')) return <GoToHub />
     return <SessionCheck.Provider value={sessionCheck}>{children}</SessionCheck.Provider>
   }
 
-  // Signed-out visitors see the same public homepage as /about.
-  if (path === '/') {
-    return <PublicSite />
-  }
-
-  if (path === '/join' && !policyOk) {
+  if (!inHub && path === '/join' && !policyOk) {
     return <MembershipMandateGate onComplete={() => setPolicyOk(true)} />
   }
 
-  const initialMode = path === '/join' ? 'register' : 'signin'
+  const initialMode = !inHub && path === '/join' ? 'register' : 'signin'
   return (
     <AuthGate key={initialMode} initialMode={initialMode} onAuthenticated={handleAuthenticated} />
   )

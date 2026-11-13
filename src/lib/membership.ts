@@ -2,6 +2,7 @@
 // session destruction and activation email. Ported from
 // server/lib/memberProfiles.js + membershipAppeals.js + membershipReview.js.
 import { ApiError } from './respond'
+import { hubUrl } from './hubUrl'
 import { accountView } from './accounts'
 import { sendEmail } from './email'
 import { appBaseUrl } from './env'
@@ -90,7 +91,7 @@ export async function sendMembershipActivatedEmail(account: AccountLike) {
     const { delivered } = await sendEmail({
       to: account.email,
       subject: 'Your YOUNGO Hub membership is active',
-      text: `Hi ${firstName},\n\nYour YOUNGO Hub membership is now active. Sign in at ${origin}/ to get started.\n\n— YOUNGO Hub`,
+      text: `Hi ${firstName},\n\nYour YOUNGO Hub membership is now active. Sign in at ${origin}${hubUrl()} to get started.\n\n— YOUNGO Hub`,
     })
     return { sent: delivered }
   } catch {
