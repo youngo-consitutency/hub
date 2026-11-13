@@ -29,15 +29,6 @@ const nextConfig: NextConfig = {
     // the old landing-page preview; its links should still land somewhere
     return [{ source: '/landingV2/:path*', destination: '/', permanent: true }]
   },
-  async rewrites() {
-    return [
-      // Static consultation microsite lives in public/consultation/ — legacy
-      // URLs /consultation and /consultation/recap must resolve to it rather
-      // than the member SPA.
-      { source: '/consultation', destination: '/consultation/index.html' },
-      { source: '/consultation/recap', destination: '/consultation/recap.html' },
-    ]
-  },
   images: {
     localPatterns: [
       {
