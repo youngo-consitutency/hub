@@ -37,7 +37,7 @@ export { renderEmailTemplate }
 const unsubscribeSecret = () =>
   String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() || process.env.PAYLOAD_SECRET!
 
-export function createUnsubscribeToken(accountId: AnyValue, category: string) {
+function createUnsubscribeToken(accountId: AnyValue, category: string) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
     throw new Error('Invalid unsubscribe category.')
   const payload = Buffer.from(
@@ -70,7 +70,7 @@ export function unsubscribeUrl(accountId: AnyValue, category: string) {
 
 // ── Transport ────────────────────────────────────────────────────
 
-export async function sendTemplatedEmail({
+async function sendTemplatedEmail({
   to,
   templateKey,
   data,
@@ -185,7 +185,7 @@ export async function enqueueNotification({
   return { created: Boolean(rows[0]), item: publicOutbox(rows[0]) }
 }
 
-export async function markNotificationSent(id: AnyValue) {
+async function markNotificationSent(id: AnyValue) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -196,7 +196,7 @@ export async function markNotificationSent(id: AnyValue) {
   )
 }
 
-export async function markNotificationFailed(id: AnyValue, code: string) {
+async function markNotificationFailed(id: AnyValue, code: string) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -214,7 +214,7 @@ const MAX_DELIVERY_ATTEMPTS = 5
 const retryDelayMs = (attempts: number) => Math.min(30_000 * 2 ** attempts, 30 * 60_000)
 
 // Claim due rows under a short lease so concurrent drains never double-deliver.
-export async function claimNotificationBatch(limit = 50) {
+async function claimNotificationBatch(limit = 50) {
   const pool = getPgPool()!
   const { rows } = await pool.query(
     `UPDATE notification_outbox o
@@ -235,7 +235,7 @@ export async function claimNotificationBatch(limit = 50) {
 }
 
 // Requeue with backoff; rows past the attempt ceiling go terminal instead.
-export async function rescheduleNotification(row: Doc, code: string) {
+async function rescheduleNotification(row: Doc, code: string) {
   const pool = getPgPool()!
   const attempts = Number(row.attempts || 0) + 1
   if (attempts >= MAX_DELIVERY_ATTEMPTS) return markNotificationFailed(row.id, code)
