@@ -19,7 +19,7 @@ import {
 } from 'react-icons/tb'
 import { apiGet, apiPost, useApi } from '../lib/api'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
-import { replace } from '../lib/router'
+import { replace, useQuery } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui'
 import { fmtDual, fmtDateRange } from '../lib/time'
@@ -122,7 +122,7 @@ function DirectMatches({ query, data }: DirectMatchesProps) {
 
 export function Search() {
   const { account } = useAccount()
-  const initialQuery = new URLSearchParams(window.location.search).get('q') || ''
+  const initialQuery = useQuery().get('q') || ''
   const [query, setQuery] = useState(initialQuery)
   // Debounced: each /search call scans six collections — do not fire per
   // keystroke.

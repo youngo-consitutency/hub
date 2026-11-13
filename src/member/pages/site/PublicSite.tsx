@@ -1,4 +1,5 @@
 import type { AnyValue } from '../../lib/types'
+import { HUB_ROOT } from '../../../lib/hubUrl'
 import { useEffect, useRef, useState } from 'react'
 import {
   TbArrowRight as ArrowRight,
@@ -123,7 +124,7 @@ function SiteHeader() {
             Sign in
           </A>
         )}
-        <A className="btn btn-primary btn-sm siteJoinBtn" href={signedIn ? '/' : '/join'}>
+        <A className="btn btn-primary btn-sm siteJoinBtn" href={signedIn ? HUB_ROOT : '/join'}>
           {signedIn ? 'Open your Hub' : 'Join YOUNGO'}
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
         </A>

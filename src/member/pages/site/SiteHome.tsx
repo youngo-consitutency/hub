@@ -1,4 +1,5 @@
 import type { AnyValue } from '../../lib/types'
+import { HUB_ROOT } from '../../../lib/hubUrl'
 import { MotionConfig, motion } from 'motion/react'
 import {
   TbBook as BookOpen,
@@ -106,7 +107,7 @@ export function SiteHome() {
             </h1>
             <p className="ldHeroLead">{hero.lead}</p>
             <div className="ldActions">
-              <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? '/' : '/join'}>
+              <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
                 {signedIn ? 'Open your Hub' : hero.joinLabel}
                 <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
               </A>
@@ -116,7 +117,7 @@ export function SiteHome() {
             </div>
             <p className="ldFine">{hero.reassurance}</p>
           </div>
-          <HeroCommunity href={signedIn ? '/' : '/join'} label="Your seat" />
+          <HeroCommunity href={signedIn ? HUB_ROOT : '/join'} label="Your seat" />
         </div>
       </section>
       <section className="ldBand ldDark" aria-labelledby="organised-heading">
@@ -246,7 +247,7 @@ export function SiteHome() {
         <div className="ldCtaInner">
           <h2 id="cta-heading">{cta.title}</h2>
           <p>{cta.body}</p>
-          <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? '/' : '/join'}>
+          <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
             {signedIn ? 'Open your Hub' : cta.label}
             <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
           </A>

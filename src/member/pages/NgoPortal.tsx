@@ -4,7 +4,7 @@ import { TbBuildingCommunity as OrganisationIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { apiPost, apiPatch, useApi } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
-import { replace, usePath } from '../lib/router'
+import { replace, usePath, useQuery } from '../lib/router'
 import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { DatePicker, SearchableSelect } from '../components/FormControls'
 import { NgoOpportunities } from '../components/NgoOpportunities'
@@ -14,6 +14,7 @@ export function NgoPortal() {
   const [panel, setPanel] = useState<AnyValue>(null)
   const { account, setAccount, reloadAccess } = useAccount()
   const path = usePath()
+  const query = useQuery()
   const requests = useApi(path.includes('accept') ? null : '/member/ngo/requests')
   const data = requests.data
   const [actionError, setError] = useState<AnyValue>(null)
@@ -47,8 +48,8 @@ export function NgoPortal() {
   }
 
   useEffect(() => {
-    setInviteToken(new URLSearchParams(window.location.search).get('token'))
-  }, [path])
+    setInviteToken(query.get('token'))
+  }, [query])
 
   const acceptInvite = () => {
     if (!inviteToken) return

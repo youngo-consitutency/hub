@@ -117,7 +117,7 @@ interface AsyncProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
 import Link from 'next/link'
-import { navigate, replace, peekBackground } from '../lib/router'
+import { currentAppUrl, hrefFor, navigate, replace, peekBackground } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
@@ -145,7 +145,7 @@ export function A({
   // still owns the actual navigation (peek state, replace vs push).
   return (
     <Link
-      href={href as string}
+      href={hrefFor(href as string)}
       className={className}
       target={target}
       onClick={(e) => {
@@ -168,7 +168,7 @@ export function A({
           peek
             ? {
                 state: {
-                  peekBackground: background || window.location.pathname + window.location.search,
+                  peekBackground: background || currentAppUrl(),
                 },
                 scroll: false,
               }

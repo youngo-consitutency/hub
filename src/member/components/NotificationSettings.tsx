@@ -1,4 +1,5 @@
 import type { AnyValue } from '../lib/types'
+import { useQuery } from '../lib/router'
 import { useEffect, useRef, useState } from 'react'
 import {
   TbBell as Bell,
@@ -30,11 +31,12 @@ export function NotificationSettings() {
   const setup = useAlertSetup()
   const [helpDevice, setHelpDevice] = useState<AnyValue>(null)
   const cardRef = useRef<AnyValue>(null)
+  const alertsRequested = useQuery().has('alerts')
 
   useEffect(() => {
-    if (window.location.hash !== '#alerts') return
+    if (!alertsRequested) return
     cardRef.current?.scrollIntoView({ block: 'start' })
-  }, [])
+  }, [alertsRequested])
 
   const { state, busy, message, error } = setup
   const supported = !state.loading && isPushSupported()
