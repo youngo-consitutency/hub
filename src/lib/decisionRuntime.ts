@@ -278,6 +278,57 @@ export async function transition(
   })
 }
 
+// row lock on the proposal while status still matches: flag and ballot
+// writers and the deadline closers all take it first, so a write is either
+// counted by the closer or refused after it. null means status moved on
+export async function withProposalLock<T>(
+  req: PayloadRequest,
+  proposal: Doc,
+  fn: () => Promise<T>,
+): Promise<T | null> {
+  return withTransaction(req, async (transactionID) => {
+    const { rows } = await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`UPDATE decision_proposals SET status=status
+               WHERE id=${proposal.id} AND status=${proposal.status} RETURNING id`,
+    })
+    if (!rows.length) return null
+    return fn()
+  })
+}
+
+// one ballot per council seat: shared seats (wg, ot, org) key by seat, focal
+// point seats are personal so key by holder
+export const ballotSeatKeys = (account: AccountLike, councilSeats: string[]): string[] =>
+  councilSeats.map((s) => (s === 'focal_point' ? `focal_point:${account.id}` : s)).sort()
+
+// stored-ballot tally, shared by the deadline closer and the facilitator path
+export async function tallyBallots(req: PayloadRequest, proposalId: number) {
+  const [{ totalDocs: cast }, { totalDocs: votesFor }] = await Promise.all([
+    req.payload.count({
+      collection: 'decision-ballots',
+      where: { proposal: { equals: proposalId } },
+      overrideAccess: true,
+    }),
+    req.payload.count({
+      collection: 'decision-ballots',
+      where: { and: [{ proposal: { equals: proposalId } }, { choice: { equals: 'for' } }] },
+      overrideAccess: true,
+    }),
+  ])
+  return { cast, votesFor }
+}
+
+export function voteOutcome(
+  proposal: Doc,
+  cast: number,
+  votesFor: number,
+): 'failed_quorum' | 'adopted' | 'rejected' {
+  if (requiresQuorum(proposal.decisionType) && !quorumMet(cast, proposal.eligibleVoterCount ?? 0))
+    return 'failed_quorum'
+  return voteAdopted(votesFor, cast) ? 'adopted' : 'rejected'
+}
+
 // Advance the state machine by wall-clock deadlines. Safe to call
 // concurrently: each step is a status compare-and-set.
 export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
@@ -297,79 +348,94 @@ export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
     await update({ status: 'decision' }, 'phase_decision')
   }
   if (proposal.status === 'decision' && past(proposal.decisionEndsAt)) {
-    const flags = await proposalFlags(req, proposal.id)
-    const red = flags.filter((f) => f.kind === 'red').map((f) => f.status)
-    const grey = flags.filter((f) => f.kind === 'grey').map((f) => f.status)
-    const outcome = consensusOutcome(red, grey)
-    if (outcome === 'vote') {
-      const eligible = await countEligible(req, proposal)
-      await update(
-        {
-          status: 'voting',
-          eligibleVoterCount: eligible,
-          votingEndsAt: new Date(Date.now() + VOTING_WINDOW_MS).toISOString(),
-          ballotOptions: [{ option: 'for' }, { option: 'against' }],
-        },
-        'vote_opened',
-        { eligibleVoterCount: eligible, quorumNeeded: quorumNeeded(eligible) },
-      )
-    } else {
-      await update(
-        { status: 'adopted', adoptedVia: outcome, decidedAt: new Date().toISOString() },
-        'adopted',
-        { via: outcome },
-      )
-    }
+    // flags are read under the lock, so none can land after the outcome
+    const locked = await withProposalLock(req, proposal, async () => {
+      const flags = await proposalFlags(req, proposal.id)
+      const red = flags.filter((f) => f.kind === 'red').map((f) => f.status)
+      const grey = flags.filter((f) => f.kind === 'grey').map((f) => f.status)
+      const outcome = consensusOutcome(red, grey)
+      if (outcome === 'vote') {
+        const eligible = await countEligible(req, proposal)
+        await update(
+          {
+            status: 'voting',
+            eligibleVoterCount: eligible,
+            votingEndsAt: new Date(Date.now() + VOTING_WINDOW_MS).toISOString(),
+            ballotOptions: [{ option: 'for' }, { option: 'against' }],
+          },
+          'vote_opened',
+          { eligibleVoterCount: eligible, quorumNeeded: quorumNeeded(eligible) },
+        )
+      } else {
+        await update(
+          { status: 'adopted', adoptedVia: outcome, decidedAt: new Date().toISOString() },
+          'adopted',
+          { via: outcome },
+        )
+      }
+      return true
+    })
+    if (locked === null) proposal = await loadProposal(req, proposal.id)
   }
   if (proposal.status === 'voting' && past(proposal.votingEndsAt)) {
-    const [{ totalDocs: cast }, { totalDocs: votesFor }] = await Promise.all([
-      req.payload.count({
-        collection: 'decision-ballots',
-        where: { proposal: { equals: proposal.id } },
-        overrideAccess: true,
-      }),
-      req.payload.count({
-        collection: 'decision-ballots',
-        where: { and: [{ proposal: { equals: proposal.id } }, { choice: { equals: 'for' } }] },
-        overrideAccess: true,
-      }),
-    ])
-    if (
-      requiresQuorum(proposal.decisionType) &&
-      !quorumMet(cast, proposal.eligibleVoterCount ?? 0)
-    ) {
-      // Quorum not met → the original proposal must be withdrawn (S09 §2).
-      await update(
-        { status: 'failed_quorum', decidedAt: new Date().toISOString() },
-        'failed_quorum',
-        { cast, quorumNeeded: quorumNeeded(proposal.eligibleVoterCount ?? 0) },
-      )
-    } else if (voteAdopted(votesFor, cast)) {
-      await update(
-        {
-          status: 'adopted',
-          adoptedVia: 'vote',
-          decidedAt: new Date().toISOString(),
-          votesFor,
-          votesAgainst: cast - votesFor,
-        },
-        'adopted',
-        { via: 'vote', votesFor, cast },
-      )
-    } else {
-      await update(
-        {
-          status: 'rejected',
-          decidedAt: new Date().toISOString(),
-          votesFor,
-          votesAgainst: cast - votesFor,
-        },
-        'rejected',
-        { votesFor, cast },
-      )
-    }
+    // ballots are counted under the lock, so none can land after the tally
+    const locked = await withProposalLock(req, proposal, async () => {
+      const { cast, votesFor } = await tallyBallots(req, proposal.id)
+      const outcome = voteOutcome(proposal, cast, votesFor)
+      const decidedAt = new Date().toISOString()
+      if (outcome === 'failed_quorum') {
+        // Quorum not met → the original proposal must be withdrawn (S09 §2).
+        await update({ status: 'failed_quorum', decidedAt }, 'failed_quorum', {
+          cast,
+          quorumNeeded: quorumNeeded(proposal.eligibleVoterCount ?? 0),
+        })
+      } else if (outcome === 'adopted') {
+        await update(
+          {
+            status: 'adopted',
+            adoptedVia: 'vote',
+            decidedAt,
+            votesFor,
+            votesAgainst: cast - votesFor,
+          },
+          'adopted',
+          { via: 'vote', votesFor, cast },
+        )
+      } else {
+        await update(
+          { status: 'rejected', decidedAt, votesFor, votesAgainst: cast - votesFor },
+          'rejected',
+          { votesFor, cast },
+        )
+      }
+      return true
+    })
+    if (locked === null) proposal = await loadProposal(req, proposal.id)
   }
   return proposal
+}
+
+// cron backstop: transitions otherwise only happen when someone reads. safe to
+// re-run, advanceIfDue is a compare-and-set per step
+export async function sweepDueDecisions(req: PayloadRequest) {
+  const { docs } = await req.payload.find({
+    collection: 'decision-proposals',
+    where: { status: { in: ['consultation', 'revision', 'decision', 'voting'] } },
+    pagination: false,
+    overrideAccess: true,
+  })
+  let advanced = 0
+  let failed = 0
+  for (const proposal of docs as Doc[]) {
+    try {
+      const after = await advanceIfDue(req, proposal)
+      if (after.status !== proposal.status) advanced += 1
+    } catch (error) {
+      failed += 1
+      console.error(`[decisions] sweep failed for proposal ${proposal.id}`, error)
+    }
+  }
+  return { open: docs.length, advanced, failed }
 }
 
 export async function checkVeto(req: PayloadRequest, proposal: Doc) {
