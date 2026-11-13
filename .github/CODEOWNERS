@@ -1,0 +1,8 @@
+# last matching pattern wins, so keep the specific paths below the catch-all
+*                       @unnobatroo
+
+# paths where a mistake is expensive: CI, schema history and the authority model
+/.github/workflows/     @unnobatroo
+/src/db/migrations/     @unnobatroo
+/src/lib/access.ts      @unnobatroo
+/src/lib/authority.ts   @unnobatroo
