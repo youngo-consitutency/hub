@@ -129,6 +129,11 @@ a.entityCard {
   gap: var(--space-2);
 }
 
+/* keep long titles clear of the absolute side peek chip */
+.card:has(> .cardPeekTrigger) :is(.entityCardHeader, .groupCardTitle) {
+  padding-right: 88px;
+}
+
 .cardCornerIcon {
   flex: 0 0 auto;
   color: var(--accent);
