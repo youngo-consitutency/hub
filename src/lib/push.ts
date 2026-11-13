@@ -53,7 +53,7 @@ export function validatedPushEndpoint(value: AnyValue) {
   return url.href
 }
 
-export function toWebPushSubscription(row: Doc) {
+function toWebPushSubscription(row: Doc) {
   return {
     endpoint: validatedPushEndpoint(row.endpoint),
     keys: row.keys || {},
@@ -161,7 +161,7 @@ export async function deleteSubscription({
   return rowCount || 0
 }
 
-export async function pruneEndpoints(endpoints: string[]) {
+async function pruneEndpoints(endpoints: string[]) {
   const list = (endpoints || []).filter(Boolean)
   if (!list.length) return 0
   const pool = getPgPool()!

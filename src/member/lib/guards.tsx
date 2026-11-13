@@ -5,7 +5,7 @@ import { lockFor } from './routes'
 import { Locked } from '../components/Locked'
 
 // Routes reachable while the membership course is incomplete.
-export const PRE_VERIFY = [
+const PRE_VERIFY = [
   /^\/onboarding/,
   /^\/library/,
   /^\/resources/,
@@ -16,7 +16,7 @@ export const PRE_VERIFY = [
   /^\/membership\/appeal/,
 ]
 
-export function isPreVerify(path: AnyValue) {
+function isPreVerify(path: AnyValue) {
   return PRE_VERIFY.some((re) => re.test(path))
 }
 

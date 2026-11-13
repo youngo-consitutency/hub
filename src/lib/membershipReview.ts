@@ -51,7 +51,7 @@ function toIsoDate(value: AnyValue) {
   return match ? match[1] : text || null
 }
 
-export function extractPublicLinks(...values: Doc[]) {
+function extractPublicLinks(...values: Doc[]) {
   const found: { href: string; host: string }[] = []
   const seen = new Set<string>()
   for (const value of values) {
@@ -88,7 +88,7 @@ export function extractPublicLinks(...values: Doc[]) {
   return found
 }
 
-export function membershipReviewAccount(row: Doc) {
+function membershipReviewAccount(row: Doc) {
   const account = accountView(row)
   if (!account) return null
   const r = toCamelCase<Doc>(row)

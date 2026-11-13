@@ -32,10 +32,6 @@ export interface AccessProfile {
   accountId?: number
 }
 
-// Only coordination records carry wg.manage — membership is affiliation,
-// not a mandate [S25]. Kept for legacy wgAssignments callers.
-export const WG_COORDINATION_ROLES = new Set(['contact', 'lead', 'coordinator', 'contact_point'])
-
 const EMPTY: AccessProfile = {
   teamRoles: [],
   wgAssignments: [],

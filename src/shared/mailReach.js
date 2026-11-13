@@ -21,5 +21,4 @@ export function mailReach(access) {
   return { canDraft: everyone || wgSlugs.length > 0, everyone, wgSlugs }
 }
 
-export const MAIL_SCOPES = ['working_group', 'constituency', 'individual']
 export const MAX_INDIVIDUAL_RECIPIENTS = 20

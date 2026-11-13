@@ -21,7 +21,7 @@ export async function disablePWAInDevelopment() {
   }
 }
 
-export async function registerServiceWorker() {
+async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
     console.log('[PWA] Service Worker not supported')
     return null
@@ -70,7 +70,7 @@ export function isPushSupported() {
 }
 
 /** iPhone / iPad, including iPadOS reporting itself as a Mac with touch. */
-export function isIOS() {
+function isIOS() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent || ''
   return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
@@ -91,7 +91,7 @@ export function needsHomeScreenInstall() {
  * which is the normal state in local development, where the worker is
  * deliberately unregistered.
  */
-export async function getPushRegistration() {
+async function getPushRegistration() {
   if (!isPushSupported()) return null
   try {
     return (await navigator.serviceWorker.getRegistration('/')) || null
@@ -259,7 +259,7 @@ export async function requestNotificationPermission() {
 /**
  * Check if app is running in standalone mode (PWA)
  */
-export function isPWA() {
+function isPWA() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as AnyValue).standalone === true
@@ -269,7 +269,7 @@ export function isPWA() {
 /**
  * Check if app can be installed (beforeinstallprompt event)
  */
-export function setupInstallPrompt(onPrompt?: AnyValue) {
+function setupInstallPrompt(onPrompt?: AnyValue) {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredInstallPrompt = e

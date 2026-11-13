@@ -37,7 +37,7 @@ const sectionId = (title: string, taken: Set<string>) => {
 }
 
 /** Draft payload from the page as it is live now, recording that base. */
-export function pageDraftFrom(page: Doc): Doc {
+function pageDraftFrom(page: Doc): Doc {
   return {
     ...page.document,
     baseRevisionId: page.revisionId,

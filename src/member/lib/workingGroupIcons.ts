@@ -22,7 +22,7 @@ import {
   TbWind,
 } from 'react-icons/tb'
 
-export const WORKING_GROUP_ICONS = {
+const WORKING_GROUP_ICONS = {
   ace: TbSchool,
   ach: TbMask,
   adaptation: TbCloudRain,
