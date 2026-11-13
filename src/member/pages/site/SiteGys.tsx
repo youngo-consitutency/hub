@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../../lib/types'
+import { ScrollTimeline } from '../../components/fx/ScrollTimeline'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
@@ -20,7 +21,7 @@ export function SiteGys() {
       <Async query={query} skeletons={4}>
         {(gys: AnyValue) => (
           <>
-            <header className="sitePageHeader">
+            <header className="sitePageHeader" data-motif="lines">
               <p className="pageEyebrow">{gysCopy.eyebrow}</p>
               <h1>{gysCopy.title}</h1>
               <p className="sitePageLead">{gys.current.intro}</p>
@@ -29,19 +30,15 @@ export function SiteGys() {
             <section className="siteSection" aria-labelledby="gys-process-heading">
               <h2 id="gys-process-heading">{processCopy.title}</h2>
               <p className="siteSectionLead">{processCopy.lead}</p>
-              <ol className="siteGysSteps">
-                {(Array.isArray(gys.process) ? gys.process : []).map((item: Doc, index: number) => (
-                  <li key={item.step} className="card">
-                    <span className="stepNum" aria-hidden>
-                      {index + 1}
-                    </span>
-                    <div>
-                      <h3>{item.step}</h3>
-                      <p className="meta">{item.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <ScrollTimeline
+                entries={(Array.isArray(gys.process) ? gys.process : []).map(
+                  (item: Doc, index: number) => ({
+                    label: String(index + 1).padStart(2, '0'),
+                    title: item.step,
+                    body: item.body,
+                  }),
+                )}
+              />
             </section>
 
             <section className="siteCtaBand card">

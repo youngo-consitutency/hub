@@ -1,4 +1,6 @@
 import type { AnyValue } from '../../lib/types'
+import { Ripple } from '../../components/fx/Ripple'
+import { BorderBeam } from '../../components/fx/BorderBeam'
 import { MotionConfig, motion } from 'motion/react'
 import {
   TbBook as BookOpen,
@@ -210,7 +212,10 @@ export function SiteHome() {
         </div>
       </section>
       <section className="ldCta ldDark ldWrap" aria-labelledby="cta-heading">
-        <div className="ldContour" aria-hidden />
+        <div className="ldCtaRipple">
+          <Ripple />
+        </div>
+        <BorderBeam />
         <div className="ldCtaInner">
           <h2 id="cta-heading">{cta.title}</h2>
           <p>{cta.body}</p>

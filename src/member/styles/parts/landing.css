@@ -845,3 +845,14 @@
     grid-column: 1 / -1;
   }
 }
+
+/* the closing card: ripples breathe out from its right side, a beam circles the border */
+.ldCtaRipple {
+  position: absolute;
+  top: 50%;
+  right: -6%;
+  z-index: -1;
+  width: 56%;
+  height: 150%;
+  transform: translateY(-50%);
+}

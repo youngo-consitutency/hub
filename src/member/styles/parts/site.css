@@ -289,10 +289,6 @@ main#site-main {
 .siteFormatCard h3,
 .siteContactCard h3,
 .siteWgCard h3,
-.siteCoyIdentity h3 {
-  font-size: 15px;
-}
-
 .siteFormatCard .iconTile,
 .siteContactCard .iconTile {
   margin-bottom: var(--space-1);
@@ -403,38 +399,6 @@ main#site-main {
 .siteWgTags {
   gap: var(--space-1);
   margin-top: var(--space-2);
-}
-
-.siteCoyList {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  list-style: none;
-}
-
-.siteCoyRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-}
-
-.siteCoyRow + .siteCoyRow {
-  border-top: 1px solid var(--border);
-}
-
-.siteCoyIdentity {
-  min-width: 0;
-}
-
-.siteCoyIdentity .metaMuted {
-  margin-top: 1px;
-}
-
-.siteCoyRow .chip {
-  flex: 0 0 auto;
 }
 
 /* ── FAQ and contact ──────────────────────────────── */
@@ -707,12 +671,6 @@ main#site-main {
   .siteSectionHeadingRow {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .siteCoyRow {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: var(--space-2);
   }
 
   .siteFooterInner {

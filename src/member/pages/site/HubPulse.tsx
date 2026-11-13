@@ -1,4 +1,5 @@
 import type { IconType } from 'react-icons'
+import { NumberTicker } from '../../components/fx/NumberTicker'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbBook as BookOpen,
@@ -29,7 +30,9 @@ function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
         </span>
         <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
       </span>
-      <strong>{count}</strong>
+      <strong>
+        <NumberTicker value={count} />
+      </strong>
       <span>{label}</span>
     </A>
   )

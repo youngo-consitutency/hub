@@ -1,9 +1,5 @@
-interface CoyRowProps {
-  coy?: AnyValue
-}
-
 import type { AnyValue, Doc } from '../../lib/types'
-import { regionLabel } from '../../lib/regions'
+import { BorderBeam } from '../../components/fx/BorderBeam'
 import {
   TbCalendar as CalendarDays,
   TbChevronRight as ChevronRight,
@@ -19,48 +15,7 @@ import { useDocument } from '../../lib/documents'
 // Icon names are stored in the site document; components live here.
 const FORMAT_ICONS = { Globe, Map, MapPin, Video }
 import { useApi } from '../../lib/api'
-import { coyDisplayStatus } from '../../../shared/coyStatus'
-
-const STATUS_LABEL = {
-  announced: ['chip-neutral', 'Announced'],
-  endorsed: ['chip-neutral', 'Endorsed'],
-  underway: ['chip-accent', 'Under way'],
-  registration_open: ['chip-accent', 'Registration open'],
-  applications_open: ['chip-warn', 'Applications open'],
-  applications_closed: ['chip-neutral', 'Applications closed'],
-  registration_closed: ['chip-neutral', 'Registration closed'],
-  concluded: ['chip-neutral', 'Concluded'],
-  cancelled: ['chip-danger', 'Cancelled'],
-}
-
-function CoyRow({ coy }: CoyRowProps) {
-  const status = coyDisplayStatus(coy)
-  const [chipClass, chipLabel] = (STATUS_LABEL as AnyValue)[status] || ['chip-neutral', status]
-  const place = [coy.city, coy.country].filter(Boolean).join(', ')
-  return (
-    <li className="siteCoyRow">
-      <div className="siteCoyIdentity">
-        <h3>{coy.title}</h3>
-        <p className="metaMuted">
-          {coy.type === 'coy'
-            ? 'Global Conference of Youth'
-            : coy.type === 'rcoy'
-              ? 'Regional Conference of Youth'
-              : coy.type === 'lcoy'
-                ? 'Local Conference of Youth'
-                : 'Conference of Youth'}
-          {place ? ` · ${place}` : ''}
-          {coy.region && !place
-            ? ` · ${regionLabel(coy.region)}`
-            : coy.region && place
-              ? ` (${regionLabel(coy.region)})`
-              : ''}
-        </p>
-      </div>
-      <span className={`chip ${chipClass}`}>{chipLabel}</span>
-    </li>
-  )
-}
+import { CoyDirectory } from './CoyDirectory'
 
 export function SiteCoy() {
   const { doc: connect } = useDocument('connect')
@@ -77,7 +32,7 @@ export function SiteCoy() {
 
   return (
     <div className="siteMain">
-      <header className="sitePageHeader">
+      <header className="sitePageHeader" data-motif="dots">
         <p className="pageEyebrow">{coy.eyebrow}</p>
         <h1>{coy.title}</h1>
         <p className="sitePageLead">{coy.lead}</p>
@@ -114,6 +69,7 @@ export function SiteCoy() {
 
       <section className="siteSection" aria-labelledby="current-coy-heading">
         <article className="card siteCurrentCoy">
+          <BorderBeam colorFrom="var(--accent)" colorTo="var(--ld-glow-lime)" />
           <div>
             <p className="pageEyebrow">{coy.currentEyebrow}</p>
             <h2 id="current-coy-heading">{COY_CURRENT.title}</h2>
@@ -151,35 +107,18 @@ export function SiteCoy() {
             ) : null
           }
         >
-          {(data: Doc) => {
-            const global = data.items.filter((c: AnyValue) => c.type === 'coy')
-            const regional = data.items.filter((c: AnyValue) => c.type !== 'coy')
-            return (
-              <div className="stack">
-                {global.length > 0 && (
-                  <ul className="card siteCoyList">
-                    {global.map((coy: AnyValue) => (
-                      <CoyRow key={coy.slug} coy={coy} />
-                    ))}
-                  </ul>
-                )}
-                {regional.length > 0 && (
-                  <ul className="card siteCoyList">
-                    {regional.map((coy: AnyValue) => (
-                      <CoyRow key={coy.slug} coy={coy} />
-                    ))}
-                  </ul>
-                )}
-                <p className="metaMuted">
-                  {footnote.before}{' '}
-                  <A href="/coys" className="inlineLink">
-                    {footnote.linkLabel}
-                  </A>
-                  .
-                </p>
-              </div>
-            )
-          }}
+          {(data: Doc) => (
+            <div className="stack">
+              <CoyDirectory items={data.items} />
+              <p className="metaMuted">
+                {footnote.before}{' '}
+                <A href="/coys" className="inlineLink">
+                  {footnote.linkLabel}
+                </A>
+                .
+              </p>
+            </div>
+          )}
         </Async>
       </section>
 
