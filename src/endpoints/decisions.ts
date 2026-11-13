@@ -7,14 +7,17 @@ import {
   verifiedContext,
 } from '../lib/accounts'
 import { isUniqueViolation } from '../lib/pg'
-import { DECISION_TYPES, RED_FLAG_CATEGORIES } from '../lib/decisions'
-import { hasCapability } from '../lib/access'
+import { requireCronSecret } from '../lib/cron'
+import { DECISION_TYPES, RED_FLAG_CATEGORIES, snapDeadlinePassed } from '../lib/decisions'
+import { getAccessProfile, hasCapability } from '../lib/access'
 import {
   advanceIfDue,
+  ballotSeatKeys,
   ballotView,
   checkVeto,
   commentView,
   flagView,
+  ids,
   isBodyMember,
   isContactPerson,
   loadProposal,
@@ -22,10 +25,12 @@ import {
   proposalFlags,
   proposalView,
   recordEvent,
+  sweepDueDecisions,
   transition,
   vetoView,
+  withProposalLock,
 } from '../lib/decisionRuntime'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 
 // S09 decision workflow endpoints — members act through these; collection
 // REST writes are staff-only, and every transition is audited. The state
@@ -35,6 +40,11 @@ import type { Doc, AnyValue } from '../lib/domain'
 // ValidationError — ballots' only unique constraint is this pair.
 const isDuplicateBallot = (error: unknown) =>
   isUniqueViolation(error, 'decision-ballots', 'decision_ballots')
+
+// a child row only answers under the proposal it belongs to
+const ownedBy = (row: Doc, proposal: Doc) => ids(row.proposal)[0] === proposal.id
+
+const DECISION_BODIES = ['council', 'working_group', 'operational_team', 'gct', 'constituency']
 
 export const decisionEndpoints: Endpoint[] = [
   {
@@ -65,7 +75,7 @@ export const decisionEndpoints: Endpoint[] = [
     path: '/decisions',
     method: 'post',
     handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
+      const account = requireCwMember(req)
       const b = await readBody(req)
       const fields: Record<string, string> = {}
       if (!b.title?.trim()) fields.title = 'Required.'
@@ -73,12 +83,33 @@ export const decisionEndpoints: Endpoint[] = [
       if (!b.proposalText?.trim()) fields.proposalText = 'Required.'
       if (!DECISION_TYPES.includes(b.decisionType)) fields.decisionType = 'Invalid.'
       if (!b.body) fields.body = 'Required.'
+      else if (!DECISION_BODIES.includes(b.body)) fields.body = 'Invalid.'
       if (b.decisionType === 'snap') {
         if (!b.snapJustification?.trim())
           fields.snapJustification = 'Snap decisions require a justification.'
         if (!b.snapDeadline) fields.snapDeadline = 'Snap decisions require a deadline.'
+        else if (snapDeadlinePassed('snap', b.snapDeadline))
+          fields.snapDeadline = 'Must be a future date.'
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
+      // proposers and their contact persons must sit in the body they propose to
+      const scope = { body: b.body, bodyRef: b.bodyRef?.trim() || null }
+      if (!(await isBodyMember(req, account, scope)))
+        throw fail.forbidden('Only members of the decision-making body may propose to it.')
+      const contacts: number[] =
+        Array.isArray(b.contactPersons) && b.contactPersons.length
+          ? b.contactPersons.map(Number)
+          : [account.id]
+      for (const id of contacts) {
+        if (id === account.id) continue
+        const contact = Number.isInteger(id)
+          ? await req.payload
+              .findByID({ collection: 'accounts', id, overrideAccess: true })
+              .catch(() => null)
+          : null
+        if (!contact || !(await isBodyMember(req, contact as unknown as AccountLike, scope)))
+          throw fail.validation({ contactPersons: 'Contact persons must be members of the body.' })
+      }
       const proposal = await req.payload.create({
         collection: 'decision-proposals',
         data: {
@@ -92,10 +123,7 @@ export const decisionEndpoints: Endpoint[] = [
           snapDeadline: b.snapDeadline ?? null,
           status: 'draft',
           proposedBy: account.id,
-          contactPersons:
-            Array.isArray(b.contactPersons) && b.contactPersons.length
-              ? b.contactPersons
-              : [account.id],
+          contactPersons: contacts,
         },
         overrideAccess: true,
       })
@@ -153,6 +181,8 @@ export const decisionEndpoints: Endpoint[] = [
         throw fail.forbidden('Only the contact person(s) may present the proposal.')
       if (p.status !== 'draft')
         throw fail.conflict('invalid_phase', 'Only draft proposals can be presented.')
+      if (snapDeadlinePassed(p.decisionType, p.snapDeadline))
+        throw fail.conflict('snap_deadline_passed', 'The snap deadline has already passed.')
       const windows = computeWindows(
         p.decisionType,
         new Date(),
@@ -221,21 +251,28 @@ export const decisionEndpoints: Endpoint[] = [
           fields.alternative = 'Red flags require an alternative proposal.'
       }
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const flag = await req.payload.create({
-        collection: 'decision-flags',
-        data: {
-          proposal: p.id,
-          kind: b.kind,
-          rationaleCategory: b.kind === 'red' ? b.rationaleCategory : null,
-          reason: b.reason.trim(),
-          alternative: b.alternative?.trim() || null,
-          raisedBy: account.id,
-          status: 'open',
-          raisedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      // under the proposal lock so the flag is either counted or refused
+      const flag = await withProposalLock(req, p, async () => {
+        const created = await req.payload.create({
+          collection: 'decision-flags',
+          data: {
+            proposal: p.id,
+            kind: b.kind,
+            rationaleCategory: b.kind === 'red' ? b.rationaleCategory : null,
+            reason: b.reason.trim(),
+            alternative: b.alternative?.trim() || null,
+            raisedBy: account.id,
+            status: 'open',
+            raisedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
+        await recordEvent(req, p.id, `flag_${b.kind}_raised`, account, { flagId: created.id })
+        return created
       })
-      await recordEvent(req, p.id, `flag_${b.kind}_raised`, account, { flagId: flag.id })
+      if (!flag)
+        throw fail.conflict('invalid_phase', 'The period for raising flags has just closed.')
       return json({ flag: flagView(flag) }, { status: 201 })
     }),
   },
@@ -256,6 +293,7 @@ export const decisionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
+      if (!ownedBy(flag, p)) throw fail.notFound('Flag not found.')
       if (!['open'].includes((flag as Doc).status))
         throw fail.conflict('invalid_phase', 'Flag is no longer open.')
       const b = await readBody(req)
@@ -289,6 +327,7 @@ export const decisionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Flag not found.')
         })
+      if (!ownedBy(flag, p)) throw fail.notFound('Flag not found.')
       const raiser = (flag as Doc).raisedBy?.id ?? (flag as Doc).raisedBy
       // S09: a flag is withdrawn by its raiser or through the documented
       // nullification/escalation process — never by administrator override.
@@ -301,37 +340,6 @@ export const decisionEndpoints: Endpoint[] = [
       })
       await recordEvent(req, p.id, 'flag_withdrawn', account, { flagId: flag.id })
       return json({ flag: flagView(updated) })
-    }),
-  },
-  {
-    path: '/decisions/:id/close',
-    method: 'post',
-    handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      let p = await loadProposal(req, param(req, 'id'))
-      if (!isContactPerson(account, p))
-        throw fail.forbidden('Only contact person(s) may close the decision period.')
-      p = await advanceIfDue(req, p)
-      if (['adopted', 'vetoed', 'withdrawn', 'rejected', 'failed_quorum'].includes(p.status))
-        return json({ proposal: proposalView(p) })
-      if (!['consultation', 'revision', 'decision', 'voting'].includes(p.status))
-        throw fail.conflict('invalid_phase', `Cannot close while status is ${p.status}.`)
-      // Contact person confirms and closes the windows (S09 §2 step 5-6):
-      // mark pending deadlines elapsed, then the state machine resolves.
-      const past = new Date(Date.now() - 1000).toISOString()
-      p = await req.payload.update({
-        collection: 'decision-proposals',
-        id: p.id,
-        data: {
-          consultationEndsAt: past,
-          revisionEndsAt: past,
-          decisionEndsAt: past,
-          ...(p.status === 'voting' ? { votingEndsAt: past } : {}),
-        },
-        overrideAccess: true,
-      })
-      p = await advanceIfDue(req, p)
-      return json({ proposal: proposalView(p) })
     }),
   },
   {
@@ -359,27 +367,48 @@ export const decisionEndpoints: Endpoint[] = [
         return totalDocs > 0
       }
       if (await hasBallot()) throw fail.conflict('already_voted', 'Each member may vote once.')
-      let ballot
-      try {
-        ballot = await req.payload.create({
+      // council seats vote once each, however many accounts hold them
+      let seat: string | null = null
+      if (p.body === 'council') {
+        const keys = ballotSeatKeys(account, (await getAccessProfile(req, account)).councilSeats)
+        const { docs: used } = await req.payload.find({
           collection: 'decision-ballots',
-          data: {
-            proposal: p.id,
-            account: account.id,
-            choice: b.choice,
-            castAt: new Date().toISOString(),
-          },
+          where: { and: [{ proposal: { equals: p.id } }, { seat: { in: keys } }] },
+          pagination: false,
           overrideAccess: true,
         })
+        const taken = new Set((used as Doc[]).map((d) => d.seat))
+        seat = keys.find((k) => !taken.has(k)) ?? null
+        if (!seat) throw fail.conflict('already_voted', 'This seat has already voted.')
+      }
+      let ballot
+      try {
+        // under the proposal lock so the ballot is either counted or refused
+        ballot = await withProposalLock(req, p, async () => {
+          const created = await req.payload.create({
+            collection: 'decision-ballots',
+            data: {
+              proposal: p.id,
+              account: account.id,
+              seat,
+              choice: b.choice,
+              castAt: new Date().toISOString(),
+            },
+            overrideAccess: true,
+            req,
+          })
+          await recordEvent(req, p.id, 'ballot_cast', account)
+          return created
+        })
       } catch (error: AnyValue) {
-        // The pre-check is a fast path only — the unique index is the real
+        // The pre-check is a fast path only — the unique indexes are the real
         // guard, and error shapes vary, so re-confirm against the table: a
         // row for this pair after a failed insert means the race was lost.
         if (isDuplicateBallot(error) || (await hasBallot()))
           throw fail.conflict('already_voted', 'Each member may vote once.')
         throw error
       }
-      await recordEvent(req, p.id, 'ballot_cast', account)
+      if (!ballot) throw fail.conflict('invalid_phase', 'Voting has just closed.')
       return json({ ballot: ballotView(ballot) }, { status: 201 })
     }),
   },
@@ -433,6 +462,7 @@ export const decisionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Veto request not found.')
         })
+      if (!ownedBy(veto, p)) throw fail.notFound('Veto request not found.')
       const updated = await req.payload.update({
         collection: 'decision-vetoes',
         id: veto.id,
@@ -488,6 +518,16 @@ export const decisionEndpoints: Endpoint[] = [
           createdAt: e.createdAt,
         })),
       })
+    }),
+  },
+  {
+    // daily backstop (vercel.json crons → CRON_SECRET bearer): resolves overdue
+    // windows nobody has opened since the deadline passed
+    path: '/cron/decisions-sweep',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      requireCronSecret(req)
+      return json(await sweepDueDecisions(req))
     }),
   },
 ]

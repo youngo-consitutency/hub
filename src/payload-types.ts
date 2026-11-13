@@ -1293,6 +1293,7 @@ export interface DecisionBallot {
   id: number;
   proposal: number | DecisionProposal;
   account: number | Account;
+  seat?: string | null;
   choice: string;
   castAt: string;
   updatedAt: string;
@@ -2884,6 +2885,7 @@ export interface DecisionCommentsSelect<T extends boolean = true> {
 export interface DecisionBallotsSelect<T extends boolean = true> {
   proposal?: T;
   account?: T;
+  seat?: T;
   choice?: T;
   castAt?: T;
   updatedAt?: T;

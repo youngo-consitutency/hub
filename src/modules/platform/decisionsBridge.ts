@@ -9,8 +9,12 @@ import {
   loadProposal,
   proposalFlags,
   recordEvent,
+  tallyBallots,
   transition as transitionStatus,
+  voteOutcome,
+  withProposalLock,
 } from '../../lib/decisionRuntime'
+import { consensusOutcome, snapDeadlinePassed, unresolvedRed } from '../../lib/decisions'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
 import type { Doc, AnyValue } from '../../lib/domain'
 import type { DecisionFlag, DecisionProposal } from '../../payload-types'
@@ -322,23 +326,29 @@ export async function contribute(req: PayloadRequest, actor: Actor, id: string, 
   if (kind === 'red' && (!grounds || !alternative))
     fail(400, 'A red flag needs grounds and an alternative proposal.')
   if (kind === 'grey' && !grounds) fail(400, 'Explain the concern behind a grey flag.')
-  const flag = await req.payload.create({
-    collection: 'decision-flags',
-    data: {
-      proposal: proposal.id,
-      kind: kind as DecisionFlag['kind'],
-      rationaleCategory: (input.rationaleCategory ?? null) as DecisionFlag['rationaleCategory'],
-      reason: grounds ? `${message}\n\n${grounds}` : message,
-      alternative: alternative || null,
-      raisedBy: account.id,
-      status: 'open',
-      raisedAt: new Date().toISOString(),
-    },
-    overrideAccess: true,
+  // under the proposal lock so the flag is either counted or refused
+  const raised = await withProposalLock(req, proposal, async () => {
+    const flag = await req.payload.create({
+      collection: 'decision-flags',
+      data: {
+        proposal: proposal.id,
+        kind: kind as DecisionFlag['kind'],
+        rationaleCategory: (input.rationaleCategory ?? null) as DecisionFlag['rationaleCategory'],
+        reason: grounds ? `${message}\n\n${grounds}` : message,
+        alternative: alternative || null,
+        raisedBy: account.id,
+        status: 'open',
+        raisedAt: new Date().toISOString(),
+      },
+      overrideAccess: true,
+      req,
+    })
+    await recordEvent(req, proposal.id, `flag_${kind}_raised`, account, {
+      flagId: flag.id,
+    })
+    return true
   })
-  await recordEvent(req, proposal.id, `flag_${kind}_raised`, account, {
-    flagId: flag.id,
-  })
+  if (!raised) fail(409, 'The response period is closed.')
 }
 
 export async function resolveContribution(
@@ -440,6 +450,8 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
   }
 
   if (next === 'consultation') {
+    if (snapDeadlinePassed(proposal.decisionType, proposal.snapDeadline))
+      fail(409, 'The snap deadline has already passed.')
     const windows = computeWindows(
       proposal.decisionType,
       new Date(),
@@ -479,29 +491,13 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
 
   if (next === 'withdrawn') {
     if (outcomeBasis === 'formal_veto') {
+      // vetoes only stop a vote through the confirmed-request flow
       if (proposal.status !== 'voting')
         fail(409, 'A formal veto stops the vote and withdraws the proposal.')
-      const organisations = Number(input.vetoOrganisations)
-      const south = Number(input.vetoGlobalSouth)
-      const bodies = Number(input.vetoBodies)
-      if (
-        ![organisations, south, bodies].every(Number.isSafeInteger) ||
-        Math.min(organisations, south, bodies) < 0 ||
-        south > organisations
-      )
-        fail(400, 'Enter valid represented organisation and body counts.')
-      if (organisations < 20 && south < 6 && bodies < 5)
-        fail(409, 'The formal veto threshold has not been met.')
-      await bump(
-        {
-          status: 'vetoed',
-          decidedAt: new Date().toISOString(),
-          resultSummary: `Formal veto: ${reason}`,
-          outcomeEvidence: evidence || null,
-        },
-        'vetoed',
-        { organisations, globalSouthOrganisations: south, bodies, reason },
-      )
+      const after = await checkVeto(req, proposal)
+      if (after.status !== 'vetoed')
+        fail(409, 'The formal veto threshold has not been met by confirmed veto requests.')
+      await syncProjection(after)
       return
     }
     await bump(
@@ -520,10 +516,12 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
   // adopted / not_adopted
   if (!evidence) fail(400, 'Record the outcome evidence.')
   if (proposal.status === 'decision') {
+    // same rule as the deadline closer: addressed red flags still stand
     const flags = await proposalFlags(req, proposal.id)
-    const openRed = flags.filter((f) => f.kind === 'red' && f.status === 'open').length
-    if (openRed) fail(409, 'Resolve the outstanding red flags or use the voting process.')
-    const openGrey = flags.filter((f) => f.kind === 'grey' && f.status === 'open').length
+    const statuses = (kind: string) => flags.filter((f) => f.kind === kind).map((f) => f.status)
+    if (consensusOutcome(statuses('red'), statuses('grey')) === 'vote')
+      fail(409, 'Resolve the outstanding red flags or use the voting process.')
+    const openGrey = unresolvedRed(statuses('grey'))
     if (openGrey) reason += `\nReservations considered: ${text(input, 'reservations', 3000)}`
     if (next !== 'adopted') fail(409, 'A consensus process may only adopt or move to a vote.')
     await bump(
@@ -538,39 +536,28 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
       { via: openGrey ? 'consensus_with_reservations' : 'consensus' },
     )
   } else {
-    // voting → adopted/not_adopted with the recorded tally.
-    const electorate = Number(input.electorateSize)
-    const forVotes = Number(input.votesFor)
-    const against = Number(input.votesAgainst)
-    if (
-      ![electorate, forVotes, against].every(Number.isSafeInteger) ||
-      electorate < 1 ||
-      forVotes < 0 ||
-      against < 0 ||
-      forVotes + against > electorate
-    )
-      fail(400, 'Enter valid eligible-seat and vote counts.')
-    if (forVotes + against < Math.ceil(electorate * 0.05))
+    // voting → outcome from the stored ballots, never a typed tally
+    const { cast, votesFor } = await tallyBallots(req, proposal.id)
+    const outcome = voteOutcome(proposal, cast, votesFor)
+    if (outcome === 'failed_quorum')
       fail(
         409,
         'The vote did not meet quorum. Withdraw the proposal and record the ballot evidence.',
       )
-    const passed = forVotes * 3 >= (forVotes + against) * 2
-    if ((next === 'adopted') !== passed)
-      fail(409, 'The recorded vote does not support this outcome (5% quorum, two-thirds approval).')
+    if ((next === 'adopted') !== (outcome === 'adopted'))
+      fail(409, 'The stored ballots do not support this outcome (5% quorum, two-thirds approval).')
     await bump(
       {
-        status: passed ? 'adopted' : 'rejected',
-        adoptedVia: passed ? 'vote' : null,
+        status: outcome,
+        adoptedVia: outcome === 'adopted' ? 'vote' : null,
         decidedAt: new Date().toISOString(),
         resultSummary: reason,
         outcomeEvidence: evidence,
-        eligibleVoterCount: electorate,
-        votesFor: forVotes,
-        votesAgainst: against,
+        votesFor,
+        votesAgainst: cast - votesFor,
       },
-      passed ? 'adopted' : 'rejected',
-      { votesFor: forVotes, votesAgainst: against, electorate },
+      outcome,
+      { votesFor, votesAgainst: cast - votesFor, cast },
     )
   }
 
