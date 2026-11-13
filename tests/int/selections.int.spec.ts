@@ -194,8 +194,11 @@ describe('selections (S24)', () => {
       const { selection, a, b } = await evaluating()
       const submit = (pick: AnyValue) =>
         post(selection.id, '/decide', team, { selectedApplicationIds: [pick.id] })
-      const statuses = (await Promise.all([submit(a), submit(b)])).map((r) => r.status).sort()
-      expect(statuses).toEqual([200, 409])
+      const picks = [a, b]
+      const results = await Promise.all(picks.map(submit))
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409])
+      const winner = picks[results.findIndex((r) => r.status === 200)]
+      const loser = picks.find((p) => p !== winner)!
       // the application statuses match the one decision that won
       const payload = await testPayload()
       const { docs } = await payload.find({
@@ -203,7 +206,9 @@ describe('selections (S24)', () => {
         where: { selection: { equals: selection.id } },
         overrideAccess: true,
       })
-      expect(docs.filter((d: AnyValue) => d.status === 'selected')).toHaveLength(1)
+      const statusOf = (app: AnyValue) => docs.find((d: AnyValue) => d.id === app.id)?.status
+      expect(statusOf(winner)).toBe('selected')
+      expect(statusOf(loser)).toBe('not_selected')
     })
   })
 
