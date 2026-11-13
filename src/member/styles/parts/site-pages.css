@@ -1,0 +1,310 @@
+/* layouts for the individual public pages. each is shaped for its job and shares only the
+   language: tokens, display type, the pointer glow and motion. nothing here is a copy of
+   another page's layout */
+
+/* ── page header motifs: the shared deep band, with a pattern per page ── */
+.sitePageHeader[data-motif]::after {
+  mask-image: radial-gradient(circle at 82% 30%, #000 5%, transparent 65%);
+}
+
+.sitePageHeader[data-motif='dots']::after {
+  background: radial-gradient(circle, rgba(169, 232, 196, 0.22) 1.2px, transparent 1.6px) 0 0 / 22px
+    22px;
+}
+
+.sitePageHeader[data-motif='lines']::after {
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0 18px,
+    rgba(169, 232, 196, 0.1) 18px 19px
+  );
+}
+
+.sitePageHeader[data-motif='grid']::after {
+  background:
+    linear-gradient(var(--ld-line-deep) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, var(--ld-line-deep) 1px, transparent 1px) 0 0 / 40px 40px;
+}
+
+.sitePageHeader[data-motif='arcs']::after {
+  background: repeating-radial-gradient(
+    circle at 100% 100%,
+    transparent 0 30px,
+    rgba(169, 232, 196, 0.12) 30px 31px
+  );
+}
+
+.sitePageHeader[data-motif='waves']::after {
+  background: repeating-radial-gradient(
+    ellipse 140% 55% at 30% 130%,
+    transparent 0 20px,
+    rgba(169, 232, 196, 0.12) 20px 21px
+  );
+}
+
+/* ── COY: a directory to browse, with the filters kept beside the results ── */
+.siteCoyBrowser {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.siteCoyTools {
+  position: sticky;
+  top: calc(var(--ld-header-h) + var(--space-4));
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  background: var(--bg-card);
+}
+
+.siteCoySearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-page);
+  color: var(--text-3);
+}
+
+.siteCoySearch:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.siteCoySearch input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+}
+
+.siteCoyFormats {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.siteCoyFormats .pill {
+  justify-content: space-between;
+}
+
+.siteCoyRegion select {
+  width: 100%;
+  min-height: 40px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-page);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+}
+
+.siteCoyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteCoyGrid li {
+  display: grid;
+}
+
+.siteCoyCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4);
+}
+
+.siteCoyCard h3 {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.siteCoyArrow {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--text-3);
+}
+
+.siteCoyCard .chip {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: start;
+}
+
+.siteCoyMore {
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .siteCoyBrowser {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .siteCoyTools {
+    position: static;
+  }
+
+  .siteCoyFormats {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+/* ── FAQ: a help centre, a single reading column led by search ── */
+.siteFaqBody {
+  width: min(100%, 760px);
+  margin-inline: auto;
+}
+
+.siteFaqTools {
+  position: sticky;
+  top: var(--ld-header-h);
+  z-index: 2;
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  background: var(--bg-page);
+}
+
+.siteFaqSearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  color: var(--text-3);
+  box-shadow: var(--shadow-card);
+}
+
+.siteFaqSearch:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.siteFaqSearch input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 16px;
+}
+
+.siteFaqMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.siteFaqList {
+  counter-reset: faq;
+}
+
+.siteFaqList li {
+  counter-increment: faq;
+}
+
+/* questions are numbered in display type, so the page reads as a numbered index */
+.siteFaqItem summary::before {
+  content: counter(faq, decimal-leading-zero);
+  margin-right: var(--space-4);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.siteFaqItem summary span {
+  flex: 1;
+}
+
+.siteFaqEmpty {
+  margin-top: var(--space-6);
+  text-align: center;
+}
+
+/* current COY: the card carries a travelling beam */
+.siteCurrentCoy {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Contact: a bento of routes, the first one featured ── */
+.siteBento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(170px, auto);
+  gap: var(--space-4);
+}
+
+.siteBento .siteContactCard {
+  position: relative;
+  overflow: hidden;
+  align-content: space-between;
+  transition:
+    border-color var(--motion-standard) var(--motion-ease),
+    box-shadow var(--motion-standard) var(--motion-ease);
+}
+
+.siteBento .siteContactCard:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.siteBento .siteContactCard:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  padding: var(--space-8);
+}
+
+.siteBento .siteContactCard:first-child {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: space-between;
+}
+
+/* an odd tile out takes the whole last row */
+.siteBento .siteContactCard:last-child:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.siteBento .siteContactCard:first-child h3 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 900px) {
+  .siteBento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .siteBento .siteContactCard:first-child {
+    grid-column: auto;
+    grid-row: auto;
+    padding: var(--space-5);
+  }
+}

@@ -10,7 +10,7 @@ export function SiteResources() {
   const cta = res.cta || {}
   return (
     <div className="siteMain">
-      <header className="sitePageHeader">
+      <header className="sitePageHeader" data-motif="grid">
         <p className="pageEyebrow">{res.eyebrow}</p>
         <h1>{res.title}</h1>
         <p className="sitePageLead">{res.lead}</p>

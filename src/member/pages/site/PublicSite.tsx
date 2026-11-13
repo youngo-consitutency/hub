@@ -17,6 +17,8 @@ import {
 import { A } from '../../components/ui'
 import { Brand } from '../../components/Brand'
 import { DestinationIcon } from '../../components/DestinationLink'
+import { useSignedIn } from '../../lib/useSignedIn'
+import { trackPointer } from '../../lib/pointerGlow'
 import { usePath } from '../../lib/router'
 import { publishedLinks, useDocument } from '../../lib/documents'
 import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
@@ -28,8 +30,6 @@ import { SiteResources } from './SiteResources'
 import { SiteFaq } from './SiteFaq'
 import { SiteContact } from './SiteContact'
 
-// top-level header links; everything else sits under a menu (home is the logo)
-const TOP_LINKS = SITE_ROUTES.filter((route) => !route.menu && route.href !== '/')
 const routesIn = (menu: SiteMenu) => SITE_ROUTES.filter((route) => route.menu === menu)
 
 // a header dropdown of page links; react aria handles keyboard, focus and dismissal
@@ -69,11 +69,21 @@ function SiteNavMenu({ id, label, path }: { id: SiteMenu; label: string; path: s
 function SiteHeader() {
   const path = usePath()
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const signedIn = useSignedIn()
   const menuButtonRef = useRef<AnyValue>(null)
 
   useEffect(() => {
     setOpen(false)
   }, [path])
+
+  // every public page opens on a deep band under the header; it turns solid once the page scrolls
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [])
 
   useEffect(() => {
     if (!open) return undefined
@@ -87,31 +97,23 @@ function SiteHeader() {
   }, [open])
 
   return (
-    <header className="siteHeader">
+    <header className="siteHeader" data-overlay={!scrolled && !open ? '' : undefined}>
       <div className="siteHeaderInner">
         <A href="/" className="wordmark siteWordmark" aria-label="YOUNGO home">
           <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
-          {TOP_LINKS.map(({ href, label }) => (
-            <A
-              key={href}
-              href={href}
-              className={`siteNavItem ${isSiteRouteActive(path, href) ? 'active' : ''}`}
-              aria-current={isSiteRouteActive(path, href) ? 'page' : undefined}
-            >
-              {label}
-            </A>
-          ))}
           {SITE_MENUS.map((menu) => (
             <SiteNavMenu key={menu.id} id={menu.id} label={menu.label} path={path} />
           ))}
         </nav>
-        <A className="siteSignInLink" href="/signin">
-          Sign in
-        </A>
-        <A className="btn btn-primary btn-sm siteJoinBtn" href="/join">
-          Join YOUNGO
+        {!signedIn && (
+          <A className="siteSignInLink" href="/signin">
+            Sign in
+          </A>
+        )}
+        <A className="btn btn-primary btn-sm siteJoinBtn" href={signedIn ? '/' : '/join'}>
+          {signedIn ? 'Open your Hub' : 'Join YOUNGO'}
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
         </A>
         <button
@@ -161,27 +163,47 @@ function SiteHeader() {
   )
 }
 
+// the project is open source
+const REPO_URL = 'https://github.com/youngo-consitutency/hub'
+
 function SiteFooter() {
   const { doc: connect } = useDocument('connect')
   const { doc: site } = useDocument('site')
   const footer = site?.footer || {}
   const socials = publishedLinks(connect?.SOCIAL_LINKS)
-  const YOUNGO_NETWORK = connect?.YOUNGO_NETWORK || []
   return (
     <footer className="siteFooter">
       <div className="siteFooterInner">
         <div className="siteFooterBrand">
           <Brand constituencyOnly />
           <p className="meta">{footer.brand}</p>
+          <ul className="siteSocials" aria-label={footer.followTitle}>
+            {socials.map((link: AnyValue) => (
+              <li key={link.key}>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={link.label}
+                >
+                  <DestinationIcon url={link.url} size={18} />
+                </a>
+              </li>
+            ))}
+            <li>
+              <a href={REPO_URL} target="_blank" rel="noreferrer noopener" aria-label="Source code">
+                <DestinationIcon url={REPO_URL} size={18} />
+              </a>
+            </li>
+          </ul>
         </div>
         <nav className="siteFooterCol" aria-label="Site pages">
           <h2>{footer.exploreTitle}</h2>
-          {SITE_ROUTES.map(({ href, label }) => (
+          {SITE_ROUTES.filter((route) => route.footer !== false).map(({ href, label }) => (
             <A key={href} href={href}>
               {label}
             </A>
           ))}
-          <a href="/privacy">{footer.privacyLabel}</a>
         </nav>
         <div className="siteFooterCol">
           <h2>{footer.involvedTitle}</h2>
@@ -197,30 +219,7 @@ function SiteFooter() {
               </A>
             ),
           )}
-          {YOUNGO_NETWORK.map((network: AnyValue) => (
-            <a
-              key={network.key}
-              href={network.url}
-              target={network.url.startsWith('/') ? undefined : '_blank'}
-              rel="noreferrer noopener"
-            >
-              {network.title}
-              <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
-            </a>
-          ))}
         </div>
-        {socials.length > 0 && (
-          <div className="siteFooterCol">
-            <h2>{footer.followTitle}</h2>
-            {socials.map((link: AnyValue) => (
-              <a key={link.key} href={link.url} target="_blank" rel="noreferrer noopener">
-                <DestinationIcon url={link.url} size={15} />
-                {link.label}
-                <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
-              </a>
-            ))}
-          </div>
-        )}
       </div>
       <p className="siteFooterLegal metaMuted">
         {footer.legal} <a href={footer.legalLink?.href || '/privacy'}>{footer.legalLink?.label}</a>
@@ -255,8 +254,6 @@ function SiteNotFound() {
  */
 export function PublicSite() {
   const path = usePath()
-  const { doc: site } = useDocument('site')
-  const consult = site?.consultBanner
   let Page: AnyValue = SiteNotFound
   if (isSiteHome(path)) Page = SiteHome
   else if (isSiteRouteActive(path, '/about/working-groups')) Page = SiteWorkingGroups
@@ -268,7 +265,7 @@ export function PublicSite() {
   else if (isSiteRouteActive(path, '/about/organisation')) Page = PublicPlatform
 
   return (
-    <div className="siteShell">
+    <div className="siteShell" onPointerMove={trackPointer}>
       <a className="skipLink" href="#site-main">
         Skip to main content
       </a>
@@ -276,20 +273,6 @@ export function PublicSite() {
       <main id="site-main" tabIndex={-1}>
         <Page />
       </main>
-      {consult && (
-        <p className="siteConsultBanner">
-          <span>
-            <strong>{consult.title}</strong> {consult.body}
-          </span>
-          <span className="siteConsultBannerActions">
-            {(consult.links || []).map((link: AnyValue) => (
-              <a key={link.href} href={link.href}>
-                {link.label}
-              </a>
-            ))}
-          </span>
-        </p>
-      )}
       <SiteFooter />
     </div>
   )

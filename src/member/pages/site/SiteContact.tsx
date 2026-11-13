@@ -1,4 +1,5 @@
 import type { AnyValue } from '../../lib/types'
+import { BorderBeam } from '../../components/fx/BorderBeam'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbAt as AtSign,
@@ -47,7 +48,7 @@ export function SiteContact() {
   const follow = contact.socials || {}
   return (
     <div className="siteMain">
-      <header className="sitePageHeader">
+      <header className="sitePageHeader" data-motif="waves">
         <p className="pageEyebrow">{contact.eyebrow}</p>
         <h1>{doc?.title || contact.title}</h1>
         <p className="sitePageLead">{doc?.intro || contact.lead}</p>
@@ -55,11 +56,12 @@ export function SiteContact() {
 
       <section className="siteSection" aria-labelledby="routes-heading">
         <h2 id="routes-heading">{contact.routesTitle}</h2>
-        <div className="cardGrid cardGridFit">
-          {routes.map(({ icon, title, body, cta }: AnyValue) => {
+        <div className="siteBento">
+          {routes.map(({ icon, title, body, cta }: AnyValue, index: number) => {
             const Icon = (ROUTE_ICONS as AnyValue)[icon] || Users
             return (
               <article key={title} className="card siteContactCard">
+                {index === 0 && <BorderBeam />}
                 <span className="iconTile" aria-hidden>
                   <Icon size={20} strokeWidth={1.75} />
                 </span>
