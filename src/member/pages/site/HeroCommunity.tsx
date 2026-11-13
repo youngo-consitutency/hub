@@ -2,15 +2,15 @@
 
 import { motion } from 'motion/react'
 import { TbPlus as Plus } from 'react-icons/tb'
-import { A } from '../../components/ui'
 
 const PEEPS = ['amara', 'jun', 'lucia', 'tariq', 'ingrid', 'kofi']
 
-// a ring of illustrated members around an open seat; the seat is the join link
-export function HeroCommunity({ href, label }: { href: string; label: string }) {
+// a ring of illustrated members around an open seat. the seat is decoration: the page already
+// has a join button beside it, so it is not a second one
+export function HeroCommunity({ label }: { label: string }) {
   return (
-    <div className="ldCommunity">
-      <div className="ldOrbit" aria-hidden>
+    <div className="ldCommunity" aria-hidden>
+      <div className="ldOrbit">
         {PEEPS.map((name, i) => (
           <span
             key={name}
@@ -29,12 +29,10 @@ export function HeroCommunity({ href, label }: { href: string; label: string }) 
           </span>
         ))}
       </div>
-      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-        <A href={href} className="ldSeat">
-          <Plus size={26} strokeWidth={1.5} aria-hidden />
-          <span>{label}</span>
-        </A>
-      </motion.div>
+      <span className="ldSeat">
+        <Plus size={26} strokeWidth={1.5} />
+        <span>{label}</span>
+      </span>
     </div>
   )
 }
