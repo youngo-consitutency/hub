@@ -4,6 +4,15 @@
 /* every public page uses the display face; the signed-in hub keeps system fonts for now */
 .siteShell {
   --font-display: var(--font-space-grotesk), var(--font-ui);
+  /* a faint dot grid under the light sections; the deep bands cover it */
+  background:
+    radial-gradient(
+        circle at 1px 1px,
+        color-mix(in srgb, var(--text-3) 22%, transparent) 1px,
+        transparent 0
+      )
+      0 0 / 28px 28px,
+    var(--bg-page);
 }
 
 .ldWrap {
@@ -32,13 +41,19 @@
   --accent-tint: rgba(74, 222, 128, 0.14);
   --on-accent-tint: #86efac;
   --glow-accent: 0 0 0 1px rgba(74, 222, 128, 0.5), 0 0 28px rgba(45, 212, 160, 0.35);
+  /* follows the pointer (--mx/--my, set by trackPointer) and rests top right */
+  --glow-spot: radial-gradient(
+    460px circle at var(--mx, 72%) var(--my, 18%),
+    rgba(74, 222, 128, 0.16),
+    transparent 70%
+  );
 }
 
 .ldDark {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
+  background: var(--glow-spot), linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
   color: var(--ld-on-deep);
 }
 
@@ -112,7 +127,11 @@
 /* ── hero ─────────────────────────────────────────── */
 .ldHero {
   margin-top: calc(var(--ld-header-h) * -1);
-  padding-block: calc(var(--ld-header-h) + clamp(32px, 6vw, 80px)) clamp(40px, 7vw, 96px);
+  padding-block: calc(var(--ld-header-h) + clamp(32px, 6vw, 80px)) clamp(24px, 4vw, 40px);
+}
+
+.ldHero .ldMarquee {
+  margin-top: clamp(32px, 5vw, 56px);
 }
 
 /* header over the hero: transparent, light text; solid again once scrolled or the menu is open.
@@ -334,10 +353,6 @@
   padding: 0;
 }
 
-.ldGrid4 {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
 .ldGrid3 {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
@@ -387,14 +402,6 @@
   transition:
     transform var(--motion-panel) var(--motion-spring),
     background var(--motion-standard) var(--motion-ease);
-}
-
-.ldIndex {
-  position: absolute;
-  top: var(--space-5);
-  right: var(--space-5);
-  color: var(--text-3);
-  font-size: 12px;
 }
 
 .ldTile {
@@ -489,11 +496,7 @@
   line-height: 1.5;
 }
 
-/* ── principles ticker ────────────────────────────── */
-.ldValues {
-  overflow: hidden;
-}
-
+/* ── principles ticker, at the foot of the hero ───── */
 .ldMarquee {
   display: flex;
   overflow: hidden;
@@ -594,11 +597,22 @@
   border: 2px solid var(--accent);
   border-radius: 50%;
   background: var(--bg-page);
+  transition:
+    background var(--motion-standard) var(--motion-ease),
+    box-shadow var(--motion-standard) var(--motion-ease);
 }
 
 .ldYear {
   color: var(--accent);
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.ldTimeline li:hover::before {
+  background: var(--accent);
+  box-shadow: var(--glow-accent);
 }
 
 .ldTimeline h3 {
@@ -614,7 +628,7 @@
 
 /* ── closing call to action ───────────────────────── */
 .ldCta {
-  margin-block: clamp(56px, 8vw, 112px);
+  margin-top: clamp(56px, 8vw, 112px);
   width: calc(min(100%, 1240px) - 2 * var(--ld-gutter));
   padding-inline: 0;
   border-radius: 28px;
@@ -682,7 +696,7 @@
 .sitePageHeader::before {
   border-bottom: 1px solid var(--ld-line-deep);
   background:
-    radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
+    var(--glow-spot), radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
     radial-gradient(30% 60% at 5% 100%, rgba(163, 230, 53, 0.16), transparent 70%),
     linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
 }
@@ -745,7 +759,7 @@
   overflow: hidden;
   margin-top: clamp(56px, 8vw, 112px);
   border-top: 1px solid var(--ld-line-deep);
-  background: linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
+  background: var(--glow-spot), linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
   color: var(--ld-on-deep);
 }
 
@@ -765,8 +779,37 @@
 }
 
 .siteFooterInner {
-  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(140px, 1fr));
+  grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(150px, 1fr));
   padding-block: clamp(40px, 6vw, 72px) var(--space-6);
+}
+
+.siteSocials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteSocials a {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--ld-line-deep);
+  border-radius: 50%;
+  color: var(--ld-on-deep);
+  transition:
+    transform var(--motion-standard) var(--motion-ease-out),
+    border-color var(--motion-standard) var(--motion-ease),
+    color var(--motion-standard) var(--motion-ease);
+}
+
+.siteSocials a:hover {
+  border-color: var(--ld-accent-deep);
+  color: var(--ld-accent-deep);
+  transform: translateY(-2px);
 }
 
 .siteFooterCol h2 {
@@ -801,4 +844,15 @@
   .siteFooterBrand {
     grid-column: 1 / -1;
   }
+}
+
+/* the closing card: ripples breathe out from its right side, a beam circles the border */
+.ldCtaRipple {
+  position: absolute;
+  top: 50%;
+  right: -6%;
+  z-index: -1;
+  width: 56%;
+  height: 150%;
+  transform: translateY(-50%);
 }

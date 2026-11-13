@@ -8,15 +8,17 @@ export interface SiteRoute {
   label: string
   // header placement: a top-level link, or an entry under one of the menus
   menu?: SiteMenu
+  // the footer lists every page except those that opt out
+  footer?: false
 }
 
 export const SITE_ROUTES: SiteRoute[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about/working-groups', label: 'Working groups' },
+  { href: '/', label: 'Home', footer: false },
+  { href: '/about/working-groups', label: 'Working groups', menu: 'takePart' },
   { href: '/about/coy', label: 'COY', menu: 'takePart' },
   { href: '/about/gys', label: 'GYS', menu: 'takePart' },
   { href: '/about/resources', label: 'Resources', menu: 'takePart' },
-  { href: '/about/organisation', label: 'Organisation & partners', menu: 'about' },
+  { href: '/about/organisation', label: 'Organisation & partners', menu: 'about', footer: false },
   { href: '/about/faq', label: 'FAQs', menu: 'about' },
   { href: '/about/contact', label: 'Contact', menu: 'about' },
 ]

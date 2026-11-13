@@ -25,6 +25,10 @@ describe('public route registry', () => {
     }
   })
 
+  it('keeps the footer short', () => {
+    expect(SITE_ROUTES.filter((route) => route.footer !== false).length).toBeLessThanOrEqual(6)
+  })
+
   it('treats /about as the home page and matches sections by segment', () => {
     expect(isSiteHome('/about')).toBe(true)
     expect(isSiteRouteActive('/about', '/')).toBe(true)

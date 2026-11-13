@@ -30,7 +30,12 @@ test.describe('Public site', () => {
   test('the header groups pages under menus that navigate', async ({ page }) => {
     await page.goto(BASE)
     await page.getByRole('button', { name: 'Take part' }).click()
-    await expect(page.getByRole('menuitem')).toHaveText(['COY', 'GYS', 'Resources'])
+    await expect(page.getByRole('menuitem')).toHaveText([
+      'Working groups',
+      'COY',
+      'GYS',
+      'Resources',
+    ])
     await page.getByRole('menuitem', { name: 'COY' }).click()
     await expect(page).toHaveURL(`${BASE}/about/coy`)
     await expect(page.getByRole('button', { name: 'Take part' })).toHaveClass(/active/)

@@ -1,5 +1,7 @@
 import type { AnyValue } from '../../lib/types'
 import { HUB_ROOT } from '../../../lib/hubUrl'
+import { Ripple } from '../../components/fx/Ripple'
+import { BorderBeam } from '../../components/fx/BorderBeam'
 import { MotionConfig, motion } from 'motion/react'
 import {
   TbBook as BookOpen,
@@ -20,7 +22,6 @@ import { A, Skeletons, ErrorCard, Empty } from '../../components/ui'
 import { useSignedIn } from '../../lib/useSignedIn'
 import { useDocument } from '../../lib/documents'
 import { inView, rise, stagger } from '../../lib/motion'
-import { trackPointer } from '../../lib/pointerGlow'
 import { HeroCommunity } from './HeroCommunity'
 import { HubPulse } from './HubPulse'
 
@@ -50,8 +51,6 @@ function SectionIntro({ id, eyebrow, title, lead }: AnyValue) {
   )
 }
 
-const pad = (n: number) => String(n + 1).padStart(2, '0')
-
 // the public home page, rendered from the cms `site` document
 export function SiteHome() {
   const { doc: site, loading, error, retry } = useDocument('site')
@@ -77,7 +76,6 @@ export function SiteHome() {
     )
   const {
     hero = {},
-    mission = {},
     organisation = {},
     takePart = {},
     principles = {},
@@ -119,11 +117,28 @@ export function SiteHome() {
           </div>
           <HeroCommunity href={signedIn ? HUB_ROOT : '/join'} label="Your seat" />
         </div>
+        {/* the track repeats once so the loop is seamless; the copy is hidden from readers */}
+        <div className="ldMarquee">
+          <ul className="ldTrack" aria-label="YOUNGO principles">
+            {principleItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <ul className="ldTrack ldTrackCopy" aria-hidden>
+            {principleItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
       </section>
       <section className="ldBand ldDark" aria-labelledby="organised-heading">
         <div className="ldGridLines" aria-hidden />
         <div className="ldWrap ldBandInner">
-          <SectionIntro {...organisation} id="organised-heading" />
+          <SectionIntro
+            eyebrow={organisation.eyebrow}
+            title={organisation.title}
+            id="organised-heading"
+          />
           <motion.dl
             className="ldFacts"
             variants={stagger}
@@ -138,39 +153,12 @@ export function SiteHome() {
               </motion.div>
             ))}
           </motion.dl>
-          {organisation.note && <p className="ldFine">{organisation.note}</p>}
         </div>
-      </section>
-      <section className="ldSection ldWrap" aria-labelledby="mission-heading">
-        <SectionIntro {...mission} id="mission-heading" />
-        <motion.ul
-          className="ldGrid ldGrid4"
-          onPointerMove={trackPointer}
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={inView}
-        >
-          {(mission.items || []).map(({ icon, title, body }: AnyValue, i: number) => {
-            const Icon = iconFor(icon)
-            return (
-              <motion.li key={title} className="ldCard" variants={rise} whileHover={{ y: -4 }}>
-                <span className="ldIndex mono">{pad(i)}</span>
-                <span className="ldIcon" aria-hidden>
-                  <Icon size={24} strokeWidth={1.5} />
-                </span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </motion.li>
-            )
-          })}
-        </motion.ul>
       </section>
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
         <SectionIntro {...takePart} id="what-heading" />
         <motion.ul
           className="ldGrid ldGrid3"
-          onPointerMove={trackPointer}
           variants={stagger}
           initial="hidden"
           whileInView="show"
@@ -202,24 +190,6 @@ export function SiteHome() {
       <section className="ldSection ldWrap" aria-label="Live from the Hub">
         <HubPulse />
       </section>
-      <section className="ldSection ldValues" aria-labelledby="values-heading">
-        <div className="ldWrap">
-          <SectionIntro {...principles} id="values-heading" />
-        </div>
-        {/* the track repeats once so the loop is seamless; the copy is hidden from readers */}
-        <div className="ldMarquee">
-          <ul className="ldTrack" aria-label="YOUNGO principles">
-            {principleItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <ul className="ldTrack ldTrackCopy" aria-hidden>
-            {principleItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
       <section className="ldSection ldWrap" aria-labelledby="history-heading">
         <SectionIntro {...history} id="history-heading" />
         <div className="ldTimeline">
@@ -234,7 +204,7 @@ export function SiteHome() {
           <motion.ol variants={stagger} initial="hidden" whileInView="show" viewport={inView}>
             {(history.items || []).map(({ year, title, body }: AnyValue) => (
               <motion.li key={year} variants={rise}>
-                <span className="ldYear mono">{year}</span>
+                <span className="ldYear">{year}</span>
                 <h3>{title}</h3>
                 <p>{body}</p>
               </motion.li>
@@ -243,7 +213,10 @@ export function SiteHome() {
         </div>
       </section>
       <section className="ldCta ldDark ldWrap" aria-labelledby="cta-heading">
-        <div className="ldContour" aria-hidden />
+        <div className="ldCtaRipple">
+          <Ripple />
+        </div>
+        <BorderBeam />
         <div className="ldCtaInner">
           <h2 id="cta-heading">{cta.title}</h2>
           <p>{cta.body}</p>

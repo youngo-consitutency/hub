@@ -1,4 +1,5 @@
 import type { IconType } from 'react-icons'
+import { NumberTicker } from '../../components/fx/NumberTicker'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbBook as BookOpen,
@@ -7,7 +8,6 @@ import {
 } from 'react-icons/tb'
 import { A } from '../../components/ui'
 import { useApi } from '../../lib/api'
-import { trackPointer } from '../../lib/pointerGlow'
 import { UpcomingEvents } from './UpcomingEvents'
 
 // live counts come from the same public endpoints the Hub pages use, so landing and Hub never drift
@@ -30,7 +30,9 @@ function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
         </span>
         <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
       </span>
-      <strong>{count}</strong>
+      <strong>
+        <NumberTicker value={count} />
+      </strong>
       <span>{label}</span>
     </A>
   )
@@ -38,7 +40,7 @@ function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
 
 export function HubPulse() {
   return (
-    <div className="ldPulse" onPointerMove={trackPointer}>
+    <div className="ldPulse">
       <UpcomingEvents />
       <div className="ldStats">
         {STATS.map((stat) => (
