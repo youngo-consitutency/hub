@@ -1,6 +1,7 @@
 import type { AnyValue, Doc } from '../lib/types'
 import { useContentOptionLabels } from '../lib/documents'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import useSWR from 'swr'
 import { apiGet, useApi } from '../lib/api'
 import { A, Async, Empty, StatusChip, PageHeader } from '../components/ui'
 import { useAccount } from '../lib/accountContext'
@@ -24,41 +25,37 @@ export function CpOverview() {
   const groups = useApi('/groups')
   const { account } = useAccount()
   const access = account?.access || { wgAssignments: [], manageAllWgs: false }
-  const [pendingByWg, setPendingByWg] = useState<Doc>({})
 
   const assignedSlugs = useMemo(() => {
     if (access.manageAllWgs) return null
     return new Set((access.wgAssignments || []).map((item: Doc) => item.wgSlug).filter(Boolean))
   }, [access.manageAllWgs, access.wgAssignments])
 
-  useEffect(() => {
-    const items = groups.data?.items
-    if (!items?.length) return
-    const assigned = access.manageAllWgs
-      ? items
-      : items.filter((group: Doc) => assignedSlugs?.has(group.slug))
-    let cancelled = false
-    Promise.all(
-      assigned.map(async (group: Doc) => {
-        try {
-          const data = await apiGet(`/member/cp/${encodeURIComponent(group.slug)}/members`)
-          const pending = (data.members || []).filter(
-            ({ progress }: AnyValue) =>
-              progress.status === 'pending_approval' || progress.status === 'interested',
-          ).length
-          return [group.slug, pending]
-        } catch {
-          return [group.slug, 0]
-        }
-      }),
-    ).then((pairs) => {
-      if (cancelled) return
-      setPendingByWg(Object.fromEntries(pairs))
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [groups.data, access.manageAllWgs, assignedSlugs])
+  // no batched endpoint exists, so one SWR entry runs the per-group reads together:
+  // cached, deduped and ignored after unmount (the old effect refetched on every change)
+  const pendingSlugs: string[] = (groups.data?.items || [])
+    .filter((group: Doc) => access.manageAllWgs || assignedSlugs?.has(group.slug))
+    .map((group: Doc) => group.slug)
+  const { data: pendingByWg = {} } = useSWR<Record<string, number>>(
+    pendingSlugs.length ? ['cp-pending', ...pendingSlugs] : null,
+    async ([, ...slugs]: string[]) =>
+      Object.fromEntries(
+        await Promise.all(
+          slugs.map(async (slug) => {
+            try {
+              const data = await apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
+              const pending = (data.members || []).filter(
+                ({ progress }: AnyValue) =>
+                  progress.status === 'pending_approval' || progress.status === 'interested',
+              ).length
+              return [slug, pending]
+            } catch {
+              return [slug, 0]
+            }
+          }),
+        ),
+      ),
+  )
 
   const pendingTotal = Object.values(pendingByWg).reduce((sum, n) => sum + n, 0)
 
