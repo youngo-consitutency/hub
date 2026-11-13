@@ -9,36 +9,32 @@
  *
  * Env:
  *   PORT                 default 8080
- *   MCP_ALLOW_ANONYMOUS  1/true — Grok Connectors can use the URL with no
- *                        OAuth and no bearer token. Hub login stays server-side.
- *   MCP_TOKEN            optional shared secret (Bearer, ?token=, or /t/<token>/mcp)
+ *   MCP_TOKEN            required shared secret, sent as `Authorization: Bearer`
+ *                        (never in the url — urls end up in logs). The server
+ *                        refuses to start without it.
  *   MCP_ALLOWED_ORIGINS  comma-separated browser origins that get CORS headers
  *   HUB_ORIGIN           default http://localhost:3000
  *   HUB_EMAIL / HUB_PASSWORD  or HUB_TOKEN
  */
-import { createHash, timingSafeEqual } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import { createAdaptorServer } from '@hono/node-server'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import { bearerAuth } from 'hono/bearer-auth'
 import { cors } from 'hono/cors'
+import { HTTPException } from 'hono/http-exception'
 import { loadMcpEnv } from './lib/env.mjs'
 import { createHubMcpServer, SERVER_INFO } from './lib/mcpServer.mjs'
 
 const MAX_BODY_BYTES = 256 * 1024
-
-// hash first so length differences don't leak through the compare
-const digest = (value) => createHash('sha256').update(value).digest()
-const tokensMatch = (got, expected) =>
-  Boolean(got && expected) && timingSafeEqual(digest(got), digest(expected))
 
 const fail = (c, status, code, message) => c.json({ error: { code, message } }, status)
 
 /** @param {{ env?: Partial<NodeJS.ProcessEnv> }} [options] */
 export function createMcpApp({ env = process.env } = {}) {
   const token = String(env.MCP_TOKEN || env.HUB_MCP_TOKEN || '').trim()
-  const anonymous = /^(1|true|yes)$/i.test(String(env.MCP_ALLOW_ANONYMOUS || '').trim())
+  if (!token) throw new Error('MCP_TOKEN is required: the content MCP has no anonymous mode.')
   const origins = String(env.MCP_ALLOWED_ORIGINS || '')
     .split(',')
     .map((item) => item.trim())
@@ -50,8 +46,7 @@ export function createMcpApp({ env = process.env } = {}) {
     await next()
     c.header('Cache-Control', 'no-store')
   })
-  // never reflect arbitrary origins — anonymous mode would hand the hub
-  // account to any web page
+  // never reflect arbitrary origins — a web page must not drive the hub account
   app.use(
     cors({
       origin: origins,
@@ -61,7 +56,7 @@ export function createMcpApp({ env = process.env } = {}) {
     }),
   )
 
-  const health = (c) => c.json({ ok: true, server: SERVER_INFO.name, anonymous })
+  const health = (c) => c.json({ ok: true, server: SERVER_INFO.name })
   app.get('/healthz', health)
   app.get('/health', health)
   app.get('/', (c) =>
@@ -70,26 +65,19 @@ export function createMcpApp({ env = process.env } = {}) {
       server: SERVER_INFO,
       mcp: '/mcp',
       healthz: '/healthz',
-      auth: anonymous ? 'none' : 'token',
+      auth: 'token',
     }),
   )
 
-  const requireAuth = async (c, next) => {
-    if (anonymous) return next()
-    if (!token) return fail(c, 500, 'mcp_token_missing', 'Set MCP_ALLOW_ANONYMOUS=1 or MCP_TOKEN.')
-    const bearer = c.req.header('authorization')?.match(/^Bearer (.*)$/)?.[1]
-    const got =
-      bearer ?? c.req.query('token') ?? c.req.query('access_token') ?? c.req.param('token')
-    // bare 401, no oauth metadata — some clients still prompt oauth on it
-    if (!tokensMatch(String(got || '').trim(), token))
-      return fail(
-        c,
-        401,
-        'unauthorized',
-        'Pass ?token= on the MCP URL, or set MCP_ALLOW_ANONYMOUS=1. No OAuth.',
-      )
-    return next()
+  // hono's bearerAuth compares in constant time; header only, no url tokens
+  const unauthorized = {
+    error: { code: 'unauthorized', message: 'Send Authorization: Bearer <MCP_TOKEN>.' },
   }
+  const requireAuth = bearerAuth({
+    token,
+    noAuthenticationHeader: { message: unauthorized },
+    invalidToken: { message: unauthorized },
+  })
 
   const limit = bodyLimit({
     maxSize: MAX_BODY_BYTES,
@@ -118,7 +106,7 @@ export function createMcpApp({ env = process.env } = {}) {
     }
   }
 
-  const mcpPaths = ['/mcp', '/t/:token/mcp']
+  const mcpPaths = '/mcp'
   app.on('POST', mcpPaths, requireAuth, limit, handleMcp)
   // get/delete are meaningless without sessions — clients POST only
   app.on(['GET', 'DELETE', 'PUT', 'PATCH'], mcpPaths, (c) =>
@@ -127,6 +115,7 @@ export function createMcpApp({ env = process.env } = {}) {
 
   app.notFound((c) => fail(c, 404, 'not_found', 'Not found'))
   app.onError((error, c) => {
+    if (error instanceof HTTPException) return error.getResponse()
     console.error('mcp: request handling failed', error)
     return fail(c, 500, 'server_error', 'Internal server error')
   })

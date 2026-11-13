@@ -6,7 +6,7 @@
  */
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
-import { createMcpHttpServer } from '../../mcp-content/server.mjs'
+import { createMcpApp, createMcpHttpServer } from '../../mcp-content/server.mjs'
 import {
   createHubClient,
   resolveHubOrigin,
@@ -78,7 +78,8 @@ describe('mcp http transport', () => {
     const health = await fetch(`http://127.0.0.1:${mcp.port}/healthz`)
     expect(health.status).toBe(200)
     const healthBody = await health.json()
-    expect(healthBody).toMatchObject({ ok: true, anonymous: false })
+    expect(healthBody).toMatchObject({ ok: true })
+    expect(healthBody).not.toHaveProperty('anonymous')
 
     const root = await fetch(`http://127.0.0.1:${mcp.port}/`)
     expect(root.status).toBe(200)
@@ -101,15 +102,13 @@ describe('mcp http transport', () => {
     expect(body.error?.code).toBe('method_not_allowed')
   })
 
-  it('fails closed when neither MCP_TOKEN nor anonymous mode is set', async () => {
-    const open = await startMcp({})
-    try {
-      const res = await listTools(open.port)
-      expect(res.status).toBe(500)
-      expect(res.body?.error?.code).toBe('mcp_token_missing')
-    } finally {
-      await open.close()
-    }
+  it('refuses to start without MCP_TOKEN', () => {
+    expect(() => createMcpApp({ env: {} })).toThrow(/MCP_TOKEN/)
+    expect(() => createMcpHttpServer({ env: { MCP_TOKEN: '  ' } })).toThrow(/MCP_TOKEN/)
+  })
+
+  it('has no anonymous mode: the old switch changes nothing', () => {
+    expect(() => createMcpApp({ env: { MCP_ALLOW_ANONYMOUS: '1' } })).toThrow(/MCP_TOKEN/)
   })
 
   it('rejects missing and wrong tokens with a bare 401', async () => {
@@ -123,17 +122,22 @@ describe('mcp http transport', () => {
     expect(wrong.status).toBe(401)
   })
 
-  it('accepts the token via bearer, query, and path forms', async () => {
-    for (const opts of [
-      { token: MCP_TOKEN },
-      { path: `/mcp?token=${MCP_TOKEN}` },
-      { path: `/t/${MCP_TOKEN}/mcp` },
+  it('accepts the token only in the Authorization header', async () => {
+    const ok = await listTools(mcp.port, { token: MCP_TOKEN })
+    expect(ok.status).toBe(200)
+    const names = ok.body?.result?.tools?.map((tool: { name: string }) => tool.name)
+    expect(names).toContain('whoami')
+    expect(names).toContain('create_content_draft')
+
+    // urls end up in logs, so a token there must never authenticate
+    for (const path of [
+      `/mcp?token=${MCP_TOKEN}`,
+      `/mcp?access_token=${MCP_TOKEN}`,
+      `/t/${MCP_TOKEN}/mcp`,
     ]) {
-      const res = await listTools(mcp.port, opts)
-      expect(res.status).toBe(200)
-      const names = res.body?.result?.tools?.map((tool: { name: string }) => tool.name)
-      expect(names).toContain('whoami')
-      expect(names).toContain('create_content_draft')
+      const res = await listTools(mcp.port, { path })
+      expect([401, 404]).toContain(res.status)
+      expect(res.body?.result).toBeUndefined()
     }
   })
 
@@ -147,27 +151,6 @@ describe('mcp http transport', () => {
       accept: 'application/json',
     })
     expect(badAccept.status).toBe(406)
-  })
-
-  it('anonymous mode lists tools but still requires Hub credentials to call', async () => {
-    const open = await startMcp({ MCP_ALLOW_ANONYMOUS: '1' })
-    try {
-      const res = await listTools(open.port)
-      expect(res.status).toBe(200)
-      expect(res.body?.result?.tools?.length).toBeGreaterThan(0)
-
-      const call = await rpc(open.port, {
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'tools/call',
-        params: { name: 'whoami', arguments: {} },
-      })
-      expect(call.status).toBe(200)
-      expect(call.body?.result?.isError).toBe(true)
-      expect(call.body?.result?.content?.[0]?.text).toMatch(/HUB_EMAIL/)
-    } finally {
-      await open.close()
-    }
   })
 })
 
