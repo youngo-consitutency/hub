@@ -40,8 +40,6 @@ youngo/
 # agent state
 .claude
 .codex
-.cursor
-.devin
 .zed
 .mcp.json
 .agent-vault

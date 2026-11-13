@@ -70,12 +70,9 @@ const write = (p, s) => {
   renameSync(tmp, p)
 }
 
-// Devin (.devin -> .agents/tool-cfg/devin) and Cursor own their whole map.
-for (const p of [
-  join(ROOT, '.agents/tool-cfg/devin/mcp_config.json'),
-  join(ROOT, '.agents/tool-cfg/cursor/mcp.json'),
-  join(ROOT, '.mcp.json'), // Claude Code project config
-]) {
+// Claude Code owns its whole map.
+{
+  const p = join(ROOT, '.mcp.json')
   write(p, json({ mcpServers: canonical }))
   console.log('wrote', p.replace(ROOT, '.'))
 }
