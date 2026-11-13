@@ -11,6 +11,7 @@ import { apiGet } from '../lib/api'
 import { clearSession } from '../lib/session'
 import { useAccount } from '../lib/accountContext'
 import { HUB_ROOT } from '../../lib/hubUrl'
+import { isSitePath } from '../../shared/publicRoutes'
 import { navigate, useInHub, usePath } from '../lib/router'
 import { ErrorCard } from './ui'
 
@@ -109,7 +110,7 @@ export function AccessGate({ children }: AccessGateProps) {
     if (path.startsWith('/privacy')) return <Privacy standalone />
     // Public website: browsable before any gate, for members too; data comes from the
     // redacting public API.
-    if (path === '/' || path.startsWith('/about')) return <PublicSite />
+    if (isSitePath(path)) return <PublicSite />
   }
 
   if (!ready) {

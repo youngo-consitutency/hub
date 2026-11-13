@@ -26,8 +26,6 @@ data
 .agent-vault
 .claude
 .codex
-.cursor
-.devin
 .zed
 .mcp.json
 .agents

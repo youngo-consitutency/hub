@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { LEGACY_HUB_SEGMENTS } from '../../src/lib/hubUrl'
 import {
+  LEGACY_SITE_PATHS,
   PUBLIC_PATHS,
-  SITE_MENUS,
   SITE_ROUTES,
   isSiteHome,
   isSiteRouteActive,
@@ -11,31 +12,37 @@ describe('public route registry', () => {
   it('lists every site page in the sitemap once, with / as the only home', () => {
     expect(new Set(PUBLIC_PATHS).size).toBe(PUBLIC_PATHS.length)
     for (const route of SITE_ROUTES) expect(PUBLIC_PATHS).toContain(route.href)
-    expect(PUBLIC_PATHS).not.toContain('/about')
   })
 
-  it('keeps the header short: few top-level links, the rest under menus', () => {
-    const topLevel = SITE_ROUTES.filter((route) => !route.menu && route.href !== '/')
-    expect(topLevel.length + SITE_MENUS.length).toBeLessThanOrEqual(4)
-    for (const menu of SITE_MENUS) {
+  it('keeps the site to a few pages, all linked from the header', () => {
+    expect(SITE_ROUTES.length).toBeLessThanOrEqual(5)
+    expect(SITE_ROUTES[0].href).toBe('/')
+  })
+
+  it('sends every merged page to a section of a page that exists', () => {
+    for (const [old, target] of Object.entries(LEGACY_SITE_PATHS)) {
+      const page = target.split('#')[0]
       expect(
-        SITE_ROUTES.some((route) => route.menu === menu.id),
-        menu.id,
-      ).toBe(true)
+        SITE_ROUTES.map((route) => route.href),
+        old,
+      ).toContain(page)
+      expect(PUBLIC_PATHS, old).not.toContain(old)
     }
   })
 
-  it('keeps the footer short', () => {
-    expect(SITE_ROUTES.filter((route) => route.footer !== false).length).toBeLessThanOrEqual(6)
+  it('opens on the landing page only at /, and matches sections by segment', () => {
+    expect(isSiteHome('/')).toBe(true)
+    expect(isSiteHome('/about')).toBe(false)
+    expect(isSiteRouteActive('/our-work/x', '/our-work')).toBe(true)
+    // a shared prefix is not the same section
+    expect(isSiteRouteActive('/our-workshop', '/our-work')).toBe(false)
+    expect(isSiteRouteActive('/our-work', '/')).toBe(false)
   })
 
-  it('treats /about as the home page and matches sections by segment', () => {
-    expect(isSiteHome('/about')).toBe(true)
-    expect(isSiteRouteActive('/about', '/')).toBe(true)
-    expect(isSiteRouteActive('/about/coy/2026', '/about/coy')).toBe(true)
-    // a shared prefix is not the same section
-    expect(isSiteRouteActive('/about/coyote', '/about/coy')).toBe(false)
-    expect(isSiteRouteActive('/about/coy', '/')).toBe(false)
+  it('keeps clear of the Hub: no public path is a Hub segment', () => {
+    for (const { href } of SITE_ROUTES) {
+      expect(LEGACY_HUB_SEGMENTS.has(href.split('/')[1]), href).toBe(false)
+    }
   })
 })
 

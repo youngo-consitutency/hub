@@ -70,14 +70,28 @@ const write = (p, s) => {
   renameSync(tmp, p)
 }
 
-// Devin (.devin -> .agents/tool-cfg/devin) and Cursor own their whole map.
-for (const p of [
-  join(ROOT, '.agents/tool-cfg/devin/mcp_config.json'),
-  join(ROOT, '.agents/tool-cfg/cursor/mcp.json'),
-  join(ROOT, '.mcp.json'), // Claude Code project config
-]) {
+// Claude Code owns its whole map.
+{
+  const p = join(ROOT, '.mcp.json')
   write(p, json({ mcpServers: canonical }))
   console.log('wrote', p.replace(ROOT, '.'))
+}
+
+// Devin and Cursor are no longer targets. Older runs left credentials in their files, so
+// drop only the names this script owns and keep anything else a maintainer added.
+for (const rel of ['.agents/tool-cfg/devin/mcp_config.json', '.agents/tool-cfg/cursor/mcp.json']) {
+  const p = join(ROOT, rel)
+  if (!existsSync(p)) continue
+  try {
+    const config = JSON.parse(readFileSync(p, 'utf8'))
+    const kept = Object.fromEntries(
+      Object.entries(config.mcpServers ?? {}).filter(([name]) => !MANAGED.includes(name)),
+    )
+    write(p, json({ ...config, mcpServers: kept }))
+    console.log('cleared managed entries in', rel)
+  } catch {
+    console.warn('left', rel, 'alone: not valid JSON')
+  }
 }
 
 // Zed (JSONC): merge into context_servers through a real JSONC edit, so

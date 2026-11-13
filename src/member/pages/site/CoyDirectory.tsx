@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
-import { TbArrowUpRight as ArrowUpRight, TbSearch as Search } from 'react-icons/tb'
+import { TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
 import type { AnyValue } from '../../lib/types'
 import { regionLabel } from '../../lib/regions'
 import { coyDisplayStatus } from '../../../shared/coyStatus'
+import { BorderBeam } from '../../components/fx/BorderBeam'
 import { Empty, FilterPill } from '../../components/ui'
 import { useCatalogue } from '../../lib/useCatalogue'
+import { PublicSearch } from './PublicSearch'
 
 const FORMATS = [
   { id: 'all', label: 'All' },
@@ -25,11 +27,12 @@ const STATUS: Record<string, [chip: string, label: string, rank: number]> = {
   cancelled: ['chip-danger', 'Cancelled', 4],
 }
 
-const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy)] ?? ['chip-neutral', '', 1]
-const isWeb = (url: unknown): url is string => typeof url === 'string' && /^https?:\/\//.test(url)
+export const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy)] ?? ['chip-neutral', '', 1]
+export const isWeb = (url: unknown): url is string =>
+  typeof url === 'string' && /^https?:\/\//.test(url)
 
 // what is open comes first, then what is coming, then what is over
-const byRelevance = (a: AnyValue, b: AnyValue) =>
+export const byRelevance = (a: AnyValue, b: AnyValue) =>
   statusOf(a)[2] - statusOf(b)[2] ||
   String(a.startsOn ?? '9999').localeCompare(String(b.startsOn ?? '9999')) ||
   String(a.title).localeCompare(String(b.title))
@@ -77,16 +80,7 @@ export function CoyDirectory({ items }: { items: AnyValue[] }) {
   return (
     <div className="siteCoyBrowser">
       <aside className="siteCoyTools" aria-label="Filter conferences">
-        <label className="siteCoySearch">
-          <Search size={16} aria-hidden />
-          <span className="srOnly">Search conferences</span>
-          <input
-            type="search"
-            value={list.search}
-            placeholder="Search conferences"
-            onChange={(e) => list.setSearch(e.target.value)}
-          />
-        </label>
+        <PublicSearch label="Search conferences" value={list.search} onChange={list.setSearch} />
         <div className="siteCoyFormats" role="group" aria-label="Format">
           {FORMATS.filter(({ id }) => countOf(id) > 0).map(({ id, label }) => (
             <FilterPill
@@ -150,5 +144,37 @@ export function CoyDirectory({ items }: { items: AnyValue[] }) {
         )}
       </div>
     </div>
+  )
+}
+
+// the one conference that is open right now gets the spotlight; the directory below lists the rest
+export function FeaturedConference({ items }: { items: AnyValue[] }) {
+  const featured = [...items].sort(byRelevance)[0]
+  if (!featured || statusOf(featured)[2] !== 0) return null
+  const [chip, label] = statusOf(featured)
+  const place = [featured.city, featured.country].filter(Boolean).join(', ')
+  const href = [featured.registerUrl, featured.websiteUrl].find(isWeb)
+  return (
+    <article className="siteFeatured">
+      <BorderBeam colorFrom="var(--accent)" colorTo="var(--ld-glow-lime)" />
+      <p className="pageEyebrow">Open now</p>
+      <h3>{featured.title}</h3>
+      <div className="siteFeaturedMeta">
+        <span className={`chip ${chip}`}>{label}</span>
+        {place && <span className="metaMuted">{place}</span>}
+      </div>
+      {href && (
+        <a
+          className="btn btn-primary"
+          href={href}
+          target="_blank"
+          rel="noreferrer noopener"
+          style={{ justifySelf: 'start' }}
+        >
+          Register or find out more
+          <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden />
+        </a>
+      )}
+    </article>
   )
 }

@@ -72,9 +72,9 @@ Constituency Work so this stays a last resort; every use is auditable via
 
 ## Task skills
 
-Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), and `tool-cfg/` holds generated per-tool MCP configs — it is a local convention reached through `.claude`/`.codex`/`.cursor` symlinks on the maintainer's machine, not a path tools discover on their own.
+Agent state lives under `.agents/`: `skills/` holds task recipes and non-negotiables (`hub-invariants` applies to any change; `hub-endpoints`, `hub-authority`, `hub-member-ui`, `hub-data`, `hub-mcp` cover their domains), and `tool-cfg/` holds generated per-tool MCP configs — it is a local convention reached through `.claude`/`.codex` symlinks on the maintainer's machine, not a path tools discover on their own.
 
-Session memory uses the Hindsight bank `youngo-hub`, exposed as tools on the `hub` MCP server: `recall` with tag `project:youngo-hub` before substantive work, `retain` decisions/findings/state after. There is no local memory vault — do not create `.agent-vault/` or similar. Set `HINDSIGHT_API_KEY` (and Hub credentials for content tools) in `.env.local`, then run `npm run sync:mcp` to write the `hub` server into `.mcp.json`, `.zed/settings.json`, and `.agents/tool-cfg/{devin,cursor,codex}`. Those files are gitignored; the script is the only place the wiring is defined, so never hand-edit its outputs.
+Session memory uses the Hindsight bank `youngo-hub`, exposed as tools on the `hub` MCP server: `recall` with tag `project:youngo-hub` before substantive work, `retain` decisions/findings/state after. There is no local memory vault — do not create `.agent-vault/` or similar. Set `HINDSIGHT_API_KEY` (and Hub credentials for content tools) in `.env.local`, then run `npm run sync:mcp` to write the `hub` server into `.mcp.json`, `.zed/settings.json`, and `.agents/tool-cfg/codex`. Those files are gitignored; the script is the only place the wiring is defined, so never hand-edit its outputs.
 
 ## Verification
 

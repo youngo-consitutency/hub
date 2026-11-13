@@ -1,8 +1,10 @@
+import { createElement } from 'react'
 import type { AnyValue } from '../../lib/types'
 import { Ripple } from '../../components/fx/Ripple'
 import { BorderBeam } from '../../components/fx/BorderBeam'
-import { MotionConfig, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import {
+  TbAward as Award,
   TbBook as BookOpen,
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
@@ -15,7 +17,18 @@ import {
   TbMapPin as MapPin,
   TbSpeakerphone as Megaphone,
   TbScript as ScrollText,
+  TbUserCheck as UserCheck,
   TbUsers as Users,
+  TbEye as Eye,
+  TbScale as Scale,
+  TbShieldCheck as ShieldCheck,
+  TbSeedling as Seeding,
+  TbMoodSmile as Smile,
+  TbSparkles as Sparkles,
+  TbRocket as Rocket,
+  TbHeart as Heart,
+  TbUsersGroup as UsersGroup,
+  TbMessages as Messages,
 } from 'react-icons/tb'
 import { A, Skeletons, ErrorCard, Empty } from '../../components/ui'
 import { useDocument } from '../../lib/documents'
@@ -39,14 +52,40 @@ const ICONS = {
 }
 const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
 
-// eyebrow, heading and optional lead shared by every home section
-function SectionIntro({ id, eyebrow, title, lead }: AnyValue) {
+// heading and optional lead shared by every home section
+function SectionIntro({ id, title, lead }: AnyValue) {
   return (
     <header className="ldIntro">
-      {eyebrow && <p className="ldEyebrow">{eyebrow}</p>}
       <h2 id={id}>{title}</h2>
       {lead && <p className="ldLead">{lead}</p>}
     </header>
+  )
+}
+
+// principles are CMS text, so icons follow the wording; anything new falls back to a leaf
+const PRINCIPLE_ICONS: [RegExp, typeof Leaf][] = [
+  [/justice|equity|impartial/i, Scale],
+  [/dignity|compassion/i, Heart],
+  [/inclusiv|divers/i, UsersGroup],
+  [/open|transparen/i, Eye],
+  [/integrity/i, ShieldCheck],
+  [/ambition|empower/i, Rocket],
+  [/sustainab/i, Seeding],
+  [/hope/i, Smile],
+  [/consensus|democra|dialog/i, Messages],
+  [/innovat|creativ/i, Sparkles],
+]
+const principleIcon = (text: string) => PRINCIPLE_ICONS.find(([re]) => re.test(text))?.[1] ?? Leaf
+
+// the four milestones are in a fixed order, so icons follow position
+const MILESTONE_ICONS = [Leaf, UserCheck, Award, Globe]
+
+function PrincipleChip({ text }: { text: string }) {
+  return (
+    <li>
+      {createElement(principleIcon(text), { size: 17, strokeWidth: 1.5, 'aria-hidden': true })}
+      {text}
+    </li>
   )
 }
 
@@ -72,14 +111,7 @@ export function SiteHome() {
         <Empty title="About YOUNGO" body="This page has not been published yet." />
       </div>
     )
-  const {
-    hero = {},
-    organisation = {},
-    takePart = {},
-    principles = {},
-    history = {},
-    cta = {},
-  } = home
+  const { hero = {}, takePart = {}, principles = {}, history = {}, cta = {} } = home
 
   // the last two words of the headline carry the gradient
   const words: string[] = (hero.title || '').split(' ')
@@ -88,9 +120,8 @@ export function SiteHome() {
   const principleItems: string[] = principles.items || []
 
   return (
-    <MotionConfig reducedMotion="user">
+    <>
       <section className="ldHero ldDark">
-        <div className="ldContour" aria-hidden />
         <div className="ldAurora" aria-hidden />
         <div className="ldWrap ldHeroGrid">
           <div className="ldHeroCopy">
@@ -104,7 +135,7 @@ export function SiteHome() {
             <p className="ldHeroLead">{hero.lead}</p>
             <div className="ldActions">
               <JoinButton label={hero.joinLabel} glow />
-              <A href="/about/working-groups" className="btn btn-secondary btn-lg">
+              <A href="/our-work#working-groups" className="btn btn-secondary btn-lg">
                 <Users size={18} strokeWidth={1.75} aria-hidden />
                 {hero.exploreLabel}
               </A>
@@ -117,32 +148,14 @@ export function SiteHome() {
         <div className="ldMarquee">
           <ul className="ldTrack" aria-label="YOUNGO principles">
             {principleItems.map((item) => (
-              <li key={item}>{item}</li>
+              <PrincipleChip key={item} text={item} />
             ))}
           </ul>
           <ul className="ldTrack ldTrackCopy" aria-hidden>
             {principleItems.map((item) => (
-              <li key={item}>{item}</li>
+              <PrincipleChip key={item} text={item} />
             ))}
           </ul>
-        </div>
-      </section>
-      <section className="ldBand ldDark" aria-labelledby="organised-heading">
-        <div className="ldGridLines" aria-hidden />
-        <div className="ldWrap ldBandInner">
-          <SectionIntro
-            eyebrow={organisation.eyebrow}
-            title={organisation.title}
-            id="organised-heading"
-          />
-          <motion.dl className="ldFacts" {...reveal}>
-            {(organisation.stats || []).map(({ value, label }: AnyValue) => (
-              <motion.div key={value} variants={rise}>
-                <dt>{value}</dt>
-                <dd>{label}</dd>
-              </motion.div>
-            ))}
-          </motion.dl>
         </div>
       </section>
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
@@ -186,13 +199,19 @@ export function SiteHome() {
             transition={{ duration: 1.2, ease: 'easeOut' }}
           />
           <motion.ol {...reveal}>
-            {(history.items || []).map(({ year, title, body }: AnyValue) => (
-              <motion.li key={year} variants={rise}>
-                <span className="ldYear">{year}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </motion.li>
-            ))}
+            {(history.items || []).map(({ year, title, body }: AnyValue, i: number) => {
+              const MilestoneIcon = MILESTONE_ICONS[i % MILESTONE_ICONS.length]
+              return (
+                <motion.li key={year} variants={rise}>
+                  <span className="ldYear">
+                    <MilestoneIcon size={20} strokeWidth={1.5} aria-hidden />
+                    {year}
+                  </span>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </motion.li>
+              )
+            })}
           </motion.ol>
         </div>
       </section>
@@ -207,6 +226,6 @@ export function SiteHome() {
           <JoinButton label={cta.label} glow />
         </div>
       </section>
-    </MotionConfig>
+    </>
   )
 }

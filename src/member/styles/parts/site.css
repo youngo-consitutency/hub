@@ -403,61 +403,6 @@ main#site-main {
 }
 
 /* ── FAQ and contact ──────────────────────────────── */
-.siteFaqList {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-5) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.siteFaqItem {
-  overflow: hidden;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-card);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-card);
-}
-
-.siteFaqItem summary {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  color: var(--text-1);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.siteFaqItem summary::-webkit-details-marker {
-  display: none;
-}
-
-.siteFaqItem summary:hover {
-  background: var(--bg-raised);
-}
-
-.siteFaqItem summary > svg {
-  flex: 0 0 auto;
-  color: var(--text-3);
-  transition: transform var(--motion-standard) var(--motion-ease);
-}
-
-.siteFaqItem[open] summary > svg {
-  transform: rotate(180deg);
-}
-
-.siteFaqItem[open] summary {
-  border-bottom: 1px solid var(--border);
-}
-
-.siteFaqItem p {
-  max-width: 82ch;
-  padding: var(--space-4);
-}
 
 .siteFaqMore {
   margin-top: var(--space-4);
@@ -501,59 +446,6 @@ main#site-main {
   background: var(--bg-card);
 }
 
-.siteFooterInner {
-  width: min(100%, 1240px);
-  margin: 0 auto;
-  padding: var(--space-8) clamp(16px, 4vw, 32px) var(--space-6);
-  display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) repeat(auto-fit, minmax(140px, 1fr));
-  gap: clamp(24px, 4vw, 48px);
-}
-
-.siteFooterBrand .meta {
-  max-width: 34ch;
-  margin-top: var(--space-3);
-}
-
-.siteFooterCol {
-  display: grid;
-  align-content: start;
-  gap: var(--space-2);
-}
-
-.siteFooterCol h2 {
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.siteFooterCol a {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--text-2);
-  font-size: 14px;
-}
-
-.siteFooterCol a:hover {
-  color: var(--accent);
-}
-
-.siteFooterLegal {
-  /* rule spans the content column, not the padded box */
-  width: min(100% - 2 * clamp(16px, 4vw, 32px), 1240px - 64px);
-  margin: 0 auto;
-  padding: var(--space-3) 0 var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.siteFooterLegal a {
-  color: var(--text-2);
-  text-decoration: underline;
-}
-
 .siteHeroCard {
   display: grid;
   gap: var(--space-2);
@@ -564,10 +456,6 @@ main#site-main {
 @media (max-width: 980px) {
   .siteHeroLayout {
     grid-template-columns: 1fr;
-  }
-
-  .siteFooterInner {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .siteGysSteps {
@@ -672,10 +560,6 @@ main#site-main {
   .siteSectionHeadingRow {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .siteFooterInner {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -806,7 +690,7 @@ main#site-main {
   gap: var(--space-3);
 }
 
-.siteWithdrawn h2 {
+.siteWithdrawn h3 {
   font-size: 18px;
   margin-bottom: var(--space-1);
 }

@@ -12,9 +12,9 @@ import { UpcomingEvents } from './UpcomingEvents'
 
 // live counts come from the same public endpoints the Hub pages use, so landing and Hub never drift
 const STATS: { path: string; label: string; href: string; icon: IconType }[] = [
-  { path: '/groups', label: 'Working groups', href: '/about/working-groups', icon: Users },
-  { path: '/coys', label: 'Conferences of Youth', href: '/about/coy', icon: MapPin },
-  { path: '/resources', label: 'Science resources', href: '/about/resources', icon: BookOpen },
+  { path: '/groups', label: 'Working groups', href: '/our-work#working-groups', icon: Users },
+  { path: '/coys', label: 'Conferences of Youth', href: '/our-work#conferences', icon: MapPin },
+  { path: '/resources', label: 'Science resources', href: '/learn', icon: BookOpen },
 ]
 
 function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
@@ -24,16 +24,16 @@ function Stat({ path, label, href, icon: Icon }: (typeof STATS)[number]) {
   if (!count) return null
   return (
     <A href={href} className="ldCard ldStat">
-      <span className="ldTileTop">
-        <span className="ldIcon" aria-hidden>
-          <Icon size={22} strokeWidth={1.5} />
-        </span>
-        <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
+      <span className="ldIcon" aria-hidden>
+        <Icon size={22} strokeWidth={1.5} />
       </span>
-      <strong>
-        <NumberTicker value={count} />
-      </strong>
-      <span>{label}</span>
+      <span className="ldStatText">
+        <strong>
+          <NumberTicker value={count} />
+        </strong>
+        <span>{label}</span>
+      </span>
+      <ArrowUpRight className="ldArrow" size={20} strokeWidth={1.75} aria-hidden />
     </A>
   )
 }

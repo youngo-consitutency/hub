@@ -1,5 +1,6 @@
 import type { AnyValue } from '../../lib/types'
 import { BorderBeam } from '../../components/fx/BorderBeam'
+import { SiteSection } from './SitePage'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbAt as AtSign,
@@ -18,13 +19,18 @@ import { PageWithdrawn } from './PageWithdrawn'
 // Icon names are stored in the site document; components live here.
 const ROUTE_ICONS = { Users, Network, AtSign, LifeBuoy }
 
-export function SiteContact() {
+export function ContactSection() {
   const { doc: connect } = useDocument('connect')
   const { doc: site, loading } = useDocument('site')
   const page = useApi('/pages/contact')
   const contact = site?.contact
   if (!contact || page.loading) return loading || page.loading ? <Skeletons n={4} /> : null
-  if (page.data?.state === 'unpublished') return <PageWithdrawn title={contact.title} />
+  if (page.data?.state === 'unpublished')
+    return (
+      <SiteSection id="contact" title={contact.title}>
+        <PageWithdrawn />
+      </SiteSection>
+    )
   const doc = page.data?.document
   // reviewed sections become routes; icons stay with the site document's routes
   const baseRoutes = contact.routes || []
@@ -47,15 +53,14 @@ export function SiteContact() {
   const partnership = contact.partnership || {}
   const follow = contact.socials || {}
   return (
-    <div className="siteMain">
-      <header className="sitePageHeader" data-motif="waves">
-        <p className="pageEyebrow">{contact.eyebrow}</p>
-        <h1>{doc?.title || contact.title}</h1>
-        <p className="sitePageLead">{doc?.intro || contact.lead}</p>
-      </header>
-
-      <section className="siteSection" aria-labelledby="routes-heading">
-        <h2 id="routes-heading">{contact.routesTitle}</h2>
+    <SiteSection
+      id="contact"
+      eyebrow={contact.eyebrow}
+      title={doc?.title || contact.title}
+      lead={doc?.intro || contact.lead}
+    >
+      <div className="siteSub">
+        <h3>{contact.routesTitle}</h3>
         <div className="siteBento">
           {routes.map(({ icon, title, body, cta }: AnyValue, index: number) => {
             const Icon = (ROUTE_ICONS as AnyValue)[icon] || Users
@@ -94,17 +99,17 @@ export function SiteContact() {
             )
           })}
         </div>
-      </section>
+      </div>
 
-      <section className="siteSection">
-        <h2>{partnership.title}</h2>
+      <div className="siteSub">
+        <h3>{partnership.title}</h3>
         <p className="siteSectionLead">{partnership.lead}</p>
         <PartnerEnquiry />
-      </section>
+      </div>
 
       {socials.length > 0 && (
-        <section className="siteSection" aria-labelledby="socials-heading">
-          <h2 id="socials-heading">{follow.title}</h2>
+        <div className="siteSub">
+          <h3>{follow.title}</h3>
           <p className="siteSectionLead">{follow.lead}</p>
           <ul className="siteSocialList" aria-label="Official YOUNGO channels">
             {socials.map((link: AnyValue) => (
@@ -117,13 +122,13 @@ export function SiteContact() {
               </li>
             ))}
           </ul>
-        </section>
+        </div>
       )}
 
-      <section className="card cardTight siteContactNote">
+      <div className="card cardTight siteContactNote">
         <HeartHandshake size={20} strokeWidth={1.75} aria-hidden />
         <p className="meta">{contact.note}</p>
-      </section>
-    </div>
+      </div>
+    </SiteSection>
   )
 }

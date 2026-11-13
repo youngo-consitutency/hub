@@ -1,85 +1,49 @@
-import type { AnyValue } from '../../lib/types'
+import type { ComponentType } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { MotionConfig } from 'motion/react'
 import {
   TbArrowRight as ArrowRight,
-  TbChevronDown as ChevronDown,
   TbLogin as LogIn,
   TbMenu2 as Menu,
   TbX as X,
 } from 'react-icons/tb'
-import { Button, Menu as AriaMenu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
 import {
-  SITE_MENUS,
+  LEGACY_SITE_PATHS,
   SITE_ROUTES,
   isSiteHome,
   isSiteRouteActive,
-  type SiteMenu,
 } from '../../../shared/publicRoutes'
 import { A } from '../../components/ui'
 import { Brand } from '../../components/Brand'
 import { DestinationIcon } from '../../components/DestinationLink'
 import { useSignedIn } from '../../lib/useSignedIn'
 import { trackPointer } from '../../lib/pointerGlow'
-import { usePath } from '../../lib/router'
+import { replace, usePath } from '../../lib/router'
 import { publishedLinks, useDocument } from '../../lib/documents'
-import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
 import { SiteHome } from './SiteHome'
 import { JoinButton } from './JoinButton'
-import { SiteWorkingGroups } from './SiteWorkingGroups'
-import { SiteCoy } from './SiteCoy'
-import { SiteGys } from './SiteGys'
+import { SiteWork } from './SiteWork'
 import { SiteResources } from './SiteResources'
-import { SiteFaq } from './SiteFaq'
-import { SiteContact } from './SiteContact'
+import { SiteAbout } from './SiteAbout'
 
-const routesIn = (menu: SiteMenu) => SITE_ROUTES.filter((route) => route.menu === menu)
+// every link to another page lives in the header; the home page is the logo
+const NAV_LINKS = SITE_ROUTES.filter((route) => route.href !== '/')
 
-// a header dropdown of page links; react aria handles keyboard, focus and dismissal
-function SiteNavMenu({ id, label, path }: { id: SiteMenu; label: string; path: string }) {
-  const routes = routesIn(id)
-  const active = routes.some((route) => isSiteRouteActive(path, route.href))
-  return (
-    <MenuTrigger>
-      <Button className={`siteNavItem siteNavMenuButton ${active ? 'active' : ''}`}>
-        {label}
-        <ChevronDown size={14} strokeWidth={1.75} aria-hidden />
-      </Button>
-      <Popover className="siteNavPopover" placement="bottom start" offset={6}>
-        <AriaMenu className="siteNavMenu" aria-label={label} items={routes}>
-          {(route) => (
-            <MenuItem
-              id={route.href}
-              href={route.href}
-              className="siteNavMenuItem"
-              // react aria drops aria-current, so set it on the anchor itself
-              ref={(el: HTMLElement | null) => {
-                if (!el) return
-                // clear it too, the element can outlive a client-side nav
-                if (isSiteRouteActive(path, route.href)) el.setAttribute('aria-current', 'page')
-                else el.removeAttribute('aria-current')
-              }}
-            >
-              {route.label}
-            </MenuItem>
-          )}
-        </AriaMenu>
-      </Popover>
-    </MenuTrigger>
-  )
+const PAGES: Record<string, ComponentType> = {
+  '/our-work': SiteWork,
+  '/learn': SiteResources,
+  '/about': SiteAbout,
 }
 
 function SiteHeader() {
   const path = usePath()
+  const signedIn = useSignedIn()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const signedIn = useSignedIn()
-  const menuButtonRef = useRef<AnyValue>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    setOpen(false)
-  }, [path])
+  useEffect(() => setOpen(false), [path])
 
-  // every public page opens on a deep band under the header; it turns solid once the page scrolls
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 24)
     update()
@@ -89,7 +53,7 @@ function SiteHeader() {
 
   useEffect(() => {
     if (!open) return undefined
-    const close = (event: AnyValue) => {
+    const close = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       setOpen(false)
       menuButtonRef.current?.focus()
@@ -98,15 +62,23 @@ function SiteHeader() {
     return () => window.removeEventListener('keydown', close)
   }, [open])
 
+  const current = (href: string) => (isSiteRouteActive(path, href) ? 'page' : undefined)
   return (
     <header className="siteHeader" data-overlay={!scrolled && !open ? '' : undefined}>
       <div className="siteHeaderInner">
         <A href="/" className="wordmark siteWordmark" aria-label="YOUNGO home">
           <Brand constituencyOnly />
         </A>
-        <nav className="siteNav siteNavDesktop" aria-label="About YOUNGO">
-          {SITE_MENUS.map((menu) => (
-            <SiteNavMenu key={menu.id} id={menu.id} label={menu.label} path={path} />
+        <nav className="siteNav siteNavDesktop" aria-label="Pages">
+          {NAV_LINKS.map(({ href, label }) => (
+            <A
+              key={href}
+              href={href}
+              className={`siteNavItem ${current(href) ? 'active' : ''}`}
+              aria-current={current(href)}
+            >
+              {label}
+            </A>
           ))}
         </nav>
         {!signedIn && (
@@ -133,30 +105,22 @@ function SiteHeader() {
         </button>
       </div>
       {open && (
-        <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="About YOUNGO">
-          {[
-            { label: '', routes: SITE_ROUTES.filter((route) => !route.menu) },
-            ...SITE_MENUS.map((menu) => ({ label: menu.label, routes: routesIn(menu.id) })),
-          ].map((group) => (
-            <div key={group.label || 'pages'} className="siteMobileNavGroup">
-              {group.label && <p className="siteMobileNavHeading">{group.label}</p>}
-              {group.routes.map(({ href, label }) => (
-                <A
-                  key={href}
-                  href={href}
-                  className={`siteMobileNavItem ${isSiteRouteActive(path, href) ? 'active' : ''}`}
-                  aria-current={isSiteRouteActive(path, href) ? 'page' : undefined}
-                >
-                  {label}
-                  <ArrowRight size={15} strokeWidth={1.75} aria-hidden />
-                </A>
-              ))}
-            </div>
+        <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="Pages">
+          {[SITE_ROUTES[0], ...NAV_LINKS].map(({ href, label }) => (
+            <A
+              key={href}
+              href={href}
+              className={`siteMobileNavItem ${current(href) ? 'active' : ''}`}
+              aria-current={current(href)}
+            >
+              {label}
+            </A>
           ))}
-          <A className="siteMobileNavItem siteMobileSignIn" href="/signin">
-            Sign in to the Hub
-            <ArrowRight size={15} aria-hidden />
-          </A>
+          {!signedIn && (
+            <A className="siteMobileNavItem" href="/signin">
+              Sign in
+            </A>
+          )}
         </nav>
       )}
     </header>
@@ -178,7 +142,7 @@ function SiteFooter() {
           <Brand constituencyOnly />
           <p className="meta">{footer.brand}</p>
           <ul className="siteSocials" aria-label={footer.followTitle}>
-            {socials.map((link: AnyValue) => (
+            {socials.map((link: { key: string; url: string; label: string }) => (
               <li key={link.key}>
                 <a
                   href={link.url}
@@ -197,9 +161,9 @@ function SiteFooter() {
             </li>
           </ul>
         </div>
-        <nav className="siteFooterCol" aria-label="Site pages">
+        <nav className="siteFooterCol" aria-label="Pages">
           <h2>{footer.exploreTitle}</h2>
-          {SITE_ROUTES.filter((route) => route.footer !== false).map(({ href, label }) => (
+          {SITE_ROUTES.map(({ href, label }) => (
             <A key={href} href={href}>
               {label}
             </A>
@@ -207,26 +171,27 @@ function SiteFooter() {
         </nav>
         <div className="siteFooterCol">
           <h2>{footer.involvedTitle}</h2>
-          {(footer.involved || []).map((link: AnyValue) =>
-            link.external ? (
-              <a key={link.label} href={link.href} target="_blank" rel="noreferrer noopener">
-                {link.label}
-                <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
-              </a>
-            ) : (
-              <A key={link.label} href={link.href}>
-                {link.label}
-              </A>
-            ),
+          {(footer.involved || []).map(
+            (link: { label: string; href: string; external?: boolean }) =>
+              link.external ? (
+                <a key={link.label} href={link.href} target="_blank" rel="noreferrer noopener">
+                  {link.label}
+                  <ArrowRight size={13} strokeWidth={1.75} aria-hidden />
+                </a>
+              ) : (
+                <A key={link.label} href={link.href}>
+                  {link.label}
+                </A>
+              ),
           )}
         </div>
       </div>
-      <p className="siteFooterLegal metaMuted">
-        {footer.legal} <a href={footer.legalLink?.href || '/privacy'}>{footer.legalLink?.label}</a>
-      </p>
     </footer>
   )
 }
+
+// shown for a moment while an old page path moves to its new place
+const Nothing = () => null
 
 function SiteNotFound() {
   const { doc: site } = useDocument('site')
@@ -248,32 +213,43 @@ function SiteNotFound() {
 }
 
 /**
- * The public YOUNGO website: a multi-page introduction to the constituency,
- * readable before any account, policy scroll, or cookies. All data shown is
- * served by the public API, which redacts member-only details.
+ * The public YOUNGO website: four pages, readable before any account, policy scroll, or
+ * cookies. All data shown is served by the public API, which redacts member-only details.
  */
 export function PublicSite() {
   const path = usePath()
-  let Page: AnyValue = SiteNotFound
-  if (isSiteHome(path)) Page = SiteHome
-  else if (isSiteRouteActive(path, '/about/working-groups')) Page = SiteWorkingGroups
-  else if (isSiteRouteActive(path, '/about/resources')) Page = SiteResources
-  else if (isSiteRouteActive(path, '/about/gys')) Page = SiteGys
-  else if (isSiteRouteActive(path, '/about/coy')) Page = SiteCoy
-  else if (isSiteRouteActive(path, '/about/faq')) Page = SiteFaq
-  else if (isSiteRouteActive(path, '/about/contact')) Page = SiteContact
-  else if (isSiteRouteActive(path, '/about/organisation')) Page = PublicPlatform
+  const legacy = LEGACY_SITE_PATHS[path]
+  const first = useRef(true)
+
+  // old page paths move to their section in the page that now holds them
+  useEffect(() => {
+    if (legacy) replace(legacy)
+  }, [legacy])
+
+  // a new page starts at its top, and screen readers land on its content
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    document.getElementById('site-main')?.focus({ preventScroll: true })
+  }, [path])
+
+  // exact paths only: an unknown /about/x is a 404, not the About page
+  const Page = isSiteHome(path) ? SiteHome : (PAGES[path] ?? (legacy ? Nothing : SiteNotFound))
 
   return (
-    <div className="siteShell" onPointerMove={trackPointer}>
-      <a className="skipLink" href="#site-main">
-        Skip to main content
-      </a>
-      <SiteHeader />
-      <main id="site-main" tabIndex={-1}>
-        <Page />
-      </main>
-      <SiteFooter />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="siteShell" onPointerMove={trackPointer}>
+        <a className="skipLink" href="#site-main">
+          Skip to main content
+        </a>
+        <SiteHeader />
+        <main id="site-main" tabIndex={-1}>
+          <Page />
+        </main>
+        <SiteFooter />
+      </div>
+    </MotionConfig>
   )
 }

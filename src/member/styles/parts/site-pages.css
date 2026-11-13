@@ -61,34 +61,6 @@
   background: var(--bg-card);
 }
 
-.siteCoySearch {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  background: var(--bg-page);
-  color: var(--text-3);
-}
-
-.siteCoySearch:focus-within {
-  border-color: var(--accent);
-  box-shadow: var(--glow-accent);
-}
-
-.siteCoySearch input {
-  flex: 1;
-  min-width: 0;
-  min-height: 40px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text-1);
-  font: inherit;
-  font-size: 14px;
-}
-
 .siteCoyFormats {
   display: grid;
   gap: var(--space-1);
@@ -175,42 +147,10 @@
 }
 
 .siteFaqTools {
-  position: sticky;
-  top: var(--ld-header-h);
-  z-index: 2;
   display: grid;
   gap: var(--space-2);
   padding-block: var(--space-3);
   background: var(--bg-page);
-}
-
-.siteFaqSearch {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding-inline: var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--bg-card);
-  color: var(--text-3);
-  box-shadow: var(--shadow-card);
-}
-
-.siteFaqSearch:focus-within {
-  border-color: var(--accent);
-  box-shadow: var(--glow-accent);
-}
-
-.siteFaqSearch input {
-  flex: 1;
-  min-width: 0;
-  min-height: 48px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text-1);
-  font: inherit;
-  font-size: 16px;
 }
 
 .siteFaqMeta {
@@ -220,27 +160,7 @@
   gap: var(--space-3);
 }
 
-.siteFaqList {
-  counter-reset: faq;
-}
-
-.siteFaqList li {
-  counter-increment: faq;
-}
-
 /* questions are numbered in display type, so the page reads as a numbered index */
-.siteFaqItem summary::before {
-  content: counter(faq, decimal-leading-zero);
-  margin-right: var(--space-4);
-  color: var(--accent);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.siteFaqItem summary span {
-  flex: 1;
-}
 
 .siteFaqEmpty {
   margin-top: var(--space-6);
@@ -256,55 +176,575 @@
 /* ── Contact: a bento of routes, the first one featured ── */
 .siteBento {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: minmax(170px, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
 .siteBento .siteContactCard {
   position: relative;
   overflow: hidden;
-  align-content: space-between;
   transition:
     border-color var(--motion-standard) var(--motion-ease),
-    box-shadow var(--motion-standard) var(--motion-ease);
+    box-shadow var(--motion-standard) var(--motion-ease),
+    transform var(--motion-standard) var(--motion-ease);
 }
 
 .siteBento .siteContactCard:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-card-hover);
-}
-
-.siteBento .siteContactCard:first-child {
-  grid-column: span 2;
-  grid-row: span 2;
-  padding: var(--space-8);
-}
-
-.siteBento .siteContactCard:first-child {
-  grid-template-columns: minmax(0, 1fr);
-  align-content: space-between;
+  transform: translateY(-2px);
 }
 
 /* an odd tile out takes the whole last row */
-.siteBento .siteContactCard:last-child:nth-child(4) {
+.siteBento .siteContactCard:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
 
-.siteBento .siteContactCard:first-child h3 {
+@media (max-width: 700px) {
+  .siteBento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── footer: brand, two link columns, then the legal row ── */
+.siteFooter .siteFooterInner {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 56px) var(--ld-gutter) var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(150px, 1fr));
+  gap: clamp(24px, 4vw, 48px);
+}
+
+.siteFooterBrand .meta {
+  max-width: 34ch;
+  margin-top: var(--space-3);
+}
+
+.siteFooterCol {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.siteFooterCol h2 {
+  color: var(--ld-on-deep-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.siteFooterCol a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  color: var(--ld-on-deep);
+  font-size: 14px;
+  text-underline-offset: 4px;
+}
+
+.siteFooterCol a:hover {
+  color: var(--ld-accent-deep);
+  text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .siteFooter .siteFooterInner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .siteFooterBrand {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── sections: each is a block with an icon heading; every other one sits on a rounded surface ── */
+.siteBlock {
+  scroll-margin-top: calc(var(--ld-header-h) + 56px);
+  padding-block: clamp(32px, 5vw, 64px);
+}
+
+.siteBlock:nth-of-type(even) {
+  margin-inline: calc(var(--ld-gutter) * -1);
+  padding-inline: var(--ld-gutter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+}
+
+.siteBlockHead {
+  max-width: 62ch;
+  margin-bottom: clamp(20px, 3vw, 32px);
+}
+
+.siteBlockTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.siteBlockHead h2 {
+  flex: 1;
+  line-height: 1.1;
+  font-size: clamp(26px, 3.6vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.siteSub + .siteSub {
+  margin-top: clamp(28px, 4vw, 48px);
+}
+
+.siteSub > h3 {
+  margin-bottom: var(--space-3);
+  font-size: 20px;
+}
+
+/* ── "on this page": a sticky row of links that marks where you are ── */
+.siteSectionNav {
+  position: sticky;
+  top: calc(var(--ld-header-h) - 1px);
+  z-index: 3;
+  margin-inline: calc(var(--ld-gutter) * -1);
+  padding: var(--space-2) var(--ld-gutter);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-page) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.siteSectionNav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteSectionNav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background var(--motion-standard) var(--motion-ease),
+    color var(--motion-standard) var(--motion-ease);
+}
+
+.siteSectionNav a:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.siteSectionNav a[aria-current='location'] {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+/* ── search on the public pages ── */
+.sitePublicSearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-page);
+  color: var(--text-3);
+}
+
+.sitePublicSearchLarge {
+  gap: var(--space-3);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.sitePublicSearch:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.sitePublicSearch input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+}
+
+.sitePublicSearch input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sitePublicSearchClear {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.sitePublicSearchClear:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.sitePublicSearch[data-empty] .sitePublicSearchClear {
+  display: none;
+}
+
+/* ── working groups: a browse bar over a grid ── */
+.siteBrowseBar {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.siteBrowseChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.siteWgGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteWgGrid li {
+  display: grid;
+}
+
+/* ── FAQ on react-aria's Disclosure: a numbered help centre ── */
+.siteFaqList {
+  display: grid;
+  gap: var(--space-2);
+  counter-reset: faq;
+}
+
+.siteFaqItem {
+  counter-increment: faq;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-page);
+}
+
+.siteFaqItem h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.siteFaqTrigger,
+.siteDisclosureTrigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.siteFaqTrigger::before {
+  content: counter(faq, decimal-leading-zero);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.siteFaqTrigger span {
+  flex: 1;
+}
+
+.siteFaqTrigger svg {
+  flex: none;
+  transition: transform var(--motion-standard) var(--motion-ease);
+}
+
+.siteFaqTrigger[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.siteFaqItem [role='region'] {
+  padding: 0 var(--space-4) var(--space-4) calc(var(--space-4) + 2.2em);
+}
+
+@media (max-width: 760px) {
+  .siteBlock:nth-of-type(even) {
+    margin-inline: 0;
+    padding-inline: var(--space-4);
+  }
+}
+
+/* ── our work: the reach row, topic tiles and the featured conference ── */
+.siteReach {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-6) 0 0;
+}
+
+.siteReachItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'icon number' 'icon label';
+  align-items: center;
+  column-gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  background: var(--bg-card);
+}
+
+.siteReachItem svg {
+  grid-area: icon;
+  padding: 11px;
+  box-sizing: content-box;
+  border-radius: 14px;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.siteReachItem dd {
+  grid-area: number;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.4vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.siteReachItem dt {
+  grid-area: label;
+  color: var(--text-2);
+  font-size: 15px;
+}
+
+.siteTopicTiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.siteTopicTile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-page);
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-standard) var(--motion-ease),
+    background var(--motion-standard) var(--motion-ease),
+    transform var(--motion-standard) var(--motion-ease-out);
+}
+
+.siteTopicTile svg {
+  color: var(--accent);
+}
+
+.siteTopicName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.siteTopicCount {
+  color: var(--text-3);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.siteTopicTile[data-hovered] {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.siteTopicTile[data-selected] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+}
+
+.siteTopicTile[data-focus-visible] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.siteFeatured {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  overflow: hidden;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+}
+
+.siteFeatured h3 {
   font-family: var(--font-display);
   font-size: clamp(24px, 3vw, 34px);
   letter-spacing: -0.02em;
 }
 
-@media (max-width: 900px) {
-  .siteBento {
+.siteFeaturedMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* main takes focus on page change for screen readers; it is a landmark, not a control, so no ring */
+#site-main:focus {
+  outline: none;
+}
+
+/* ── enquiry form: react-aria fields, native validation, inline errors ── */
+.siteForm {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 720px;
+}
+
+.siteFormRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.siteField {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.siteField > label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.siteField .input[data-invalid] {
+  border-color: var(--danger, #b42318);
+}
+
+.siteField .input[data-focused] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.siteFieldCount {
+  justify-self: end;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.siteCheck {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  color: var(--text-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.siteCheckBox {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: transparent;
+  transition:
+    background var(--motion-standard) var(--motion-ease),
+    border-color var(--motion-standard) var(--motion-ease);
+}
+
+.siteCheck[data-selected] .siteCheckBox {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.siteCheck[data-focus-visible] .siteCheckBox {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.siteFormSubmit {
+  justify-self: start;
+}
+
+.siteFormDone {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  max-width: 720px;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.siteFormDone h3 {
+  color: var(--text-1);
+}
+
+.siteFormDone .meta {
+  margin-block: var(--space-1) var(--space-3);
+}
+
+@media (max-width: 600px) {
+  .siteFormRow {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .siteBento .siteContactCard:first-child {
-    grid-column: auto;
-    grid-row: auto;
-    padding: var(--space-5);
-  }
+.siteField .fieldError {
+  padding: 0;
+  background: none;
+  color: var(--danger, #b42318);
+  font-size: var(--font-size-sm);
 }
