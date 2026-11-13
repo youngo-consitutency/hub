@@ -50,7 +50,6 @@ import {
   TbSearch as Search,
   TbSparkles as Sparkles,
   TbVideo as Video,
-  TbLayoutSidebarRightExpand,
   TbArrowUpRight,
 } from 'react-icons/tb'
 import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions'
@@ -124,18 +123,6 @@ function OpportunityCard({
         aria-label={`${item.title} — open details in side peek`}
         onClick={() => onPeek?.(item)}
       />
-      <button
-        type="button"
-        className="cardPeekTrigger"
-        onClick={(e) => {
-          e.stopPropagation()
-          onPeek?.(item)
-        }}
-        aria-label={`Side peek for ${item.title}`}
-      >
-        <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
-        <span>Side peek</span>
-      </button>
       <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
         {item.organizationName && <p className="metaMuted">{item.organizationName}</p>}

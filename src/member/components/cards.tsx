@@ -84,7 +84,6 @@ import { DestinationIcon } from './DestinationLink'
 import { coyDisplayStatus } from '../../shared/coyStatus'
 import {
   TbCalendar as CalendarDays,
-  TbLayoutSidebarRightExpand,
   TbMapPin as MapPin,
   TbUsersGroup as UsersRound,
   TbArrowUpRight as ArrowUpRight,
@@ -165,20 +164,6 @@ function LinkedEntityCard({
       ) : (
         <A href={href} className="entityCardLinkOverlay" aria-label={label} peek />
       )}
-      {onPeek && (
-        <button
-          type="button"
-          className="cardPeekTrigger"
-          onClick={(e) => {
-            e.stopPropagation()
-            onPeek()
-          }}
-          aria-label={`Side peek for ${label || 'item'}`}
-        >
-          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
-          <span>Side peek</span>
-        </button>
-      )}
       {children}
     </article>
   )
@@ -218,20 +203,6 @@ export function EventCard({ event, onPeek }: EventCardProps) {
           aria-label={`Open ${event.title}`}
           peek
         />
-      )}
-      {onPeek && (
-        <button
-          type="button"
-          className="cardPeekTrigger"
-          onClick={(e) => {
-            e.stopPropagation()
-            onPeek(event)
-          }}
-          aria-label={`Side peek for ${event.title}`}
-        >
-          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
-          <span>Side peek</span>
-        </button>
       )}
       <div className="eventCardIdentity">
         <DateStamp iso={event.startsAt} />
@@ -377,20 +348,6 @@ export function GroupCard({
           aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
           peek
         />
-      )}
-      {onPeek && (
-        <button
-          type="button"
-          className="cardPeekTrigger"
-          onClick={(e) => {
-            e.stopPropagation()
-            onPeek(group)
-          }}
-          aria-label={`Side peek for ${group.name}`}
-        >
-          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
-          <span>Side peek</span>
-        </button>
       )}
       <div className="groupCardBody">
         <div className="groupCardCopy">

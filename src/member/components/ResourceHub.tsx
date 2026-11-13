@@ -33,7 +33,6 @@ interface ResourceReportProps {
 import type { AnyValue } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
 import { ResourcePeek } from './EntityPeeks'
-import { TbLayoutSidebarRightExpand } from 'react-icons/tb'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
 import { useMemo, useState } from 'react'
@@ -111,20 +110,6 @@ export function ResourceCard({
           aria-label={`Open ${resource.title} in side peek`}
           onClick={() => onPeek(resource)}
         />
-      )}
-      {onPeek && (
-        <button
-          type="button"
-          className="cardPeekTrigger"
-          onClick={(e) => {
-            e.stopPropagation()
-            onPeek(resource)
-          }}
-          aria-label={`Side peek for ${resource.title}`}
-        >
-          <TbLayoutSidebarRightExpand size={13} strokeWidth={1.8} aria-hidden />
-          <span>Side peek</span>
-        </button>
       )}
       <div className="resourceHubCardTop">
         <SiteFavicon url={resource.url} />
