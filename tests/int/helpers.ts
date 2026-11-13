@@ -9,7 +9,7 @@ import { provisionAccount, type TestSpec } from './provision'
 
 export const BASE = process.env.TEST_BASE_URL || 'http://localhost:3000'
 
-async function login(email: string, password: string) {
+export async function login(email: string, password: string) {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ async function login(email: string, password: string) {
 
 export async function session(spec: TestSpec) {
   const { account, email, password } = await provisionAccount(spec)
-  return { ...(await login(email, password)), account }
+  return { ...(await login(email, password)), account, email, password }
 }
 
 export const api = (path: string, { cookie, ...init }: { cookie?: string } & RequestInit = {}) => {

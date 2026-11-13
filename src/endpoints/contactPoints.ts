@@ -5,6 +5,7 @@ import { audit } from '../lib/audit'
 import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { createWgActivity } from '../lib/wgActivities'
+import { wgProgressView } from './member'
 import type { Doc, AnyValue } from '../lib/domain'
 
 function publicSlot(s: AnyValue, { withEmail = false } = {}) {
@@ -24,6 +25,12 @@ function publicSlot(s: AnyValue, { withEmail = false } = {}) {
     bookedAt: s.bookedAt || null,
   }
 }
+
+// values the wg-progress collection accepts; `pending_approval` is the
+// member's own request, so a contact point never sets it
+const REVIEW_STATUSES = ['active', 'rejected', 'inactive']
+const WG_ROLES = ['member', 'contact', 'lead']
+type WgStatus = 'active' | 'rejected' | 'inactive'
 
 export const contactPointEndpoints: Endpoint[] = [
   // ── Contact point (WG management) ─────────────────────────────────
@@ -71,30 +78,43 @@ export const contactPointEndpoints: Endpoint[] = [
       if (!canManageWg(access, wg)) throw fail.forbidden()
       const accountId = param(req, 'accountId')
       const b = await readBody(req)
-      const roleInWg = ['member', 'contact_point', 'observer'].includes(b.roleInWg)
-        ? b.roleInWg
-        : 'member'
+      // the review decision: Approve → active, Reject → rejected
+      const status = b.status === undefined ? undefined : String(b.status)
+      if (status !== undefined && !REVIEW_STATUSES.includes(status))
+        throw fail.validation({ status: 'Choose active, rejected or inactive.' })
+      const rawRole = b.roleInWg ?? b.role
+      const roleInWg =
+        rawRole === undefined ? undefined : WG_ROLES.includes(rawRole) ? rawRole : 'member'
+      if (status === undefined && roleInWg === undefined)
+        throw fail.validation({ status: 'Send a status or a role.' })
       const { docs } = await req.payload.find({
         collection: 'wg-progress',
         where: { wgSlug: { equals: wg }, account: { equals: accountId } },
         limit: 1,
+        depth: 0,
         overrideAccess: true,
       })
-      if (!docs[0]) throw fail.notFound()
+      const current = docs[0] as Doc | undefined
+      if (!current) throw fail.notFound()
       const updated = await req.payload.update({
         collection: 'wg-progress',
-        id: (docs[0] as Doc).id,
-        data: { roleInWg },
+        id: current.id,
+        data: {
+          ...(status !== undefined ? { status: status as WgStatus } : {}),
+          ...(roleInWg !== undefined ? { roleInWg } : {}),
+        },
+        depth: 0,
         overrideAccess: true,
         req,
       })
       await audit(req, account, {
-        action: 'wg.role_update',
+        action: 'wg.membership_review',
         targetType: 'wg_progress',
-        targetId: String((docs[0] as Doc).id),
-        after: { wg, roleInWg },
+        targetId: String(current.id),
+        before: { status: current.status, roleInWg: current.roleInWg },
+        after: { wg, status: updated.status, roleInWg: updated.roleInWg },
       })
-      return json({ progress: updated })
+      return json({ progress: wgProgressView(updated, accountId) })
     }),
   },
   {
@@ -229,12 +249,13 @@ export const contactPointEndpoints: Endpoint[] = [
           bookedAt: new Date().toISOString(),
           status: 'booked',
         },
+        depth: 1,
         overrideAccess: true,
         req,
       })
       const updated = claimed.docs[0]
       if (!updated) throw new ApiError(409, 'conflict', 'This slot was already booked.')
-      return json({ slot: updated }, { status: 201 })
+      return json({ slot: publicSlot(updated) }, { status: 201 })
     }),
   },
   {
@@ -258,10 +279,11 @@ export const contactPointEndpoints: Endpoint[] = [
         collection: 'cp-call-slots',
         id,
         data: { bookedByAccount: null, bookedAt: null, status: 'open' },
+        depth: 1,
         overrideAccess: true,
         req,
       })
-      return json({ released })
+      return json({ released: publicSlot(released) })
     }),
   },
   {
@@ -311,6 +333,7 @@ export const contactPointEndpoints: Endpoint[] = [
           throw fail.validation({ durationMinutes: 'Duration must be 10–240 minutes.' })
         created.push(
           await req.payload.create({
+            depth: 1,
             collection: 'cp-call-slots',
             data: {
               startsAt: new Date(startsAt).toISOString(),
@@ -324,7 +347,10 @@ export const contactPointEndpoints: Endpoint[] = [
           }),
         )
       }
-      return json({ slots: created }, { status: 201 })
+      return json(
+        { slots: created.map((c) => publicSlot(c, { withEmail: true })) },
+        { status: 201 },
+      )
     }),
   },
   {
