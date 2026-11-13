@@ -44,6 +44,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # install before the DSN lands in GITHUB_ENV so install scripts never see it
+      - run: npm ci
 
       - name: Create or reuse the PR Neon branch
         id: branch
@@ -76,8 +78,6 @@ jobs:
           echo "::add-mask::$DSN"
           echo "DATABASE_URL=$DSN" >> "$GITHUB_ENV"
 
-      - run: npm ci
-        if: steps.branch.outputs.skip != 'true'
       # a schema-only copy has the tables but not payload_migrations' rows, so
       # migrate would replay over them. build from migrations instead, like CI.
       # also wipes any older pr branch that was copied with data
