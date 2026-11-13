@@ -12,14 +12,11 @@ import { AccountProvider } from '../../../member/lib/accountContext'
 import { disablePWAInDevelopment, initPWA } from '../../../member/lib/pwa'
 import { RouterProvider } from 'react-aria-components'
 import { navigate, RouterBridge } from '../../../member/lib/router'
-import { watchSystemTheme } from '../../../member/lib/theme'
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const stopThemeSync = watchSystemTheme()
     if (process.env.NODE_ENV === 'production') initPWA()
     else disablePWAInDevelopment()
-    return () => stopThemeSync?.()
   }, [])
   // react aria links and menu items navigate through the app router
   return (

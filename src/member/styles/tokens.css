@@ -2,7 +2,7 @@
    Follows European and international accessibility standards (WCAG 2.2 AA / EN 301 549).
    British English conventions apply throughout. */
 :root {
-  /* logo variant per surface: the on-dark art swaps in under dark themes and deep sections */
+  /* logo variant per surface: the on-dark art swaps in on the deep brand bands */
   --brand-dark-display: none;
   --brand-light-display: inline-block;
   --bg-page: #f7f9f6;
@@ -139,54 +139,6 @@
   }
 }
 
-[data-theme='dark'] {
-  --bg-page: #0b1411;
-  --bg-card: #14221c;
-  --bg-raised: #1c2e27;
-  --bg-popover: #1c2e27;
-  --brand-dark-display: inline-block;
-  --brand-light-display: none;
-  --text-1: #f1f8f3;
-  --text-2: #c4d7cc;
-  --text-3: #9fb7a9;
-  --border: #273e33;
-  --border-strong: #5f8370;
-  --accent: #4ade80;
-  --accent-hover: #86efac;
-  --on-accent: #052617;
-  --accent-tint: #133927;
-  --on-accent-tint: #86efac;
-  --success: #4ade80;
-  --success-tint: #133927;
-  --on-success-tint: #86efac;
-  --live: #a3e635;
-  --live-tint: rgba(163, 230, 53, 0.15);
-  --warn: #fbbf24;
-  --warn-tint: rgba(245, 158, 11, 0.15);
-  --danger: #f87171;
-  --danger-tint: rgba(239, 68, 68, 0.15);
-  --info: #7dd3fc;
-  --info-tint: rgba(14, 165, 233, 0.15);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.28);
-  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.42);
-  --shadow-popover: 0 8px 32px rgba(0, 0, 0, 0.55);
-  --shadow-drawer: -8px 0 36px rgba(0, 0, 0, 0.6);
-  --shadow-sticky: 0 -8px 24px rgba(0, 0, 0, 0.35);
-  --overlay: rgba(0, 0, 0, 0.72);
-  --glow-accent: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
-  --calendar-gys: #c4b5fd;
-  --calendar-coordination: #a5b4fc;
-  --landing-canvas: var(--bg-page);
-  --landing-surface: var(--bg-card);
-  --landing-ink: var(--text-1);
-  --landing-teal: #72d1c8;
-  --landing-lime: #a5d978;
-  --landing-forest: #57b875;
-  --landing-line: rgba(165, 217, 120, 0.18);
-  --landing-shadow: none;
-  --ld-spot: color-mix(in srgb, var(--accent) 22%, transparent);
-}
-
 /* Base typography and standards */
 * {
   box-sizing: border-box;
@@ -226,10 +178,6 @@ body {
 html {
   scrollbar-gutter: stable;
   color-scheme: light;
-}
-
-[data-theme='dark'] {
-  color-scheme: dark;
 }
 
 body {
