@@ -75,10 +75,9 @@ export function DecisionPage({ slug }: { slug: string }) {
                     <strong>Outcome evidence:</strong> {d.outcomeEvidence}
                   </p>
                 )}
-                {d.electorateSize !== null && (
+                {d.votesFor !== null && (
                   <p>
-                    External vote: {d.votesFor} for, {d.votesAgainst} against, {d.electorateSize}{' '}
-                    eligible seats.
+                    Recorded vote: {d.votesFor} for, {d.votesAgainst} against.
                   </p>
                 )}
                 <A href="/work">Assign follow-up work</A>
@@ -231,8 +230,8 @@ export function DecisionPage({ slug }: { slug: string }) {
                   <Feedback error={failure} message="" />
                   <p className="meta">
                     Review the current proposal, relevant body, flags and policy before confirming.
-                    Periods cannot be shortened. Voting outcomes refer to an externally conducted
-                    vote and its eligible seats.
+                    Periods cannot be shortened. Voting outcomes are worked out from the stored
+                    ballots.
                   </p>
                   <form
                     className="platformForm"
@@ -272,31 +271,11 @@ export function DecisionPage({ slug }: { slug: string }) {
                           <option value="process">Recorded process / vote</option>
                           <option value="formal_veto">Formal veto: withdraw the proposal</option>
                         </Select>
-                        <Field
-                          label="Organisations requesting a veto"
-                          name="vetoOrganisations"
-                          type="number"
-                          defaultValue="0"
-                        />
-                        <Field
-                          label="Of those, Global South organisations"
-                          name="vetoGlobalSouth"
-                          type="number"
-                          defaultValue="0"
-                        />
-                        <Field
-                          label="Working groups / operational teams requesting a veto"
-                          name="vetoBodies"
-                          type="number"
-                          defaultValue="0"
-                        />
-                        <Field
-                          label="Eligible seats in the external vote"
-                          name="electorateSize"
-                          type="number"
-                        />
-                        <Field label="Votes for" name="votesFor" type="number" />
-                        <Field label="Votes against" name="votesAgainst" type="number" />
+                        <p className="meta">
+                          Vote counts come from the ballots stored on the Hub and cannot be typed
+                          in. A formal veto only succeeds once the required veto requests have been
+                          confirmed.
+                        </p>
                       </>
                     )}
                     <button disabled={busy} className="btn btn-primary">
