@@ -15,7 +15,7 @@ import {
 import { audit } from './audit'
 import { accountRef } from './accounts'
 import { sql } from '@payloadcms/db-postgres'
-import { txHandle } from './pg'
+import { txHandle, withTransaction } from './pg'
 import type { VetoRequest } from './decisions'
 import type { AccountLike, ActorLike, Doc, AnyValue } from './domain'
 
@@ -248,8 +248,8 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
 // compare-and-set on status: every status writer goes through here, so
 // concurrent racers (deadline reads, withdraw, facilitator moves) can't
 // overwrite each other. only the one that moves the row off its current
-// status writes the rest + the event, all in one tx (same join/commit shape
-// as withAuthorityLock). null means someone else got there first
+// status writes the rest + the event, all in one tx (withTransaction). null
+// means someone else got there first
 export async function transition(
   req: PayloadRequest,
   proposal: Doc,
@@ -258,7 +258,7 @@ export async function transition(
   actor: ActorLike | null = null,
   detail?: AnyValue,
 ): Promise<Doc | null> {
-  const apply = async (transactionID: AnyValue) => {
+  return withTransaction(req, async (transactionID) => {
     // the row lock from this UPDATE holds racers until commit, then they miss
     const { rows } = await (req.payload.db as Doc).execute({
       db: txHandle(req.payload, transactionID),
@@ -275,23 +275,7 @@ export async function transition(
     })
     await recordEvent(req, proposal.id, type, actor, detail)
     return updated
-  }
-  // joined tx: the caller owns commit/rollback
-  if (req.transactionID != null) return apply(req.transactionID)
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
-    const updated = await apply(transactionID)
-    if (updated) await req.payload.db.commitTransaction(transactionID)
-    else await req.payload.db.rollbackTransaction(transactionID)
-    return updated
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+  })
 }
 
 // Advance the state machine by wall-clock deadlines. Safe to call

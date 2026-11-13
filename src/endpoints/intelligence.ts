@@ -8,7 +8,7 @@ import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
-import { isUniqueViolation, txHandle } from '../lib/pg'
+import { isUniqueViolation, txHandle, withTransaction } from '../lib/pg'
 import type { Doc, AnyValue } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
@@ -133,36 +133,22 @@ const citationsSchema = z
 const reloadNote = (req: PayloadRequest, id: AnyValue) =>
   req.payload.findByID({ collection: 'research-notes', id, depth: 0, overrideAccess: true })
 
-// compare-and-set the status and audit it in one tx (same join/commit shape as
-// withAuthorityLock); no row claimed → 409, which rolls back
+// compare-and-set the status and audit it in one tx (withTransaction); no row
+// claimed → 409, which rolls back
 async function transition(
   req: PayloadRequest,
   claim: ReturnType<typeof sql>,
   conflict: string,
   record: () => Promise<void>,
 ) {
-  const apply = async (transactionID: AnyValue) => {
+  return withTransaction(req, async (transactionID) => {
     const { rows } = await (req.payload.db as Doc).execute({
       db: txHandle(req.payload, transactionID),
       sql: claim,
     })
     if (!rows?.length) throw new ApiError(409, 'conflict', conflict)
     await record()
-  }
-  // joined tx: the caller owns commit/rollback
-  if (req.transactionID != null) return apply(req.transactionID)
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
-    await apply(transactionID)
-    await req.payload.db.commitTransaction(transactionID)
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+  })
 }
 
 export const intelligenceEndpoints: Endpoint[] = [

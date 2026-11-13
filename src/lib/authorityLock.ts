@@ -1,6 +1,6 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { Doc, AnyValue } from './domain'
-import { txHandle } from './pg'
+import { txHandle, withTransaction } from './pg'
 
 // Shared writer coordination for authority records (S11/S13). Every path
 // that creates or ends a record takes the same transaction-scoped advisory
@@ -48,22 +48,8 @@ export async function withAuthorityLock<T>(
   const acquire = async (transactionID: AnyValue) => {
     for (const id of accountIds) await advisoryAuthorityLock(req.payload, transactionID, id)
   }
-  if (req.transactionID != null) {
-    await acquire(req.transactionID)
-    return fn()
-  }
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
+  return withTransaction(req, async (transactionID) => {
     await acquire(transactionID)
-    const result = await fn()
-    await req.payload.db.commitTransaction(transactionID)
-    return result
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+    return fn()
+  })
 }
