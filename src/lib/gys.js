@@ -34,7 +34,7 @@ const FIELD_PATTERNS = {
   title: [/^title$/i, /headline/i, /summary\s*title/i],
 }
 
-export function parseCsv(text) {
+function parseCsv(text) {
   const source = String(text || '').replace(/^\uFEFF/, '')
   if (!source.trim()) return { headers: [], rows: [] }
   const { data } = Papa.parse(source, { skipEmptyLines: 'greedy' })
@@ -53,7 +53,7 @@ function matchField(header, patterns) {
   return patterns.some((pattern) => pattern.test(header))
 }
 
-export function detectColumnMap(headers, overrides = {}) {
+function detectColumnMap(headers, overrides = {}) {
   const map = {
     timestamp: null,
     email: null,
@@ -91,7 +91,7 @@ function cell(row, key) {
   return String(row[key] ?? '').trim()
 }
 
-export function externalIdForRow(row, map) {
+function externalIdForRow(row, map) {
   const parts = [
     cell(row, map.timestamp),
     cell(row, map.email),
@@ -102,7 +102,7 @@ export function externalIdForRow(row, map) {
   return createHash('sha256').update(parts.join('|')).digest('hex').slice(0, 32)
 }
 
-export function mapRowToContribution(row, map, index = 0) {
+function mapRowToContribution(row, map, index = 0) {
   const body = cell(row, map.body)
   const name = cell(row, map.name)
   const theme = cell(row, map.theme)

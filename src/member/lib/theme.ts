@@ -1,12 +1,12 @@
 import type { AnyValue } from './types'
 const THEMES = new Set(['light', 'dark'])
-export const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)'
+const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)'
 // shared with public/theme-init.js, which applies it before first paint
 export const THEME_STORAGE_KEY = 'youngo-hub:theme-override'
 
 // Follow the device until the member explicitly chooses an appearance; light
 // is the fallback when the browser does not expose its colour preference.
-export const DEFAULT_THEME = 'light'
+const DEFAULT_THEME = 'light'
 
 function themeStorage() {
   try {
@@ -25,11 +25,11 @@ export function themePreference(storage: AnyValue = themeStorage()) {
   }
 }
 
-export function systemTheme(media: AnyValue) {
+function systemTheme(media: AnyValue) {
   return media?.matches ? 'dark' : DEFAULT_THEME
 }
 
-export function applyTheme(theme: AnyValue, root = document.documentElement) {
+function applyTheme(theme: AnyValue, root = document.documentElement) {
   const next = THEMES.has(theme) ? theme : DEFAULT_THEME
   root.dataset.theme = next
   root.ownerDocument

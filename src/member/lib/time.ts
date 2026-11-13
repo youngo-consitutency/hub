@@ -2,7 +2,7 @@ import type { AnyValue } from './types'
 // Canonical time display and countdown.
 // All params explicit so node --test can pin tz/now.
 
-export function localTz() {
+function localTz() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
@@ -21,7 +21,7 @@ function formatter(tz: AnyValue, options: Intl.DateTimeFormatOptions) {
   return fmt
 }
 
-export function fmtDay(iso: AnyValue, tz: AnyValue) {
+function fmtDay(iso: AnyValue, tz: AnyValue) {
   return formatter(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
 }
 

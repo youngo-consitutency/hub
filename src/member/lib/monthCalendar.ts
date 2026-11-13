@@ -10,7 +10,7 @@ export function shiftCalendarMonth({ year, month }: AnyValue, amount: AnyValue) 
   return calendarMonth(date)
 }
 
-export function eventDateKey(iso: AnyValue) {
+function eventDateKey(iso: AnyValue) {
   return new Date(iso).toISOString().slice(0, 10)
 }
 
