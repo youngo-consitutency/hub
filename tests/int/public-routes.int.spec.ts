@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   PUBLIC_PATHS,
   SITE_MENUS,
@@ -32,5 +32,24 @@ describe('public route registry', () => {
     // a shared prefix is not the same section
     expect(isSiteRouteActive('/about/coyote', '/about/coy')).toBe(false)
     expect(isSiteRouteActive('/about/coy', '/')).toBe(false)
+  })
+})
+
+// previews run on copies of real members, so they must stay out of search
+// and never send anything
+describe('preview deployments', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('drop the sitemap and keep delivery off', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    const { default: sitemap } = await import('../../src/app/sitemap')
+    const { default: robots } = await import('../../src/app/robots')
+    const { deliveryDisabled } = await import('../../src/lib/environment')
+    expect(sitemap()).toEqual([])
+    expect(robots().sitemap).toBeUndefined()
+    expect(deliveryDisabled()).toBe(true)
+    vi.stubEnv('VERCEL_ENV', 'production')
+    expect(sitemap().length).toBeGreaterThan(0)
+    expect(deliveryDisabled()).toBe(false)
   })
 })

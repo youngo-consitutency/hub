@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { noAccess, serverWrites } from '../lib/collectionAccess'
-import { AUTHORITY_ROLES, normaliseScopeType } from '../lib/authority'
+import { AUTHORITY_ROLES, normaliseScopeType, recordKind } from '../lib/authority'
 
 // role contact channels: a mailbox plus a member-only channel per role
 // holders come from authority-records via role + scopeId (working-group rows
@@ -26,9 +26,20 @@ export const DirectoryContacts: CollectionConfig = {
     {
       name: 'role',
       type: 'text',
-      // an authority registry key, e.g. focal_point
-      validate: (value: unknown) =>
-        !value || Object.hasOwn(AUTHORITY_ROLES, String(value)) || 'Unknown authority role.',
+      // an authority registry key, e.g. focal_point. mandates only: a
+      // participation role would list a whole roster past members' privacy settings
+      validate: (value: unknown, { siblingData }: { siblingData?: { scopeType?: string } }) => {
+        if (!value) return true
+        const role = String(value)
+        if (!Object.hasOwn(AUTHORITY_ROLES, role)) return 'Unknown authority role.'
+        const types = siblingData?.scopeType
+          ? [normaliseScopeType(siblingData.scopeType)]
+          : AUTHORITY_ROLES[role].scopeTypes
+        return (
+          types.every((t) => recordKind(t, role) === 'mandate') ||
+          'Directory rows name mandate holders, not member lists.'
+        )
+      },
     },
     {
       name: 'scopeId',

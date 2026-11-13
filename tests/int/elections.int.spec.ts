@@ -283,6 +283,8 @@ describe('elections (S10) and selections (S24)', () => {
     })
     const restart = (await failed.json()).election
     expect(restart.status).toBe('restart_required')
+    // a failed vote never publishes winners, even if some were submitted
+    expect(restart.result.races.seat.elected).toEqual([])
     expect(restart.votingOpensAt).toBeTruthy()
     const reopened = await call('/advance', { method: 'POST' })
     const again = (await reopened.json()).election
@@ -376,6 +378,62 @@ describe('elections (S10) and selections (S24)', () => {
     const done = (await res.json()).election
     expect(done.status).toBe('restart_required')
     expect(done.result.races.seat.elected).toEqual([])
+  })
+
+  it('freezes screening at voting and records one result under a double submit', async () => {
+    const open = async (label: string) => {
+      const create = await api('/governance/elections', {
+        method: 'POST',
+        cookie: facilitator.cookie,
+        body: JSON.stringify({
+          title: `${label} election ${Date.now()}`,
+          kind: 'other',
+          races: [{ slug: 'seat', label: 'Seat' }],
+          quorumIndividuals: 1,
+          quorumOrganisations: 0,
+        }),
+      })
+      const { election } = await create.json()
+      const call = (path: string, init: AnyValue = {}) =>
+        api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
+      await call('/advance', { method: 'POST' })
+      return call
+    }
+    const call = await open('Freeze')
+    const other = await open('Other')
+    const nom = await call('/candidates', {
+      method: 'POST',
+      cookie: voter1.cookie,
+      body: JSON.stringify({ race: 'seat', statement: 'Freeze candidate' }),
+    })
+    const cand = (await nom.json()).candidate
+    const screen = (via: typeof call) =>
+      via(`/candidates/${cand.id}/screen`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'screened_in' }),
+      })
+    // a candidate can't be screened through another election's route
+    expect((await screen(other)).status).toBe(404)
+    expect((await screen(call)).status).toBe(200)
+    await call('/ballot', {
+      method: 'PUT',
+      body: JSON.stringify({ url: 'https://vote.belenios.example/elections/freeze/' }),
+    })
+    await call('/voters')
+    await call('/advance', { method: 'POST' })
+    // the ballot list is fixed once voting opens
+    expect((await screen(call)).status).toBe(409)
+    const submit = () =>
+      call('/result', {
+        method: 'POST',
+        body: JSON.stringify({
+          archiveUrl: 'https://vote.belenios.example/elections/freeze/archive',
+          ballotsCast: { individuals: 1, organisations: 0 },
+          races: { seat: { elected: [cand.id] } },
+        }),
+      })
+    const statuses = (await Promise.all([submit(), submit()])).map((r) => r.status).sort()
+    expect(statuses).toEqual([200, 409])
   })
 
   it(

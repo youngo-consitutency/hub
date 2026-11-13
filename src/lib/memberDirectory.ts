@@ -13,10 +13,6 @@ import type { Doc, AccountLike, AccountView, AnyValue } from './domain'
 
 const WEBSITE_PERMISSIONS = ['content_editor', 'content_publisher']
 
-// contact points come from current authority records, never the participation row
-const wgDutyRoleLabel = (role: string | null | undefined, isContactPoint: boolean) =>
-  isContactPoint ? 'Contact Point' : role === 'lead' ? 'Lead' : null
-
 async function profileRow(accountId: number) {
   const pool = getPgPool()
   if (!pool) return null
@@ -126,10 +122,9 @@ function safePerson(
   const group = workingGroup
     ? relationships.workingGroups.find((item: Doc) => item.slug === workingGroup)
     : null
-  const contactRole = wgDutyRoleLabel(
-    group?.role,
-    Boolean(workingGroup) && contactPointIds.has(account.id),
-  )
+  // contact points come from current authority records, never the participation row
+  const contactRole =
+    Boolean(workingGroup) && contactPointIds.has(account.id) ? 'Contact Point' : null
   const showLocation = duty || profile.showCountry
   const directoryOpen = profile.directoryVisibility === 'members'
   return {
