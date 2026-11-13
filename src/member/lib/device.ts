@@ -1,4 +1,4 @@
-export function detectDevice({ userAgent = '', platform = '', maxTouchPoints = 0 } = {}) {
+function detectDevice({ userAgent = '', platform = '', maxTouchPoints = 0 } = {}) {
   if (/iPhone|iPad|iPod/i.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1)) {
     return 'ios'
   }

@@ -113,7 +113,7 @@ async function endRecords(
 // the sweep and the status write queues on the lock and then re-verifies
 // eligibility against the post-exit state — it cannot slip a mandate past
 // the exit. `hooks.afterSweep` exists for concurrency tests only.
-export async function applyMembershipTransition(
+async function applyMembershipTransition(
   req: PayloadRequest,
   accountId: number,
   transition: {

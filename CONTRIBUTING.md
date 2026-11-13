@@ -18,7 +18,7 @@ npm ci
 npm run dev
 ```
 
-Use Node.js 22.13 or later in the Node 22 series. The app needs `DATABASE_URL` and `PAYLOAD_SECRET`; see [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
+Use Node.js 22.23.4 or later in the Node 22 series, or 24.22.1 or later (see `engines` in `package.json`). The app needs `DATABASE_URL` and `PAYLOAD_SECRET`; see [local development](https://github.com/youngo-consitutency/hub/wiki/Local-development) for database setup and troubleshooting.
 
 ## Make the change
 
@@ -44,6 +44,12 @@ git diff --check
 
 The build runs TypeScript checking. `npm run test:int` and `npm run test:e2e` need a running server and a migrated PostgreSQL database — tests provision their own accounts and content. Mention skipped checks in your pull request.
 
+Integration tests refuse to run unless `DATABASE_URL` points at localhost, so a stray production URL cannot be used to create test accounts.
+
+### Migrations
+
+Name a new migration after the latest existing migration timestamp, not today's date. Existing names already run past `20261203`, and Payload applies migrations in filename order, so a migration named with an earlier date would sort before ones already applied. Check `ls src/db/migrations | tail -3`, then use the next timestamp after the last one.
+
 Format only files changed by your task, inspect the diff, and keep documentation links working.
 
 ## Open a pull request
@@ -58,4 +64,4 @@ Keep short setup and contribution guides with the code. The [organisation and pe
 
 Public content changes need a reliable source link. Never commit account exports, private meeting links, identity documents, access tokens, or local agent notes.
 
-By contributing, you confirm that you have permission to share your contribution under the applicable project licence. See [LICENSE](LICENSE), [the code of conduct](CODE_OF_CONDUCT.md), and [security reporting](SECURITY.md).
+By contributing, you confirm that you have permission to share your contribution under the project licence, GPL-3.0-only. See [LICENSE](LICENSE), [the code of conduct](CODE_OF_CONDUCT.md), and [security reporting](SECURITY.md).

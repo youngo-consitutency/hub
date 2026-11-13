@@ -511,17 +511,17 @@ export function councilSeatFor(
   return spec.councilSeat.replace('{scope}', row.scopeId)
 }
 
-export function capabilitiesFor(roleKey: string, scopeId: string): string[] {
+function capabilitiesFor(roleKey: string, scopeId: string): string[] {
   const spec = AUTHORITY_ROLES[roleKey]
   return (spec?.capabilities ?? []).map((c) => c.replace('{scope}', scopeId))
 }
 
-export function teamKeysFor(roleKey: string): string[] {
+function teamKeysFor(roleKey: string): string[] {
   return AUTHORITY_ROLES[roleKey]?.teamKeys ?? []
 }
 
 // The legacy WG role label used by consumers of `wgAssignments`.
-export function wgLegacyRoleFor(roleKey: string): string {
+function wgLegacyRoleFor(roleKey: string): string {
   switch (roleKey) {
     case 'wg.contact_point':
       return 'contact'
@@ -648,7 +648,7 @@ export function deriveAuthority(
 // participation (opted membership, no appointing authority needed);
 // anything else is a mandate. Writers use this to set `kind`; readers
 // never branch on it — authority resolves from the role either way.
-export const PARTICIPATION_SCOPES = new Set([
+const PARTICIPATION_SCOPES = new Set([
   'body',
   'working_group',
   'organisation',

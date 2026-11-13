@@ -48,7 +48,7 @@ import {
 // does not.
 const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
 
-export function destinationIconFor(rawUrl = '') {
+function destinationIconFor(rawUrl = '') {
   if (/^mailto:/i.test(rawUrl)) return TbMail
 
   let url
