@@ -7,7 +7,7 @@ import { api, session } from './helpers'
 // the snapshot isn't in the api view, so read it straight from the row
 const counts = async (id: number) => {
   const { rows } = await getPgPool()!.query(
-    'SELECT eligible_individual_count AS i, eligible_org_count AS o, status FROM elections WHERE id=$1',
+    'SELECT eligible_individual_count::int AS i, eligible_org_count::int AS o, status FROM elections WHERE id=$1',
     [id],
   )
   return rows[0]

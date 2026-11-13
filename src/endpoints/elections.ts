@@ -277,18 +277,23 @@ export const electionEndpoints: Endpoint[] = [
         )
       const url = httpsUrl((await readBody(req)).url)
       if (!url) throw fail.validation({ url: 'Use the https link of the Belenios election.' })
-      const updated = await req.payload.update({
-        collection: 'elections',
-        id: e.id,
-        data: { externalRef: url },
-        overrideAccess: true,
-      })
-      await audit(req, account, {
-        action: 'election.ballot_set',
-        targetType: 'governance',
-        targetId: String(e.id),
-        before: { ballotUrl: e.externalRef || null },
-        after: { ballotUrl: url },
+      // re-checked under the row lock: voting may have opened while we read the body
+      const updated = await withPhase(req, e.id, ['announced', 'nominations'], null, async () => {
+        const doc = await req.payload.update({
+          collection: 'elections',
+          id: e.id,
+          data: { externalRef: url },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'election.ballot_set',
+          targetType: 'governance',
+          targetId: String(e.id),
+          before: { ballotUrl: e.externalRef || null },
+          after: { ballotUrl: url },
+        })
+        return doc
       })
       return json({ election: electionView(updated) })
     }),
