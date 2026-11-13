@@ -18,7 +18,7 @@ const SECRETS = ['DATABASE_URL', 'PAYLOAD_SECRET']
 const cwd = mkdtempSync(path.join(tmpdir(), 'mcp-smoke-'))
 writeFileSync(
   path.join(cwd, '.env'),
-  'DATABASE_URL=postgres://smoke@127.0.0.1:9/smoke\nPAYLOAD_SECRET=smoke\nMCP_ALLOW_ANONYMOUS=1\n',
+  'DATABASE_URL=postgres://smoke@127.0.0.1:9/smoke\nPAYLOAD_SECRET=smoke\nMCP_TOKEN=smoke-token\n',
 )
 
 // preload reports which secret names survived (names only, never values)
@@ -27,9 +27,9 @@ const probe = `process.on('SIGTERM', () => {
   process.exit(0)
 })`
 
-// anonymous must come from the .env file, not the runner
+// the token must come from the .env file, not the runner
 const inherited = { ...process.env }
-for (const key of ['MCP_ALLOW_ANONYMOUS', 'MCP_TOKEN', 'HUB_MCP_TOKEN']) delete inherited[key]
+for (const key of ['MCP_TOKEN', 'HUB_MCP_TOKEN']) delete inherited[key]
 const server = spawn(
   'node',
   [
@@ -95,6 +95,7 @@ async function rpc(message) {
     headers: {
       'content-type': 'application/json',
       accept: 'application/json, text/event-stream',
+      authorization: 'Bearer smoke-token',
     },
     body: JSON.stringify(message),
   })
@@ -116,7 +117,15 @@ async function rpc(message) {
 }
 
 const health = await waitReady()
-if (health?.anonymous !== true) fail('allow-listed MCP_ALLOW_ANONYMOUS was not loaded from .env')
+if (!health?.ok) fail('server unhealthy')
+
+// no token, no entry
+const anon = await fetch(`${base}/mcp`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: '{}',
+})
+if (anon.status !== 401) fail(`unauthenticated /mcp returned ${anon.status}, expected 401`)
 
 const init = await rpc(
   rpcBody(

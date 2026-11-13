@@ -456,7 +456,7 @@ export async function joinBody(actor: Actor, id: string) {
     )
       fail(403, 'This body requires an assigned or screened membership.')
     await client.query(
-      `INSERT INTO authority_records(account_id,kind,role,scope_type,scope_id) VALUES($1,'participation','body.member','body',$2) ON CONFLICT(account_id,role,scope_type,scope_id) WHERE status='active' DO UPDATE SET starts_at=now(),ends_at=NULL,updated_at=now()`,
+      `INSERT INTO authority_records(account_id,kind,role,scope_type,scope_id,starts_at) VALUES($1,'participation','body.member','body',$2,now()) ON CONFLICT(account_id,role,scope_type,scope_id) WHERE status='active' DO UPDATE SET starts_at=now(),ends_at=NULL,updated_at=now()`,
       [actor.id, id],
     )
     await audit(client, actor, 'body.joined', id, 'Member joined an open working group')
