@@ -1,9 +1,11 @@
 import type { Endpoint, PayloadRequest } from 'payload'
+import { sql } from '@payloadcms/db-postgres'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { isSelector, loadSelection } from '../lib/governance'
-import type { AccountLike, AnyValue } from '../lib/domain'
+import { txHandle, withTransaction } from '../lib/pg'
+import type { AccountLike, AnyValue, Doc } from '../lib/domain'
 
 // S24 selections.
 
@@ -23,6 +25,45 @@ const selectionView = (s: AnyValue, extra?: AnyValue) => ({
   ...(extra ?? {}),
 })
 
+// explicit projections: payload docs carry the populated account record
+const memberView = (m: AnyValue) => ({
+  id: m.id,
+  selection: typeof m.selection === 'object' ? m.selection.id : m.selection,
+  account: accountRef(m.account),
+  joinedAt: m.joinedAt,
+  recusedApplicantIds: m.recusedApplicantIds ?? [],
+  coiNote: m.coiNote ?? null,
+})
+
+const evaluationView = (e: AnyValue) => ({
+  id: e.id,
+  application: typeof e.application === 'object' ? e.application.id : e.application,
+  evaluator: accountRef(e.evaluator),
+  grade: e.grade ?? null,
+  scores: e.scores ?? null,
+  comment: e.comment ?? null,
+  evaluatedAt: e.evaluatedAt,
+})
+
+const idOf = (v: AnyValue) => (v != null && typeof v === 'object' ? v.id : v)
+
+// an application of this selection, or 404 (never another selection's)
+async function loadApplication(req: PayloadRequest, selectionId: number, id: number) {
+  const app = Number.isInteger(id)
+    ? await req.payload
+        .findByID({
+          collection: 'selection-applications',
+          id,
+          depth: 0,
+          overrideAccess: true,
+          req,
+        })
+        .catch(() => null)
+    : null
+  if (!app || idOf(app.selection) !== selectionId) throw fail.notFound('Application not found.')
+  return app as AnyValue
+}
+
 async function committeeMember(req: PayloadRequest, selectionId: number, accountId: number) {
   const { docs } = await req.payload.find({
     collection: 'selection-committee',
@@ -31,8 +72,26 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
     },
     limit: 1,
     overrideAccess: true,
+    req,
   })
   return docs[0] as AnyValue
+}
+
+// joining the committee and applying exclude each other (S24 §2.2.4) but live in two tables,
+// so both handlers check-then-insert under one per-selection lock or concurrent calls slip past
+const SELECTION_LOCK_NS = 0x53454c // 'SEL'
+async function withSelectionLock<T>(
+  req: PayloadRequest,
+  selectionId: number,
+  fn: () => Promise<T>,
+) {
+  return withTransaction(req, async (transactionID) => {
+    await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`SELECT pg_advisory_xact_lock(${SELECTION_LOCK_NS}, ${selectionId})`,
+    })
+    return fn()
+  })
 }
 
 // Recording a selection stage belongs to the Selections Team (S24) —
@@ -139,23 +198,39 @@ export const selectionEndpoints: Endpoint[] = [
       const s = await loadSelection(req, param(req, 'id'))
       if (!['committee_forming', 'open'].includes(s.status))
         throw fail.conflict('invalid_phase', 'The committee can no longer be joined.')
-      const existing = await committeeMember(req, s.id, account.id)
-      if (existing) throw fail.conflict('already_joined', 'Already on the committee.')
-      const member = await req.payload.create({
-        collection: 'selection-committee',
-        data: {
-          selection: s.id,
-          account: account.id,
-          joinedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      const member = await withSelectionLock(req, s.id, async () => {
+        const existing = await committeeMember(req, s.id, account.id)
+        if (existing) throw fail.conflict('already_joined', 'Already on the committee.')
+        // S24 §2.2.4: an applicant can't judge the field they are part of
+        const { totalDocs: applied } = await req.payload.find({
+          collection: 'selection-applications',
+          where: { and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }] },
+          limit: 0,
+          overrideAccess: true,
+          req,
+        })
+        if (applied)
+          throw fail.conflict(
+            'conflict_of_interest',
+            'You have applied to this selection, so you cannot sit on its committee.',
+          )
+        return req.payload.create({
+          collection: 'selection-committee',
+          data: {
+            selection: s.id,
+            account: account.id,
+            joinedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
       })
       await audit(req, account, {
         action: 'selection.committee_joined',
         targetType: 'governance',
         targetId: String(s.id),
       })
-      return json({ member }, { status: 201 })
+      return json({ member: memberView(member) }, { status: 201 })
     }),
   },
   {
@@ -203,31 +278,42 @@ export const selectionEndpoints: Endpoint[] = [
       const account = requireCwMember(req)
       const s = await loadSelection(req, param(req, 'id'))
       if (s.status !== 'open') throw fail.conflict('invalid_phase', 'Applications are not open.')
+      if (s.deadlineAt && new Date(s.deadlineAt).getTime() < Date.now())
+        throw fail.conflict('deadline_passed', 'The application deadline has passed.')
       const b = await readBody(req)
       if (!b.answers || typeof b.answers !== 'object')
         throw fail.validation({ answers: 'Required.' })
-      const { totalDocs: existing } = await req.payload.find({
-        collection: 'selection-applications',
-        where: {
-          and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }],
-        },
-        limit: 0,
-        overrideAccess: true,
-      })
-      if (existing > 0) throw fail.conflict('already_applied', 'One application per member.')
-      const app = await req.payload.create({
-        collection: 'selection-applications',
-        data: {
-          selection: s.id,
-          account: account.id,
-          answers: b.answers,
-          selfFinance: Boolean(b.selfFinance),
-          gender: b.gender?.trim() || null,
-          region: b.region?.trim() || null,
-          status: 'submitted',
-          submittedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      const app = await withSelectionLock(req, s.id, async () => {
+        if (await committeeMember(req, s.id, account.id))
+          throw fail.conflict(
+            'conflict_of_interest',
+            'Committee members cannot apply to their own selection.',
+          )
+        const { totalDocs: existing } = await req.payload.find({
+          collection: 'selection-applications',
+          where: {
+            and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }],
+          },
+          limit: 0,
+          overrideAccess: true,
+          req,
+        })
+        if (existing > 0) throw fail.conflict('already_applied', 'One application per member.')
+        return req.payload.create({
+          collection: 'selection-applications',
+          data: {
+            selection: s.id,
+            account: account.id,
+            answers: b.answers,
+            selfFinance: Boolean(b.selfFinance),
+            gender: b.gender?.trim() || null,
+            region: b.region?.trim() || null,
+            status: 'submitted',
+            submittedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
       })
       await audit(req, account, {
         action: 'selection.applied',
@@ -248,11 +334,16 @@ export const selectionEndpoints: Endpoint[] = [
       const b = await readBody(req)
       if (!Array.isArray(b.applicantIds) || !b.applicantIds.length)
         throw fail.validation({ applicantIds: 'List the application ids you are conflicted on.' })
+      const recusals = b.applicantIds.map(Number)
+      for (const id of recusals)
+        await loadApplication(req, s.id, id).catch(() => {
+          throw fail.validation({ applicantIds: 'Only applications of this selection.' })
+        })
       const updated = await req.payload.update({
         collection: 'selection-committee',
         id: member.id,
         data: {
-          recusedApplicantIds: b.applicantIds.map(Number),
+          recusedApplicantIds: recusals,
           coiNote: b.coiNote?.trim() || null,
         },
         overrideAccess: true,
@@ -262,7 +353,7 @@ export const selectionEndpoints: Endpoint[] = [
         targetType: 'governance',
         targetId: String(s.id),
       })
-      return json({ member: updated })
+      return json({ member: memberView(updated) })
     }),
   },
   {
@@ -299,7 +390,11 @@ export const selectionEndpoints: Endpoint[] = [
         throw fail.conflict('invalid_phase', 'Evaluations open once applications close.')
       const member = await committeeMember(req, s.id, account.id)
       if (!member) throw fail.forbidden('Only committee members may evaluate.')
-      const applicationId = Number(param(req, 'aid'))
+      const application = await loadApplication(req, s.id, Number(param(req, 'aid')))
+      const applicationId = application.id as number
+      // nobody scores their own application, seat or not
+      if (idOf(application.account) === account.id)
+        throw fail.conflict('conflict_of_interest', 'You cannot evaluate your own application.')
       // Recusal check (S24 §2.2.4): conflicted members may not evaluate.
       const recused = (member.recusedApplicantIds ?? []).map(Number)
       if (recused.includes(applicationId))
@@ -359,7 +454,7 @@ export const selectionEndpoints: Endpoint[] = [
         targetType: 'governance',
         targetId: String(s.id),
       })
-      return json({ evaluation: evalRecord })
+      return json({ evaluation: evaluationView(evalRecord) })
     }),
   },
   {
@@ -375,34 +470,59 @@ export const selectionEndpoints: Endpoint[] = [
       const b = await readBody(req)
       if (!Array.isArray(b.selectedApplicationIds))
         throw fail.validation({ selectedApplicationIds: 'Required.' })
-      if (b.selectedApplicationIds.length > (s.spotsAvailable ?? 1))
+      const picked = b.selectedApplicationIds.map(Number)
+      if (
+        picked.some((id: number) => !Number.isInteger(id)) ||
+        new Set(picked).size !== picked.length
+      )
+        throw fail.validation({ selectedApplicationIds: 'Use each application id once.' })
+      if (picked.length > (s.spotsAvailable ?? 1))
         throw fail.validation({
           selectedApplicationIds: `Only ${s.spotsAvailable} spot(s) available.`,
         })
-      // mark selected/not_selected
-      const { docs: apps } = await req.payload.find({
-        collection: 'selection-applications',
-        where: { selection: { equals: s.id } },
-        limit: 1000,
-        overrideAccess: true,
-      })
-      const selected = new Set(b.selectedApplicationIds.map(Number))
-      for (const app of apps as AnyValue[]) {
-        await req.payload.update({
-          collection: 'selection-applications',
-          id: app.id,
-          data: { status: selected.has(app.id) ? 'selected' : 'not_selected' },
-          overrideAccess: true,
+      const summary = b.selectionSummary?.trim() || null
+      // status compare-and-set under the row lock: a double submit decides once,
+      // and the application marks land in the same transaction
+      const updated = await withTransaction(req, async (transactionID) => {
+        const { rows } = await (req.payload.db as Doc).execute({
+          db: txHandle(req.payload, transactionID),
+          sql: sql`UPDATE selections SET status='decided' WHERE id=${s.id} AND status='evaluating' RETURNING id`,
         })
-      }
-      const updated = await req.payload.update({
-        collection: 'selections',
-        id: s.id,
-        data: {
-          status: 'decided',
-          selectionSummary: b.selectionSummary?.trim() || null,
-        },
-        overrideAccess: true,
+        if (!rows.length)
+          throw fail.conflict('invalid_phase', 'Evaluations must finish before deciding.')
+        const { docs: apps } = await req.payload.find({
+          collection: 'selection-applications',
+          where: { selection: { equals: s.id } },
+          pagination: false,
+          depth: 0,
+          overrideAccess: true,
+          req,
+        })
+        const own = new Set(apps.map((a) => a.id))
+        if (picked.some((id: number) => !own.has(id)))
+          throw fail.validation({
+            selectedApplicationIds: 'Only applications of this selection.',
+          })
+        for (const app of apps) {
+          if (app.status === 'withdrawn' && picked.includes(app.id))
+            throw fail.validation({ selectedApplicationIds: 'A withdrawn application.' })
+          if (app.status === 'withdrawn') continue
+          await req.payload.update({
+            collection: 'selection-applications',
+            id: app.id,
+            data: { status: picked.includes(app.id) ? 'selected' : 'not_selected' },
+            depth: 0,
+            overrideAccess: true,
+            req,
+          })
+        }
+        return req.payload.update({
+          collection: 'selections',
+          id: s.id,
+          data: { selectionSummary: summary },
+          overrideAccess: true,
+          req,
+        })
       })
       await audit(req, account, {
         action: 'selection.decided',

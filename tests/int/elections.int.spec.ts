@@ -312,6 +312,16 @@ describe('elections (S10) and selections (S24)', () => {
     const call = (path: string, init: AnyValue = {}) =>
       api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
     await call('/advance', { method: 'POST' })
+    // voting needs a screened-in candidate in every race
+    const nominee = await api(`/governance/elections/${election.id}/candidates`, {
+      method: 'POST',
+      cookie: cwMember.cookie,
+      body: JSON.stringify({ race: 'seat', statement: 'Ballot filler' }),
+    })
+    await call(`/candidates/${(await nominee.json()).candidate.id}/screen`, {
+      method: 'POST',
+      body: JSON.stringify({ status: 'screened_in' }),
+    })
     await call('/ballot', {
       method: 'PUT',
       body: JSON.stringify({ url: 'https://vote.belenios.example/elections/race/' }),
@@ -356,6 +366,16 @@ describe('elections (S10) and selections (S24)', () => {
     const call = (path: string, init: AnyValue = {}) =>
       api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
     await call('/advance', { method: 'POST' })
+    // voting needs a screened-in candidate in every race
+    const nominee = await api(`/governance/elections/${election.id}/candidates`, {
+      method: 'POST',
+      cookie: cwMember.cookie,
+      body: JSON.stringify({ race: 'seat', statement: 'Ballot filler' }),
+    })
+    await call(`/candidates/${(await nominee.json()).candidate.id}/screen`, {
+      method: 'POST',
+      body: JSON.stringify({ status: 'screened_in' }),
+    })
     await call('/ballot', {
       method: 'PUT',
       body: JSON.stringify({ url: 'https://vote.belenios.example/elections/noquorum/' }),
