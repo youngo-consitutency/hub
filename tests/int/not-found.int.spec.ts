@@ -32,7 +32,7 @@ describe('unknown routes', () => {
   })
 
   it('still answers 200 for known pages', async () => {
-    for (const path of ['/', '/signin', '/about/faq', '/privacy']) {
+    for (const path of ['/', '/signin', '/about', '/our-work', '/learn', '/privacy']) {
       const res = await fetch(`${BASE}${path}`)
       expect(res.status, path).toBe(200)
     }

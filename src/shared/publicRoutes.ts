@@ -1,38 +1,42 @@
-// the public website's pages, defined once. the header, mobile menu, footer and
-// sitemap read this list; plain data so the server-side sitemap can import it
-
-export type SiteMenu = 'takePart' | 'about'
+// the public website's pages, defined once. the header, footer, mobile menu and sitemap read
+// this list; plain data so the server-side sitemap can import it
+//
+// the paths avoid the Hub's own top-level names (/work, /resources, ...), which still redirect
+// into /hub for old links
 
 export interface SiteRoute {
   href: string
   label: string
-  // header placement: a top-level link, or an entry under one of the menus
-  menu?: SiteMenu
-  // the footer lists every page except those that opt out
-  footer?: false
 }
 
+// four pages: the home page, then one per job. each long page is split into sections
 export const SITE_ROUTES: SiteRoute[] = [
-  { href: '/', label: 'Home', footer: false },
-  { href: '/about/working-groups', label: 'Working groups', menu: 'takePart' },
-  { href: '/about/coy', label: 'COY', menu: 'takePart' },
-  { href: '/about/gys', label: 'GYS', menu: 'takePart' },
-  { href: '/about/resources', label: 'Resources', menu: 'takePart' },
-  { href: '/about/organisation', label: 'Organisation & partners', menu: 'about', footer: false },
-  { href: '/about/faq', label: 'FAQs', menu: 'about' },
-  { href: '/about/contact', label: 'Contact', menu: 'about' },
+  { href: '/', label: 'Home' },
+  { href: '/our-work', label: 'Our work' },
+  { href: '/learn', label: 'Resources' },
+  { href: '/about', label: 'About' },
 ]
 
-export const SITE_MENUS: { id: SiteMenu; label: string }[] = [
-  { id: 'takePart', label: 'Take part' },
-  { id: 'about', label: 'About' },
-]
+// pages that moved or were merged keep working: old path -> where its content lives now
+export const LEGACY_SITE_PATHS: Record<string, string> = {
+  '/about/work': '/our-work',
+  '/about/resources': '/learn',
+  '/about/organisation': '/about',
+  '/about/working-groups': '/our-work#working-groups',
+  '/about/coy': '/our-work#conferences',
+  '/about/gys': '/our-work#statement',
+  '/about/faq': '/about#faq',
+  '/about/contact': '/about#contact',
+}
 
-// the home page is also served at /about; '/' is its canonical address
-export const isSiteHome = (path: string) => path === '/' || path === '/about' || path === '/about/'
+export const isSiteHome = (path: string) => path === '/'
 
 export const isSiteRouteActive = (path: string, href: string) =>
   href === '/' ? isSiteHome(path) : path === href || path.startsWith(`${href}/`)
+
+// anything the public site renders, including old paths that are about to move
+export const isSitePath = (path: string) =>
+  SITE_ROUTES.some(({ href }) => isSiteRouteActive(path, href)) || path.startsWith('/about/')
 
 // every indexable public page: the site plus the standalone public entries
 export const PUBLIC_PATHS = [

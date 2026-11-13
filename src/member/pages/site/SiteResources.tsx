@@ -1,34 +1,25 @@
+import { TbBook as BookOpen } from 'react-icons/tb'
 import { ResourceCatalogue } from '../../components/ResourceHub'
-import { TbBook2 as BookOpen, TbChevronRight as ChevronRight } from 'react-icons/tb'
-import { Skeletons } from '../../components/ui'
 import { useDocument } from '../../lib/documents'
+import { SiteCtaBand, SitePage } from './SitePage'
 
 export function SiteResources() {
-  const { doc: site, loading } = useDocument('site')
+  const { doc: site } = useDocument('site')
   const res = site?.resources
-  if (!res) return loading ? <Skeletons n={3} /> : null
+  if (!res) return null
   const cta = res.cta || {}
   return (
-    <div className="siteMain">
-      <header className="sitePageHeader" data-motif="grid">
-        <p className="pageEyebrow">{res.eyebrow}</p>
-        <h1>{res.title}</h1>
-        <p className="sitePageLead">{res.lead}</p>
-      </header>
+    <SitePage title={res.title} eyebrow={res.eyebrow} lead={res.lead} motif="grid">
       <div className="siteResourceCatalogue">
         <ResourceCatalogue heading={res.catalogueHeading} />
       </div>
-      <section className="siteCtaBand card">
-        <BookOpen size={24} strokeWidth={1.75} aria-hidden />
-        <div>
-          <h2>{cta.title}</h2>
-          <p className="meta">{cta.body}</p>
-        </div>
-        <a className="btn btn-primary" href="/resources">
-          {cta.label}
-          <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-        </a>
-      </section>
-    </div>
+      <SiteCtaBand
+        icon={BookOpen}
+        title={cta.title}
+        body={cta.body}
+        label={cta.label}
+        href="/resources"
+      />
+    </SitePage>
   )
 }

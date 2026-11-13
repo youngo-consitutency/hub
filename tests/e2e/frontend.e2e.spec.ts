@@ -17,28 +17,24 @@ test.describe('Public site', () => {
       page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
     ).toBeVisible({ timeout: 30000 })
     await expect(page.locator('img[src*="working-together"]')).toHaveCount(0)
-    await page.goto(`${BASE}/about`)
-    await expect(
-      page.getByRole('heading', { name: 'Your place in global climate action.', exact: true }),
-    ).toBeVisible()
+    // the site opens on the landing page; /about is its own page now
     await expect(page.getByRole('link', { name: 'YOUNGO home', exact: true })).toHaveAttribute(
       'href',
       '/',
     )
+    await page.goto(`${BASE}/about`)
+    await expect(page.getByRole('heading', { name: 'About YOUNGO', exact: true })).toBeVisible({
+      timeout: 30000,
+    })
   })
 
-  test('the header groups pages under menus that navigate', async ({ page }) => {
-    await page.goto(BASE)
-    await page.getByRole('button', { name: 'Take part' }).click()
-    await expect(page.getByRole('menuitem')).toHaveText([
-      'Working groups',
-      'COY',
-      'GYS',
-      'Resources',
-    ])
-    await page.getByRole('menuitem', { name: 'COY' }).click()
-    await expect(page).toHaveURL(`${BASE}/about/coy`)
-    await expect(page.getByRole('button', { name: 'Take part' })).toHaveClass(/active/)
+  test('the header links to the pages and the old page paths still arrive', async ({ page }) => {
+    await page.goto(`${BASE}/about`)
+    const nav = page.getByRole('navigation', { name: 'Pages' }).first()
+    await expect(nav.getByRole('link')).toHaveText(['Our work', 'Resources', 'About'])
+    await expect(nav.getByRole('link', { name: 'About' })).toHaveAttribute('aria-current', 'page')
+    await page.goto(`${BASE}/about/coy`)
+    await expect(page).toHaveURL(`${BASE}/our-work#conferences`)
   })
 
   test('the retired landing preview redirects home', async ({ request }) => {

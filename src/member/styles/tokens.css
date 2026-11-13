@@ -45,6 +45,8 @@
   --radius-control: 8px;
   --radius-card: 12px;
   --radius-modal: 16px;
+  /* the large surfaces: hero, page headers, footer and the closing card */
+  --radius-surface: 28px;
   --radius-pill: 9999px;
   --content-max: 1600px;
   --detail-max: 1120px;
@@ -101,12 +103,12 @@
      every pairing below was checked at 4.5:1 or better */
   --ld-header-h: 65px;
   --ld-gutter: clamp(16px, 4vw, 32px);
-  --ld-deep: #04130c;
-  --ld-deep-2: #0a2418;
+  --ld-deep: #0f4631;
+  --ld-deep-2: #1a6a4c;
   --ld-on-deep: #eaf6ee;
-  --ld-on-deep-muted: #a9c4b4;
-  --ld-line-deep: rgba(169, 232, 196, 0.16);
-  --ld-glass: rgba(10, 36, 24, 0.62);
+  --ld-on-deep-muted: #d3e6da;
+  --ld-line-deep: rgba(214, 243, 226, 0.2);
+  --ld-glass: rgba(15, 70, 49, 0.55);
   --ld-glow-green: #2dd4a0;
   --ld-glow-lime: #a3e635;
   --ld-glow-sky: #38bdf8;
@@ -134,6 +136,7 @@
 
 @media (max-width: 620px) {
   :root {
+    --radius-surface: 20px;
     --catalog-columns: 1;
     --card-padding: var(--space-3);
   }

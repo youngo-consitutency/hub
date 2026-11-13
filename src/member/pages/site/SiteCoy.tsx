@@ -2,7 +2,6 @@ import type { AnyValue, Doc } from '../../lib/types'
 import { BorderBeam } from '../../components/fx/BorderBeam'
 import {
   TbCalendar as CalendarDays,
-  TbChevronRight as ChevronRight,
   TbWorld as Globe,
   TbMap as Map,
   TbMapPin as MapPin,
@@ -15,9 +14,10 @@ import { useDocument } from '../../lib/documents'
 // Icon names are stored in the site document; components live here.
 const FORMAT_ICONS = { Globe, Map, MapPin, Video }
 import { useApi } from '../../lib/api'
-import { CoyDirectory } from './CoyDirectory'
+import { CoyDirectory, FeaturedConference } from './CoyDirectory'
+import { SiteSection } from './SitePage'
 
-export function SiteCoy() {
+export function ConferencesSection() {
   const { doc: connect } = useDocument('connect')
   const { doc: site, loading } = useDocument('site')
   const COY_CURRENT = connect?.COY_CURRENT || {}
@@ -28,19 +28,12 @@ export function SiteCoy() {
   const official = coy.officialSite || {}
   const upcoming = coy.upcoming || {}
   const footnote = upcoming.footnote || {}
-  const cta = coy.cta || {}
 
   return (
-    <div className="siteMain">
-      <header className="sitePageHeader" data-motif="dots">
-        <p className="pageEyebrow">{coy.eyebrow}</p>
-        <h1>{coy.title}</h1>
-        <p className="sitePageLead">{coy.lead}</p>
-      </header>
-
-      <section className="siteSection" aria-labelledby="formats-heading">
+    <SiteSection id="conferences" eyebrow={coy.eyebrow} title={coy.title} lead={coy.lead}>
+      <div className="siteSub">
         <div className="siteSectionHeadingRow">
-          <h2 id="formats-heading">{coy.familyTitle}</h2>
+          <h3>{coy.familyTitle}</h3>
           <a
             className="btn btn-secondary btn-sm"
             href={official.href}
@@ -65,14 +58,14 @@ export function SiteCoy() {
             )
           })}
         </div>
-      </section>
+      </div>
 
-      <section className="siteSection" aria-labelledby="current-coy-heading">
+      <div className="siteSub">
         <article className="card siteCurrentCoy">
           <BorderBeam colorFrom="var(--accent)" colorTo="var(--ld-glow-lime)" />
           <div>
             <p className="pageEyebrow">{coy.currentEyebrow}</p>
-            <h2 id="current-coy-heading">{COY_CURRENT.title}</h2>
+            <h3>{COY_CURRENT.title}</h3>
             <p className="meta">{COY_CURRENT.note}</p>
           </div>
           <div className="siteCtaActions">
@@ -90,10 +83,10 @@ export function SiteCoy() {
             ))}
           </div>
         </article>
-      </section>
+      </div>
 
-      <section className="siteSection" aria-labelledby="upcoming-heading">
-        <h2 id="upcoming-heading">{upcoming.title}</h2>
+      <div className="siteSub">
+        <h3>{upcoming.title}</h3>
         <p className="siteSectionLead">{upcoming.lead}</p>
         <Async
           query={query}
@@ -109,6 +102,7 @@ export function SiteCoy() {
         >
           {(data: Doc) => (
             <div className="stack">
+              <FeaturedConference items={data.items} />
               <CoyDirectory items={data.items} />
               <p className="metaMuted">
                 {footnote.before}{' '}
@@ -120,19 +114,7 @@ export function SiteCoy() {
             </div>
           )}
         </Async>
-      </section>
-
-      <section className="siteCtaBand card">
-        <CalendarDays size={24} strokeWidth={1.75} aria-hidden />
-        <div>
-          <h2>{cta.title}</h2>
-          <p className="meta">{cta.body}</p>
-        </div>
-        <A className="btn btn-primary" href="/join">
-          {cta.label}
-          <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-        </A>
-      </section>
-    </div>
+      </div>
+    </SiteSection>
   )
 }

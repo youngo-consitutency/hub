@@ -1,6 +1,7 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
+import { LEGACY_SITE_PATHS } from './src/shared/publicRoutes'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { isIndexable } from './src/lib/environment'
@@ -31,6 +32,12 @@ const nextConfig: NextConfig = {
       { source: '/landingV2/:path*', destination: '/', permanent: true },
       // the retired consultation microsite: old links and the CMS footer still point here
       { source: '/consultation/:path*', destination: '/', permanent: true },
+      // pages merged into /about/work and /about/organisation
+      ...Object.entries(LEGACY_SITE_PATHS).map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: true,
+      })),
     ]
   },
   images: {

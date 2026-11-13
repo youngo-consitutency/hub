@@ -1,5 +1,5 @@
 // Two location models share this module.
-//  - Site routes (/, /about/*, /signin, ...) are real paths served by Next.
+//  - Site routes (/, /our-work, /learn, /about, /signin, ...) are real paths served by Next.
 //  - The Hub lives at /hub and keeps its own pages in the hash:
 //    /hub#/calendar/some-event?tab=notes. The server only ever serves /hub.
 // Call sites keep passing plain app paths ('/calendar'); this module decides
@@ -15,7 +15,7 @@ const PEEK_KEY = 'youngo.peekBackground'
 const HUB_EVENT = 'hub:navigate'
 
 // real server routes; every other path is a Hub page
-const SITE_PATH = /^\/(about|signin|join|privacy|reset-password|hub)(\/|$)/
+const SITE_PATH = /^\/(about|our-work|learn|signin|join|privacy|reset-password|hub)(\/|$)/
 // public evidence pages exist as real routes too, but inside the Hub they stay in-app
 const SHARED_PATH = /^\/negotiations(\/|$)/
 

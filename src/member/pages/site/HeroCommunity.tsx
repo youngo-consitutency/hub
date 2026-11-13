@@ -3,7 +3,15 @@
 import { motion } from 'motion/react'
 import { TbPlus as Plus } from 'react-icons/tb'
 
-const PEEPS = ['amara', 'jun', 'lucia', 'tariq', 'ingrid', 'kofi']
+// the roles that make the constituency work, drawn as characters; deliberately not real people
+const FIGURES = [
+  { name: 'amara', role: 'Global Focal Point' },
+  { name: 'jun', role: 'Working group contact point' },
+  { name: 'lucia', role: 'COY organiser' },
+  { name: 'tariq', role: 'COP delegate' },
+  { name: 'ingrid', role: 'Policy drafter' },
+  { name: 'kofi', role: 'New member' },
+]
 
 // a ring of illustrated members around an open seat. the seat is decoration: the page already
 // has a join button beside it, so it is not a second one
@@ -11,12 +19,14 @@ export function HeroCommunity({ label }: { label: string }) {
   return (
     <div className="ldCommunity" aria-hidden>
       <div className="ldOrbit">
-        {PEEPS.map((name, i) => (
+        {FIGURES.map(({ name, role }, i) => (
           <span
             key={name}
             className="ldPeep"
-            style={{ '--angle': `${(360 / PEEPS.length) * i}deg` } as React.CSSProperties}
+            data-role={role}
+            style={{ '--angle': `${(360 / FIGURES.length) * i}deg` } as React.CSSProperties}
           >
+            <span className="ldPeepName">{name[0].toUpperCase() + name.slice(1)}</span>
             <motion.img
               src={`/illustrations/community/${name}.svg`}
               alt=""

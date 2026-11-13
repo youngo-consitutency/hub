@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@dicebear/core": "^9.4.3",
-    "@dicebear/open-peeps": "^9.4.2",
+    "@dicebear/lorelei": "^9.4.2",
     "@playwright/test": "1.65.0",
     "@types/html-to-text": "^9.0.4",
     "@types/node": "26.6.6",
