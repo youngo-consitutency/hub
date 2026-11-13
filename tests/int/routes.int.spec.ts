@@ -99,6 +99,24 @@ describe('route registry', () => {
     expect(lockFor('/calendar', failed)).toBeNull()
   })
 
+  it('treats loading access the same on every guarded page', () => {
+    const loading = { isVerified: true }
+    for (const route of ROUTES.filter((r) => r.locked)) {
+      expect(lockFor(route.href, loading), route.href).toBe(CHECKING_ACCESS)
+      expect(lockFor(`${route.href}/x`, loading), route.href).toBe(CHECKING_ACCESS)
+    }
+    expect(lockFor('/cp/finance', loading)).toBe(CHECKING_ACCESS)
+    // once access lands the real answer replaces it
+    expect(lockFor('/team/gys', member)?.title).toBe('GYS Policy Team only')
+  })
+
+  it('shows signed-out visitors only the public negotiations page', () => {
+    expect(
+      navFor(viewerOf(null), '/negotiations').map((g) => [g.section, g.items.map((i) => i.label)]),
+    ).toEqual([['Work & decisions', ['Negotiations']]])
+    expect(mobileNavFor(viewerOf(null), '/negotiations')).toEqual([])
+  })
+
   it('limits contact points to their own groups', () => {
     expect(lockFor('/cp', member)?.title).toBe('WG Contact Points only')
     expect(lockFor('/cp', contactPoint)).toBeNull()

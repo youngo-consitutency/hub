@@ -10,21 +10,16 @@ import { apiGet, apiPost } from '../lib/api'
 import { Button, Empty, ErrorCard, Section, Skeletons } from './ui'
 import { TbSpeakerphone as Megaphone } from 'react-icons/tb'
 
-const KIND_LABEL = {
-  event: 'Event',
-  workshop: 'Online workshop',
-  hackathon: 'Hackathon',
-  opportunity: 'Opportunity',
-  call: 'Open call',
-  training: 'Training',
-}
+import { OPPORTUNITY_FORMAT_LABELS, OPPORTUNITY_KIND_LABELS } from '../../shared/opportunities.js'
 
 function PostingMeta({ item }: PostingMetaProps) {
   return (
     <>
       <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-        <span className="chip chip-info">{(KIND_LABEL as AnyValue)[item.kind] || item.kind}</span>
-        <span className="chip chip-neutral">{item.format}</span>
+        <span className="chip chip-info">{OPPORTUNITY_KIND_LABELS[item.kind] || item.kind}</span>
+        <span className="chip chip-neutral">
+          {OPPORTUNITY_FORMAT_LABELS[item.format] || item.format}
+        </span>
         {item.region && <span className="chip chip-neutral">{regionLabel(item.region)}</span>}
       </div>
       <h3>{item.title}</h3>
