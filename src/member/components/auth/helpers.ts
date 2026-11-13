@@ -10,7 +10,7 @@ let registrationOptionsPromise
 let nationalityOptionsPromise
 let phoneSupportPromise
 
-export function loadRegistrationOptions() {
+function loadRegistrationOptions() {
   registrationOptionsPromise ||= apiGet('/documents/registration-options').then(
     (data) => data?.body || {},
   )
@@ -42,7 +42,7 @@ export function loadNationalityOptions() {
   return nationalityOptionsPromise
 }
 
-export function browserPhoneCountry() {
+function browserPhoneCountry() {
   if (typeof navigator === 'undefined') return ''
   try {
     const locale = navigator.languages?.[0] || navigator.language
@@ -52,7 +52,7 @@ export function browserPhoneCountry() {
   }
 }
 
-export const EMPTY_REGISTER = {
+const EMPTY_REGISTER = {
   email: '',
   password: '',
   passwordConfirm: '',
