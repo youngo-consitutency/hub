@@ -3,6 +3,7 @@ import type { AnyValue, Doc } from './domain'
 import { ApiError } from './respond'
 import { audit } from './audit'
 import { getDocument } from './documents'
+import { txHandle, withTransaction } from './pg'
 import { baselinePage, publicPageDocument } from '../shared/publicPages'
 
 // Publication of the reviewed FAQ / contact pages. Each page's live state is
@@ -40,24 +41,13 @@ export async function readPublicPage(req: PayloadRequest, slug: string): Promise
 }
 
 async function withPageLock<T>(req: PayloadRequest, slug: string, fn: () => Promise<T>) {
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
-    const db = (req.payload.db as Doc).sessions?.[transactionID]?.db
+  return withTransaction(req, async (transactionID) => {
     await (req.payload.db as Doc).execute({
-      db,
+      db: txHandle(req.payload, transactionID),
       raw: `SELECT pg_advisory_xact_lock(${PAGE_LOCK_NS}, ${PAGE_LOCK_KEY[slug]})`,
     })
-    const result = await fn()
-    await req.payload.db.commitTransaction(transactionID)
-    return result
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+    return fn()
+  })
 }
 
 async function writePageState(req: PayloadRequest, slug: string, body: Doc) {

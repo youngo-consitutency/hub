@@ -4,7 +4,7 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
-import { txHandle } from '../lib/pg'
+import { txHandle, withTransaction } from '../lib/pg'
 import { cleanText } from '../lib/text'
 import type { Doc, AnyValue } from '../lib/domain'
 
@@ -490,8 +490,7 @@ export const electionEndpoints: Endpoint[] = [
 
 // compare-and-set on status, then fn in the same tx. the UPDATE's row lock
 // makes export and advance serialise: whoever loses re-reads the committed
-// status and misses. next=null just locks the row without moving it. joins
-// an open req tx like withAuthorityLock
+// status and misses. next=null just locks the row without moving it
 async function withPhase<T>(
   req: PayloadRequest,
   id: number,
@@ -499,7 +498,7 @@ async function withPhase<T>(
   next: string | null,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const apply = async (transactionID: AnyValue) => {
+  return withTransaction(req, async (transactionID) => {
     const { rows } = await (req.payload.db as Doc).execute({
       db: txHandle(req.payload, transactionID),
       sql: sql`UPDATE elections SET status=${next ?? sql`status`}
@@ -511,21 +510,7 @@ async function withPhase<T>(
     if (!rows.length)
       throw fail.conflict('invalid_phase', 'The election moved to another phase. Reload and retry.')
     return fn()
-  }
-  if (req.transactionID != null) return apply(req.transactionID)
-  const transactionID = await req.payload.db.beginTransaction()
-  if (transactionID == null) throw new Error('Database transactions are unavailable.')
-  req.transactionID = transactionID
-  try {
-    const result = await apply(transactionID)
-    await req.payload.db.commitTransaction(transactionID)
-    return result
-  } catch (error) {
-    await req.payload.db.rollbackTransaction(transactionID)
-    throw error
-  } finally {
-    delete req.transactionID
-  }
+  })
 }
 
 // only https links: these are shown to members and opened in their browsers

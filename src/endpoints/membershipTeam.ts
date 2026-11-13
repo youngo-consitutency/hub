@@ -3,6 +3,7 @@ import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
+import { withTransaction } from '../lib/pg'
 import {
   updateMembershipLifecycle,
   setAccountFields,
@@ -46,10 +47,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
       const id = Number(param(req, 'id'))
       if (!Number.isInteger(id)) throw fail.notFound()
       // the delete and its audit row land together or not at all
-      const transactionID = await req.payload.db.beginTransaction()
-      if (transactionID == null) throw new Error('Database transactions are unavailable.')
-      req.transactionID = transactionID
-      try {
+      await withTransaction(req, async () => {
         if (!(await closeGuardianEnquiry(req, id))) throw fail.notFound()
         await audit(req, staff, {
           action: 'guardian_enquiry.closed',
@@ -57,13 +55,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
           targetId: String(id),
           after: { deleted: true },
         })
-        await req.payload.db.commitTransaction(transactionID)
-      } catch (error) {
-        await req.payload.db.rollbackTransaction(transactionID)
-        throw error
-      } finally {
-        delete req.transactionID
-      }
+      })
       return json({ ok: true })
     }),
   },

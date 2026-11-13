@@ -1,5 +1,5 @@
 import pg from 'pg'
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 import type { Doc, AnyValue } from './domain'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
@@ -38,6 +38,29 @@ export function txHandle(payload: Payload, transactionID: AnyValue) {
   const tx = (payload.db as Doc).sessions?.[transactionID]?.db
   if (!tx) throw new Error('This write requires an open database transaction.')
   return tx
+}
+
+// run fn in a payload transaction. an open req transaction is joined and its
+// owner commits or rolls back; otherwise this begins one, commits on success,
+// rolls back on any throw, and always clears req.transactionID
+export async function withTransaction<T>(
+  req: PayloadRequest,
+  fn: (transactionID: AnyValue) => Promise<T>,
+): Promise<T> {
+  if (req.transactionID != null) return fn(req.transactionID)
+  const transactionID = await req.payload.db.beginTransaction()
+  if (transactionID == null) throw new Error('Database transactions are unavailable.')
+  req.transactionID = transactionID
+  try {
+    const result = await fn(transactionID)
+    await req.payload.db.commitTransaction(transactionID)
+    return result
+  } catch (error) {
+    await req.payload.db.rollbackTransaction(transactionID)
+    throw error
+  } finally {
+    delete req.transactionID
+  }
 }
 
 // Unique violations surface as raw 23505 in the cause chain or a converted
