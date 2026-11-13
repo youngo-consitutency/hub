@@ -9,7 +9,6 @@ import { navigationActive as isActive } from '../lib/pageSections'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { A } from './ui'
-import { ThemeToggle } from './ThemeToggle'
 import { Brand } from './Brand'
 import { usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
@@ -146,7 +145,6 @@ export function Shell({ children }: ShellProps) {
           </div>
         ))}
         <div className="sidebarFooter">
-          <ThemeToggle />
           <A
             href="/help"
             className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
@@ -289,7 +287,6 @@ export function Shell({ children }: ShellProps) {
                   <ChevronRight size={17} strokeWidth={1.75} aria-hidden />
                 </A>
               )}
-              <ThemeToggle />
             </div>
             <div className="sheetSections">
               {nav.map((group: Doc) => (
