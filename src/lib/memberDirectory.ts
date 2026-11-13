@@ -119,9 +119,6 @@ function safePerson(
   relationships: AnyValue,
   { duty = false, workingGroup = '', contactPointIds = new Set<number>() } = {},
 ) {
-  const group = workingGroup
-    ? relationships.workingGroups.find((item: Doc) => item.slug === workingGroup)
-    : null
   // contact points come from current authority records, never the participation row
   const contactRole =
     Boolean(workingGroup) && contactPointIds.has(account.id) ? 'Contact Point' : null
