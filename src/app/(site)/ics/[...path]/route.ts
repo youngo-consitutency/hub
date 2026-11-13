@@ -4,6 +4,7 @@ import config from '@payload-config'
 import ical, { ICalAlarmType, ICalCalendarMethod } from 'ical-generator'
 import { getEvent, getGroup, listEventsForIcs } from '@/lib/content'
 import { getDocument } from '@/lib/documents'
+import { eventView } from '@/lib/views'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,22 +22,22 @@ async function typeLabels(req: AnyValue): Promise<Record<string, string>> {
 
 const stripIcs = (file: string) => file.replace(/\.ics$/, '')
 
-// Calendar feeds carry UTC times, meeting URLs and a 15-minute VALARM.
+// calendar feeds carry UTC times and a 15-minute VALARM. they are public and cached, so events go through the same redaction as the json api
+// (no meeting url, join links scrubbed from the description)
 function buildCalendar({ name, events }: { name: string; events: AnyValue[] }) {
   const cal = ical({
     name,
     prodId: { company: 'YOUNGO Hub', product: 'Hub', language: 'EN' },
     method: ICalCalendarMethod.PUBLISH,
   })
-  for (const e of events) {
+  for (const event of events) {
+    const e = eventView(event) as AnyValue
     cal.createEvent({
       id: `${e.slug}@youngohub`,
       start: new Date(e.startsAt),
       end: new Date(e.endsAt),
       summary: e.title,
       description: e.description,
-      url: e.meetingUrl,
-      location: e.meetingUrl,
       alarms: [{ type: ICalAlarmType.display, trigger: 900, description: 'Reminder' }],
     })
   }
