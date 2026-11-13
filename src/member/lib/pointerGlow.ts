@@ -1,10 +1,13 @@
 import type { PointerEvent } from 'react'
 
-// one delegated handler per grid: the hovered `.ldCard` gets --mx/--my for its glow
+// surfaces that glow where the pointer is: cards, and the deep hero, page header and footer bands
+const GLOW = '.ldCard, .ldDark, .sitePageHeader, .siteFooter'
+
+// one delegated handler on the page shell: the nearest glowing surface gets --mx/--my
 export function trackPointer(e: PointerEvent<HTMLElement>) {
-  const card = (e.target as HTMLElement).closest<HTMLElement>('.ldCard')
-  if (!card) return
-  const box = card.getBoundingClientRect()
-  card.style.setProperty('--mx', `${e.clientX - box.left}px`)
-  card.style.setProperty('--my', `${e.clientY - box.top}px`)
+  const surface = (e.target as HTMLElement).closest<HTMLElement>(GLOW)
+  if (!surface) return
+  const box = surface.getBoundingClientRect()
+  surface.style.setProperty('--mx', `${e.clientX - box.left}px`)
+  surface.style.setProperty('--my', `${e.clientY - box.top}px`)
 }
