@@ -5,7 +5,7 @@ import { resolveCoyStatus } from '../shared/coyStatus'
 import { normalizeTaskForces } from '../shared/protocol'
 import type { Doc } from './domain'
 import { holderKey, holdersFor, type RoleTarget } from './roleHolders'
-import { AUTHORITY_ROLES, normaliseScopeType } from './authority'
+import { AUTHORITY_ROLES, normaliseScopeType, recordKind } from './authority'
 
 type AnyRecord = Doc
 type Req = PayloadRequest | Payload
@@ -294,7 +294,8 @@ function contactTarget(c: AnyRecord): RoleTarget | null {
     const scopeType = normaliseScopeType(
       c.scopeType || (spec?.scopeTypes.length === 1 ? spec.scopeTypes[0] : ''),
     )
-    return spec?.scopeTypes.includes(scopeType)
+    // mandates only: a participation role would publish a whole member roster
+    return spec?.scopeTypes.includes(scopeType) && recordKind(scopeType, c.role) === 'mandate'
       ? { role: c.role, scopeType, scopeId: c.scopeId }
       : null
   }

@@ -1,5 +1,5 @@
 import type { AnyValue, Doc } from '../../src/lib/domain'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import crypto from 'node:crypto'
 import { applyAccountSpec } from '../../scripts/lib/accountSpec'
 import { testPayload } from './provision'
@@ -15,6 +15,7 @@ describe('directory role holders', () => {
   const active = `Active Focal ${tag}`
   const lapsed = `Lapsed Focal ${tag}`
   const contact = `Group Contact ${tag}`
+  const created: (number | string)[] = []
 
   beforeAll(async () => {
     const payload = await testPayload()
@@ -27,11 +28,12 @@ describe('directory role holders', () => {
       [FOCAL_ROLE, { role: 'focal_point', scopeId: 'platform' }],
       [WG_ROLE, { wg: wg.id }],
     ] as const) {
-      await payload.create({
+      const row = await payload.create({
         collection: 'directory-contacts',
         data: { group: 'focal_points', roleTitle, ...extra } as AnyValue,
         overrideAccess: true,
       })
+      created.push(row.id)
     }
     const focal = [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }]
     const provision = (spec: AnyValue) =>
@@ -49,6 +51,15 @@ describe('directory role holders', () => {
       wg: { slug: wg.slug, role: 'contact' },
     })
     member = await session({})
+  })
+
+  afterAll(async () => {
+    const payload = await testPayload()
+    await payload.delete({
+      collection: 'directory-contacts',
+      where: { id: { in: created } },
+      overrideAccess: true,
+    })
   })
 
   const rows = async (cookie?: string) =>
@@ -80,9 +91,13 @@ describe('directory role holders', () => {
     // wg.contact_point can sit under a working group or a body
     await expect(create({ role: 'wg.contact_point', scopeId: 'x' })).rejects.toThrow()
     const ok = await create({ role: 'wg.contact_point', scopeType: 'working_group', scopeId: 'x' })
+    created.push(ok.id)
     // a single-scope role still falls back without one
     const single = await create({ role: 'focal_point', scopeId: 'platform' })
-    for (const id of [ok.id, single.id])
-      await payload.delete({ collection: 'directory-contacts', id, overrideAccess: true })
+    created.push(single.id)
+    // a participation role would publish the whole roster
+    await expect(
+      create({ role: 'wg.member', scopeType: 'working_group', scopeId: 'x' }),
+    ).rejects.toThrow()
   })
 })
