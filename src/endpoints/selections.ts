@@ -72,8 +72,26 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
     },
     limit: 1,
     overrideAccess: true,
+    req,
   })
   return docs[0] as AnyValue
+}
+
+// joining the committee and applying exclude each other (S24 §2.2.4) but live in two tables,
+// so both handlers check-then-insert under one per-selection lock or concurrent calls slip past
+const SELECTION_LOCK_NS = 0x53454c // 'SEL'
+async function withSelectionLock<T>(
+  req: PayloadRequest,
+  selectionId: number,
+  fn: () => Promise<T>,
+) {
+  return withTransaction(req, async (transactionID) => {
+    await (req.payload.db as Doc).execute({
+      db: txHandle(req.payload, transactionID),
+      sql: sql`SELECT pg_advisory_xact_lock(${SELECTION_LOCK_NS}, ${selectionId})`,
+    })
+    return fn()
+  })
 }
 
 // Recording a selection stage belongs to the Selections Team (S24) —
@@ -180,28 +198,32 @@ export const selectionEndpoints: Endpoint[] = [
       const s = await loadSelection(req, param(req, 'id'))
       if (!['committee_forming', 'open'].includes(s.status))
         throw fail.conflict('invalid_phase', 'The committee can no longer be joined.')
-      const existing = await committeeMember(req, s.id, account.id)
-      if (existing) throw fail.conflict('already_joined', 'Already on the committee.')
-      // S24 §2.2.4: an applicant can't judge the field they are part of
-      const { totalDocs: applied } = await req.payload.find({
-        collection: 'selection-applications',
-        where: { and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }] },
-        limit: 0,
-        overrideAccess: true,
-      })
-      if (applied)
-        throw fail.conflict(
-          'conflict_of_interest',
-          'You have applied to this selection, so you cannot sit on its committee.',
-        )
-      const member = await req.payload.create({
-        collection: 'selection-committee',
-        data: {
-          selection: s.id,
-          account: account.id,
-          joinedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      const member = await withSelectionLock(req, s.id, async () => {
+        const existing = await committeeMember(req, s.id, account.id)
+        if (existing) throw fail.conflict('already_joined', 'Already on the committee.')
+        // S24 §2.2.4: an applicant can't judge the field they are part of
+        const { totalDocs: applied } = await req.payload.find({
+          collection: 'selection-applications',
+          where: { and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }] },
+          limit: 0,
+          overrideAccess: true,
+          req,
+        })
+        if (applied)
+          throw fail.conflict(
+            'conflict_of_interest',
+            'You have applied to this selection, so you cannot sit on its committee.',
+          )
+        return req.payload.create({
+          collection: 'selection-committee',
+          data: {
+            selection: s.id,
+            account: account.id,
+            joinedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
       })
       await audit(req, account, {
         action: 'selection.committee_joined',
@@ -258,36 +280,40 @@ export const selectionEndpoints: Endpoint[] = [
       if (s.status !== 'open') throw fail.conflict('invalid_phase', 'Applications are not open.')
       if (s.deadlineAt && new Date(s.deadlineAt).getTime() < Date.now())
         throw fail.conflict('deadline_passed', 'The application deadline has passed.')
-      if (await committeeMember(req, s.id, account.id))
-        throw fail.conflict(
-          'conflict_of_interest',
-          'Committee members cannot apply to their own selection.',
-        )
       const b = await readBody(req)
       if (!b.answers || typeof b.answers !== 'object')
         throw fail.validation({ answers: 'Required.' })
-      const { totalDocs: existing } = await req.payload.find({
-        collection: 'selection-applications',
-        where: {
-          and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }],
-        },
-        limit: 0,
-        overrideAccess: true,
-      })
-      if (existing > 0) throw fail.conflict('already_applied', 'One application per member.')
-      const app = await req.payload.create({
-        collection: 'selection-applications',
-        data: {
-          selection: s.id,
-          account: account.id,
-          answers: b.answers,
-          selfFinance: Boolean(b.selfFinance),
-          gender: b.gender?.trim() || null,
-          region: b.region?.trim() || null,
-          status: 'submitted',
-          submittedAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
+      const app = await withSelectionLock(req, s.id, async () => {
+        if (await committeeMember(req, s.id, account.id))
+          throw fail.conflict(
+            'conflict_of_interest',
+            'Committee members cannot apply to their own selection.',
+          )
+        const { totalDocs: existing } = await req.payload.find({
+          collection: 'selection-applications',
+          where: {
+            and: [{ selection: { equals: s.id } }, { account: { equals: account.id } }],
+          },
+          limit: 0,
+          overrideAccess: true,
+          req,
+        })
+        if (existing > 0) throw fail.conflict('already_applied', 'One application per member.')
+        return req.payload.create({
+          collection: 'selection-applications',
+          data: {
+            selection: s.id,
+            account: account.id,
+            answers: b.answers,
+            selfFinance: Boolean(b.selfFinance),
+            gender: b.gender?.trim() || null,
+            region: b.region?.trim() || null,
+            status: 'submitted',
+            submittedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+          req,
+        })
       })
       await audit(req, account, {
         action: 'selection.applied',
