@@ -89,7 +89,6 @@ export interface Config {
     'wg-activities': WgActivity;
     'cp-call-slots': CpCallSlot;
     'content-drafts': ContentDraft;
-    'consultation-contributions': ConsultationContribution;
     'password-resets': PasswordReset;
     'ngo-seats': NgoSeat;
     'ngo-requests': NgoRequest;
@@ -156,7 +155,6 @@ export interface Config {
     'wg-activities': WgActivitiesSelect<false> | WgActivitiesSelect<true>;
     'cp-call-slots': CpCallSlotsSelect<false> | CpCallSlotsSelect<true>;
     'content-drafts': ContentDraftsSelect<false> | ContentDraftsSelect<true>;
-    'consultation-contributions': ConsultationContributionsSelect<false> | ConsultationContributionsSelect<true>;
     'password-resets': PasswordResetsSelect<false> | PasswordResetsSelect<true>;
     'ngo-seats': NgoSeatsSelect<false> | NgoSeatsSelect<true>;
     'ngo-requests': NgoRequestsSelect<false> | NgoRequestsSelect<true>;
@@ -895,30 +893,6 @@ export interface ContentDraft {
   reviewedAt?: string | null;
   publishedAt?: string | null;
   revision?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "consultation-contributions".
- */
-export interface ConsultationContribution {
-  id: number;
-  kind: string;
-  name?: string | null;
-  email?: string | null;
-  organization?: string | null;
-  body?: string | null;
-  meta?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  consentGiven?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1882,10 +1856,6 @@ export interface PayloadLockedDocument {
         value: number | ContentDraft;
       } | null)
     | ({
-        relationTo: 'consultation-contributions';
-        value: number | ConsultationContribution;
-      } | null)
-    | ({
         relationTo: 'password-resets';
         value: number | PasswordReset;
       } | null)
@@ -2589,21 +2559,6 @@ export interface ContentDraftsSelect<T extends boolean = true> {
   reviewedAt?: T;
   publishedAt?: T;
   revision?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "consultation-contributions_select".
- */
-export interface ConsultationContributionsSelect<T extends boolean = true> {
-  kind?: T;
-  name?: T;
-  email?: T;
-  organization?: T;
-  body?: T;
-  meta?: T;
-  consentGiven?: T;
   updatedAt?: T;
   createdAt?: T;
 }

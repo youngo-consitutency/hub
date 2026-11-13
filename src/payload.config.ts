@@ -32,7 +32,6 @@ import { WgProgress } from './collections/WgProgress'
 import { WgActivities } from './collections/WgActivities'
 import { CpCallSlots } from './collections/CpCallSlots'
 import { ContentDrafts } from './collections/ContentDrafts'
-import { ConsultationContributions } from './collections/ConsultationContributions'
 import { PasswordResets } from './collections/PasswordResets'
 import { NgoSeats, NgoRequests } from './collections/Ngo'
 import { MembershipAppeals } from './collections/Membership'
@@ -111,7 +110,6 @@ export default buildConfig({
     WgActivities,
     CpCallSlots,
     ContentDrafts,
-    ConsultationContributions,
     PasswordResets,
     NgoSeats,
     NgoRequests,
