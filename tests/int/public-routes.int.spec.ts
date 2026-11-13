@@ -41,6 +41,8 @@ describe('preview deployments', () => {
   afterEach(() => vi.unstubAllEnvs())
 
   it('drop the sitemap and keep delivery off', async () => {
+    // a deployment may force delivery off; the production half assumes it doesn't
+    vi.stubEnv('HUB_DELIVERY_DISABLED', 'false')
     vi.stubEnv('VERCEL_ENV', 'preview')
     const { default: sitemap } = await import('../../src/app/sitemap')
     const { default: robots } = await import('../../src/app/robots')

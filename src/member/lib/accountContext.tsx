@@ -3,9 +3,11 @@ interface AccountProviderProps {
 }
 
 import type { AnyValue } from './types'
-import { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, useEffect, useRef } from 'react'
+import { useSWRConfig } from 'swr'
 import { setSession, getCachedAccount } from './session'
 import { apiGet } from './api'
+import { mergeAccount, withoutAccess } from './accountState'
 
 const AccountContext = createContext<AnyValue>(null)
 
@@ -14,8 +16,24 @@ export function AccountProvider({ children }: AccountProviderProps) {
   const [account, setAccountState] = useState(getCachedAccount)
 
   const accountId = account?.id
+  // SWR's cache is global and keys carry no account, so another account signing in
+  // within this document would first see the last one's data. clear it whenever the
+  // account changes or ends (a sign-out reload already starts clean)
+  const { mutate } = useSWRConfig()
+  const lastId = useRef(accountId)
+  useEffect(() => {
+    if (lastId.current && lastId.current !== accountId)
+      void mutate(() => true, undefined, { revalidate: false })
+    lastId.current = accountId
+  }, [accountId, mutate])
+
   const [accessTry, setAccessTry] = useState(0)
-  const reloadAccess = useCallback(() => setAccessTry((n) => n + 1), [])
+  // access we hold is stale once something may have moved it, so drop it: a failed
+  // refetch then lands on the retry lock rather than a wrong "access required"
+  const reloadAccess = useCallback(() => {
+    setAccountState(withoutAccess)
+    setAccessTry((n) => n + 1)
+  }, [])
   useEffect(() => {
     if (!accountId) return
     let alive = true
@@ -42,15 +60,11 @@ export function AccountProvider({ children }: AccountProviderProps) {
     }
   }, [accountId, accessTry])
 
-  // endpoints hand back a bare accountView: keep the access we hold for the same
-  // account. a new id refetches via the effect; mutations that move access
-  // (course pass, seat) call reloadAccess themselves
+  // endpoints hand back a bare accountView: keep the access state we hold for the
+  // same account (loaded, or failed and awaiting retry). a new id refetches via the
+  // effect; mutations that move access (course pass, seat) call reloadAccess
   const setAccount = useCallback((acc: AnyValue) => {
-    setAccountState((current: AnyValue) =>
-      acc && !acc.access && current?.access && current.id === acc.id
-        ? { ...acc, access: current.access }
-        : acc,
-    )
+    setAccountState((current: AnyValue) => mergeAccount(current, acc))
     if (acc) setSession({ account: acc })
   }, [])
 

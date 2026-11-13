@@ -259,6 +259,13 @@ export const electionEndpoints: Endpoint[] = [
         throw fail.notFound('Candidate not found.')
       // the screened-in list is what goes on the ballot, so it freezes when voting opens
       const updated = await withPhase(req, e.id, ['nominations'], null, async () => {
+        // two screens can both load before either locks: audit what was really there
+        const current = await req.payload.findByID({
+          collection: 'election-candidates',
+          id: candidate.id,
+          overrideAccess: true,
+          req,
+        })
         const doc = await req.payload.update({
           collection: 'election-candidates',
           id: candidate.id,
@@ -274,7 +281,7 @@ export const electionEndpoints: Endpoint[] = [
           action: `election.candidate_${b.status}`,
           targetType: 'governance',
           targetId: String(e.id),
-          before: { candidate: candidate.id, status: candidate.status },
+          before: { candidate: candidate.id, status: current.status },
           after: { candidate: candidate.id, status: b.status },
         })
         return doc
@@ -437,6 +444,20 @@ export const electionEndpoints: Endpoint[] = [
       const status = quorumMet ? 'completed' : 'restart_required'
       // a double submit or a concurrent restart loses here with 409
       const updated = await withPhase(req, e.id, ['voting', 'tallying'], status, async () => {
+        // status alone can't tell rounds apart: a restart and a new ballot put it back
+        // in voting. the round is its open time and ballot, so a stale request can't
+        // record the old vote's result on the new one
+        const round = await req.payload.findByID({
+          collection: 'elections',
+          id: e.id,
+          overrideAccess: true,
+          req,
+        })
+        if (round.votingOpensAt !== e.votingOpensAt || round.externalRef !== e.externalRef)
+          throw fail.conflict(
+            'invalid_phase',
+            'The vote changed while this result was being recorded. Reload and retry.',
+          )
         const doc = await req.payload.update({
           collection: 'elections',
           id: e.id,
