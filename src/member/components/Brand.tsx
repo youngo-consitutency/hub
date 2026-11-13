@@ -1,25 +1,27 @@
-import type { AnyValue } from '../lib/types'
 interface BrandProps {
-  constituencyOnly?: AnyValue
+  constituencyOnly?: boolean
 }
 
+// transparent logo art, in a light and an on-dark variant; css shows the one that suits the surface
 export function Brand({ constituencyOnly = false }: BrandProps) {
-  const src = constituencyOnly ? '/brand/youngo-logo.png' : '/brand/youngo-hub-logo.png'
-
+  const name = constituencyOnly ? 'youngo-logo' : 'youngo-hub-logo'
+  const [width, height] = constituencyOnly ? [336, 98] : [768, 139]
   return (
-    <span
-      className="brandLockup"
-      data-brand={constituencyOnly ? 'youngo' : 'hub'}
-      aria-hidden="true"
-    >
-      <span className="brandLogoPlate">
-        <img
-          src={src}
-          alt=""
-          width={constituencyOnly ? 336 : 768}
-          height={constituencyOnly ? 98 : 139}
-        />
-      </span>
+    <span className="brandLockup" aria-hidden="true">
+      <img
+        className="brandLogo brandLogoLight"
+        src={`/brand/${name}.png`}
+        alt=""
+        width={width}
+        height={height}
+      />
+      <img
+        className="brandLogo brandLogoDark"
+        src={`/brand/${name}-on-dark.png`}
+        alt=""
+        width={width}
+        height={height}
+      />
     </span>
   )
 }
