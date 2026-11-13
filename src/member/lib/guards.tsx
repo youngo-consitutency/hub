@@ -25,5 +25,7 @@ export function isPreVerify(path: AnyValue) {
 export function lockedFor(path: string, account: AnyValue) {
   if (account && !account.isVerified && !isPreVerify(path)) return <Locked course />
   const lock = lockFor(path, account)
-  return lock ? <Locked title={lock.title} body={lock.body} /> : null
+  return lock ? (
+    <Locked title={lock.title} body={lock.body} retry={'retry' in lock} busy={'busy' in lock} />
+  ) : null
 }

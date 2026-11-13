@@ -10,20 +10,8 @@ import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
 import type { Doc, AnyValue } from '../lib/domain'
 import type { Account } from '../payload-types'
+import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../shared/opportunities'
 
-const OPPORTUNITY_KINDS = [
-  { value: 'event', label: 'Event' },
-  { value: 'workshop', label: 'Online workshop' },
-  { value: 'hackathon', label: 'Hackathon' },
-  { value: 'opportunity', label: 'Opportunity' },
-  { value: 'call', label: 'Open call' },
-  { value: 'training', label: 'Training' },
-]
-const OPPORTUNITY_FORMATS = [
-  { value: 'online', label: 'Online' },
-  { value: 'in_person', label: 'In person' },
-  { value: 'hybrid', label: 'Hybrid' },
-]
 const KIND_VALUES = new Set(OPPORTUNITY_KINDS.map((k) => k.value))
 const FORMAT_VALUES = new Set(OPPORTUNITY_FORMATS.map((f) => f.value))
 
@@ -74,19 +62,8 @@ export const opportunityEndpoints: Endpoint[] = [
       })
       return json({
         items,
-        kinds: [
-          { value: 'event', label: 'Event' },
-          { value: 'workshop', label: 'Online workshop' },
-          { value: 'hackathon', label: 'Hackathon' },
-          { value: 'opportunity', label: 'Opportunity' },
-          { value: 'call', label: 'Open call' },
-          { value: 'training', label: 'Training' },
-        ],
-        formats: [
-          { value: 'online', label: 'Online' },
-          { value: 'in_person', label: 'In person' },
-          { value: 'hybrid', label: 'Hybrid' },
-        ],
+        kinds: OPPORTUNITY_KINDS,
+        formats: OPPORTUNITY_FORMATS,
       })
     }),
   },

@@ -31,7 +31,18 @@ const ICONS = {
 }
 const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
 
-/** Render the public home page from the site document, with loading, retry and unpublished states. */
+// eyebrow, heading and optional lead shared by every home section
+function SectionIntro({ id, eyebrow, title, lead }: AnyValue) {
+  return (
+    <header className="siteSectionIntro">
+      {eyebrow && <p className="pageEyebrow">{eyebrow}</p>}
+      <h2 id={id}>{title}</h2>
+      {lead && <p className="siteSectionLead">{lead}</p>}
+    </header>
+  )
+}
+
+// the public home page, rendered from the cms `site` document
 export function SiteHome() {
   const { doc: site, loading, error, retry } = useDocument('site')
   const home = site?.home
@@ -63,6 +74,8 @@ export function SiteHome() {
     cta = {},
   } = home
 
+  // each section's layout follows its content: ideas, facts, places, values,
+  // dates. take-part tiles are whole links, one big target per destination
   return (
     <>
       <section className="siteHero">
@@ -90,118 +103,96 @@ export function SiteHome() {
       </section>
 
       <div className="siteMain">
-        <section className="siteSection siteEditorialSection" aria-labelledby="mission-heading">
-          <div className="siteSectionIntro">
-            <p className="pageEyebrow">{mission.eyebrow}</p>
-            <h2 id="mission-heading">{mission.title}</h2>
-            <p className="siteSectionLead">{mission.lead}</p>
-          </div>
-          <div className="siteMissionGrid">
+        <section className="siteSection" aria-labelledby="mission-heading">
+          <SectionIntro {...mission} id="mission-heading" />
+          <ul className="siteIdeas">
             {(mission.items || []).map(({ icon, title, body }: AnyValue) => {
               const Icon = iconFor(icon)
               return (
-                <article key={title} className="card siteMissionCard">
-                  <span className="iconTile" aria-hidden>
-                    <Icon size={20} strokeWidth={1.75} />
-                  </span>
+                <li key={title}>
+                  <Icon size={28} strokeWidth={1.5} aria-hidden />
                   <h3>{title}</h3>
                   <p className="meta">{body}</p>
-                </article>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </section>
+      </div>
 
-        <section className="siteSection siteEditorialSection" aria-labelledby="organised-heading">
-          <div className="siteSectionIntro">
-            <p className="pageEyebrow">{organisation.eyebrow}</p>
-            <h2 id="organised-heading">{organisation.title}</h2>
-            <p className="siteSectionLead">{organisation.lead}</p>
-          </div>
-          <div className="siteOrganisationGrid">
+      <section className="siteBand" aria-labelledby="organised-heading">
+        <div className="siteMain siteBandInner">
+          <SectionIntro {...organisation} id="organised-heading" />
+          <dl className="siteFacts">
             {(organisation.stats || []).map(({ value, label }: AnyValue) => (
-              <article key={value} className="card siteOrgCard">
-                <strong>{value}</strong>
-                <p className="meta">{label}</p>
-              </article>
+              <div key={value}>
+                <dt>{value}</dt>
+                <dd>{label}</dd>
+              </div>
             ))}
-          </div>
-          <p className="meta siteOrgNote">{organisation.note}</p>
-        </section>
+          </dl>
+          {organisation.note && <p className="siteBandNote">{organisation.note}</p>}
+        </div>
+      </section>
 
-        <section className="siteSection siteEditorialSection" aria-labelledby="what-heading">
-          <div className="siteSectionIntro">
-            <p className="pageEyebrow">{takePart.eyebrow}</p>
-            <h2 id="what-heading">{takePart.title}</h2>
-          </div>
-          <div className="siteActivityGrid">
+      <div className="siteMain">
+        <section className="siteSection" aria-labelledby="what-heading">
+          <SectionIntro {...takePart} id="what-heading" />
+          <ul className="siteTiles">
             {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
               const Icon = iconFor(icon)
               return (
-                <article key={title} className="card siteDoCard">
-                  <span className="iconTile" aria-hidden>
-                    <Icon size={20} strokeWidth={1.75} />
-                  </span>
-                  <div>
+                <li key={title}>
+                  <A href={href} className="siteTile">
+                    <span className="iconTile" aria-hidden>
+                      <Icon size={20} strokeWidth={1.75} />
+                    </span>
                     <h3>{title}</h3>
                     <p className="meta">{body}</p>
-                    <A href={href} className="siteDoLink">
+                    <span className="siteTileAction">
                       {link}
                       <ChevronRight size={15} strokeWidth={1.75} aria-hidden />
-                    </A>
-                  </div>
-                </article>
+                    </span>
+                  </A>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </section>
 
-        <section
-          className="siteSection siteValuesSection siteEditorialSection"
-          aria-labelledby="values-heading"
-        >
-          <div className="siteSectionIntro">
-            <p className="pageEyebrow">{principles.eyebrow}</p>
-            <h2 id="values-heading">{principles.title}</h2>
-            <p className="siteSectionLead">{principles.lead}</p>
-          </div>
-          <ul className="sitePrincipleList" aria-label="YOUNGO principles">
+        <section className="siteSection siteSplit" aria-labelledby="values-heading">
+          <SectionIntro {...principles} id="values-heading" />
+          <ul className="sitePrinciples" aria-label="YOUNGO principles">
             {(principles.items || []).map((principle: AnyValue) => (
               <li key={principle}>{principle}</li>
             ))}
           </ul>
         </section>
 
-        <section className="siteSection siteEditorialSection" aria-labelledby="history-heading">
-          <div className="siteSectionIntro">
-            <p className="pageEyebrow">{history.eyebrow}</p>
-            <h2 id="history-heading">{history.title}</h2>
-          </div>
-          <div className="siteTimeline">
+        <section className="siteSection" aria-labelledby="history-heading">
+          <SectionIntro {...history} id="history-heading" />
+          <ol className="siteHistory">
             {(history.items || []).map(({ year, title, body }: AnyValue) => (
-              <article key={year} className="siteTimelineItem">
-                <span className="siteTimelineYear mono">{year}</span>
-                <div>
-                  <h3>{title}</h3>
-                  <p className="meta">{body}</p>
-                </div>
-              </article>
+              <li key={year}>
+                <span className="siteHistoryYear mono">{year}</span>
+                <h3>{title}</h3>
+                <p className="meta">{body}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
+      </div>
 
-        <section className="siteCtaBand card" aria-labelledby="cta-heading">
-          <HandHeart size={24} strokeWidth={1.75} aria-hidden />
-          <div>
-            <h2 id="cta-heading">{cta.title}</h2>
-            <p className="meta">{cta.body}</p>
-          </div>
-          <A className="btn btn-primary" href="/join">
+      <section className="siteCta" aria-labelledby="cta-heading">
+        <div className="siteMain siteCtaInner">
+          <h2 id="cta-heading">{cta.title}</h2>
+          <p>{cta.body}</p>
+          <A className="btn btn-primary btn-glow" href="/join">
             {cta.label}
             <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
           </A>
-        </section>
-      </div>
+        </div>
+      </section>
     </>
   )
 }

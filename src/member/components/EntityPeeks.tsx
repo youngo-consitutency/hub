@@ -34,6 +34,8 @@ import { DestinationIcon } from './DestinationLink'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { regionLabel } from '../lib/regions'
+import { useContentOptionLabels } from '../lib/documents'
+import { OPPORTUNITY_FORMAT_LABELS, OPPORTUNITY_KIND_LABELS } from '../../shared/opportunities.js'
 import { coyDisplayStatus, coyApplicationsAreOpen } from '../../shared/coyStatus'
 import type { AnyValue, Doc } from '../lib/types'
 
@@ -133,35 +135,20 @@ const external = { target: '_blank', rel: 'noreferrer' } as const
 
 // ── Opportunity Peek ─────────────────────────────────────────
 
-const OPPORTUNITY_KINDS: Record<string, string> = {
-  event: 'Event',
-  workshop: 'Workshop',
-  hackathon: 'Hackathon',
-  opportunity: 'Opportunity',
-  call: 'Open call',
-  training: 'Training',
-}
-
-const OPPORTUNITY_FORMATS: Record<string, string> = {
-  online: 'Online',
-  in_person: 'In person',
-  hybrid: 'Hybrid',
-}
-
 const opportunityPeek: PeekDef<AnyValue> = {
   eyebrow: ({ item }) =>
-    `Opportunities › ${OPPORTUNITY_KINDS[item.kind] || item.kind || 'Opportunity'}`,
+    `Opportunities › ${OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}`,
   title: ({ item }) => item.title,
   subtitle: ({ item }) => item.organizationName,
   icon: TbSpeakerphone,
   badge: ({ item }) => (
     <span className="chip chip-accent">
-      {OPPORTUNITY_KINDS[item.kind] || item.kind || 'Opportunity'}
+      {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}
     </span>
   ),
   copyUrl: ({ item }) => item.linkUrl,
   properties: ({ item }) => {
-    const formatLabel = OPPORTUNITY_FORMATS[item.format] || item.format
+    const formatLabel = OPPORTUNITY_FORMAT_LABELS[item.format] || item.format
     const where = item.format === 'online' ? 'Online / Remote' : item.location
     const region = item.region ? regionLabel(item.region) : null
     return properties([
@@ -169,7 +156,7 @@ const opportunityPeek: PeekDef<AnyValue> = {
         'Type',
         TbTag,
         <span className="chip chip-accent">
-          {OPPORTUNITY_KINDS[item.kind] || item.kind || 'Opportunity'}
+          {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}
         </span>,
       ),
       formatLabel &&
@@ -191,7 +178,7 @@ const opportunityPeek: PeekDef<AnyValue> = {
       </a>
     ) : null,
   tabs: ({ item }) => {
-    const formatLabel = OPPORTUNITY_FORMATS[item.format] || item.format
+    const formatLabel = OPPORTUNITY_FORMAT_LABELS[item.format] || item.format
     const where = item.format === 'online' ? 'Online / Remote' : item.location
     const region = item.region ? regionLabel(item.region) : null
     return [
@@ -301,33 +288,25 @@ export const OpportunityPeek = createPeek(opportunityPeek)
 
 // ── Event Peek ───────────────────────────────────────────────
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  constituency_call: 'Constituency call',
-  wg_call: 'Working Group call',
-  wgf: 'Working Group Forum',
-  unfccc_session: 'UNFCCC Session',
-  webinar: 'Webinar',
-  workshop: 'Workshop',
-  coordination: 'Coordination meeting',
-}
-
-const eventPeek: PeekDef<AnyValue> = {
-  eyebrow: ({ item }) => `Calendar › ${EVENT_TYPE_LABELS[item.type] || item.type || 'Event'}`,
+// event type labels are staff-editable (content-options), so they ride in as extras
+const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
+  eyebrow: ({ item, extras }) =>
+    `Calendar › ${extras.typeLabels[item.type] || item.type || 'Event'}`,
   title: ({ item }) => item.title,
   subtitle: ({ item }) => (item.wg ? `${item.wg.name} WG` : undefined),
   icon: TbCalendar,
   fullPageHref: ({ item }) => `/calendar/${item.slug}`,
-  badge: ({ item, now }) => {
+  badge: ({ item, now, extras }) => {
     const live = now >= Date.parse(item.startsAt) && now <= Date.parse(item.endsAt)
     return live ? (
       <StatusChip status="live_now" />
     ) : (
       <span className="chip chip-neutral">
-        {EVENT_TYPE_LABELS[item.type] || item.type || 'Event'}
+        {extras.typeLabels[item.type] || item.type || 'Event'}
       </span>
     )
   },
-  properties: ({ item, now }) => {
+  properties: ({ item, now, extras }) => {
     const startMs = Date.parse(item.startsAt)
     const endMs = Date.parse(item.endsAt)
     const live = now >= startMs && now <= endMs
@@ -338,7 +317,7 @@ const eventPeek: PeekDef<AnyValue> = {
         'Type',
         TbTag,
         <span className="chip chip-neutral">
-          {EVENT_TYPE_LABELS[item.type] || item.type || 'Event'}
+          {extras.typeLabels[item.type] || item.type || 'Event'}
         </span>,
       ),
       prop(
@@ -496,7 +475,12 @@ const eventPeek: PeekDef<AnyValue> = {
   },
 }
 
-export const EventPeek = createPeek(eventPeek)
+const EventPeekBody = createPeek(eventPeek)
+
+export function EventPeek(props: { item: AnyValue | null; onClose: () => void }) {
+  const { eventTypes } = useContentOptionLabels()
+  return <EventPeekBody {...props} typeLabels={eventTypes} />
+}
 
 // ── Working Group Peek ───────────────────────────────────────
 // Descriptive copy tracks Governance Policy §4: Working Groups follow

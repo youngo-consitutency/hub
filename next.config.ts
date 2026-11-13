@@ -3,6 +3,7 @@ import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { isIndexable } from './src/lib/environment'
 
 const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
@@ -19,6 +20,15 @@ const nextConfig: NextConfig = {
   // React Compiler memoises components at build time — cuts redundant
   // re-renders across the member UI without manual memo/useMemo churn.
   reactCompiler: true,
+  // non-production builds keep out of search results, static microsite pages included
+  async headers() {
+    if (isIndexable()) return []
+    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] }]
+  },
+  async redirects() {
+    // the old landing-page preview; its links should still land somewhere
+    return [{ source: '/landingV2/:path*', destination: '/', permanent: true }]
+  },
   async rewrites() {
     return [
       // Static consultation microsite lives in public/consultation/ — legacy

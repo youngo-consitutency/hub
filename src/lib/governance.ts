@@ -3,7 +3,7 @@ import { fail } from './respond'
 import { getAccessProfile, hasCapability } from './access'
 import type { AccountLike } from './domain'
 import { isCwActive, isVerifiedAccount } from './accountStatus'
-import { getPgPool } from './pg'
+import { requirePgPool } from './pg'
 
 // shared S10/S24 helpers. votes are cast on belenios (verifiable secret
 // ballots); the hub decides who is eligible and records the result.
@@ -28,9 +28,8 @@ export interface EligibleVoter {
 // everyone who may vote: the same verified + active constituency work rule
 // that requireCwMember enforces on every decision endpoint
 export async function eligibleVoters(): Promise<EligibleVoter[]> {
-  const pool = getPgPool()
-  if (!pool) return []
-  const { rows } = await pool.query(
+  // no database means no registry: fail loudly, never export an empty list
+  const { rows } = await requirePgPool().query(
     `SELECT id, email, entity_type, member_status, hub_access_status, membership_track,
             constituency_work_status, membership_status
        FROM accounts
@@ -47,9 +46,12 @@ export async function eligibleVoters(): Promise<EligibleVoter[]> {
 }
 
 // one line per voter, `address,login`: belenios emails each address its own
-// credential, and the pseudonymous login keeps names out of the voter list
+// credential. the login carries the voter kind, so belenios's records show
+// how many individuals and organisations voted (quorum counts them apart),
+// and no names leave the hub
 export const beleniosVoterList = (voters: EligibleVoter[]) =>
-  voters.map((voter) => `${voter.email},hub-${voter.id}`).join('\n') + (voters.length ? '\n' : '')
+  voters.map((voter) => `${voter.email},hub-${voter.kind}-${voter.id}`).join('\n') +
+  (voters.length ? '\n' : '')
 
 export async function loadElection(req: PayloadRequest, id: string | number) {
   return req.payload

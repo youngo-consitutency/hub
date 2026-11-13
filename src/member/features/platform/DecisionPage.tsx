@@ -2,7 +2,7 @@ import { SidePanel } from '../../components/SidePanel.tsx'
 import { TbGavel as DecisionIcon } from 'react-icons/tb'
 import { Feedback } from './Feedback.tsx'
 import { useState, type FormEvent } from 'react'
-import { BackLink, Empty, ErrorCard, PageHeader, Skeletons } from '../../components/ui'
+import { A, BackLink, Empty, ErrorCard, PageHeader, Skeletons } from '../../components/ui'
 import type { DecisionDetail, DecisionState } from '../../../shared/platform.ts'
 import { usePlatform, post, patch, values, formatDate } from './api.ts'
 import { Field, Text, Select } from './fields.tsx'
@@ -81,7 +81,7 @@ export function DecisionPage({ slug }: { slug: string }) {
                     eligible seats.
                   </p>
                 )}
-                <a href="/work">Assign follow-up work</a>
+                <A href="/work">Assign follow-up work</A>
               </>
             )}
           </section>

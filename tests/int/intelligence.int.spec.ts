@@ -19,6 +19,8 @@ describe('intelligence api', () => {
   let contactId: number | string
   // letters + digits so the query tokeniser keeps it whole
   const token = `zq${crypto.randomBytes(6).toString('hex')}`
+  // role mailbox, kept off @test.invalid so it can't hide an account email leak
+  const mailbox = `${token}@roles.invalid`
 
   const ask = (who: Session, body: Doc) =>
     api('/intelligence/query', { method: 'POST', cookie: who.cookie, body: JSON.stringify(body) })
@@ -52,7 +54,14 @@ describe('intelligence api', () => {
     controller = await session({ membershipTrack: 'constituency_work', teams: ['data_controller'] })
     const contact = await payload.create({
       collection: 'directory-contacts',
-      data: { group: 'it', roleTitle: `Liaison ${token}`, personName: `Person ${token}` },
+      data: {
+        group: 'it',
+        roleTitle: `Liaison ${token}`,
+        description: 'Role mailbox for the spec',
+        publicEmail: mailbox,
+        // superseded column: holders come from authority records, never this
+        personName: `Person ${token}`,
+      },
       overrideAccess: true,
     })
     contactId = contact.id
@@ -72,6 +81,7 @@ describe('intelligence api', () => {
     expect(res.status).toBe(200)
     const text = await res.text()
     expect(text).not.toContain('@test.invalid')
+    expect(text).not.toContain(mailbox)
     const { evidence } = JSON.parse(text)
     expect(evidence.some((e: Doc) => e.sourceType === 'contact')).toBe(false)
 
@@ -86,15 +96,24 @@ describe('intelligence api', () => {
     for (const r of roles) expect(ownTitles).toContain(r.title)
   })
 
+  it('gives a plain member without constituency work no contact evidence either', async () => {
+    const plain = await session({})
+    const res = await ask(plain, { query: token })
+    expect(res.status).toBe(200)
+    const { evidence } = await res.json()
+    expect(evidence.some((e: Doc) => e.sourceType === 'contact')).toBe(false)
+  })
+
   it('serves contact evidence to a contacts holder and tolerates a junk limit', async () => {
     const res = await ask(author, { query: token, limit: 'lots' })
     expect(res.status).toBe(200)
     const text = await res.text()
     expect(text).not.toContain('@test.invalid')
+    expect(text).not.toContain(`Person ${token}`)
     const { evidence } = JSON.parse(text)
-    expect(evidence).toContainEqual(
-      expect.objectContaining({ sourceType: 'contact', title: `Person ${token}` }),
-    )
+    const contact = evidence.find((e: Doc) => e.sourceType === 'contact')
+    expect(contact?.title).toBe(`Liaison ${token}`)
+    expect(contact?.snippet).toContain(mailbox)
   })
 
   it('rejects missing or malformed citations', async () => {
