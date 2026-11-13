@@ -6,6 +6,7 @@ import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import { apiPost } from '../lib/api'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
+import { Honeypot } from './auth/shared'
 
 const EMPTY = {
   name: '',
@@ -117,15 +118,7 @@ export function GysSignup({ embedded = false }: GysSignupProps) {
             </label>
           </div>
 
-          {/* Honeypot — hidden from users, tempting to bots. */}
-          <input
-            className="hp"
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            value={form.website}
-            onChange={set('website')}
-          />
+          <Honeypot value={form.website} onChange={set('website')} />
 
           {error && <p className="meta formError">{error}</p>}
 

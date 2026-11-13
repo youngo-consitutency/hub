@@ -1,6 +1,7 @@
 {
   "name": "youngo-hub-content-mcp",
   "private": true,
+  "license": "GPL-3.0-only",
   "version": "1.2.0",
   "type": "module",
   "engines": {

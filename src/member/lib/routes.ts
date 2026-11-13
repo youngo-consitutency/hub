@@ -68,7 +68,7 @@ export const GROUPS = [
   { id: 'operate', label: 'Operate the Hub' },
 ] as const
 
-export type GroupId = (typeof GROUPS)[number]['id']
+type GroupId = (typeof GROUPS)[number]['id']
 
 export interface HubRoute {
   href: string

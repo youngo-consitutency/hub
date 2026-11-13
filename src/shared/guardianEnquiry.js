@@ -6,7 +6,7 @@
  * request stores only the fields listed in GUARDIAN_FIELDS.
  */
 
-export const GUARDIAN_ENQUIRY_RETENTION_MONTHS = 12
+const GUARDIAN_ENQUIRY_RETENTION_MONTHS = 12
 
 export const UNDER18_STOP_MESSAGE =
   'People under 18 cannot complete this application. A parent or legal guardian has to use the guardian pathway. Nothing from this form is saved as a membership application.'
