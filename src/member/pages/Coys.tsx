@@ -3,7 +3,15 @@ import { CatalogueResults } from '../components/CatalogueResults'
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
+import {
+  Async,
+  Empty,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+  SearchBox,
+} from '../components/ui'
 import { CoyCard } from '../components/cards'
 import { CoyPeek } from '../components/EntityPeeks'
 import { regionFilterPrefix, regionLabel } from '../lib/regions'
@@ -87,17 +95,12 @@ export function Coys() {
             <>
               <div className="catalogTools">
                 <div className="catalogSearchRow">
-                  <label className="searchInputWrap">
-                    <span className="srOnly">Search conferences</span>
-                    <Search size={18} strokeWidth={1.75} aria-hidden />
-                    <input
-                      className="input"
-                      type="search"
-                      placeholder="Search conferences or locations"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
-                  </label>
+                  <SearchBox
+                    label="Search conferences"
+                    placeholder="Search conferences or locations"
+                    value={search}
+                    onChange={setSearch}
+                  />
                   <div className="sortControl" aria-label="Sort conferences">
                     <SortButton
                       active={sort === 'title'}

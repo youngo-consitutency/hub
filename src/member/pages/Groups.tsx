@@ -4,7 +4,15 @@ import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, FilterMenu, FilterPill, PageHeader, SortButton } from '../components/ui'
+import {
+  Async,
+  Empty,
+  FilterMenu,
+  FilterPill,
+  PageHeader,
+  SortButton,
+  SearchBox,
+} from '../components/ui'
 import { GroupCard } from '../components/cards'
 import { GroupPeek } from '../components/EntityPeeks'
 import {
@@ -90,17 +98,12 @@ export function Groups() {
             <>
               <div className="catalogTools">
                 <div className="catalogSearchRow">
-                  <label className="searchInputWrap">
-                    <span className="srOnly">Search working groups</span>
-                    <Search size={18} strokeWidth={1.75} aria-hidden />
-                    <input
-                      className="input"
-                      type="search"
-                      placeholder="Search groups or topics"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
-                  </label>
+                  <SearchBox
+                    label="Search working groups"
+                    placeholder="Search groups or topics"
+                    value={search}
+                    onChange={setSearch}
+                  />
                   <div className="catalogDisplayControls">
                     <div className="sortControl" aria-label="Sort groups">
                       <SortButton

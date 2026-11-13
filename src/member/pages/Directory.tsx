@@ -4,11 +4,11 @@ import { TbUsers as UsersIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, PageHeader } from '../components/ui'
+import { Async, Empty, PageHeader, SearchBox } from '../components/ui'
 import { ContactCard, PersonCard, WorkingGroupContactCard } from '../components/cards'
 import { useDocument } from '../lib/documents'
 import { useWorkingGroups } from '../lib/workingGroups'
-import { TbAt as AtSign, TbSearch as Search, TbUsers as Users } from 'react-icons/tb'
+import { TbAt as AtSign, TbUsers as Users } from 'react-icons/tb'
 
 function PeopleDirectory() {
   const wg = useWorkingGroups()
@@ -35,17 +35,11 @@ function PeopleDirectory() {
           setSearch(draftSearch.trim())
         }}
       >
-        <label className="searchInputWrap">
-          <span className="srOnly">Search people, skills, or topics</span>
-          <Search size={18} aria-hidden />
-          <input
-            className="input"
-            type="search"
-            value={draftSearch}
-            onChange={(event) => setDraftSearch(event.target.value)}
-            placeholder="Search people, skills, or topics"
-          />
-        </label>
+        <SearchBox
+          label="Search people, skills, or topics"
+          value={draftSearch}
+          onChange={setDraftSearch}
+        />
         <label className="field peopleGroupFilter">
           <span className="srOnly">Filter by working group</span>
           <select

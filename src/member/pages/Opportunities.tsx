@@ -33,6 +33,7 @@ import {
   Section,
   SortButton,
   LifecycleTiming,
+  SearchBox,
 } from '../components/ui'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
@@ -261,17 +262,7 @@ export function Opportunities() {
             <>
               <div className="catalogTools">
                 <div className="catalogSearchRow">
-                  <label className="searchInputWrap">
-                    <span className="srOnly">Search opportunities</span>
-                    <Search size={18} strokeWidth={1.75} aria-hidden />
-                    <input
-                      className="input"
-                      type="search"
-                      placeholder="Search opportunities"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
-                  </label>
+                  <SearchBox label="Search opportunities" value={search} onChange={setSearch} />
                   <div className="sortControl" aria-label="Sort opportunities">
                     <SortButton
                       active={sort === 'deadline'}

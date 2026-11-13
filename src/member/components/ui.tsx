@@ -129,6 +129,7 @@ import {
   TbX,
   TbAdjustmentsHorizontal,
   TbChevronDown,
+  TbSearch,
 } from 'react-icons/tb'
 
 export function A({
@@ -188,6 +189,31 @@ export function Button({ variant = 'secondary', sm, glow, className = '', ...res
     .filter(Boolean)
     .join(' ')
   return <button type="button" className={cls} {...rest} />
+}
+
+interface SearchBoxProps {
+  /** names the field for screen readers */
+  label: string
+  placeholder?: string
+  value: string
+  onChange: (value: string) => void
+}
+
+/** The search field every catalogue and list page uses. */
+export function SearchBox({ label, placeholder = label, value, onChange }: SearchBoxProps) {
+  return (
+    <label className="searchInputWrap">
+      <span className="srOnly">{label}</span>
+      <TbSearch size={18} strokeWidth={1.75} aria-hidden />
+      <input
+        className="input"
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  )
 }
 
 export function FilterPill({

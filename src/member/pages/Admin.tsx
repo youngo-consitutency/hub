@@ -34,7 +34,16 @@ import {
   TbShieldCheck as ShieldCheck,
 } from 'react-icons/tb'
 import { apiGet, apiPatch, apiPost } from '../lib/api'
-import { A, Button, Empty, ErrorCard, PageHeader, Section, Skeletons } from '../components/ui'
+import {
+  A,
+  Button,
+  Empty,
+  ErrorCard,
+  PageHeader,
+  Section,
+  Skeletons,
+  SearchBox,
+} from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
 import { AdminEmailBroadcast } from '../components/AdminEmailBroadcast'
 import { PushBroadcast } from '../components/PushBroadcast'
@@ -332,17 +341,12 @@ export function Admin() {
       <AdminCallSlots />
 
       <div className="catalogTools adminTools">
-        <label className="searchInputWrap">
-          <Search size={18} aria-hidden />
-          <span className="srOnly">Search accounts</span>
-          <input
-            className="input"
-            type="search"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search name, email, organisation or country"
-          />
-        </label>
+        <SearchBox
+          label="Search accounts"
+          placeholder="Search name, email, organisation or country"
+          value={searchInput}
+          onChange={setSearchInput}
+        />
         <div className="adminFilters">
           <SearchableSelect
             label="Account type"
