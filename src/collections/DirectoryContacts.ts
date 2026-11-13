@@ -42,11 +42,13 @@ export const DirectoryContacts: CollectionConfig = {
       type: 'text',
       // needed when the role can sit under more than one scope type
       validate: (value: unknown, { siblingData }: { siblingData?: { role?: string } }) => {
-        if (!value) return true
         const spec =
           siblingData?.role && Object.hasOwn(AUTHORITY_ROLES, siblingData.role)
             ? AUTHORITY_ROLES[siblingData.role]
             : null
+        // a single-scope role (or no role) can leave it blank and fall back
+        if (!value)
+          return (spec?.scopeTypes.length ?? 0) <= 1 || 'Choose which scope type this role uses.'
         return (
           Boolean(spec?.scopeTypes.includes(normaliseScopeType(String(value)))) ||
           'Scope type does not fit this role.'
