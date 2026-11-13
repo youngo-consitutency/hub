@@ -13,3 +13,11 @@ export const stagger: Variants = {
 
 // play once, a little before the element is fully in view
 export const inView = { once: true, margin: '0px 0px -10% 0px' } as const
+
+// spread onto a motion list whose children use `rise`: they stagger in as it scrolls into view
+export const reveal = {
+  variants: stagger,
+  initial: 'hidden',
+  whileInView: 'show',
+  viewport: inView,
+} as const

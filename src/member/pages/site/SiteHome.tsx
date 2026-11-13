@@ -1,5 +1,4 @@
 import type { AnyValue } from '../../lib/types'
-import { HUB_ROOT } from '../../../lib/hubUrl'
 import { Ripple } from '../../components/fx/Ripple'
 import { BorderBeam } from '../../components/fx/BorderBeam'
 import { MotionConfig, motion } from 'motion/react'
@@ -19,10 +18,10 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 import { A, Skeletons, ErrorCard, Empty } from '../../components/ui'
-import { useSignedIn } from '../../lib/useSignedIn'
 import { useDocument } from '../../lib/documents'
-import { inView, rise, stagger } from '../../lib/motion'
+import { inView, reveal, rise } from '../../lib/motion'
 import { HeroCommunity } from './HeroCommunity'
+import { JoinButton } from './JoinButton'
 import { HubPulse } from './HubPulse'
 
 // Icon names are stored in the site document; components live here.
@@ -54,7 +53,6 @@ function SectionIntro({ id, eyebrow, title, lead }: AnyValue) {
 // the public home page, rendered from the cms `site` document
 export function SiteHome() {
   const { doc: site, loading, error, retry } = useDocument('site')
-  const signedIn = useSignedIn()
   const home = site?.home
   if (loading)
     return (
@@ -105,11 +103,9 @@ export function SiteHome() {
             </h1>
             <p className="ldHeroLead">{hero.lead}</p>
             <div className="ldActions">
-              <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
-                {signedIn ? 'Open your Hub' : hero.joinLabel}
-                <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-              </A>
+              <JoinButton label={hero.joinLabel} glow />
               <A href="/about/working-groups" className="btn btn-secondary btn-lg">
+                <Users size={18} strokeWidth={1.75} aria-hidden />
                 {hero.exploreLabel}
               </A>
             </div>
@@ -139,13 +135,7 @@ export function SiteHome() {
             title={organisation.title}
             id="organised-heading"
           />
-          <motion.dl
-            className="ldFacts"
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={inView}
-          >
+          <motion.dl className="ldFacts" {...reveal}>
             {(organisation.stats || []).map(({ value, label }: AnyValue) => (
               <motion.div key={value} variants={rise}>
                 <dt>{value}</dt>
@@ -157,13 +147,7 @@ export function SiteHome() {
       </section>
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
         <SectionIntro {...takePart} id="what-heading" />
-        <motion.ul
-          className="ldGrid ldGrid3"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={inView}
-        >
+        <motion.ul className="ldGrid ldGrid3" {...reveal}>
           {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
             const Icon = iconFor(icon)
             return (
@@ -201,7 +185,7 @@ export function SiteHome() {
             viewport={inView}
             transition={{ duration: 1.2, ease: 'easeOut' }}
           />
-          <motion.ol variants={stagger} initial="hidden" whileInView="show" viewport={inView}>
+          <motion.ol {...reveal}>
             {(history.items || []).map(({ year, title, body }: AnyValue) => (
               <motion.li key={year} variants={rise}>
                 <span className="ldYear">{year}</span>
@@ -220,10 +204,7 @@ export function SiteHome() {
         <div className="ldCtaInner">
           <h2 id="cta-heading">{cta.title}</h2>
           <p>{cta.body}</p>
-          <A className="btn btn-primary btn-glow btn-lg" href={signedIn ? HUB_ROOT : '/join'}>
-            {signedIn ? 'Open your Hub' : cta.label}
-            <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-          </A>
+          <JoinButton label={cta.label} glow />
         </div>
       </section>
     </MotionConfig>

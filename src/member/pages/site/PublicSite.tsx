@@ -1,9 +1,9 @@
 import type { AnyValue } from '../../lib/types'
-import { HUB_ROOT } from '../../../lib/hubUrl'
 import { useEffect, useRef, useState } from 'react'
 import {
   TbArrowRight as ArrowRight,
   TbChevronDown as ChevronDown,
+  TbLogin as LogIn,
   TbMenu2 as Menu,
   TbX as X,
 } from 'react-icons/tb'
@@ -24,6 +24,7 @@ import { usePath } from '../../lib/router'
 import { publishedLinks, useDocument } from '../../lib/documents'
 import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
 import { SiteHome } from './SiteHome'
+import { JoinButton } from './JoinButton'
 import { SiteWorkingGroups } from './SiteWorkingGroups'
 import { SiteCoy } from './SiteCoy'
 import { SiteGys } from './SiteGys'
@@ -110,13 +111,11 @@ function SiteHeader() {
         </nav>
         {!signedIn && (
           <A className="siteSignInLink" href="/signin">
+            <LogIn size={15} strokeWidth={1.75} aria-hidden />
             Sign in
           </A>
         )}
-        <A className="btn btn-primary btn-sm siteJoinBtn" href={signedIn ? HUB_ROOT : '/join'}>
-          {signedIn ? 'Open your Hub' : 'Join YOUNGO'}
-          <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
-        </A>
+        <JoinButton label="Join YOUNGO" size="sm" className="siteJoinBtn" />
         <button
           ref={menuButtonRef}
           className="iconButton siteMenuButton"
