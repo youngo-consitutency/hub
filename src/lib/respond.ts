@@ -1,5 +1,6 @@
 import type { Doc } from './domain'
 import * as Sentry from '@sentry/nextjs'
+import type { z } from 'zod'
 import type { PayloadRequest } from 'payload'
 
 // Uniform error surface: { error: { code, message, fields? } }.
@@ -113,6 +114,16 @@ export async function readBody<T extends JsonBody = JsonBody>(req: PayloadReques
     if (error instanceof SyntaxError) throw fail.validation({ body: 'Malformed JSON.' })
     throw error
   }
+}
+
+// zod parse that fails as the contract's validation error, one message per
+// field path ("races.0.slug"); the first issue on a path wins
+export function parseWith<S extends z.ZodType>(schema: S, input: unknown): z.output<S> {
+  const parsed = schema.safeParse(input)
+  if (parsed.success) return parsed.data
+  const fields: Record<string, string> = {}
+  for (const issue of parsed.error.issues) fields[issue.path.join('.') || 'body'] ??= issue.message
+  throw fail.validation(fields)
 }
 
 // Missing params surface as '' so the handler decides the status.

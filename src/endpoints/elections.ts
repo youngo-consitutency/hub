@@ -1,16 +1,55 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { sql } from '@payloadcms/db-postgres'
-import { endpoint, fail, json, readBody, param } from '../lib/respond'
+import { z } from 'zod'
+import { endpoint, fail, json, parseWith, readBody, param } from '../lib/respond'
 import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
 import { txHandle, withTransaction } from '../lib/pg'
 import { cleanText } from '../lib/text'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { AccountLike, Doc, AnyValue } from '../lib/domain'
 
 // S10 elections. the hub runs nominations and screening, decides who may
 // vote and records the result; the vote itself happens on belenios, whose
 // ballots are secret and publicly verifiable (see lib/governance.ts)
+
+const text = (max: number) => z.string().transform((v) => cleanText(v, max))
+const quorum = (fallback: number) =>
+  z
+    .number('Use a whole number, 0 or more.')
+    .int('Use a whole number, 0 or more.')
+    .min(0, 'Use a whole number, 0 or more.')
+    .default(fallback)
+
+const raceSchema = z.object({
+  slug: z
+    .string('Required.')
+    .trim()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,59}$/, 'Use letters, numbers, - or _ (60 at most).'),
+  label: text(120).optional(),
+})
+
+const createSchema = z.object({
+  title: text(200).pipe(z.string().min(1, 'Required.')),
+  description: text(4000)
+    .optional()
+    .transform((v) => v || null),
+  races: z
+    .array(raceSchema, 'At least one race is required.')
+    .min(1, 'At least one race is required.')
+    .max(20, 'At most 20 races.')
+    .superRefine((races, ctx) => {
+      const seen = new Set<string>()
+      for (const race of races) {
+        const key = race.slug.toLowerCase()
+        if (seen.has(key))
+          ctx.addIssue({ code: 'custom', message: `Duplicate race "${race.slug}".` })
+        seen.add(key)
+      }
+    }),
+  quorumIndividuals: quorum(100),
+  quorumOrganisations: quorum(25),
+})
 
 const candidateView = (c: AnyValue) => ({
   id: c.id,
@@ -63,24 +102,17 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may create elections.')
       const b = await readBody(req)
-      const fields: Record<string, string> = {}
-      if (!b.title?.trim()) fields.title = 'Required.'
-      if (!Array.isArray(b.races) || !b.races.length)
-        fields.races = 'At least one race is required.'
-      if (Object.keys(fields).length) throw fail.validation(fields)
+      const input = parseWith(createSchema, b)
       const election = await req.payload.create({
         collection: 'elections',
         data: {
-          title: b.title.trim(),
+          title: input.title,
           kind: b.kind === 'other' ? 'other' : 'focal_point',
           status: 'announced',
-          description: b.description?.trim() || null,
-          races: b.races.map((r: AnyValue) => ({
-            slug: String(r.slug).trim(),
-            label: String(r.label ?? r.slug).trim(),
-          })),
-          quorumIndividuals: b.quorumIndividuals ?? 100,
-          quorumOrganisations: b.quorumOrganisations ?? 25,
+          description: input.description,
+          races: input.races.map((r) => ({ slug: r.slug, label: r.label || r.slug })),
+          quorumIndividuals: input.quorumIndividuals,
+          quorumOrganisations: input.quorumOrganisations,
         },
         overrideAccess: true,
       })
@@ -169,6 +201,10 @@ export const electionEndpoints: Endpoint[] = [
           overrideAccess: true,
           req,
         })
+        if (next === 'voting') await requireCandidatePerRace(req, e)
+        // a restart is a new vote: last round's screening doesn't carry over,
+        // candidacies stay but every one goes back to facilitation
+        if (e.status === 'restart_required') await resetScreening(req, account, e.id)
         await audit(req, account, {
           action: `election.${next}`,
           targetType: 'governance',
@@ -193,7 +229,9 @@ export const electionEndpoints: Endpoint[] = [
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
       const statement = typeof b.statement === 'string' ? cleanText(b.statement, 4000) : ''
       if (!statement) fields.statement = 'A statement of motivation is required.'
-      if (b.videoUrl != null && typeof b.videoUrl !== 'string') fields.videoUrl = 'Use a link.'
+      const videoUrl = b.videoUrl == null || b.videoUrl === '' ? null : httpsUrl(b.videoUrl)
+      if (b.videoUrl != null && b.videoUrl !== '' && (!videoUrl || videoUrl.length > 500))
+        fields.videoUrl = 'Use an https link (500 characters at most).'
       if (Object.keys(fields).length) throw fail.validation(fields)
       // the row lock serialises nominations per election, so the duplicate
       // check can't race a double-click and nothing lands after voting opens
@@ -216,7 +254,7 @@ export const electionEndpoints: Endpoint[] = [
             race: b.race,
             account: account.id,
             statement,
-            videoUrl: b.videoUrl?.trim() || null,
+            videoUrl,
             status: 'pending',
             nominatedAt: new Date().toISOString(),
           },
@@ -510,6 +548,49 @@ async function withPhase<T>(
     if (!rows.length)
       throw fail.conflict('invalid_phase', 'The election moved to another phase. Reload and retry.')
     return fn()
+  })
+}
+
+// the ballot is built from screened-in candidates, so every race needs one.
+// runs under the phase lock, so a screening can't slip in between
+async function requireCandidatePerRace(req: PayloadRequest, e: Doc) {
+  const { docs } = await req.payload.find({
+    collection: 'election-candidates',
+    where: { and: [{ election: { equals: e.id } }, { status: { equals: 'screened_in' } }] },
+    pagination: false,
+    depth: 0,
+    select: { race: true },
+    overrideAccess: true,
+    req,
+  })
+  const covered = new Set(docs.map((c) => c.race))
+  const fields: Record<string, string> = {}
+  for (const race of e.races ?? [])
+    if (!covered.has(race.slug)) fields[race.slug] = 'No screened-in candidate for this race.'
+  if (Object.keys(fields).length)
+    throw fail.conflict(
+      'race_without_candidate',
+      'Every race needs at least one screened-in candidate before voting opens.',
+      fields,
+    )
+}
+
+async function resetScreening(req: PayloadRequest, account: AccountLike, electionId: number) {
+  const { docs } = await req.payload.update({
+    collection: 'election-candidates',
+    where: {
+      and: [{ election: { equals: electionId } }, { status: { not_in: ['pending', 'withdrawn'] } }],
+    },
+    data: { status: 'pending' },
+    depth: 0,
+    overrideAccess: true,
+    req,
+  })
+  await audit(req, account, {
+    action: 'election.screening_reset',
+    targetType: 'governance',
+    targetId: String(electionId),
+    after: { candidates: docs.map((c) => c.id) },
   })
 }
 
