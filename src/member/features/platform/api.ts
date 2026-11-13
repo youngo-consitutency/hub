@@ -42,16 +42,7 @@ export function usePlatform<T>(path: string) {
 }
 export function values(form: HTMLFormElement): Record<string, unknown> {
   const result: Record<string, unknown> = Object.fromEntries(new FormData(form))
-  for (const name of [
-    'version',
-    'snapHours',
-    'electorateSize',
-    'votesFor',
-    'votesAgainst',
-    'vetoOrganisations',
-    'vetoGlobalSouth',
-    'vetoBodies',
-  ])
+  for (const name of ['version', 'snapHours'])
     if (result[name] !== undefined && result[name] !== '') result[name] = Number(result[name])
   for (const name of ['startsAt', 'endsAt', 'dueAt', 'reviewDueAt', 'followUpAt', 'renewalDueAt'])
     if (typeof result[name] === 'string' && result[name])

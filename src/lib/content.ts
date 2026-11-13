@@ -384,7 +384,7 @@ export async function listOpportunities(
     .filter((row) => !format || format === 'all' || row.format === format)
 }
 
-export function resourceFingerprint(item: Doc) {
+function resourceFingerprint(item: Doc) {
   return createHash('sha256')
     .update(
       JSON.stringify([
