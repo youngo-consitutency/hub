@@ -96,7 +96,7 @@ export function SiteCoy() {
             <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
           </a>
         </div>
-        <div className="cardGrid">
+        <div className="cardGrid cardGridFit">
           {(coy.formats || []).map(({ icon, title, body }: AnyValue) => {
             const Icon = (FORMAT_ICONS as AnyValue)[icon] || Globe
             return (
