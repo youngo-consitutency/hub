@@ -26,8 +26,12 @@ const nextConfig: NextConfig = {
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] }]
   },
   async redirects() {
-    // the old landing-page preview; its links should still land somewhere
-    return [{ source: '/landingV2/:path*', destination: '/', permanent: true }]
+    return [
+      // the old landing-page preview; its links should still land somewhere
+      { source: '/landingV2/:path*', destination: '/', permanent: true },
+      // the retired consultation microsite: old links and the CMS footer still point here
+      { source: '/consultation/:path*', destination: '/', permanent: true },
+    ]
   },
   images: {
     localPatterns: [
