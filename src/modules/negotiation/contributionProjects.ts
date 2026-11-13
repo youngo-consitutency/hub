@@ -9,6 +9,7 @@ import {
   contentHash,
   insertEvidence,
   requirePool,
+  withClientTransaction,
   saveIdempotency,
   writeAudit,
 } from './contributionShared'
@@ -26,9 +27,7 @@ export async function createSubmissionProject({
   pool?: Pool | null
 }) {
   const data = normalizeProjectInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = 'project.create'
     const idempotency = await beginIdempotentMutation(
       client,
@@ -38,7 +37,6 @@ export async function createSubmissionProject({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     const track = await client.query(
@@ -129,14 +127,8 @@ export async function createSubmissionProject({
       requestHash: idempotency.requestHash,
       response,
     })
-    await client.query('COMMIT')
     return response
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
 
 export async function appendSubmissionVersion({
@@ -151,9 +143,7 @@ export async function appendSubmissionVersion({
   pool?: Pool | null
 }) {
   const data = normalizeDraftVersionInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = `project.version.create:${projectId}`
     const idempotency = await beginIdempotentMutation(
       client,
@@ -163,7 +153,6 @@ export async function appendSubmissionVersion({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     const project = await assertProjectWrite(client, projectId, account.id)
@@ -226,14 +215,8 @@ export async function appendSubmissionVersion({
       requestHash: idempotency.requestHash,
       response: version.rows[0],
     })
-    await client.query('COMMIT')
     return version.rows[0]
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
 
 export async function listAccessibleProjects({

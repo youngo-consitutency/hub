@@ -257,3 +257,23 @@ export async function assertAmendmentWrite(
   if (!amendment.rows[0]) throw new ContributionError(404, 'not_found', 'Amendment not found.')
   return amendment.rows[0]
 }
+
+// BEGIN/COMMIT around fn on one pooled client; any throw rolls back and the
+// client always goes back to the pool. return early to commit early
+export async function withClientTransaction<T>(
+  pool: Pool | null,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await requirePool(pool).connect()
+  try {
+    await client.query('BEGIN')
+    const result = await fn(client)
+    await client.query('COMMIT')
+    return result
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
