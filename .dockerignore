@@ -1,0 +1,37 @@
+# keeps secrets, history and host build output out of the builder stage
+# (the Dockerfile does COPY . .)
+.git
+.gitignore
+.github
+.env
+.env.*
+!.env.example
+*.pem
+*.log
+node_modules
+**/node_modules
+.next
+out
+build
+dist
+coverage
+test-results
+playwright-report
+blob-report
+.vercel
+.neon
+.local
+.local-demo
+data
+.agent-vault
+.claude
+.codex
+.cursor
+.devin
+.zed
+.mcp.json
+.agents
+.DS_Store
+Dockerfile
+.dockerignore
+docker-compose.yml
