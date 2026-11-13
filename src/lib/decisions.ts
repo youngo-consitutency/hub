@@ -59,6 +59,17 @@ export function computeWindows(
   }
 }
 
+// a snap proposal can't be presented once its deadline has passed
+export function snapDeadlinePassed(
+  type: DecisionType,
+  snapDeadline: string | Date | null | undefined,
+  now = Date.now(),
+): boolean {
+  if (type !== 'snap') return false
+  const t = snapDeadline ? new Date(snapDeadline).getTime() : NaN
+  return !Number.isFinite(t) || t <= now
+}
+
 export const VOTING_WINDOW_MS = 24 * H
 
 // On-ground decisions vote among members present; no 5% quorum (S09 §3.3/§3.4).

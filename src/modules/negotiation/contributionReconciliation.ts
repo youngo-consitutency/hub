@@ -9,7 +9,7 @@ import {
   beginIdempotentMutation,
   contentHash,
   insertEvidence,
-  requirePool,
+  withClientTransaction,
   saveIdempotency,
   writeAudit,
 } from './contributionShared'
@@ -32,9 +32,7 @@ export async function suggestAmendmentReconciliation({
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationSuggestionInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = `amendment.reconciliation.suggest:${amendmentId}`
     const idempotency = await beginIdempotentMutation(
       client,
@@ -44,7 +42,6 @@ export async function suggestAmendmentReconciliation({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
@@ -115,14 +112,8 @@ export async function suggestAmendmentReconciliation({
       requestHash: idempotency.requestHash,
       response,
     })
-    await client.query('COMMIT')
     return response
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
 
 export async function confirmAmendmentReconciliation({
@@ -139,9 +130,7 @@ export async function confirmAmendmentReconciliation({
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationConfirmationInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = `amendment.reconciliation.confirm:${reconciliationId}`
     const idempotency = await beginIdempotentMutation(
       client,
@@ -151,7 +140,6 @@ export async function confirmAmendmentReconciliation({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
@@ -266,12 +254,6 @@ export async function confirmAmendmentReconciliation({
       requestHash: idempotency.requestHash,
       response,
     })
-    await client.query('COMMIT')
     return response
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }

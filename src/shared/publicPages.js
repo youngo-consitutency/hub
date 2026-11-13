@@ -6,7 +6,7 @@
  */
 
 export const PUBLIC_PAGE_KEYS = Object.freeze(['faq', 'contact'])
-export const PAGE_STATES = Object.freeze(['baseline', 'published', 'unpublished'])
+const PAGE_STATES = Object.freeze(['baseline', 'published', 'unpublished'])
 
 const text = (value, min, max) =>
   typeof value === 'string' && value.trim().length >= min && value.length <= max

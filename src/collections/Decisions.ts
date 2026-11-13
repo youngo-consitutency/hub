@@ -211,8 +211,12 @@ export const DecisionBallots: CollectionConfig = {
     read: noAccess,
     ...serverWrites,
   },
-  // One ballot per member per proposal — enforced at the database.
-  indexes: [{ unique: true, fields: ['proposal', 'account'] }],
+  // One ballot per member and one per council seat per proposal, both at the
+  // database. seat is null outside council votes (nulls never collide).
+  indexes: [
+    { unique: true, fields: ['proposal', 'account'] },
+    { unique: true, fields: ['proposal', 'seat'] },
+  ],
   fields: [
     {
       name: 'proposal',
@@ -228,6 +232,8 @@ export const DecisionBallots: CollectionConfig = {
       required: true,
       index: true,
     },
+    // council seat key the ballot was cast for (wg:x, focal_point:<account>)
+    { name: 'seat', type: 'text' },
     { name: 'choice', type: 'text', required: true },
     { name: 'castAt', type: 'date', required: true },
   ],

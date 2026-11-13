@@ -12,7 +12,7 @@ import {
   unsubscribeFromPush,
 } from './pwa'
 
-export const DISMISS_KEY = 'youngo-hub:alert-setup-dismissed'
+const DISMISS_KEY = 'youngo-hub:alert-setup-dismissed'
 
 export function useAlertSetup() {
   const [state, setState] = useState<Doc>({ loading: true })

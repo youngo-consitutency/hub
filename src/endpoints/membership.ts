@@ -113,7 +113,7 @@ async function endRecords(
 // the sweep and the status write queues on the lock and then re-verifies
 // eligibility against the post-exit state — it cannot slip a mandate past
 // the exit. `hooks.afterSweep` exists for concurrency tests only.
-export async function applyMembershipTransition(
+async function applyMembershipTransition(
   req: PayloadRequest,
   accountId: number,
   transition: {
@@ -222,10 +222,15 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.validation({
           _: 'Only Constituency Work membership renews annually.',
         })
-      if (!['active', 'expired'].includes(String(account.membershipStatus ?? '')))
+      // renewal extends a current CW membership only; resigned, lapsed or
+      // never-activated members are (re)activated by the Membership Team
+      if (
+        !['active', 'renewal_due'].includes(String(account.membershipStatus ?? '')) ||
+        account.constituencyWorkStatus !== 'active'
+      )
         throw fail.conflict(
           'invalid_state',
-          `Cannot renew while membership status is ${account.membershipStatus}.`,
+          'Only a current Constituency Work membership can be renewed. Ask the Membership Team to reactivate it.',
         )
       const due = nextCWRenewalDue()
       const updated = await setAccountFields(account.id, {

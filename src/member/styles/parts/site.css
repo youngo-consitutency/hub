@@ -8,6 +8,8 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-page);
+  /* the full-bleed page headers use 100vw, which counts the scrollbar */
+  overflow-x: clip;
 }
 
 .siteConsultBanner {
@@ -227,8 +229,18 @@ main#site-main {
 }
 
 .sitePageHeader {
+  position: relative;
+  isolation: isolate;
   margin-inline: calc(clamp(16px, 4vw, 32px) * -1);
   padding: clamp(40px, 6vw, 64px) clamp(16px, 4vw, 32px) clamp(32px, 5vw, 48px);
+}
+
+/* tint and rule run edge to edge of the window, not just the content column */
+.sitePageHeader::before {
+  content: '';
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--accent-tint) 28%, var(--bg-page));
 }
@@ -555,8 +567,13 @@ main#site-main {
   margin: 0 auto;
   padding: var(--space-8) clamp(16px, 4vw, 32px) var(--space-6);
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(140px, 1fr));
+  grid-template-columns: minmax(220px, 1.5fr) repeat(auto-fit, minmax(140px, 1fr));
   gap: clamp(24px, 4vw, 48px);
+}
+
+/* the banner already closes the page, so no gap before the footer */
+.siteConsultBanner + .siteFooter {
+  margin-top: 0;
 }
 
 .siteFooterBrand .meta {
@@ -591,9 +608,10 @@ main#site-main {
 }
 
 .siteFooterLegal {
-  width: min(100%, 1240px);
+  /* rule spans the content column, not the padded box */
+  width: min(100% - 2 * clamp(16px, 4vw, 32px), 1240px - 64px);
   margin: 0 auto;
-  padding: var(--space-3) clamp(16px, 4vw, 32px) var(--space-4);
+  padding: var(--space-3) 0 var(--space-4);
   border-top: 1px solid var(--border);
 }
 

@@ -180,3 +180,40 @@ export function FormAlert({ children }: FormAlertProps) {
     </div>
   )
 }
+
+interface LoginEmailFieldProps {
+  login?: AnyValue
+  fields?: AnyValue
+  setLog?: AnyValue
+}
+
+export function LoginEmailField({ login, fields, setLog }: LoginEmailFieldProps) {
+  return (
+    <label className={fieldClass(fields.email)}>
+      <span>Email *</span>
+      <input
+        className="input"
+        type="email"
+        autoComplete="email"
+        value={login.email}
+        onChange={setLog('email')}
+        aria-invalid={!!fields.email}
+      />
+      <FieldError msg={fields.email} />
+    </label>
+  )
+}
+
+// hidden from people, tempting to bots; the server drops any submission that fills it
+export function Honeypot({ value, onChange }: { value?: string; onChange?: AnyValue }) {
+  return (
+    <input
+      className="hp"
+      tabIndex={-1}
+      autoComplete="off"
+      aria-hidden="true"
+      value={value}
+      onChange={onChange}
+    />
+  )
+}

@@ -155,7 +155,7 @@ export function adminReason(body: AnyValue): string {
 }
 
 // Payload's auth cookie — set directly to keep the response contract.
-export const SESSION_COOKIE = 'payload-token'
+const SESSION_COOKIE = 'payload-token'
 
 export function sessionCookieHeader(token: string, expiresAt: Date | string | number) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''

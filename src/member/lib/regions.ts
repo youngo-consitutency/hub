@@ -20,7 +20,7 @@ const REGION_ABBREVIATIONS = {
   weog: 'WEOG',
 }
 
-export function regionAbbreviation(value: AnyValue) {
+function regionAbbreviation(value: AnyValue) {
   const normalized = regionKey(value)
   if (!normalized) return ''
   if ((REGION_ABBREVIATIONS as AnyValue)[normalized]) {
