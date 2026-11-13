@@ -1,5 +1,5 @@
 import type { AnyValue } from './types'
-export function nextFilterState(current = 'neutral') {
+function nextFilterState(current = 'neutral') {
   if (current === 'neutral') return 'include'
   if (current === 'include') return 'exclude'
   return 'neutral'

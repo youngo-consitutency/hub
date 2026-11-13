@@ -8,9 +8,9 @@ import { deliveryDisabled } from './environment'
 // Personal agent keys for the YOUNGO MCP gateway. Eligibility is derived
 // from authority records on every use, never stored: a key works only
 // while its holder still has the mandate it was minted for.
-export const KEY_PREFIX = 'yk_live_'
-export const KEY_LIFETIME_DAYS = 90
-export const MAX_ACTIVE_KEYS = 3
+const KEY_PREFIX = 'yk_live_'
+const KEY_LIFETIME_DAYS = 90
+const MAX_ACTIVE_KEYS = 3
 const INACTIVE_MEMBERSHIP = ['expired', 'terminated', 'rejected']
 
 export const AGENT_TOOLS = [
