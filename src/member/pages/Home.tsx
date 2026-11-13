@@ -75,15 +75,7 @@ export function Home() {
         {(data: Doc) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <PageHeader
-              title="Your Hub"
-              icon={Network}
-              action={
-                <A href="/calendar" className="btn btn-secondary">
-                  <CalendarStats size={17} aria-hidden /> Calendar
-                </A>
-              }
-            />
+            <PageHeader title="Your Hub" icon={Network} />
 
             <div className="homeSummary" aria-label="Hub overview">
               <div className="homeMetrics">

@@ -115,7 +115,7 @@ export function SiteHome() {
             </div>
             <p className="ldFine">{hero.reassurance}</p>
           </div>
-          <HeroCommunity href={signedIn ? HUB_ROOT : '/join'} label="Your seat" />
+          <HeroCommunity label="Your seat" />
         </div>
         {/* the track repeats once so the loop is seamless; the copy is hidden from readers */}
         <div className="ldMarquee">
