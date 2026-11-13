@@ -2,11 +2,13 @@
    Follows European and international accessibility standards (WCAG 2.2 AA / EN 301 549).
    British English conventions apply throughout. */
 :root {
+  /* logo variant per surface: the on-dark art swaps in under dark themes and deep sections */
+  --brand-dark-display: none;
+  --brand-light-display: inline-block;
   --bg-page: #f7f9f6;
   --bg-card: #ffffff;
   --bg-raised: #edf3ec;
   --bg-popover: #ffffff;
-  --brand-surface: #ffffff;
   --text-1: #0e231a;
   --text-2: #2b4538;
   --text-3: #4b6657;
@@ -94,6 +96,22 @@
   --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
+
+  /* landing: the hero, stats band and closing card stay deep forest in both themes;
+     every pairing below was checked at 4.5:1 or better */
+  --ld-header-h: 65px;
+  --ld-gutter: clamp(16px, 4vw, 32px);
+  --ld-deep: #04130c;
+  --ld-deep-2: #0a2418;
+  --ld-on-deep: #eaf6ee;
+  --ld-on-deep-muted: #a9c4b4;
+  --ld-line-deep: rgba(169, 232, 196, 0.16);
+  --ld-glass: rgba(10, 36, 24, 0.62);
+  --ld-glow-green: #2dd4a0;
+  --ld-glow-lime: #a3e635;
+  --ld-glow-sky: #38bdf8;
+  --ld-accent-deep: #4ade80;
+  --ld-spot: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 @media (max-width: 1599px) {
@@ -126,7 +144,8 @@
   --bg-card: #14221c;
   --bg-raised: #1c2e27;
   --bg-popover: #1c2e27;
-  --brand-surface: #ffffff;
+  --brand-dark-display: inline-block;
+  --brand-light-display: none;
   --text-1: #f1f8f3;
   --text-2: #c4d7cc;
   --text-3: #9fb7a9;
@@ -165,6 +184,7 @@
   --landing-forest: #57b875;
   --landing-line: rgba(165, 217, 120, 0.18);
   --landing-shadow: none;
+  --ld-spot: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* Base typography and standards */

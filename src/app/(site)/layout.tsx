@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from 'next'
+import { Space_Grotesk } from 'next/font/google'
 import Script from 'next/script'
 import { appBaseUrl } from '../../lib/env'
 import { SITE_DESCRIPTION, SITE_NAME, isIndexable, shareMetadata } from './seo'
+
+// display face for the public landing; self-hosted by next at build, no runtime request to google
+const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
   metadataBase: new URL(appBaseUrl()),
@@ -34,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" suppressHydrationWarning>
+    <html lang="en-GB" className={display.variable} suppressHydrationWarning>
       <head>
         {/* Applies the saved theme before paint, matching the legacy index.html. */}
         <Script src="/theme-init.js" strategy="beforeInteractive" />

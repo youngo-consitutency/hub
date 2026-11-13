@@ -17,6 +17,7 @@ import {
 import { A } from '../../components/ui'
 import { Brand } from '../../components/Brand'
 import { DestinationIcon } from '../../components/DestinationLink'
+import { useSignedIn } from '../../lib/useSignedIn'
 import { usePath } from '../../lib/router'
 import { publishedLinks, useDocument } from '../../lib/documents'
 import { PublicPlatform } from '../../features/platform/PublicPlatform.tsx'
@@ -69,11 +70,21 @@ function SiteNavMenu({ id, label, path }: { id: SiteMenu; label: string; path: s
 function SiteHeader() {
   const path = usePath()
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const signedIn = useSignedIn()
   const menuButtonRef = useRef<AnyValue>(null)
 
   useEffect(() => {
     setOpen(false)
   }, [path])
+
+  // every public page opens on a deep band under the header; it turns solid once the page scrolls
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [])
 
   useEffect(() => {
     if (!open) return undefined
@@ -87,7 +98,7 @@ function SiteHeader() {
   }, [open])
 
   return (
-    <header className="siteHeader">
+    <header className="siteHeader" data-overlay={!scrolled && !open ? '' : undefined}>
       <div className="siteHeaderInner">
         <A href="/" className="wordmark siteWordmark" aria-label="YOUNGO home">
           <Brand constituencyOnly />
@@ -107,11 +118,13 @@ function SiteHeader() {
             <SiteNavMenu key={menu.id} id={menu.id} label={menu.label} path={path} />
           ))}
         </nav>
-        <A className="siteSignInLink" href="/signin">
-          Sign in
-        </A>
-        <A className="btn btn-primary btn-sm siteJoinBtn" href="/join">
-          Join YOUNGO
+        {!signedIn && (
+          <A className="siteSignInLink" href="/signin">
+            Sign in
+          </A>
+        )}
+        <A className="btn btn-primary btn-sm siteJoinBtn" href={signedIn ? '/' : '/join'}>
+          {signedIn ? 'Open your Hub' : 'Join YOUNGO'}
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
         </A>
         <button
@@ -255,8 +268,6 @@ function SiteNotFound() {
  */
 export function PublicSite() {
   const path = usePath()
-  const { doc: site } = useDocument('site')
-  const consult = site?.consultBanner
   let Page: AnyValue = SiteNotFound
   if (isSiteHome(path)) Page = SiteHome
   else if (isSiteRouteActive(path, '/about/working-groups')) Page = SiteWorkingGroups
@@ -276,20 +287,6 @@ export function PublicSite() {
       <main id="site-main" tabIndex={-1}>
         <Page />
       </main>
-      {consult && (
-        <p className="siteConsultBanner">
-          <span>
-            <strong>{consult.title}</strong> {consult.body}
-          </span>
-          <span className="siteConsultBannerActions">
-            {(consult.links || []).map((link: AnyValue) => (
-              <a key={link.href} href={link.href}>
-                {link.label}
-              </a>
-            ))}
-          </span>
-        </p>
-      )}
       <SiteFooter />
     </div>
   )
