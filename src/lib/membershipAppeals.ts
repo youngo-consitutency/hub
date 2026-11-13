@@ -7,17 +7,12 @@ import type { Doc, AccountLike, AnyValue } from './domain'
 // Identity appeals: members submit a statement + proof document; the
 // membership team reviews them. Proofs are bytea, access-scoped.
 
-export const APPEAL_IDENTITY_KINDS = ['passport', 'national_id', 'organisational_letter', 'other']
-export const APPEAL_PROOF_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'application/pdf',
-])
+const APPEAL_IDENTITY_KINDS = ['passport', 'national_id', 'organisational_letter', 'other']
+const APPEAL_PROOF_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
 export const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
-export const APPEAL_MAX_PER_ACCOUNT = 3
+const APPEAL_MAX_PER_ACCOUNT = 3
 
-export function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyValue {
+function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyValue {
   if (!row) return null
   const r = toCamelCase<Doc>(row)
   return {
@@ -34,7 +29,7 @@ export function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyVal
   }
 }
 
-export function validateAppealProof(bytes: Buffer, contentType: string) {
+function validateAppealProof(bytes: Buffer, contentType: string) {
   const type = String(contentType || '')
     .split(';')[0]
     .trim()
@@ -194,7 +189,7 @@ export async function readAppealProof(id: string | number, pool?: Pool | null) {
   return rows[0] || null
 }
 
-export async function findAppealById(id: string | number, pool?: Pool | null) {
+async function findAppealById(id: string | number, pool?: Pool | null) {
   const db = pool || getPgPool()
   if (!db) return null
   const { rows } = await db.query(`SELECT ${APPEAL_COLUMNS} FROM membership_appeals WHERE id=$1`, [

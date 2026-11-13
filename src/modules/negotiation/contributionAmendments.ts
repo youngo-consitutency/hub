@@ -9,7 +9,7 @@ import {
   beginIdempotentMutation,
   contentHash,
   insertEvidence,
-  requirePool,
+  withClientTransaction,
   saveIdempotency,
   writeAudit,
 } from './contributionShared'
@@ -27,9 +27,7 @@ export async function createAmendment({
   pool?: Pool | null
 }) {
   const data = normalizeAmendmentInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = 'amendment.create'
     const idempotency = await beginIdempotentMutation(
       client,
@@ -39,7 +37,6 @@ export async function createAmendment({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     if (data.projectId) await assertProjectWrite(client, data.projectId, account.id)
@@ -128,14 +125,8 @@ export async function createAmendment({
       requestHash: idempotency.requestHash,
       response,
     })
-    await client.query('COMMIT')
     return response
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
 
 export async function appendAmendmentVersion({
@@ -150,9 +141,7 @@ export async function appendAmendmentVersion({
   pool?: Pool | null
 }) {
   const data = normalizeAmendmentRevisionInput(input)
-  const client = await requirePool(pool).connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const operation = `amendment.version.create:${amendmentId}`
     const idempotency = await beginIdempotentMutation(
       client,
@@ -162,7 +151,6 @@ export async function appendAmendmentVersion({
       data,
     )
     if (idempotency.response) {
-      await client.query('COMMIT')
       return idempotency.response
     }
     const amendment = await assertAmendmentWrite(client, amendmentId, account.id)
@@ -227,12 +215,6 @@ export async function appendAmendmentVersion({
       requestHash: idempotency.requestHash,
       response: version.rows[0],
     })
-    await client.query('COMMIT')
     return version.rows[0]
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
