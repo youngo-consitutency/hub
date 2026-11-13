@@ -5,20 +5,22 @@ services:
     environment:
       POSTGRES_DB: youngo_dev
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # no default on purpose: export POSTGRES_PASSWORD before `docker compose up`
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD to a local-only password}
+    # loopback only, so the database is never reachable from the network.
     # 5433 avoids clashing with a host Postgres already on 5432.
     ports:
-      - '5433:5432'
+      - '127.0.0.1:5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   # Optional app-in-container setup. DATABASE_URL inside the container:
-  #   postgres://postgres:postgres@postgres:5432/youngo_dev
+  #   postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/youngo_dev
   payload:
     profiles: ['container-dev']
     image: node:22-alpine
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
     volumes:
       - .:/home/node/app
       - node_modules:/home/node/app/node_modules
@@ -30,7 +32,7 @@ services:
       - path: .env.local
         required: false
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/youngo_dev
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/youngo_dev
 
   # Hosted content MCP for remote clients (stateless POST /mcp on :8080).
   # It signs in to the Hub as a normal account — never give it DATABASE_URL.
@@ -40,7 +42,7 @@ services:
     profiles: ['container-dev']
     image: node:22-alpine
     ports:
-      - '8080:8080'
+      - '127.0.0.1:8080:8080'
     volumes:
       - .:/home/node/app
       - mcp_node_modules:/home/node/app/mcp-content/node_modules

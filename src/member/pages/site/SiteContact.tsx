@@ -55,7 +55,7 @@ export function SiteContact() {
 
       <section className="siteSection" aria-labelledby="routes-heading">
         <h2 id="routes-heading">{contact.routesTitle}</h2>
-        <div className="cardGrid">
+        <div className="cardGrid cardGridFit">
           {routes.map(({ icon, title, body, cta }: AnyValue) => {
             const Icon = (ROUTE_ICONS as AnyValue)[icon] || Users
             return (

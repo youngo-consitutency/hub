@@ -1,6 +1,6 @@
 import type { AnyValue, Doc } from '../lib/types'
-import { useEffect, useMemo, useState } from 'react'
-import { apiGet, apiPost, useApi } from '../lib/api'
+import { sourceLocation, useProposalForm } from '../lib/useProposalForm'
+import { ProposalFooter } from '../components/ProposalFooter'
 import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
 import { TbCircleCheck as CheckCircle } from 'react-icons/tb'
 
@@ -17,77 +17,43 @@ const initialForm = {
   citationQuote: '',
 }
 
-export function AmendmentProposal() {
-  const tracks = useApi('/negotiations')
-  const [form, setForm] = useState(initialForm)
-  const [trackDetail, setTrackDetail] = useState<AnyValue>(null)
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [created, setCreated] = useState<AnyValue>(null)
-  const [idempotency] = useState(() => crypto.randomUUID())
-  const selectedTrack = useMemo(
-    () => tracks.data?.items.find((track: AnyValue) => track.id === form.trackId),
-    [tracks.data, form.trackId],
-  )
+type Form = typeof initialForm
 
-  useEffect(() => {
-    let active = true
-    setTrackDetail(null)
-    if (!selectedTrack) return undefined
-    apiGet(`/negotiations/${selectedTrack.slug}`)
-      .then((detail) => {
-        if (!active) return
-        setTrackDetail(detail)
-        setForm((current) => ({
-          ...current,
-          targetDocumentVersionId: detail.documents[0]?.latestVersion.id || '',
-        }))
-      })
-      .catch((requestError) => active && setError(requestError.message))
-    return () => {
-      active = false
-    }
-  }, [selectedTrack])
-
-  const set = (name: AnyValue) => (event: AnyValue) =>
-    setForm((current) => ({ ...current, [name]: event.target.value }))
-
-  const submit = async (event: AnyValue) => {
-    event.preventDefault()
-    setSaving(true)
-    setError('')
-    try {
-      const result = await apiPost('/negotiations/amendments', {
-        idempotencyKey: idempotency,
-        targetType: 'official_document',
-        targetDocumentVersionId: form.targetDocumentVersionId,
-        stableAnchor: {
-          ...(form.page ? { page: form.page } : {}),
-          ...(form.paragraph ? { paragraph: form.paragraph } : {}),
-          quote: form.anchorQuote,
-        },
-        operation: form.operation,
-        originalText: form.originalText,
-        proposedText: form.operation === 'delete' ? null : form.proposedText,
-        rationale: form.rationale,
-        citations: [
-          {
-            sourceVersionId: form.targetDocumentVersionId,
-            location: {
-              ...(form.page ? { page: form.page } : {}),
-              ...(form.paragraph ? { paragraph: form.paragraph } : {}),
-            },
-            quote: form.citationQuote || form.anchorQuote,
-          },
-        ],
-      })
-      setCreated(result.amendment)
-    } catch (requestError) {
-      setError((requestError as AnyValue).message)
-    } finally {
-      setSaving(false)
-    }
+const toBody = (form: Form, idempotencyKey: string) => {
+  const location = sourceLocation(form.page, form.paragraph)
+  return {
+    idempotencyKey,
+    targetType: 'official_document',
+    targetDocumentVersionId: form.targetDocumentVersionId,
+    stableAnchor: { ...location, quote: form.anchorQuote },
+    operation: form.operation,
+    originalText: form.originalText,
+    proposedText: form.operation === 'delete' ? null : form.proposedText,
+    rationale: form.rationale,
+    citations: [
+      {
+        sourceVersionId: form.targetDocumentVersionId,
+        location,
+        quote: form.citationQuote || form.anchorQuote,
+      },
+    ],
   }
+}
+
+// a new track always resets the target to its latest document version
+const onTrackLoaded = (form: Form, detail: AnyValue): Form => ({
+  ...form,
+  targetDocumentVersionId: detail.documents[0]?.latestVersion.id || '',
+})
+
+export function AmendmentProposal() {
+  const { tracks, form, set, trackDetail, error, saving, created, submit } = useProposalForm({
+    initial: initialForm,
+    endpoint: '/negotiations/amendments',
+    resultKey: 'amendment',
+    toBody,
+    onTrackLoaded,
+  })
 
   if (created)
     return (
@@ -225,16 +191,7 @@ export function AmendmentProposal() {
               This is a member proposal. It never modifies the cited official source and does not
               represent YOUNGO endorsement.
             </p>
-            {error && (
-              <p className="formError" role="alert">
-                {error}
-              </p>
-            )}
-            <div className="detailActions detailPageActions">
-              <button className="btn btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : 'Save text proposal'}
-              </button>
-            </div>
+            <ProposalFooter error={error} saving={saving} label="Save text proposal" />
           </form>
         )}
       </Async>
