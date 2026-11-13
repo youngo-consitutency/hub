@@ -36,28 +36,26 @@ export function CpOverview() {
   const pendingSlugs: string[] = (groups.data?.items || [])
     .filter((group: Doc) => access.manageAllWgs || assignedSlugs?.has(group.slug))
     .map((group: Doc) => group.slug)
-  const { data: pendingByWg = {} } = useSWR<Record<string, number>>(
+  const { data: pendingByWg, error: pendingError } = useSWR<Record<string, number>>(
     pendingSlugs.length ? ['cp-pending', ...pendingSlugs] : null,
     async ([, ...slugs]: string[]) =>
       Object.fromEntries(
         await Promise.all(
+          // a failed read rejects so SWR keeps the last counts and retries, never a fake zero
           slugs.map(async (slug) => {
-            try {
-              const data = await apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
-              const pending = (data.members || []).filter(
-                ({ progress }: AnyValue) =>
-                  progress.status === 'pending_approval' || progress.status === 'interested',
-              ).length
-              return [slug, pending]
-            } catch {
-              return [slug, 0]
-            }
+            const data = await apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
+            const pending = (data.members || []).filter(
+              ({ progress }: AnyValue) =>
+                progress.status === 'pending_approval' || progress.status === 'interested',
+            ).length
+            return [slug, pending]
           }),
         ),
       ),
   )
 
-  const pendingTotal = Object.values(pendingByWg).reduce((sum, n) => sum + n, 0)
+  const pendingTotal = pendingByWg && Object.values(pendingByWg).reduce((sum, n) => sum + n, 0)
+  const pendingUnavailable = !pendingByWg && pendingError
 
   return (
     <div className="mcConsole">
@@ -74,7 +72,7 @@ export function CpOverview() {
         </div>
         <div className="metricCard">
           <ListChecks size={20} aria-hidden />
-          <strong>{pendingTotal}</strong>
+          <strong>{pendingUnavailable ? '–' : (pendingTotal ?? 0)}</strong>
           <span>Awaiting review</span>
         </div>
       </div>
@@ -110,7 +108,7 @@ export function CpOverview() {
             return (
               <div className="cardGrid">
                 {assigned.map((group: Doc) => {
-                  const pending = pendingByWg[group.slug] || 0
+                  const pending = pendingByWg?.[group.slug] || 0
                   const role = roleForGroup(access, group.slug)
                   return (
                     <A key={group.slug} href={`/cp/${group.slug}`} className="card entityCard">
@@ -124,7 +122,9 @@ export function CpOverview() {
                         <span className="mcPill mono">
                           {role === 'officer' ? 'Platform officer' : assignmentLabels[role] || role}
                         </span>
-                        {pending > 0 ? (
+                        {pendingUnavailable ? (
+                          <span className="mcPill mono">unavailable</span>
+                        ) : pending > 0 ? (
                           <span className="mcPill mcPillWarn mono">
                             <ListChecks size={12} aria-hidden />
                             {pending} pending
