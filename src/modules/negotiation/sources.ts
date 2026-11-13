@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto'
 import { type Pool } from 'pg'
 import { getPgPool } from '../../lib/pg'
+import { withClientTransaction } from './contributionShared'
 import { getAccessProfile, hasCapability } from '../../lib/access'
 import type { Doc, AccountLike, AnyValue } from '../../lib/domain'
 
@@ -97,9 +98,7 @@ export async function reviewDocumentExtraction({
     )
   const assessed = assessExtractionText(text)
   const access = await getAccessProfile(req, account)
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
+  return withClientTransaction(pool, async (client) => {
     const target = await client.query(
       `SELECT v.id
        FROM negotiation_document_versions v
@@ -176,12 +175,6 @@ export async function reviewDocumentExtraction({
         requestId || null,
       ],
     )
-    await client.query('COMMIT')
     return inserted.rows[0]
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
+  })
 }
