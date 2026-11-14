@@ -9,7 +9,7 @@ type Loader = () => Promise<ComponentType<AnyValue>>
 
 export type HubRoute =
   | { kind: 'page'; pattern: RegExp; keys: string[]; Page: ComponentType<AnyValue>; fixed?: Props }
-  | { kind: 'redirect'; pattern: RegExp; to: string }
+  | { kind: 'redirect'; pattern: RegExp; keys: string[]; to: string }
 
 const compile = (path: string) => {
   const keys: string[] = []
@@ -34,6 +34,7 @@ const withPanel = (path: string, load: Loader): HubRoute[] => {
   return [path, `${path}/:slug`].map((pattern) => ({ kind: 'page', ...compile(pattern), Page }))
 }
 
+// `to` may name the path's own :params, e.g. redirect('/a/:id/b', '/a/:id')
 const redirect = (path: string, to: string): HubRoute => ({
   kind: 'redirect',
   ...compile(path),
@@ -68,13 +69,9 @@ export const HUB_ROUTES: HubRoute[] = [
     '/calendar',
     from(() => import('../pages/Calendar'), 'Calendar'),
   ),
-  page(
+  ...withPanel(
     '/council',
     from(() => import('../features/platform/Platform'), 'Decisions'),
-  ),
-  page(
-    '/council/:slug',
-    from(() => import('../features/platform/DecisionPage'), 'DecisionPage'),
   ),
   ...withPanel(
     '/coys',
@@ -104,10 +101,8 @@ export const HUB_ROUTES: HubRoute[] = [
     '/groups',
     from(() => import('../pages/Groups'), 'Groups'),
   ),
-  page(
-    '/groups/:slug/:extra',
-    from(() => import('../pages/TaskForce'), 'TaskForce'),
-  ),
+  // task forces are cards in the group panel now; their old pages land on the group
+  redirect('/groups/:slug/:extra', '/groups/:slug'),
   page(
     '/gys',
     from(() => import('../pages/Statement'), 'Statement'),
@@ -252,7 +247,12 @@ export function matchHubRoute(path: string): HubMatch | null {
   for (const route of HUB_ROUTES) {
     const found = route.pattern.exec(path)
     if (!found) continue
-    if (route.kind === 'redirect') return { kind: 'redirect', to: route.to }
+    if (route.kind === 'redirect') {
+      const params = Object.fromEntries(
+        route.keys.map((key, i) => [key, decodeURIComponent(found[i + 1])]),
+      )
+      return { kind: 'redirect', to: route.to.replace(/:(\w+)/g, (_, key) => params[key] ?? '') }
+    }
     const params = Object.fromEntries(
       route.keys.map((key, i) => [key, decodeURIComponent(found[i + 1])]),
     )

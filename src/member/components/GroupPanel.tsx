@@ -18,6 +18,7 @@ import { useContactPoints } from '../lib/workingGroups'
 import { A, Async, Section, Empty } from './ui'
 import { EventCard, PersonCard, SubmissionCard } from './cards'
 import { CopyFeedButton } from './Subscribe'
+import { TaskForceCard } from './TaskForceCard'
 import { ExternalResourceRow } from './DestinationLink'
 import { groupResourcesByCategory, isPublicGroupResource } from '../../shared/resourceCategories'
 import {
@@ -178,14 +179,7 @@ export function GroupPanel({ g }: GroupPanelProps) {
         <Section label="Task forces">
           <div className="cardGrid groupActivityGrid">
             {g.taskForces.map((force: AnyValue) => (
-              <A
-                key={force.slug}
-                href={`/groups/${g.slug}/${force.slug}`}
-                className="card cardTight entityCard"
-              >
-                <h3>{force.name}</h3>
-                {force.purpose && <p className="meta">{force.purpose}</p>}
-              </A>
+              <TaskForceCard key={force.slug} group={g} force={force} />
             ))}
           </div>
         </Section>

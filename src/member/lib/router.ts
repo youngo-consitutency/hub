@@ -113,5 +113,5 @@ export const navigate = (to: AnyValue, options?: Options) => go('push', to, opti
 export const replace = (to: AnyValue, options?: Options) => go('replace', to, options)
 
 // the lists whose records open in the side panel: /groups/:slug is the Groups page with the panel open
-const PANEL_PATH = /^\/(calendar|groups|coys|submissions|opportunities)\/[^/]+$/
+const PANEL_PATH = /^\/(calendar|groups|coys|submissions|opportunities|council)\/[^/]+$/
 export const isPanelPath = (href?: string) => PANEL_PATH.test(href || '')
