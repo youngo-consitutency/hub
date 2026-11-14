@@ -607,13 +607,3 @@
     flex: 0 0 auto;
   }
 }
-
-/* on narrow screens the type pills scroll sideways in one row instead of stacking into three */
-@media (max-width: 700px) {
-  .calendarFilters .pillRow {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-}

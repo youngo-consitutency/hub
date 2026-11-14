@@ -7,7 +7,7 @@ import type { AnyValue, Doc } from '../lib/types'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, FilterPill, PageHeader } from '../components/ui'
+import { Async, CatalogToolbar, Empty, FilterPill, PageHeader } from '../components/ui'
 import { EventCard } from '../components/cards'
 import { EventPeek } from '../components/EntityPeeks'
 import { CalendarSubscribe } from '../components/Subscribe'
@@ -97,8 +97,9 @@ export function Calendar({ slug }: { slug?: string }) {
         title="Calendar"
         description="Calls, forums, sessions, and webinars in one UTC-first agenda."
         action={<CalendarSubscribe type="all" />}
-      >
-        <fieldset className="filterLevel calendarFilters">
+      />
+      <CatalogToolbar>
+        <fieldset className="filterLevel">
           <legend>Event type</legend>
           <div className="pillRow">
             {FILTERS.map((f) => (
@@ -114,7 +115,7 @@ export function Calendar({ slug }: { slug?: string }) {
             ))}
           </div>
         </fieldset>
-      </PageHeader>
+      </CatalogToolbar>
       <Async
         query={query}
         empty={(d: AnyValue) =>

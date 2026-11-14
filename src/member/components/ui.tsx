@@ -196,7 +196,8 @@ export function SearchBox({ label, placeholder = label, value, onChange }: Searc
 }
 
 interface CatalogToolbarProps {
-  search: SearchBoxProps
+  /** omit for toolbars that only filter, like the calendar's */
+  search?: SearchBoxProps
   sortLabel?: string
   sort?: import('react').ReactNode
   /** extra rows between search and the filter menu, e.g. category pills */
@@ -213,19 +214,21 @@ export function CatalogToolbar({
   filters,
 }: CatalogToolbarProps) {
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-card border border-line bg-raised p-3 [&_.searchInputWrap]:w-full">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 max-[620px]:grid-cols-1 max-[620px]:gap-2">
-        <SearchBox {...search} />
-        {sort && (
-          <div
-            role="group"
-            aria-label={sortLabel}
-            className="inline-flex items-center gap-1 rounded-control bg-raised p-1 max-[620px]:w-max max-[620px]:max-w-full max-[620px]:self-start max-[620px]:overflow-x-auto"
-          >
-            {sort}
-          </div>
-        )}
-      </div>
+    <div className="mb-4 flex flex-col gap-3 rounded-card border border-line bg-raised p-3 [&_.searchInputWrap]:w-full max-[620px]:[&>.pillRow]:flex-nowrap max-[620px]:[&>.pillRow]:overflow-x-auto max-[620px]:[&_fieldset_.pillRow]:flex-nowrap max-[620px]:[&_fieldset_.pillRow]:overflow-x-auto">
+      {(search || sort) && (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 max-[620px]:grid-cols-1 max-[620px]:gap-2">
+          {search && <SearchBox {...search} />}
+          {sort && (
+            <div
+              role="group"
+              aria-label={sortLabel}
+              className="inline-flex items-center gap-1 rounded-control bg-raised p-1 max-[620px]:w-max max-[620px]:max-w-full max-[620px]:self-start max-[620px]:overflow-x-auto"
+            >
+              {sort}
+            </div>
+          )}
+        </div>
+      )}
       {children}
       {filters && (
         <div className="flex items-center justify-between gap-3 max-[620px]:flex-col max-[620px]:items-stretch [&_.filterMenu]:w-full [&_.filterMenuPanel]:w-full [&_.filterMenuPanel]:max-w-full">
