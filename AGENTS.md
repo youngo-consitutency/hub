@@ -1,6 +1,6 @@
 # YOUNGO Hub agent guidance
 
-YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `src/member/`, and PostgreSQL holds the data. There is deliberately no admin UI — staff operations run through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
+YOUNGO Hub is the current YOUNGO member and mission-control product — one Next.js + Payload application: the member interface lives in `src/member/`, and PostgreSQL holds the data. There is no general admin UI. The one exception is the content console at `/cms` (standard Payload admin), open only to accounts holding `content.publish` and limited to editing `content-documents`; creating or deleting documents, and every other staff operation, runs through the Payload local API (terminal scripts) or direct database access. `YMC-v2` is superseded historical context; do not add new features there.
 
 ## Hub Intelligence invariants
 

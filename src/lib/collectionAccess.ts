@@ -6,8 +6,9 @@ import { getAccessProfile, hasCapability } from './access'
 // the actor, then write through the local api with overrideAccess; these rules
 // keep the generated api from bypassing that
 
-// there is no console login: nothing writes through the generated api, and it
-// only reads published content or a member's own (or capability-scoped) rows
+// nothing writes through the generated api except the /cms console's content-document
+// edits (see ContentDocuments), and it only reads published content or a member's own
+// (or capability-scoped) rows
 export const noAccess: Access = () => false
 
 // field-level equivalents (field access takes a different args shape)
