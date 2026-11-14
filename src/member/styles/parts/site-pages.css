@@ -313,9 +313,9 @@
 
 /* ── footer: brand, two link columns, then the legal row ── */
 .siteFooter .siteFooterInner {
-  width: min(100%, 1240px);
+  width: min(100%, var(--container));
   margin: 0 auto;
-  padding: clamp(32px, 5vw, 56px) var(--ld-gutter) var(--space-6);
+  padding: clamp(32px, 5vw, 56px) var(--gutter) var(--space-6);
   display: grid;
   grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(150px, 1fr));
   gap: clamp(24px, 4vw, 48px);
@@ -373,8 +373,8 @@
 }
 
 .siteBlock:nth-of-type(even) {
-  margin-inline: calc(var(--ld-gutter) * -1);
-  padding-inline: var(--ld-gutter);
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
   border: 1px solid var(--border);
   border-radius: var(--radius-surface);
   background: var(--bg-card);

@@ -16,9 +16,9 @@
 }
 
 .ldWrap {
-  width: min(100%, 1320px);
+  width: min(100%, var(--container));
   margin-inline: auto;
-  padding-inline: var(--ld-gutter);
+  padding-inline: var(--gutter);
 }
 
 /* deep sections re-scope the tokens so buttons, cards and links inside theme themselves */
@@ -285,14 +285,14 @@
 
 /* events card: frosted panel over the aurora */
 .ldHero .siteUpcoming {
-  border-radius: 20px;
+  border-radius: var(--radius-modal);
   backdrop-filter: blur(16px);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
 
 /* ── sections ─────────────────────────────────────── */
 .ldSection {
-  padding-block: clamp(56px, 8vw, 112px) 0;
+  padding-block: var(--section-y) 0;
 }
 
 .ldIntro {
@@ -538,7 +538,7 @@
   .ldTrack {
     flex-wrap: wrap;
     justify-content: flex-start;
-    padding-inline: var(--ld-gutter);
+    padding-inline: var(--gutter);
   }
 
   .ldTrackCopy {
@@ -630,8 +630,8 @@
 
 /* ── closing call to action ───────────────────────── */
 .ldCta {
-  margin-top: clamp(56px, 8vw, 112px);
-  width: calc(min(100%, 1240px) - 2 * var(--ld-gutter));
+  margin-top: var(--section-y);
+  width: calc(min(100%, var(--container)) - 2 * var(--gutter));
   padding-inline: 0;
   border-radius: var(--radius-surface);
 }

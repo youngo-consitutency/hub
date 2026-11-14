@@ -191,7 +191,7 @@
   min-width: 0;
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 24px clamp(20px, 2.5vw, 40px) 40px;
+  padding: 24px var(--gutter) 40px;
   width: 100%;
 }
 
