@@ -8,13 +8,13 @@ import { WgActivityCard } from './WgActivityCard'
 /** A task force inside its group's panel: opens in place to show the activities posted to it. */
 export function TaskForceCard({ group, force }: { group: AnyValue; force: AnyValue }) {
   return (
-    <Disclosure className="group card cardTight">
+    <Disclosure className="group card cardTight self-start data-[expanded]:col-span-full">
       {({ isExpanded }) => (
         <>
           <Heading className="m-0">
             <Button
               slot="trigger"
-              className="flex w-full items-start justify-between gap-3 text-left"
+              className="flex w-full cursor-pointer items-start justify-between gap-3 border-0 bg-transparent p-0 text-left text-inherit"
             >
               <span>
                 <span className="block font-semibold text-ink">{force.name}</span>
