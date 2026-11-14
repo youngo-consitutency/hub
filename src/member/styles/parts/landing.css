@@ -16,7 +16,7 @@
 }
 
 .ldWrap {
-  width: min(100%, 1240px);
+  width: min(100%, 1320px);
   margin-inline: auto;
   padding-inline: var(--ld-gutter);
 }
@@ -565,13 +565,26 @@
 
 .ldTimeline li {
   position: relative;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card, 0 1px 2px rgba(15, 70, 49, 0.06));
+  transition:
+    transform var(--motion-standard) var(--motion-ease),
+    border-color var(--motion-standard) var(--motion-ease);
+}
+
+.ldTimeline li:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
 }
 
 .ldTimeline li::before {
   content: '';
   position: absolute;
   top: calc(var(--space-6) * -1 - 5px);
-  left: 0;
+  left: var(--space-5);
   width: 12px;
   height: 12px;
   border: 2px solid var(--accent);

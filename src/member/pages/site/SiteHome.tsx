@@ -118,6 +118,7 @@ export function SiteHome() {
   const lead = words.slice(0, -2).join(' ')
   const accent = words.slice(-2).join(' ')
   const principleItems: string[] = principles.items || []
+  const items: AnyValue[] = takePart.items || []
 
   return (
     <>
@@ -161,7 +162,7 @@ export function SiteHome() {
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
         <SectionIntro {...takePart} id="what-heading" />
         <motion.ul className="ldGrid ldGrid3" {...reveal}>
-          {(takePart.items || []).map(({ icon, title, body, href, link }: AnyValue) => {
+          {items.map(({ icon, title, body, href, link }: AnyValue) => {
             const Icon = iconFor(icon)
             return (
               <motion.li key={title} variants={rise} whileHover={{ y: -4 }}>
