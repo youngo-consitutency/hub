@@ -23,7 +23,7 @@
 
 /* deep sections re-scope the tokens so buttons, cards and links inside theme themselves */
 .ldDark,
-.sitePageHeader,
+.heroBand,
 .siteFooter,
 .sidebar {
   --brand-dark-display: inline-block;
@@ -118,7 +118,7 @@
   box-shadow: var(--shadow-card-hover);
 }
 
-.siteShell:has(.ldHero, .sitePageHeader) .siteHeader[data-overlay] {
+.siteShell:has(.ldHero, .heroBand-page) .siteHeader[data-overlay] {
   --text-1: var(--ld-on-deep);
   --text-2: var(--ld-on-deep);
   --brand-dark-display: inline-block;
@@ -681,62 +681,6 @@
     flex: 1 1 100%;
     justify-content: center;
   }
-}
-
-/* ── inner public pages: the shared page header becomes the same deep band as the home hero ── */
-.sitePageHeader {
-  margin-top: calc(var(--ld-header-h) * -1);
-  padding-top: calc(var(--ld-header-h) + clamp(32px, 6vw, 72px));
-  padding-bottom: clamp(36px, 6vw, 64px);
-  color: var(--ld-on-deep);
-}
-
-.sitePageHeader::before,
-.sitePageHeader::after {
-  border-radius: 0 0 var(--radius-surface) var(--radius-surface);
-}
-
-.sitePageHeader::before {
-  border-bottom: 1px solid var(--ld-line-deep);
-  background:
-    var(--glow-spot), radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
-    radial-gradient(30% 60% at 5% 100%, rgba(163, 230, 53, 0.16), transparent 70%),
-    linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
-}
-
-.sitePageHeader::after {
-  content: '';
-  position: absolute;
-  inset: 0 calc(50% - 50vw);
-  z-index: -1;
-  background: repeating-radial-gradient(
-    circle at 82% 30%,
-    transparent 0 22px,
-    rgba(169, 232, 196, 0.09) 22px 23px
-  );
-  mask-image: radial-gradient(circle at 82% 30%, #000 5%, transparent 60%);
-}
-
-.sitePageHeader .pageEyebrow {
-  color: var(--ld-accent-deep);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-}
-
-.sitePageHeader h1 {
-  max-width: 20ch;
-  font-size: clamp(36px, 5.6vw, 60px);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-}
-
-.sitePageLead {
-  color: var(--ld-on-deep-muted);
-}
-
-.sitePageHeader + * {
-  margin-top: var(--space-8);
 }
 
 /* link cards share the landing lift */

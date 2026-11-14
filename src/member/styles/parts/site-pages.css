@@ -2,30 +2,7 @@
    language: tokens, display type, the pointer glow and motion. nothing here is a copy of
    another page's layout */
 
-/* ── page hero: one shape for every inner page — copy and facts on the left, a drawing on the right ── */
-.sitePageHeaderGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
-  gap: var(--space-8);
-  align-items: center;
-}
-
-.sitePageHeaderCopy {
-  display: grid;
-  gap: var(--space-3);
-  justify-items: start;
-}
-
-.sitePageHeader h1 {
-  max-width: 14ch;
-}
-
-.sitePageLead {
-  max-width: 52ch;
-  font-size: clamp(16px, 1.5vw, 19px);
-  line-height: 1.55;
-}
-
+/* ── hero facts and drawing: the slots HeroBand fills on the inner pages (the band itself is hero.css) ── */
 .siteFacts {
   display: flex;
   flex-wrap: wrap;
@@ -72,7 +49,6 @@
 .heroArt {
   width: 100%;
   max-height: 300px;
-  justify-self: end;
   overflow: visible;
 }
 
@@ -134,16 +110,6 @@
 @keyframes heroFloat {
   50% {
     transform: translateY(-8px);
-  }
-}
-
-@media (max-width: 860px) {
-  .sitePageHeaderGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .heroArt {
-    display: none;
   }
 }
 

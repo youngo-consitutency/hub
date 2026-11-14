@@ -4,7 +4,8 @@ import type { ComponentType, ReactNode } from 'react'
 import { TbChevronRight as ChevronRight } from 'react-icons/tb'
 import { A } from '../../components/ui'
 import { NumberTicker } from '../../components/fx/NumberTicker'
-import { HeroArt, type HeroArtKind } from './HeroArt'
+import { HeroArt, type HeroArtKind } from '../../components/HeroArt'
+import { HeroBand } from '../../components/HeroBand'
 
 export interface PageFact {
   icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>
@@ -27,29 +28,27 @@ export function SitePage({ title, eyebrow, lead, art, facts, children }: SitePag
   const shown = (facts ?? []).filter((fact) => fact.value > 0)
   return (
     <div className="siteMain">
-      <header className="sitePageHeader">
-        <div className="sitePageHeaderGrid">
-          <div className="sitePageHeaderCopy">
-            <p className="pageEyebrow">{eyebrow}</p>
-            <h1>{title}</h1>
-            {lead && <p className="sitePageLead">{lead}</p>}
-            {shown.length > 0 && (
-              <dl className="siteFacts">
-                {shown.map(({ icon: Icon, value, label }) => (
-                  <div key={label}>
-                    <Icon size={18} strokeWidth={1.5} aria-hidden />
-                    <dd>
-                      <NumberTicker value={value} />
-                    </dd>
-                    <dt>{label}</dt>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
-          <HeroArt kind={art} />
-        </div>
-      </header>
+      <HeroBand
+        variant="page"
+        eyebrow={eyebrow}
+        title={title}
+        lead={lead}
+        art={<HeroArt kind={art} />}
+      >
+        {shown.length > 0 && (
+          <dl className="siteFacts">
+            {shown.map(({ icon: Icon, value, label }) => (
+              <div key={label}>
+                <Icon size={18} strokeWidth={1.5} aria-hidden />
+                <dd>
+                  <NumberTicker value={value} />
+                </dd>
+                <dt>{label}</dt>
+              </div>
+            ))}
+          </dl>
+        )}
+      </HeroBand>
       {children}
     </div>
   )

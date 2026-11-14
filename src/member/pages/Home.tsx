@@ -21,6 +21,7 @@ import { A, Async, Empty, LifecycleTiming, Section } from '../components/ui'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
 import { MissionMetric } from '../components/MissionConsole'
+import { HeroBand } from '../components/HeroBand'
 import { fmtDual } from '../lib/time'
 import { useAccount } from '../lib/accountContext'
 import { DestinationIcon } from '../components/DestinationLink'
@@ -75,12 +76,15 @@ export function Home() {
         {(data: Doc) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <section className="hubHero ldDark" aria-label="Hub overview">
-              <p className="pageEyebrow">
-                {account?.name ? `Welcome back, ${account.name.split(' ')[0]}` : 'Welcome back'}
-              </p>
-              <h1 className="hubHeroTitle">Your Hub</h1>
-              <p className="hubHeroLead">Here is what needs you, and what is coming up.</p>
+            <HeroBand
+              variant="hub"
+              label="Hub overview"
+              eyebrow={
+                account?.name ? `Welcome back, ${account.name.split(' ')[0]}` : 'Welcome back'
+              }
+              title="Your Hub"
+              lead="Here is what needs you, and what is coming up."
+            >
               <div className="homeMetrics">
                 <MissionMetric
                   value={String(data.counts?.closing ?? data.closing.length)}
@@ -102,7 +106,7 @@ export function Home() {
                   icon={Megaphone}
                 />
               </div>
-            </section>
+            </HeroBand>
 
             <div className="homeColumns">
               <div className="homeMain">
