@@ -12,7 +12,6 @@ import {
   TbGlobe,
   TbHeartHandshake,
   TbInfoCircle,
-  TbLink,
   TbMapPin,
   TbPlayerPlay,
   TbShare,
@@ -28,7 +27,7 @@ import {
   type NotionPeekTab,
   type NotionProperty,
 } from './NotionSidePeek'
-import { A, Button, LifecycleTiming, StatusChip } from './ui'
+import { A, LifecycleTiming, StatusChip } from './ui'
 import { AddToCalendar } from './AddToCalendar'
 import { DestinationIcon } from './DestinationLink'
 import { fmtDual, fmtDateRange } from '../lib/time'
@@ -663,120 +662,3 @@ const submissionPeek: PeekDef<AnyValue> = {
 }
 
 export const SubmissionPeek = createPeek(submissionPeek)
-
-// ── Resource Peek ────────────────────────────────────────────
-
-const resourcePeek: PeekDef<AnyValue, { onReport?: (resource: AnyValue) => void }> = {
-  eyebrow: () => 'Resource Hub',
-  title: ({ item }) => item.title,
-  subtitle: ({ item }) => item.publisher,
-  icon: TbFileText,
-  copyUrl: ({ item }) => item.url,
-  badge: ({ item }) =>
-    item.verification?.status === 'verified' ? (
-      <span className="chip chip-accent">Verified</span>
-    ) : (
-      <span className="chip chip-neutral">Resource</span>
-    ),
-  properties: ({ item }) =>
-    properties([
-      prop('Type', TbTag, <span className="chip chip-accent">{item.type || 'Resource'}</span>),
-      prop(
-        'Verification',
-        TbShieldCheck,
-        item.verification?.status === 'verified' ? (
-          <span className="chip chip-accent">Verified</span>
-        ) : (
-          <span className="chip chip-neutral">Community submitted</span>
-        ),
-      ),
-      item.publisher && prop('Publisher', TbUsers, <strong>{item.publisher}</strong>),
-      item.language && prop('Language', TbGlobe, text(item.language)),
-      item.region && prop('Region', TbMapPin, text(regionLabel(item.region))),
-      item.url &&
-        prop(
-          'Resource link',
-          TbLink,
-          <a href={item.url} {...external} className="inlineLink">
-            Open material
-          </a>,
-        ),
-    ]),
-  tabs: ({ item, extras, onClose }) => {
-    const verified = item.verification?.status === 'verified'
-    const topics = item.topics || (item.topic ? [item.topic] : [])
-    return [
-      {
-        id: 'overview',
-        label: 'Summary & scope',
-        icon: TbFileDescription,
-        content: (
-          <div className="notionTabContent">
-            {item.summary && (
-              <NotionCallout icon={TbFileText} tone="default">
-                <p>{item.summary}</p>
-              </NotionCallout>
-            )}
-            {topics.length > 0 && (
-              <div className="notionSection">
-                <h4 className="notionSectionHeading">Thematic areas</h4>
-                <div className="notionPeekBadgesRow">
-                  {topics.map((t: string) => (
-                    <span key={t} className="chip chip-neutral">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="notionActionRow">
-              {item.url && (
-                <a className="btn btn-primary" href={item.url} {...external}>
-                  <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                  <span>Open resource</span>
-                </a>
-              )}
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: 'verification',
-        label: 'Verification & feedback',
-        icon: TbShieldCheck,
-        content: (
-          <div className="notionTabContent">
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Verification</h4>
-              <p className="notionBodyText">
-                {verified
-                  ? 'This resource has been reviewed and marked as verified.'
-                  : 'This resource has not been verified.'}
-              </p>
-              {item.verification?.checkedAt && (
-                <p className="metaMuted">
-                  Last checked on {new Date(item.verification.checkedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-            {extras.onReport && (
-              <div className="notionActionRow">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    onClose()
-                    extras.onReport!(item)
-                  }}
-                >
-                  Report an issue with this resource
-                </Button>
-              </div>
-            )}
-          </div>
-        ),
-      },
-    ]
-  },
-}
-
-export const ResourcePeek = createPeek(resourcePeek)

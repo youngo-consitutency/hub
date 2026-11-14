@@ -33,7 +33,7 @@ import {
   Section,
   SortButton,
   LifecycleTiming,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
@@ -260,10 +260,11 @@ export function Opportunities() {
 
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox label="Search opportunities" value={search} onChange={setSearch} />
-                  <div className="sortControl" aria-label="Sort opportunities">
+              <CatalogToolbar
+                search={{ label: 'Search opportunities', value: search, onChange: setSearch }}
+                sortLabel="Sort opportunities"
+                sort={
+                  <>
                     <SortButton
                       active={sort === 'deadline'}
                       icon={CalendarClock}
@@ -278,97 +279,101 @@ export function Opportunities() {
                     >
                       Title A–Z
                     </SortButton>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu
-                    onClear={() => {
-                      setKindFilters({})
-                      setFormatFilters({})
-                      setRegionFilters({})
-                    }}
-                    label="Filter opportunities"
-                    activeCount={
-                      activeFilterCount(kindFilters) +
-                      activeFilterCount(formatFilters) +
-                      activeFilterCount(regionFilters)
-                    }
-                  >
-                    <fieldset className="filterLevel">
-                      <legend>Type</legend>
-                      <div className="pillRow">
-                        {KINDS.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(kindFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : kindFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setKindFilters({})
-                              else {
-                                setKindFilters((current) => toggleFilter(current, item.key))
-                              }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    <fieldset className="filterLevel">
-                      <legend>Format</legend>
-                      <div className="pillRow">
-                        {FORMATS.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(formatFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : formatFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setFormatFilters({})
-                              else {
-                                setFormatFilters((current) => toggleFilter(current, item.key))
-                              }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    {regions.length > 0 && (
+                  </>
+                }
+                filters={
+                  <>
+                    <FilterMenu
+                      onClear={() => {
+                        setKindFilters({})
+                        setFormatFilters({})
+                        setRegionFilters({})
+                      }}
+                      label="Filter opportunities"
+                      activeCount={
+                        activeFilterCount(kindFilters) +
+                        activeFilterCount(formatFilters) +
+                        activeFilterCount(regionFilters)
+                      }
+                    >
                       <fieldset className="filterLevel">
-                        <legend>Region</legend>
+                        <legend>Type</legend>
                         <div className="pillRow">
-                          <FilterPill
-                            active={activeFilterCount(regionFilters) === 0}
-                            icon={Map}
-                            onClick={() => setRegionFilters({})}
-                          >
-                            All regions
-                          </FilterPill>
-                          {regions.map((region: AnyValue) => (
+                          {KINDS.map((item) => (
                             <FilterPill
-                              key={region}
-                              state={regionFilters[region] || 'neutral'}
-                              prefix={regionFilterPrefix(region, regionLabel(region))}
-                              onClick={() =>
-                                setRegionFilters((current) => toggleFilter(current, region))
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(kindFilters) === 0}
+                              state={
+                                item.key === 'all' ? undefined : kindFilters[item.key] || 'neutral'
                               }
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setKindFilters({})
+                                else {
+                                  setKindFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
                             >
-                              {regionLabel(region)}
+                              {item.label}
                             </FilterPill>
                           ))}
                         </div>
                       </fieldset>
-                    )}
-                  </FilterMenu>
-                </div>
-              </div>
+                      <fieldset className="filterLevel">
+                        <legend>Format</legend>
+                        <div className="pillRow">
+                          {FORMATS.map((item) => (
+                            <FilterPill
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(formatFilters) === 0}
+                              state={
+                                item.key === 'all'
+                                  ? undefined
+                                  : formatFilters[item.key] || 'neutral'
+                              }
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setFormatFilters({})
+                                else {
+                                  setFormatFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                      {regions.length > 0 && (
+                        <fieldset className="filterLevel">
+                          <legend>Region</legend>
+                          <div className="pillRow">
+                            <FilterPill
+                              active={activeFilterCount(regionFilters) === 0}
+                              icon={Map}
+                              onClick={() => setRegionFilters({})}
+                            >
+                              All regions
+                            </FilterPill>
+                            {regions.map((region: AnyValue) => (
+                              <FilterPill
+                                key={region}
+                                state={regionFilters[region] || 'neutral'}
+                                prefix={regionFilterPrefix(region, regionLabel(region))}
+                                onClick={() =>
+                                  setRegionFilters((current) => toggleFilter(current, region))
+                                }
+                              >
+                                {regionLabel(region)}
+                              </FilterPill>
+                            ))}
+                          </div>
+                        </fieldset>
+                      )}
+                    </FilterMenu>
+                  </>
+                }
+              />
               <CatalogueResults count={items.length}>
                 {items.length ? (
                   <div className="opportunityGroups">

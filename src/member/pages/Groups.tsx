@@ -11,7 +11,7 @@ import {
   FilterPill,
   PageHeader,
   SortButton,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import { GroupCard } from '../components/cards'
 import { GroupPeek } from '../components/EntityPeeks'
@@ -96,53 +96,59 @@ export function Groups() {
 
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox
-                    label="Search working groups"
-                    placeholder="Search groups or topics"
-                    value={search}
-                    onChange={setSearch}
-                  />
-                  <div className="catalogDisplayControls">
-                    <div className="sortControl" aria-label="Sort groups">
-                      <SortButton
-                        active
-                        icon={descending ? ArrowUpAZ : ArrowDownAZ}
-                        onClick={() => setDescending((current) => !current)}
-                      >
-                        Name {descending ? 'Z–A' : 'A–Z'}
-                      </SortButton>
-                    </div>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu activeCount={activeFilterCount(topics)} onClear={() => setTopics({})}>
-                    <fieldset className="filterLevel">
-                      <legend>Topics</legend>
-                      <div className="pillRow">
-                        <FilterPill
-                          active={activeFilterCount(topics) === 0}
-                          icon={Tags}
-                          onClick={() => setTopics({})}
-                        >
-                          All topics
-                        </FilterPill>
-                        {topicList.map((item: Doc) => (
+              <CatalogToolbar
+                search={{
+                  label: 'Search working groups',
+                  placeholder: 'Search groups or topics',
+                  value: search,
+                  onChange: setSearch,
+                }}
+                sortLabel="Sort groups"
+                sort={
+                  <>
+                    <SortButton
+                      active
+                      icon={descending ? ArrowUpAZ : ArrowDownAZ}
+                      onClick={() => setDescending((current) => !current)}
+                    >
+                      Name {descending ? 'Z–A' : 'A–Z'}
+                    </SortButton>
+                  </>
+                }
+                filters={
+                  <>
+                    <FilterMenu
+                      activeCount={activeFilterCount(topics)}
+                      onClear={() => setTopics({})}
+                    >
+                      <fieldset className="filterLevel">
+                        <legend>Topics</legend>
+                        <div className="pillRow">
                           <FilterPill
-                            key={item.key}
-                            state={topics[item.key] || 'neutral'}
-                            icon={(TOPIC_ICONS as AnyValue)[item.key]}
-                            onClick={() => setTopics((current) => toggleFilter(current, item.key))}
+                            active={activeFilterCount(topics) === 0}
+                            icon={Tags}
+                            onClick={() => setTopics({})}
                           >
-                            {item.label}
+                            All topics
                           </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                  </FilterMenu>
-                </div>
-              </div>
+                          {topicList.map((item: Doc) => (
+                            <FilterPill
+                              key={item.key}
+                              state={topics[item.key] || 'neutral'}
+                              icon={(TOPIC_ICONS as AnyValue)[item.key]}
+                              onClick={() =>
+                                setTopics((current) => toggleFilter(current, item.key))
+                              }
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                    </FilterMenu>
+                  </>
+                }
+              />
               <CatalogueResults count={groups.length}>
                 {groups.length ? (
                   <div className="cardGrid">{groups.map(renderGroup)}</div>

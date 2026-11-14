@@ -10,7 +10,7 @@ import {
   FilterPill,
   PageHeader,
   SortButton,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import { CoyCard } from '../components/cards'
 import { CoyPeek } from '../components/EntityPeeks'
@@ -93,15 +93,16 @@ export function Coys() {
             })
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox
-                    label="Search conferences"
-                    placeholder="Search conferences or locations"
-                    value={search}
-                    onChange={setSearch}
-                  />
-                  <div className="sortControl" aria-label="Sort conferences">
+              <CatalogToolbar
+                search={{
+                  label: 'Search conferences',
+                  placeholder: 'Search conferences or locations',
+                  value: search,
+                  onChange: setSearch,
+                }}
+                sortLabel="Sort conferences"
+                sort={
+                  <>
                     <SortButton
                       active={sort === 'title'}
                       icon={ArrowDownAZ}
@@ -116,71 +117,77 @@ export function Coys() {
                     >
                       Region
                     </SortButton>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu
-                    onClear={() => {
-                      setTypeFilters({})
-                      setRegionFilters({})
-                    }}
-                    label="Filter conferences"
-                    activeCount={activeFilterCount(typeFilters) + activeFilterCount(regionFilters)}
-                  >
-                    <fieldset className="filterLevel">
-                      <legend>Conference type</legend>
-                      <div className="pillRow">
-                        {TYPES.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(typeFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : typeFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setTypeFilters({})
-                              else {
-                                setTypeFilters((current) => toggleFilter(current, item.key))
+                  </>
+                }
+                filters={
+                  <>
+                    <FilterMenu
+                      onClear={() => {
+                        setTypeFilters({})
+                        setRegionFilters({})
+                      }}
+                      label="Filter conferences"
+                      activeCount={
+                        activeFilterCount(typeFilters) + activeFilterCount(regionFilters)
+                      }
+                    >
+                      <fieldset className="filterLevel">
+                        <legend>Conference type</legend>
+                        <div className="pillRow">
+                          {TYPES.map((item) => (
+                            <FilterPill
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(typeFilters) === 0}
+                              state={
+                                item.key === 'all' ? undefined : typeFilters[item.key] || 'neutral'
                               }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    <fieldset className="filterLevel">
-                      <legend>Region</legend>
-                      <div className="pillRow">
-                        {REGIONS.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(regionFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : regionFilters[item.key] || 'neutral'
-                            }
-                            icon={item.key === 'all' ? Map : undefined}
-                            prefix={
-                              item.key === 'all'
-                                ? undefined
-                                : regionFilterPrefix(item.key, item.label)
-                            }
-                            onClick={() => {
-                              if (item.key === 'all') setRegionFilters({})
-                              else {
-                                setRegionFilters((current) => toggleFilter(current, item.key))
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setTypeFilters({})
+                                else {
+                                  setTypeFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <fieldset className="filterLevel">
+                        <legend>Region</legend>
+                        <div className="pillRow">
+                          {REGIONS.map((item) => (
+                            <FilterPill
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(regionFilters) === 0}
+                              state={
+                                item.key === 'all'
+                                  ? undefined
+                                  : regionFilters[item.key] || 'neutral'
                               }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                  </FilterMenu>
-                </div>
-              </div>
+                              icon={item.key === 'all' ? Map : undefined}
+                              prefix={
+                                item.key === 'all'
+                                  ? undefined
+                                  : regionFilterPrefix(item.key, item.label)
+                              }
+                              onClick={() => {
+                                if (item.key === 'all') setRegionFilters({})
+                                else {
+                                  setRegionFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                    </FilterMenu>
+                  </>
+                }
+              />
               <CatalogueResults count={items.length}>
                 {items.length ? (
                   <div className="cardGrid">

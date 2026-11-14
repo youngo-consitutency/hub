@@ -105,7 +105,38 @@
 }
 
 .searchInputWrap .input {
-  padding-left: 42px;
+  padding-inline: 42px 38px;
+}
+
+/* react-aria marks the field empty, so the clear button only shows once there is text */
+.searchClear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.searchClear:hover {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
+.searchInputWrap[data-empty] .searchClear {
+  display: none;
+}
+
+/* the browser's own clear cross would double up */
+.searchInputWrap .input::-webkit-search-cancel-button {
+  display: none;
 }
 
 .searchResults {
@@ -1359,7 +1390,6 @@ a.monogram:hover {
 
 .roleHubGrid {
   display: grid;
-  grid-template-columns: repeat(var(--catalog-columns), minmax(0, 1fr));
   grid-auto-rows: auto;
   justify-content: start;
   align-items: stretch;
@@ -1368,7 +1398,6 @@ a.monogram:hover {
 
 .dashboardCardGrid {
   display: grid;
-  grid-template-columns: repeat(var(--catalog-columns), minmax(0, 1fr));
   grid-auto-rows: auto;
   justify-content: start;
   align-items: stretch;

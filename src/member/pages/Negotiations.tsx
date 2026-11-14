@@ -8,7 +8,7 @@ interface TrackResultsProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
-import { A, Async, Empty, PageHeader, SearchBox } from '../components/ui'
+import { A, Async, Empty, CatalogToolbar, PageHeader, SortButton } from '../components/ui'
 import { TbArrowUpRight as ArrowUpRight, TbWorldSearch as WorldSearch } from 'react-icons/tb'
 
 /** Browse negotiation tracks with text search and an optional open-calls filter. */
@@ -23,24 +23,20 @@ export function Negotiations() {
         title="Negotiations"
         description="Follow negotiation topics, review the evidence and find open calls."
       />
-      <div className="catalogTools">
-        <div className="catalogSearchRow">
-          <SearchBox
-            label="Search negotiation tracks"
-            placeholder="Search track topics or working groups"
-            value={search}
-            onChange={setSearch}
-          />
-          <button
-            className={`btn btn-sm ${openOnly ? 'btn-primary' : 'btn-secondary'}`}
-            type="button"
-            aria-pressed={openOnly}
-            onClick={() => setOpenOnly((value) => !value)}
-          >
+      <CatalogToolbar
+        search={{
+          label: 'Search negotiation tracks',
+          placeholder: 'Search track topics or working groups',
+          value: search,
+          onChange: setSearch,
+        }}
+        sortLabel="Call filter"
+        sort={
+          <SortButton active={openOnly} onClick={() => setOpenOnly((value) => !value)}>
             Open calls only
-          </button>
-        </div>
-      </div>
+          </SortButton>
+        }
+      />
       <Async query={query}>{(data: Doc) => <TrackResults data={data} search={search} />}</Async>
     </div>
   )

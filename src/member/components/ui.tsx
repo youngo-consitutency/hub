@@ -116,6 +116,7 @@ interface AsyncProps {
 
 import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
+import { Button as RacButton, Input, SearchField } from 'react-aria-components'
 import Link from 'next/link'
 import { currentAppUrl, hrefFor, navigate, replace, peekBackground } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
@@ -199,20 +200,49 @@ interface SearchBoxProps {
   onChange: (value: string) => void
 }
 
-/** The search field every catalogue and list page uses. */
+/** The search field every catalogue and list page uses (react-aria: clear button, Escape, labelling). */
 export function SearchBox({ label, placeholder = label, value, onChange }: SearchBoxProps) {
   return (
-    <label className="searchInputWrap">
-      <span className="srOnly">{label}</span>
+    <SearchField className="searchInputWrap" aria-label={label} value={value} onChange={onChange}>
       <TbSearch size={18} strokeWidth={1.75} aria-hidden />
-      <input
-        className="input"
-        type="search"
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+      <Input className="input" placeholder={placeholder} />
+      <RacButton className="searchClear" aria-label="Clear search">
+        <TbX size={15} strokeWidth={1.75} aria-hidden />
+      </RacButton>
+    </SearchField>
+  )
+}
+
+interface CatalogToolbarProps {
+  search: SearchBoxProps
+  sortLabel?: string
+  sort?: import('react').ReactNode
+  /** extra rows between search and the filter menu, e.g. category pills */
+  children?: import('react').ReactNode
+  filters?: import('react').ReactNode
+}
+
+/** Search, sort and filter row shared by every browse page, so they all behave and wrap alike. */
+export function CatalogToolbar({
+  search,
+  sortLabel,
+  sort,
+  children,
+  filters,
+}: CatalogToolbarProps) {
+  return (
+    <div className="catalogTools">
+      <div className="catalogSearchRow">
+        <SearchBox {...search} />
+        {sort && (
+          <div className="sortControl" role="group" aria-label={sortLabel}>
+            {sort}
+          </div>
+        )}
+      </div>
+      {children}
+      {filters && <div className="catalogControlRow catalogFilterRow">{filters}</div>}
+    </div>
   )
 }
 
