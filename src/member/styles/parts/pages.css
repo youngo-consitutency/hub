@@ -1225,21 +1225,6 @@ a.monogram:hover {
   margin-left: auto;
 }
 
-.detailPage .detailActions:has(> :nth-child(2)) > * {
-  min-width: 0;
-  width: auto;
-}
-
-.detailPage .detailActions:has(> :nth-child(2)) > .btn,
-.detailPage .detailActions:has(> :nth-child(2)) > .addCalWrap > .btn {
-  width: auto;
-}
-
-.eventDetailPage {
-  width: 100%;
-  max-width: var(--detail-max);
-}
-
 /* Detail summaries keep facts and actions together without forcing sparse
    metadata across the full content column. */
 .detailSummary {

@@ -78,8 +78,6 @@
 
 /* These surfaces all sit below their controls; no diagonal drift or zoom. */
 .comboMenu[data-entering],
-.addCalPanel,
-.subscribePanel,
 .siteMobileNav,
 .sheet {
   animation: hubPopoverIn var(--motion-standard) var(--motion-ease-out) both;

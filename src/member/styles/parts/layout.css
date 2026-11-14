@@ -878,8 +878,7 @@
     width: 100%;
   }
 
-  .pageHeaderAction > .btn,
-  .pageHeaderAction > .subscribeWrap {
+  .pageHeaderAction > .btn {
     width: 100%;
   }
 
