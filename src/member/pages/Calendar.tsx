@@ -1,14 +1,13 @@
-interface CalendarEventIconProps {
+interface CalendarEventDotProps {
   type: string
 }
 
 import { usePeek } from '../lib/peek'
 import type { AnyValue, Doc } from '../lib/types'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { useContentOptions } from '../lib/documents'
-import { Async, Empty, FilterMenu, FilterPill, PageHeader } from '../components/ui'
+import { Async, Empty, FilterPill, PageHeader } from '../components/ui'
 import { EventCard } from '../components/cards'
 import { EventPeek } from '../components/EntityPeeks'
 import { CalendarSubscribe } from '../components/Subscribe'
@@ -34,7 +33,6 @@ import {
   TbBuildingBank as Landmark,
   TbMessages as MessagesSquare,
   TbDeviceDesktop as MonitorPlay,
-  TbCalendarTime as CalendarClock,
   TbCalendarMonth as CalendarMonth,
   TbCalendarWeek as CalendarWeek,
   TbSun as Sun,
@@ -51,48 +49,19 @@ const FILTERS = [
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-const EVENT_ICONS = {
-  constituency_call: UsersRound,
-  wg_call: Network,
-  wgf: MessagesSquare,
-  unfccc_session: Landmark,
-  webinar: MonitorPlay,
-  coordination: CalendarClock,
-}
-
-function CalendarEventIcon({ type }: CalendarEventIconProps) {
-  const Icon = (EVENT_ICONS as AnyValue)[type] || CalendarClock
-  return (
-    <span className="calendarEventIcon" data-event-type={type} aria-hidden>
-      <Icon size={15} strokeWidth={1.8} />
-    </span>
-  )
+// a small coloured dot per event; the colour is the event type, the cell's label lists the titles
+function CalendarEventDot({ type }: CalendarEventDotProps) {
+  return <span className="calendarEventDot" data-event-type={type} aria-hidden />
 }
 
 export function Calendar({ slug }: { slug?: string }) {
-  const { eventTypes } = useContentOptions()
-  const EVENT_TYPES = Object.fromEntries(
-    eventTypes.map((t: AnyValue) => [t.value, t.short || t.label]),
-  )
   const [typeFilters, setTypeFilters] = useState<Doc>({})
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState<AnyValue>(null)
   const [agendaScope, setAgendaScope] = useState('month')
   const panel = usePeek('/calendar', '/events', slug)
-  const [calendarPanel, setCalendarPanel] = useState<AnyValue>(null)
-  const [calendarHeight, setCalendarHeight] = useState<AnyValue>(null)
   const query = useApi('/events?type=all')
   const today = new Date().toISOString().slice(0, 10)
-
-  useEffect(() => {
-    if (!calendarPanel) return undefined
-    const measure = () => setCalendarHeight(calendarPanel.offsetHeight)
-    measure()
-    if (typeof ResizeObserver === 'undefined') return undefined
-    const observer = new ResizeObserver(measure)
-    observer.observe(calendarPanel)
-    return () => observer.disconnect()
-  }, [calendarPanel])
 
   const changeType = (nextType: AnyValue) => {
     if (nextType === 'all') setTypeFilters({})
@@ -129,30 +98,22 @@ export function Calendar({ slug }: { slug?: string }) {
         description="Calls, forums, sessions, and webinars in one UTC-first agenda."
         action={<CalendarSubscribe type="all" />}
       >
-        <FilterMenu
-          onClear={() => {
-            setTypeFilters({})
-          }}
-          label={activeFilterCount(typeFilters) === 0 ? 'Filter events' : 'Event filters'}
-          activeCount={activeFilterCount(typeFilters)}
-        >
-          <fieldset className="filterLevel">
-            <legend>Event type</legend>
-            <div className="pillRow">
-              {FILTERS.map((f) => (
-                <FilterPill
-                  key={f.key}
-                  active={f.key === 'all' && activeFilterCount(typeFilters) === 0}
-                  state={f.key === 'all' ? undefined : typeFilters[f.key] || 'neutral'}
-                  icon={f.icon}
-                  onClick={() => changeType(f.key)}
-                >
-                  {f.label}
-                </FilterPill>
-              ))}
-            </div>
-          </fieldset>
-        </FilterMenu>
+        <fieldset className="filterLevel calendarFilters">
+          <legend>Event type</legend>
+          <div className="pillRow">
+            {FILTERS.map((f) => (
+              <FilterPill
+                key={f.key}
+                active={f.key === 'all' && activeFilterCount(typeFilters) === 0}
+                state={f.key === 'all' ? undefined : typeFilters[f.key] || 'neutral'}
+                icon={f.icon}
+                onClick={() => changeType(f.key)}
+              >
+                {f.label}
+              </FilterPill>
+            ))}
+          </div>
+        </fieldset>
       </PageHeader>
       <Async
         query={query}
@@ -193,29 +154,21 @@ export function Calendar({ slug }: { slug?: string }) {
               : agendaScope === 'week'
                 ? 'This week'
                 : formatCalendarMonth(month)
-          const visibleTypes = [
-            ...new Set<AnyValue>(monthEvents.map((event: AnyValue) => event.type)),
-          ]
-
           return (
             <div className="calendarLayout">
               <section
-                ref={setCalendarPanel}
                 className="calendarPanel"
                 aria-label={`${formatCalendarMonth(month)} calendar`}
               >
                 <div className="calendarToolbar">
-                  <div>
-                    <p className="eyebrow">Month</p>
-                    <h2>{formatCalendarMonth(month)}</h2>
-                  </div>
+                  <h2>{formatCalendarMonth(month)}</h2>
                   <div className="calendarControls">
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
                       onClick={returnToThisMonth}
                     >
-                      Today
+                      This month
                     </button>
                     <button
                       type="button"
@@ -259,7 +212,7 @@ export function Calendar({ slug }: { slug?: string }) {
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
                             {dots.map((event: AnyValue) => (
-                              <CalendarEventIcon key={event.slug} type={event.type} />
+                              <CalendarEventDot key={event.slug} type={event.type} />
                             ))}
                             {date.events.length > dots.length && (
                               <span className="calendarMore">
@@ -298,34 +251,13 @@ export function Calendar({ slug }: { slug?: string }) {
                     )
                   })}
                 </div>
-
-                {visibleTypes.length > 0 && (
-                  <div className="calendarLegend" aria-label="Event types">
-                    {visibleTypes.map((eventType) => (
-                      <span key={eventType}>
-                        <CalendarEventIcon type={eventType} />
-                        {EVENT_TYPES[eventType] || eventType}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </section>
 
-              <aside
-                className="calendarAgenda"
-                aria-labelledby="calendar-agenda-title"
-                style={calendarHeight ? { height: `${calendarHeight}px` } : undefined}
-              >
+              <aside className="calendarAgenda" aria-labelledby="calendar-agenda-title">
                 <div className="calendarAgendaHeader">
-                  <p className="eyebrow">Agenda</p>
-                  <div className="calendarAgendaSummary">
-                    <h2 id="calendar-agenda-title">{agendaTitle}</h2>
-                    <p className="meta">
-                      {agendaEvents.length
-                        ? `${agendaEvents.length} ${agendaEvents.length === 1 ? 'event' : 'events'}`
-                        : 'No events'}
-                    </p>
-                  </div>
+                  <h2 id="calendar-agenda-title" className="srOnly">
+                    {agendaTitle}
+                  </h2>
                   <div
                     className="viewSwitch calendarAgendaScope"
                     role="group"
