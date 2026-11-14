@@ -353,30 +353,6 @@ main#site-main {
   list-style: none;
 }
 
-/* ── Shared call to action ────────────────────────── */
-.siteCtaBand {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-4);
-  margin-top: clamp(28px, 4vw, 44px);
-  padding: var(--space-5);
-  border-top: 3px solid var(--accent);
-}
-
-.siteCtaBand > svg {
-  color: var(--accent);
-}
-
-.siteCtaBand h2 {
-  font-size: 18px;
-}
-
-.siteCtaBand .meta {
-  max-width: 62ch;
-  margin-top: var(--space-1);
-}
-
 .siteCurrentCoy {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -568,15 +544,9 @@ main#site-main {
     justify-content: center;
   }
 
-  .siteCtaBand,
   .siteCurrentCoy {
     grid-template-columns: 1fr;
     align-items: start;
-  }
-
-  .siteCtaBand .btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .siteGysSteps {

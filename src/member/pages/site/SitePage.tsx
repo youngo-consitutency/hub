@@ -1,8 +1,6 @@
 'use client'
 
 import type { ComponentType, ReactNode } from 'react'
-import { TbChevronRight as ChevronRight } from 'react-icons/tb'
-import { A } from '../../components/ui'
 import { NumberTicker } from '../../components/fx/NumberTicker'
 import { HeroArt, type HeroArtKind } from '../../components/HeroArt'
 import { HeroBand } from '../../components/HeroBand'
@@ -72,31 +70,6 @@ export function SiteSection({ id, title, lead, children }: SiteSectionProps) {
         {lead && <p className="siteSectionLead">{lead}</p>}
       </header>
       {children}
-    </section>
-  )
-}
-
-interface SiteCtaProps {
-  icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>
-  title: string
-  body: string
-  label: string
-  href: string
-}
-
-// the one closing call to action of a page
-export function SiteCtaBand({ icon: Icon, title, body, label, href }: SiteCtaProps) {
-  return (
-    <section className="siteCtaBand card">
-      <Icon size={24} strokeWidth={1.75} aria-hidden />
-      <div>
-        <h2>{title}</h2>
-        <p className="meta">{body}</p>
-      </div>
-      <A className="btn btn-primary" href={href}>
-        {label}
-        <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
-      </A>
     </section>
   )
 }

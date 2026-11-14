@@ -4,13 +4,12 @@ import { useDocument } from '../../lib/documents'
 import { regionKey } from '../../lib/regions'
 import { ConferencesSection } from './SiteCoy'
 import { StatementSection } from './SiteGys'
-import { SiteCtaBand, SitePage } from './SitePage'
+import { SitePage } from './SitePage'
 import { WorkingGroupsSection } from './SiteWorkingGroups'
 
 // where the policy work happens: the groups, the conferences and the statement they produce
 export function SiteWork() {
   const { doc: site } = useDocument('site')
-  const cta = site?.workingGroups?.cta
   const work = site?.work
   // the numbers come from the same public lists the sections below use
   const groups = useApi('/groups').data?.items ?? []
@@ -33,15 +32,6 @@ export function SiteWork() {
       <WorkingGroupsSection />
       <ConferencesSection />
       <StatementSection />
-      {cta && (
-        <SiteCtaBand
-          icon={Users}
-          title={cta.title}
-          body={cta.body}
-          label={cta.label}
-          href="/join"
-        />
-      )}
     </SitePage>
   )
 }

@@ -40,7 +40,7 @@ export function StatementSection() {
             />
           </div>
 
-          <section className="siteCtaBand card">
+          <section className="card mt-[clamp(28px,4vw,44px)] grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-t-[3px] border-t-accent p-5 max-[760px]:grid-cols-1 max-[760px]:items-start [&>svg]:text-accent">
             <Statement size={24} strokeWidth={1.75} aria-hidden />
             <div>
               <h3>{gys.current.title}</h3>

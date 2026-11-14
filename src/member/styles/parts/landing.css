@@ -628,35 +628,6 @@
   line-height: 1.55;
 }
 
-/* ── closing call to action ───────────────────────── */
-.ldCta {
-  margin-top: var(--section-y);
-  width: calc(min(100%, var(--container)) - 2 * var(--gutter));
-  padding-inline: 0;
-  border-radius: var(--radius-surface);
-}
-
-.ldCtaInner {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-4);
-  max-width: 62ch;
-  padding: clamp(32px, 6vw, 72px);
-}
-
-.ldCta h2 {
-  font-size: clamp(30px, 4.4vw, 52px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-
-.ldCta p {
-  color: var(--ld-on-deep-muted);
-  font-size: clamp(15px, 1.3vw, 18px);
-  line-height: 1.6;
-}
-
 /* ── small screens ────────────────────────────────── */
 @media (max-width: 900px) {
   .ldPulse {
@@ -753,17 +724,6 @@
   border-color: var(--ld-accent-deep);
   color: var(--ld-accent-deep);
   transform: translateY(-2px);
-}
-
-/* the closing card: ripples breathe out from its right side, a beam circles the border */
-.ldCtaRipple {
-  position: absolute;
-  top: 50%;
-  right: -6%;
-  z-index: -1;
-  width: 56%;
-  height: 150%;
-  transform: translateY(-50%);
 }
 
 /* a figure's role appears on hover, and is not repeated for assistive tech (the ring is decoration) */

@@ -1,7 +1,5 @@
 import { createElement } from 'react'
 import type { AnyValue } from '../../lib/types'
-import { Ripple } from '../../components/fx/Ripple'
-import { BorderBeam } from '../../components/fx/BorderBeam'
 import { motion } from 'motion/react'
 import {
   TbAward as Award,
@@ -113,7 +111,7 @@ export function SiteHome() {
         <Empty title="About YOUNGO" body="This page has not been published yet." />
       </div>
     )
-  const { hero = {}, takePart = {}, principles = {}, history = {}, cta = {} } = home
+  const { hero = {}, takePart = {}, principles = {}, history = {} } = home
 
   // the last two words of the headline carry the gradient
   const words: string[] = (hero.title || '').split(' ')
@@ -216,17 +214,6 @@ export function SiteHome() {
               )
             })}
           </motion.ol>
-        </div>
-      </section>
-      <section className="ldCta ldDark ldWrap" aria-labelledby="cta-heading">
-        <div className="ldCtaRipple">
-          <Ripple />
-        </div>
-        <BorderBeam />
-        <div className="ldCtaInner">
-          <h2 id="cta-heading">{cta.title}</h2>
-          <p>{cta.body}</p>
-          <JoinButton label={cta.label} glow />
         </div>
       </section>
     </>
