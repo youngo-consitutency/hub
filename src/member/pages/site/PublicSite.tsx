@@ -1,8 +1,9 @@
 import type { ComponentType } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { MotionConfig } from 'motion/react'
 import {
   TbArrowRight as ArrowRight,
+  TbChevronDown as ChevronDown,
   TbLogin as LogIn,
   TbMenu2 as Menu,
   TbX as X,
@@ -70,16 +71,33 @@ function SiteHeader() {
           <Brand constituencyOnly />
         </A>
         <nav className="siteNav siteNavDesktop" aria-label="Pages">
-          {NAV_LINKS.map(({ href, label }) => (
-            <A
-              key={href}
-              href={href}
-              className={`siteNavItem ${current(href) ? 'active' : ''}`}
-              aria-current={current(href)}
-            >
-              {label}
-            </A>
-          ))}
+          {NAV_LINKS.map(({ href, label, sections }) => {
+            const link = (
+              <A
+                href={href}
+                className={`siteNavItem ${current(href) ? 'active' : ''}`}
+                aria-current={current(href)}
+              >
+                {label}
+                {sections && <ChevronDown size={14} strokeWidth={1.75} aria-hidden />}
+              </A>
+            )
+            // a page with sections opens a menu on hover or focus; the link itself still goes to the page
+            return sections ? (
+              <div key={href} className="siteNavGroup">
+                {link}
+                <ul className="siteNavMenu">
+                  {sections.map((section) => (
+                    <li key={section.href}>
+                      <A href={section.href}>{section.label}</A>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <Fragment key={href}>{link}</Fragment>
+            )
+          })}
         </nav>
         {!signedIn && (
           <A className="siteSignInLink" href="/signin">
@@ -106,15 +124,25 @@ function SiteHeader() {
       </div>
       {open && (
         <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="Pages">
-          {[SITE_ROUTES[0], ...NAV_LINKS].map(({ href, label }) => (
-            <A
-              key={href}
-              href={href}
-              className={`siteMobileNavItem ${current(href) ? 'active' : ''}`}
-              aria-current={current(href)}
-            >
-              {label}
-            </A>
+          {[SITE_ROUTES[0], ...NAV_LINKS].map(({ href, label, sections }) => (
+            <Fragment key={href}>
+              <A
+                href={href}
+                className={`siteMobileNavItem ${current(href) ? 'active' : ''}`}
+                aria-current={current(href)}
+              >
+                {label}
+              </A>
+              {sections?.map((section) => (
+                <A
+                  key={section.href}
+                  href={section.href}
+                  className="siteMobileNavItem siteMobileNavSub"
+                >
+                  {section.label}
+                </A>
+              ))}
+            </Fragment>
           ))}
           {!signedIn && (
             <A className="siteMobileNavItem" href="/signin">

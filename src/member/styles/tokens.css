@@ -48,11 +48,13 @@
   /* the large surfaces: hero, page headers, footer and the closing card */
   --radius-surface: 28px;
   --radius-pill: 9999px;
+  /* one rhythm for site and Hub: the public container, the page gutter, and the roomy section gap */
+  --container: 1280px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --section-y: clamp(56px, 8vw, 112px);
   --content-max: 1600px;
   --detail-max: 1120px;
   --catalog-card-min: 280px;
-  --catalog-card-max: 320px;
-  --catalog-columns: 4;
   --text-measure: 62ch;
   --card-padding: var(--space-4);
   --section-gap: var(--space-6);
@@ -102,7 +104,6 @@
   /* landing: the hero, stats band and closing card stay deep forest in both themes;
      every pairing below was checked at 4.5:1 or better */
   --ld-header-h: 65px;
-  --ld-gutter: clamp(16px, 4vw, 32px);
   --ld-deep: #0f4631;
   --ld-deep-2: #1a6a4c;
   --ld-on-deep: #eaf6ee;
@@ -116,18 +117,6 @@
   --ld-spot: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-@media (max-width: 1599px) {
-  :root {
-    --catalog-columns: 3;
-  }
-}
-
-@media (max-width: 1180px) {
-  :root {
-    --catalog-columns: 2;
-  }
-}
-
 @media (max-width: 900px) {
   :root {
     --card-padding: 14px;
@@ -137,7 +126,6 @@
 @media (max-width: 620px) {
   :root {
     --radius-surface: 20px;
-    --catalog-columns: 1;
     --card-padding: var(--space-3);
   }
 }

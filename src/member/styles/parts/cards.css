@@ -935,3 +935,119 @@ a.resourceRow:hover {
 .eventCard .entityCardHeading h3 {
   font-size: 17px;
 }
+
+/* catalogue rows: a dense list, the row's title is the link. checked links get the accent edge
+   and a lift on hover; unchecked ones stay flat so the difference reads without a legend */
+.resourceList {
+  display: grid;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.resourceListRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-left: 3px solid transparent;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.resourceListRow + .resourceListRow {
+  border-top: 1px solid var(--border);
+}
+
+.resourceListRow:hover {
+  background: var(--bg-raised);
+}
+
+.resourceListRow[data-checked] {
+  border-left-color: var(--accent);
+}
+
+.resourceListRow[data-checked]:hover {
+  background: var(--accent-tint);
+}
+
+.resourceListCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.resourceListLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+/* stretch the link over the whole row; buttons sit above it */
+.resourceListLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.resourceListLink svg {
+  flex: none;
+  align-self: center;
+  color: var(--accent);
+  transition: transform 0.2s;
+}
+
+.resourceListRow:hover .resourceListLink svg {
+  transform: translate(2px, -2px);
+}
+
+.resourceListSummary {
+  max-width: 70ch;
+}
+
+.resourceListSide {
+  position: relative;
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.resourceListStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-3);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.resourceListRow[data-checked] .resourceListStatus {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .resourceListRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .resourceListSide {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

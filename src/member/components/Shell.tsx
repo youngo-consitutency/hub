@@ -123,9 +123,9 @@ export function Shell({ children }: ShellProps) {
           </A>
         </div>
         {verified && (
-          <A href="/search" className="navItem sidebarSearch">
+          <A href="/search" className="navItem sidebarSearch" title="Search the Hub">
             <Search size={18} strokeWidth={1.75} aria-hidden />
-            <span>Search the Hub</span>
+            <span className="navLabel">Search the Hub</span>
           </A>
         )}
         {nav.map((group: Doc) => (
@@ -137,9 +137,10 @@ export function Shell({ children }: ShellProps) {
                 href={href}
                 className={`navItem ${isActive(path, href) ? 'active' : ''}`}
                 aria-current={isActive(path, href) ? 'page' : undefined}
+                title={label}
               >
                 <Icon size={18} strokeWidth={1.75} aria-hidden />
-                {label}
+                <span className="navLabel">{label}</span>
               </A>
             ))}
           </div>
@@ -149,9 +150,10 @@ export function Shell({ children }: ShellProps) {
             href="/help"
             className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
             aria-current={isActive(path, '/help') ? 'page' : undefined}
+            title="Help"
           >
             <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
-            <span>Help</span>
+            <span className="navLabel">Help</span>
           </A>
           {account && verified && (
             <A
@@ -160,6 +162,9 @@ export function Shell({ children }: ShellProps) {
               title={account.email}
               aria-current={isActive(path, '/profile') ? 'page' : undefined}
             >
+              <span className="accountInitial" aria-hidden>
+                {account.name.trim().charAt(0).toUpperCase()}
+              </span>
               <span className="accountChipHeader">
                 <span className="accountNameRow">
                   <span className="accountName">{account.name}</span>

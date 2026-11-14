@@ -1,5 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
-import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
+import { z } from 'zod'
+import { ApiError, endpoint, fail, json, parseWith, readBody, param } from '../lib/respond'
 import { hasCapability } from '../lib/access'
 import {
   accountView,
@@ -12,10 +13,9 @@ import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
 import { ENDED_MEMBERSHIP_STATUSES } from '../lib/membership'
-import { getOwnMemberProfile } from '../lib/memberDirectory'
-import { saveMemberPhoto, deleteMemberPhoto } from '../lib/memberPhotos'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
+import { AVATAR_CHOICES, AVATAR_KEYS } from '../shared/avatar'
 import { wgActivityView } from '../lib/views'
 import type { AnyValue } from '../lib/domain'
 import type { Account } from '../payload-types'
@@ -31,6 +31,37 @@ type CourseDoc = {
 
 const COURSE_MAX_FAILURES = 5
 const COURSE_WINDOW_MS = 60 * 60 * 1000
+
+// Avatars are picks from the style's own option lists — unknown keys and
+// values are refused; null returns the member to their seeded default.
+const avatarSchema = z.object({
+  avatar: z
+    .strictObject(
+      Object.fromEntries(AVATAR_KEYS.map((key) => [key, z.enum(AVATAR_CHOICES[key]).optional()])),
+    )
+    .nullable(),
+})
+
+async function ownProfile(req: PayloadRequest, accountId: number) {
+  const { docs } = await req.payload.find({
+    collection: 'member-profiles',
+    where: { account: { equals: accountId } },
+    limit: 1,
+    overrideAccess: true,
+  })
+  return docs[0] as AnyValue
+}
+
+const writeOwnProfile = (req: PayloadRequest, existing: AnyValue, data: AnyValue) =>
+  existing
+    ? req.payload.update({
+        collection: 'member-profiles',
+        id: existing.id,
+        data,
+        overrideAccess: true,
+        req,
+      })
+    : req.payload.create({ collection: 'member-profiles', data, overrideAccess: true, req })
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
   const course = (await getDocument(req, 'membership-course', { answerKey: true }))?.body as
@@ -338,14 +369,7 @@ export const memberEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const account = requireVerifiedMember(req)
-      const { docs } = await req.payload.find({
-        collection: 'member-profiles',
-        where: { account: { equals: account.id } },
-        limit: 1,
-        overrideAccess: true,
-      })
-      const row = docs[0] as AnyValue
-      const photoUpdatedAt = row?.photoUpdatedAt ?? null
+      const row = await ownProfile(req, account.id)
       return json({
         profile: {
           accountId: account.id,
@@ -362,11 +386,7 @@ export const memberEndpoints: Endpoint[] = [
           roleTitle: row?.roleTitle || '',
           revision: row?.revision || 1,
           updatedAt: row?.updatedAt ?? null,
-          hasPhoto: Boolean(row?.hasPhoto ?? photoUpdatedAt),
-          photoUpdatedAt,
-          photoUrl: photoUpdatedAt
-            ? `/api/member/people/${account.id}/photo?v=${encodeURIComponent(photoUpdatedAt)}`
-            : null,
+          avatar: row?.avatar ?? null,
         },
       })
     }),
@@ -394,13 +414,7 @@ export const memberEndpoints: Endpoint[] = [
         ? b.directoryVisibility
         : 'private'
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const { docs } = await req.payload.find({
-        collection: 'member-profiles',
-        where: { account: { equals: account.id } },
-        limit: 1,
-        overrideAccess: true,
-      })
-      const existing = docs[0] as AnyValue
+      const existing = await ownProfile(req, account.id)
       const data = {
         account: account.id,
         displayName,
@@ -416,21 +430,31 @@ export const memberEndpoints: Endpoint[] = [
         roleTitle,
         revision: (existing?.revision || 1) + 1,
       }
-      const profile = existing
-        ? await req.payload.update({
-            collection: 'member-profiles',
-            id: existing.id,
-            data: data,
-            overrideAccess: true,
-            req,
-          })
-        : await req.payload.create({
-            collection: 'member-profiles',
-            data: data,
-            overrideAccess: true,
-            req,
-          })
+      const profile = await writeOwnProfile(req, existing, data)
       return json({ profile })
+    }),
+  },
+  {
+    path: '/member/profile/avatar',
+    method: 'put',
+    handler: endpoint(async (req) => {
+      const account = requireVerifiedMember(req)
+      const { avatar } = parseWith(avatarSchema, await readBody(req))
+      const existing = await ownProfile(req, account.id)
+      await writeOwnProfile(req, existing, {
+        account: account.id,
+        displayName: existing?.displayName ?? account.name ?? 'YOUNGO member',
+        avatar,
+        revision: (existing?.revision || 1) + 1,
+      })
+      await audit(req, account, {
+        action: 'member.profile_avatar_updated',
+        targetType: 'member_profile',
+        targetId: String(account.id),
+        before: { avatar: existing?.avatar ?? null },
+        after: { avatar },
+      })
+      return json({ avatar })
     }),
   },
 
@@ -460,51 +484,6 @@ export const memberEndpoints: Endpoint[] = [
         ),
         groups,
         mandateContacts: directory.slice(0, 12),
-      })
-    }),
-  },
-
-  // ── Member profile photo (bytea, never the public media store) ──
-  {
-    path: '/member/profile/photo',
-    method: 'put',
-    handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const bytes = Buffer.from(await (req as AnyValue).arrayBuffer())
-      const photo = await saveMemberPhoto(
-        account.id,
-        bytes,
-        String(req.headers.get('content-type') || ''),
-        account.id,
-      )
-      await audit(req, account, {
-        action: 'member.profile_photo_updated',
-        targetType: 'member_profile',
-        targetId: String(account.id),
-        after: {
-          contentType: photo.content_type,
-          byteSize: photo.byte_size,
-          revision: photo.revision,
-        },
-      })
-      return json({ profile: await getOwnMemberProfile(accountView(account)) })
-    }),
-  },
-  {
-    path: '/member/profile/photo',
-    method: 'delete',
-    handler: endpoint(async (req) => {
-      const account = requireVerifiedMember(req)
-      const removed = await deleteMemberPhoto(account.id)
-      if (removed)
-        await audit(req, account, {
-          action: 'member.profile_photo_removed',
-          targetType: 'member_profile',
-          targetId: String(account.id),
-        })
-      return json({
-        ok: true,
-        profile: await getOwnMemberProfile(accountView(account)),
       })
     }),
   },

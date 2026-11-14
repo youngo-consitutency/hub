@@ -26,36 +26,6 @@
   background: linear-gradient(to left, var(--from), var(--to), transparent);
 }
 
-/* ripple: rings that breathe outward from the centre */
-.fxRipple {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  user-select: none;
-  mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
-}
-
-.fxRippleRing {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border: 1px solid rgba(169, 232, 196, 0.5);
-  border-radius: 50%;
-  background: rgba(169, 232, 196, 0.04);
-  transform: translate(-50%, -50%) scale(1);
-  animation: fxRipple 3s ease calc(var(--i, 0) * 0.2s) infinite;
-}
-
-@keyframes fxRipple {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-}
-
 /* scroll timeline: the rail fills with scroll, labels stay in view beside their entry */
 .fxTimeline {
   position: relative;

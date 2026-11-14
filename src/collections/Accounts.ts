@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { noAccess, noFieldAccess } from '../lib/collectionAccess'
+import { grantsCapability, noAccess, noFieldAccess } from '../lib/collectionAccess'
 
 // Member accounts — replaces hub_accounts + hub_sessions + password/verify
 // token tables. Payload auth provides password hashing and httpOnly cookie
@@ -33,6 +33,8 @@ export const Accounts: CollectionConfig = {
   // payload.login and cookie sessions still work without these
   endpoints: false,
   access: {
+    // the /cms console opens only for content publishers; authority derives from authority-records
+    admin: ({ req }) => grantsCapability(req, 'content.publish'),
     read: ({ req }) => {
       if (!req.user) return false
       return { id: { equals: req.user.id } }

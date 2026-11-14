@@ -3,7 +3,6 @@ interface ResourceCardProps {
   onReport?: AnyValue
   onCorrect?: AnyValue
   onReview?: AnyValue
-  onPeek?: (r: AnyValue) => void
 }
 
 interface ResourceCatalogueProps {
@@ -16,7 +15,6 @@ interface ResourcePathwayGroupProps {
   items?: AnyValue
   onReport?: AnyValue
   onCorrect?: AnyValue
-  onPeek?: (r: AnyValue) => void
 }
 
 interface ResourceSubmissionPanelProps {
@@ -32,7 +30,6 @@ interface ResourceReportProps {
 
 import type { AnyValue } from '../lib/types'
 import { SidePanel } from './SidePanel.tsx'
-import { ResourcePeek } from './EntityPeeks'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
 import { useMemo, useState } from 'react'
@@ -40,6 +37,7 @@ import {
   TbArrowUpRight as ArrowUpRight,
   TbBook2 as BookOpen,
   TbBriefcase as Briefcase,
+  TbCircleCheck as Check,
   TbChartDots as Research,
   TbCoin as Funding,
   TbDatabase as Database,
@@ -49,7 +47,6 @@ import {
   TbMap2 as Map,
   TbPlayerPlay as Video,
   TbSchool as School,
-  TbSearch as Search,
   TbSend as Send,
   TbTool as Tool,
   TbWorld as World,
@@ -58,7 +55,18 @@ import { optionLabel as resourceLabel, useContentOptions } from '../lib/document
 import { apiPatch, apiPost, useApi } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import { FieldError } from './FormControls'
-import { Async, Button, Empty, ErrorCard, FilterChip, FilterPill, Section, StatusChip } from './ui'
+import {
+  Async,
+  Button,
+  Empty,
+  ErrorCard,
+  FilterChip,
+  FilterMenu,
+  FilterPill,
+  CatalogToolbar,
+  Section,
+  StatusChip,
+} from './ui'
 
 const PATHWAY_ICONS = {
   career: Briefcase,
@@ -92,25 +100,11 @@ const EMPTY_RESOURCE = (vocab: AnyValue) => ({
   language: vocab.resourceLanguages[0] || '',
 })
 
-export function ResourceCard({
-  resource,
-  onReport,
-  onCorrect,
-  onReview,
-  onPeek,
-}: ResourceCardProps) {
+export function ResourceCard({ resource, onReport, onCorrect, onReview }: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
   return (
     <article className="card resourceHubCard linkedEntityCard">
-      {onPeek && (
-        <button
-          type="button"
-          className="entityCardLinkOverlay"
-          aria-label={`Open ${resource.title} in side peek`}
-          onClick={() => onPeek(resource)}
-        />
-      )}
       <div className="resourceHubCardTop">
         <SiteFavicon url={resource.url} />
         <a
@@ -173,6 +167,80 @@ export function ResourceCard({
   )
 }
 
+// one scannable line per resource: the whole row opens the link in a new tab, and only
+// links a Content Publisher has checked (and nobody has reported) get the verified look
+// a check older than a year no longer counts: links rot
+const PAGE = 12
+const CHECK_VALID_MS = 365 * 24 * 60 * 60 * 1000
+const isChecked = (item: AnyValue) =>
+  item.verification?.status === 'verified' &&
+  !item.verification.openIssues &&
+  Date.now() - new Date(item.verification.checkedAt).getTime() < CHECK_VALID_MS
+
+function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
+  const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
+  const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
+  const v = resource.verification
+  const checked = isChecked(resource)
+  const status = checked
+    ? `Checked ${new Date(v.checkedAt).toLocaleDateString()}`
+    : v?.status === 'needs_changes' || v?.openIssues > 0
+      ? 'Under review'
+      : v?.status === 'retired'
+        ? 'Retired'
+        : v?.status === 'verified' && !v.openIssues
+          ? 'Check due'
+          : 'Not yet checked'
+  const topics = (resource.topics || [resource.topic]).filter(Boolean)
+  return (
+    <li className="resourceRow resourceListRow" data-checked={checked || undefined}>
+      <SiteFavicon url={resource.url} />
+      <div className="resourceListCopy">
+        <a href={resource.url} target="_blank" rel="noreferrer" className="resourceListLink">
+          {resource.title}
+          <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden />
+          <span className="srOnly"> (opens in a new tab)</span>
+        </a>
+        {resource.publisher && <p className="metaMuted">{resource.publisher}</p>}
+        {resource.summary && <p className="meta resourceListSummary">{resource.summary}</p>}
+        <div className="chipRow">
+          <FilterChip icon={TypeIcon} tone="accent">
+            {resourceLabel(RESOURCE_TYPES, resource.type)}
+          </FilterChip>
+          {topics.slice(0, 3).map((topic: AnyValue) => (
+            <FilterChip key={topic}>{topic}</FilterChip>
+          ))}
+          <FilterChip icon={Map}>{regionLabel(resource.region)}</FilterChip>
+        </div>
+      </div>
+      <div className="resourceListSide">
+        <span className="resourceListStatus">
+          {checked && <Check size={14} strokeWidth={2.25} aria-hidden />}
+          {status}
+        </span>
+        {(onReport || onCorrect) && (
+          <span className="resourceCardActions">
+            {onReport && (
+              <Button sm variant="ghost" onClick={() => onReport(resource)}>
+                Report
+              </Button>
+            )}
+            {onCorrect && (
+              <Button sm variant="ghost" onClick={() => onCorrect(resource)}>
+                Suggest edit
+              </Button>
+            )}
+          </span>
+        )}
+      </div>
+    </li>
+  )
+}
+
+// one section per category; every resource's type is in `options`, so none is left out
+const sections = (options: AnyValue[]) =>
+  options.map((o) => ({ ...o, has: (item: AnyValue) => item.type === o.value }))
+
 export function ResourceCatalogue({
   heading = 'Resource catalogue',
   onCorrect,
@@ -185,17 +253,24 @@ export function ResourceCatalogue({
   } = useContentOptions()
   const { account } = useAccount()
   const [reported, setReported] = useState<AnyValue>(null)
-  const [selectedResource, setSelectedResource] = useState<AnyValue | null>(null)
   const [notice, setNotice] = useState('')
-  const [limit, setLimit] = useState(12)
+  const [limit, setLimit] = useState(PAGE)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [pathway, setPathway] = useState('all')
-  const [groupBy, setGroupBy] = useState('pathway')
   const [type, setType] = useState('all')
   const [topic, setTopic] = useState('all')
 
-  const items = useMemo(() => {
+  // every filter change starts again from the first page
+  const reset =
+    <T,>(set: (value: T) => void) =>
+    (value: T) => {
+      set(value)
+      setLimit(PAGE)
+    }
+
+  // everything but the category, so the category chips can show what each would give
+  const pool = useMemo(() => {
     const words = search.toLowerCase().split(/\s+/).filter(Boolean)
     return (query.data?.items || []).filter((item: AnyValue) => {
       const haystack = [
@@ -212,13 +287,26 @@ export function ResourceCatalogue({
       return (
         words.every((word) => haystack.includes(word)) &&
         (pathway === 'all' || item.pathway === pathway) &&
-        (type === 'all' || item.type === type) &&
         (topic === 'all' || (item.topics || [item.topic]).includes(topic)) &&
-        (!verifiedOnly ||
-          (item.verification?.status === 'verified' && !item.verification.openIssues))
+        (!verifiedOnly || isChecked(item))
       )
     })
-  }, [pathway, query.data?.items, search, topic, type, verifiedOnly])
+  }, [pathway, query.data?.items, search, topic, verifiedOnly])
+  // the vocabulary first, then any type that is in use but not listed there
+  const typeOptions = useMemo(() => {
+    const listed = new Set(RESOURCE_TYPES.map((o: AnyValue) => o.value))
+    const extra = [...new Set<string>((query.data?.items || []).map((r: AnyValue) => r.type))]
+      .filter((value) => value && !listed.has(value))
+      .map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))
+    return [...RESOURCE_TYPES, ...extra]
+  }, [RESOURCE_TYPES, query.data?.items])
+  const items = useMemo(
+    () => pool.filter((item: AnyValue) => type === 'all' || item.type === type),
+    [pool, type],
+  )
+
+  // sections for the chosen grouping; a resource with an unknown value lands in the last one
+  const groups = type === 'all' ? sections(typeOptions) : null
 
   return (
     <>
@@ -242,181 +330,125 @@ export function ResourceCatalogue({
         </p>
       )}
       <Section label={heading} meta={query.data ? `${items.length} listed` : null}>
-        <div className="resourceHubControls">
-          <div className="catalogSearchRow">
-            <label className="searchInputWrap resourceHubSearch">
-              <Search size={18} strokeWidth={1.75} aria-hidden />
-              <span className="srOnly">Search resources</span>
-              <input
-                className="input"
-                type="search"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value)
-                  setLimit(12)
-                }}
-                placeholder="Search resources"
-              />
-            </label>
-            <label className="catalogSelect">
-              Group by
-              <select
-                className="input"
-                value={groupBy}
-                onChange={(event) => {
-                  setGroupBy(event.target.value)
-                  setLimit(12)
+        <CatalogToolbar
+          search={{ label: 'Search resources', value: search, onChange: reset(setSearch) }}
+          filters={
+            (RESOURCE_PATHWAYS.length > 0 || RESOURCE_TOPICS.length > 0) && (
+              <FilterMenu
+                activeCount={[pathway !== 'all', topic !== 'all'].filter(Boolean).length}
+                onClear={() => {
+                  setPathway('all')
+                  setTopic('all')
+                  setLimit(PAGE)
                 }}
               >
-                <option value="pathway">Pathway</option>
-                <option value="none">None — A–Z</option>
-              </select>
-            </label>
-          </div>
-          <details className="resourceMoreFilters">
-            <summary>
-              Filters
-              {[pathway !== 'all', type !== 'all', topic !== 'all'].filter(Boolean).length > 0
-                ? ` · ${[pathway !== 'all', type !== 'all', topic !== 'all'].filter(Boolean).length} active`
-                : ''}
-            </summary>
-            <div className="resourceHubFilterRows">
-              <fieldset className="filterLevel">
-                <legend>Pathway</legend>
-                <div className="pillRow" aria-label="Pathway">
-                  <FilterPill
-                    active={pathway === 'all'}
-                    icon={World}
-                    onClick={() => {
-                      setPathway('all')
-                      setLimit(12)
-                    }}
-                  >
-                    All pathways
-                  </FilterPill>
-                  {RESOURCE_PATHWAYS.map((item: AnyValue) => (
-                    <FilterPill
-                      key={item.value}
-                      active={pathway === item.value}
-                      icon={(PATHWAY_ICONS as AnyValue)[item.value]}
-                      onClick={() => {
-                        setPathway(item.value)
-                        setLimit(12)
-                      }}
-                    >
-                      {item.label}
-                    </FilterPill>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="resourceHubSelects">
-                <label>
-                  <span>Type</span>
-                  <select
-                    className="input"
-                    value={type}
-                    onChange={(event) => {
-                      setType(event.target.value)
-                      setLimit(12)
-                    }}
-                  >
-                    <option value="all">All types</option>
-                    {RESOURCE_TYPES.map((item: AnyValue) => (
-                      <option key={item.value} value={item.value}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Topic</span>
-                  <select
-                    className="input"
-                    value={topic}
-                    onChange={(event) => {
-                      setTopic(event.target.value)
-                      setLimit(12)
-                    }}
-                  >
-                    <option value="all">All topics</option>
-                    {RESOURCE_TOPICS.map((item: AnyValue) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </div>
-          </details>
-          <div className="resourceFilterFooter">
-            <label className="resourceCheck">
-              <input
-                type="checkbox"
-                checked={verifiedOnly}
-                onChange={(event) => {
-                  setVerifiedOnly(event.target.checked)
-                  setLimit(12)
-                }}
-              />{' '}
-              Only checked links without open issues
-            </label>
-            <Button
-              sm
-              variant="secondary"
-              disabled={
-                !search && pathway === 'all' && type === 'all' && topic === 'all' && !verifiedOnly
-              }
-              onClick={() => {
-                setSearch('')
-                setPathway('all')
-                setType('all')
-                setTopic('all')
-                setVerifiedOnly(false)
-                setLimit(12)
-              }}
+                {RESOURCE_PATHWAYS.length > 0 && (
+                  <fieldset className="filterLevel">
+                    <legend>Pathway</legend>
+                    <div className="pillRow">
+                      <FilterPill
+                        active={pathway === 'all'}
+                        icon={World}
+                        onClick={() => reset(setPathway)('all')}
+                      >
+                        All pathways
+                      </FilterPill>
+                      {RESOURCE_PATHWAYS.map((item: AnyValue) => (
+                        <FilterPill
+                          key={item.value}
+                          active={pathway === item.value}
+                          icon={(PATHWAY_ICONS as AnyValue)[item.value]}
+                          onClick={() => reset(setPathway)(item.value)}
+                        >
+                          {item.label}
+                        </FilterPill>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
+                {RESOURCE_TOPICS.length > 0 && (
+                  <fieldset className="filterLevel">
+                    <legend>Topic</legend>
+                    <div className="pillRow">
+                      <FilterPill
+                        active={topic === 'all'}
+                        icon={Filter}
+                        onClick={() => reset(setTopic)('all')}
+                      >
+                        All topics
+                      </FilterPill>
+                      {RESOURCE_TOPICS.map((item: string) => (
+                        <FilterPill
+                          key={item}
+                          active={topic === item}
+                          onClick={() => reset(setTopic)(item)}
+                        >
+                          {item}
+                        </FilterPill>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
+              </FilterMenu>
+            )
+          }
+        >
+          <div className="pillRow" role="group" aria-label="Category">
+            <FilterPill active={type === 'all'} icon={World} onClick={() => reset(setType)('all')}>
+              All {pool.length}
+            </FilterPill>
+            {typeOptions.map((item: AnyValue) => {
+              const n = pool.filter((r: AnyValue) => r.type === item.value).length
+              return n ? (
+                <FilterPill
+                  key={item.value}
+                  active={type === item.value}
+                  icon={(TYPE_ICONS as AnyValue)[item.value]}
+                  onClick={() => reset(setType)(item.value)}
+                >
+                  {item.label} {n}
+                </FilterPill>
+              ) : null
+            })}
+            <FilterPill
+              className="ml-auto"
+              active={verifiedOnly}
+              icon={Check}
+              onClick={() => reset(setVerifiedOnly)(!verifiedOnly)}
             >
-              Clear filters
-            </Button>
+              Checked links only
+            </FilterPill>
           </div>
-        </div>
+        </CatalogToolbar>
         <Async query={query} skeletons={4}>
           {() =>
             items.length ? (
-              groupBy === 'pathway' && pathway === 'all' ? (
+              groups ? (
                 <div className="catalogGroups">
-                  {[...RESOURCE_PATHWAYS, { value: 'other', label: 'Other resources' }].map(
-                    (group) => {
-                      const matches = items.filter((item: AnyValue) =>
-                        group.value === 'other'
-                          ? !RESOURCE_PATHWAYS.some((path: AnyValue) => path.value === item.pathway)
-                          : item.pathway === group.value,
-                      )
-                      return matches.length ? (
-                        <ResourcePathwayGroup
-                          key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
-                          group={group}
-                          items={matches}
-                          onReport={account?.isVerified ? setReported : null}
-                          onCorrect={onCorrect}
-                          onPeek={(r: AnyValue) => setSelectedResource(r)}
-                        />
-                      ) : null
-                    },
-                  )}
+                  {groups.map((group: AnyValue) => {
+                    const matches = items.filter((item: AnyValue) => group.has(item))
+                    return matches.length ? (
+                      <ResourcePathwayGroup
+                        key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
+                        group={group}
+                        items={matches}
+                        onReport={account?.isVerified ? setReported : null}
+                        onCorrect={onCorrect}
+                      />
+                    ) : null
+                  })}
                 </div>
               ) : (
-                <div className="resourceHubGrid cardGrid">
+                <ul className="resourceList">
                   {items.slice(0, limit).map((resource: AnyValue) => (
-                    <ResourceCard
+                    <ResourceRow
                       key={resource.slug}
                       resource={resource}
                       onReport={account?.isVerified ? setReported : null}
                       onCorrect={onCorrect}
-                      onPeek={(r: AnyValue) => setSelectedResource(r)}
                     />
                   ))}
-                </div>
+                </ul>
               )
             ) : (
               <Empty
@@ -435,47 +467,35 @@ export function ResourceCatalogue({
             )
           }
         </Async>
-        {(groupBy === 'none' || pathway !== 'all') && items.length > limit && (
+        {!groups && items.length > limit && (
           <div className="resourceLoadMore">
-            <Button variant="secondary" onClick={() => setLimit((value) => value + 12)}>
+            <Button variant="secondary" onClick={() => setLimit((value) => value + PAGE)}>
               Show more resources ({items.length - limit} remaining)
             </Button>
           </div>
         )}
       </Section>
-      <ResourcePeek
-        item={selectedResource}
-        onClose={() => setSelectedResource(null)}
-        onReport={account?.isVerified ? setReported : undefined}
-      />
     </>
   )
 }
 
-function ResourcePathwayGroup({
-  group,
-  items,
-  onReport,
-  onCorrect,
-  onPeek,
-}: ResourcePathwayGroupProps) {
-  const [visible, setVisible] = useState(3)
+function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePathwayGroupProps) {
+  const [visible, setVisible] = useState(8)
   return (
     <Section label={group.label} meta={`${items.length} resources`}>
       {group.description && <p className="catalogGroupDescription">{group.description}</p>}
-      <div className="cardGrid resourceHubGrid">
+      <ul className="resourceList">
         {items.slice(0, visible).map((resource: AnyValue) => (
-          <ResourceCard
+          <ResourceRow
             key={resource.slug}
             resource={resource}
             onReport={onReport}
             onCorrect={onCorrect}
-            onPeek={onPeek}
           />
         ))}
-      </div>
+      </ul>
       {items.length > visible && (
-        <Button sm variant="secondary" onClick={() => setVisible((count) => count + 6)}>
+        <Button sm variant="secondary" onClick={() => setVisible((count) => count + 12)}>
           Show more in {group.label} ({items.length - visible} remaining)
         </Button>
       )}

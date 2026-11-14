@@ -1,5 +1,5 @@
 import type { AnyValue } from '../../lib/types'
-import { TbArrowUpRight, TbCalendarEvent } from 'react-icons/tb'
+import { TbArrowUpRight, TbCalendarHeart } from 'react-icons/tb'
 import { A, Button } from '../../components/ui'
 import { DateStamp } from '../../components/DateStamp'
 import { useApi } from '../../lib/api'
@@ -12,7 +12,7 @@ export function UpcomingEvents() {
     <aside className="siteUpcoming" aria-labelledby="upcoming-title">
       <div className="siteUpcomingHeading">
         <span className="iconTile" aria-hidden>
-          <TbCalendarEvent size={22} />
+          <TbCalendarHeart size={22} />
         </span>
         <div>
           <p className="pageEyebrow">Around YOUNGO</p>
@@ -40,9 +40,7 @@ export function UpcomingEvents() {
                   <DateStamp iso={event.startsAt} />
                   <div>
                     <h3>
-                      <A href={`/calendar/${event.slug}`} peek={false}>
-                        {event.title}
-                      </A>
+                      <A href={`/calendar/${event.slug}`}>{event.title}</A>
                     </h3>
                     <p className="meta">
                       {moment.localTime} {moment.localZone}
@@ -56,7 +54,7 @@ export function UpcomingEvents() {
           <p className="meta">No upcoming events have been published.</p>
         )}
       </div>
-      <A href="/calendar" className="siteUpcomingLink" peek={false}>
+      <A href="/calendar" className="siteUpcomingLink">
         Open the Hub calendar <TbArrowUpRight size={19} aria-hidden />
       </A>
     </aside>

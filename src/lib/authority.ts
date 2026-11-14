@@ -26,21 +26,13 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     label: 'Global Focal Point',
     scopeTypes: ['platform'],
     councilSeat: 'focal_point', // seat is personal: each of the two FPs votes
+    // S11 and S13: Focal Points liaise with the UNFCCC and observe the GCT; they have no independent
+    // decision-making power, so Hub administration sits with the GCT areas below, not here.
     capabilities: [
       'council.vote',
       'constituency.coordinate',
       'points.award',
       'intelligence.contacts.read',
-      // Platform operation — the senior officers administer the Hub itself.
-      'platform.manage',
-      'accounts.manage',
-      'audit.read',
-      'ngo.manage_all',
-      'wg.manage_all',
-      'notifications.send',
-      'intelligence.operations.read',
-      'intelligence.writeback.approve',
-      'intelligence.writeback.apply',
     ],
     requiresCw: true,
   },
@@ -185,9 +177,16 @@ export const AUTHORITY_ROLES: Record<string, AuthorityRoleSpec> = {
     capabilities: [
       'gct.coordinate',
       'intelligence.contacts.read',
-      // Internal management runs the accounts console.
+      // S14: Internal Management runs the Hub's platform operation. Writeback approval stays with the
+      // Data Controller, so approval and application are never the same hands.
+      'platform.manage',
       'accounts.manage',
       'audit.read',
+      'ngo.manage_all',
+      'wg.manage_all',
+      'notifications.send',
+      'intelligence.operations.read',
+      'intelligence.writeback.apply',
     ],
     requiresCw: true,
   },

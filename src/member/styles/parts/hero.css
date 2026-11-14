@@ -1,0 +1,86 @@
+/* the one hero band (HeroBand.tsx): eyebrow, display title, muted lead, then a facts or metrics
+   slot, on the deep green scope from landing.css. page runs edge to edge under the public header;
+   hub is the rounded inset band on Home. the grid, gaps and 860px collapse are utilities in the component */
+.heroBandTitle {
+  line-height: 1.05;
+}
+
+.heroBandLead {
+  color: var(--text-3);
+}
+
+/* ── page: full bleed, pulled up under the overlay header ── */
+.heroBand-page {
+  position: relative;
+  isolation: isolate;
+  margin: calc(var(--ld-header-h) * -1) calc(var(--gutter) * -1) 0;
+  padding: calc(var(--ld-header-h) + clamp(32px, 6vw, 72px)) var(--gutter) clamp(36px, 6vw, 64px);
+  color: var(--ld-on-deep);
+}
+
+/* tint and rings run edge to edge of the window, not just the content column */
+.heroBand-page::before,
+.heroBand-page::after {
+  content: '';
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
+  border-radius: 0 0 var(--radius-surface) var(--radius-surface);
+}
+
+.heroBand-page::before {
+  border-bottom: 1px solid var(--ld-line-deep);
+  background:
+    var(--glow-spot), radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
+    radial-gradient(30% 60% at 5% 100%, rgba(163, 230, 53, 0.16), transparent 70%),
+    linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
+}
+
+.heroBand-page::after {
+  background: repeating-radial-gradient(
+    circle at 82% 30%,
+    transparent 0 22px,
+    rgba(169, 232, 196, 0.09) 22px 23px
+  );
+  mask-image: radial-gradient(circle at 82% 30%, #000 5%, transparent 60%);
+}
+
+.heroBand-page + * {
+  margin-top: var(--space-8);
+}
+
+.heroBand-page .pageEyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.heroBand-page .heroBandTitle {
+  max-width: 14ch;
+  font-size: clamp(36px, 5.6vw, 60px);
+  letter-spacing: -0.035em;
+  scroll-margin-top: 84px;
+}
+
+.heroBand-page .heroBandLead {
+  max-width: 52ch;
+  margin-top: var(--space-3);
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.55;
+}
+
+/* ── hub: rounded and inset, the surface itself comes from .ldDark ── */
+.heroBand-hub {
+  margin-bottom: var(--section-gap);
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: var(--radius-surface);
+}
+
+.heroBand-hub .heroBandTitle {
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.03em;
+}
+
+.heroBand-hub .heroBandLead {
+  margin-bottom: var(--space-3);
+}

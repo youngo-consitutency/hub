@@ -1,3 +1,4 @@
+import { DecisionPage } from './DecisionPage.tsx'
 import { bodyRoles } from '../../../shared/protocol'
 import { useContentOptionLabels } from '../../lib/documents'
 import { SidePanel } from '../../components/SidePanel.tsx'
@@ -932,8 +933,14 @@ function Workspace({ tab }: { tab: Tab }) {
     </div>
   )
 }
-export function Decisions() {
-  return <Platform initialTab="decisions" />
+// /council/:slug is this list with the decision open in the side panel
+export function Decisions({ slug }: { slug?: string }) {
+  return (
+    <>
+      <Platform initialTab="decisions" />
+      {slug && <DecisionPage slug={slug} />}
+    </>
+  )
 }
 export function Work() {
   return <Platform initialTab="work" />

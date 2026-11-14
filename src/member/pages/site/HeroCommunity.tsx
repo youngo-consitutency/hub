@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { TbPlus as Plus } from 'react-icons/tb'
+import { TbUserPlus as UserPlus } from 'react-icons/tb'
 
 // the roles that make the constituency work, drawn as characters; deliberately not real people
 const FIGURES = [
@@ -40,7 +40,7 @@ export function HeroCommunity({ label }: { label: string }) {
         ))}
       </div>
       <span className="ldSeat">
-        <Plus size={26} strokeWidth={1.5} />
+        <UserPlus size={30} strokeWidth={1.5} />
         <span>{label}</span>
       </span>
     </div>

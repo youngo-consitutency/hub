@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { serverWrites } from '../lib/collectionAccess'
+import { grantsCapability, noAccess } from '../lib/collectionAccess'
+import { audit } from '../lib/audit'
 import type { AnyValue } from '../lib/domain'
 
 // quiz answer keys must not ride along on public reads; the grader opts in
@@ -19,7 +20,24 @@ export const ContentDocuments: CollectionConfig = {
   slug: 'content-documents',
   access: {
     read: () => true,
-    ...serverWrites,
+    // documents are provisioned by scripts; publishers edit them in the /cms console
+    create: noAccess,
+    delete: noAccess,
+    update: ({ req }) => grantsCapability(req, 'content.publish'),
+  },
+  hooks: {
+    // a console edit leaves a trail; scripts and endpoints write without a user and audit themselves
+    afterChange: [
+      async ({ doc, req, operation }) => {
+        if (operation !== 'update' || !req.user) return doc
+        await audit(req, req.user, {
+          action: 'content_document.update',
+          targetType: 'content-documents',
+          targetId: doc.slug,
+        })
+        return doc
+      },
+    ],
   },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true, index: true },

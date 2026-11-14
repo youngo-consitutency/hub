@@ -1,8 +1,12 @@
 /* Entry stylesheet. Cascade layers, lowest priority first: tokens hold every
    colour, size and motion value; components hold the interface. Inside a
    layer the import order below still decides ties, so keep it stable. */
-@layer tokens, components;
+@layer theme, tokens, components, utilities;
 
+/* Tailwind: theme variables and utilities only (no preflight reset, the sheets below own the
+   base styles). Utilities come last so a utility class always wins over a component rule. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import './theme.css';
 @import './tokens.css' layer(tokens);
 
 @import './parts/shell.css' layer(components);
@@ -16,9 +20,12 @@
 @import './parts/landing.css' layer(components);
 @import './parts/site-pages.css' layer(components);
 @import './parts/fx.css' layer(components);
+@import './parts/hero.css' layer(components);
 @import './parts/hub-design.css' layer(components);
 @import './parts/search.css' layer(components);
 @import './parts/surfaces.css' layer(components);
 /* motion then touch come last: they adjust the sheets above */
 @import './parts/motion.css' layer(components);
 @import './parts/touch.css' layer(components);
+
+@import 'tailwindcss/utilities.css' layer(utilities);

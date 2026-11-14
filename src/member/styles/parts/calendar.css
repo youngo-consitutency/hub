@@ -248,8 +248,8 @@
 }
 
 .calendarWeekdays [data-weekend],
-.calendarDay[data-weekend] .calendarDayNumber {
-  color: var(--danger);
+.calendarDay[data-weekend] .calendarDayNumber:not(.today) {
+  color: var(--text-3);
 }
 
 .calendarMonthGrid {
@@ -279,17 +279,13 @@
 }
 
 .calendarDay[data-weekend] {
-  background: color-mix(in srgb, var(--danger-tint) 55%, var(--bg-card));
+  background: color-mix(in srgb, var(--bg-raised) 45%, var(--bg-card));
 }
 
 .calendarDay.outside {
   color: var(--text-3);
   background: var(--bg-raised);
   opacity: 0.55;
-}
-
-.calendarDay[data-weekend].outside {
-  background: color-mix(in srgb, var(--danger-tint) 38%, var(--bg-raised));
 }
 
 .calendarDayButton {
@@ -322,10 +318,6 @@
   color: var(--on-accent);
 }
 
-.calendarDay[data-weekend] .calendarDayNumber.today {
-  color: var(--on-accent);
-}
-
 .calendarDots {
   display: flex;
   align-items: center;
@@ -334,61 +326,42 @@
   flex-wrap: wrap;
 }
 
-.calendarEventIcon {
-  width: 20px;
-  height: 20px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: var(--radius-control);
-  color: var(--text-3);
-  background: var(--bg-raised);
+.calendarEventDot {
+  width: 7px;
+  height: 7px;
   flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--text-3);
 }
 
-.calendarEventIcon[data-event-type='constituency_call'] {
-  color: var(--accent);
+.calendarEventDot[data-event-type='constituency_call'] {
+  background: var(--accent);
 }
 
-.calendarEventIcon[data-event-type='wg_call'] {
-  color: var(--info);
+.calendarEventDot[data-event-type='wg_call'] {
+  background: var(--info);
 }
 
-.calendarEventIcon[data-event-type='wgf'] {
-  color: var(--calendar-gys);
+.calendarEventDot[data-event-type='wgf'] {
+  background: var(--calendar-gys);
 }
 
-.calendarEventIcon[data-event-type='unfccc_session'] {
-  color: var(--warn);
+.calendarEventDot[data-event-type='unfccc_session'] {
+  background: var(--warn);
 }
 
-.calendarEventIcon[data-event-type='webinar'] {
-  color: var(--live);
+.calendarEventDot[data-event-type='webinar'] {
+  background: var(--live);
 }
 
-.calendarEventIcon[data-event-type='coordination'] {
-  color: var(--calendar-coordination);
+.calendarEventDot[data-event-type='coordination'] {
+  background: var(--calendar-coordination);
 }
 
 .calendarMore {
   font-size: 10px;
   color: var(--text-3);
   line-height: 1;
-}
-
-.calendarLegend {
-  display: flex;
-  align-items: center;
-  gap: 8px 14px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-  color: var(--text-3);
-  font-size: 11px;
-}
-
-.calendarLegend > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .calendarAgenda {
@@ -456,12 +429,10 @@
   flex-direction: column;
   gap: var(--space-3);
   overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 0 var(--space-1) var(--space-3) 2px;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scroll-padding-block: 0 var(--space-3);
-  scroll-snap-type: y proximity;
 }
 
 .calendarAgendaGroup,
@@ -471,7 +442,6 @@
 }
 
 .calendarAgendaGroup {
-  scroll-snap-align: start;
 }
 
 .calendarAgendaDate {
@@ -530,6 +500,28 @@
   box-shadow: none;
 }
 
+/* on a desktop the month fills the window's height and the agenda takes the same height, scrolling inside;
+   rows are capped at 160px so cells never balloon. Below 720px high the rows keep their minimum */
+@media (min-width: 981px) and (min-height: 720px) {
+  .calendarLayout {
+    align-items: stretch;
+  }
+
+  .calendarMonthGrid {
+    grid-auto-rows: clamp(76px, calc((100dvh - 300px) / 6), 160px);
+  }
+
+  .calendarDay {
+    min-height: 0;
+  }
+
+  /* contain: size takes the agenda out of the row's height, so the month sets it */
+  .calendarAgenda {
+    position: static;
+    contain: size;
+  }
+}
+
 @media (max-width: 980px) {
   .calendarLayout {
     grid-template-columns: 1fr;
@@ -538,7 +530,6 @@
 
   .calendarAgenda {
     position: static;
-    height: auto !important;
     min-height: 0;
     max-height: none;
     overflow: visible;

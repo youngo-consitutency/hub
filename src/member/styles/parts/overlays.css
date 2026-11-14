@@ -64,6 +64,7 @@
   flex-shrink: 0;
 }
 .routePeekBody {
+  container-type: inline-size;
   flex: 1;
   min-height: 0;
   height: calc(100dvh - 52px);
@@ -488,22 +489,6 @@
 }
 
 /* ── Subscribe (ICS) ──────────────────────────────── */
-.subscribeWrap {
-  position: relative;
-}
-
-.subscribePanel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: var(--z-dropdown);
-  width: 380px;
-  max-width: min(92vw, 380px);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  box-shadow: var(--shadow-popover);
-}
 
 .subscribeHeader {
   display: flex;
@@ -565,25 +550,6 @@
 }
 
 /* ── Add to calendar menu ──────────────────────────── */
-.addCalWrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.addCalPanel {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  z-index: var(--z-dropdown);
-  min-width: 240px;
-  width: max-content;
-  max-width: min(92vw, 300px);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  box-shadow: var(--shadow-popover);
-  padding: 10px;
-}
 
 .addCalItem {
   display: flex;
@@ -602,16 +568,6 @@
 }
 
 @media (max-width: 560px) {
-  .addCalPanel {
-    left: auto;
-    right: 0;
-  }
-
-  .subscribePanel {
-    right: auto;
-    left: 0;
-  }
-
   .subscribeSteps li {
     grid-template-columns: 1fr;
   }

@@ -2,7 +2,6 @@ import type { Endpoint } from 'payload'
 import { endpoint, fail, json, param } from '../lib/respond'
 import { accountView, requireVerifiedMember, verifiedContext } from '../lib/accounts'
 import { getMemberPerson, listMemberPeople } from '../lib/memberDirectory'
-import { readMemberPhoto } from '../lib/memberPhotos'
 
 export const peopleEndpoints: Endpoint[] = [
   // ── Member people directory ───────────────────────────────────────
@@ -31,27 +30,6 @@ export const peopleEndpoints: Endpoint[] = [
       const person = await getMemberPerson({ ...accountView(account), access }, param(req, 'id'))
       if (!person) throw fail.notFound('Member profile not found.')
       return json({ person })
-    }),
-  },
-
-  {
-    path: '/member/people/:id/photo',
-    method: 'get',
-    handler: endpoint(async (req) => {
-      const { account, access } = await verifiedContext(req)
-      const id = Number(param(req, 'id'))
-      const person = await getMemberPerson({ ...accountView(account), access }, id)
-      if (!person) throw fail.notFound('Profile photo not found.')
-      const photo = await readMemberPhoto(id)
-      if (!photo) throw fail.notFound('Profile photo not found.')
-      return new Response(new Uint8Array(photo.bytes), {
-        headers: {
-          'Content-Type': photo.content_type,
-          'Content-Length': String(photo.byte_size),
-          'Content-Disposition': 'inline',
-          'Cache-Control': 'private, no-store',
-        },
-      })
     }),
   },
 ]

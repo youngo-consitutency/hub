@@ -7,14 +7,32 @@
 export interface SiteRoute {
   href: string
   label: string
+  /** anchors inside the page, shown as the header dropdown and in the mobile menu */
+  sections?: { href: string; label: string }[]
 }
 
 // four pages: the home page, then one per job. each long page is split into sections
 export const SITE_ROUTES: SiteRoute[] = [
   { href: '/', label: 'Home' },
-  { href: '/our-work', label: 'Our work' },
+  {
+    href: '/our-work',
+    label: 'Our work',
+    sections: [
+      { href: '/our-work#working-groups', label: 'Working groups' },
+      { href: '/our-work#conferences', label: 'Conferences' },
+      { href: '/our-work#statement', label: 'Global Youth Statement' },
+    ],
+  },
   { href: '/learn', label: 'Resources' },
-  { href: '/about', label: 'About' },
+  {
+    href: '/about',
+    label: 'About',
+    sections: [
+      { href: '/about#organisation', label: 'Organisation' },
+      { href: '/about#faq', label: 'Questions' },
+      { href: '/about#contact', label: 'Contact' },
+    ],
+  },
 ]
 
 // pages that moved or were merged keep working: old path -> where its content lives now

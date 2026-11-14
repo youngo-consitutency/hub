@@ -6,9 +6,9 @@ interface OpportunityCardProps {
   onKindFilter?: AnyValue
   onFormatFilter?: AnyValue
   onRegionFilter?: AnyValue
-  onPeek?: (item: AnyValue) => void
 }
 
+import { usePeekFrom } from '../lib/peek'
 import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { OpportunityPeek } from '../components/EntityPeeks'
@@ -24,6 +24,7 @@ import {
 import { CardSchedule } from '../components/cards'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
+  A,
   Async,
   Empty,
   FilterChip,
@@ -33,7 +34,7 @@ import {
   Section,
   SortButton,
   LifecycleTiming,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import {
   TbSortAscendingLetters as ArrowDownAZ,
@@ -113,16 +114,14 @@ function OpportunityCard({
   onKindFilter,
   onFormatFilter,
   onRegionFilter,
-  onPeek,
 }: OpportunityCardProps) {
   const where = item.format === 'online' ? null : item.location
   return (
     <article className="card entityCard opportunityCard linkedEntityCard">
-      <button
-        type="button"
+      <A
+        href={`/opportunities/${item.id}`}
         className="entityCardLinkOverlay"
-        aria-label={`${item.title} — open details in side peek`}
-        onClick={() => onPeek?.(item)}
+        aria-label={`Open ${item.title}`}
       />
       <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
@@ -171,14 +170,14 @@ function OpportunityCard({
 }
 
 /** Browse opportunities with search, filters, sorting and layouts, grouped by open or closed status. */
-export function Opportunities() {
+export function Opportunities({ slug }: { slug?: string }) {
   const [kindFilters, setKindFilters] = useState<Doc>({})
   const [formatFilters, setFormatFilters] = useState<Doc>({})
   const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
-  const [selectedOpportunity, setSelectedOpportunity] = useState<AnyValue | null>(null)
   const query = useApi('/member/opportunities?kind=all&format=all')
+  const panel = usePeekFrom('/opportunities', query.data?.items, slug)
 
   return (
     <div>
@@ -188,6 +187,8 @@ export function Opportunities() {
         description="Shared open calls, fellowships, speaker slots, and events from constituency channels — plus postings from organisations in the Hub."
       />
       <Async
+        grid
+        skeletons={6}
         query={query}
         empty={(data: Doc) =>
           data.items.length === 0 ? (
@@ -254,16 +255,16 @@ export function Opportunities() {
                     ? () => setRegionFilters((current) => toggleFilter(current, item.region))
                     : undefined
                 }
-                onPeek={(selected) => setSelectedOpportunity(selected)}
               />
             ))
 
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox label="Search opportunities" value={search} onChange={setSearch} />
-                  <div className="sortControl" aria-label="Sort opportunities">
+              <CatalogToolbar
+                search={{ label: 'Search opportunities', value: search, onChange: setSearch }}
+                sortLabel="Sort opportunities"
+                sort={
+                  <>
                     <SortButton
                       active={sort === 'deadline'}
                       icon={CalendarClock}
@@ -278,97 +279,101 @@ export function Opportunities() {
                     >
                       Title A–Z
                     </SortButton>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu
-                    onClear={() => {
-                      setKindFilters({})
-                      setFormatFilters({})
-                      setRegionFilters({})
-                    }}
-                    label="Filter opportunities"
-                    activeCount={
-                      activeFilterCount(kindFilters) +
-                      activeFilterCount(formatFilters) +
-                      activeFilterCount(regionFilters)
-                    }
-                  >
-                    <fieldset className="filterLevel">
-                      <legend>Type</legend>
-                      <div className="pillRow">
-                        {KINDS.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(kindFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : kindFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setKindFilters({})
-                              else {
-                                setKindFilters((current) => toggleFilter(current, item.key))
-                              }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    <fieldset className="filterLevel">
-                      <legend>Format</legend>
-                      <div className="pillRow">
-                        {FORMATS.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(formatFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : formatFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setFormatFilters({})
-                              else {
-                                setFormatFilters((current) => toggleFilter(current, item.key))
-                              }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    {regions.length > 0 && (
+                  </>
+                }
+                filters={
+                  <>
+                    <FilterMenu
+                      onClear={() => {
+                        setKindFilters({})
+                        setFormatFilters({})
+                        setRegionFilters({})
+                      }}
+                      label="Filter opportunities"
+                      activeCount={
+                        activeFilterCount(kindFilters) +
+                        activeFilterCount(formatFilters) +
+                        activeFilterCount(regionFilters)
+                      }
+                    >
                       <fieldset className="filterLevel">
-                        <legend>Region</legend>
+                        <legend>Type</legend>
                         <div className="pillRow">
-                          <FilterPill
-                            active={activeFilterCount(regionFilters) === 0}
-                            icon={Map}
-                            onClick={() => setRegionFilters({})}
-                          >
-                            All regions
-                          </FilterPill>
-                          {regions.map((region: AnyValue) => (
+                          {KINDS.map((item) => (
                             <FilterPill
-                              key={region}
-                              state={regionFilters[region] || 'neutral'}
-                              prefix={regionFilterPrefix(region, regionLabel(region))}
-                              onClick={() =>
-                                setRegionFilters((current) => toggleFilter(current, region))
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(kindFilters) === 0}
+                              state={
+                                item.key === 'all' ? undefined : kindFilters[item.key] || 'neutral'
                               }
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setKindFilters({})
+                                else {
+                                  setKindFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
                             >
-                              {regionLabel(region)}
+                              {item.label}
                             </FilterPill>
                           ))}
                         </div>
                       </fieldset>
-                    )}
-                  </FilterMenu>
-                </div>
-              </div>
+                      <fieldset className="filterLevel">
+                        <legend>Format</legend>
+                        <div className="pillRow">
+                          {FORMATS.map((item) => (
+                            <FilterPill
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(formatFilters) === 0}
+                              state={
+                                item.key === 'all'
+                                  ? undefined
+                                  : formatFilters[item.key] || 'neutral'
+                              }
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setFormatFilters({})
+                                else {
+                                  setFormatFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                      {regions.length > 0 && (
+                        <fieldset className="filterLevel">
+                          <legend>Region</legend>
+                          <div className="pillRow">
+                            <FilterPill
+                              active={activeFilterCount(regionFilters) === 0}
+                              icon={Map}
+                              onClick={() => setRegionFilters({})}
+                            >
+                              All regions
+                            </FilterPill>
+                            {regions.map((region: AnyValue) => (
+                              <FilterPill
+                                key={region}
+                                state={regionFilters[region] || 'neutral'}
+                                prefix={regionFilterPrefix(region, regionLabel(region))}
+                                onClick={() =>
+                                  setRegionFilters((current) => toggleFilter(current, region))
+                                }
+                              >
+                                {regionLabel(region)}
+                              </FilterPill>
+                            ))}
+                          </div>
+                        </fieldset>
+                      )}
+                    </FilterMenu>
+                  </>
+                }
+              />
               <CatalogueResults count={items.length}>
                 {items.length ? (
                   <div className="opportunityGroups">
@@ -405,7 +410,7 @@ export function Opportunities() {
           )
         }}
       </Async>
-      <OpportunityPeek item={selectedOpportunity} onClose={() => setSelectedOpportunity(null)} />
+      <OpportunityPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

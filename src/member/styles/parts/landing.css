@@ -16,14 +16,14 @@
 }
 
 .ldWrap {
-  width: min(100%, 1240px);
+  width: min(100%, var(--container));
   margin-inline: auto;
-  padding-inline: var(--ld-gutter);
+  padding-inline: var(--gutter);
 }
 
 /* deep sections re-scope the tokens so buttons, cards and links inside theme themselves */
 .ldDark,
-.sitePageHeader,
+.heroBand,
 .siteFooter,
 .sidebar {
   --brand-dark-display: inline-block;
@@ -118,7 +118,7 @@
   box-shadow: var(--shadow-card-hover);
 }
 
-.siteShell:has(.ldHero, .sitePageHeader) .siteHeader[data-overlay] {
+.siteShell:has(.ldHero, .heroBand-page) .siteHeader[data-overlay] {
   --text-1: var(--ld-on-deep);
   --text-2: var(--ld-on-deep);
   --brand-dark-display: inline-block;
@@ -131,6 +131,12 @@
   border-bottom-color: transparent;
   background: transparent;
   backdrop-filter: none;
+}
+
+/* over the hero the header's tokens turn light, so its dropdown goes deep green to keep the text readable */
+.siteHeader[data-overlay] .siteNavMenu {
+  background: var(--ld-deep);
+  border-color: var(--ld-line-deep);
 }
 
 .ldHeroGrid {
@@ -279,14 +285,14 @@
 
 /* events card: frosted panel over the aurora */
 .ldHero .siteUpcoming {
-  border-radius: 20px;
+  border-radius: var(--radius-modal);
   backdrop-filter: blur(16px);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
 
 /* ── sections ─────────────────────────────────────── */
 .ldSection {
-  padding-block: clamp(56px, 8vw, 112px) 0;
+  padding-block: var(--section-y) 0;
 }
 
 .ldIntro {
@@ -532,7 +538,7 @@
   .ldTrack {
     flex-wrap: wrap;
     justify-content: flex-start;
-    padding-inline: var(--ld-gutter);
+    padding-inline: var(--gutter);
   }
 
   .ldTrackCopy {
@@ -565,13 +571,26 @@
 
 .ldTimeline li {
   position: relative;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card, 0 1px 2px rgba(15, 70, 49, 0.06));
+  transition:
+    transform var(--motion-standard) var(--motion-ease),
+    border-color var(--motion-standard) var(--motion-ease);
+}
+
+.ldTimeline li:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
 }
 
 .ldTimeline li::before {
   content: '';
   position: absolute;
   top: calc(var(--space-6) * -1 - 5px);
-  left: 0;
+  left: var(--space-5);
   width: 12px;
   height: 12px;
   border: 2px solid var(--accent);
@@ -609,35 +628,6 @@
   line-height: 1.55;
 }
 
-/* ── closing call to action ───────────────────────── */
-.ldCta {
-  margin-top: clamp(56px, 8vw, 112px);
-  width: calc(min(100%, 1240px) - 2 * var(--ld-gutter));
-  padding-inline: 0;
-  border-radius: var(--radius-surface);
-}
-
-.ldCtaInner {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-4);
-  max-width: 62ch;
-  padding: clamp(32px, 6vw, 72px);
-}
-
-.ldCta h2 {
-  font-size: clamp(30px, 4.4vw, 52px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-
-.ldCta p {
-  color: var(--ld-on-deep-muted);
-  font-size: clamp(15px, 1.3vw, 18px);
-  line-height: 1.6;
-}
-
 /* ── small screens ────────────────────────────────── */
 @media (max-width: 900px) {
   .ldPulse {
@@ -662,62 +652,6 @@
     flex: 1 1 100%;
     justify-content: center;
   }
-}
-
-/* ── inner public pages: the shared page header becomes the same deep band as the home hero ── */
-.sitePageHeader {
-  margin-top: calc(var(--ld-header-h) * -1);
-  padding-top: calc(var(--ld-header-h) + clamp(32px, 6vw, 72px));
-  padding-bottom: clamp(36px, 6vw, 64px);
-  color: var(--ld-on-deep);
-}
-
-.sitePageHeader::before,
-.sitePageHeader::after {
-  border-radius: 0 0 var(--radius-surface) var(--radius-surface);
-}
-
-.sitePageHeader::before {
-  border-bottom: 1px solid var(--ld-line-deep);
-  background:
-    var(--glow-spot), radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
-    radial-gradient(30% 60% at 5% 100%, rgba(163, 230, 53, 0.16), transparent 70%),
-    linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
-}
-
-.sitePageHeader::after {
-  content: '';
-  position: absolute;
-  inset: 0 calc(50% - 50vw);
-  z-index: -1;
-  background: repeating-radial-gradient(
-    circle at 82% 30%,
-    transparent 0 22px,
-    rgba(169, 232, 196, 0.09) 22px 23px
-  );
-  mask-image: radial-gradient(circle at 82% 30%, #000 5%, transparent 60%);
-}
-
-.sitePageHeader .pageEyebrow {
-  color: var(--ld-accent-deep);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-}
-
-.sitePageHeader h1 {
-  max-width: 20ch;
-  font-size: clamp(36px, 5.6vw, 60px);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-}
-
-.sitePageLead {
-  color: var(--ld-on-deep-muted);
-}
-
-.sitePageHeader + * {
-  margin-top: var(--space-8);
 }
 
 /* link cards share the landing lift */
@@ -790,17 +724,6 @@
   border-color: var(--ld-accent-deep);
   color: var(--ld-accent-deep);
   transform: translateY(-2px);
-}
-
-/* the closing card: ripples breathe out from its right side, a beam circles the border */
-.ldCtaRipple {
-  position: absolute;
-  top: 50%;
-  right: -6%;
-  z-index: -1;
-  width: 56%;
-  height: 150%;
-  transform: translateY(-50%);
 }
 
 /* a figure's role appears on hover, and is not repeated for assistive tech (the ring is decoration) */
