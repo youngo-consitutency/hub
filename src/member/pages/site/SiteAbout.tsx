@@ -16,9 +16,10 @@ export function SiteAbout() {
   const about = site?.about
   return (
     <SitePage
+      eyebrow={about?.eyebrow ?? 'Who we are'}
       title={about?.title ?? 'About YOUNGO'}
       lead={about?.lead}
-      motif="arcs"
+      art="structure"
       sections={SECTIONS}
     >
       <OrganisationSection />

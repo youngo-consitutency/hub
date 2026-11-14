@@ -9,7 +9,7 @@ export function SiteResources() {
   if (!res) return null
   const cta = res.cta || {}
   return (
-    <SitePage title={res.title} eyebrow={res.eyebrow} lead={res.lead} motif="grid">
+    <SitePage title={res.title} eyebrow={res.eyebrow ?? 'Resources'} lead={res.lead} art="shelf">
       <div className="siteResourceCatalogue">
         <ResourceCatalogue heading={res.catalogueHeading} />
       </div>

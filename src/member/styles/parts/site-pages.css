@@ -2,44 +2,149 @@
    language: tokens, display type, the pointer glow and motion. nothing here is a copy of
    another page's layout */
 
-/* ── page header motifs: the shared deep band, with a pattern per page ── */
-.sitePageHeader[data-motif]::after {
-  mask-image: radial-gradient(circle at 82% 30%, #000 5%, transparent 65%);
+/* ── page hero: one shape for every inner page — copy and facts on the left, a drawing on the right ── */
+.sitePageHeaderGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: var(--space-8);
+  align-items: center;
 }
 
-.sitePageHeader[data-motif='dots']::after {
-  background: radial-gradient(circle, rgba(169, 232, 196, 0.22) 1.2px, transparent 1.6px) 0 0 / 22px
-    22px;
+.sitePageHeaderCopy {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
 }
 
-.sitePageHeader[data-motif='lines']::after {
-  background: repeating-linear-gradient(
-    115deg,
-    transparent 0 18px,
-    rgba(169, 232, 196, 0.1) 18px 19px
-  );
+.sitePageHeader h1 {
+  max-width: 14ch;
 }
 
-.sitePageHeader[data-motif='grid']::after {
-  background:
-    linear-gradient(var(--ld-line-deep) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, var(--ld-line-deep) 1px, transparent 1px) 0 0 / 40px 40px;
+.sitePageLead {
+  max-width: 52ch;
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.55;
 }
 
-.sitePageHeader[data-motif='arcs']::after {
-  background: repeating-radial-gradient(
-    circle at 100% 100%,
-    transparent 0 30px,
-    rgba(169, 232, 196, 0.12) 30px 31px
-  );
+.siteFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
 }
 
-.sitePageHeader[data-motif='waves']::after {
-  background: repeating-radial-gradient(
-    ellipse 140% 55% at 30% 130%,
-    transparent 0 20px,
-    rgba(169, 232, 196, 0.12) 20px 21px
-  );
+.siteFacts > div {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: 'icon number' 'label label';
+  align-items: center;
+  justify-content: start;
+  column-gap: var(--space-2);
+  min-width: 132px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--ld-line-deep);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+.siteFacts svg {
+  grid-area: icon;
+  color: var(--ld-accent-deep);
+}
+
+.siteFacts dd {
+  grid-area: number;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.siteFacts dt {
+  grid-area: label;
+  color: var(--ld-on-deep-muted);
+  font-size: 13px;
+}
+
+.heroArt {
+  width: 100%;
+  max-height: 300px;
+  justify-self: end;
+  overflow: visible;
+}
+
+.heroArtLine,
+.heroArtOrbit,
+.heroArtPanel {
+  fill: none;
+  stroke: rgba(169, 232, 196, 0.35);
+  stroke-width: 1.25;
+}
+
+.heroArtOrbit {
+  stroke-dasharray: 3 7;
+}
+
+.heroArtPanel {
+  fill: rgba(255, 255, 255, 0.04);
+}
+
+.heroArtBase {
+  stroke: rgba(169, 232, 196, 0.5);
+}
+
+.heroArtDot {
+  fill: var(--ld-accent-deep);
+}
+
+.heroArtCore {
+  fill: #4ade80;
+}
+
+.heroArtHalo {
+  fill: rgba(74, 222, 128, 0.14);
+}
+
+.heroArtNode,
+.heroArtCard {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heroArtNode {
+    animation: heroPulse 4.5s ease-in-out infinite;
+  }
+
+  .heroArtCard {
+    animation: heroFloat 6s ease-in-out infinite;
+  }
+}
+
+@keyframes heroPulse {
+  50% {
+    opacity: 0.55;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes heroFloat {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 860px) {
+  .sitePageHeaderGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .heroArt {
+    display: none;
+  }
 }
 
 /* ── COY: a directory to browse, with the filters kept beside the results ── */
@@ -508,50 +613,6 @@
 }
 
 /* ── our work: the reach row, topic tiles and the featured conference ── */
-.siteReach {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-4);
-  margin: var(--space-6) 0 0;
-}
-
-.siteReachItem {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas: 'icon number' 'icon label';
-  align-items: center;
-  column-gap: var(--space-4);
-  padding: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-modal);
-  background: var(--bg-card);
-}
-
-.siteReachItem svg {
-  grid-area: icon;
-  padding: 11px;
-  box-sizing: content-box;
-  border-radius: 14px;
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-}
-
-.siteReachItem dd {
-  grid-area: number;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(32px, 3.4vw, 44px);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
-.siteReachItem dt {
-  grid-area: label;
-  color: var(--text-2);
-  font-size: 15px;
-}
-
 .siteTopicTiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));

@@ -3,8 +3,14 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { TbChevronRight as ChevronRight } from 'react-icons/tb'
 import { A } from '../../components/ui'
+import { NumberTicker } from '../../components/fx/NumberTicker'
+import { HeroArt, type HeroArtKind } from './HeroArt'
 
-export type Motif = 'rings' | 'dots' | 'lines' | 'grid' | 'arcs' | 'waves'
+export interface PageFact {
+  icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>
+  value: number
+  label: string
+}
 export interface PageSection {
   id: string
   label: string
@@ -63,22 +69,44 @@ function SectionNav({ sections }: { sections: PageSection[] }) {
 
 interface SitePageProps {
   title: string
-  eyebrow?: string
+  eyebrow: string
   lead?: ReactNode
-  motif: Motif
+  /** the line drawing beside the title; each page has its own idea */
+  art: HeroArtKind
+  /** up to three numbers that size the page's subject; zero counts are left out */
+  facts?: PageFact[]
   /** two or more sections get the "on this page" list */
   sections?: PageSection[]
   children: ReactNode
 }
 
-// the frame every public page shares: one h1 in the deep band, then the page
-export function SitePage({ title, eyebrow, lead, motif, sections, children }: SitePageProps) {
+// the frame every public page shares: the same hero (eyebrow, title, lead, facts, drawing), then the page
+export function SitePage({ title, eyebrow, lead, art, facts, sections, children }: SitePageProps) {
+  const shown = (facts ?? []).filter((fact) => fact.value > 0)
   return (
     <div className="siteMain">
-      <header className="sitePageHeader" data-motif={motif === 'rings' ? undefined : motif}>
-        {eyebrow && <p className="pageEyebrow">{eyebrow}</p>}
-        <h1>{title}</h1>
-        {lead && <p className="sitePageLead">{lead}</p>}
+      <header className="sitePageHeader">
+        <div className="sitePageHeaderGrid">
+          <div className="sitePageHeaderCopy">
+            <p className="pageEyebrow">{eyebrow}</p>
+            <h1>{title}</h1>
+            {lead && <p className="sitePageLead">{lead}</p>}
+            {shown.length > 0 && (
+              <dl className="siteFacts">
+                {shown.map(({ icon: Icon, value, label }) => (
+                  <div key={label}>
+                    <Icon size={18} strokeWidth={1.5} aria-hidden />
+                    <dd>
+                      <NumberTicker value={value} />
+                    </dd>
+                    <dt>{label}</dt>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </div>
+          <HeroArt kind={art} />
+        </div>
       </header>
       {sections && sections.length > 1 && <SectionNav sections={sections} />}
       {children}

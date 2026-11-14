@@ -737,29 +737,6 @@ main#site-main {
   padding-bottom: 0;
 }
 
-.siteFacts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-  gap: var(--space-5);
-  margin: 0;
-}
-
-.siteFacts > div {
-  padding-top: var(--space-3);
-  border-top: 3px solid var(--accent);
-}
-
-.siteFacts dt {
-  font-size: clamp(20px, 2.2vw, 26px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.siteFacts dd {
-  margin: var(--space-1) 0 0;
-  color: var(--text-2);
-}
-
 .siteBandNote {
   max-width: var(--text-measure);
   margin-top: var(--space-6);
