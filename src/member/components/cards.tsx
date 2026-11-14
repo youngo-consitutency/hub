@@ -106,7 +106,7 @@ const EVENT_ICONS = {
 
 const COY_ICONS = { lcoy: MapPin, rcoy: Map, coy: Globe }
 
-const EVENT_LABEL = {
+export const EVENT_LABEL = {
   constituency_call: 'Constituency',
   wg_call: 'WG',
   wgf: 'Forum',
