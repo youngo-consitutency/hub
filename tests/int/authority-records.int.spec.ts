@@ -136,16 +136,44 @@ describe('record-derived permissions', () => {
     expect(access.teamRoles).toEqual([])
   })
 
-  it('gives a focal point platform operations without team memberships', async () => {
+  it('gives a focal point a council seat and no platform operation (S11, S13)', async () => {
     const { account } = await provisionAccount({
       membershipTrack: 'constituency_work',
       records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
     })
     const access = await accessFor(account)
-    expect(access.capabilities).toContain('platform.manage')
-    expect(access.capabilities).toContain('accounts.manage')
-    expect(access.capabilities).toContain('audit.read')
     expect(access.councilSeats).toContain('focal_point')
+    expect(access.capabilities).toContain('council.vote')
+    for (const operation of [
+      'platform.manage',
+      'accounts.manage',
+      'audit.read',
+      'ngo.manage_all',
+      'wg.manage_all',
+      'notifications.send',
+      'intelligence.writeback.approve',
+      'intelligence.writeback.apply',
+    ])
+      expect(access.capabilities).not.toContain(operation)
+  })
+
+  it('gives GCT Internal Management the platform operation, but not writeback approval (S14)', async () => {
+    const { account } = await provisionAccount({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'gct.internal', scopeType: 'team', scopeId: 'gct' }],
+    })
+    const access = await accessFor(account)
+    for (const operation of [
+      'platform.manage',
+      'accounts.manage',
+      'audit.read',
+      'ngo.manage_all',
+      'wg.manage_all',
+      'notifications.send',
+      'intelligence.writeback.apply',
+    ])
+      expect(access.capabilities).toContain(operation)
+    expect(access.capabilities).not.toContain('intelligence.writeback.approve')
     expect(access.capabilities).not.toContain('safeguarding.case')
     expect(access.capabilities).not.toContain('finance.review')
   })

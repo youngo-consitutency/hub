@@ -54,7 +54,7 @@ describe('generated REST surface', () => {
     const member = await session({})
     const operator = await session({
       membershipTrack: 'constituency_work',
-      records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
+      records: [{ role: 'gct.internal', scopeType: 'team', scopeId: 'gct' }],
     })
     viewers = [
       { label: 'anonymous' },

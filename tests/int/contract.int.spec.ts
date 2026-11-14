@@ -46,7 +46,7 @@ describe('API contract (requires dev server on :3000)', () => {
     member = await session({})
     admin = await session({
       membershipTrack: 'constituency_work',
-      records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
+      records: [{ role: 'gct.internal', scopeType: 'team', scopeId: 'gct' }],
     })
     membershipStaff = await session({
       membershipTrack: 'constituency_work',

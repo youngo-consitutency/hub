@@ -60,7 +60,7 @@ path is `scripts/setup/grant-authority.ts`, which writes a single
 provenance-stamped record directly:
 
 ```sh
-ACCOUNT_ID=<id> ROLE=focal_point npx tsx scripts/setup/grant-authority.ts
+ACCOUNT_ID=<id> ROLE=gct.internal SCOPE_TYPE=team SCOPE_ID=gct npx tsx scripts/setup/grant-authority.ts
 ```
 
 The target account must already hold active Constituency Work — every
