@@ -4,7 +4,8 @@ import { TbUsers as UsersIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
-import { Async, Empty, PageHeader, SearchBox } from '../components/ui'
+import { Async, CatalogToolbar, Empty, FilterMenu, FilterPill, PageHeader } from '../components/ui'
+import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { ContactCard, PersonCard, WorkingGroupContactCard } from '../components/cards'
 import { useDocument } from '../lib/documents'
 import { useWorkingGroups } from '../lib/workingGroups'
@@ -13,66 +14,57 @@ import { TbAt as AtSign, TbUsers as Users } from 'react-icons/tb'
 function PeopleDirectory() {
   const wg = useWorkingGroups()
   const [selectedPerson, setSelectedPerson] = useState<AnyValue>(null)
-  const [draftSearch, setDraftSearch] = useState('')
   const [search, setSearch] = useState('')
   const [workingGroup, setWorkingGroup] = useState('')
   const [tag, setTag] = useState('')
+  // typing searches after a short pause, so there is no Search button
+  const term = useDebouncedValue(search.trim())
   const params = new URLSearchParams({ pageSize: '24' })
-  if (search) params.set('search', search)
+  if (term) params.set('search', term)
   if (workingGroup) params.set('workingGroup', workingGroup)
   if (tag) params.set('tag', tag)
-  const query = useApi(`/member/people?${params.toString()}`, [search, workingGroup, tag])
+  const query = useApi(`/member/people?${params.toString()}`, [term, workingGroup, tag])
 
   return (
     <section aria-label="Member profiles">
       <div className="peopleDirectoryIntro">
         <p className="meta">Only members who choose to share their profile appear here.</p>
       </div>
-      <form
-        className="peopleDirectoryTools"
-        onSubmit={(event) => {
-          event.preventDefault()
-          setSearch(draftSearch.trim())
+      <CatalogToolbar
+        search={{
+          label: 'Search people, skills, or topics',
+          value: search,
+          onChange: setSearch,
         }}
-      >
-        <SearchBox
-          label="Search people, skills, or topics"
-          value={draftSearch}
-          onChange={setDraftSearch}
-        />
-        <label className="field peopleGroupFilter">
-          <span className="srOnly">Filter by working group</span>
-          <select
-            className="input"
-            value={workingGroup}
-            onChange={(event) => setWorkingGroup(event.target.value)}
-          >
-            <option value="">All working groups</option>
-            {wg.groups.map((group: Doc) => (
-              <option key={group.slug} value={group.slug}>
-                {group.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className="btn btn-secondary">
-          Search
-        </button>
-        {(search || workingGroup || tag) && (
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => {
-              setDraftSearch('')
-              setSearch('')
+        filters={
+          <FilterMenu
+            label="Filter by working group"
+            activeCount={workingGroup || tag ? 1 : 0}
+            onClear={() => {
               setWorkingGroup('')
               setTag('')
             }}
           >
-            Clear
-          </button>
-        )}
-      </form>
+            <fieldset className="filterLevel">
+              <legend>Working group</legend>
+              <div className="pillRow">
+                <FilterPill active={!workingGroup} onClick={() => setWorkingGroup('')}>
+                  All groups
+                </FilterPill>
+                {wg.groups.map((group: Doc) => (
+                  <FilterPill
+                    key={group.slug}
+                    active={workingGroup === group.slug}
+                    onClick={() => setWorkingGroup(group.slug)}
+                  >
+                    {group.name}
+                  </FilterPill>
+                ))}
+              </div>
+            </fieldset>
+          </FilterMenu>
+        }
+      />
       {tag && (
         <p className="filterContext" role="status">
           Filtering by tag: <strong>{tag}</strong>

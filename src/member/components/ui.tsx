@@ -205,7 +205,11 @@ interface CatalogToolbarProps {
   filters?: import('react').ReactNode
 }
 
-/** Search, sort and filter row shared by every browse page, so they all behave and wrap alike. */
+/**
+ * The one toolbar every browse page uses, so they all behave and wrap alike. Slots, in order:
+ * `search`; `sort` (how the list is ordered); `children` (quick pills: categories and on/off switches);
+ * `filters` (a FilterMenu, only when there is a real choice to make).
+ */
 export function CatalogToolbar({
   search,
   sortLabel,

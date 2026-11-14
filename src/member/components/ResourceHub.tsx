@@ -34,7 +34,6 @@ import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
 import { useMemo, useState } from 'react'
 import {
-  TbSortAscendingLetters as ArrowDownAZ,
   TbArrowUpRight as ArrowUpRight,
   TbBook2 as BookOpen,
   TbBriefcase as Briefcase,
@@ -66,7 +65,6 @@ import {
   FilterPill,
   CatalogToolbar,
   Section,
-  SortButton,
   StatusChip,
 } from './ui'
 
@@ -260,7 +258,6 @@ export function ResourceCatalogue({
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [pathway, setPathway] = useState('all')
-  const [groupBy, setGroupBy] = useState('type')
   const [type, setType] = useState('all')
   const [topic, setTopic] = useState('all')
 
@@ -309,7 +306,7 @@ export function ResourceCatalogue({
   )
 
   // sections for the chosen grouping; a resource with an unknown value lands in the last one
-  const groups = groupBy === 'type' && type === 'all' ? sections(typeOptions) : null
+  const groups = type === 'all' ? sections(typeOptions) : null
 
   return (
     <>
@@ -335,25 +332,6 @@ export function ResourceCatalogue({
       <Section label={heading} meta={query.data ? `${items.length} listed` : null}>
         <CatalogToolbar
           search={{ label: 'Search resources', value: search, onChange: reset(setSearch) }}
-          sortLabel="Group resources"
-          sort={
-            <>
-              <SortButton
-                active={groupBy === 'type'}
-                icon={Filter}
-                onClick={() => reset(setGroupBy)('type')}
-              >
-                By category
-              </SortButton>
-              <SortButton
-                active={groupBy === 'none'}
-                icon={ArrowDownAZ}
-                onClick={() => reset(setGroupBy)('none')}
-              >
-                A–Z
-              </SortButton>
-            </>
-          }
           filters={
             (RESOURCE_PATHWAYS.length > 0 || RESOURCE_TOPICS.length > 0) && (
               <FilterMenu

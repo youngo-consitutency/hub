@@ -8,7 +8,7 @@ interface TrackResultsProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
-import { A, Async, Empty, CatalogToolbar, PageHeader, SortButton } from '../components/ui'
+import { A, Async, Empty, CatalogToolbar, FilterPill, PageHeader } from '../components/ui'
 import { TbArrowUpRight as ArrowUpRight, TbWorldSearch as WorldSearch } from 'react-icons/tb'
 
 /** Browse negotiation tracks with text search and an optional open-calls filter. */
@@ -30,13 +30,13 @@ export function Negotiations() {
           value: search,
           onChange: setSearch,
         }}
-        sortLabel="Call filter"
-        sort={
-          <SortButton active={openOnly} onClick={() => setOpenOnly((value) => !value)}>
+      >
+        <div className="pillRow">
+          <FilterPill active={openOnly} onClick={() => setOpenOnly((value) => !value)}>
             Open calls only
-          </SortButton>
-        }
-      />
+          </FilterPill>
+        </div>
+      </CatalogToolbar>
       <Async query={query}>{(data: Doc) => <TrackResults data={data} search={search} />}</Async>
     </div>
   )
