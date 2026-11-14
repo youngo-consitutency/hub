@@ -118,7 +118,7 @@ export function Groups({ slug }: { slug?: string }) {
                   </>
                 }
                 filters={
-                  <>
+                  topicList.length > 0 && (
                     <FilterMenu
                       activeCount={activeFilterCount(topics)}
                       onClear={() => setTopics({})}
@@ -148,7 +148,7 @@ export function Groups({ slug }: { slug?: string }) {
                         </div>
                       </fieldset>
                     </FilterMenu>
-                  </>
+                  )
                 }
               />
               <CatalogueResults count={groups.length}>

@@ -355,15 +355,12 @@ export function ResourceCatalogue({
             </>
           }
           filters={
-            <>
+            (RESOURCE_PATHWAYS.length > 0 || RESOURCE_TOPICS.length > 0) && (
               <FilterMenu
-                activeCount={
-                  [pathway !== 'all', topic !== 'all', verifiedOnly].filter(Boolean).length
-                }
+                activeCount={[pathway !== 'all', topic !== 'all'].filter(Boolean).length}
                 onClear={() => {
                   setPathway('all')
                   setTopic('all')
-                  setVerifiedOnly(false)
                   setLimit(PAGE)
                 }}
               >
@@ -391,41 +388,31 @@ export function ResourceCatalogue({
                     </div>
                   </fieldset>
                 )}
-                <fieldset className="filterLevel">
-                  <legend>Topic</legend>
-                  <div className="pillRow">
-                    <FilterPill
-                      active={topic === 'all'}
-                      icon={Filter}
-                      onClick={() => reset(setTopic)('all')}
-                    >
-                      All topics
-                    </FilterPill>
-                    {RESOURCE_TOPICS.map((item: string) => (
+                {RESOURCE_TOPICS.length > 0 && (
+                  <fieldset className="filterLevel">
+                    <legend>Topic</legend>
+                    <div className="pillRow">
                       <FilterPill
-                        key={item}
-                        active={topic === item}
-                        onClick={() => reset(setTopic)(item)}
+                        active={topic === 'all'}
+                        icon={Filter}
+                        onClick={() => reset(setTopic)('all')}
                       >
-                        {item}
+                        All topics
                       </FilterPill>
-                    ))}
-                  </div>
-                </fieldset>
-                <fieldset className="filterLevel">
-                  <legend>Checks</legend>
-                  <div className="pillRow">
-                    <FilterPill
-                      active={verifiedOnly}
-                      icon={Check}
-                      onClick={() => reset(setVerifiedOnly)(!verifiedOnly)}
-                    >
-                      Only checked links without open issues
-                    </FilterPill>
-                  </div>
-                </fieldset>
+                      {RESOURCE_TOPICS.map((item: string) => (
+                        <FilterPill
+                          key={item}
+                          active={topic === item}
+                          onClick={() => reset(setTopic)(item)}
+                        >
+                          {item}
+                        </FilterPill>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
               </FilterMenu>
-            </>
+            )
           }
         >
           <div className="pillRow" role="group" aria-label="Category">
@@ -445,6 +432,14 @@ export function ResourceCatalogue({
                 </FilterPill>
               ) : null
             })}
+            <FilterPill
+              className="ml-auto"
+              active={verifiedOnly}
+              icon={Check}
+              onClick={() => reset(setVerifiedOnly)(!verifiedOnly)}
+            >
+              Checked links only
+            </FilterPill>
           </div>
         </CatalogToolbar>
         <Async query={query} skeletons={4}>
