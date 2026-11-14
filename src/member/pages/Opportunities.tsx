@@ -188,6 +188,8 @@ export function Opportunities() {
         description="Shared open calls, fellowships, speaker slots, and events from constituency channels — plus postings from organisations in the Hub."
       />
       <Async
+        grid
+        skeletons={6}
         query={query}
         empty={(data: Doc) =>
           data.items.length === 0 ? (

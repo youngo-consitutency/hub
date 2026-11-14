@@ -59,6 +59,8 @@ export function Coys() {
         description="Find local, regional, and global Conferences of Youth, with dates and participation status."
       />
       <Async
+        grid
+        skeletons={6}
         query={query}
         empty={(d: AnyValue) =>
           d.items.length === 0 ? (

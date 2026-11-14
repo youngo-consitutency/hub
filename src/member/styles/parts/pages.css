@@ -25,8 +25,31 @@
   height: 76px;
 }
 
-.skeleton::after {
-  content: none;
+.skeletonCard {
+  height: 148px;
+}
+
+/* a soft sweep, only for people who have not asked for less motion */
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--bg-card) 70%, transparent),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: skeletonSweep 1.4s var(--motion-ease, ease) infinite;
+  }
+}
+
+@keyframes skeletonSweep {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .empty {

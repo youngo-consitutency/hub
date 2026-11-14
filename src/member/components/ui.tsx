@@ -83,6 +83,8 @@ interface SectionProps {
 
 interface SkeletonsProps {
   n?: AnyValue
+  /** card-shaped placeholders in the real card grid, so the page does not jump when data lands */
+  grid?: boolean
 }
 
 interface EmptyProps {
@@ -110,6 +112,7 @@ interface TimelineProps {
 interface AsyncProps {
   query?: AnyValue
   skeletons?: AnyValue
+  grid?: boolean
   children: (data: Doc) => import('react').ReactNode
   empty?: AnyValue
 }
@@ -530,11 +533,11 @@ export function Section({ label, meta, action, children }: SectionProps) {
   )
 }
 
-export function Skeletons({ n = 3 }: SkeletonsProps) {
+export function Skeletons({ n = 3, grid }: SkeletonsProps) {
   return (
-    <div className="stack" role="status" aria-label="Loading content">
+    <div className={grid ? 'cardGrid' : 'stack'} role="status" aria-label="Loading content">
       {Array.from({ length: n }).map((_, i) => (
-        <div key={i} className="skeleton" />
+        <div key={i} className={grid ? 'skeleton skeletonCard' : 'skeleton'} />
       ))}
     </div>
   )
@@ -598,8 +601,8 @@ export function Timeline({ steps, currentIndex }: TimelineProps) {
 }
 
 // Wrap an async section: shows skeletons, error-retry, or children(data).
-export function Async({ query, skeletons = 3, children, empty }: AsyncProps) {
-  if (query.loading) return <Skeletons n={skeletons} />
+export function Async({ query, skeletons = 3, grid, children, empty }: AsyncProps) {
+  if (query.loading) return <Skeletons n={skeletons} grid={grid} />
   if (query.error) return <ErrorCard message={query.error} onRetry={query.retry} />
   if (empty && empty(query.data)) return empty(query.data)
   return children(query.data)

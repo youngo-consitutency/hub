@@ -57,6 +57,8 @@ export function Groups() {
         <PageSectionNav section="groups" />
       </PageHeader>
       <Async
+        grid
+        skeletons={6}
         query={query}
         empty={(d: AnyValue) =>
           d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null

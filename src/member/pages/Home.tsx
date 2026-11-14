@@ -17,7 +17,8 @@ import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { responsibilitiesFor, viewerOf } from '../lib/routes'
 import { useApi } from '../lib/api'
-import { A, Async, LifecycleTiming, Section } from '../components/ui'
+import { A, Async, Empty, LifecycleTiming, Section } from '../components/ui'
+import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
 import { MissionMetric } from '../components/MissionConsole'
 import { fmtDual } from '../lib/time'
@@ -173,7 +174,11 @@ export function Home() {
                       ))}
                     </div>
                   ) : (
-                    <p className="meta">No meetings are scheduled this week.</p>
+                    <Empty
+                      icon={CalendarIcon}
+                      title="Nothing scheduled this week"
+                      body="New calls and sessions appear here as they are added."
+                    />
                   )}
                 </Section>
 
