@@ -8,24 +8,25 @@ import {
   TbBook as BookOpen,
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
-  TbGavel as Gavel,
-  TbLeaf as Leaf,
+  TbBuildingCommunity as BuildingCommunity,
+  TbFriends as Friends,
   TbWorld as Globe,
   TbSchool as GraduationCap,
-  TbHeartHandshake as HandHeart,
+  TbUserHeart as UserHeart,
   TbHeartHandshake as Handshake,
   TbMapPin as MapPin,
   TbSpeakerphone as Megaphone,
-  TbScript as ScrollText,
+  TbWriting as Writing,
   TbUserCheck as UserCheck,
   TbUsers as Users,
-  TbEye as Eye,
+  TbEyeHeart as EyeHeart,
   TbScale as Scale,
   TbShieldCheck as ShieldCheck,
   TbSeedling as Seeding,
   TbMoodSmile as Smile,
-  TbSparkles as Sparkles,
-  TbRocket as Rocket,
+  TbBulb as Bulb,
+  TbMicrophone2 as Microphone,
+  TbWorldHeart as WorldHeart,
   TbHeart as Heart,
   TbUsersGroup as UsersGroup,
   TbMessages as Messages,
@@ -41,14 +42,14 @@ import { HubPulse } from './HubPulse'
 const ICONS = {
   GraduationCap,
   Handshake,
-  ScrollText,
+  ScrollText: Writing,
   Megaphone,
-  Gavel,
+  Gavel: BuildingCommunity,
   MapPin,
   Users,
   BookOpen,
   Globe,
-  HandHeart,
+  HandHeart: UserHeart,
 }
 const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
 
@@ -63,22 +64,23 @@ function SectionIntro({ id, title, lead }: AnyValue) {
 }
 
 // principles are CMS text, so icons follow the wording; anything new falls back to a leaf
-const PRINCIPLE_ICONS: [RegExp, typeof Leaf][] = [
+const PRINCIPLE_ICONS: [RegExp, typeof Friends][] = [
   [/justice|equity|impartial/i, Scale],
   [/dignity|compassion/i, Heart],
   [/inclusiv|divers/i, UsersGroup],
-  [/open|transparen/i, Eye],
+  [/open|transparen/i, EyeHeart],
   [/integrity/i, ShieldCheck],
-  [/ambition|empower/i, Rocket],
+  [/ambition|empower/i, Microphone],
   [/sustainab/i, Seeding],
   [/hope/i, Smile],
   [/consensus|democra|dialog/i, Messages],
-  [/innovat|creativ/i, Sparkles],
+  [/innovat|creativ/i, Bulb],
 ]
-const principleIcon = (text: string) => PRINCIPLE_ICONS.find(([re]) => re.test(text))?.[1] ?? Leaf
+const principleIcon = (text: string) =>
+  PRINCIPLE_ICONS.find(([re]) => re.test(text))?.[1] ?? Friends
 
 // the four milestones are in a fixed order, so icons follow position
-const MILESTONE_ICONS = [Leaf, UserCheck, Award, Globe]
+const MILESTONE_ICONS = [Friends, UserCheck, Award, Globe]
 
 function PrincipleChip({ text }: { text: string }) {
   return (
@@ -127,7 +129,7 @@ export function SiteHome() {
         <div className="ldWrap ldHeroGrid">
           <div className="ldHeroCopy">
             <p className="ldChip">
-              <Leaf size={15} strokeWidth={1.75} aria-hidden />
+              <WorldHeart size={15} strokeWidth={1.75} aria-hidden />
               {hero.eyebrow}
             </p>
             <h1>
