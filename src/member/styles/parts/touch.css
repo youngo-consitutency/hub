@@ -33,7 +33,8 @@
     padding: 0 var(--space-4);
   }
 
-  .pill {
+  .pill,
+  .sortOption {
     height: auto;
     min-height: 44px;
   }
