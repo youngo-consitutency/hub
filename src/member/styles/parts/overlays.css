@@ -64,6 +64,7 @@
   flex-shrink: 0;
 }
 .routePeekBody {
+  container-type: inline-size;
   flex: 1;
   min-height: 0;
   height: calc(100dvh - 52px);

@@ -2,6 +2,7 @@ interface CalendarEventIconProps {
   type: string
 }
 
+import { usePeek } from '../lib/peek'
 import type { AnyValue, Doc } from '../lib/types'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
@@ -68,7 +69,7 @@ function CalendarEventIcon({ type }: CalendarEventIconProps) {
   )
 }
 
-export function Calendar() {
+export function Calendar({ slug }: { slug?: string }) {
   const { eventTypes } = useContentOptions()
   const EVENT_TYPES = Object.fromEntries(
     eventTypes.map((t: AnyValue) => [t.value, t.short || t.label]),
@@ -77,7 +78,7 @@ export function Calendar() {
   const [month, setMonth] = useState(calendarMonth)
   const [selectedDay, setSelectedDay] = useState<AnyValue>(null)
   const [agendaScope, setAgendaScope] = useState('month')
-  const [selectedEvent, setSelectedEvent] = useState<AnyValue | null>(null)
+  const panel = usePeek('/calendar', '/events', slug)
   const [calendarPanel, setCalendarPanel] = useState<AnyValue>(null)
   const [calendarHeight, setCalendarHeight] = useState<AnyValue>(null)
   const query = useApi('/events?type=all')
@@ -389,11 +390,7 @@ export function Calendar() {
                         )}
                         <div className="calendarAgendaCards">
                           {dateEvents.map((event: AnyValue) => (
-                            <EventCard
-                              key={event.slug}
-                              event={event}
-                              onPeek={(selected) => setSelectedEvent(selected)}
-                            />
+                            <EventCard key={event.slug} event={event} />
                           ))}
                         </div>
                       </section>
@@ -423,7 +420,7 @@ export function Calendar() {
           )
         }}
       </Async>
-      <EventPeek item={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <EventPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

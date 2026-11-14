@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/types'
+import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
 import { useState } from 'react'
@@ -43,12 +44,12 @@ const REGIONS = [
 ]
 
 /** Browse Conferences of Youth with search, type and region filters, sorting and catalogue layouts. */
-export function Coys() {
+export function Coys({ slug }: { slug?: string }) {
   const [typeFilters, setTypeFilters] = useState<Doc>({})
   const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('title')
-  const [selectedCoy, setSelectedCoy] = useState<AnyValue | null>(null)
+  const panel = usePeek('/coys', '/coys', slug)
   const query = useApi('/coys?type=all&region=all')
 
   return (
@@ -205,7 +206,6 @@ export function Coys() {
                         onRegionFilter={() =>
                           setRegionFilters((current) => toggleFilter(current, c.region))
                         }
-                        onPeek={(selected) => setSelectedCoy(selected)}
                       />
                     ))}
                   </div>
@@ -221,7 +221,7 @@ export function Coys() {
           )
         }}
       </Async>
-      <CoyPeek item={selectedCoy} onClose={() => setSelectedCoy(null)} />
+      <CoyPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

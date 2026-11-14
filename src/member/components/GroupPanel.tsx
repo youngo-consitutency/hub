@@ -8,17 +8,17 @@ interface GroupResourceGroupsProps {
   locked?: AnyValue
 }
 
-interface GroupDetailProps {
-  slug: string
+interface GroupPanelProps {
+  g: AnyValue
 }
 
 import type { AnyValue, Doc } from '../lib/types'
 import { useApi } from '../lib/api'
 import { useContactPoints } from '../lib/workingGroups'
-import { A, Async, BackLink, Section, Empty, PageHeader } from '../components/ui'
-import { EventCard, PersonCard, SubmissionCard } from '../components/cards'
-import { CopyFeedButton } from '../components/Subscribe'
-import { ExternalResourceRow } from '../components/DestinationLink'
+import { A, Async, Section, Empty } from './ui'
+import { EventCard, PersonCard, SubmissionCard } from './cards'
+import { CopyFeedButton } from './Subscribe'
+import { ExternalResourceRow } from './DestinationLink'
 import { groupResourcesByCategory, isPublicGroupResource } from '../../shared/resourceCategories'
 import {
   TbArrowRight as ArrowRight,
@@ -154,109 +154,97 @@ function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsPro
   )
 }
 
-export function GroupDetail({ slug }: GroupDetailProps) {
-  const query = useApi(`/groups/${slug}`)
+/** The group's working surface inside its side panel: access, task forces, people, meetings, submissions, links. */
+export function GroupPanel({ g }: GroupPanelProps) {
   return (
-    <div className="detailPage">
-      <BackLink href="/groups">Working groups</BackLink>
-      <Async query={query}>
-        {(g: AnyValue) => (
-          <>
-            <PageHeader title={g.name} description={g.focusLine}>
-              {g.cadenceNote && <p className="metaMuted mono">{g.cadenceNote}</p>}
-            </PageHeader>
+    <div className="notionTabContent groupPanel">
+      <section className="card groupOverview" aria-label="Group access">
+        <div className="groupOverviewCopy">
+          <h2>Member workspace</h2>
+          <p className="metaMuted detailHelp">
+            Complete the short group introduction once to open member channels, activities, and full
+            Contact Point details.
+          </p>
+        </div>
+        <div className="detailActions groupOverviewActions">
+          <A href={`/workspace/${g.slug}`} className="btn btn-primary">
+            <Unlock size={18} strokeWidth={1.75} aria-hidden />
+            Open workspace
+          </A>
+        </div>
+      </section>
 
-            <section className="card groupOverview" aria-label="Group access">
-              <div className="groupOverviewCopy">
-                <h2>Member workspace</h2>
-                <p className="metaMuted detailHelp">
-                  Complete the short group introduction once to open member channels, activities,
-                  and full Contact Point details.
-                </p>
-              </div>
-              <div className="detailActions groupOverviewActions">
-                <A href={`/workspace/${g.slug}`} className="btn btn-primary">
-                  <Unlock size={18} strokeWidth={1.75} aria-hidden />
-                  Open workspace
-                </A>
-              </div>
-            </section>
-
-            {g.taskForces?.length > 0 && (
-              <Section label="Task forces">
-                <div className="cardGrid groupActivityGrid">
-                  {g.taskForces.map((force: AnyValue) => (
-                    <A
-                      key={force.slug}
-                      href={`/groups/${g.slug}/${force.slug}`}
-                      className="card cardTight entityCard"
-                      peek
-                    >
-                      <h3>{force.name}</h3>
-                      {force.purpose && <p className="meta">{force.purpose}</p>}
-                    </A>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            <GroupCommunity slug={g.slug} />
-
-            <Section
-              label="Upcoming meetings"
-              action={
-                g.events?.length ? (
-                  <CopyFeedButton
-                    path={`/ics/wg/${g.slug}.ics`}
-                    label="Subscribe"
-                    className="btn btn-ghost btn-sm"
-                  />
-                ) : null
-              }
-            >
-              {g.events?.length ? (
-                <div className="cardGrid groupActivityGrid">
-                  {g.events.map((e: AnyValue) => (
-                    <EventCard key={e.slug} event={e} />
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  icon={CalendarOff}
-                  title="Nothing scheduled"
-                  body="No upcoming calls for this group right now."
-                />
-              )}
-            </Section>
-
-            {g.submissions?.length > 0 && (
-              <Section label="Open submissions">
-                <div className="cardGrid groupActivityGrid">
-                  {g.submissions.map((s: AnyValue) => (
-                    <SubmissionCard key={s.slug} sub={s} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {(g.resources?.length > 0 || g.workspaceResourcesLocked) && (
-              <section
-                className="section groupResourcesSection"
-                aria-labelledby={`group-resources-${g.slug}`}
+      {g.taskForces?.length > 0 && (
+        <Section label="Task forces">
+          <div className="cardGrid groupActivityGrid">
+            {g.taskForces.map((force: AnyValue) => (
+              <A
+                key={force.slug}
+                href={`/groups/${g.slug}/${force.slug}`}
+                className="card cardTight entityCard"
               >
-                <h2 className="srOnly" id={`group-resources-${g.slug}`}>
-                  Links and resources
-                </h2>
-                <GroupResourceGroups
-                  slug={g.slug}
-                  resources={g.resources || []}
-                  locked={Boolean(g.workspaceResourcesLocked)}
-                />
-              </section>
-            )}
-          </>
+                <h3>{force.name}</h3>
+                {force.purpose && <p className="meta">{force.purpose}</p>}
+              </A>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <GroupCommunity slug={g.slug} />
+
+      <Section
+        label="Upcoming meetings"
+        action={
+          g.events?.length ? (
+            <CopyFeedButton
+              path={`/ics/wg/${g.slug}.ics`}
+              label="Subscribe"
+              className="btn btn-ghost btn-sm"
+            />
+          ) : null
+        }
+      >
+        {g.events?.length ? (
+          <div className="cardGrid groupActivityGrid">
+            {g.events.map((e: AnyValue) => (
+              <EventCard key={e.slug} event={e} />
+            ))}
+          </div>
+        ) : (
+          <Empty
+            icon={CalendarOff}
+            title="Nothing scheduled"
+            body="No upcoming calls for this group right now."
+          />
         )}
-      </Async>
+      </Section>
+
+      {g.submissions?.length > 0 && (
+        <Section label="Open submissions">
+          <div className="cardGrid groupActivityGrid">
+            {g.submissions.map((s: AnyValue) => (
+              <SubmissionCard key={s.slug} sub={s} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {(g.resources?.length > 0 || g.workspaceResourcesLocked) && (
+        <section
+          className="section groupResourcesSection"
+          aria-labelledby={`group-resources-${g.slug}`}
+        >
+          <h2 className="srOnly" id={`group-resources-${g.slug}`}>
+            Links and resources
+          </h2>
+          <GroupResourceGroups
+            slug={g.slug}
+            resources={g.resources || []}
+            locked={Boolean(g.workspaceResourcesLocked)}
+          />
+        </section>
+      )}
     </div>
   )
 }

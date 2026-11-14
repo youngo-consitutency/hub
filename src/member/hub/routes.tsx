@@ -27,6 +27,13 @@ const page = (path: string, load: Loader, fixed?: Props): HubRoute => ({
   fixed,
 })
 
+// a list and its side panel are one page: /groups and /groups/:slug share a component, so filters and
+// scroll survive opening and closing the panel (two separate dynamic() components would remount)
+const withPanel = (path: string, load: Loader): HubRoute[] => {
+  const Page = dynamic(load)
+  return [path, `${path}/:slug`].map((pattern) => ({ kind: 'page', ...compile(pattern), Page }))
+}
+
 const redirect = (path: string, to: string): HubRoute => ({
   kind: 'redirect',
   ...compile(path),
@@ -57,13 +64,9 @@ export const HUB_ROUTES: HubRoute[] = [
     '/book',
     from(() => import('../pages/CpCallBook'), 'CpCallBook'),
   ),
-  page(
+  ...withPanel(
     '/calendar',
     from(() => import('../pages/Calendar'), 'Calendar'),
-  ),
-  page(
-    '/calendar/:slug',
-    from(() => import('../pages/EventDetail'), 'EventDetail'),
   ),
   page(
     '/council',
@@ -73,13 +76,9 @@ export const HUB_ROUTES: HubRoute[] = [
     '/council/:slug',
     from(() => import('../features/platform/DecisionPage'), 'DecisionPage'),
   ),
-  page(
+  ...withPanel(
     '/coys',
     from(() => import('../pages/Coys'), 'Coys'),
-  ),
-  page(
-    '/coys/:slug',
-    from(() => import('../pages/CoyDetail'), 'CoyDetail'),
   ),
   page(
     '/cp',
@@ -101,13 +100,9 @@ export const HUB_ROUTES: HubRoute[] = [
     '/focal',
     from(() => import('../pages/FocalPoint'), 'FocalPoint'),
   ),
-  page(
+  ...withPanel(
     '/groups',
     from(() => import('../pages/Groups'), 'Groups'),
-  ),
-  page(
-    '/groups/:slug',
-    from(() => import('../pages/GroupDetail'), 'GroupDetail'),
   ),
   page(
     '/groups/:slug/:extra',
@@ -153,7 +148,7 @@ export const HUB_ROUTES: HubRoute[] = [
     '/onboarding/course',
     from(() => import('../pages/Course'), 'Course'),
   ),
-  page(
+  ...withPanel(
     '/opportunities',
     from(() => import('../pages/Opportunities'), 'Opportunities'),
   ),
@@ -204,10 +199,6 @@ export const HUB_ROUTES: HubRoute[] = [
     },
   ),
   page(
-    '/submissions',
-    from(() => import('../pages/Submissions'), 'Submissions'),
-  ),
-  page(
     '/submissions/amendments/new',
     from(() => import('../pages/AmendmentProposal'), 'AmendmentProposal'),
   ),
@@ -223,9 +214,9 @@ export const HUB_ROUTES: HubRoute[] = [
     '/submissions/workspace/:slug',
     from(() => import('../pages/SubmissionWorkspace'), 'SubmissionWorkspace'),
   ),
-  page(
-    '/submissions/:slug',
-    from(() => import('../pages/SubmissionDetail'), 'SubmissionDetail'),
+  ...withPanel(
+    '/submissions',
+    from(() => import('../pages/Submissions'), 'Submissions'),
   ),
   page(
     '/team/gys',

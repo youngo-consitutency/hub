@@ -12,7 +12,6 @@ interface LinkedEntityCardProps {
   href?: string
   label?: string
   className?: string
-  onPeek?: () => void
   children?: import('react').ReactNode
 }
 
@@ -23,7 +22,6 @@ interface CardScheduleProps {
 
 interface EventCardProps {
   event?: AnyValue
-  onPeek?: (event: AnyValue) => void
 }
 
 interface SubmissionCardProps {
@@ -32,7 +30,6 @@ interface SubmissionCardProps {
   groupFilterState?: AnyValue
   onStatusFilter?: AnyValue
   onGroupFilter?: AnyValue
-  onPeek?: (sub: AnyValue) => void
 }
 
 interface ClosingCardProps {
@@ -45,7 +42,6 @@ interface CoyCardProps {
   regionFilterState?: AnyValue
   onTypeFilter?: AnyValue
   onRegionFilter?: AnyValue
-  onPeek?: (coy: AnyValue) => void
 }
 
 interface GroupCardProps {
@@ -55,7 +51,6 @@ interface GroupCardProps {
   statusIcon?: AnyValue
   topicFilterState?: AnyValue
   onTopicFilter?: AnyValue
-  onPeek?: (group: AnyValue) => void
 }
 
 interface PersonCardProps {
@@ -145,25 +140,10 @@ function EntityHeader({
   )
 }
 
-function LinkedEntityCard({
-  href,
-  label,
-  className = '',
-  onPeek,
-  children,
-}: LinkedEntityCardProps) {
+function LinkedEntityCard({ href, label, className = '', children }: LinkedEntityCardProps) {
   return (
     <article className={`card entityCard linkedEntityCard ${className}`.trim()}>
-      {onPeek ? (
-        <button
-          type="button"
-          className="entityCardLinkOverlay"
-          aria-label={label}
-          onClick={onPeek}
-        />
-      ) : (
-        <A href={href} className="entityCardLinkOverlay" aria-label={label} peek />
-      )}
+      <A href={href} className="entityCardLinkOverlay" aria-label={label} />
       {children}
     </article>
   )
@@ -184,26 +164,16 @@ export function CardSchedule({ iso, label }: CardScheduleProps) {
   )
 }
 
-export function EventCard({ event, onPeek }: EventCardProps) {
+export function EventCard({ event }: EventCardProps) {
   const TypeIcon = (EVENT_ICONS as AnyValue)[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
     <article className="card entityCard eventCard linkedEntityCard">
-      {onPeek ? (
-        <button
-          type="button"
-          className="entityCardLinkOverlay"
-          aria-label={`Open ${event.title}`}
-          onClick={() => onPeek(event)}
-        />
-      ) : (
-        <A
-          href={`/calendar/${event.slug}`}
-          className="entityCardLinkOverlay"
-          aria-label={`Open ${event.title}`}
-          peek
-        />
-      )}
+      <A
+        href={`/calendar/${event.slug}`}
+        className="entityCardLinkOverlay"
+        aria-label={`Open ${event.title}`}
+      />
       <div className="eventCardIdentity">
         <DateStamp iso={event.startsAt} />
         <EntityHeader title={event.title}>
@@ -226,14 +196,9 @@ export function SubmissionCard({
   groupFilterState,
   onStatusFilter,
   onGroupFilter,
-  onPeek,
 }: SubmissionCardProps) {
   return (
-    <LinkedEntityCard
-      href={`/submissions/${sub.slug}`}
-      label={`Open ${sub.title}`}
-      onPeek={onPeek ? () => onPeek(sub) : undefined}
-    >
+    <LinkedEntityCard href={`/submissions/${sub.slug}`} label={`Open ${sub.title}`}>
       <EntityHeader title={sub.title}>
         {sub.wg && (
           <FilterChip
@@ -260,7 +225,7 @@ export function ClosingCard({ item }: ClosingCardProps) {
   const isDecision = item.kind === 'decision'
   const href = `${isDecision ? '/council' : '/submissions'}/${item.slug}`
   return (
-    <A href={href} className="card entityCard" peek>
+    <A href={href} className="card entityCard">
       <EntityHeader title={item.title}>
         {isDecision && <FilterChip icon={Gavel}>Decision</FilterChip>}
       </EntityHeader>
@@ -275,17 +240,11 @@ export function CoyCard({
   regionFilterState,
   onTypeFilter,
   onRegionFilter,
-  onPeek,
 }: CoyCardProps) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   const CoyIcon = (COY_ICONS as AnyValue)[coy.type] || Globe
   return (
-    <LinkedEntityCard
-      href={`/coys/${coy.slug}`}
-      label={`Open ${coy.title}`}
-      className="coyCard"
-      onPeek={onPeek ? () => onPeek(coy) : undefined}
-    >
+    <LinkedEntityCard href={`/coys/${coy.slug}`} label={`Open ${coy.title}`} className="coyCard">
       <EntityHeader title={coy.title} status={coyDisplayStatus(coy)}>
         <FilterChip state={typeFilterState} icon={CoyIcon} onClick={onTypeFilter}>
           {(COY_LABEL as AnyValue)[coy.type]}
@@ -327,28 +286,17 @@ export function GroupCard({
   statusIcon: StatusIcon,
   topicFilterState,
   onTopicFilter,
-  onPeek,
 }: GroupCardProps) {
   const destination = href || `/groups/${group.slug}`
   const wg = useWorkingGroups()
   const topicLabel = group.topic ? wg.topicLabel(group.topic) : null
   return (
     <div className="card cardTight groupCard entityCard">
-      {onPeek ? (
-        <button
-          type="button"
-          className="groupCardLinkOverlay"
-          aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
-          onClick={() => onPeek(group)}
-        />
-      ) : (
-        <A
-          href={destination}
-          className="groupCardLinkOverlay"
-          aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
-          peek
-        />
-      )}
+      <A
+        href={destination}
+        className="groupCardLinkOverlay"
+        aria-label={`Open ${group.name}${href ? ' workspace' : ''}`}
+      />
       <div className="groupCardBody">
         <div className="groupCardCopy">
           <div className="groupCardTitle">
@@ -449,7 +397,6 @@ export function PersonCard({ person, onTagClick, onOpen, expanded = false }: Per
                 key={group.slug}
                 href={`/groups/${group.slug}`}
                 className="chip chip-neutral personLinkChip"
-                peek
               >
                 {createElement(workingGroupIcon(group.slug), {
                   size: 13,
@@ -561,7 +508,6 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
       href={`/groups/${slug}`}
       className="card cardTight workingGroupContactCard"
       aria-label={`Open ${name} working group`}
-      peek
     >
       <div className="workingGroupContactCopy">
         <div className="workingGroupContactTitle">

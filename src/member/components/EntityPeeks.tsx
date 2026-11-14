@@ -2,10 +2,11 @@
 
 import { useState, type ComponentType, type ReactNode } from 'react'
 import {
+  TbBuilding,
+  TbBroadcast,
   TbCalendar,
   TbCalendarClock,
   TbCalendarPlus,
-  TbChevronRight,
   TbExternalLink,
   TbFileDescription,
   TbFileText,
@@ -27,8 +28,11 @@ import {
   type NotionPeekTab,
   type NotionProperty,
 } from './NotionSidePeek'
-import { A, LifecycleTiming, StatusChip } from './ui'
+import { A, LifecycleTiming, StatusChip, Timeline } from './ui'
 import { AddToCalendar } from './AddToCalendar'
+import { GroupPanel } from './GroupPanel'
+import { CoyOrganiser } from './CoyOrganiser'
+import { CoyLive } from './CoyLive'
 import { DestinationIcon } from './DestinationLink'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
@@ -39,7 +43,7 @@ import { coyDisplayStatus, coyApplicationsAreOpen } from '../../shared/coyStatus
 import type { AnyValue, Doc } from '../lib/types'
 
 // ── Peek framework ─────────────────────────────────────────
-// Every entity peek is a declarative descriptor rendered by the same
+// Every entity is a declarative descriptor rendered by the same
 // wrapper, so panels can only diverge where the entity genuinely does.
 
 type PeekIcon = ComponentType<{
@@ -65,7 +69,6 @@ interface PeekDef<T, P = object> {
   /** Resolves the icon per item when it depends on record fields. */
   iconFor?: (ctx: PeekContext<T, P>) => PeekIcon | ReactNode
   badge?: (ctx: PeekContext<T, P>) => ReactNode
-  fullPageHref?: (ctx: PeekContext<T, P>) => string
   copyUrl?: (ctx: PeekContext<T, P>) => string | undefined
   actions?: (ctx: PeekContext<T, P>) => ReactNode
   properties: (ctx: PeekContext<T, P>) => NotionProperty[]
@@ -74,7 +77,7 @@ interface PeekDef<T, P = object> {
 
 function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
   // Keyed inner component: `now` is captured per opened entity, not per
-  // page mount, so live/concluded state is fresh each time a peek opens.
+  // page mount, so live/concluded state is fresh each time a opens.
   function PeekBody({ item, extras, onClose }: { item: T; extras: P; onClose: () => void }) {
     const [now] = useState(() => Date.now())
     const ctx: PeekContext<T, P> = { item, extras, now, onClose }
@@ -88,7 +91,6 @@ function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
         subtitle={def.subtitle?.(ctx)}
         icon={icon}
         badge={def.badge?.(ctx)}
-        fullPageHref={def.fullPageHref?.(ctx)}
         copyUrl={def.copyUrl?.(ctx)}
         actions={def.actions?.(ctx)}
         properties={def.properties(ctx)}
@@ -294,7 +296,6 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
   title: ({ item }) => item.title,
   subtitle: ({ item }) => (item.wg ? `${item.wg.name} WG` : undefined),
   icon: TbCalendar,
-  fullPageHref: ({ item }) => `/calendar/${item.slug}`,
   badge: ({ item, now, extras }) => {
     const live = now >= Date.parse(item.startsAt) && now <= Date.parse(item.endsAt)
     return live ? (
@@ -397,7 +398,7 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
                   <div>
                     <strong>{item.wg.name}</strong>
                   </div>
-                  <A href={`/groups/${item.wg.slug}`} className="btn btn-ghost btn-sm" peek={false}>
+                  <A href={`/groups/${item.wg.slug}`} className="btn btn-ghost btn-sm">
                     View group
                   </A>
                 </div>
@@ -491,50 +492,30 @@ const groupPeek: PeekDef<AnyValue> = {
   title: ({ item }) => item.name,
   subtitle: ({ item }) => item.focusLine,
   iconFor: ({ item }) => workingGroupIcon(item.slug),
-  fullPageHref: ({ item }) => `/groups/${item.slug}`,
   badge: () => <span className="chip chip-accent">Working Group</span>,
   properties: ({ item }) =>
     properties([
-      item.focusLine && prop('Focus', TbTag, text(item.focusLine)),
       item.cadenceNote && prop('Meeting cadence', TbCalendarClock, text(item.cadenceNote)),
     ]),
-  actions: ({ item }) => (
-    <A href={`/groups/${item.slug}`} className="btn btn-primary btn-sm" peek={false}>
-      <span>Open workspace</span>
-    </A>
-  ),
-  tabs: ({ item }) => {
-    const GroupIcon = workingGroupIcon(item.slug)
-    return [
-      {
-        id: 'overview',
-        label: 'Overview & mandate',
-        icon: TbFileDescription,
-        content: (
-          <div className="notionTabContent">
-            {item.focusLine && (
-              <NotionCallout icon={GroupIcon} tone="accent">
-                <p>{item.focusLine}</p>
-              </NotionCallout>
-            )}
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Constituency mandate</h4>
-              <p className="notionBodyText">
-                Working Groups follow international climate negotiations, conduct research and
-                policy analysis, and draft policy positions and submissions.
-              </p>
-            </div>
-            <div className="notionActionRow">
-              <A href={`/groups/${item.slug}`} className="btn btn-primary" peek={false}>
-                <span>Open full workspace</span>
-                <TbChevronRight size={16} strokeWidth={2} aria-hidden />
-              </A>
-            </div>
+  tabs: ({ item }) => [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: TbFileDescription,
+      content: (
+        <div className="notionTabContent">
+          <div className="notionSection">
+            <h4 className="notionSectionHeading">Constituency mandate</h4>
+            <p className="notionBodyText">
+              Working Groups follow international climate negotiations, conduct research and policy
+              analysis, and draft policy positions and submissions.
+            </p>
           </div>
-        ),
-      },
-    ]
-  },
+          <GroupPanel g={item} />
+        </div>
+      ),
+    },
+  ],
 }
 
 export const GroupPeek = createPeek(groupPeek)
@@ -546,7 +527,6 @@ const coyPeek: PeekDef<AnyValue> = {
   title: ({ item }) => item.title,
   subtitle: ({ item }) => [item.city, item.country].filter(Boolean).join(', ') || undefined,
   icon: TbMapPin,
-  fullPageHref: ({ item }) => `/coys/${item.slug}`,
   badge: ({ item }) => <StatusChip status={coyDisplayStatus(item)} />,
   properties: ({ item }) =>
     properties([
@@ -596,10 +576,58 @@ const coyPeek: PeekDef<AnyValue> = {
         </div>
       ),
     },
+    {
+      id: 'organiser',
+      label: 'Organiser & links',
+      icon: TbBuilding,
+      content: <CoyOrganiser coy={item} />,
+    },
+    ...(item.liveOps
+      ? [
+          {
+            id: 'live',
+            label: 'Live',
+            icon: TbBroadcast,
+            content: <CoyLive slug={item.slug} />,
+          } satisfies NotionPeekTab,
+        ]
+      : []),
   ],
 }
 
 export const CoyPeek = createPeek(coyPeek)
+
+const SUBMISSION_STEPS = ['Open', 'Drafting', 'Internal review', 'Submitted']
+const SUBMISSION_STEP_INDEX: Record<string, number> = {
+  open: 0,
+  drafting: 1,
+  internal_review: 2,
+  submitted: 3,
+  archived: 3,
+}
+
+function SubmissionProgress({ sub }: { sub: AnyValue }) {
+  const archived = !['open', 'drafting', 'internal_review'].includes(sub.status)
+  return (
+    <div className="notionTabContent">
+      <LifecycleTiming
+        status={sub.status}
+        iso={sub.deadlineAt}
+        label={archived ? 'Submitted' : 'Deadline'}
+        showCountdown={!archived}
+      />
+      <Timeline steps={SUBMISSION_STEPS} currentIndex={SUBMISSION_STEP_INDEX[sub.status] ?? 0} />
+      {sub.unfcccUrl && (
+        <div className="notionActionRow">
+          <a className="btn btn-secondary" href={sub.unfcccUrl} {...external}>
+            <DestinationIcon url={sub.unfcccUrl} size={16} />
+            <span>UNFCCC reference</span>
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Submission Peek ──────────────────────────────────────────
 
@@ -608,7 +636,6 @@ const submissionPeek: PeekDef<AnyValue> = {
   title: ({ item }) => item.title,
   subtitle: ({ item }) => (item.wg ? `${item.wg.name} Working Group` : undefined),
   icon: TbFileText,
-  fullPageHref: ({ item }) => `/submissions/${item.slug}`,
   badge: ({ item }) => <StatusChip status={item.status} />,
   properties: ({ item }) =>
     properties([
@@ -657,6 +684,12 @@ const submissionPeek: PeekDef<AnyValue> = {
           </div>
         </div>
       ),
+    },
+    {
+      id: 'progress',
+      label: 'Progress',
+      icon: TbCalendarClock,
+      content: <SubmissionProgress sub={item} />,
     },
   ],
 }

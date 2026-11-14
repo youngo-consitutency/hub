@@ -11,7 +11,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 import { HUB_ROOT, hubUrl } from '../../lib/hubUrl'
 
-const PEEK_KEY = 'youngo.peekBackground'
 const HUB_EVENT = 'hub:navigate'
 
 // real server routes; every other path is a Hub page
@@ -80,12 +79,6 @@ export function useQuery() {
   )
 }
 
-/** The current app path with its query, as the peek background marker stores it. */
-export function currentAppUrl() {
-  if (inHubNow()) return readHash().slice(1)
-  return window.location.pathname + window.location.search
-}
-
 let bound: AppRouterInstance | null = null
 
 // Mount once inside every tree that calls navigate(): binds the App Router
@@ -98,21 +91,10 @@ export function RouterBridge() {
   return null
 }
 
-export function peekBackground(): string | null {
-  if (typeof window === 'undefined') return null
-  return sessionStorage.getItem(PEEK_KEY)
-}
+type Options = { scroll?: boolean }
 
-function storePeek(state: AnyValue) {
-  if (state?.peekBackground) sessionStorage.setItem(PEEK_KEY, String(state.peekBackground))
-  else sessionStorage.removeItem(PEEK_KEY)
-}
-
-type Options = { state?: AnyValue; scroll?: boolean }
-
-function go(method: 'push' | 'replace', to: AnyValue, { state = {}, scroll = true }: Options = {}) {
+function go(method: 'push' | 'replace', to: AnyValue, { scroll = true }: Options = {}) {
   const target = resolve(String(to))
-  storePeek(state)
   if (target.hub && inHubNow()) {
     window.history[method === 'push' ? 'pushState' : 'replaceState'](null, '', target.href)
     window.dispatchEvent(new Event(HUB_EVENT))
@@ -129,3 +111,7 @@ function go(method: 'push' | 'replace', to: AnyValue, { state = {}, scroll = tru
 
 export const navigate = (to: AnyValue, options?: Options) => go('push', to, options)
 export const replace = (to: AnyValue, options?: Options) => go('replace', to, options)
+
+// the lists whose records open in the side panel: /groups/:slug is the Groups page with the panel open
+const PANEL_PATH = /^\/(calendar|groups|coys|submissions|opportunities)\/[^/]+$/
+export const isPanelPath = (href?: string) => PANEL_PATH.test(href || '')

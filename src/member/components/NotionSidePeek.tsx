@@ -1,16 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
-import {
-  TbArrowsMaximize,
-  TbCheck,
-  TbChevronRight,
-  TbLink,
-  TbX,
-  TbInfoCircle,
-} from 'react-icons/tb'
+import { TbCheck, TbChevronRight, TbLink, TbX, TbInfoCircle } from 'react-icons/tb'
 import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
-import { A } from './ui'
 
 export interface NotionProperty {
   id?: string
@@ -52,7 +44,6 @@ export interface NotionSidePeekProps {
       }>
     | ReactNode
   badge?: ReactNode
-  fullPageHref?: string
   properties?: NotionProperty[]
   tabs?: NotionPeekTab[]
   initialTab?: string
@@ -78,7 +69,6 @@ export function NotionSidePeek({
   eyebrow,
   icon: IconProp,
   badge,
-  fullPageHref,
   properties = [],
   tabs,
   initialTab,
@@ -163,13 +153,8 @@ export function NotionSidePeek({
   const requestClose = () => setClosing(true)
 
   const handleCopyLink = () => {
-    const targetUrl =
-      copyUrl ||
-      (fullPageHref && typeof window !== 'undefined'
-        ? `${window.location.origin}${fullPageHref}`
-        : typeof window !== 'undefined'
-          ? window.location.href
-          : '')
+    // the panel's own address is its link: /hub#/groups/slug
+    const targetUrl = copyUrl || (typeof window !== 'undefined' ? window.location.href : '')
     if (targetUrl && navigator.clipboard) {
       navigator.clipboard
         .writeText(targetUrl)
@@ -264,19 +249,6 @@ export function NotionSidePeek({
               )}
             </button>
 
-            {fullPageHref && (
-              <A
-                href={fullPageHref}
-                className="btn btn-ghost btn-sm notionTopActionBtn"
-                title="Open as full standalone page"
-                aria-label="Open as full page"
-                peek={false}
-              >
-                <TbArrowsMaximize size={15} strokeWidth={1.75} aria-hidden />
-                <span className="notionActionLabel">Open full page</span>
-              </A>
-            )}
-
             <button
               type="button"
               className="iconButton notionPeekCloseBtn"
@@ -289,7 +261,7 @@ export function NotionSidePeek({
           </div>
         </div>
 
-        {/* Main scrolling peek body */}
+        {/* Main scrolling body */}
         <div className="routePeekBody notionPeekBody">
           {/* Cover / Header section */}
           <header className="notionPeekHeader">

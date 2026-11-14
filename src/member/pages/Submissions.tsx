@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/types'
+import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbFileText as PolicyIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -45,13 +46,13 @@ const ARCHIVE_STATUSES = [
 ]
 
 /** Browse open or archived submissions with search, stage and group filters, sorting and layouts. */
-export function Submissions() {
+export function Submissions({ slug }: { slug?: string }) {
   const [state, setState] = useState('open')
   const [statusFilters, setStatusFilters] = useState<Doc>({})
   const [groupFilters, setGroupFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
-  const [selectedSubmission, setSelectedSubmission] = useState<AnyValue | null>(null)
+  const panel = usePeek('/submissions', '/submissions', slug)
   const query = useApi(`/submissions?state=${state}`, [state])
 
   const changeState = (nextState: AnyValue) => {
@@ -253,7 +254,6 @@ export function Submissions() {
                                 )
                             : undefined
                         }
-                        onPeek={(selected) => setSelectedSubmission(selected)}
                       />
                     ))}
                   </div>
@@ -269,7 +269,7 @@ export function Submissions() {
           )
         }}
       </Async>
-      <SubmissionPeek item={selectedSubmission} onClose={() => setSelectedSubmission(null)} />
+      <SubmissionPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

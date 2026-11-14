@@ -4,7 +4,6 @@ interface AProps {
   children?: import('react').ReactNode
   onClick?: AnyValue
   target?: AnyValue
-  peek?: AnyValue
   [key: string]: AnyValue
 }
 
@@ -121,7 +120,7 @@ import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
 import { Button as RacButton, Input, SearchField } from 'react-aria-components'
 import Link from 'next/link'
-import { currentAppUrl, hrefFor, navigate, replace, peekBackground } from '../lib/router'
+import { hrefFor, isPanelPath, navigate } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
@@ -136,18 +135,10 @@ import {
   TbSearch,
 } from 'react-icons/tb'
 
-export function A({
-  href,
-  className,
-  children,
-  onClick,
-  target,
-  peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(href || ''),
-  ...rest
-}: AProps) {
+export function A({ href, className, children, onClick, target, ...rest }: AProps) {
   // next/link prefetches the route chunk on viewport/hover, so soft
   // navigations land without waiting on a fresh download. The click handler
-  // still owns the actual navigation (peek state, replace vs push).
+  // still owns the actual navigation (scroll handling, hash routing).
   return (
     <Link
       href={hrefFor(href as string)}
@@ -166,21 +157,9 @@ export function A({
         )
           return
         e.preventDefault()
-        const background = peekBackground()
-        const go = peek && background ? replace : navigate
-        go(
-          href,
-          peek
-            ? {
-                state: {
-                  peekBackground: background || currentAppUrl(),
-                },
-                scroll: false,
-              }
-            : undefined,
-        )
+        // opening a side panel keeps the list where it was
+        navigate(href as string, { scroll: !isPanelPath(href) })
       }}
-      aria-haspopup={peek ? 'dialog' : undefined}
       {...rest}
     >
       {children}

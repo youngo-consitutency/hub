@@ -6,9 +6,9 @@ interface OpportunityCardProps {
   onKindFilter?: AnyValue
   onFormatFilter?: AnyValue
   onRegionFilter?: AnyValue
-  onPeek?: (item: AnyValue) => void
 }
 
+import { usePeekFrom } from '../lib/peek'
 import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { OpportunityPeek } from '../components/EntityPeeks'
@@ -24,6 +24,7 @@ import {
 import { CardSchedule } from '../components/cards'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
 import {
+  A,
   Async,
   Empty,
   FilterChip,
@@ -113,16 +114,14 @@ function OpportunityCard({
   onKindFilter,
   onFormatFilter,
   onRegionFilter,
-  onPeek,
 }: OpportunityCardProps) {
   const where = item.format === 'online' ? null : item.location
   return (
     <article className="card entityCard opportunityCard linkedEntityCard">
-      <button
-        type="button"
+      <A
+        href={`/opportunities/${item.id}`}
         className="entityCardLinkOverlay"
-        aria-label={`${item.title} — open details in side peek`}
-        onClick={() => onPeek?.(item)}
+        aria-label={`Open ${item.title}`}
       />
       <div className="entityCardHeading opportunityCardCopy">
         <h3>{item.title}</h3>
@@ -171,14 +170,14 @@ function OpportunityCard({
 }
 
 /** Browse opportunities with search, filters, sorting and layouts, grouped by open or closed status. */
-export function Opportunities() {
+export function Opportunities({ slug }: { slug?: string }) {
   const [kindFilters, setKindFilters] = useState<Doc>({})
   const [formatFilters, setFormatFilters] = useState<Doc>({})
   const [regionFilters, setRegionFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
-  const [selectedOpportunity, setSelectedOpportunity] = useState<AnyValue | null>(null)
   const query = useApi('/member/opportunities?kind=all&format=all')
+  const panel = usePeekFrom('/opportunities', query.data?.items, slug)
 
   return (
     <div>
@@ -256,7 +255,6 @@ export function Opportunities() {
                     ? () => setRegionFilters((current) => toggleFilter(current, item.region))
                     : undefined
                 }
-                onPeek={(selected) => setSelectedOpportunity(selected)}
               />
             ))
 
@@ -412,7 +410,7 @@ export function Opportunities() {
           )
         }}
       </Async>
-      <OpportunityPeek item={selectedOpportunity} onClose={() => setSelectedOpportunity(null)} />
+      <OpportunityPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

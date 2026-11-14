@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/types'
+import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -41,11 +42,11 @@ const TOPIC_ICONS = {
 }
 
 /** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
-export function Groups() {
+export function Groups({ slug }: { slug?: string }) {
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState<Doc>({})
   const [descending, setDescending] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState<AnyValue | null>(null)
+  const panel = usePeek('/groups', '/groups', slug)
   const query = useApi('/groups')
   const { doc: directory } = useDocument('directory')
   const topicList = directory?.topics || []
@@ -92,7 +93,6 @@ export function Groups() {
                 if (!topicKey) return
                 setTopics((current) => toggleFilter(current, topicKey))
               }}
-              onPeek={(selected) => setSelectedGroup(selected)}
             />
           )
 
@@ -166,7 +166,7 @@ export function Groups() {
           )
         }}
       </Async>
-      <GroupPeek item={selectedGroup} onClose={() => setSelectedGroup(null)} />
+      <GroupPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }
