@@ -88,7 +88,7 @@ describe('API contract (requires dev server on :3000)', () => {
     const p = items[0]
     expect(p).toHaveProperty('id')
     expect(p).toHaveProperty('displayName')
-    expect(p).toHaveProperty('photoUrl')
+    expect(p).toHaveProperty('avatar')
     expect(p).toHaveProperty('workingGroups')
   })
 

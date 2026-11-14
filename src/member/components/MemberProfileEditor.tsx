@@ -12,22 +12,18 @@ interface MemberProfileEditorProps {
 import type { AnyValue, Doc } from '../lib/types'
 import { useDocument } from '../lib/documents'
 import { regionLabel } from '../lib/regions'
-import { useEffect, useRef, useState } from 'react'
-import { apiDelete, apiPatch, apiPutFile } from '../lib/api'
+import { useEffect, useState } from 'react'
+import { apiPatch } from '../lib/api'
 import { Async, Button, ErrorCard } from './ui'
+import { AvatarBuilder } from './AvatarBuilder'
 import { MemberAvatar } from './MemberAvatar'
 import { signOut } from '../lib/session'
 import {
   TbRosetteDiscountCheck as BadgeCheck,
-  TbCamera as Camera,
   TbLogout as LogOut,
   TbMail as Mail,
-  TbPhotoEdit as PhotoEdit,
-  TbTrash as Trash,
   TbUsers as Users,
 } from 'react-icons/tb'
-
-const MAX_PHOTO_BYTES = 768 * 1024
 
 function formFromProfile(profile: AnyValue) {
   return {
@@ -60,15 +56,14 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
 
   const [form, setForm] = useState<AnyValue>(null)
   const [saving, setSaving] = useState(false)
-  const [photoBusy, setPhotoBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Doc>({})
-  const fileRef = useRef<AnyValue>(null)
   const profile = query.data?.profile
 
   useEffect(() => {
-    if (profile) setForm(formFromProfile(profile))
+    // seed once: a refetch (say, after saving the avatar) must not wipe typing
+    if (profile) setForm((current: AnyValue) => current ?? formFromProfile(profile))
   }, [profile])
 
   const change = (event: AnyValue) => {
@@ -100,47 +95,6 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
       setFieldErrors((caught as AnyValue).fields || {})
     } finally {
       setSaving(false)
-    }
-  }
-
-  const uploadPhoto = async (event: AnyValue) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Use a JPEG, PNG, or WebP image.')
-      return
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setError('Profile photos must be 768 KB or smaller.')
-      return
-    }
-    setPhotoBusy(true)
-    setError('')
-    setMessage('')
-    try {
-      await apiPutFile('/member/profile/photo', file)
-      setMessage('Profile photo updated.')
-      query.retry()
-    } catch (caught) {
-      setError((caught as AnyValue).message)
-    } finally {
-      setPhotoBusy(false)
-    }
-  }
-
-  const removePhoto = async () => {
-    setPhotoBusy(true)
-    setError('')
-    setMessage('')
-    try {
-      await apiDelete('/member/profile/photo')
-      setMessage('Profile photo removed.')
-      query.retry()
-    } catch (caught) {
-      setError((caught as AnyValue).message)
-    } finally {
-      setPhotoBusy(false)
     }
   }
 
@@ -186,36 +140,18 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
                   </div>
                 </div>
                 <div className="memberProfileHeaderActions">
-                  <div className="profilePhotoActions">
-                    <input
-                      ref={fileRef}
-                      className="srOnly"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={uploadPhoto}
-                    />
-                    <Button sm disabled={photoBusy} onClick={() => fileRef.current?.click()}>
-                      {current.hasPhoto ? (
-                        <PhotoEdit size={16} aria-hidden />
-                      ) : (
-                        <Camera size={16} aria-hidden />
-                      )}
-                      {current.hasPhoto ? 'Change photo' : 'Add photo'}
-                    </Button>
-                    {current.hasPhoto && (
-                      <Button sm variant="ghost" disabled={photoBusy} onClick={removePhoto}>
-                        <Trash size={16} aria-hidden />
-                        Remove
-                      </Button>
-                    )}
-                    <Button sm variant="secondary" className="profileSignOut" onClick={signOut}>
-                      <LogOut size={16} strokeWidth={1.75} aria-hidden />
-                      Sign out
-                    </Button>
-                    <small>JPEG, PNG or WebP · max 768 KB</small>
-                  </div>
+                  <Button sm variant="secondary" className="profileSignOut" onClick={signOut}>
+                    <LogOut size={16} strokeWidth={1.75} aria-hidden />
+                    Sign out
+                  </Button>
                 </div>
               </header>
+
+              <AvatarBuilder
+                accountId={current.accountId}
+                saved={current.avatar}
+                onSaved={query.retry}
+              />
 
               <div className="memberProfileOverview">
                 <div>
@@ -357,7 +293,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
                     directory.
                   </p>
                 </div>
-                <Button type="submit" variant="primary" disabled={saving || photoBusy}>
+                <Button type="submit" variant="primary" disabled={saving}>
                   {saving ? 'Saving…' : 'Save profile'}
                 </Button>
               </footer>

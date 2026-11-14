@@ -138,7 +138,7 @@ function templateContent(templateKey: string, data: Doc = {}): Content {
       body: (
         <>
           {paragraphs(
-            `The Membership Team has activated your YOUNGO Hub membership.\n\nYOUNGO is the children and youth constituency to the UN climate process. The Hub is where members find working groups, calls, and the work happening now.\n\nA good next step is to open the Hub, join a working group, and add a photo on your profile.`,
+            `The Membership Team has activated your YOUNGO Hub membership.\n\nYOUNGO is the children and youth constituency to the UN climate process. The Hub is where members find working groups, calls, and the work happening now.\n\nA good next step is to open the Hub, join a working group, and build your avatar on your profile.`,
           )}
           {social.length > 0 && (
             <Text style={s.social}>
@@ -159,7 +159,7 @@ function templateContent(templateKey: string, data: Doc = {}): Content {
           )}
         </>
       ),
-      text: `${firstName}, you are in.\n\nThe Membership Team has activated your YOUNGO Hub membership. Open the Hub to join a working group and add a photo on your profile.${link}${socialText ? `\n\nStay in touch\n${socialText}` : ''}`,
+      text: `${firstName}, you are in.\n\nThe Membership Team has activated your YOUNGO Hub membership. Open the Hub to join a working group and build your avatar on your profile.${link}${socialText ? `\n\nStay in touch\n${socialText}` : ''}`,
     }
   }
 

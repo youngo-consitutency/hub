@@ -55,14 +55,6 @@ export function apiPut(path: AnyValue, body?: AnyValue) {
   })
 }
 
-export function apiPutFile(path: AnyValue, file: AnyValue) {
-  return request(path, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type },
-  })
-}
-
 export function apiPostFile(path: AnyValue, file: AnyValue, headers = {}) {
   return request(path, {
     method: 'POST',

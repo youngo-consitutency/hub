@@ -575,20 +575,6 @@
   flex: 0 0 auto;
 }
 
-.profilePhotoActions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  max-width: 380px;
-}
-
-.profilePhotoActions small {
-  width: 100%;
-  color: var(--text-3);
-  text-align: left;
-}
-
 .memberProfileOverview {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(250px, 0.9fr);
@@ -867,10 +853,6 @@ a.profileLink {
     justify-content: space-between;
   }
 
-  .profilePhotoActions small {
-    text-align: left;
-  }
-
   .memberProfileFields,
   .memberProfileOverview,
   .profileVisibility,
@@ -894,12 +876,6 @@ a.profileLink {
     align-items: flex-start;
     flex-direction: row;
     justify-content: flex-start;
-  }
-
-  .profilePhotoActions {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 100%;
   }
 }
 
