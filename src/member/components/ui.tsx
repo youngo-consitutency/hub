@@ -213,17 +213,25 @@ export function CatalogToolbar({
   filters,
 }: CatalogToolbarProps) {
   return (
-    <div className="catalogTools">
-      <div className="catalogSearchRow">
+    <div className="mb-4 flex flex-col gap-3 rounded-card border border-line bg-raised p-3 [&_.searchInputWrap]:w-full">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 max-[620px]:grid-cols-1 max-[620px]:gap-2">
         <SearchBox {...search} />
         {sort && (
-          <div className="sortControl" role="group" aria-label={sortLabel}>
+          <div
+            role="group"
+            aria-label={sortLabel}
+            className="inline-flex items-center gap-1 rounded-control bg-raised p-1 max-[620px]:w-max max-[620px]:max-w-full max-[620px]:self-start max-[620px]:overflow-x-auto"
+          >
             {sort}
           </div>
         )}
       </div>
       {children}
-      {filters && <div className="catalogControlRow catalogFilterRow">{filters}</div>}
+      {filters && (
+        <div className="flex items-center justify-between gap-3 max-[620px]:flex-col max-[620px]:items-stretch [&_.filterMenu]:w-full [&_.filterMenuPanel]:w-full [&_.filterMenuPanel]:max-w-full">
+          {filters}
+        </div>
+      )}
     </div>
   )
 }

@@ -133,6 +133,12 @@
   backdrop-filter: none;
 }
 
+/* over the hero the header's tokens turn light, so its dropdown goes deep green to keep the text readable */
+.siteHeader[data-overlay] .siteNavMenu {
+  background: var(--ld-deep);
+  border-color: var(--ld-line-deep);
+}
+
 .ldHeroGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
