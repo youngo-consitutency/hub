@@ -17,7 +17,7 @@ import type { AnyValue, Doc } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { responsibilitiesFor, viewerOf } from '../lib/routes'
 import { useApi } from '../lib/api'
-import { A, Async, LifecycleTiming, Section, PageHeader } from '../components/ui'
+import { A, Async, LifecycleTiming, Section } from '../components/ui'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
 import { MissionMetric } from '../components/MissionConsole'
 import { fmtDual } from '../lib/time'
@@ -29,7 +29,6 @@ import {
   TbArrowUpRight as ArrowUpRight,
   TbPin as Pin,
   TbClipboardCheck as ClipboardCheck,
-  TbSitemap as Network,
   TbCircleCheck as CircleCheck,
   TbProgress as Progress,
   TbAlarm as Alarm,
@@ -75,9 +74,12 @@ export function Home() {
         {(data: Doc) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
-            <PageHeader title="Your Hub" icon={Network} />
-
-            <div className="homeSummary" aria-label="Hub overview">
+            <section className="hubHero ldDark" aria-label="Hub overview">
+              <p className="pageEyebrow">
+                {account?.name ? `Welcome back, ${account.name.split(' ')[0]}` : 'Welcome back'}
+              </p>
+              <h1 className="hubHeroTitle">Your Hub</h1>
+              <p className="hubHeroLead">Here is what needs you, and what is coming up.</p>
               <div className="homeMetrics">
                 <MissionMetric
                   value={String(data.counts?.closing ?? data.closing.length)}
@@ -99,112 +101,117 @@ export function Home() {
                   icon={Megaphone}
                 />
               </div>
-            </div>
+            </section>
 
-            <WorkspaceSection groups={groups} workspaces={workspaces} />
-            {canManageGroups(account) && (
-              <Section label="Group support">
-                <A href="/book" className="card cardTight roleHubCard">
-                  <span className="iconTile" aria-hidden>
-                    <ClipboardCheck size={20} strokeWidth={1.75} />
-                  </span>
-                  <span className="roleHubCopy">
-                    <strong>Book a group support call</strong>
-                    <small>Get help with your group’s page and member induction.</small>
-                  </span>
-                </A>
-              </Section>
-            )}
-            <ResponsibilitySection account={account} />
+            <div className="homeColumns">
+              <div className="homeMain">
+                {data.closing.length > 0 && (
+                  <Section
+                    label="Closing soon"
+                    action={
+                      <A href="/submissions" className="metaMuted">
+                        All →
+                      </A>
+                    }
+                  >
+                    <div className="dashboardCardGrid">
+                      {data.closing.map((x: AnyValue) => (
+                        <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
+                      ))}
+                    </div>
+                  </Section>
+                )}
 
-            {data.closing.length > 0 && (
-              <Section
-                label="Closing soon"
-                action={
-                  <A href="/submissions" className="metaMuted">
-                    All →
-                  </A>
-                }
-              >
-                <div className="dashboardCardGrid">
-                  {data.closing.map((x: AnyValue) => (
-                    <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {data.pinned.length > 0 && (
-              <Section label="Pinned">
-                <div className="pinnedStack">
-                  {data.pinned.map((a: AnyValue) => (
-                    <div key={a.slug || a.title} className="pinnedBanner">
-                      <span className="pinnedBannerIcon" aria-hidden>
-                        <Pin size={16} strokeWidth={2} />
-                      </span>
-                      <div className="pinnedBannerCopy">
-                        <h3 className="pinnedBannerTitle">{a.title}</h3>
-                        <p className="pinnedBannerBody">{a.body}</p>
-                      </div>
-                      {(a.ctaUrl || a.ctaDeadlineAt) && (
-                        <div className="announcementActions pinnedBannerActions">
-                          {a.ctaDeadlineAt && (
-                            <LifecycleTiming iso={a.ctaDeadlineAt} label="Closes" />
-                          )}
-                          {a.ctaUrl && (
-                            <a
-                              className="btn btn-primary btn-sm"
-                              href={a.ctaUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <DestinationIcon url={a.ctaUrl} size={16} />
-                              {a.ctaLabel || 'Open'}
-                            </a>
+                {data.pinned.length > 0 && (
+                  <Section label="Pinned">
+                    <div className="pinnedStack">
+                      {data.pinned.map((a: AnyValue) => (
+                        <div key={a.slug || a.title} className="pinnedBanner">
+                          <span className="pinnedBannerIcon" aria-hidden>
+                            <Pin size={16} strokeWidth={2} />
+                          </span>
+                          <div className="pinnedBannerCopy">
+                            <h3 className="pinnedBannerTitle">{a.title}</h3>
+                            <p className="pinnedBannerBody">{a.body}</p>
+                          </div>
+                          {(a.ctaUrl || a.ctaDeadlineAt) && (
+                            <div className="announcementActions pinnedBannerActions">
+                              {a.ctaDeadlineAt && (
+                                <LifecycleTiming iso={a.ctaDeadlineAt} label="Closes" />
+                              )}
+                              {a.ctaUrl && (
+                                <a
+                                  className="btn btn-primary btn-sm"
+                                  href={a.ctaUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <DestinationIcon url={a.ctaUrl} size={16} />
+                                  {a.ctaLabel || 'Open'}
+                                </a>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Section>
-            )}
+                  </Section>
+                )}
 
-            <Section
-              label="This week"
-              action={
-                <A href="/calendar" className="metaMuted">
-                  Calendar →
-                </A>
-              }
-            >
-              {data.week.length ? (
-                <div className="dashboardCardGrid">
-                  {data.week.map((e: AnyValue) => (
-                    <EventCard key={e.slug} event={e} />
-                  ))}
-                </div>
-              ) : (
-                <p className="meta">No meetings are scheduled this week.</p>
-              )}
-            </Section>
+                <Section
+                  label="This week"
+                  action={
+                    <A href="/calendar" className="metaMuted">
+                      Calendar →
+                    </A>
+                  }
+                >
+                  {data.week.length ? (
+                    <div className="dashboardCardGrid">
+                      {data.week.map((e: AnyValue) => (
+                        <EventCard key={e.slug} event={e} />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="meta">No meetings are scheduled this week.</p>
+                  )}
+                </Section>
 
-            {data.coys.length > 0 && (
-              <Section
-                label="COYs"
-                action={
-                  <A href="/coys" className="metaMuted">
-                    All →
-                  </A>
-                }
-              >
-                <div className="dashboardCardGrid">
-                  {data.coys.map((c: AnyValue) => (
-                    <CoyCard key={c.slug} coy={c} />
-                  ))}
-                </div>
-              </Section>
-            )}
+                {data.coys.length > 0 && (
+                  <Section
+                    label="COYs"
+                    action={
+                      <A href="/coys" className="metaMuted">
+                        All →
+                      </A>
+                    }
+                  >
+                    <div className="dashboardCardGrid">
+                      {data.coys.map((c: AnyValue) => (
+                        <CoyCard key={c.slug} coy={c} />
+                      ))}
+                    </div>
+                  </Section>
+                )}
+              </div>
+              <div className="homeSide">
+                <WorkspaceSection groups={groups} workspaces={workspaces} />
+                {canManageGroups(account) && (
+                  <Section label="Group support">
+                    <A href="/book" className="card cardTight roleHubCard">
+                      <span className="iconTile" aria-hidden>
+                        <ClipboardCheck size={20} strokeWidth={1.75} />
+                      </span>
+                      <span className="roleHubCopy">
+                        <strong>Book a group support call</strong>
+                        <small>Get help with your group’s page and member induction.</small>
+                      </span>
+                    </A>
+                  </Section>
+                )}
+                <ResponsibilitySection account={account} />
+              </div>
+            </div>
           </>
         )}
       </Async>

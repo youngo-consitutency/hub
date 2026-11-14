@@ -51,8 +51,6 @@
   --content-max: 1600px;
   --detail-max: 1120px;
   --catalog-card-min: 280px;
-  --catalog-card-max: 320px;
-  --catalog-columns: 4;
   --text-measure: 62ch;
   --card-padding: var(--space-4);
   --section-gap: var(--space-6);
@@ -116,18 +114,6 @@
   --ld-spot: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-@media (max-width: 1599px) {
-  :root {
-    --catalog-columns: 3;
-  }
-}
-
-@media (max-width: 1180px) {
-  :root {
-    --catalog-columns: 2;
-  }
-}
-
 @media (max-width: 900px) {
   :root {
     --card-padding: 14px;
@@ -137,7 +123,6 @@
 @media (max-width: 620px) {
   :root {
     --radius-surface: 20px;
-    --catalog-columns: 1;
     --card-padding: var(--space-3);
   }
 }

@@ -215,9 +215,23 @@ a.mcMetricLink:focus-visible {
   }
 }
 
-/* Home starts with a compact summary; event details appear once in the agenda. */
-.homeSummary {
+/* Home opens with the landing's deep band: a greeting, then the three counts */
+.hubHero {
+  display: grid;
+  gap: var(--space-2);
   margin-bottom: var(--section-gap);
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: var(--radius-surface);
+}
+.hubHeroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.hubHeroLead {
+  margin-bottom: var(--space-3);
+  color: var(--text-3);
 }
 .homeMetrics {
   display: grid;
@@ -276,4 +290,22 @@ a.mcMetricLink:focus-visible {
 }
 .workspaceStart:hover {
   background: var(--bg-raised);
+}
+
+/* Home: personal shortcuts in a fixed rail beside the feed once there is room */
+.homeColumns {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@container (min-width: 960px) {
+  .homeColumns {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+
+  .homeSide {
+    position: sticky;
+    top: var(--space-6);
+  }
 }
