@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { TbChevronRight as ChevronRight } from 'react-icons/tb'
 import { A } from '../../components/ui'
 import { NumberTicker } from '../../components/fx/NumberTicker'
@@ -11,62 +11,6 @@ export interface PageFact {
   value: number
   label: string
 }
-export interface PageSection {
-  id: string
-  label: string
-}
-
-// a long page is split into sections with a sticky "on this page" list that marks where you are
-function SectionNav({ sections }: { sections: PageSection[] }) {
-  const [current, setCurrent] = useState(sections[0]?.id)
-  useEffect(() => {
-    const seen = new Map<string, boolean>()
-    const watched = new Set<string>()
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) seen.set(entry.target.id, entry.isIntersecting)
-        // the first section in the band just below the header wins
-        const active = sections.find(({ id }) => seen.get(id))
-        if (active) setCurrent(active.id)
-      },
-      { rootMargin: '-20% 0px -65% 0px' },
-    )
-    // a section can mount after its data loads, so pick up late arrivals too
-    const attach = () => {
-      for (const { id } of sections) {
-        const element = document.getElementById(id)
-        if (element && !watched.has(id)) {
-          watched.add(id)
-          observer.observe(element)
-        }
-      }
-    }
-    attach()
-    const mutations = new MutationObserver(attach)
-    mutations.observe(document.getElementById('site-main') ?? document.body, {
-      childList: true,
-      subtree: true,
-    })
-    return () => {
-      mutations.disconnect()
-      observer.disconnect()
-    }
-  }, [sections])
-  return (
-    <nav className="siteSectionNav" aria-label="On this page">
-      <ul>
-        {sections.map(({ id, label }) => (
-          <li key={id}>
-            <a href={`#${id}`} aria-current={current === id ? 'location' : undefined}>
-              {label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )
-}
-
 interface SitePageProps {
   title: string
   eyebrow: string
@@ -75,13 +19,11 @@ interface SitePageProps {
   art: HeroArtKind
   /** up to three numbers that size the page's subject; zero counts are left out */
   facts?: PageFact[]
-  /** two or more sections get the "on this page" list */
-  sections?: PageSection[]
   children: ReactNode
 }
 
 // the frame every public page shares: the same hero (eyebrow, title, lead, facts, drawing), then the page
-export function SitePage({ title, eyebrow, lead, art, facts, sections, children }: SitePageProps) {
+export function SitePage({ title, eyebrow, lead, art, facts, children }: SitePageProps) {
   const shown = (facts ?? []).filter((fact) => fact.value > 0)
   return (
     <div className="siteMain">
@@ -108,7 +50,6 @@ export function SitePage({ title, eyebrow, lead, art, facts, sections, children 
           <HeroArt kind={art} />
         </div>
       </header>
-      {sections && sections.length > 1 && <SectionNav sections={sections} />}
       {children}
     </div>
   )

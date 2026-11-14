@@ -2,13 +2,7 @@ import { useDocument } from '../../lib/documents'
 import { OrganisationSection } from '../../features/platform/PublicPlatform'
 import { ContactSection } from './SiteContact'
 import { FaqSection } from './SiteFaq'
-import { SitePage, type PageSection } from './SitePage'
-
-const SECTIONS: PageSection[] = [
-  { id: 'organisation', label: 'Organisation' },
-  { id: 'faq', label: 'Questions' },
-  { id: 'contact', label: 'Contact' },
-]
+import { SitePage } from './SitePage'
 
 // who YOUNGO is, the questions people ask, and where to write
 export function SiteAbout() {
@@ -20,7 +14,6 @@ export function SiteAbout() {
       title={about?.title ?? 'About YOUNGO'}
       lead={about?.lead}
       art="structure"
-      sections={SECTIONS}
     >
       <OrganisationSection />
       <FaqSection />

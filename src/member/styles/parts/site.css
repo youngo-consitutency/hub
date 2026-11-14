@@ -57,6 +57,60 @@
   white-space: nowrap;
 }
 
+.siteNavItem {
+  gap: var(--space-1);
+}
+
+.siteNavGroup {
+  position: relative;
+}
+
+/* the gap above the menu is padding, not margin, so the pointer never leaves the group on the way down */
+.siteNavMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: var(--z-sticky);
+  min-width: 220px;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(18, 32, 25, 0.12));
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease),
+    visibility var(--motion-fast);
+}
+
+.siteNavGroup:is(:hover, :focus-within) .siteNavMenu {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.siteNavMenu a {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.siteNavMenu a:is(:hover, :focus-visible) {
+  background: var(--bg-raised);
+  color: var(--text-1);
+}
+
 .siteNavItem:hover {
   background: var(--bg-raised);
   color: var(--text-1);
@@ -513,6 +567,11 @@ main#site-main {
     color: var(--text-2);
     font-size: 14px;
     font-weight: 500;
+  }
+
+  .siteMobileNavSub {
+    padding-left: var(--space-6);
+    font-weight: 400;
   }
 
   .siteMobileNavItem.active {

@@ -4,14 +4,8 @@ import { useDocument } from '../../lib/documents'
 import { regionKey } from '../../lib/regions'
 import { ConferencesSection } from './SiteCoy'
 import { StatementSection } from './SiteGys'
-import { SiteCtaBand, SitePage, type PageSection } from './SitePage'
+import { SiteCtaBand, SitePage } from './SitePage'
 import { WorkingGroupsSection } from './SiteWorkingGroups'
-
-const SECTIONS: PageSection[] = [
-  { id: 'working-groups', label: 'Working groups' },
-  { id: 'conferences', label: 'Conferences' },
-  { id: 'statement', label: 'Global Youth Statement' },
-]
 
 // where the policy work happens: the groups, the conferences and the statement they produce
 export function SiteWork() {
@@ -35,7 +29,6 @@ export function SiteWork() {
         { icon: MapPin, value: conferences.length, label: 'Conferences of Youth' },
         { icon: Globe, value: regions.size, label: 'World regions' },
       ]}
-      sections={SECTIONS}
     >
       <WorkingGroupsSection />
       <ConferencesSection />

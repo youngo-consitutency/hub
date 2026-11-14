@@ -40,9 +40,7 @@ export function UpcomingEvents() {
                   <DateStamp iso={event.startsAt} />
                   <div>
                     <h3>
-                      <A href={`/calendar/${event.slug}`} peek={false}>
-                        {event.title}
-                      </A>
+                      <A href={`/calendar/${event.slug}`}>{event.title}</A>
                     </h3>
                     <p className="meta">
                       {moment.localTime} {moment.localZone}
@@ -56,7 +54,7 @@ export function UpcomingEvents() {
           <p className="meta">No upcoming events have been published.</p>
         )}
       </div>
-      <A href="/calendar" className="siteUpcomingLink" peek={false}>
+      <A href="/calendar" className="siteUpcomingLink">
         Open the Hub calendar <TbArrowUpRight size={19} aria-hidden />
       </A>
     </aside>

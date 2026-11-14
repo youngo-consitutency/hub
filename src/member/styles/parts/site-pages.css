@@ -409,52 +409,6 @@
   font-size: 20px;
 }
 
-/* ── "on this page": a sticky row of links that marks where you are ── */
-.siteSectionNav {
-  position: sticky;
-  top: calc(var(--ld-header-h) - 1px);
-  z-index: 3;
-  margin-inline: calc(var(--ld-gutter) * -1);
-  padding: var(--space-2) var(--ld-gutter);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg-page) 92%, transparent);
-  backdrop-filter: blur(12px);
-}
-
-.siteSectionNav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.siteSectionNav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-pill);
-  color: var(--text-2);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background var(--motion-standard) var(--motion-ease),
-    color var(--motion-standard) var(--motion-ease);
-}
-
-.siteSectionNav a:hover {
-  background: var(--bg-raised);
-  color: var(--text-1);
-}
-
-.siteSectionNav a[aria-current='location'] {
-  background: var(--accent-tint);
-  color: var(--on-accent-tint);
-}
-
 /* ── search on the public pages ── */
 .sitePublicSearch {
   display: flex;
