@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { TbCheck, TbChevronRight, TbLink, TbX, TbInfoCircle } from 'react-icons/tb'
 import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
+import { Tab, TabList, TabPanel, Tabs as AriaTabs } from 'react-aria-components'
 
 export interface NotionProperty {
   id?: string
@@ -301,41 +302,31 @@ export function NotionSidePeek({
           {/* Quick action bar */}
           {actions && <div className="notionPeekQuickActions">{actions}</div>}
 
-          {/* Inner Menus / Segmented Tabs */}
-          {tabs && tabs.length > 1 && (
-            <nav className="notionPeekTabs" role="tablist" aria-label="Inner navigation">
-              {tabs.map((tab) => {
-                const TabIcon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`notionPeekTab ${isActive ? 'isActive' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                    aria-selected={isActive}
-                    aria-controls={`peek-panel-${tab.id}`}
-                    id={`peek-tab-${tab.id}`}
-                    role="tab"
+          {tabs && tabs.length > 1 ? (
+            <AriaTabs
+              selectedKey={activeTab}
+              onSelectionChange={(key) => setActiveTab(String(key))}
+            >
+              <TabList aria-label="Inner navigation" className="notionPeekTabs">
+                {tabs.map(({ id, label, icon: TabIcon, badge }) => (
+                  <Tab
+                    key={id}
+                    id={id}
+                    className={({ isSelected }) => `notionPeekTab ${isSelected ? 'isActive' : ''}`}
                   >
                     {TabIcon && <TabIcon size={16} strokeWidth={1.75} aria-hidden />}
-                    <span>{tab.label}</span>
-                    {tab.badge !== undefined && <span className="notionTabBadge">{tab.badge}</span>}
-                  </button>
-                )
-              })}
-            </nav>
+                    <span>{label}</span>
+                    {badge !== undefined && <span className="notionTabBadge">{badge}</span>}
+                  </Tab>
+                ))}
+              </TabList>
+              <TabPanel id={activeTab} className="notionPeekContentArea">
+                {currentTabContent}
+              </TabPanel>
+            </AriaTabs>
+          ) : (
+            <section className="notionPeekContentArea">{currentTabContent}</section>
           )}
-
-          {/* Content area */}
-          <section
-            className="notionPeekContentArea"
-            role={tabs && tabs.length > 1 ? 'tabpanel' : undefined}
-            id={tabs && tabs.length > 1 ? `peek-panel-${activeTab}` : undefined}
-            aria-labelledby={tabs && tabs.length > 1 ? `peek-tab-${activeTab}` : undefined}
-          >
-            {currentTabContent}
-          </section>
         </div>
       </PortalProvider>
     </dialog>
