@@ -10,7 +10,15 @@ const properties = openPeeps.schema.properties as Record<
   string,
   { items?: { enum?: string[] }; default?: string[] }
 >
-const parts = (key: string) => properties[key]?.items?.enum ?? []
+
+// the style's own lists minus a few options that don't suit a youth
+// constituency. a filter, not a copy: new library options show up by themselves
+const WITHHELD: Record<string, string[]> = {
+  head: ['bear'],
+  face: ['cyclops', 'monster', 'rage', 'angryWithFang', 'veryAngry', 'contempt'],
+}
+const parts = (key: string) =>
+  (properties[key]?.items?.enum ?? []).filter((value) => !WITHHELD[key]?.includes(value))
 const palette = (key: string) => properties[key]?.default ?? []
 
 /** Every value a member may store, per option. Anything else is rejected. */
@@ -33,7 +41,10 @@ export const AVATAR_KEYS = Object.keys(AVATAR_CHOICES) as AvatarKey[]
 // the style draws these by chance; a pick switches the chance to all or nothing
 const OPTIONAL: AvatarKey[] = ['facialHair', 'accessories', 'mask']
 
-/** Keeps only allowlisted picks, so nothing else ever reaches the renderer. */
+/**
+ * Keeps only allowlisted picks, so nothing else ever reaches the renderer. A
+ * stored pick that has since left the allowlist falls back to the seeded default.
+ */
 export function cleanAvatar(input: unknown): AvatarOptions {
   const out: AvatarOptions = {}
   if (!input || typeof input !== 'object') return out
@@ -47,7 +58,12 @@ export function cleanAvatar(input: unknown): AvatarOptions {
 // the seed fills every option the member has not picked, so the same member
 // gets the same avatar everywhere and nobody is left without one
 function draw(seed: string | number, options?: unknown) {
-  const styleOptions: Record<string, unknown> = { seed: String(seed) }
+  // the seeded default draws head and face from the allowed lists too
+  const styleOptions: Record<string, unknown> = {
+    seed: String(seed),
+    head: AVATAR_CHOICES.head,
+    face: AVATAR_CHOICES.face,
+  }
   for (const [key, value] of Object.entries(cleanAvatar(options))) {
     if (OPTIONAL.includes(key as AvatarKey)) {
       styleOptions[`${key}Probability`] = value === NONE ? 0 : 100

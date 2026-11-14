@@ -1,9 +1,17 @@
 import { useMemo, useState } from 'react'
-import { ToggleButton, ToggleButtonGroup } from 'react-aria-components'
-import { TbArrowBackUp, TbArrowsShuffle } from 'react-icons/tb'
+import {
+  Button as AriaButton,
+  Dialog,
+  DialogTrigger,
+  Heading,
+  ListBox,
+  ListBoxItem,
+  Modal,
+  ModalOverlay,
+} from 'react-aria-components'
+import { TbArrowBackUp, TbArrowsShuffle, TbPencil } from 'react-icons/tb'
 import {
   AVATAR_CHOICES,
-  avatarDataUri,
   randomAvatar,
   resolveAvatar,
   type AvatarKey,
@@ -11,150 +19,205 @@ import {
 } from '../../shared/avatar'
 import { apiPut } from '../lib/api'
 import type { AnyValue } from '../lib/types'
-import { SearchableSelect } from './FormControls'
+import { Avatar } from './MemberAvatar'
+import { Tabs } from './Tabs'
 import { Button, ErrorCard } from './ui'
 
-const PARTS: [AvatarKey, string][] = [
-  ['head', 'Hair and headwear'],
-  ['face', 'Expression'],
-  ['facialHair', 'Facial hair'],
-  ['accessories', 'Glasses'],
-  ['mask', 'Mask'],
+const TABS: { id: string; label: string; options: [AvatarKey, string][] }[] = [
+  { id: 'head', label: 'Head', options: [['head', 'Hair and headwear']] },
+  { id: 'face', label: 'Face', options: [['face', 'Expression']] },
+  {
+    id: 'extras',
+    label: 'Extras',
+    options: [
+      ['facialHair', 'Facial hair'],
+      ['accessories', 'Glasses'],
+      ['mask', 'Mask'],
+    ],
+  },
+  {
+    id: 'colours',
+    label: 'Colours',
+    options: [
+      ['skinColor', 'Skin tone'],
+      ['headContrastColor', 'Hair colour'],
+      ['clothingColor', 'Clothing colour'],
+    ],
+  },
 ]
 
-const COLOURS: [AvatarKey, string][] = [
-  ['skinColor', 'Skin tone'],
-  ['headContrastColor', 'Hair colour'],
-  ['clothingColor', 'Clothing colour'],
-]
-
-// "lovingGrin1" → "Loving grin 1"
-function optionLabel(value: string) {
+// "lovingGrin1" → "Loving grin 1"; colours have no names, so they are numbered
+function optionLabel(group: string, value: string, index: number) {
+  if (/^[0-9a-f]{6}$/.test(value)) return `${group} ${index + 1}`
   const words = value.replace(/([a-z])([A-Z0-9])/g, '$1 $2').toLowerCase()
   return words[0].toUpperCase() + words.slice(1)
 }
 
-const PART_OPTIONS = Object.fromEntries(
-  PARTS.map(([key]) => [
-    key,
-    AVATAR_CHOICES[key].map((value) => ({ value, label: optionLabel(value) })),
-  ]),
-)
-
-interface AvatarBuilderProps {
-  accountId: number
-  /** the picks stored on the profile when the editor opened; null is the seeded default */
-  saved: AvatarOptions | null
-  onSaved: () => void
+interface OptionGridProps {
+  seed: number
+  option: AvatarKey
+  label: string
+  shown: Record<AvatarKey, string>
+  onPick: (value: string) => void
 }
 
-export function AvatarBuilder({ accountId, saved, onSaved }: AvatarBuilderProps) {
+// every thumbnail is the member's own avatar with that one option swapped in
+function OptionGrid({ seed, option, label, shown, onPick }: OptionGridProps) {
+  return (
+    <div className="grid gap-2">
+      <span id={`avatar-${option}`} className="fieldLabel">
+        {label}
+      </span>
+      <ListBox
+        aria-labelledby={`avatar-${option}`}
+        layout="grid"
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={[shown[option]]}
+        onSelectionChange={(keys) => {
+          const [value] = keys === 'all' ? [] : [...keys]
+          if (value != null) onPick(String(value))
+        }}
+        className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 p-1"
+      >
+        {AVATAR_CHOICES[option].map((value, index) => {
+          const text = optionLabel(label, value, index)
+          return (
+            <ListBoxItem
+              key={value}
+              id={value}
+              textValue={text}
+              aria-label={text}
+              className="aspect-square cursor-pointer overflow-hidden rounded-card bg-raised outline-offset-2 outline-accent data-[focus-visible]:outline-2 data-[hovered]:bg-accent-tint data-[selected]:bg-accent-tint data-[selected]:outline-2"
+            >
+              <Avatar
+                seed={seed}
+                options={{ ...shown, [option]: value }}
+                alt=""
+                className="block size-full"
+              />
+            </ListBoxItem>
+          )
+        })}
+      </ListBox>
+    </div>
+  )
+}
+
+interface EditorProps {
+  accountId: number
+  saved: AvatarOptions | null
+  onSaved: () => void
+  close: () => void
+}
+
+// mounted only while the window is open, so closing without Save discards the picks
+function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
   const [picks, setPicks] = useState(saved)
-  const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  // the seed fills whatever is not picked, so the controls always show a value
+  // the seed fills whatever is not picked, so every option shows a selection
   const shown = useMemo(() => resolveAvatar(accountId, picks), [accountId, picks])
-  const preview = useMemo(() => avatarDataUri(accountId, picks), [accountId, picks])
-
-  const change = (next: AvatarOptions | null) => {
-    setPicks(next)
-    setDirty(true)
-    setMessage('')
-  }
 
   const save = async () => {
     setSaving(true)
     setError('')
     try {
       await apiPut('/member/profile/avatar', { avatar: picks })
-      setDirty(false)
-      setMessage('Avatar saved.')
       onSaved()
+      close()
     } catch (caught) {
       setError((caught as AnyValue).message)
-    } finally {
       setSaving(false)
     }
   }
 
   return (
-    <fieldset className="m-0 grid min-w-0 gap-5 border-0 border-t border-line p-0 pt-5 sm:grid-cols-[auto_minmax(0,1fr)]">
-      <legend className="sr-only">Avatar</legend>
-      <div className="grid content-start justify-items-center gap-3">
-        <img
-          src={preview}
+    <>
+      <div className="grid justify-items-center gap-2 border-b border-line p-4">
+        <Heading slot="title" className="m-0 text-base font-semibold">
+          Edit avatar
+        </Heading>
+        <Avatar
+          seed={accountId}
+          options={picks}
           alt="Preview of your avatar"
-          className="size-36 rounded-pill bg-accent-tint"
+          className="size-28 rounded-pill bg-accent-tint sm:size-36"
         />
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button className="min-h-11" onClick={() => change(randomAvatar())}>
+      </div>
+
+      <Tabs
+        label="Avatar options"
+        className="px-4 pt-3"
+        items={TABS.map(({ id, label, options }) => ({
+          id,
+          label,
+          content: (
+            <div className="grid max-h-[36dvh] gap-4 overflow-y-auto pb-4">
+              {options.map(([option, name]) => (
+                <OptionGrid
+                  key={option}
+                  seed={accountId}
+                  option={option}
+                  label={name}
+                  shown={shown}
+                  onPick={(value) => setPicks({ ...picks, [option]: value })}
+                />
+              ))}
+            </div>
+          ),
+        }))}
+      />
+
+      <footer className="grid gap-3 border-t border-line p-4">
+        {error && <ErrorCard message={error} />}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button className="min-h-11" variant="ghost" onClick={() => setPicks(randomAvatar())}>
             <TbArrowsShuffle size={16} aria-hidden />
             Randomise
           </Button>
-          <Button className="min-h-11" variant="ghost" onClick={() => change(null)}>
+          <Button className="min-h-11" variant="ghost" onClick={() => setPicks(null)}>
             <TbArrowBackUp size={16} aria-hidden />
             Reset
           </Button>
-        </div>
-      </div>
-
-      <div className="grid min-w-0 gap-4">
-        <div>
-          <p className="pageEyebrow">Avatar</p>
-          <p className="meta">
-            Build the avatar other members see next to your name. Reset returns to the one the Hub
-            drew for you.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {PARTS.map(([key, label]) => (
-            <SearchableSelect
-              key={key}
-              label={label}
-              options={PART_OPTIONS[key]}
-              value={shown[key]}
-              onChange={(value) => change({ ...picks, [key]: value })}
-            />
-          ))}
-        </div>
-        {COLOURS.map(([key, label]) => (
-          <div key={key} className="grid gap-2">
-            <span id={`avatar-${key}`} className="fieldLabel">
-              {label}
-            </span>
-            <ToggleButtonGroup
-              aria-labelledby={`avatar-${key}`}
-              className="flex flex-wrap gap-2"
-              selectionMode="single"
-              disallowEmptySelection
-              selectedKeys={[shown[key]]}
-              onSelectionChange={(keys) => change({ ...picks, [key]: String([...keys][0]) })}
-            >
-              {AVATAR_CHOICES[key].map((colour, index) => (
-                <ToggleButton
-                  key={colour}
-                  id={colour}
-                  aria-label={`${label} ${index + 1}`}
-                  className="size-11 cursor-pointer rounded-pill border border-line-strong p-0 outline-offset-2 outline-accent data-focus-visible:outline-2 data-selected:outline-2"
-                  style={{ backgroundColor: `#${colour}` }}
-                />
-              ))}
-            </ToggleButtonGroup>
-          </div>
-        ))}
-        {error && <ErrorCard message={error} />}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button className="min-h-11" variant="primary" disabled={!dirty || saving} onClick={save}>
-            {saving ? 'Saving…' : 'Save avatar'}
+          <Button className="ml-auto min-h-11" onClick={close}>
+            Cancel
           </Button>
-          <p className="meta" role="status">
-            {message}
-          </p>
+          <Button className="min-h-11" variant="primary" disabled={saving} onClick={save}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
         </div>
-      </div>
-    </fieldset>
+      </footer>
+    </>
+  )
+}
+
+interface AvatarBuilderProps {
+  accountId: number
+  /** the picks stored on the profile; null is the seeded default */
+  saved: AvatarOptions | null
+  onSaved: () => void
+}
+
+/** The avatar picker: a floating window on desktop, a bottom sheet on phones. */
+export function AvatarBuilder(props: AvatarBuilderProps) {
+  return (
+    <DialogTrigger>
+      <AriaButton className="btn btn-secondary btn-sm">
+        <TbPencil size={16} strokeWidth={1.75} aria-hidden />
+        Edit avatar
+      </AriaButton>
+      <ModalOverlay
+        isDismissable
+        className="fixed inset-0 z-[var(--z-popover)] flex items-end justify-center bg-[var(--overlay)] sm:items-center sm:p-4"
+      >
+        <Modal className="w-full rounded-t-card bg-card shadow-[var(--shadow-popover)] sm:max-w-xl sm:rounded-card">
+          <Dialog className="flex max-h-[92dvh] flex-col overflow-y-auto outline-none">
+            {({ close }) => <AvatarEditor {...props} close={close} />}
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+    </DialogTrigger>
   )
 }

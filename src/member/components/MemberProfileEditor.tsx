@@ -140,18 +140,17 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
                   </div>
                 </div>
                 <div className="memberProfileHeaderActions">
+                  <AvatarBuilder
+                    accountId={current.accountId}
+                    saved={current.avatar}
+                    onSaved={query.retry}
+                  />
                   <Button sm variant="secondary" className="profileSignOut" onClick={signOut}>
                     <LogOut size={16} strokeWidth={1.75} aria-hidden />
                     Sign out
                   </Button>
                 </div>
               </header>
-
-              <AvatarBuilder
-                accountId={current.accountId}
-                saved={current.avatar}
-                onSaved={query.retry}
-              />
 
               <div className="memberProfileOverview">
                 <div>

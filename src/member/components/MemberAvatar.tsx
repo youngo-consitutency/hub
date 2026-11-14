@@ -2,23 +2,35 @@ import { useMemo } from 'react'
 import type { AnyValue } from '../lib/types'
 import { avatarDataUri } from '../../shared/avatar'
 
+interface AvatarProps {
+  /** the account id, so a member's avatar is the same everywhere */
+  seed: string | number
+  options?: unknown
+  alt: string
+  className?: string
+}
+
+/** The one avatar renderer: the library draws it from allowlisted picks over a seeded default. */
+export function Avatar({ seed, options, alt, className }: AvatarProps) {
+  const src = useMemo(() => avatarDataUri(seed, options), [seed, options])
+  return <img src={src} alt={alt} decoding="async" className={className} />
+}
+
 interface MemberAvatarProps {
   person?: AnyValue
   size?: AnyValue
   className?: string
 }
 
-// drawn by the library from allowlisted picks, seeded by the account id so
-// every member has one before they ever open the builder
 export function MemberAvatar({ person, size = 'md', className = '' }: MemberAvatarProps) {
   const name = person?.displayName || person?.name || 'YOUNGO member'
-  const seed = person?.id ?? person?.accountId ?? name
-  const avatar = person?.avatar
-  const src = useMemo(() => avatarDataUri(seed, avatar), [seed, avatar])
-
   return (
     <span className={`memberAvatar memberAvatar-${size} ${className}`.trim()}>
-      <img src={src} alt={`Avatar of ${name}`} decoding="async" />
+      <Avatar
+        seed={person?.id ?? person?.accountId ?? name}
+        options={person?.avatar}
+        alt={`Avatar of ${name}`}
+      />
     </span>
   )
 }
