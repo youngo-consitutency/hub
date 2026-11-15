@@ -1,6 +1,6 @@
 # Scripts
 
-Run from the repository root. Anything that writes reads `DATABASE_URL` from `.env.local`, so check which database it names first. Agents never run writing scripts against production; a maintainer does.
+Run from the repository root. Scripts that write to the database read `DATABASE_URL` from `.env.local`, so check which database it names first. `agent/hub-mcp.mjs` never touches the database: it writes through the Hub API at `HUB_ORIGIN` (also from `.env.local`), so check that origin instead. Agents never run writing scripts against production; a maintainer does.
 
 | Script                                 | Purpose                                                           | Writes?                         |
 | -------------------------------------- | ----------------------------------------------------------------- | ------------------------------- |
