@@ -38,6 +38,24 @@ const eslintConfig = [
     },
   },
   {
+    // the public site must stay loadable without the signed-in Hub: it may use shared
+    // components, lib and shared modules, never the Hub's pages, routes or gates
+    files: ['src/member/pages/site/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../[A-Z]*', '../../pages/*', '../../hub/*', '../../components/*Gate*'],
+              message: 'The public site must not import Hub pages, routes or gates.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     ignores: [
       '.next/',
       'dist/',
