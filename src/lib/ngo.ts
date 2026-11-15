@@ -11,7 +11,7 @@ import type { Doc, AccountLike, AnyValue } from './domain'
 
 export const AFFILIATION_ROLES = ['affiliate', 'viewer', 'representative']
 
-export type OrgContext = {
+type OrgContext = {
   orgAccountId: string
   seatRole: string
   canManageRequests: boolean

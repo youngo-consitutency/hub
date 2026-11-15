@@ -14,7 +14,7 @@ const PAGE_LOCK_NS = 0x594f50 // 'YOP'
 const PAGE_LOCK_KEY: Record<string, number> = { faq: 1, contact: 2 }
 const pageDocSlug = (slug: string) => `page-${slug}`
 
-export type PageState = {
+type PageState = {
   state: 'baseline' | 'published' | 'unpublished'
   revisionId: number | null
   publishedAt: string | null

@@ -6,7 +6,7 @@ export const rise: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
 }
 
-export const stagger: Variants = {
+const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08 } },
 }

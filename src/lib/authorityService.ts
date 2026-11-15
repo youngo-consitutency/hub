@@ -15,7 +15,7 @@ import type { Doc, AccountLike, AnyValue } from './domain'
 // Writes to `authority-records`. Grants validate against the role registry
 // and are audited; the partial unique index backstops concurrent duplicates.
 
-export interface GrantInput {
+interface GrantInput {
   account: number
   role: string
   scopeType?: string

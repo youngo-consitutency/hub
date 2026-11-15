@@ -4,7 +4,7 @@ import type { AnyValue } from './domain'
 // Sources: S13 Governance, S14 GCT Mandate, S25 WG CP Mandate, S15 Liaisons,
 // S02 Awareness, S23/S04 Safeguarding, S17 Membership, S24 Selections, S10 Elections.
 
-export interface AuthorityRoleSpec {
+interface AuthorityRoleSpec {
   label: string
   /** scopeType values this role may be recorded under. */
   scopeTypes: string[]
@@ -551,7 +551,7 @@ export interface AuthorityRow {
   provenance?: { source?: string; assignmentId?: number | string } | null
 }
 
-export interface AuthorityDerivation {
+interface AuthorityDerivation {
   teamRoles: string[]
   capabilities: string[]
   councilSeats: string[]

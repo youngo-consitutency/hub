@@ -12,7 +12,7 @@ export interface RoleTarget {
   scopeId: string
 }
 
-export interface RoleHolder {
+interface RoleHolder {
   id: number
   displayName: string
 }

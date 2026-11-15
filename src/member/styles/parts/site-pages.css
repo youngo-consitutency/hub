@@ -351,12 +351,6 @@
   margin-bottom: clamp(20px, 3vw, 32px);
 }
 
-.siteBlockTitle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
 .siteBlockHead h2 {
   flex: 1;
   line-height: 1.1;
@@ -442,12 +436,6 @@
   display: grid;
   gap: var(--space-3);
   margin-bottom: var(--space-3);
-}
-
-.siteBrowseChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 .siteWgGrid {

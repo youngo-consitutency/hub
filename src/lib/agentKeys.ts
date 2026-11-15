@@ -45,7 +45,7 @@ const operatorIds = () =>
       .filter(Boolean),
   )
 
-export type Eligibility = {
+type Eligibility = {
   ok: boolean
   gate:
     | 'ready'

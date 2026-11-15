@@ -19,7 +19,7 @@ export async function isSelector(req: PayloadRequest, account: AccountLike) {
   return hasCapability(access, 'selection.manage')
 }
 
-export interface EligibleVoter {
+interface EligibleVoter {
   id: number
   email: string
   kind: 'individual' | 'organisation'

@@ -20,7 +20,7 @@ import { TbSelector, TbX } from 'react-icons/tb'
 // these wrappers keep the props every form already passes. anatomy follows the
 // docs: label + group(input, button) + popover(listbox)
 
-export interface Option {
+interface Option {
   value: string
   label: string
 }

@@ -9,7 +9,7 @@ import type { Doc, AccountLike, AnyValue } from './domain'
 
 const APPEAL_IDENTITY_KINDS = ['passport', 'national_id', 'organisational_letter', 'other']
 const APPEAL_PROOF_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
-export const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
+const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 const APPEAL_MAX_PER_ACCOUNT = 3
 
 function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyValue {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-export interface CatalogueOptions<T> {
+interface CatalogueOptions<T> {
   /** the text a search is matched against */
   text: (item: T) => unknown[]
   /** one predicate per filter key; an empty value means the filter is off */

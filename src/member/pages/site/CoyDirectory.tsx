@@ -27,12 +27,11 @@ const STATUS: Record<string, [chip: string, label: string, rank: number]> = {
   cancelled: ['chip-danger', 'Cancelled', 4],
 }
 
-export const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy)] ?? ['chip-neutral', '', 1]
-export const isWeb = (url: unknown): url is string =>
-  typeof url === 'string' && /^https?:\/\//.test(url)
+const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy)] ?? ['chip-neutral', '', 1]
+const isWeb = (url: unknown): url is string => typeof url === 'string' && /^https?:\/\//.test(url)
 
 // what is open comes first, then what is coming, then what is over
-export const byRelevance = (a: AnyValue, b: AnyValue) =>
+const byRelevance = (a: AnyValue, b: AnyValue) =>
   statusOf(a)[2] - statusOf(b)[2] ||
   String(a.startsOn ?? '9999').localeCompare(String(b.startsOn ?? '9999')) ||
   String(a.title).localeCompare(String(b.title))

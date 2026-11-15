@@ -24,7 +24,7 @@ const inHubNow = () => typeof window !== 'undefined' && inHubPath(window.locatio
 type Target = { hub: boolean; href: string }
 
 /** Where an app path points: a hash route inside the Hub, or a real URL. */
-export function resolve(to: string, hubNow = inHubNow()): Target {
+function resolve(to: string, hubNow = inHubNow()): Target {
   const path = to.split(/[?#]/)[0]
   const site =
     SITE_PATH.test(path) || (path === '/' && !hubNow) || (SHARED_PATH.test(path) && !hubNow)
