@@ -6,7 +6,9 @@
  * row directly against the database and exits.
  *
  *   ACCOUNT_ID=<id> ROLE=gct.internal SCOPE_TYPE=team SCOPE_ID=gct \
- *     npx tsx scripts/setup/grant-authority.ts
+ *     npx tsx scripts/setup/grant-authority.ts [--apply]
+ *
+ * A dry run unless --apply is passed: it checks the account and role, then prints the grant.
  *
  * GCT Internal Management is the role that runs the platform (S14); a Focal Point
  * record grants a council seat only (S11, S13).
@@ -65,6 +67,14 @@ async function main() {
         'requires it — restore CW first, then re-run this grant.',
     )
     process.exit(1)
+  }
+
+  if (!process.argv.includes('--apply')) {
+    console.log(
+      `Would grant ${role} on ${scopeType}:${scopeId} to account ${accountId}. ` +
+        'Dry run, nothing written (pass --apply).',
+    )
+    process.exit(0)
   }
 
   const created = await payload.create({

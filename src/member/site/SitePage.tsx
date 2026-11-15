@@ -1,9 +1,9 @@
 'use client'
 
 import type { ComponentType, ReactNode } from 'react'
-import { NumberTicker } from '../../components/fx/NumberTicker'
-import { HeroArt, type HeroArtKind } from '../../components/HeroArt'
-import { HeroBand } from '../../components/HeroBand'
+import { NumberTicker } from '../components/fx/NumberTicker'
+import { HeroArt, type HeroArtKind } from './HeroArt'
+import { HeroBand } from '../components/HeroBand'
 
 interface PageFact {
   icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>

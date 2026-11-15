@@ -1,5 +1,5 @@
 import { createElement } from 'react'
-import type { AnyValue } from '../../lib/types'
+import type { AnyValue } from '../lib/types'
 import { motion } from 'motion/react'
 import {
   TbAward as Award,
@@ -29,9 +29,9 @@ import {
   TbUsersGroup as UsersGroup,
   TbMessages as Messages,
 } from 'react-icons/tb'
-import { A, Skeletons, ErrorCard, Empty } from '../../components/ui'
-import { useDocument } from '../../lib/documents'
-import { inView, reveal, rise } from '../../lib/motion'
+import { A, Skeletons, ErrorCard, Empty } from '../components/ui'
+import { useDocument } from '../lib/documents'
+import { inView, reveal, rise } from '../lib/motion'
 import { HeroCommunity } from './HeroCommunity'
 import { JoinButton } from './JoinButton'
 import { HubPulse } from './HubPulse'

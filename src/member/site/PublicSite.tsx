@@ -13,14 +13,14 @@ import {
   SITE_ROUTES,
   isSiteHome,
   isSiteRouteActive,
-} from '../../../shared/publicRoutes'
-import { A } from '../../components/ui'
-import { Brand } from '../../components/Brand'
-import { DestinationIcon } from '../../components/DestinationLink'
-import { useSignedIn } from '../../lib/useSignedIn'
-import { trackPointer } from '../../lib/pointerGlow'
-import { replace, usePath } from '../../lib/router'
-import { publishedLinks, useDocument } from '../../lib/documents'
+} from '../../shared/publicRoutes'
+import { A } from '../components/ui'
+import { Brand } from '../components/Brand'
+import { DestinationIcon } from '../components/DestinationLink'
+import { useSignedIn } from '../lib/useSignedIn'
+import { trackPointer } from '../lib/pointerGlow'
+import { replace, usePath } from '../lib/router'
+import { publishedLinks, useDocument } from '../lib/documents'
 import { SiteHome } from './SiteHome'
 import { JoinButton } from './JoinButton'
 import { SiteWork } from './SiteWork'
