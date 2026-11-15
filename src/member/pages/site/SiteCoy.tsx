@@ -62,7 +62,7 @@ export function ConferencesSection() {
 
       <div className="siteSub">
         <article className="card siteCurrentCoy">
-          <BorderBeam colorFrom="var(--accent)" colorTo="var(--ld-glow-lime)" />
+          <BorderBeam colorFrom="var(--accent)" colorTo="var(--glow-lime)" />
           <div>
             <p className="pageEyebrow">{coy.currentEyebrow}</p>
             <h3>{COY_CURRENT.title}</h3>

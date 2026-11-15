@@ -155,7 +155,7 @@ export function FeaturedConference({ items }: { items: AnyValue[] }) {
   const href = [featured.registerUrl, featured.websiteUrl].find(isWeb)
   return (
     <article className="siteFeatured">
-      <BorderBeam colorFrom="var(--accent)" colorTo="var(--ld-glow-lime)" />
+      <BorderBeam colorFrom="var(--accent)" colorTo="var(--glow-lime)" />
       <p className="pageEyebrow">Open now</p>
       <h3>{featured.title}</h3>
       <div className="siteFeaturedMeta">
