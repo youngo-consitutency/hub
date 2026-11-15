@@ -3,7 +3,7 @@
  * Express + raw SQL). Restore the production pg_dump into a scratch database
  * and point LEGACY_DATABASE_URL at it; DATABASE_URL is this Hub's database.
  *
- *   LEGACY_DATABASE_URL=postgres://… DRY_RUN=1 npx tsx scripts/setup/import-legacy-members.ts
+ *   LEGACY_DATABASE_URL=postgres://… npx tsx scripts/setup/import-legacy-members.ts --apply
  *   LEGACY_DATABASE_URL=postgres://… npx tsx scripts/setup/import-legacy-members.ts
  *
  * Optional: LEGACY_COY_SLUG (default coy21) — the COY the legacy allowlist
@@ -32,7 +32,8 @@ const { getPgPool } = await import('../../src/lib/pg')
 const { validatedPushEndpoint } = await import('../../src/lib/push')
 
 const SOURCE = 'legacy_hub'
-const dryRun = process.env.DRY_RUN === '1'
+// a dry run unless told to apply, like every other data script
+const dryRun = !process.argv.includes('--apply')
 const coySlug = process.env.LEGACY_COY_SLUG || 'coy21'
 
 const camel = (s: string) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())
@@ -40,7 +41,7 @@ const camel = (s: string) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase()
 async function main() {
   if (!process.env.LEGACY_DATABASE_URL) {
     console.error(
-      'Usage: LEGACY_DATABASE_URL=<restored dump> [DRY_RUN=1] npx tsx scripts/setup/import-legacy-members.ts',
+      'Usage: LEGACY_DATABASE_URL=<restored dump> npx tsx scripts/setup/import-legacy-members.ts',
     )
     process.exit(1)
   }
@@ -575,7 +576,7 @@ async function main() {
         .join(', ')}`,
     )
   for (const note of notes) console.log(`note — ${note}`)
-  console.log(dryRun ? 'Dry run — nothing written.' : 'Import finished.')
+  console.log(dryRun ? 'Dry run — nothing written (pass --apply).' : 'Import finished.')
   await legacy.end()
   process.exit(0)
 }
