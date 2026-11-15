@@ -29,7 +29,7 @@ import {
 } from 'react-icons/tb'
 
 // what the signed-in account can do, flattened once from account.access
-export interface Viewer {
+interface Viewer {
   signedIn: boolean
   verified: boolean
   teamRoles: string[]
@@ -58,7 +58,7 @@ export function viewerOf(account: AnyValue): Viewer {
 }
 
 // sidebar sections, in display order, grouped by who uses them
-export const GROUPS = [
+const GROUPS = [
   { id: 'home', label: '' },
   { id: 'explore', label: 'Explore' },
   { id: 'people', label: 'People & groups' },
@@ -70,7 +70,7 @@ export const GROUPS = [
 
 type GroupId = (typeof GROUPS)[number]['id']
 
-export interface HubRoute {
+interface HubRoute {
   href: string
   label: string
   group: GroupId
@@ -305,7 +305,7 @@ export const ROUTES: HubRoute[] = [
 const allowed = (route: HubRoute, viewer: Viewer, path: string) =>
   route.allow ? route.allow(viewer, path) : viewer.verified
 
-export interface NavItem {
+interface NavItem {
   href: string
   label: string
   icon: ComponentType<AnyValue>
@@ -328,7 +328,7 @@ export function responsibilitiesFor(viewer: Viewer) {
   )
 }
 
-export interface MobileTab extends NavItem {
+interface MobileTab extends NavItem {
   mobileLabel?: string
 }
 

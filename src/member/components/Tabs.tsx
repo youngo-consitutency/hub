@@ -1,7 +1,7 @@
 import type { ElementType, ReactNode } from 'react'
 import { Tab, TabList, TabPanel, Tabs as AriaTabs, type TabsProps } from 'react-aria-components'
 
-export interface TabItem {
+interface TabItem {
   id: string
   label: ReactNode
   icon?: ElementType

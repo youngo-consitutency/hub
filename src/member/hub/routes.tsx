@@ -7,7 +7,7 @@ import type { AnyValue } from '../lib/types'
 type Props = Record<string, string>
 type Loader = () => Promise<ComponentType<AnyValue>>
 
-export type HubRoute =
+type HubRoute =
   | { kind: 'page'; pattern: RegExp; keys: string[]; Page: ComponentType<AnyValue>; fixed?: Props }
   | { kind: 'redirect'; pattern: RegExp; keys: string[]; to: string }
 
@@ -48,7 +48,7 @@ const from =
     (await load())[name]
 
 // static paths come before the dynamic ones that would also match them
-export const HUB_ROUTES: HubRoute[] = [
+const HUB_ROUTES: HubRoute[] = [
   page(
     '/',
     from(() => import('../pages/Home'), 'Home'),
@@ -240,7 +240,7 @@ export const HUB_ROUTES: HubRoute[] = [
   redirect('/staff/points', '/work'),
 ]
 
-export type HubMatch =
+type HubMatch =
   { kind: 'page'; Page: ComponentType<AnyValue>; props: Props } | { kind: 'redirect'; to: string }
 
 export function matchHubRoute(path: string): HubMatch | null {

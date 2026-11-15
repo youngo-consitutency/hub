@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiGet, apiPost, apiPatch } from '../../lib/api'
 
-export const get = <T>(path: string): Promise<T> => apiGet(`/platform${path}`)
+const get = <T>(path: string): Promise<T> => apiGet(`/platform${path}`)
 export const post = (path: string, body: unknown = {}) => apiPost(`/platform${path}`, body)
 export const patch = (path: string, body: unknown) => apiPatch(`/platform${path}`, body)
-export const SAVED_EVENT = 'platform:saved'
+const SAVED_EVENT = 'platform:saved'
 export const announceSaved = () => window.dispatchEvent(new Event(SAVED_EVENT))
 
 export function usePlatform<T>(path: string) {

@@ -5,7 +5,7 @@ import { NumberTicker } from '../../components/fx/NumberTicker'
 import { HeroArt, type HeroArtKind } from '../../components/HeroArt'
 import { HeroBand } from '../../components/HeroBand'
 
-export interface PageFact {
+interface PageFact {
   icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>
   value: number
   label: string

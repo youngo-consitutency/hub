@@ -64,7 +64,7 @@ export function verifyUnsubscribeToken(token: string) {
   }
 }
 
-export function unsubscribeUrl(accountId: AnyValue, category: string) {
+function unsubscribeUrl(accountId: AnyValue, category: string) {
   return `${appBaseUrl()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
 }
 

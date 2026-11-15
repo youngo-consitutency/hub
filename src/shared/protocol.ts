@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../member/lib/types'
+import type { AnyValue } from '../member/lib/types'
 // Governance-protocol contracts shared by the web app and server: which
 // roles exist per body kind, which roles grant website access, and which
 // task-force slugs are routable. Display labels live in the
@@ -24,8 +24,4 @@ export function normalizeTaskForces(value: AnyValue) {
       name: String(item.name || item.slug).trim(),
       purpose: String(item.purpose || '').trim(),
     }))
-}
-
-export function taskForceBySlug(group: Doc, slug: AnyValue) {
-  return normalizeTaskForces(group?.taskForces).find((item) => item.slug === slug) || null
 }

@@ -104,7 +104,7 @@ export function endpoint(handler: Handler): Handler {
 export const json = (data: unknown, init?: ResponseInit) => Response.json(data, init)
 
 /** Parsed request body — handlers validate the fields they read. */
-export type JsonBody = Doc
+type JsonBody = Doc
 
 // absent body → {}, malformed json is the caller's fault, not a 500
 export async function readBody<T extends JsonBody = JsonBody>(req: PayloadRequest): Promise<T> {

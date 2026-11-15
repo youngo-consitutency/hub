@@ -4,7 +4,7 @@
 // the paths avoid the Hub's own top-level names (/work, /resources, ...), which still redirect
 // into /hub for old links
 
-export interface SiteRoute {
+interface SiteRoute {
   href: string
   label: string
   /** anchors inside the page, shown as the header dropdown and in the mobile menu */

@@ -7,7 +7,7 @@ export const DECISION_TYPES = [
   'og_snap', // on-ground snap: meeting decision, ⅔ majority
   'press_release', // 48h / 24h / 24h; red flags get +4d resolution window
 ] as const
-export type DecisionType = (typeof DECISION_TYPES)[number]
+type DecisionType = (typeof DECISION_TYPES)[number]
 
 // Red flag rationale categories, Annex 3 of S09.
 export const RED_FLAG_CATEGORIES = [
@@ -24,7 +24,7 @@ export const RED_FLAG_CATEGORIES = [
 const H = 3_600_000
 const D = 24 * H
 
-export interface PhaseWindows {
+interface PhaseWindows {
   consultationEndsAt: string
   revisionEndsAt: string
   decisionEndsAt: string

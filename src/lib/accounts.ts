@@ -105,7 +105,7 @@ export function requireAccount(req: PayloadRequest): AccountLike {
   return user as AccountLike
 }
 
-export interface MemberContext {
+interface MemberContext {
   account: AccountLike
   access: AccessProfile
 }

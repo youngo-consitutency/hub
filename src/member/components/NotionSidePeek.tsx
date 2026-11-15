@@ -30,7 +30,7 @@ export interface NotionPeekTab {
   content: ReactNode
 }
 
-export interface NotionSidePeekProps {
+interface NotionSidePeekProps {
   isOpen: boolean
   onClose: () => void
   title: string
