@@ -1,6 +1,6 @@
 # Scripts
 
-Run from the repository root. Scripts that write to the database read `DATABASE_URL` from `.env.local`, so check which database it names first. `agent/hub-mcp.mjs` never touches the database: it writes through the Hub API at `HUB_ORIGIN` (also from `.env.local`), so check that origin instead. Agents never run writing scripts against production; a maintainer does.
+Run from the repository root. Scripts that write to the database read `DATABASE_URL` from `.env.local`, so check which database it names first. `agent/hub-mcp.mjs` never touches the database: it writes through the Hub API at `HUB_ORIGIN`, which `npm run sync:mcp` copies from `.env.local` into the generated client config, so check that origin instead. With `HINDSIGHT_API_KEY` set it also retains session memory to the Hindsight `youngo-hub` bank, a separate remote service. Agents never run writing scripts against production; a maintainer does.
 
 | Script                                 | Purpose                                                           | Writes?                         |
 | -------------------------------------- | ----------------------------------------------------------------- | ------------------------------- |
