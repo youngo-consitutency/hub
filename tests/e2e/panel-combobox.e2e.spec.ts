@@ -16,7 +16,7 @@ test('a combobox inside a side panel opens and selects', async ({ page }) => {
     name: 'E2E Operator',
     // officer roles only count while constituency work is active
     membershipTrack: 'constituency_work',
-    records: [{ role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }],
+    records: [{ role: 'gct.internal', scopeType: 'team', scopeId: 'gct' }],
   })
 
   await page.goto(`${BASE}/signin`)

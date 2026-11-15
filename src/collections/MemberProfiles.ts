@@ -33,9 +33,8 @@ export const MemberProfiles: CollectionConfig = {
     { name: 'showRoles', type: 'checkbox', defaultValue: true },
     { name: 'roleTitle', type: 'text' },
     { name: 'revision', type: 'number', defaultValue: 1 },
-    // Photo bytes live in member_profile_photos (bytea, migration-managed):
-    // member photos must never pass through the public media store.
-    { name: 'hasPhoto', type: 'checkbox', defaultValue: false },
-    { name: 'photoUpdatedAt', type: 'date' },
+    // Avatar builder picks, allowlisted in src/shared/avatar.ts. Members never
+    // upload images; null draws the default seeded by the account id.
+    { name: 'avatar', type: 'json' },
   ],
 }

@@ -33,7 +33,8 @@
     padding: 0 var(--space-4);
   }
 
-  .pill {
+  .pill,
+  .sortOption {
     height: auto;
     min-height: 44px;
   }
@@ -43,6 +44,13 @@
     min-width: 44px;
     min-height: 44px;
     flex-shrink: 0;
+  }
+
+  /* the clear button is 26px, so a transparent overlay brings it to a 44px target */
+  .searchClear::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
   }
 
   /* ── Section "see all" links ────────────────────────

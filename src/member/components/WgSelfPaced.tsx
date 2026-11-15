@@ -286,13 +286,12 @@ export function WgSelfPaced({ course, storageKey, onReachEnd }: WgSelfPacedProps
             <ChevronRight size={22} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
-        <div className="jtDots" role="tablist" aria-label="Onboarding slides">
+        <div className="jtDots" role="group" aria-label="Onboarding slides">
           {slides.map((item: Doc, itemIndex: AnyValue) => (
             <button
               key={item.id}
               type="button"
-              role="tab"
-              aria-selected={itemIndex === index}
+              aria-current={itemIndex === index ? 'step' : undefined}
               aria-label={`${item.title}, slide ${itemIndex + 1}`}
               className={itemIndex === index ? 'is-current' : undefined}
               onClick={() => go(itemIndex)}

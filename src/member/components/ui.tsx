@@ -4,7 +4,6 @@ interface AProps {
   children?: import('react').ReactNode
   onClick?: AnyValue
   target?: AnyValue
-  peek?: AnyValue
   [key: string]: AnyValue
 }
 
@@ -83,6 +82,8 @@ interface SectionProps {
 
 interface SkeletonsProps {
   n?: AnyValue
+  /** card-shaped placeholders in the real card grid, so the page does not jump when data lands */
+  grid?: boolean
 }
 
 interface EmptyProps {
@@ -110,14 +111,16 @@ interface TimelineProps {
 interface AsyncProps {
   query?: AnyValue
   skeletons?: AnyValue
+  grid?: boolean
   children: (data: Doc) => import('react').ReactNode
   empty?: AnyValue
 }
 
 import type { AnyValue, Doc } from '../lib/types'
 import { Fragment } from 'react'
+import { Button as RacButton, Input, SearchField } from 'react-aria-components'
 import Link from 'next/link'
-import { currentAppUrl, hrefFor, navigate, replace, peekBackground } from '../lib/router'
+import { hrefFor, isPanelPath, navigate } from '../lib/router'
 import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
@@ -132,18 +135,10 @@ import {
   TbSearch,
 } from 'react-icons/tb'
 
-export function A({
-  href,
-  className,
-  children,
-  onClick,
-  target,
-  peek = /^\/(calendar|groups|coys|submissions|council)\/[^/]+$/.test(href || ''),
-  ...rest
-}: AProps) {
+export function A({ href, className, children, onClick, target, ...rest }: AProps) {
   // next/link prefetches the route chunk on viewport/hover, so soft
   // navigations land without waiting on a fresh download. The click handler
-  // still owns the actual navigation (peek state, replace vs push).
+  // still owns the actual navigation (scroll handling, hash routing).
   return (
     <Link
       href={hrefFor(href as string)}
@@ -162,21 +157,9 @@ export function A({
         )
           return
         e.preventDefault()
-        const background = peekBackground()
-        const go = peek && background ? replace : navigate
-        go(
-          href,
-          peek
-            ? {
-                state: {
-                  peekBackground: background || currentAppUrl(),
-                },
-                scroll: false,
-              }
-            : undefined,
-        )
+        // opening a side panel keeps the list where it was
+        navigate(href as string, { scroll: !isPanelPath(href) })
       }}
-      aria-haspopup={peek ? 'dialog' : undefined}
       {...rest}
     >
       {children}
@@ -199,20 +182,64 @@ interface SearchBoxProps {
   onChange: (value: string) => void
 }
 
-/** The search field every catalogue and list page uses. */
+/** The search field every catalogue and list page uses (react-aria: clear button, Escape, labelling). */
 export function SearchBox({ label, placeholder = label, value, onChange }: SearchBoxProps) {
   return (
-    <label className="searchInputWrap">
-      <span className="srOnly">{label}</span>
+    <SearchField className="searchInputWrap" aria-label={label} value={value} onChange={onChange}>
       <TbSearch size={18} strokeWidth={1.75} aria-hidden />
-      <input
-        className="input"
-        type="search"
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+      <Input className="input" placeholder={placeholder} />
+      <RacButton className="searchClear" aria-label="Clear search">
+        <TbX size={15} strokeWidth={1.75} aria-hidden />
+      </RacButton>
+    </SearchField>
+  )
+}
+
+interface CatalogToolbarProps {
+  /** omit for toolbars that only filter, like the calendar's */
+  search?: SearchBoxProps
+  sortLabel?: string
+  sort?: import('react').ReactNode
+  /** extra rows between search and the filter menu, e.g. category pills */
+  children?: import('react').ReactNode
+  filters?: import('react').ReactNode
+}
+
+/**
+ * The one toolbar every browse page uses, so they all behave and wrap alike. Slots, in order:
+ * `search`; `sort` (how the list is ordered); `children` (quick pills: categories and on/off switches);
+ * `filters` (a FilterMenu, only when there is a real choice to make).
+ */
+export function CatalogToolbar({
+  search,
+  sortLabel,
+  sort,
+  children,
+  filters,
+}: CatalogToolbarProps) {
+  return (
+    <div className="mb-4 flex flex-col gap-3 rounded-card border border-line bg-raised p-3 [&_.searchInputWrap]:w-full max-[620px]:[&>.pillRow]:flex-nowrap max-[620px]:[&>.pillRow]:overflow-x-auto max-[620px]:[&_fieldset_.pillRow]:flex-nowrap max-[620px]:[&_fieldset_.pillRow]:overflow-x-auto">
+      {(search || sort) && (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 max-[620px]:grid-cols-1 max-[620px]:gap-2">
+          {search && <SearchBox {...search} />}
+          {sort && (
+            <div
+              role="group"
+              aria-label={sortLabel}
+              className="inline-flex items-center gap-1 rounded-control bg-raised p-1 max-[620px]:w-max max-[620px]:max-w-full max-[620px]:self-start max-[620px]:overflow-x-auto"
+            >
+              {sort}
+            </div>
+          )}
+        </div>
+      )}
+      {children}
+      {filters && (
+        <div className="flex items-center justify-between gap-3 max-[620px]:flex-col max-[620px]:items-stretch [&_.filterMenu]:w-full [&_.filterMenuPanel]:w-full [&_.filterMenuPanel]:max-w-full">
+          {filters}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -500,11 +527,11 @@ export function Section({ label, meta, action, children }: SectionProps) {
   )
 }
 
-export function Skeletons({ n = 3 }: SkeletonsProps) {
+export function Skeletons({ n = 3, grid }: SkeletonsProps) {
   return (
-    <div className="stack" role="status" aria-label="Loading content">
+    <div className={grid ? 'cardGrid' : 'stack'} role="status" aria-label="Loading content">
       {Array.from({ length: n }).map((_, i) => (
-        <div key={i} className="skeleton" />
+        <div key={i} className={grid ? 'skeleton skeletonCard' : 'skeleton'} />
       ))}
     </div>
   )
@@ -568,8 +595,8 @@ export function Timeline({ steps, currentIndex }: TimelineProps) {
 }
 
 // Wrap an async section: shows skeletons, error-retry, or children(data).
-export function Async({ query, skeletons = 3, children, empty }: AsyncProps) {
-  if (query.loading) return <Skeletons n={skeletons} />
+export function Async({ query, skeletons = 3, grid, children, empty }: AsyncProps) {
+  if (query.loading) return <Skeletons n={skeletons} grid={grid} />
   if (query.error) return <ErrorCard message={query.error} onRetry={query.retry} />
   if (empty && empty(query.data)) return empty(query.data)
   return children(query.data)

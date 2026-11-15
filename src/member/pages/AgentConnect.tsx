@@ -2,6 +2,7 @@
 
 import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
+import { Tabs } from '../components/Tabs'
 import {
   TbCheck as Check,
   TbCopy as Copy,
@@ -118,7 +119,6 @@ function Connector({ data, reload }: { data: Doc; reload: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [secret, setSecret] = useState<Doc | null>(null)
-  const [snippet, setSnippet] = useState<'claude' | 'cursor'>('claude')
   const activeKeys = (data.keys || []).filter((k: Doc) => k.state === 'active')
   const url = data.mcpUrl || 'https://<youngo-mcp-host>/mcp'
 
@@ -217,23 +217,18 @@ function Connector({ data, reload }: { data: Doc; reload: () => void }) {
 
           <Section label="Connect your agent">
             <div className="card agentSnippet">
-              <div className="rowGap" role="tablist" aria-label="Agent">
-                {(['claude', 'cursor'] as const).map((value) => (
-                  <Button
-                    key={value}
-                    sm
-                    role="tab"
-                    aria-selected={snippet === value}
-                    variant={snippet === value ? 'secondary' : 'ghost'}
-                    onClick={() => setSnippet(value)}
-                  >
-                    {value === 'claude' ? 'Claude Code' : 'Cursor (.cursor/mcp.json)'}
-                  </Button>
-                ))}
-              </div>
-              <pre>
-                <code>{SNIPPETS[snippet](url)}</code>
-              </pre>
+              <Tabs
+                label="Agent"
+                items={(['claude', 'cursor'] as const).map((value) => ({
+                  id: value,
+                  label: value === 'claude' ? 'Claude Code' : 'Cursor (.cursor/mcp.json)',
+                  content: (
+                    <pre>
+                      <code>{SNIPPETS[value](url)}</code>
+                    </pre>
+                  ),
+                }))}
+              />
             </div>
           </Section>
 

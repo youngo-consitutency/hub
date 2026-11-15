@@ -14,6 +14,7 @@ import {
 } from 'react-icons/tb'
 import { apiDelete, apiPost, useApi } from '../lib/api'
 import { formatDateTime } from '../lib/time'
+import { Tabs } from './Tabs'
 import { Async, Button, Empty, ErrorCard, Section } from './ui'
 import { FieldError } from './FormControls'
 
@@ -80,44 +81,39 @@ export function CoyLive({ slug }: { slug: string }) {
 }
 
 function CoyOrganiserTools({ slug, onAnnounced }: { slug: string; onAnnounced: () => void }) {
-  const [tab, setTab] = useState<'participants' | 'announce'>('participants')
   const participants = useApi(`/member/coy/${slug}/participants`, [slug])
   return (
     <Section label="Organiser tools">
       <div className="card coyTools">
-        <div className="rowGap" role="tablist" aria-label="Organiser tools">
-          {[
-            { value: 'participants', label: 'Participants', Icon: Users },
-            { value: 'announce', label: 'Announce', Icon: Megaphone },
-          ].map(({ value, label, Icon }) => (
-            <Button
-              key={value}
-              sm
-              role="tab"
-              aria-selected={tab === value}
-              variant={tab === value ? 'secondary' : 'ghost'}
-              onClick={() => setTab(value as AnyValue)}
-            >
-              <Icon size={16} strokeWidth={1.75} aria-hidden />
-              {label}
-            </Button>
-          ))}
-        </div>
         <Async query={participants} skeletons={2}>
-          {(data: Doc) =>
-            tab === 'participants' ? (
-              <Participants slug={slug} data={data} onChange={participants.retry} />
-            ) : (
-              <Announce
-                slug={slug}
-                summary={data.summary}
-                onSent={() => {
-                  onAnnounced()
-                  participants.retry()
-                }}
-              />
-            )
-          }
+          {(data: Doc) => (
+            <Tabs
+              label="Organiser tools"
+              items={[
+                {
+                  id: 'participants',
+                  label: 'Participants',
+                  icon: Users,
+                  content: <Participants slug={slug} data={data} onChange={participants.retry} />,
+                },
+                {
+                  id: 'announce',
+                  label: 'Announce',
+                  icon: Megaphone,
+                  content: (
+                    <Announce
+                      slug={slug}
+                      summary={data.summary}
+                      onSent={() => {
+                        onAnnounced()
+                        participants.retry()
+                      }}
+                    />
+                  ),
+                },
+              ]}
+            />
+          )}
         </Async>
       </div>
     </Section>

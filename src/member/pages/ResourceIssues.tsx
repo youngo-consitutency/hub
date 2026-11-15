@@ -65,6 +65,18 @@ function ResourceQueue({ account }: ResourceQueueProps) {
           : item.verification.status === filter)
       )
     }) || []
+  // flagged first, then never checked, then the stalest check
+  if (filter !== 'submissions')
+    items.sort((a: AnyValue, b: AnyValue) => {
+      const rank = (v: AnyValue) => [v.openIssues > 0 ? 0 : 1, v.checkedAt ? 1 : 0]
+      const [fa, ca] = rank(a.verification)
+      const [fb, cb] = rank(b.verification)
+      return (
+        fa - fb ||
+        ca - cb ||
+        String(a.verification.checkedAt).localeCompare(String(b.verification.checkedAt))
+      )
+    })
   function saved(text: AnyValue) {
     setSelected(null)
     setMessage(text)

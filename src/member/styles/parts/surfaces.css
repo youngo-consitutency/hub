@@ -215,10 +215,7 @@ a.mcMetricLink:focus-visible {
   }
 }
 
-/* Home starts with a compact summary; event details appear once in the agenda. */
-.homeSummary {
-  margin-bottom: var(--section-gap);
-}
+/* the three counts in Home's hero band */
 .homeMetrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -276,4 +273,22 @@ a.mcMetricLink:focus-visible {
 }
 .workspaceStart:hover {
   background: var(--bg-raised);
+}
+
+/* Home: personal shortcuts in a fixed rail beside the feed once there is room */
+.homeColumns {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@container (min-width: 960px) {
+  .homeColumns {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+
+  .homeSide {
+    position: sticky;
+    top: var(--space-6);
+  }
 }

@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/types'
+import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -11,7 +12,7 @@ import {
   FilterPill,
   PageHeader,
   SortButton,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import { GroupCard } from '../components/cards'
 import { GroupPeek } from '../components/EntityPeeks'
@@ -41,11 +42,11 @@ const TOPIC_ICONS = {
 }
 
 /** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
-export function Groups() {
+export function Groups({ slug }: { slug?: string }) {
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState<Doc>({})
   const [descending, setDescending] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState<AnyValue | null>(null)
+  const panel = usePeek('/groups', '/groups', slug)
   const query = useApi('/groups')
   const { doc: directory } = useDocument('directory')
   const topicList = directory?.topics || []
@@ -57,6 +58,8 @@ export function Groups() {
         <PageSectionNav section="groups" />
       </PageHeader>
       <Async
+        grid
+        skeletons={6}
         query={query}
         empty={(d: AnyValue) =>
           d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null
@@ -90,59 +93,64 @@ export function Groups() {
                 if (!topicKey) return
                 setTopics((current) => toggleFilter(current, topicKey))
               }}
-              onPeek={(selected) => setSelectedGroup(selected)}
             />
           )
 
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox
-                    label="Search working groups"
-                    placeholder="Search groups or topics"
-                    value={search}
-                    onChange={setSearch}
-                  />
-                  <div className="catalogDisplayControls">
-                    <div className="sortControl" aria-label="Sort groups">
-                      <SortButton
-                        active
-                        icon={descending ? ArrowUpAZ : ArrowDownAZ}
-                        onClick={() => setDescending((current) => !current)}
-                      >
-                        Name {descending ? 'Z–A' : 'A–Z'}
-                      </SortButton>
-                    </div>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu activeCount={activeFilterCount(topics)} onClear={() => setTopics({})}>
-                    <fieldset className="filterLevel">
-                      <legend>Topics</legend>
-                      <div className="pillRow">
-                        <FilterPill
-                          active={activeFilterCount(topics) === 0}
-                          icon={Tags}
-                          onClick={() => setTopics({})}
-                        >
-                          All topics
-                        </FilterPill>
-                        {topicList.map((item: Doc) => (
+              <CatalogToolbar
+                search={{
+                  label: 'Search working groups',
+                  placeholder: 'Search groups or topics',
+                  value: search,
+                  onChange: setSearch,
+                }}
+                sortLabel="Sort groups"
+                sort={
+                  <>
+                    <SortButton
+                      active
+                      icon={descending ? ArrowUpAZ : ArrowDownAZ}
+                      onClick={() => setDescending((current) => !current)}
+                    >
+                      Name {descending ? 'Z–A' : 'A–Z'}
+                    </SortButton>
+                  </>
+                }
+                filters={
+                  topicList.length > 0 && (
+                    <FilterMenu
+                      activeCount={activeFilterCount(topics)}
+                      onClear={() => setTopics({})}
+                    >
+                      <fieldset className="filterLevel">
+                        <legend>Topics</legend>
+                        <div className="pillRow">
                           <FilterPill
-                            key={item.key}
-                            state={topics[item.key] || 'neutral'}
-                            icon={(TOPIC_ICONS as AnyValue)[item.key]}
-                            onClick={() => setTopics((current) => toggleFilter(current, item.key))}
+                            active={activeFilterCount(topics) === 0}
+                            icon={Tags}
+                            onClick={() => setTopics({})}
                           >
-                            {item.label}
+                            All topics
                           </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                  </FilterMenu>
-                </div>
-              </div>
+                          {topicList.map((item: Doc) => (
+                            <FilterPill
+                              key={item.key}
+                              state={topics[item.key] || 'neutral'}
+                              icon={(TOPIC_ICONS as AnyValue)[item.key]}
+                              onClick={() =>
+                                setTopics((current) => toggleFilter(current, item.key))
+                              }
+                            >
+                              {item.label}
+                            </FilterPill>
+                          ))}
+                        </div>
+                      </fieldset>
+                    </FilterMenu>
+                  )
+                }
+              />
               <CatalogueResults count={groups.length}>
                 {groups.length ? (
                   <div className="cardGrid">{groups.map(renderGroup)}</div>
@@ -158,7 +166,7 @@ export function Groups() {
           )
         }}
       </Async>
-      <GroupPeek item={selectedGroup} onClose={() => setSelectedGroup(null)} />
+      <GroupPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

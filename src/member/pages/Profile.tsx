@@ -109,7 +109,7 @@ export function Profile() {
                     <li
                       key={`${assignment.wgSlug}-${assignmentLabels[assignment.role] || 'Member'}`}
                     >
-                      <A href={`/groups/${assignment.wgSlug}`} className="inlineLink" peek>
+                      <A href={`/groups/${assignment.wgSlug}`} className="inlineLink">
                         {assignment.wgName || wg.label(assignment.wgSlug)}
                       </A>{' '}
                       · {assignmentLabels[assignment.role] || 'Member'}
@@ -133,7 +133,6 @@ export function Profile() {
                               <A
                                 href={`/groups/${slug}`}
                                 className="chip chip-neutral personLinkChip"
-                                peek
                               >
                                 <GroupIcon size={13} strokeWidth={1.75} aria-hidden />
                                 {wg.label(slug)}

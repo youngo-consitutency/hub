@@ -16,15 +16,9 @@ const WEBSITE_PERMISSIONS = ['content_editor', 'content_publisher']
 async function profileRow(accountId: number) {
   const pool = getPgPool()
   if (!pool) return null
-  const { rows } = await pool.query(
-    `SELECT p.*,
-            ph.updated_at AS photo_updated_at,
-            (ph.account_id IS NOT NULL) AS has_photo
-     FROM member_profiles p
-     LEFT JOIN member_profile_photos ph ON ph.account_id=p.account_id
-     WHERE p.account_id=$1`,
-    [accountId],
-  )
+  const { rows } = await pool.query(`SELECT p.* FROM member_profiles p WHERE p.account_id=$1`, [
+    accountId,
+  ])
   return rows[0] || null
 }
 
@@ -139,7 +133,7 @@ function safePerson(
     workingGroups: duty || profile.showWorkingGroups ? relationships.workingGroups : [],
     teams: duty || profile.showRoles ? relationships.teams : [],
     platformRole: duty || profile.showRoles ? relationships.platformRole : null,
-    photoUrl: profile.photoUrl,
+    avatar: profile.avatar,
     updatedAt: profile.updatedAt,
   }
 }
@@ -228,11 +222,8 @@ export async function listMemberPeople({
   const offsetSlot = values.length + 2
   const { rows } = await pool.query(
     `SELECT a.*, p.*,
-            (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles,
-            ph.updated_at AS photo_updated_at,
-            (ph.account_id IS NOT NULL) AS has_photo
+            (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles
      FROM ${fromSql}
-     LEFT JOIN member_profile_photos ph ON ph.account_id=a.id
      ${clause}
      ORDER BY COALESCE(NULLIF(p.display_name,''), a.name) ASC
      LIMIT $${limitSlot} OFFSET $${offsetSlot}`,
@@ -272,20 +263,4 @@ export async function getMemberPerson(viewer: AccountLike, accountId: AnyValue) 
   if (profile.directoryVisibility !== 'members' && !canOverride) return null
   const maps = await relationshipMaps([account])
   return safePerson(profile, account, relationshipsFor(account, maps))
-}
-
-export async function getOwnMemberProfile(account: AccountLike) {
-  const profile = profileShape(await profileRow(account.id), account)
-  const maps = await relationshipMaps([account])
-  return {
-    ...profile,
-    account: {
-      id: account.id,
-      name: account.name,
-      email: account.email,
-      country: account.country || null,
-      region: account.region || null,
-    },
-    relationships: relationshipsFor(account, maps),
-  }
 }

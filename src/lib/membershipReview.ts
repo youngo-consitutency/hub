@@ -166,7 +166,6 @@ export async function listMembershipReviewItems() {
 function profileShape(row: Doc, account: AccountLike) {
   const r = toCamelCase<AnyValue>(row)
   const updatedAt = r.updatedAt ?? null
-  const photoUpdatedAt = r.photoUpdatedAt ?? null
   return {
     accountId: account.id,
     displayName: r.displayName ?? account.name ?? 'YOUNGO member',
@@ -182,11 +181,7 @@ function profileShape(row: Doc, account: AccountLike) {
     roleTitle: r.roleTitle ?? '',
     revision: r.revision || 1,
     updatedAt,
-    hasPhoto: Boolean(r.hasPhoto ?? photoUpdatedAt),
-    photoUpdatedAt,
-    photoUrl: photoUpdatedAt
-      ? `/api/member/people/${account.id}/photo?v=${encodeURIComponent(photoUpdatedAt)}`
-      : null,
+    avatar: r.avatar ?? null,
   }
 }
 
@@ -197,12 +192,7 @@ export async function listMemberProfileSummaries(accounts: AccountLike[]) {
   let rows: Doc[] = []
   if (pool) {
     const result = await pool.query(
-      `SELECT p.*,
-              ph.updated_at AS photo_updated_at,
-              (ph.account_id IS NOT NULL) AS has_photo
-       FROM member_profiles p
-       LEFT JOIN member_profile_photos ph ON ph.account_id=p.account_id
-       WHERE p.account_id=ANY($1::int[])`,
+      `SELECT p.* FROM member_profiles p WHERE p.account_id=ANY($1::int[])`,
       [accounts.map((account) => account.id)],
     )
     rows = result.rows
@@ -215,8 +205,7 @@ export async function listMemberProfileSummaries(accounts: AccountLike[]) {
       headline: profile.headline,
       expertiseTags: profile.expertiseTags,
       directoryVisibility: profile.directoryVisibility,
-      hasPhoto: profile.hasPhoto,
-      photoUrl: profile.photoUrl,
+      avatar: profile.avatar,
       updatedAt: profile.updatedAt,
     })
   }

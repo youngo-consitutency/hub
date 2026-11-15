@@ -606,9 +606,10 @@ export function MembershipTeam() {
                           <div className="queueIdentity membershipQueueIdentity">
                             <MemberAvatar
                               person={{
+                                id: item.id,
                                 name: item.name,
                                 displayName: item.profile?.displayName,
-                                photoUrl: item.profile?.photoUrl,
+                                avatar: item.profile?.avatar,
                               }}
                               size="sm"
                             />
@@ -640,9 +641,6 @@ export function MembershipTeam() {
                                 <span className="chip chip-neutral">
                                   Directory: {item.profile?.directoryVisibility || 'private'}
                                 </span>
-                                {item.profile?.hasPhoto && (
-                                  <span className="chip chip-neutral">Photo</span>
-                                )}
                               </div>
                             </div>
                           </div>

@@ -1,4 +1,5 @@
 import type { AnyValue, Doc } from '../lib/types'
+import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbFileText as PolicyIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -12,7 +13,7 @@ import {
   FilterPill,
   PageHeader,
   SortButton,
-  SearchBox,
+  CatalogToolbar,
 } from '../components/ui'
 import { SubmissionCard } from '../components/cards'
 import { SubmissionPeek } from '../components/EntityPeeks'
@@ -45,13 +46,13 @@ const ARCHIVE_STATUSES = [
 ]
 
 /** Browse open or archived submissions with search, stage and group filters, sorting and layouts. */
-export function Submissions() {
+export function Submissions({ slug }: { slug?: string }) {
   const [state, setState] = useState('open')
   const [statusFilters, setStatusFilters] = useState<Doc>({})
   const [groupFilters, setGroupFilters] = useState<Doc>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
-  const [selectedSubmission, setSelectedSubmission] = useState<AnyValue | null>(null)
+  const panel = usePeek('/submissions', '/submissions', slug)
   const query = useApi(`/submissions?state=${state}`, [state])
 
   const changeState = (nextState: AnyValue) => {
@@ -139,15 +140,16 @@ export function Submissions() {
 
           return (
             <>
-              <div className="catalogTools">
-                <div className="catalogSearchRow">
-                  <SearchBox
-                    label="Search submissions"
-                    placeholder="Search submissions or working groups"
-                    value={search}
-                    onChange={setSearch}
-                  />
-                  <div className="sortControl" aria-label="Sort submissions">
+              <CatalogToolbar
+                search={{
+                  label: 'Search submissions',
+                  placeholder: 'Search submissions or working groups',
+                  value: search,
+                  onChange: setSearch,
+                }}
+                sortLabel="Sort submissions"
+                sort={
+                  <>
                     <SortButton
                       active={sort === 'date'}
                       icon={CalendarClock}
@@ -162,70 +164,76 @@ export function Submissions() {
                     >
                       Title A–Z
                     </SortButton>
-                  </div>
-                </div>
-                <div className="catalogControlRow catalogFilterRow">
-                  <FilterMenu
-                    onClear={() => {
-                      setStatusFilters({})
-                      setGroupFilters({})
-                    }}
-                    activeCount={activeFilterCount(statusFilters) + activeFilterCount(groupFilters)}
-                  >
-                    <fieldset className="filterLevel">
-                      <legend>{state === 'open' ? 'Stage' : 'Outcome'}</legend>
-                      <div className="pillRow">
-                        {statuses.map((item) => (
-                          <FilterPill
-                            key={item.key}
-                            active={item.key === 'all' && activeFilterCount(statusFilters) === 0}
-                            state={
-                              item.key === 'all' ? undefined : statusFilters[item.key] || 'neutral'
-                            }
-                            icon={item.icon}
-                            onClick={() => {
-                              if (item.key === 'all') setStatusFilters({})
-                              else {
-                                setStatusFilters((current) => toggleFilter(current, item.key))
-                              }
-                            }}
-                          >
-                            {item.label}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </fieldset>
-                    {groups.length > 1 && (
+                  </>
+                }
+                filters={
+                  <>
+                    <FilterMenu
+                      onClear={() => {
+                        setStatusFilters({})
+                        setGroupFilters({})
+                      }}
+                      activeCount={
+                        activeFilterCount(statusFilters) + activeFilterCount(groupFilters)
+                      }
+                    >
                       <fieldset className="filterLevel">
-                        <legend>Working group</legend>
+                        <legend>{state === 'open' ? 'Stage' : 'Outcome'}</legend>
                         <div className="pillRow">
-                          <FilterPill
-                            active={activeFilterCount(groupFilters) === 0}
-                            icon={Tags}
-                            onClick={() => setGroupFilters({})}
-                          >
-                            All groups
-                          </FilterPill>
-                          {groups.map((item) => (
+                          {statuses.map((item) => (
                             <FilterPill
-                              key={(item as AnyValue).slug}
-                              state={groupFilters[(item as AnyValue).slug] || 'neutral'}
-                              icon={workingGroupIcon((item as AnyValue).slug)}
-                              onClick={() =>
-                                setGroupFilters((current) =>
-                                  toggleFilter(current, (item as AnyValue).slug),
-                                )
+                              key={item.key}
+                              active={item.key === 'all' && activeFilterCount(statusFilters) === 0}
+                              state={
+                                item.key === 'all'
+                                  ? undefined
+                                  : statusFilters[item.key] || 'neutral'
                               }
+                              icon={item.icon}
+                              onClick={() => {
+                                if (item.key === 'all') setStatusFilters({})
+                                else {
+                                  setStatusFilters((current) => toggleFilter(current, item.key))
+                                }
+                              }}
                             >
-                              {(item as AnyValue).name}
+                              {item.label}
                             </FilterPill>
                           ))}
                         </div>
                       </fieldset>
-                    )}
-                  </FilterMenu>
-                </div>
-              </div>
+                      {groups.length > 1 && (
+                        <fieldset className="filterLevel">
+                          <legend>Working group</legend>
+                          <div className="pillRow">
+                            <FilterPill
+                              active={activeFilterCount(groupFilters) === 0}
+                              icon={Tags}
+                              onClick={() => setGroupFilters({})}
+                            >
+                              All groups
+                            </FilterPill>
+                            {groups.map((item) => (
+                              <FilterPill
+                                key={(item as AnyValue).slug}
+                                state={groupFilters[(item as AnyValue).slug] || 'neutral'}
+                                icon={workingGroupIcon((item as AnyValue).slug)}
+                                onClick={() =>
+                                  setGroupFilters((current) =>
+                                    toggleFilter(current, (item as AnyValue).slug),
+                                  )
+                                }
+                              >
+                                {(item as AnyValue).name}
+                              </FilterPill>
+                            ))}
+                          </div>
+                        </fieldset>
+                      )}
+                    </FilterMenu>
+                  </>
+                }
+              />
               <CatalogueResults count={submissions.length}>
                 {submissions.length ? (
                   <div className="cardGrid">
@@ -246,7 +254,6 @@ export function Submissions() {
                                 )
                             : undefined
                         }
-                        onPeek={(selected) => setSelectedSubmission(selected)}
                       />
                     ))}
                   </div>
@@ -262,7 +269,7 @@ export function Submissions() {
           )
         }}
       </Async>
-      <SubmissionPeek item={selectedSubmission} onClose={() => setSelectedSubmission(null)} />
+      <SubmissionPeek item={panel.item} onClose={panel.close} />
     </div>
   )
 }

@@ -2,23 +2,17 @@
 
 import { useState, type ComponentType, type ReactNode } from 'react'
 import {
+  TbBuilding,
+  TbBroadcast,
   TbCalendar,
   TbCalendarClock,
-  TbCalendarPlus,
-  TbChevronRight,
   TbExternalLink,
   TbFileDescription,
   TbFileText,
   TbGlobe,
-  TbHeartHandshake,
   TbInfoCircle,
-  TbLink,
   TbMapPin,
   TbPlayerPlay,
-  TbShare,
-  TbShieldCheck,
-  TbSpeakerphone,
-  TbTag,
   TbUsers,
   TbVideo,
 } from 'react-icons/tb'
@@ -28,8 +22,12 @@ import {
   type NotionPeekTab,
   type NotionProperty,
 } from './NotionSidePeek'
-import { A, Button, LifecycleTiming, StatusChip } from './ui'
+import { A, LifecycleTiming, StatusChip, Timeline } from './ui'
 import { AddToCalendar } from './AddToCalendar'
+import { EVENT_LABEL } from './cards'
+import { GroupPanel } from './GroupPanel'
+import { CoyOrganiser } from './CoyOrganiser'
+import { CoyLive } from './CoyLive'
 import { DestinationIcon } from './DestinationLink'
 import { fmtDual, fmtDateRange } from '../lib/time'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
@@ -40,7 +38,7 @@ import { coyDisplayStatus, coyApplicationsAreOpen } from '../../shared/coyStatus
 import type { AnyValue, Doc } from '../lib/types'
 
 // ── Peek framework ─────────────────────────────────────────
-// Every entity peek is a declarative descriptor rendered by the same
+// Every entity is a declarative descriptor rendered by the same
 // wrapper, so panels can only diverge where the entity genuinely does.
 
 type PeekIcon = ComponentType<{
@@ -66,7 +64,6 @@ interface PeekDef<T, P = object> {
   /** Resolves the icon per item when it depends on record fields. */
   iconFor?: (ctx: PeekContext<T, P>) => PeekIcon | ReactNode
   badge?: (ctx: PeekContext<T, P>) => ReactNode
-  fullPageHref?: (ctx: PeekContext<T, P>) => string
   copyUrl?: (ctx: PeekContext<T, P>) => string | undefined
   actions?: (ctx: PeekContext<T, P>) => ReactNode
   properties: (ctx: PeekContext<T, P>) => NotionProperty[]
@@ -75,7 +72,7 @@ interface PeekDef<T, P = object> {
 
 function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
   // Keyed inner component: `now` is captured per opened entity, not per
-  // page mount, so live/concluded state is fresh each time a peek opens.
+  // page mount, so live/concluded state is fresh each time a opens.
   function PeekBody({ item, extras, onClose }: { item: T; extras: P; onClose: () => void }) {
     const [now] = useState(() => Date.now())
     const ctx: PeekContext<T, P> = { item, extras, now, onClose }
@@ -89,7 +86,6 @@ function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
         subtitle={def.subtitle?.(ctx)}
         icon={icon}
         badge={def.badge?.(ctx)}
-        fullPageHref={def.fullPageHref?.(ctx)}
         copyUrl={def.copyUrl?.(ctx)}
         actions={def.actions?.(ctx)}
         properties={def.properties(ctx)}
@@ -136,201 +132,103 @@ const external = { target: '_blank', rel: 'noreferrer' } as const
 // ── Opportunity Peek ─────────────────────────────────────────
 
 const opportunityPeek: PeekDef<AnyValue> = {
-  eyebrow: ({ item }) =>
-    `Opportunities › ${OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}`,
+  eyebrow: () => 'Opportunities',
   title: ({ item }) => item.title,
   subtitle: ({ item }) => item.organizationName,
-  icon: TbSpeakerphone,
   badge: ({ item }) => (
     <span className="chip chip-accent">
       {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}
     </span>
   ),
   copyUrl: ({ item }) => item.linkUrl,
+  // the organisation is the subtitle and the type is the chip, so neither repeats here
   properties: ({ item }) => {
     const formatLabel = OPPORTUNITY_FORMAT_LABELS[item.format] || item.format
     const where = item.format === 'online' ? 'Online / Remote' : item.location
     const region = item.region ? regionLabel(item.region) : null
     return properties([
-      prop(
-        'Type',
-        TbTag,
-        <span className="chip chip-accent">
-          {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}
-        </span>,
-      ),
       formatLabel &&
         prop('Format', item.format === 'online' ? TbVideo : TbMapPin, text(formatLabel)),
       where && prop('Location', TbMapPin, text(where)),
       region && prop('Region', TbGlobe, text(region)),
-      item.organizationName &&
-        prop('Organisation', TbHeartHandshake, <strong>{item.organizationName}</strong>),
       item.deadlineAt &&
         prop('Application deadline', TbCalendarClock, mono(fmtDual(item.deadlineAt))),
       item.startsAt && prop('Commences', TbCalendar, mono(fmtDual(item.startsAt))),
     ])
   },
-  actions: ({ item }) =>
-    item.linkUrl ? (
-      <a className="btn btn-primary btn-sm" href={item.linkUrl} {...external}>
-        <TbExternalLink size={15} strokeWidth={1.75} aria-hidden />
-        <span>Apply now</span>
-      </a>
-    ) : null,
-  tabs: ({ item }) => {
-    const formatLabel = OPPORTUNITY_FORMAT_LABELS[item.format] || item.format
-    const where = item.format === 'online' ? 'Online / Remote' : item.location
-    const region = item.region ? regionLabel(item.region) : null
-    return [
-      {
-        id: 'overview',
-        label: 'Overview',
-        icon: TbFileDescription,
-        content: (
-          <div className="notionTabContent">
-            {item.summary && (
-              <NotionCallout icon={TbInfoCircle} tone="accent">
-                <p>{item.summary}</p>
-              </NotionCallout>
-            )}
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Key particulars</h4>
-              <ul className="notionBulletList">
-                {formatLabel && (
-                  <li>
-                    <strong>Delivery mode:</strong> {formatLabel}
-                    {where && item.format !== 'online' ? ` (${where})` : ''}
-                  </li>
-                )}
-                {region && (
-                  <li>
-                    <strong>Regional scope:</strong> {region}
-                  </li>
-                )}
-                {item.startsAt && (
-                  <li>
-                    <strong>Commencement date:</strong> {fmtDual(item.startsAt)}
-                  </li>
-                )}
-                {item.deadlineAt && (
-                  <li>
-                    <strong>Closing date:</strong> {fmtDual(item.deadlineAt)}
-                  </li>
-                )}
-              </ul>
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: 'apply',
-        label: 'Application & timeline',
-        icon: TbExternalLink,
-        content: (
-          <div className="notionTabContent">
-            {item.deadlineAt && (
-              <div className="notionCardGroup">
-                <LifecycleTiming iso={item.deadlineAt} label="Apply by" showCountdown />
-              </div>
-            )}
-            {item.linkUrl && (
-              <div className="notionSection">
-                <h4 className="notionSectionHeading">Submission portal</h4>
-                <p className="notionBodyText">
-                  Applications are managed by {item.organizationName || 'the organising body'}{' '}
-                  through its own portal.
-                </p>
-                <div className="notionActionRow">
-                  <a className="btn btn-primary btn-lg" href={item.linkUrl} {...external}>
-                    <TbExternalLink size={18} strokeWidth={1.75} aria-hidden />
-                    <span>Open application portal</span>
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: 'actions',
-        label: 'Actions & share',
-        icon: TbShare,
-        content: (
-          <div className="notionTabContent">
-            <div className="notionActionButtonsList">
-              {item.deadlineAt && (
-                <div className="notionCalendarActionWrap">
-                  <AddToCalendar
-                    event={{
-                      title: `Deadline: ${item.title}`,
-                      description: `${item.summary || ''}\n\nApply: ${item.linkUrl || ''}`,
-                      startsAt: item.deadlineAt,
-                      endsAt: item.deadlineAt,
-                    }}
-                  />
-                </div>
-              )}
-              {item.linkUrl && (
-                <a className="btn btn-secondary" href={item.linkUrl} {...external}>
-                  <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                  <span>Direct link</span>
-                </a>
-              )}
-            </div>
-          </div>
-        ),
-      },
-    ]
-  },
+  actions: ({ item }) => (
+    <>
+      {item.linkUrl && (
+        <a className="btn btn-primary btn-sm" href={item.linkUrl} {...external}>
+          <TbExternalLink size={15} strokeWidth={1.75} aria-hidden />
+          <span>Apply now</span>
+        </a>
+      )}
+      {item.deadlineAt && (
+        <AddToCalendar
+          className="btn btn-secondary btn-sm"
+          event={{
+            title: `Deadline: ${item.title}`,
+            description: `${item.summary || ''}\n\nApply: ${item.linkUrl || ''}`,
+            startsAt: item.deadlineAt,
+            endsAt: item.deadlineAt,
+          }}
+        />
+      )}
+    </>
+  ),
+  tabs: ({ item }) => [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: TbFileDescription,
+      content: (
+        <div className="notionTabContent">
+          {item.summary && (
+            <NotionCallout icon={TbInfoCircle} tone="accent">
+              <p>{item.summary}</p>
+            </NotionCallout>
+          )}
+          {item.deadlineAt && (
+            <LifecycleTiming iso={item.deadlineAt} label="Apply by" showCountdown />
+          )}
+        </div>
+      ),
+    },
+  ],
 }
 
 export const OpportunityPeek = createPeek(opportunityPeek)
 
 // ── Event Peek ───────────────────────────────────────────────
 
-// event type labels are staff-editable (content-options), so they ride in as extras
+// event type labels are staff-editable (content-options), so they ride in as extras; a type with no
+// entry there falls back to the shared card label and never shows the raw slug
+const eventTypeLabel = (type: string, labels: Record<string, string>) =>
+  labels[type] ?? (EVENT_LABEL as Record<string, string>)[type] ?? 'Event'
+
+const eventPhase = (item: AnyValue, now: number) => {
+  if (now > Date.parse(item.endsAt)) return 'concluded'
+  return now >= Date.parse(item.startsAt) ? 'live' : 'upcoming'
+}
+
 const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
-  eyebrow: ({ item, extras }) =>
-    `Calendar › ${extras.typeLabels[item.type] || item.type || 'Event'}`,
+  eyebrow: () => 'Calendar',
   title: ({ item }) => item.title,
-  subtitle: ({ item }) => (item.wg ? `${item.wg.name} WG` : undefined),
-  icon: TbCalendar,
-  fullPageHref: ({ item }) => `/calendar/${item.slug}`,
+  // type and status appear once, as chips under the bar
   badge: ({ item, now, extras }) => {
-    const live = now >= Date.parse(item.startsAt) && now <= Date.parse(item.endsAt)
-    return live ? (
-      <StatusChip status="live_now" />
-    ) : (
-      <span className="chip chip-neutral">
-        {extras.typeLabels[item.type] || item.type || 'Event'}
-      </span>
+    const phase = eventPhase(item, now)
+    return (
+      <>
+        <span className="chip chip-neutral">{eventTypeLabel(item.type, extras.typeLabels)}</span>
+        {phase === 'live' && <StatusChip status="live_now" />}
+        {phase === 'concluded' && <span className="chip chip-neutral">Concluded</span>}
+      </>
     )
   },
-  properties: ({ item, now, extras }) => {
-    const startMs = Date.parse(item.startsAt)
-    const endMs = Date.parse(item.endsAt)
-    const live = now >= startMs && now <= endMs
-    const concluded = now > endMs
+  properties: ({ item }) => {
     const GroupIcon = item.wg?.slug ? workingGroupIcon(item.wg.slug) : TbUsers
     return properties([
-      prop(
-        'Type',
-        TbTag,
-        <span className="chip chip-neutral">
-          {extras.typeLabels[item.type] || item.type || 'Event'}
-        </span>,
-      ),
-      prop(
-        'Status',
-        TbCalendarClock,
-        live ? (
-          <StatusChip status="live_now" />
-        ) : concluded ? (
-          <span className="chip chip-neutral">Concluded</span>
-        ) : (
-          <span className="chip chip-accent">Upcoming</span>
-        ),
-      ),
       prop('Date & time', TbCalendar, mono(fmtDual(item.startsAt))),
       item.wg &&
         prop(
@@ -340,48 +238,49 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
             {item.wg.name}
           </A>,
         ),
-      item.meetingUrl &&
-        !concluded &&
-        prop(
-          'Meeting room',
-          TbVideo,
-          <a href={item.meetingUrl} {...external} className="inlineLink">
-            Join link available
-          </a>,
-        ),
     ])
   },
-  actions: ({ item, now }) =>
-    item.meetingUrl && now <= Date.parse(item.endsAt) ? (
-      <a className="btn btn-primary btn-sm" href={item.meetingUrl} {...external}>
-        <TbVideo size={15} strokeWidth={1.75} aria-hidden />
-        <span>Join call</span>
-      </a>
-    ) : null,
-  tabs: ({ item, now }) => {
-    const startMs = Date.parse(item.startsAt)
-    const endMs = Date.parse(item.endsAt)
-    const live = now >= startMs && now <= endMs
-    const concluded = now > endMs
+  // one primary action for the moment the panel is opened: join, add to calendar, or watch
+  actions: ({ item, now }) => {
+    const phase = eventPhase(item, now)
+    if (phase === 'concluded')
+      return item.recordingUrl ? (
+        <a className="btn btn-primary btn-sm" href={item.recordingUrl} {...external}>
+          <TbPlayerPlay size={15} strokeWidth={1.75} aria-hidden />
+          <span>Watch recording</span>
+        </a>
+      ) : null
+    return (
+      <>
+        {item.meetingUrl && (
+          <a
+            className={`btn btn-primary btn-sm ${phase === 'live' ? 'btn-glow' : ''}`}
+            href={item.meetingUrl}
+            {...external}
+          >
+            <TbVideo size={15} strokeWidth={1.75} aria-hidden />
+            <span>{phase === 'live' ? 'Join now' : 'Join call'}</span>
+          </a>
+        )}
+        <AddToCalendar event={item} className="btn btn-secondary btn-sm" />
+      </>
+    )
+  },
+  // the briefing and its linked material: one block, so no tab bar
+  tabs: ({ item }) => {
     const descriptionUrl = item.description
       ?.match(/https?:\/\/\S+/)?.[0]
       ?.replace(/[),.;:!?'">\]]+$/, '')
     const cleanDescription = item.description
       ?.replace(/\s*(?:Slides:\s*)?https?:\/\/\S+/i, '')
       .trim()
-    const GroupIcon = item.wg?.slug ? workingGroupIcon(item.wg.slug) : TbUsers
     return [
       {
         id: 'overview',
-        label: 'Overview & agenda',
+        label: 'Overview',
         icon: TbFileDescription,
         content: (
           <div className="notionTabContent">
-            {live && item.meetingUrl && (
-              <NotionCallout icon={TbVideo} tone="accent">
-                <strong>This meeting is live now.</strong> Use the join button below to take part.
-              </NotionCallout>
-            )}
             {cleanDescription ? (
               <div className="notionSection">
                 <h4 className="notionSectionHeading">Meeting briefing</h4>
@@ -390,52 +289,6 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
             ) : (
               <p className="metaMuted">No agenda notes attached to this session.</p>
             )}
-            {item.wg && (
-              <div className="notionSection">
-                <h4 className="notionSectionHeading">Working Group</h4>
-                <div className="notionInlineCard">
-                  <GroupIcon size={20} strokeWidth={1.75} aria-hidden />
-                  <div>
-                    <strong>{item.wg.name}</strong>
-                  </div>
-                  <A href={`/groups/${item.wg.slug}`} className="btn btn-ghost btn-sm" peek={false}>
-                    View group
-                  </A>
-                </div>
-              </div>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: 'join',
-        label: 'Join & calendar',
-        icon: TbCalendarPlus,
-        content: (
-          <div className="notionTabContent">
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Live participation</h4>
-              {concluded ? (
-                <p className="metaMuted">
-                  This call has concluded.
-                  {item.recordingUrl ? ' See the recording tab for past outputs.' : ''}
-                </p>
-              ) : (
-                <div className="notionActionRow">
-                  {item.meetingUrl && (
-                    <a
-                      className={`btn ${live ? 'btn-primary btn-glow' : 'btn-primary'}`}
-                      href={item.meetingUrl}
-                      {...external}
-                    >
-                      <TbVideo size={18} strokeWidth={1.75} aria-hidden />
-                      <span>{live ? 'Join meeting — live now' : 'Join meeting'}</span>
-                    </a>
-                  )}
-                  <AddToCalendar event={item} />
-                </div>
-              )}
-            </div>
             {descriptionUrl && (
               <div className="notionSection">
                 <h4 className="notionSectionHeading">Session materials</h4>
@@ -448,29 +301,6 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
           </div>
         ),
       },
-      ...(concluded && item.recordingUrl
-        ? [
-            {
-              id: 'recording',
-              label: 'Recording',
-              icon: TbPlayerPlay,
-              content: (
-                <div className="notionTabContent">
-                  <div className="notionSection">
-                    <h4 className="notionSectionHeading">Archived recording</h4>
-                    <p className="notionBodyText">The recording is available for review.</p>
-                    <div className="notionActionRow">
-                      <a className="btn btn-primary" href={item.recordingUrl} {...external}>
-                        <TbPlayerPlay size={18} strokeWidth={1.75} aria-hidden />
-                        <span>Watch session recording</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ),
-            } satisfies NotionPeekTab,
-          ]
-        : []),
     ]
   },
 }
@@ -492,50 +322,29 @@ const groupPeek: PeekDef<AnyValue> = {
   title: ({ item }) => item.name,
   subtitle: ({ item }) => item.focusLine,
   iconFor: ({ item }) => workingGroupIcon(item.slug),
-  fullPageHref: ({ item }) => `/groups/${item.slug}`,
-  badge: () => <span className="chip chip-accent">Working Group</span>,
   properties: ({ item }) =>
     properties([
-      item.focusLine && prop('Focus', TbTag, text(item.focusLine)),
       item.cadenceNote && prop('Meeting cadence', TbCalendarClock, text(item.cadenceNote)),
     ]),
-  actions: ({ item }) => (
-    <A href={`/groups/${item.slug}`} className="btn btn-primary btn-sm" peek={false}>
-      <span>Open workspace</span>
-    </A>
-  ),
-  tabs: ({ item }) => {
-    const GroupIcon = workingGroupIcon(item.slug)
-    return [
-      {
-        id: 'overview',
-        label: 'Overview & mandate',
-        icon: TbFileDescription,
-        content: (
-          <div className="notionTabContent">
-            {item.focusLine && (
-              <NotionCallout icon={GroupIcon} tone="accent">
-                <p>{item.focusLine}</p>
-              </NotionCallout>
-            )}
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Constituency mandate</h4>
-              <p className="notionBodyText">
-                Working Groups follow international climate negotiations, conduct research and
-                policy analysis, and draft policy positions and submissions.
-              </p>
-            </div>
-            <div className="notionActionRow">
-              <A href={`/groups/${item.slug}`} className="btn btn-primary" peek={false}>
-                <span>Open full workspace</span>
-                <TbChevronRight size={16} strokeWidth={2} aria-hidden />
-              </A>
-            </div>
+  tabs: ({ item }) => [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: TbFileDescription,
+      content: (
+        <div className="notionTabContent">
+          <div className="notionSection">
+            <h4 className="notionSectionHeading">Constituency mandate</h4>
+            <p className="notionBodyText">
+              Working Groups follow international climate negotiations, conduct research and policy
+              analysis, and draft policy positions and submissions.
+            </p>
           </div>
-        ),
-      },
-    ]
-  },
+          <GroupPanel g={item} />
+        </div>
+      ),
+    },
+  ],
 }
 
 export const GroupPeek = createPeek(groupPeek)
@@ -543,87 +352,135 @@ export const GroupPeek = createPeek(groupPeek)
 // ── COY Peek ─────────────────────────────────────────────────
 
 const coyPeek: PeekDef<AnyValue> = {
-  eyebrow: ({ item }) => `COY Tracker › ${item.type?.toUpperCase() || 'COY'}`,
+  eyebrow: () => 'COY Tracker',
   title: ({ item }) => item.title,
   subtitle: ({ item }) => [item.city, item.country].filter(Boolean).join(', ') || undefined,
-  icon: TbMapPin,
-  fullPageHref: ({ item }) => `/coys/${item.slug}`,
-  badge: ({ item }) => <StatusChip status={coyDisplayStatus(item)} />,
+  // type and status appear once, as chips under the bar
+  badge: ({ item }) => (
+    <>
+      <span className="chip chip-neutral">{item.type?.toUpperCase() || 'COY'}</span>
+      <StatusChip status={coyDisplayStatus(item)} />
+    </>
+  ),
   properties: ({ item }) =>
     properties([
-      prop(
-        'Type',
-        TbTag,
-        <span className="chip chip-neutral">{item.type?.toUpperCase() || 'COY'}</span>,
-      ),
-      item.city || item.country
-        ? prop('Location', TbMapPin, text([item.city, item.country].filter(Boolean).join(', ')))
-        : null,
       prop('Dates', TbCalendar, mono(fmtDateRange(item.startsOn, item.endsOn, item.datesTbc))),
-      prop('Status', TbShieldCheck, <StatusChip status={coyDisplayStatus(item)} />),
       item.region && prop('Region', TbGlobe, text(regionLabel(item.region))),
     ]),
+  actions: ({ item }) =>
+    item.registerUrl ? (
+      <a className="btn btn-primary btn-sm" href={item.registerUrl} {...external}>
+        <TbExternalLink size={15} strokeWidth={1.75} aria-hidden />
+        <span>Register</span>
+      </a>
+    ) : null,
+  // a tab exists only for separately browsable content: the deadline is shown only when there is one
   tabs: ({ item }) => [
+    ...(item.applicationsCloseAt
+      ? [
+          {
+            id: 'overview',
+            label: 'Overview',
+            icon: TbFileDescription,
+            content: (
+              <div className="notionTabContent">
+                <LifecycleTiming
+                  iso={item.applicationsCloseAt}
+                  label="Applications close"
+                  showCountdown={coyApplicationsAreOpen(item)}
+                />
+              </div>
+            ),
+          } satisfies NotionPeekTab,
+        ]
+      : []),
     {
-      id: 'overview',
-      label: 'Overview & venue',
-      icon: TbFileDescription,
-      content: (
-        <div className="notionTabContent">
-          <NotionCallout icon={TbMapPin} tone="accent">
-            <strong>{item.type?.toUpperCase() || 'COY'}</strong>
-            {[item.city, item.country].filter(Boolean).join(', ')
-              ? ` — ${[item.city, item.country].filter(Boolean).join(', ')}`
-              : ''}
-          </NotionCallout>
-          {item.applicationsCloseAt && (
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Application deadline</h4>
-              <LifecycleTiming
-                iso={item.applicationsCloseAt}
-                label="Applications close"
-                showCountdown={coyApplicationsAreOpen(item)}
-              />
-            </div>
-          )}
-          {item.registerUrl && (
-            <div className="notionActionRow">
-              <a className="btn btn-primary" href={item.registerUrl} {...external}>
-                <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                <span>Registration portal</span>
-              </a>
-            </div>
-          )}
-        </div>
-      ),
+      id: 'organiser',
+      label: 'Organiser & links',
+      icon: TbBuilding,
+      content: <CoyOrganiser coy={item} />,
     },
+    ...(item.liveOps
+      ? [
+          {
+            id: 'live',
+            label: 'Live',
+            icon: TbBroadcast,
+            content: <CoyLive slug={item.slug} />,
+          } satisfies NotionPeekTab,
+        ]
+      : []),
   ],
 }
 
 export const CoyPeek = createPeek(coyPeek)
+
+const SUBMISSION_STEPS = ['Open', 'Drafting', 'Internal review', 'Submitted']
+const SUBMISSION_STEP_INDEX: Record<string, number> = {
+  open: 0,
+  drafting: 1,
+  internal_review: 2,
+  submitted: 3,
+  archived: 3,
+}
+
+function SubmissionProgress({ sub }: { sub: AnyValue }) {
+  const archived = !['open', 'drafting', 'internal_review'].includes(sub.status)
+  return (
+    <div className="notionTabContent">
+      <LifecycleTiming
+        status={sub.status}
+        iso={sub.deadlineAt}
+        label={archived ? 'Submitted' : 'Deadline'}
+        showCountdown={!archived}
+      />
+      <Timeline steps={SUBMISSION_STEPS} currentIndex={SUBMISSION_STEP_INDEX[sub.status] ?? 0} />
+      {sub.unfcccUrl && (
+        <div className="notionActionRow">
+          <a className="btn btn-secondary" href={sub.unfcccUrl} {...external}>
+            <DestinationIcon url={sub.unfcccUrl} size={16} />
+            <span>UNFCCC reference</span>
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Submission Peek ──────────────────────────────────────────
 
 const submissionPeek: PeekDef<AnyValue> = {
   eyebrow: () => 'Policy & Statements',
   title: ({ item }) => item.title,
-  subtitle: ({ item }) => (item.wg ? `${item.wg.name} Working Group` : undefined),
-  icon: TbFileText,
-  fullPageHref: ({ item }) => `/submissions/${item.slug}`,
   badge: ({ item }) => <StatusChip status={item.status} />,
   properties: ({ item }) =>
     properties([
-      prop('Status', TbShieldCheck, <StatusChip status={item.status} />),
       item.wg &&
         prop(
           'Working Group',
           TbUsers,
           <A href={`/groups/${item.wg.slug}`} className="inlineLink">
-            {item.wg.name} WG
+            {item.wg.name}
           </A>,
         ),
       item.deadlineAt && prop('Deadline', TbCalendarClock, mono(fmtDual(item.deadlineAt))),
     ]),
+  actions: ({ item }) => (
+    <>
+      {item.draftUrl && (
+        <a className="btn btn-primary btn-sm" href={item.draftUrl} {...external}>
+          <TbExternalLink size={15} strokeWidth={1.75} aria-hidden />
+          <span>Open drafting document</span>
+        </a>
+      )}
+      {item.finalUrl && (
+        <a className="btn btn-secondary btn-sm" href={item.finalUrl} {...external}>
+          <TbExternalLink size={15} strokeWidth={1.75} aria-hidden />
+          <span>View published statement</span>
+        </a>
+      )}
+    </>
+  ),
   tabs: ({ item }) => [
     {
       id: 'overview',
@@ -642,141 +499,16 @@ const submissionPeek: PeekDef<AnyValue> = {
               <p className="notionBodyText">{item.contributeNote}</p>
             </div>
           )}
-          <div className="notionActionRow">
-            {item.draftUrl && (
-              <a className="btn btn-primary" href={item.draftUrl} {...external}>
-                <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                <span>Open drafting document</span>
-              </a>
-            )}
-            {item.finalUrl && (
-              <a className="btn btn-secondary" href={item.finalUrl} {...external}>
-                <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                <span>View published statement</span>
-              </a>
-            )}
-          </div>
         </div>
       ),
+    },
+    {
+      id: 'progress',
+      label: 'Progress',
+      icon: TbCalendarClock,
+      content: <SubmissionProgress sub={item} />,
     },
   ],
 }
 
 export const SubmissionPeek = createPeek(submissionPeek)
-
-// ── Resource Peek ────────────────────────────────────────────
-
-const resourcePeek: PeekDef<AnyValue, { onReport?: (resource: AnyValue) => void }> = {
-  eyebrow: () => 'Resource Hub',
-  title: ({ item }) => item.title,
-  subtitle: ({ item }) => item.publisher,
-  icon: TbFileText,
-  copyUrl: ({ item }) => item.url,
-  badge: ({ item }) =>
-    item.verification?.status === 'verified' ? (
-      <span className="chip chip-accent">Verified</span>
-    ) : (
-      <span className="chip chip-neutral">Resource</span>
-    ),
-  properties: ({ item }) =>
-    properties([
-      prop('Type', TbTag, <span className="chip chip-accent">{item.type || 'Resource'}</span>),
-      prop(
-        'Verification',
-        TbShieldCheck,
-        item.verification?.status === 'verified' ? (
-          <span className="chip chip-accent">Verified</span>
-        ) : (
-          <span className="chip chip-neutral">Community submitted</span>
-        ),
-      ),
-      item.publisher && prop('Publisher', TbUsers, <strong>{item.publisher}</strong>),
-      item.language && prop('Language', TbGlobe, text(item.language)),
-      item.region && prop('Region', TbMapPin, text(regionLabel(item.region))),
-      item.url &&
-        prop(
-          'Resource link',
-          TbLink,
-          <a href={item.url} {...external} className="inlineLink">
-            Open material
-          </a>,
-        ),
-    ]),
-  tabs: ({ item, extras, onClose }) => {
-    const verified = item.verification?.status === 'verified'
-    const topics = item.topics || (item.topic ? [item.topic] : [])
-    return [
-      {
-        id: 'overview',
-        label: 'Summary & scope',
-        icon: TbFileDescription,
-        content: (
-          <div className="notionTabContent">
-            {item.summary && (
-              <NotionCallout icon={TbFileText} tone="default">
-                <p>{item.summary}</p>
-              </NotionCallout>
-            )}
-            {topics.length > 0 && (
-              <div className="notionSection">
-                <h4 className="notionSectionHeading">Thematic areas</h4>
-                <div className="notionPeekBadgesRow">
-                  {topics.map((t: string) => (
-                    <span key={t} className="chip chip-neutral">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="notionActionRow">
-              {item.url && (
-                <a className="btn btn-primary" href={item.url} {...external}>
-                  <TbExternalLink size={16} strokeWidth={1.75} aria-hidden />
-                  <span>Open resource</span>
-                </a>
-              )}
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: 'verification',
-        label: 'Verification & feedback',
-        icon: TbShieldCheck,
-        content: (
-          <div className="notionTabContent">
-            <div className="notionSection">
-              <h4 className="notionSectionHeading">Verification</h4>
-              <p className="notionBodyText">
-                {verified
-                  ? 'This resource has been reviewed and marked as verified.'
-                  : 'This resource has not been verified.'}
-              </p>
-              {item.verification?.checkedAt && (
-                <p className="metaMuted">
-                  Last checked on {new Date(item.verification.checkedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-            {extras.onReport && (
-              <div className="notionActionRow">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    onClose()
-                    extras.onReport!(item)
-                  }}
-                >
-                  Report an issue with this resource
-                </Button>
-              </div>
-            )}
-          </div>
-        ),
-      },
-    ]
-  },
-}
-
-export const ResourcePeek = createPeek(resourcePeek)

@@ -4,6 +4,9 @@ import { apiGet, apiPost, apiPatch } from '../../lib/api'
 export const get = <T>(path: string): Promise<T> => apiGet(`/platform${path}`)
 export const post = (path: string, body: unknown = {}) => apiPost(`/platform${path}`, body)
 export const patch = (path: string, body: unknown) => apiPatch(`/platform${path}`, body)
+export const SAVED_EVENT = 'platform:saved'
+export const announceSaved = () => window.dispatchEvent(new Event(SAVED_EVENT))
+
 export function usePlatform<T>(path: string) {
   const [data, setData] = useState<T | null>(null),
     [asOf, setAsOf] = useState(0),
@@ -12,6 +15,12 @@ export function usePlatform<T>(path: string) {
     [revision, setRevision] = useState(0)
   const loadedPath = useRef(path)
   const reload = useCallback(() => setRevision((n) => n + 1), [])
+  // each usePlatform owns its own state, so a save in the side panel announces itself here to
+  // refresh the list mounted behind it
+  useEffect(() => {
+    window.addEventListener(SAVED_EVENT, reload)
+    return () => window.removeEventListener(SAVED_EVENT, reload)
+  }, [reload])
   useEffect(() => {
     let active = true
     if (loadedPath.current !== path) {

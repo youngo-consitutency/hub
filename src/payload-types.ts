@@ -449,8 +449,15 @@ export interface MemberProfile {
   showRoles?: boolean | null;
   roleTitle?: string | null;
   revision?: number | null;
-  hasPhoto?: boolean | null;
-  photoUpdatedAt?: string | null;
+  avatar?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2197,8 +2204,7 @@ export interface MemberProfilesSelect<T extends boolean = true> {
   showRoles?: T;
   roleTitle?: T;
   revision?: T;
-  hasPhoto?: T;
-  photoUpdatedAt?: T;
+  avatar?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -83,10 +83,17 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  // No admin UI and no console login: staff operations run through the
-  // Payload local API (scripts, terminal sessions) and direct database access.
+  // The admin lives at /cms and is the content console only: it opens for accounts
+  // holding content.publish (see Accounts.access.admin) and edits content-documents.
+  // Everything else still runs through domain endpoints, scripts and the Local API.
   // `accounts` is the only auth collection.
-  admin: { user: 'accounts' },
+  routes: { admin: '/cms' },
+  admin: {
+    user: 'accounts',
+    importMap: { importMapFile: path.resolve(dirname, 'app/(payload)/cms/importMap.js') },
+    meta: { titleSuffix: ' – YOUNGO Hub console' },
+  },
+  // the console shows content-documents only; every other collection stays out of its navigation
   collections: [
     Media,
     Accounts,
@@ -147,7 +154,11 @@ export default buildConfig({
     RecognitionRequests,
     PartnershipRequests,
     PrivacyRequests,
-  ],
+  ].map((collection) =>
+    collection.slug === 'content-documents'
+      ? collection
+      : { ...collection, admin: { ...collection.admin, hidden: true } },
+  ),
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
   // payload's own emails share the app's smtp settings. with delivery off a

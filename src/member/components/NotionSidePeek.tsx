@@ -1,16 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
-import {
-  TbArrowsMaximize,
-  TbCheck,
-  TbChevronRight,
-  TbLink,
-  TbX,
-  TbInfoCircle,
-} from 'react-icons/tb'
+import { TbCheck, TbChevronRight, TbLink, TbX, TbInfoCircle } from 'react-icons/tb'
 import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
-import { A } from './ui'
+import { Tab, TabList, TabPanel, Tabs as AriaTabs } from 'react-aria-components'
 
 export interface NotionProperty {
   id?: string
@@ -52,7 +45,6 @@ export interface NotionSidePeekProps {
       }>
     | ReactNode
   badge?: ReactNode
-  fullPageHref?: string
   properties?: NotionProperty[]
   tabs?: NotionPeekTab[]
   initialTab?: string
@@ -78,7 +70,6 @@ export function NotionSidePeek({
   eyebrow,
   icon: IconProp,
   badge,
-  fullPageHref,
   properties = [],
   tabs,
   initialTab,
@@ -163,13 +154,8 @@ export function NotionSidePeek({
   const requestClose = () => setClosing(true)
 
   const handleCopyLink = () => {
-    const targetUrl =
-      copyUrl ||
-      (fullPageHref && typeof window !== 'undefined'
-        ? `${window.location.origin}${fullPageHref}`
-        : typeof window !== 'undefined'
-          ? window.location.href
-          : '')
+    // the panel's own address is its link: /hub#/groups/slug
+    const targetUrl = copyUrl || (typeof window !== 'undefined' ? window.location.href : '')
     if (targetUrl && navigator.clipboard) {
       navigator.clipboard
         .writeText(targetUrl)
@@ -264,19 +250,6 @@ export function NotionSidePeek({
               )}
             </button>
 
-            {fullPageHref && (
-              <A
-                href={fullPageHref}
-                className="btn btn-ghost btn-sm notionTopActionBtn"
-                title="Open as full standalone page"
-                aria-label="Open as full page"
-                peek={false}
-              >
-                <TbArrowsMaximize size={15} strokeWidth={1.75} aria-hidden />
-                <span className="notionActionLabel">Open full page</span>
-              </A>
-            )}
-
             <button
               type="button"
               className="iconButton notionPeekCloseBtn"
@@ -289,7 +262,7 @@ export function NotionSidePeek({
           </div>
         </div>
 
-        {/* Main scrolling peek body */}
+        {/* Main scrolling body */}
         <div className="routePeekBody notionPeekBody">
           {/* Cover / Header section */}
           <header className="notionPeekHeader">
@@ -329,41 +302,31 @@ export function NotionSidePeek({
           {/* Quick action bar */}
           {actions && <div className="notionPeekQuickActions">{actions}</div>}
 
-          {/* Inner Menus / Segmented Tabs */}
-          {tabs && tabs.length > 1 && (
-            <nav className="notionPeekTabs" role="tablist" aria-label="Inner navigation">
-              {tabs.map((tab) => {
-                const TabIcon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`notionPeekTab ${isActive ? 'isActive' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                    aria-selected={isActive}
-                    aria-controls={`peek-panel-${tab.id}`}
-                    id={`peek-tab-${tab.id}`}
-                    role="tab"
+          {tabs && tabs.length > 1 ? (
+            <AriaTabs
+              selectedKey={activeTab}
+              onSelectionChange={(key) => setActiveTab(String(key))}
+            >
+              <TabList aria-label="Inner navigation" className="notionPeekTabs">
+                {tabs.map(({ id, label, icon: TabIcon, badge }) => (
+                  <Tab
+                    key={id}
+                    id={id}
+                    className={({ isSelected }) => `notionPeekTab ${isSelected ? 'isActive' : ''}`}
                   >
                     {TabIcon && <TabIcon size={16} strokeWidth={1.75} aria-hidden />}
-                    <span>{tab.label}</span>
-                    {tab.badge !== undefined && <span className="notionTabBadge">{tab.badge}</span>}
-                  </button>
-                )
-              })}
-            </nav>
+                    <span>{label}</span>
+                    {badge !== undefined && <span className="notionTabBadge">{badge}</span>}
+                  </Tab>
+                ))}
+              </TabList>
+              <TabPanel id={activeTab} className="notionPeekContentArea">
+                {currentTabContent}
+              </TabPanel>
+            </AriaTabs>
+          ) : (
+            <section className="notionPeekContentArea">{currentTabContent}</section>
           )}
-
-          {/* Content area */}
-          <section
-            className="notionPeekContentArea"
-            role={tabs && tabs.length > 1 ? 'tabpanel' : undefined}
-            id={tabs && tabs.length > 1 ? `peek-panel-${activeTab}` : undefined}
-            aria-labelledby={tabs && tabs.length > 1 ? `peek-tab-${activeTab}` : undefined}
-          >
-            {currentTabContent}
-          </section>
         </div>
       </PortalProvider>
     </dialog>

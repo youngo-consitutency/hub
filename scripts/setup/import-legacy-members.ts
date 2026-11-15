@@ -270,7 +270,7 @@ async function main() {
     )
   }
 
-  // ── member profiles and photos ────────────────────────────────────
+  // ── member profiles ───────────────────────────────────────────────
   const names = new Map(legacyAccounts.map((a) => [a.id, a.name]))
   for (const r of await rows('select * from member_profiles')) {
     const account = acc(r.account_id)
@@ -284,22 +284,6 @@ async function main() {
         account,
         displayName: r.display_name || names.get(r.account_id),
       },
-    )
-  }
-  for (const p of await rows('select * from member_profile_photos')) {
-    const account = acc(p.account_id)
-    tally('member-photos', 'copied')
-    if (dryRun || !account) continue
-    await target.query(
-      `insert into member_profile_photos (account_id, content_type, bytes, byte_size, revision, updated_by, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7)
-       on conflict (account_id) do update set content_type=excluded.content_type, bytes=excluded.bytes,
-         byte_size=excluded.byte_size, revision=excluded.revision, updated_at=excluded.updated_at`,
-      [account, p.content_type, p.bytes, p.byte_size, p.revision, acc(p.updated_by), p.updated_at],
-    )
-    await target.query(
-      `update member_profiles set has_photo = true, photo_updated_at = $2 where account_id = $1`,
-      [account, p.updated_at],
     )
   }
 

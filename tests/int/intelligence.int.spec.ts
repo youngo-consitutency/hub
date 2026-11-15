@@ -8,7 +8,8 @@ import { api, session } from './helpers'
 
 type Session = Awaited<ReturnType<typeof session>>
 
-const PLATFORM = { role: 'focal_point', scopeType: 'platform', scopeId: 'platform' }
+// GCT Internal Management runs the platform (S14); only a Data Controller may approve a writeback
+const PLATFORM = { role: 'gct.internal', scopeType: 'team', scopeId: 'gct' }
 
 describe('intelligence api', () => {
   let payload: Payload
@@ -16,6 +17,7 @@ describe('intelligence api', () => {
   let author: Session
   let applier: Session
   let controller: Session
+  let secondController: Session
   let contactId: number | string
   // letters + digits so the query tokeniser keeps it whole
   const token = `zq${crypto.randomBytes(6).toString('hex')}`
@@ -49,9 +51,18 @@ describe('intelligence api', () => {
     payload = await testPayload()
     // selections gives a team role without intelligence.contacts.read (membership team has it)
     member = await session({ membershipTrack: 'constituency_work', teams: ['selection_team'] })
-    author = await session({ membershipTrack: 'constituency_work', records: [PLATFORM] })
+    // the author also holds Data Controller, so self-approval is the one thing standing in the way
+    author = await session({
+      membershipTrack: 'constituency_work',
+      records: [PLATFORM],
+      teams: ['data_controller'],
+    })
     applier = await session({ membershipTrack: 'constituency_work', records: [PLATFORM] })
     controller = await session({ membershipTrack: 'constituency_work', teams: ['data_controller'] })
+    secondController = await session({
+      membershipTrack: 'constituency_work',
+      teams: ['data_controller'],
+    })
     const contact = await payload.create({
       collection: 'directory-contacts',
       data: {
@@ -167,10 +178,9 @@ describe('intelligence api', () => {
 
     const approvals = await Promise.all([
       act(controller, item.id, 'approve'),
-      act(applier, item.id, 'approve'),
+      act(secondController, item.id, 'approve'),
     ])
     expect(approvals.map((r) => r.status).sort()).toEqual([200, 409])
-    const approver = approvals[0].status === 200 ? controller : applier
     const { docs: trail } = await payload.find({
       collection: 'audit-log',
       where: {
@@ -180,9 +190,12 @@ describe('intelligence api', () => {
       overrideAccess: true,
     })
     expect(trail.map((e) => e.reason)).toEqual([reason])
-    const other = approver === controller ? applier : author
 
-    const applied = await Promise.all([act(other, item.id, 'apply'), act(other, item.id, 'apply')])
+    // approval is not application: a GCT Internal Management holder applies, twice, once wins
+    const applied = await Promise.all([
+      act(applier, item.id, 'apply'),
+      act(applier, item.id, 'apply'),
+    ])
     expect(applied.map((r) => r.status).sort()).toEqual([200, 409])
 
     const list = await api('/intelligence/writebacks', { cookie: author.cookie })

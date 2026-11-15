@@ -5,9 +5,11 @@
  * accounts console rejects them — this script writes one authority-record
  * row directly against the database and exits.
  *
- *   ACCOUNT_ID=<id> ROLE=focal_point npx tsx scripts/setup/grant-authority.ts
  *   ACCOUNT_ID=<id> ROLE=gct.internal SCOPE_TYPE=team SCOPE_ID=gct \
  *     npx tsx scripts/setup/grant-authority.ts
+ *
+ * GCT Internal Management is the role that runs the platform (S14); a Focal Point
+ * record grants a council seat only (S11, S13).
  *
  * Optional: ENDS_AT=<iso date>, COUNCIL_SEAT=<seat>, EVIDENCE=<text>.
  *
