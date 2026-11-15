@@ -50,7 +50,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(to bottom, var(--ld-glow-green), var(--ld-glow-lime));
+  background: linear-gradient(to bottom, var(--glow-green), var(--glow-lime));
   transform-origin: top;
 }
 
@@ -75,7 +75,7 @@
 
 .fxTimelineLabel {
   position: sticky;
-  top: calc(var(--ld-header-h) + var(--space-4));
+  top: calc(var(--header-h) + var(--space-4));
   align-self: start;
   color: var(--accent);
   font-family: var(--font-display);

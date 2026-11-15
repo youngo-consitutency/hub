@@ -101,20 +101,20 @@
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
 
-  /* landing: the hero, stats band and closing card stay deep forest in both themes;
-     every pairing below was checked at 4.5:1 or better */
-  --ld-header-h: 65px;
-  --ld-deep: #0f4631;
-  --ld-deep-2: #1a6a4c;
-  --ld-on-deep: #eaf6ee;
-  --ld-on-deep-muted: #d3e6da;
-  --ld-line-deep: rgba(214, 243, 226, 0.2);
-  --ld-glass: rgba(15, 70, 49, 0.55);
-  --ld-glow-green: #2dd4a0;
-  --ld-glow-lime: #a3e635;
-  --ld-glow-sky: #38bdf8;
-  --ld-accent-deep: #4ade80;
-  --ld-spot: color-mix(in srgb, var(--accent) 16%, transparent);
+  /* deep forest surfaces (heroes, stats band, closing card, Hub sidebar) stay deep in both
+     themes; every pairing below was checked at 4.5:1 or better */
+  --header-h: 65px;
+  --deep: #0f4631;
+  --deep-2: #1a6a4c;
+  --on-deep: #eaf6ee;
+  --on-deep-muted: #d3e6da;
+  --line-deep: rgba(214, 243, 226, 0.2);
+  --glass: rgba(15, 70, 49, 0.55);
+  --glow-green: #2dd4a0;
+  --glow-lime: #a3e635;
+  --glow-sky: #38bdf8;
+  --accent-deep: #4ade80;
+  --spot: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 @media (max-width: 900px) {

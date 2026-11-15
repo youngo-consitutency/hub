@@ -29,14 +29,14 @@
   --brand-dark-display: inline-block;
   --brand-light-display: none;
   --bg-page: rgba(234, 246, 238, 0.06);
-  --bg-card: var(--ld-glass);
+  --bg-card: var(--glass);
   --bg-raised: rgba(234, 246, 238, 0.06);
-  --text-1: var(--ld-on-deep);
-  --text-2: var(--ld-on-deep);
-  --text-3: var(--ld-on-deep-muted);
-  --border: var(--ld-line-deep);
+  --text-1: var(--on-deep);
+  --text-2: var(--on-deep);
+  --text-3: var(--on-deep-muted);
+  --border: var(--line-deep);
   --border-strong: rgba(169, 232, 196, 0.4);
-  --accent: var(--ld-accent-deep);
+  --accent: var(--accent-deep);
   --accent-hover: #86efac;
   --on-accent: #052617;
   --accent-tint: rgba(74, 222, 128, 0.14);
@@ -54,8 +54,8 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--glow-spot), linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
-  color: var(--ld-on-deep);
+  background: var(--glow-spot), linear-gradient(160deg, var(--deep) 30%, var(--deep-2));
+  color: var(--on-deep);
 }
 
 .ldDark .btn-lg {
@@ -66,7 +66,7 @@
 
 .ldDark .btn-secondary {
   background: rgba(234, 246, 238, 0.06);
-  color: var(--ld-on-deep);
+  color: var(--on-deep);
   backdrop-filter: blur(8px);
 }
 
@@ -95,8 +95,8 @@
 /* ── hero ─────────────────────────────────────────── */
 .ldHero {
   border-radius: 0 0 var(--radius-surface) var(--radius-surface);
-  margin-top: calc(var(--ld-header-h) * -1);
-  padding-block: calc(var(--ld-header-h) + clamp(32px, 6vw, 80px)) clamp(24px, 4vw, 40px);
+  margin-top: calc(var(--header-h) * -1);
+  padding-block: calc(var(--header-h) + clamp(32px, 6vw, 80px)) clamp(24px, 4vw, 40px);
 }
 
 .ldHero .ldMarquee {
@@ -119,13 +119,13 @@
 }
 
 .siteShell:has(.ldHero, .heroBand-page) .siteHeader[data-overlay] {
-  --text-1: var(--ld-on-deep);
-  --text-2: var(--ld-on-deep);
+  --text-1: var(--on-deep);
+  --text-2: var(--on-deep);
   --brand-dark-display: inline-block;
   --brand-light-display: none;
   --bg-raised: rgba(234, 246, 238, 0.1);
-  --border: var(--ld-line-deep);
-  --accent: var(--ld-accent-deep);
+  --border: var(--line-deep);
+  --accent: var(--accent-deep);
   --accent-hover: #86efac;
   --on-accent: #052617;
   border-bottom-color: transparent;
@@ -135,8 +135,8 @@
 
 /* over the hero the header's tokens turn light, so its dropdown goes deep green to keep the text readable */
 .siteHeader[data-overlay] .siteNavMenu {
-  background: var(--ld-deep);
-  border-color: var(--ld-line-deep);
+  background: var(--deep);
+  border-color: var(--line-deep);
 }
 
 .ldHeroGrid {
@@ -156,10 +156,10 @@
   gap: 8px;
   margin-bottom: var(--space-5);
   padding: 6px 12px 6px 10px;
-  border: 1px solid var(--ld-line-deep);
+  border: 1px solid var(--line-deep);
   border-radius: var(--radius-pill);
   background: rgba(234, 246, 238, 0.06);
-  color: var(--ld-on-deep);
+  color: var(--on-deep);
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -167,7 +167,7 @@
 }
 
 .ldChip svg {
-  color: var(--ld-accent-deep);
+  color: var(--accent-deep);
 }
 
 .ldHero h1 {
@@ -180,7 +180,7 @@
 }
 
 .ldGradient {
-  background: linear-gradient(95deg, var(--ld-glow-green), var(--ld-glow-lime) 60%, #d9f99d);
+  background: linear-gradient(95deg, var(--glow-green), var(--glow-lime) 60%, #d9f99d);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -189,7 +189,7 @@
 .ldHeroLead {
   max-width: 54ch;
   margin-bottom: var(--space-6);
-  color: var(--ld-on-deep-muted);
+  color: var(--on-deep-muted);
   font-size: clamp(16px, 1.5vw, 19px);
   line-height: 1.6;
 }
@@ -224,7 +224,7 @@
   inset: -70%;
   z-index: -1;
   border-radius: 50%;
-  background: repeating-radial-gradient(circle, transparent 0 26px, var(--ld-line-deep) 26px 27px);
+  background: repeating-radial-gradient(circle, transparent 0 26px, var(--line-deep) 26px 27px);
   mask-image: radial-gradient(circle, #000 20%, transparent 60%);
   pointer-events: none;
 }
@@ -250,7 +250,7 @@
   top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  color: var(--ld-on-deep);
+  color: var(--on-deep);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -260,9 +260,9 @@
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--ld-line-deep);
+  border: 1px solid var(--line-deep);
   border-radius: 50%;
-  background: var(--ld-deep-2);
+  background: var(--deep-2);
 }
 
 .ldSeat {
@@ -272,11 +272,11 @@
   gap: 4px;
   width: 160px;
   aspect-ratio: 1;
-  border: 2px dashed var(--ld-accent-deep);
+  border: 2px dashed var(--accent-deep);
   border-radius: 50%;
   background: rgba(15, 70, 49, 0.55);
   backdrop-filter: blur(10px);
-  color: var(--ld-accent-deep);
+  color: var(--accent-deep);
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -391,7 +391,7 @@
   border-radius: var(--radius-modal);
   /* the glow layer has no size until the pointer is on the card */
   background:
-    radial-gradient(240px circle at var(--mx) var(--my), var(--ld-spot), transparent 70%) 0 0 / 0 0
+    radial-gradient(240px circle at var(--mx) var(--my), var(--spot), transparent 70%) 0 0 / 0 0
       no-repeat,
     var(--bg-card);
   color: var(--text-1);
@@ -515,7 +515,7 @@
 
 .ldTrack li svg {
   flex: none;
-  color: var(--ld-accent-deep);
+  color: var(--accent-deep);
 }
 
 .ldTrack li:hover {
@@ -565,7 +565,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
-  background: linear-gradient(90deg, var(--ld-glow-green), var(--ld-glow-lime));
+  background: linear-gradient(90deg, var(--glow-green), var(--glow-lime));
   transform-origin: left;
 }
 
@@ -677,9 +677,9 @@
   isolation: isolate;
   overflow: hidden;
   margin-top: clamp(56px, 8vw, 112px);
-  border-top: 1px solid var(--ld-line-deep);
-  background: var(--glow-spot), linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
-  color: var(--ld-on-deep);
+  border-top: 1px solid var(--line-deep);
+  background: var(--glow-spot), linear-gradient(160deg, var(--deep) 30%, var(--deep-2));
+  color: var(--on-deep);
 }
 
 .siteFooter::before {
@@ -711,9 +711,9 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border: 1px solid var(--ld-line-deep);
+  border: 1px solid var(--line-deep);
   border-radius: 50%;
-  color: var(--ld-on-deep);
+  color: var(--on-deep);
   transition:
     transform var(--motion-standard) var(--motion-ease-out),
     border-color var(--motion-standard) var(--motion-ease),
@@ -721,8 +721,8 @@
 }
 
 .siteSocials a:hover {
-  border-color: var(--ld-accent-deep);
-  color: var(--ld-accent-deep);
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
   transform: translateY(-2px);
 }
 
@@ -733,10 +733,10 @@
   bottom: calc(100% + var(--space-2));
   left: 50%;
   padding: 4px 10px;
-  border: 1px solid var(--ld-line-deep);
+  border: 1px solid var(--line-deep);
   border-radius: var(--radius-pill);
-  background: var(--ld-deep);
-  color: var(--ld-on-deep);
+  background: var(--deep);
+  color: var(--on-deep);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;

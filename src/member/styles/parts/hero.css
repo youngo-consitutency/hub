@@ -13,9 +13,9 @@
 .heroBand-page {
   position: relative;
   isolation: isolate;
-  margin: calc(var(--ld-header-h) * -1) calc(var(--gutter) * -1) 0;
-  padding: calc(var(--ld-header-h) + clamp(32px, 6vw, 72px)) var(--gutter) clamp(36px, 6vw, 64px);
-  color: var(--ld-on-deep);
+  margin: calc(var(--header-h) * -1) calc(var(--gutter) * -1) 0;
+  padding: calc(var(--header-h) + clamp(32px, 6vw, 72px)) var(--gutter) clamp(36px, 6vw, 64px);
+  color: var(--on-deep);
 }
 
 /* tint and rings run edge to edge of the window, not just the content column */
@@ -29,11 +29,11 @@
 }
 
 .heroBand-page::before {
-  border-bottom: 1px solid var(--ld-line-deep);
+  border-bottom: 1px solid var(--line-deep);
   background:
     var(--glow-spot), radial-gradient(40% 80% at 85% 0%, rgba(45, 212, 160, 0.3), transparent 70%),
     radial-gradient(30% 60% at 5% 100%, rgba(163, 230, 53, 0.16), transparent 70%),
-    linear-gradient(160deg, var(--ld-deep) 30%, var(--ld-deep-2));
+    linear-gradient(160deg, var(--deep) 30%, var(--deep-2));
 }
 
 .heroBand-page::after {
