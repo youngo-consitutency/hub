@@ -18,8 +18,8 @@ export function BorderBeam({
   size = 80,
   duration = 8,
   delay = 0,
-  colorFrom = 'var(--ld-glow-green)',
-  colorTo = 'var(--ld-glow-lime)',
+  colorFrom = 'var(--glow-green)',
+  colorTo = 'var(--glow-lime)',
   borderWidth = 1,
 }: BorderBeamProps) {
   // the beam is decoration, so reduced motion drops it entirely
