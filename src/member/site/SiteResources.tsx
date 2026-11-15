@@ -1,5 +1,5 @@
-import { ResourceCatalogue } from '../../components/ResourceHub'
-import { useDocument } from '../../lib/documents'
+import { ResourceCatalogue } from '../components/ResourceHub'
+import { useDocument } from '../lib/documents'
 import { SitePage } from './SitePage'
 
 export function SiteResources() {

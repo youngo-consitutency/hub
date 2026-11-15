@@ -1,5 +1,5 @@
 import { TbFileOff as FileOff } from 'react-icons/tb'
-import { A } from '../../components/ui'
+import { A } from '../components/ui'
 
 // a reviewed public page that a publisher withdrew; nothing stale is shown
 export function PageWithdrawn() {

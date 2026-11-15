@@ -3,9 +3,9 @@ import {
   TbLayoutDashboard as Dashboard,
   TbUserPlus as UserPlus,
 } from 'react-icons/tb'
-import { A } from '../../components/ui'
-import { HUB_ROOT } from '../../../lib/hubUrl'
-import { useSignedIn } from '../../lib/useSignedIn'
+import { A } from '../components/ui'
+import { HUB_ROOT } from '../../lib/hubUrl'
+import { useSignedIn } from '../lib/useSignedIn'
 
 interface JoinButtonProps {
   /** the signed-out label; members always see "Open your Hub" */

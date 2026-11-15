@@ -1,5 +1,5 @@
-import type { AnyValue, Doc } from '../../lib/types'
-import { BorderBeam } from '../../components/fx/BorderBeam'
+import type { AnyValue, Doc } from '../lib/types'
+import { BorderBeam } from '../components/fx/BorderBeam'
 import {
   TbCalendar as CalendarDays,
   TbWorld as Globe,
@@ -8,12 +8,12 @@ import {
   TbVideo as Video,
   TbArrowUpRight as ArrowUpRight,
 } from 'react-icons/tb'
-import { A, Async, Empty, Skeletons } from '../../components/ui'
-import { useDocument } from '../../lib/documents'
+import { A, Async, Empty, Skeletons } from '../components/ui'
+import { useDocument } from '../lib/documents'
 
 // Icon names are stored in the site document; components live here.
 const FORMAT_ICONS = { Globe, Map, MapPin, Video }
-import { useApi } from '../../lib/api'
+import { useApi } from '../lib/api'
 import { CoyDirectory, FeaturedConference } from './CoyDirectory'
 import { SiteSection } from './SitePage'
 
