@@ -14,10 +14,10 @@ Run from the repository root. Scripts that write to the database read `DATABASE_
 | `setup/add-page-headings.ts`           | Fills missing About and Our work headings                                      | dry run; `--apply`                           |
 | `setup/remove-x-link.ts`               | Drops the X link from the `connect` document                                   | dry run; `--apply`                           |
 | `setup/remove-consultation-content.ts` | Removes the retired consultation banner, footer link and document              | dry run; `--apply`                           |
-| `setup/grant-authority.ts`             | Last-resort authority grant (see AGENTS.md, Operator recovery)                 | writes at once                               |
-| `setup/map-directory-roles.ts`         | Gives focal point directory rows the `focal_point` role                        | writes at once                               |
-| `setup/import-legacy-content.ts`       | One-way import of the legacy Hub's public content                              | writes unless `DRY_RUN=1`                    |
-| `setup/import-legacy-members.ts`       | One-way import of legacy member data                                           | writes unless `DRY_RUN=1`                    |
+| `setup/grant-authority.ts`             | Last-resort authority grant (see AGENTS.md, Operator recovery)                 | dry run; `--apply`                           |
+| `setup/map-directory-roles.ts`         | Gives focal point directory rows the `focal_point` role                        | dry run; `--apply`                           |
+| `setup/import-legacy-content.ts`       | One-way import of the legacy Hub's public content                              | dry run; `--apply`                           |
+| `setup/import-legacy-members.ts`       | One-way import of legacy member data                                           | dry run; `--apply`                           |
 | `setup/generate-vapid-keys.mjs`        | Prints a Web Push VAPID key pair                                               | no                                           |
 
 `lib/accountSpec.ts` is the shared account-provisioning helper used by scripts and test fixtures.

@@ -14,7 +14,7 @@ import {
 } from 'react-aria-components'
 import { motion } from 'motion/react'
 import { TbCheck, TbCircleCheck, TbSend } from 'react-icons/tb'
-import { SiteSection } from '../../pages/site/SitePage'
+import { SiteSection } from '../../site/SitePage'
 import { Skeletons } from '../../components/ui'
 import { useState, type FormEvent } from 'react'
 import { usePlatform, post, values } from './api.ts'

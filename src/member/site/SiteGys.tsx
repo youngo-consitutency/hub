@@ -1,14 +1,14 @@
-import type { AnyValue, Doc } from '../../lib/types'
+import type { AnyValue, Doc } from '../lib/types'
 import { SiteSection } from './SitePage'
-import { ScrollTimeline } from '../../components/fx/ScrollTimeline'
+import { ScrollTimeline } from '../components/fx/ScrollTimeline'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbChevronRight as ChevronRight,
   TbScript as Statement,
 } from 'react-icons/tb'
-import { Async } from '../../components/ui'
-import { useApi } from '../../lib/api'
-import { useDocument } from '../../lib/documents'
+import { Async } from '../components/ui'
+import { useApi } from '../lib/api'
+import { useDocument } from '../lib/documents'
 
 export function StatementSection() {
   const query = useApi('/gys')
