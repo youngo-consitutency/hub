@@ -257,24 +257,6 @@ a.mcMetricLink:focus-visible {
   }
 }
 
-.workspaceStart {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--bg-card);
-  color: var(--accent);
-  font-weight: 600;
-}
-.workspaceStart span {
-  flex: 1;
-}
-.workspaceStart:hover {
-  background: var(--bg-raised);
-}
-
 /* Home: personal shortcuts in a fixed rail beside the feed once there is room */
 .homeColumns {
   display: grid;
