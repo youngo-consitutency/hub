@@ -318,9 +318,14 @@ export const memberEndpoints: Endpoint[] = [
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
       let activities: AnyValue[] = []
       if (unlocked) {
+        // a task force card asks for its own slice, so the 50 cap applies per task force
+        const taskForce = req.query?.taskForce as string | undefined
         const { docs } = await req.payload.find({
           collection: 'wg-activities',
-          where: { wgSlug: { equals: wg } },
+          where: {
+            wgSlug: { equals: wg },
+            ...(taskForce ? { taskForceSlug: { equals: taskForce } } : {}),
+          },
           sort: '-createdAt',
           limit: 50,
           overrideAccess: true,
@@ -441,9 +446,11 @@ export const memberEndpoints: Endpoint[] = [
       const account = requireVerifiedMember(req)
       const { avatar } = parseWith(avatarSchema, await readBody(req))
       const existing = await ownProfile(req, account.id)
+      // only a new profile needs a display name; an existing one is left alone so a
+      // concurrent profile edit is not overwritten with a stale value
       await writeOwnProfile(req, existing, {
         account: account.id,
-        displayName: existing?.displayName ?? account.name ?? 'YOUNGO member',
+        ...(existing ? {} : { displayName: account.name ?? 'YOUNGO member' }),
         avatar,
         revision: (existing?.revision || 1) + 1,
       })

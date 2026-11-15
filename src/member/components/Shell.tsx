@@ -160,6 +160,7 @@ export function Shell({ children }: ShellProps) {
               href="/profile"
               className={`accountChip ${isActive(path, '/profile') ? 'active' : ''}`}
               title={account.email}
+              aria-label={`Your profile, ${account.name}`}
               aria-current={isActive(path, '/profile') ? 'page' : undefined}
             >
               <span className="accountInitial" aria-hidden>

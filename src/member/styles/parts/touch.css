@@ -46,6 +46,13 @@
     flex-shrink: 0;
   }
 
+  /* the clear button is 26px, so a transparent overlay brings it to a 44px target */
+  .searchClear::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
+
   /* ── Section "see all" links ────────────────────────
      "Calendar →", "All →", "Browse →" are 14px tall text links that sit in the
      section header. Padding keeps the type size and alignment while giving the

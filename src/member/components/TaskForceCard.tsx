@@ -39,7 +39,9 @@ export function TaskForceCard({ group, force }: { group: AnyValue; force: AnyVal
 }
 
 function TaskForceActivities({ group, force }: { group: AnyValue; force: AnyValue }) {
-  const workspace = useApi(`/member/workspace/${encodeURIComponent(group.slug)}`)
+  const workspace = useApi(
+    `/member/workspace/${encodeURIComponent(group.slug)}?taskForce=${encodeURIComponent(force.slug)}`,
+  )
   return (
     <Async query={workspace} skeletons={1}>
       {(data: AnyValue) => {

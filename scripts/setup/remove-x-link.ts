@@ -17,7 +17,14 @@ loadEnv()
 const { default: config } = await import('../../src/payload.config')
 
 const apply = process.argv.includes('--apply')
-const isX = ({ key, url }: AnyValue) => key === 'x' || /(^|\.)(x|twitter)\.com\b/.test(String(url))
+const isXHost = (url: unknown) => {
+  try {
+    return /(^|\.)(x|twitter)\.com$/.test(new URL(String(url)).hostname)
+  } catch {
+    return false
+  }
+}
+const isX = ({ key, url }: AnyValue) => key === 'x' || isXHost(url)
 
 async function main() {
   const payload = await getPayload({ config })

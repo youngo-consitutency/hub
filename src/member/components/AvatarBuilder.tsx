@@ -12,6 +12,7 @@ import {
 import { TbArrowBackUp, TbArrowsShuffle, TbPencil } from 'react-icons/tb'
 import {
   AVATAR_CHOICES,
+  cleanAvatar,
   randomAvatar,
   resolveAvatar,
   type AvatarKey,
@@ -124,7 +125,7 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
     setSaving(true)
     setError('')
     try {
-      await apiPut('/member/profile/avatar', { avatar: picks })
+      await apiPut('/member/profile/avatar', { avatar: picks && cleanAvatar(picks) })
       onSaved()
       close()
     } catch (caught) {
@@ -162,7 +163,7 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
                   option={option}
                   label={name}
                   shown={shown}
-                  onPick={(value) => setPicks({ ...picks, [option]: value })}
+                  onPick={(value) => !saving && setPicks({ ...picks, [option]: value })}
                 />
               ))}
             </div>
@@ -173,11 +174,21 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
       <footer className="grid gap-3 border-t border-line p-4">
         {error && <ErrorCard message={error} />}
         <div className="flex flex-wrap items-center gap-2">
-          <Button className="min-h-11" variant="ghost" onClick={() => setPicks(randomAvatar())}>
+          <Button
+            className="min-h-11"
+            variant="ghost"
+            isDisabled={saving}
+            onClick={() => setPicks(randomAvatar())}
+          >
             <TbArrowsShuffle size={16} aria-hidden />
             Randomise
           </Button>
-          <Button className="min-h-11" variant="ghost" onClick={() => setPicks(null)}>
+          <Button
+            className="min-h-11"
+            variant="ghost"
+            isDisabled={saving}
+            onClick={() => setPicks(null)}
+          >
             <TbArrowBackUp size={16} aria-hidden />
             Reset
           </Button>

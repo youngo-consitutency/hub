@@ -11,6 +11,7 @@ function smtpSink() {
   const messages: string[] = []
   const server = net.createServer((socket) => {
     let data = ''
+    let pending = ''
     let inData = false
     const reply = (line: string) => socket.write(`${line}\r\n`)
     reply('220 sink ready')
@@ -26,7 +27,11 @@ function smtpSink() {
         }
         return
       }
-      for (const line of text.split('\r\n').filter(Boolean)) {
+      // tcp can split a command mid-line, so only act on complete CRLF-terminated lines
+      pending += text
+      const lines = pending.split('\r\n')
+      pending = lines.pop() ?? ''
+      for (const line of lines.filter(Boolean)) {
         const command = line.slice(0, 4).toUpperCase()
         if (command === 'EHLO' || command === 'HELO') reply('250 sink')
         else if (command === 'DATA') {
@@ -55,6 +60,8 @@ describe('mail delivery', () => {
   beforeAll(async () => {
     await new Promise<void>((resolve) => sink.server.listen(0, '127.0.0.1', resolve))
     const { port } = sink.server.address() as AddressInfo
+    // SMTP_URL wins over SMTP_HOST, so blank it or a real server could take the mail
+    vi.stubEnv('SMTP_URL', '')
     vi.stubEnv('SMTP_HOST', '127.0.0.1')
     vi.stubEnv('SMTP_PORT', String(port))
     vi.stubEnv('SMTP_SECURE', 'false')

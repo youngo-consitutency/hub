@@ -7,7 +7,7 @@ import { replace } from './router'
  * closes with Back. `apiPath` is the record endpoint; the panel gets null until it loads.
  */
 export function usePeek(listPath: string, apiPath: string, slug?: string) {
-  const query = useApi(slug ? `${apiPath}/${slug}` : null)
+  const query = useApi(slug ? `${apiPath}/${slug}` : null, [], false)
   const close = useCallback(() => replace(listPath, { scroll: false }), [listPath])
   return { item: slug ? query.data : null, close }
 }

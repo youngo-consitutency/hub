@@ -58,6 +58,7 @@ describe('member avatar builder', () => {
   })
 
   it('shows the picks to other verified members', async () => {
+    expect((await put({ avatar: valid }, member.cookie)).status).toBe(200)
     await api('/member/profile', {
       method: 'PATCH',
       cookie: member.cookie,

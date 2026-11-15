@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { A, Empty, ErrorCard, Skeletons } from '../../components/ui'
 import { replace } from '../../lib/router'
 import type { DecisionDetail, DecisionState } from '../../../shared/platform.ts'
-import { usePlatform, post, patch, values, formatDate } from './api.ts'
+import { usePlatform, announceSaved, post, patch, values, formatDate } from './api.ts'
 import { Field, Text, Select } from './fields.tsx'
 
 const NEXT: Partial<Record<DecisionState, DecisionState[]>> = {
@@ -34,7 +34,7 @@ export function DecisionPage({ slug }: { slug: string }) {
         setPanel(null)
         setMessage('Saved.')
         form.reset()
-        reload()
+        announceSaved()
       } catch (error) {
         setFailure(error instanceof Error ? error.message : 'Could not save.')
       } finally {

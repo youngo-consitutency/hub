@@ -27,6 +27,7 @@ describe('hub side panels', () => {
       '/submissions/amendments/new',
     ]) {
       const match = matchHubRoute(path)
+      expect(match?.kind).toBe('page')
       expect(match?.kind === 'page' && 'slug' in match.props).toBe(false)
     }
   })

@@ -69,13 +69,14 @@ export function apiDelete(path: AnyValue) {
 
 // Fetch state for independently rendered sections, backed by SWR (request
 // dedup, revalidation, retry). Keyed by [path, ...deps] so dep changes refetch.
-export function useApi(path: AnyValue, deps: AnyValue[] = []) {
+export function useApi(path: AnyValue, deps: AnyValue[] = [], keepPrevious = true) {
   // keepPreviousData: when the key changes (filter, search, pagination) the
-  // previous result stays rendered instead of flashing skeletons.
+  // previous result stays rendered instead of flashing skeletons. Record requests opt out
+  // so one record is never shown under another's URL.
   const { data, error, isLoading, mutate } = useSWR(
     path ? [path, ...deps] : null,
     ([p]) => apiGet(p),
-    { keepPreviousData: true },
+    { keepPreviousData: keepPrevious },
   )
   return {
     data: data ?? null,

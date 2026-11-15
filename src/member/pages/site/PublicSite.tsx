@@ -138,6 +138,7 @@ function SiteHeader() {
                   key={section.href}
                   href={section.href}
                   className="siteMobileNavItem siteMobileNavSub"
+                  onClick={() => setOpen(false)}
                 >
                   {section.label}
                 </A>

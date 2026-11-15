@@ -47,6 +47,31 @@ export const ContentDocuments: CollectionConfig = {
       type: 'json',
       required: true,
       hooks: {
+        // the console edits the redacted read, so put the stored answer keys back by question id
+        // (a new question has no key until one is set through a script)
+        beforeChange: [
+          async ({ value, originalDoc, operation, req }) => {
+            if (operation !== 'update' || !originalDoc?.id || !Array.isArray(value?.quiz))
+              return value
+            const stored = await req.payload.findByID({
+              collection: 'content-documents',
+              id: originalDoc.id,
+              context: { answerKey: true },
+              overrideAccess: true,
+              req,
+            })
+            const keys = new Map<string, string>(
+              ((stored.body as AnyValue)?.quiz ?? []).map((q: AnyValue) => [q.id, q.correct]),
+            )
+            return {
+              ...value,
+              quiz: value.quiz.map((q: AnyValue) => ({
+                ...q,
+                correct: q.correct ?? keys.get(q.id),
+              })),
+            }
+          },
+        ],
         afterRead: [({ value, context }) => (context.answerKey ? value : withoutAnswerKey(value))],
       },
     },
