@@ -41,6 +41,8 @@
   --on-accent: #052617;
   --accent-tint: rgba(74, 222, 128, 0.14);
   --on-accent-tint: #86efac;
+  /* the light-theme amber is too dark on deep green (about 2:1); this one clears 4.5:1 */
+  --warn: #fbbf24;
   --glow-accent: 0 0 0 1px rgba(74, 222, 128, 0.5), 0 0 28px rgba(45, 212, 160, 0.35);
   /* follows the pointer (--mx/--my, set by trackPointer) and rests top right */
   --glow-spot: radial-gradient(

@@ -1051,3 +1051,11 @@ a.resourceRow:hover {
     justify-content: space-between;
   }
 }
+
+/* metadata chips on a resource row: one height, even gaps, wrap instead of colliding */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
