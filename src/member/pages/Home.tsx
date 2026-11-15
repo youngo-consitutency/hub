@@ -274,10 +274,14 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
               const joined = groupData.items.filter((group: Doc) => progressBySlug.has(group.slug))
               if (!joined.length) {
                 return (
-                  <A className="workspaceStart" href="/groups">
-                    <Users size={20} aria-hidden />
-                    <span>Join a working group</span>
-                    <ArrowUpRight size={18} aria-hidden />
+                  <A href="/groups" className="card cardTight roleHubCard">
+                    <span className="iconTile" aria-hidden>
+                      <Users size={20} strokeWidth={1.75} />
+                    </span>
+                    <span className="roleHubCopy">
+                      <strong>Join a working group</strong>
+                      <small>Your groups and their workspaces appear here.</small>
+                    </span>
                   </A>
                 )
               }

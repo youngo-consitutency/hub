@@ -129,12 +129,18 @@ function EntityHeader({
     <div className="entityCardHeader">
       <div className="entityCardHeading">
         <h3>{title}</h3>
-        <div className="entityCardTags entityCardHeaderTags">
-          {status && (
-            <StatusChip status={status} filterState={statusFilterState} onClick={onStatusFilter} />
-          )}
-          {children}
-        </div>
+        {(status || children) && (
+          <div className="entityCardTags entityCardHeaderTags">
+            {status && (
+              <StatusChip
+                status={status}
+                filterState={statusFilterState}
+                onClick={onStatusFilter}
+              />
+            )}
+            {children}
+          </div>
+        )}
       </div>
     </div>
   )
