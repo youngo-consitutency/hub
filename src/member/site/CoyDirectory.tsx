@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
-import type { AnyValue } from '../../lib/types'
-import { regionLabel } from '../../lib/regions'
-import { coyDisplayStatus } from '../../../shared/coyStatus'
-import { BorderBeam } from '../../components/fx/BorderBeam'
-import { Empty, FilterPill } from '../../components/ui'
-import { useCatalogue } from '../../lib/useCatalogue'
+import type { AnyValue } from '../lib/types'
+import { regionLabel } from '../lib/regions'
+import { coyDisplayStatus } from '../../shared/coyStatus'
+import { BorderBeam } from '../components/fx/BorderBeam'
+import { Empty, FilterPill } from '../components/ui'
+import { useCatalogue } from '../lib/useCatalogue'
 import { PublicSearch } from './PublicSearch'
 
 const FORMATS = [

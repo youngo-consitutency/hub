@@ -4,7 +4,7 @@ interface FaqItemProps {
   id?: string
 }
 
-import type { AnyValue, Doc } from '../../lib/types'
+import type { AnyValue, Doc } from '../lib/types'
 import { useState } from 'react'
 import {
   Button,
@@ -15,10 +15,10 @@ import {
   type Key,
 } from 'react-aria-components'
 import { TbChevronDown as ChevronDown } from 'react-icons/tb'
-import { A, Skeletons } from '../../components/ui'
-import { useDocument } from '../../lib/documents'
-import { useApi } from '../../lib/api'
-import { useCatalogue } from '../../lib/useCatalogue'
+import { A, Skeletons } from '../components/ui'
+import { useDocument } from '../lib/documents'
+import { useApi } from '../lib/api'
+import { useCatalogue } from '../lib/useCatalogue'
 import { PublicSearch } from './PublicSearch'
 import { SiteSection } from './SitePage'
 import { PageWithdrawn } from './PageWithdrawn'

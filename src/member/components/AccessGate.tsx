@@ -27,7 +27,7 @@ const ChangePasswordGate = dynamic(() =>
   import('./ChangePasswordGate').then((m) => m.ChangePasswordGate),
 )
 const Privacy = dynamic(() => import('../pages/Privacy').then((m) => m.Privacy))
-const PublicSite = dynamic(() => import('../pages/site/PublicSite').then((m) => m.PublicSite))
+const PublicSite = dynamic(() => import('../site/PublicSite').then((m) => m.PublicSite))
 
 // a failed /auth/me that wasn't a 401: members keep their cached account and
 // the shell shows a retry notice instead of a blocking screen

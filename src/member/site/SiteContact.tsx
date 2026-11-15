@@ -1,5 +1,5 @@
-import type { AnyValue } from '../../lib/types'
-import { BorderBeam } from '../../components/fx/BorderBeam'
+import type { AnyValue } from '../lib/types'
+import { BorderBeam } from '../components/fx/BorderBeam'
 import { SiteSection } from './SitePage'
 import {
   TbArrowUpRight as ArrowUpRight,
@@ -9,11 +9,11 @@ import {
   TbSitemap as Network,
   TbUsers as Users,
 } from 'react-icons/tb'
-import { A, Skeletons } from '../../components/ui'
-import { DestinationIcon } from '../../components/DestinationLink'
-import { PartnerEnquiry } from '../../features/platform/PublicPlatform.tsx'
-import { publishedLinks, useDocument } from '../../lib/documents'
-import { useApi } from '../../lib/api'
+import { A, Skeletons } from '../components/ui'
+import { DestinationIcon } from '../components/DestinationLink'
+import { PartnerEnquiry } from '../features/platform/PublicPlatform.tsx'
+import { publishedLinks, useDocument } from '../lib/documents'
+import { useApi } from '../lib/api'
 import { PageWithdrawn } from './PageWithdrawn'
 
 // Icon names are stored in the site document; components live here.
