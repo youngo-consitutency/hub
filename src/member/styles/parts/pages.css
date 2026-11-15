@@ -1195,17 +1195,9 @@ a.monogram:hover {
   margin-top: 0;
 }
 
-.detailLiveTime {
-  color: var(--live);
-}
-
 .detailHelp {
   max-width: var(--text-measure);
   margin-top: var(--space-2);
-}
-
-.detailStandaloneActions {
-  margin-top: 0;
 }
 
 .detailPageActions {
@@ -1225,79 +1217,14 @@ a.monogram:hover {
   margin-left: auto;
 }
 
-/* Detail summaries keep facts and actions together without forcing sparse
-   metadata across the full content column. */
-.detailSummary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-4);
-}
-
-.detailSummary:not(:has(> .detailActions)) {
-  grid-template-columns: auto;
-  width: fit-content;
-  max-width: 100%;
-}
-
-/* The four event actions form a compact two-row toolbar. Bound its grid track
-   so its intrinsic button widths cannot squeeze the event facts beside it. */
-.detailOverviewCard {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 390px);
-}
-
-.detailOverviewFacts {
-  display: grid;
-  align-items: start;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.detailOverviewFact {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.detailOverviewCard .detailActions {
-  justify-content: flex-end;
-  justify-self: end;
-  margin-top: 0;
-}
-
-.detailProcess,
 .detailPanel {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.detailProcess .timelineStrip {
-  margin: 0;
-}
-
-.detailLifecycleTiming {
-  width: fit-content;
-  max-width: 100%;
-  padding: var(--space-3);
-  border-radius: var(--radius-control);
-  background: var(--bg-raised);
-}
-
 .detailPanel .detailActions {
   margin-top: 0;
-}
-
-.detailActionPanel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.detailActionPanel .detailActions {
-  justify-content: flex-end;
-  justify-self: end;
 }
 
 .groupOverview {
@@ -1438,69 +1365,6 @@ a.monogram:hover {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
-}
-
-.coyDetailHeader {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-6);
-}
-
-.coyDetailHeader .pageHeader {
-  margin-bottom: 0;
-}
-
-.coyDetailOverview {
-  width: fit-content;
-  max-width: 100%;
-  justify-self: end;
-}
-
-.coyDetailFacts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  row-gap: var(--space-3);
-}
-
-.coyDetailFact {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 150px;
-  padding: 0 var(--space-4);
-}
-
-.coyDetailFact:first-child {
-  padding-left: 0;
-}
-
-.coyDetailFact:last-child {
-  padding-right: 0;
-}
-
-.coyDetailFact + .coyDetailFact {
-  border-left: 1px solid var(--border);
-}
-
-.coyDetailFactIcon {
-  color: var(--accent);
-}
-
-.coyDetailFact .detailMetaLabel,
-.coyDetailFact strong {
-  display: block;
-}
-
-.coyDetailStatus {
-  grid-template-columns: 1fr;
-  align-content: center;
-}
-
-.coyDetailStatus .chip {
-  width: max-content;
 }
 
 .coyOrganiserCard {
@@ -2329,10 +2193,6 @@ a.monogram:hover {
 
   .notificationHeadingRow {
     grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .notificationHelpDialog {
-    padding: var(--space-4);
   }
 }
 
