@@ -3,7 +3,7 @@
  * github.com/Genn25369/YOUNGO-HUB) into this database. The data stays out of
  * this repo: point LEGACY_DIR at a checkout of that repo.
  *
- *   LEGACY_DIR=../legacy-hub DRY_RUN=1 npx tsx scripts/setup/import-legacy-content.ts
+ *   LEGACY_DIR=../legacy-hub npx tsx scripts/setup/import-legacy-content.ts --apply
  *   LEGACY_DIR=../legacy-hub npx tsx scripts/setup/import-legacy-content.ts
  *
  * Reads data/fixtures.json and data/resource-hub.json, plus the WG onboarding
@@ -35,7 +35,8 @@ const { default: config } = await import('../../src/payload.config')
 const SOURCE = 'legacy_hub_fixtures'
 const DAY = 86_400_000
 const legacyDir = process.env.LEGACY_DIR || ''
-const dryRun = process.env.DRY_RUN === '1'
+// a dry run unless told to apply, like every other data script
+const dryRun = !process.argv.includes('--apply')
 const anchor = process.env.FIXTURE_ANCHOR ? new Date(process.env.FIXTURE_ANCHOR) : new Date()
 
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -66,7 +67,7 @@ const isTestFixture = (slug: string) => /-example$/.test(slug)
 
 async function main() {
   if (!legacyDir || Number.isNaN(anchor.getTime())) {
-    console.error('Usage: LEGACY_DIR=<legacy checkout> [DRY_RUN=1] [FIXTURE_ANCHOR=<iso>]')
+    console.error('Usage: LEGACY_DIR=<legacy checkout> [FIXTURE_ANCHOR=<iso>]')
     process.exit(1)
   }
   const fixtures = readJson('fixtures.json')
@@ -341,7 +342,11 @@ async function main() {
     const extra = all.docs.map((d: AnyValue) => d.slug).filter((slug) => !slugs.has(slug))
     if (extra.length) console.log(`not in legacy source — ${collection}: ${extra.join(', ')}`)
   }
-  console.log(dryRun ? 'Dry run — nothing written.' : `Imported as of ${anchor.toISOString()}.`)
+  console.log(
+    dryRun
+      ? 'Dry run — nothing written (pass --apply).'
+      : `Imported as of ${anchor.toISOString()}.`,
+  )
   process.exit(0)
 }
 

@@ -1,13 +1,13 @@
 import type { IconType } from 'react-icons'
-import { NumberTicker } from '../../components/fx/NumberTicker'
+import { NumberTicker } from '../components/fx/NumberTicker'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbBook as BookOpen,
   TbMapPin as MapPin,
   TbUsers as Users,
 } from 'react-icons/tb'
-import { A } from '../../components/ui'
-import { useApi } from '../../lib/api'
+import { A } from '../components/ui'
+import { useApi } from '../lib/api'
 import { UpcomingEvents } from './UpcomingEvents'
 
 // live counts come from the same public endpoints the Hub pages use, so landing and Hub never drift

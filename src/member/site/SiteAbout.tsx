@@ -1,5 +1,5 @@
-import { useDocument } from '../../lib/documents'
-import { OrganisationSection } from '../../features/platform/PublicPlatform'
+import { useDocument } from '../lib/documents'
+import { OrganisationSection } from '../features/platform/PublicPlatform'
 import { ContactSection } from './SiteContact'
 import { FaqSection } from './SiteFaq'
 import { SitePage } from './SitePage'

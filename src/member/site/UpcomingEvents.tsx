@@ -1,9 +1,9 @@
-import type { AnyValue } from '../../lib/types'
+import type { AnyValue } from '../lib/types'
 import { TbArrowUpRight, TbCalendarHeart } from 'react-icons/tb'
-import { A, Button } from '../../components/ui'
-import { DateStamp } from '../../components/DateStamp'
-import { useApi } from '../../lib/api'
-import { fmtMoment } from '../../lib/time'
+import { A, Button } from '../components/ui'
+import { DateStamp } from '../components/DateStamp'
+import { useApi } from '../lib/api'
+import { fmtMoment } from '../lib/time'
 
 /** Load public upcoming events with local times and full-page event links, including retry and empty states. */
 export function UpcomingEvents() {

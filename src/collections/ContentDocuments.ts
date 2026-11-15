@@ -58,7 +58,8 @@ export const ContentDocuments: CollectionConfig = {
               id: originalDoc.id,
               context: { answerKey: true },
               overrideAccess: true,
-              req,
+              // no `req`: the context is shared with the request, so passing it would leave
+              // answerKey set and the save response would carry the keys back out
             })
             const keys = new Map<string, string>(
               ((stored.body as AnyValue)?.quiz ?? []).map((q: AnyValue) => [q.id, q.correct]),
