@@ -35,6 +35,8 @@ import { regionLabel } from '../lib/regions'
 import { useMemo, useState } from 'react'
 import {
   TbArrowUpRight as ArrowUpRight,
+  TbFlag as Flag,
+  TbPencil as Pencil,
   TbBook2 as BookOpen,
   TbBriefcase as Briefcase,
   TbCircleCheck as Check,
@@ -171,6 +173,7 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: Resour
 // links a Content Publisher has checked (and nobody has reported) get the verified look
 // a check older than a year no longer counts: links rot
 const PAGE = 12
+const NOT_CHECKED = 'Not yet checked'
 const CHECK_VALID_MS = 365 * 24 * 60 * 60 * 1000
 const isChecked = (item: AnyValue) =>
   item.verification?.status === 'verified' &&
@@ -190,7 +193,7 @@ function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
         ? 'Retired'
         : v?.status === 'verified' && !v.openIssues
           ? 'Check due'
-          : 'Not yet checked'
+          : NOT_CHECKED
   const topics = (resource.topics || [resource.topic]).filter(Boolean)
   return (
     <li className="resourceRow resourceListRow" data-checked={checked || undefined}>
@@ -214,19 +217,24 @@ function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
         </div>
       </div>
       <div className="resourceListSide">
-        <span className="resourceListStatus">
-          {checked && <Check size={14} strokeWidth={2.25} aria-hidden />}
-          {status}
-        </span>
+        {/* "not yet checked" is the default, so it stays quiet; only exceptions get a label */}
+        {status !== NOT_CHECKED && (
+          <span className="resourceListStatus">
+            {checked && <Check size={14} strokeWidth={2.25} aria-hidden />}
+            {status}
+          </span>
+        )}
         {(onReport || onCorrect) && (
           <span className="resourceCardActions">
             {onReport && (
               <Button sm variant="ghost" onClick={() => onReport(resource)}>
+                <Flag size={14} strokeWidth={1.75} aria-hidden />
                 Report
               </Button>
             )}
             {onCorrect && (
               <Button sm variant="ghost" onClick={() => onCorrect(resource)}>
+                <Pencil size={14} strokeWidth={1.75} aria-hidden />
                 Suggest edit
               </Button>
             )}
@@ -411,7 +419,6 @@ export function ResourceCatalogue({
               ) : null
             })}
             <FilterPill
-              className="ml-auto"
               active={verifiedOnly}
               icon={Check}
               onClick={() => reset(setVerifiedOnly)(!verifiedOnly)}

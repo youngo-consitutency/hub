@@ -48,8 +48,11 @@ export function publishedLinks(links: AnyValue) {
 }
 
 // Single {value,label} lookup for display labels.
+// an unlisted value falls back to itself, capitalised, so a raw key like "platform" never shows
 export function optionLabel(items: Doc, value: AnyValue) {
-  return items.find((item: Doc) => item.value === value)?.label || value
+  const label = items.find((item: Doc) => item.value === value)?.label
+  if (label) return label
+  return typeof value === 'string' && value ? value[0]!.toUpperCase() + value.slice(1) : value
 }
 
 export function getWgOnboarding(wgOnboarding: AnyValue, slug: AnyValue) {
