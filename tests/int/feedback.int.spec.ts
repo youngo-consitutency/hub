@@ -88,6 +88,12 @@ describe('feedback api', () => {
       body: JSON.stringify({ status: 'triaged' }),
     })
     expect(missing.status).toBe(404)
+    const stored = await payload.findByID({
+      collection: 'feedback-tickets',
+      id: item.id,
+      overrideAccess: true,
+    })
+    expect(stored.status).toBe('new')
 
     const token = team.cookie.replace('payload-token=', '')
     const client = createHubClient({ origin: BASE, token })

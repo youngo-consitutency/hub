@@ -112,6 +112,12 @@ describe('mail desk api', () => {
     const outsider = await session({})
     const res = await post(draftBody({ type: 'individual', accountIds: [outsider.account.id] }))
     expect(res.status).toBe(403)
+    const drafts = await payload.count({
+      collection: 'mail-drafts',
+      where: { author: { equals: contact.account.id } },
+      overrideAccess: true,
+    })
+    expect(drafts.totalDocs).toBe(0)
   })
 
   it('finds people by name without exposing email', async () => {
@@ -149,9 +155,18 @@ describe('mail desk api', () => {
     const foreign = await api(`/member/mail/drafts/${draft.id}`, {
       method: 'PATCH',
       cookie: other.cookie,
-      body: JSON.stringify(draftBody({ type: 'working_group', wgSlug: wg })),
+      body: JSON.stringify({
+        ...draftBody({ type: 'working_group', wgSlug: wg }),
+        title: 'Hijacked title',
+      }),
     })
     expect(foreign.status).toBe(404)
+    const untouched = await payload.findByID({
+      collection: 'mail-drafts',
+      id: draft.id,
+      overrideAccess: true,
+    })
+    expect(untouched.title).toBe('Working group call moved')
 
     const count = await api('/member/mail/preview', {
       method: 'POST',
@@ -187,5 +202,11 @@ describe('mail desk api', () => {
       cookie: contact.cookie,
     })
     expect(again.status).toBe(404)
+    const final = await payload.findByID({
+      collection: 'mail-drafts',
+      id: draft.id,
+      overrideAccess: true,
+    })
+    expect(final.status).toBe('queued')
   })
 })

@@ -144,6 +144,20 @@ describe('officers cannot grant themselves mandates', () => {
       }),
     })
     expect(res.status).toBe(403)
+    const granted = await (
+      await testPayload()
+    ).find({
+      collection: 'authority-records',
+      where: {
+        and: [
+          { account: { equals: operator.account.id } },
+          { scopeType: { equals: 'team' } },
+          { scopeId: { equals: 'content_publisher' } },
+        ],
+      },
+      overrideAccess: true,
+    })
+    expect(granted.totalDocs).toBe(0)
   })
 })
 
@@ -338,10 +352,20 @@ describe('the membership status route', () => {
         cookie: staff.cookie,
         body: json(body),
       })
+    const payload = await testPayload()
+    const read = (id: number | string) =>
+      payload.findByID({ collection: 'accounts', id, overrideAccess: true })
+    const staffBefore = await read(staff.account.id)
+    const targetBefore = await read(target.account.id)
     expect((await patch(staff.account.id, { status: 'active' })).status).toBe(403)
     const far = new Date(Date.now() + 3 * 365 * 86_400_000).toISOString()
     expect((await patch(target.account.id, { status: 'active', renewalDueAt: far })).status).toBe(
       400,
     )
+    const staffAfter = await read(staff.account.id)
+    const targetAfter = await read(target.account.id)
+    expect(staffAfter.membershipStatus).toBe(staffBefore.membershipStatus)
+    expect(targetAfter.membershipStatus).toBe(targetBefore.membershipStatus)
+    expect(targetAfter.renewalDueAt).toBe(targetBefore.renewalDueAt)
   })
 })

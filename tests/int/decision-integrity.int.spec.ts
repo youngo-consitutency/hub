@@ -51,23 +51,16 @@ describe('who may propose, and no early close (H3)', () => {
 
   it('refuses proposals to a body the proposer does not sit in', async () => {
     const scope = { body: 'working_group', bodyRef: WG }
-    expect(
-      (await api('/decisions', { method: 'POST', cookie: outsider.cookie, body: standard(scope) }))
-        .status,
-    ).toBe(403)
-    expect(
-      (await api('/decisions', { method: 'POST', cookie: network.cookie, body: standard(scope) }))
-        .status,
-    ).toBe(403)
-    expect(
-      (
-        await api('/decisions', {
-          method: 'POST',
-          cookie: outsider.cookie,
-          body: standard({ body: 'council' }),
-        })
-      ).status,
-    ).toBe(403)
+    const refusedTitle = `Refused ${slug()}`
+    const refused = (cookie: string, s: { body: string; bodyRef?: string }) =>
+      api('/decisions', { method: 'POST', cookie, body: standard(s, { title: refusedTitle }) })
+    expect((await refused(outsider.cookie, scope)).status).toBe(403)
+    expect((await refused(network.cookie, scope)).status).toBe(403)
+    expect((await refused(outsider.cookie, { body: 'council' })).status).toBe(403)
+    const stored = await (
+      await pool()
+    ).query('SELECT count(*)::int AS n FROM decision_proposals WHERE title=$1', [refusedTitle])
+    expect(stored.rows[0].n).toBe(0)
     expect(
       (await api('/decisions', { method: 'POST', cookie: insider.cookie, body: standard(scope) }))
         .status,
@@ -76,12 +69,17 @@ describe('who may propose, and no early close (H3)', () => {
 
   it('refuses contact persons from outside the body', async () => {
     const scope = { body: 'working_group', bodyRef: WG }
+    const title = `Contacts ${slug()}`
     const res = await api('/decisions', {
       method: 'POST',
       cookie: insider.cookie,
-      body: standard(scope, { contactPersons: [outsider.account.id] }),
+      body: standard(scope, { title, contactPersons: [outsider.account.id] }),
     })
     expect(res.status).toBe(400)
+    const stored = await (
+      await pool()
+    ).query('SELECT count(*)::int AS n FROM decision_proposals WHERE title=$1', [title])
+    expect(stored.rows[0].n).toBe(0)
   })
 
   it('offers the proposer no way to shorten the statutory windows', async () => {
@@ -114,6 +112,12 @@ describe('one ballot per council seat (H4)', () => {
     fp2 = await session({ membershipTrack: 'constituency_work', records: fpRecord })
   })
 
+  const ballotCount = async (id: number) =>
+    (
+      await (
+        await pool()
+      ).query('SELECT count(*)::int AS n FROM decision_ballots WHERE proposal_id=$1', [id])
+    ).rows[0].n
   const vote = (cookie: string, id: number, choice = 'for') =>
     api(`/decisions/${id}/ballots`, { method: 'POST', cookie, body: jsonBody({ choice }) })
 
@@ -123,6 +127,7 @@ describe('one ballot per council seat (H4)', () => {
     const second = await vote(b.cookie, voting.id)
     expect(second.status).toBe(409)
     expect((await second.json()).error.code).toBe('already_voted')
+    expect(await ballotCount(voting.id)).toBe(1)
   })
 
   it('treats a substitute as the principal, never an extra vote', { timeout: 90000 }, async () => {
@@ -145,12 +150,14 @@ describe('one ballot per council seat (H4)', () => {
     const voting = await makeVotingProposal(principal, principal, { body: 'council' })
     expect((await vote(principal.cookie, voting.id)).status).toBe(201)
     expect((await vote(sub.cookie, voting.id)).status).toBe(409)
+    expect(await ballotCount(voting.id)).toBe(1)
   })
 
   it('still counts the two personal focal point seats separately', { timeout: 90000 }, async () => {
     const voting = await makeVotingProposal(fp1, fp1, { body: 'council' })
     expect((await vote(fp1.cookie, voting.id)).status).toBe(201)
     expect((await vote(fp2.cookie, voting.id)).status).toBe(201)
+    expect(await ballotCount(voting.id)).toBe(2)
   })
 
   it(
@@ -337,9 +344,9 @@ describe('snap deadlines (finding 5)', () => {
     })
   })
 
-  const snap = (deadline: string) =>
+  const snap = (deadline: string, title = 'Snap') =>
     jsonBody({
-      title: 'Snap',
+      title,
       context: 'x',
       proposalText: 'x',
       decisionType: 'snap',
@@ -350,12 +357,17 @@ describe('snap deadlines (finding 5)', () => {
     })
 
   it('refuses a snap deadline already in the past', async () => {
+    const title = `Past snap ${slug()}`
     const res = await api('/decisions', {
       method: 'POST',
       cookie: contact.cookie,
-      body: snap(new Date(Date.now() - 3600000).toISOString()),
+      body: snap(new Date(Date.now() - 3600000).toISOString(), title),
     })
     expect(res.status).toBe(400)
+    const stored = await (
+      await pool()
+    ).query('SELECT count(*)::int AS n FROM decision_proposals WHERE title=$1', [title])
+    expect(stored.rows[0].n).toBe(0)
   })
 
   it('answers presenting after the deadline with 409, not 500', async () => {
@@ -370,11 +382,19 @@ describe('snap deadlines (finding 5)', () => {
     ).query("UPDATE decision_proposals SET snap_deadline=now() - interval '1 hour' WHERE id=$1", [
       proposal.id,
     ])
+    const statusOf = async () =>
+      (
+        await (
+          await pool()
+        ).query('SELECT status FROM decision_proposals WHERE id=$1', [proposal.id])
+      ).rows[0].status
+    const before = await statusOf()
     const res = await api(`/decisions/${proposal.id}/present`, {
       method: 'POST',
       cookie: contact.cookie,
     })
     expect(res.status).toBe(409)
+    expect(await statusOf()).toBe(before)
   })
 })
 

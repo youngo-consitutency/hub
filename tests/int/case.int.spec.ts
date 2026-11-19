@@ -44,14 +44,9 @@ describe('toCamelCase row normalisation', () => {
     expect(row.metaJson).toEqual({ inner_key: 'v' })
   })
 
-  it('keeps the populated value when spellings collide — camel then snake', () => {
-    const row = toCamelCase<AnyValue>({ firstName: 'Ada', first_name: null })
-    expect(row.firstName).toBe('Ada')
-  })
-
-  it('keeps the populated value when spellings collide — snake then camel', () => {
-    const row = toCamelCase<AnyValue>({ first_name: null, firstName: 'Ada' })
-    expect(row.firstName).toBe('Ada')
+  it('keeps the populated value when spellings collide, in either key order', () => {
+    expect(toCamelCase<AnyValue>({ firstName: 'Ada', first_name: null }).firstName).toBe('Ada')
+    expect(toCamelCase<AnyValue>({ first_name: null, firstName: 'Ada' }).firstName).toBe('Ada')
     expect(toCamelCase<AnyValue>({ first_name: 'Ada', firstName: null }).firstName).toBe('Ada')
   })
 })

@@ -133,6 +133,12 @@ describe.skipIf(!GATEWAY_TOKEN)('agent gateway', () => {
       body: JSON.stringify({ currentPassword: member.password }),
     })
     expect(res.status).toBe(403)
+    const stored = await payload.count({
+      collection: 'agent-keys',
+      where: { account: { equals: member.account.id } },
+      overrideAccess: true,
+    })
+    expect(stored.totalDocs).toBe(0)
   })
 
   it('mints a key after the password check and stores only its hash', async () => {
@@ -142,6 +148,12 @@ describe.skipIf(!GATEWAY_TOKEN)('agent gateway', () => {
       body: JSON.stringify({ currentPassword: 'not-the-password' }),
     })
     expect(wrong.status).toBe(400)
+    const none = await payload.count({
+      collection: 'agent-keys',
+      where: { account: { equals: contact.account.id } },
+      overrideAccess: true,
+    })
+    expect(none.totalDocs).toBe(0)
     const res = await api('/member/agent/keys', {
       method: 'POST',
       cookie: contact.cookie,
@@ -198,6 +210,12 @@ describe.skipIf(!GATEWAY_TOKEN)('agent gateway', () => {
     expect(again.activity.id).toBe(first.activity.id)
     const conflict = await call('add_wg_activity', { ...args, title: 'Something else' })
     expect(conflict.status).toBe(409)
+    const activities = await payload.find({
+      collection: 'wg-activities',
+      where: { wgSlug: { equals: wg } },
+      overrideAccess: true,
+    })
+    expect(activities.docs.map((a) => a.title)).toEqual(['Agent-scheduled call'])
     const log = await payload.find({
       collection: 'audit-log',
       where: {

@@ -72,6 +72,14 @@ describe('content console', () => {
       cookie: publisher.cookie,
     })
     expect(deleted.status).toBe(403)
+    const stillThere = await payload.findByID({ collection: 'content-documents', id: docId })
+    expect(stillThere.slug).toBe(tag)
+    const strays = await payload.find({
+      collection: 'content-documents',
+      where: { slug: { equals: `${tag}-new` } },
+      overrideAccess: true,
+    })
+    expect(strays.totalDocs).toBe(0)
   })
 
   it('opens the console only for publishers', async () => {

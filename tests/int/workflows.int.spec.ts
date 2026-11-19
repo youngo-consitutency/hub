@@ -1,6 +1,7 @@
 import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
+import { testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('operational workflows', () => {
@@ -50,6 +51,8 @@ describe('operational workflows', () => {
         })
       ).status,
     ).toBe(403)
+    const unchanged = await api(`/member/funding/${request.id}`, { cookie: member.cookie })
+    expect((await unchanged.json()).request.status).toBe('submitted')
 
     // review → approve → disburse (finance only) → member reports
     for (const status of ['under_review', 'approved']) {
@@ -97,7 +100,9 @@ describe('operational workflows', () => {
     expect(items[0].description).toBeUndefined()
 
     // non-team members cannot list cases
-    expect((await api('/member/team/safeguarding', { cookie: finance.cookie })).status).toBe(403)
+    const refused = await api('/member/team/safeguarding', { cookie: finance.cookie })
+    expect(refused.status).toBe(403)
+    expect(JSON.stringify(await refused.json())).not.toContain(caseRef)
 
     // team sees the case; anonymous hides the reporter
     const team = await api('/member/team/safeguarding', { cookie: safeguarding.cookie })
@@ -195,5 +200,9 @@ describe('operational workflows', () => {
     })
     expect(blocked.status).toBe(409)
     expect((await blocked.json()).error.code).toBe('council_decision_required')
+    const row = await (
+      await testPayload()
+    ).findByID({ collection: 'partnership-requests', id: pid, overrideAccess: true })
+    expect(row.status).toBe('under_review')
   })
 })
