@@ -149,7 +149,7 @@ export function CoyDirectory({ items }: { items: CoyDetail[] }) {
 
 // the one conference that is open right now gets the spotlight; the directory below lists the rest
 export function FeaturedConference({ items }: { items: CoyDetail[] }) {
-  const featured = [...items].sort(byRelevance)[0]
+  const featured = items.toSorted(byRelevance)[0]
   if (!featured || statusOf(featured)[2] !== 0) return null
   const [chip, label] = statusOf(featured)
   const place = [featured.city, featured.country].filter(Boolean).join(', ')

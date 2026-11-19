@@ -215,7 +215,7 @@ export function ContentWorkspace() {
       : `New ${contentType}`
   const orderedItems = useMemo(
     () =>
-      [...(query.data?.items || [])].sort((a, b) =>
+      (query.data?.items || []).toSorted((a, b) =>
         String(b.updatedAt).localeCompare(String(a.updatedAt)),
       ),
     [query.data?.items],

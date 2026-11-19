@@ -153,8 +153,8 @@ export function Statement() {
 
               <Section label="Previous statements">
                 <div className="gysArchiveGrid">
-                  {[...gys.archive]
-                    .sort((a, b) => Number(a.year) - Number(b.year))
+                  {gys.archive
+                    .toSorted((a, b) => Number(a.year) - Number(b.year))
                     .map((archive) => (
                       <article key={archive.edition} className="card cardTight gysArchiveItem">
                         <div>

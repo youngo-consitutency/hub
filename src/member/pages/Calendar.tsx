@@ -145,7 +145,7 @@ export function Calendar({ slug }: { slug?: string }) {
                 : monthEvents
           const agendaGroups = [
             ...groupEventsByDate(
-              [...agendaEvents].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+              agendaEvents.toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
             ),
           ].sort(([a], [b]) => a.localeCompare(b))
           const agendaTitle = activeDay
