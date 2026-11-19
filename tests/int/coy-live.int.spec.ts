@@ -18,6 +18,7 @@ describe('coy allowlist parsing', () => {
 describe('coy live operations', () => {
   let payload: Payload
   let slug: string
+  let coyId: number | string
   let organiser: Awaited<ReturnType<typeof session>>
   let member: Awaited<ReturnType<typeof session>>
   const post = (
@@ -30,11 +31,12 @@ describe('coy live operations', () => {
   beforeAll(async () => {
     payload = await testPayload()
     slug = `it-coy-${randomBytes(4).toString('hex')}`
-    await payload.create({
+    const coy = await payload.create({
       collection: 'content-coys',
       data: { slug, type: 'coy', title: 'IT COY', reviewStatus: 'approved', liveOps: true },
       overrideAccess: true,
     })
+    coyId = coy.id
     organiser = await session({
       membershipTrack: 'constituency_work',
       wg: { slug: 'coy', role: 'contact' },
@@ -52,6 +54,13 @@ describe('coy live operations', () => {
   })
 
   it('blocks announcements until someone is listed', async () => {
+    const countNotices = () =>
+      payload.count({
+        collection: 'coy-notices',
+        where: { coy: { equals: coyId } },
+        overrideAccess: true,
+      })
+    const before = await countNotices()
     const res = await post(`/member/coy/${slug}/announce`, organiser.cookie, {
       title: 'Programme update',
       message: 'Doors open at nine.',
@@ -60,6 +69,7 @@ describe('coy live operations', () => {
     })
     expect(res.status).toBe(400)
     expect((await res.json()).error.code).toBe('empty_allowlist')
+    expect((await countNotices()).totalDocs).toBe(before.totalDocs)
   })
 
   it('adds existing accounts and reports the rest', async () => {
@@ -74,6 +84,12 @@ describe('coy live operations', () => {
       emails: member.account.email,
     })
     expect(await again.json()).toMatchObject({ added: 0, already: 1 })
+    const listed = await payload.count({
+      collection: 'coy-participants',
+      where: { coy: { equals: coyId } },
+      overrideAccess: true,
+    })
+    expect(listed.totalDocs).toBe(1)
   })
 
   it('posts a notice participants can read, once per campaign', async () => {
@@ -130,6 +146,12 @@ describe('coy live operations', () => {
     const path = `/member/coy/${slug}/participants/${member.account.id}`
     expect((await api(path, { method: 'DELETE', cookie: organiser.cookie })).status).toBe(200)
     expect((await api(path, { method: 'DELETE', cookie: organiser.cookie })).status).toBe(404)
+    const left = await payload.count({
+      collection: 'coy-participants',
+      where: { coy: { equals: coyId }, account: { equals: member.account.id } },
+      overrideAccess: true,
+    })
+    expect(left.totalDocs).toBe(0)
   })
 
   it('ignores conferences without live operations', async () => {

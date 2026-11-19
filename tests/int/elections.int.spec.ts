@@ -59,10 +59,11 @@ describe('elections (S10) and selections (S24)', () => {
       }),
     })
     expect(create.status).toBe(201)
+    const created = (await create.json()).election
     const res = await api('/governance/elections', { cookie: cwMember.cookie })
     expect(res.status).toBe(200)
     const { items } = await res.json()
-    expect(items.length).toBeGreaterThan(0)
+    expect(items.map((e: AnyValue) => e.id)).toContain(created.id)
     // results are only exposed once an election resolves
     const done = items.find((e: AnyValue) => e.status === 'completed')
     if (done) expect(done.result).toBeTruthy()
@@ -77,6 +78,9 @@ describe('elections (S10) and selections (S24)', () => {
       body: JSON.stringify({ title: 'Nope', races: [{ slug: 'x' }] }),
     })
     expect(res.status).toBe(403)
+    const list = await api('/governance/elections', { cookie: facilitator.cookie })
+    const { items } = await list.json()
+    expect(items.some((e: AnyValue) => e.title === 'Nope')).toBe(false)
   })
 
   it(
@@ -229,6 +233,8 @@ describe('elections (S10) and selections (S24)', () => {
         expect(over.status).toBe(400)
         expect((await over.json()).error.fields[kind]).toMatch(/More ballots than eligible/)
       }
+      // none of the refused submissions changed the election
+      expect((await counts(election.id)).status).toBe('voting')
       const recorded = await record(facilitator.cookie, result)
       expect(recorded.status).toBe(200)
       const done = (await recorded.json()).election
@@ -393,6 +399,7 @@ describe('elections (S10) and selections (S24)', () => {
       })
     // submitted ids still have to be screened in, quorum or not
     expect((await result({ seat: { elected: [999999] } })).status).toBe(400)
+    expect((await counts(election.id)).status).toBe('voting')
     const res = await result({ seat: { elected: [] } })
     expect(res.status).toBe(200)
     const done = (await res.json()).election
@@ -417,9 +424,10 @@ describe('elections (S10) and selections (S24)', () => {
       const call = (path: string, init: AnyValue = {}) =>
         api(`/governance/elections/${election.id}${path}`, { cookie: facilitator.cookie, ...init })
       await call('/advance', { method: 'POST' })
-      return call
+      return Object.assign(call, { electionId: election.id as number })
     }
     const call = await open('Freeze')
+    const electionId = call.electionId
     const other = await open('Other')
     const nom = await call('/candidates', {
       method: 'POST',
@@ -454,6 +462,7 @@ describe('elections (S10) and selections (S24)', () => {
       })
     const statuses = (await Promise.all([submit(), submit()])).map((r) => r.status).sort()
     expect(statuses).toEqual([200, 409])
+    expect((await counts(electionId)).status).toBe('completed')
   })
 
   it(

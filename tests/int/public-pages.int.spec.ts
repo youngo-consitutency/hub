@@ -112,11 +112,13 @@ describe('public page workflow', () => {
     const stale = await publish(second)
     expect(stale.status).toBe(409)
     expect((await stale.json()).error.code).toBe('stale_target')
+    expect(await live()).toMatchObject({ state: 'published', revisionId: first.id })
 
     const noReason = await post('/member/content/pages/faq/unpublish', publisher, {
       revisionId: first.id,
     })
     expect(noReason.status).toBe(400)
+    expect((await live()).state).toBe('published')
     const withdrawn = await post('/member/content/pages/faq/unpublish', publisher, {
       revisionId: first.id,
       reason: 'Out of date after the reform vote',

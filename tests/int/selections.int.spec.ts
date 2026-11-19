@@ -71,6 +71,26 @@ describe('selections (S24)', () => {
     return { selection, a, b }
   }
 
+  const countOf = async (
+    collection: 'selection-evaluations' | 'selection-applications' | 'selection-committee',
+    selection: number,
+    account?: number,
+  ) =>
+    (
+      await (
+        await testPayload()
+      ).count({
+        collection,
+        where: {
+          and: [
+            { selection: { equals: selection } },
+            ...(account ? [{ account: { equals: account } }] : []),
+          ],
+        },
+        overrideAccess: true,
+      })
+    ).totalDocs
+
   const grade = (id: number, aid: number, who: Who, body: AnyValue = { grade: 'green' }) =>
     post(id, `/applications/${aid}/evaluate`, who, body)
 
@@ -99,6 +119,11 @@ describe('selections (S24)', () => {
     const selection = await makeSelection()
     expect((await post(selection.id, '/committee', plain)).status).toBe(403)
     expect((await post(selection.id, '/open', c1)).status).toBe(403)
+    expect(await countOf('selection-committee', selection.id)).toBe(0)
+    const stored = await (
+      await testPayload()
+    ).findByID({ collection: 'selections', id: selection.id, overrideAccess: true })
+    expect(stored.status).toBe(selection.status)
   })
 
   describe('conflicts of interest', () => {
@@ -112,11 +137,13 @@ describe('selections (S24)', () => {
       const own = await post(selection.id, '/apply', c1, { answers: { motivation: 'me' } })
       expect(own.status).toBe(409)
       expect((await own.json()).error.code).toBe('conflict_of_interest')
+      expect(await countOf('selection-applications', selection.id, c1.account.id)).toBe(0)
       // an applicant may not join while applications are open
       await apply(selection.id, applicant)
       const join = await post(selection.id, '/committee', applicant)
       expect(join.status).toBe(409)
       expect((await join.json()).error.code).toBe('conflict_of_interest')
+      expect(await countOf('selection-committee', selection.id, applicant.account.id)).toBe(0)
     })
 
     it('blocks scoring your own application', async () => {
@@ -147,6 +174,7 @@ describe('selections (S24)', () => {
       const res = await grade(selection.id, own.id as number, mixed)
       expect(res.status).toBe(409)
       expect((await res.json()).error.code).toBe('conflict_of_interest')
+      expect(await countOf('selection-evaluations', selection.id)).toBe(0)
     })
 
     it('rejects a recusal naming applications outside the selection', async () => {
@@ -155,6 +183,16 @@ describe('selections (S24)', () => {
       const foreign = await apply(other.id, applicant)
       const res = await post(selection.id, '/recuse', c1, { applicantIds: [foreign.id] })
       expect(res.status).toBe(400)
+      const { docs } = await (
+        await testPayload()
+      ).find({
+        collection: 'selection-committee',
+        where: {
+          and: [{ selection: { equals: selection.id } }, { account: { equals: c1.account.id } }],
+        },
+        overrideAccess: true,
+      })
+      expect(docs[0].recusedApplicantIds ?? []).toEqual([])
     })
   })
 
@@ -165,12 +203,15 @@ describe('selections (S24)', () => {
       const foreign = await apply(other.id, applicant)
       const res = await grade(selection.id, foreign.id, c1)
       expect(res.status).toBe(404)
+      expect(await countOf('selection-evaluations', selection.id)).toBe(0)
+      expect(await countOf('selection-evaluations', other.id)).toBe(0)
     })
 
     it('refuses an unknown application and bad grades', async () => {
       const { selection, a } = await evaluating()
       expect((await grade(selection.id, 999999999, c1)).status).toBe(404)
       expect((await grade(selection.id, a.id, c1, { grade: 'purple' })).status).toBe(400)
+      expect(await countOf('selection-evaluations', selection.id)).toBe(0)
     })
   })
 
@@ -225,6 +266,7 @@ describe('selections (S24)', () => {
       const res = await post(selection.id, '/apply', applicant, { answers: { motivation: 'late' } })
       expect(res.status).toBe(409)
       expect((await res.json()).error.code).toBe('deadline_passed')
+      expect(await countOf('selection-applications', selection.id, applicant.account.id)).toBe(0)
     })
   })
 

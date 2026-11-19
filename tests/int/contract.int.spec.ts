@@ -1,40 +1,9 @@
 import type { AnyValue, Doc } from '../../src/lib/domain'
-import type { Payload } from 'payload'
 
 import { describe, it, beforeAll, expect } from 'vitest'
 
-import { provisionAccount, testPayload } from './provision'
+import { testPayload } from './provision'
 import { api, session } from './helpers'
-
-describe('payload', () => {
-  let payload: Payload
-
-  beforeAll(async () => {
-    payload = await testPayload()
-  })
-
-  it('reads provisioned accounts and content collections', async () => {
-    await provisionAccount({})
-    const accounts = await payload.find({ collection: 'accounts', limit: 1 })
-    expect(accounts.totalDocs).toBeGreaterThan(0)
-    await (
-      await testPayload()
-    ).create({
-      collection: 'content-events',
-      data: {
-        slug: `it-event-${Math.random().toString(36).slice(2, 8)}`,
-        title: 'Contract test event',
-        type: 'wg_call',
-        startsAt: new Date(Date.now() + 86_400_000).toISOString(),
-        state: 'published',
-      },
-      draft: false,
-      overrideAccess: true,
-    })
-    const events = await payload.find({ collection: 'content-events', limit: 1 })
-    expect(events.totalDocs).toBeGreaterThan(0)
-  })
-})
 
 describe('API contract (requires dev server on :3000)', () => {
   let member: { cookie: string; account: Doc }
@@ -105,6 +74,9 @@ describe('API contract (requires dev server on :3000)', () => {
     })
     expect(bad.status).toBe(400)
     expect((await bad.json()).error.code).toBe('invalid_push_endpoint')
+    const status = await (await api('/push/status', { cookie: member.cookie })).json()
+    const stored = status.subscriptions.map((row: { endpoint: string }) => row.endpoint)
+    expect(stored).not.toContain('https://attacker.example.com/steal')
   })
 
   it('upserts a push subscription idempotently', async () => {
@@ -127,6 +99,11 @@ describe('API contract (requires dev server on :3000)', () => {
     const a = await first.json()
     const b = await second.json()
     expect(a.subscription.id).toBe(b.subscription.id)
+    const status = await (await api('/push/status', { cookie: member.cookie })).json()
+    const matching = status.subscriptions.filter(
+      (row: { endpoint: string }) => row.endpoint === endpoint,
+    )
+    expect(matching).toHaveLength(1)
     await api('/push/unsubscribe', {
       method: 'POST',
       cookie: member.cookie,
@@ -224,5 +201,7 @@ describe('API contract (requires dev server on :3000)', () => {
     })
     expect(res.status).toBe(409)
     expect((await res.json()).error.code).toBe('not_rejected')
+    const state = await (await api('/member/membership/appeal', { cookie: pending.cookie })).json()
+    expect(state.appeal).toBeNull()
   })
 })

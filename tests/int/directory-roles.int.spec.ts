@@ -99,5 +99,12 @@ describe('directory role holders', () => {
     await expect(
       create({ role: 'wg.member', scopeType: 'working_group', scopeId: 'x' }),
     ).rejects.toThrow()
+    // only the two valid rows were stored
+    const stored = await payload.count({
+      collection: 'directory-contacts',
+      where: { roleTitle: { equals: `Scoped ${tag}` } },
+      overrideAccess: true,
+    })
+    expect(stored.totalDocs).toBe(2)
   })
 })

@@ -259,6 +259,12 @@ describe('authority service', () => {
         scopeId: 'ace',
       }),
     ).rejects.toMatchObject({ status: 409 })
+    const { totalDocs } = await payload.count({
+      collection: 'authority-records',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(totalDocs).toBe(1)
   })
 
   it('confines a substitute to the covered seat and validates the principal', async () => {
@@ -335,6 +341,12 @@ describe('authority service', () => {
         scopeId: 'gct',
       }),
     ).rejects.toMatchObject({ status: 409 })
+    const { totalDocs } = await payload.count({
+      collection: 'authority-records',
+      where: { account: { equals: account.id } },
+      overrideAccess: true,
+    })
+    expect(totalDocs).toBe(0)
   })
 
   it('records revocation with a reason and blocks double revocation', async () => {

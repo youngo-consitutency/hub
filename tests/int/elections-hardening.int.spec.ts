@@ -1,6 +1,7 @@
 import type { AnyValue } from '../../src/lib/domain'
 import { describe, it, beforeAll, expect } from 'vitest'
 
+import { testPayload } from './provision'
 import { api, session } from './helpers'
 
 describe('elections hardening (S10)', () => {
@@ -92,12 +93,24 @@ describe('elections hardening (S10)', () => {
         expect(res.status).toBe(400)
         expect((await res.json()).error.fields.videoUrl).toBeTruthy()
       }
+      const countCandidates = async () =>
+        (
+          await (
+            await testPayload()
+          ).count({
+            collection: 'election-candidates',
+            where: { election: { equals: election.id } },
+            overrideAccess: true,
+          })
+        ).totalDocs
+      expect(await countCandidates()).toBe(0)
       const ok = await api(`/governance/elections/${election.id}/candidates`, {
         method: 'POST',
         cookie: candidate.cookie,
         body: JSON.stringify({ race: 'seat', statement: 'Me', videoUrl: 'https://example.com/v' }),
       })
       expect(ok.status).toBe(201)
+      expect(await countCandidates()).toBe(1)
     })
   })
 

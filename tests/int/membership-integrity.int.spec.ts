@@ -105,6 +105,9 @@ describe('H2: ended accounts cannot reinstate themselves via the course', () => 
     const m = await session({ verified: false })
     await setAccount(m.account.id, { hubAccessStatus: 'suspended' })
     expect((await post('/member/course/submit', m.cookie, RIGHT)).status).toBe(403)
+    const row = await accountOf(m.account.id)
+    expect(row.hubAccessStatus).toBe('suspended')
+    expect(row.memberStatus).toBe('pending_course')
   })
 
   it('a registrant still passes the course, graded on the server from the stored key', async () => {
@@ -156,6 +159,17 @@ describe('onboarding and contact point review of WG membership', () => {
   let cp: { cookie: string; account: AnyValue }
   let member: { cookie: string; account: AnyValue }
   const wg = 'finance'
+  const wgStatus = async (accountId: number) => {
+    const { docs } = await (
+      await testPayload()
+    ).find({
+      collection: 'wg-progress',
+      where: { wgSlug: { equals: wg }, account: { equals: accountId } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    return (docs[0] as AnyValue | undefined)?.status
+  }
 
   beforeAll(async () => {
     cp = await session({ membershipTrack: 'constituency_work', wg: { slug: wg, role: 'contact' } })
@@ -198,6 +212,7 @@ describe('onboarding and contact point review of WG membership', () => {
       status: 'pending_approval',
     })
     expect(res.status).toBe(400)
+    expect(await wgStatus(member.account.id)).toBe('rejected')
   })
 
   it('onboarding does not reopen a rejected membership', async () => {
@@ -216,6 +231,7 @@ describe('onboarding and contact point review of WG membership', () => {
       status: 'active',
     })
     expect(res.status).toBe(403)
+    expect(await wgStatus(member.account.id)).toBe('rejected')
   })
 })
 

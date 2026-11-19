@@ -88,6 +88,9 @@ describe('member avatar builder', () => {
     const res = await put({ avatar }, member.cookie)
     expect(res.status).toBe(400)
     expect((await res.json()).error.code).toBe('validation')
+    // the refused pick was not stored
+    const profile = await (await api('/member/profile', { cookie: member.cookie })).json()
+    expect(profile.profile.avatar).toBeNull()
   })
 
   it('still serves a profile whose stored picks have left the allowlist', async () => {
@@ -107,7 +110,11 @@ describe('member avatar builder', () => {
   })
 
   it('rejects a body without the avatar field', async () => {
+    const stored = async () =>
+      (await (await api('/member/profile', { cookie: member.cookie })).json()).profile.avatar
+    const before = await stored()
     expect((await put({}, member.cookie)).status).toBe(400)
+    expect(await stored()).toEqual(before)
   })
 
   it('requires a signed-in, verified member', async () => {

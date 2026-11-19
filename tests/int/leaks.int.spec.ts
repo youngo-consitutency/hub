@@ -41,6 +41,11 @@ describe('joining an open working group', () => {
       body: '{}',
     })
     expect(again.status).toBe(200)
+    const { rows: after } = await (payload.db as AnyValue).pool.query(
+      `SELECT count(*)::int AS n FROM authority_records WHERE account_id=$1 AND scope_type='body' AND scope_id=$2`,
+      [member.account.id, BODY],
+    )
+    expect(after[0].n).toBe(1)
   })
 })
 

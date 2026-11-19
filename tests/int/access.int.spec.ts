@@ -42,6 +42,13 @@ describe('generated API access control', () => {
       })
       expect(res.status).toBe(403)
     }
+    const payload = await testPayload()
+    const created = await payload.count({
+      collection: 'content-announcements',
+      where: { title: { equals: 'x' } },
+      overrideAccess: true,
+    })
+    expect(created.totalDocs).toBe(0)
   })
 
   it('refuses member feedback tickets over REST', async () => {
@@ -56,6 +63,14 @@ describe('generated API access control', () => {
       }),
     })
     expect(res.status).toBe(403)
+    const created = await (
+      await testPayload()
+    ).count({
+      collection: 'feedback-tickets',
+      where: { title: { equals: 'contract ticket' } },
+      overrideAccess: true,
+    })
+    expect(created.totalDocs).toBe(0)
   })
 
   it('offers no generated REST for accounts', async () => {
@@ -66,6 +81,10 @@ describe('generated API access control', () => {
     })
     expect(res.status).toBe(501)
     expect((await api(`/accounts/${memberAccountId}`, { cookie: member.cookie })).status).toBe(501)
+    const row = (await (
+      await testPayload()
+    ).findByID({ collection: 'accounts', id: member.account.id, overrideAccess: true })) as AnyValue
+    expect(row.teamRoles ?? []).not.toContain('membership_team')
   })
 
   it('keeps working groups and their gated channels off REST', async () => {

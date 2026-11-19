@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { api } from './helpers'
+import { testPayload } from './provision'
 
 // payload's first-register endpoint creates accounts with overrideAccess while a collection is empty;
 // nothing may create accounts outside the registration flow
 describe('generated auth surface', () => {
+  const probeEmail = `first-${Math.random().toString(36).slice(2, 8)}@test.invalid`
   const attempt = (collection: string) =>
     api(`/${collection}/first-register`, {
       method: 'POST',
-      body: JSON.stringify({
-        email: `first-${Math.random().toString(36).slice(2, 8)}@test.invalid`,
-        password: 'Probe!12345678',
-      }),
+      body: JSON.stringify({ email: probeEmail, password: 'Probe!12345678' }),
     })
 
   it('offers no console login to register', async () => {
@@ -22,5 +21,13 @@ describe('generated auth surface', () => {
     // accounts has no generated endpoints at all
     const res = await attempt('accounts')
     expect(res.status).toBe(501)
+    const stored = await (
+      await testPayload()
+    ).count({
+      collection: 'accounts',
+      where: { email: { equals: probeEmail } },
+      overrideAccess: true,
+    })
+    expect(stored.totalDocs).toBe(0)
   })
 })

@@ -97,12 +97,9 @@ describe('mcp http transport', () => {
     expect(body.error?.code).toBe('method_not_allowed')
   })
 
-  it('refuses to start without MCP_TOKEN', () => {
+  it('refuses to start without MCP_TOKEN, and has no anonymous mode', () => {
     expect(() => createMcpApp({ env: {} })).toThrow(/MCP_TOKEN/)
     expect(() => createMcpHttpServer({ env: { MCP_TOKEN: '  ' } })).toThrow(/MCP_TOKEN/)
-  })
-
-  it('has no anonymous mode: the old switch changes nothing', () => {
     expect(() => createMcpApp({ env: { MCP_ALLOW_ANONYMOUS: '1' } })).toThrow(/MCP_TOKEN/)
   })
 

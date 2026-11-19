@@ -35,6 +35,17 @@ describe('decision engine (S09)', () => {
 
   const makeVoting = () => makeVotingProposal(wgContact, cwMember)
 
+  const countRows = async (collection: 'decision-ballots' | 'decision-vetoes', id: number) =>
+    (
+      await (
+        await testPayload()
+      ).count({
+        collection,
+        where: { proposal: { equals: id } },
+        overrideAccess: true,
+      })
+    ).totalDocs
+
   it('lists proposals for verified members without leaking account fields', async () => {
     const create = await api('/decisions', {
       method: 'POST',
@@ -211,15 +222,15 @@ describe('decision engine (S09)', () => {
     expect(ballot.status).toBe(201)
 
     // a second vote is always rejected
-    expect(
-      (
-        await api(`/decisions/${voting.id}/ballots`, {
-          method: 'POST',
-          cookie: cwMember.cookie,
-          body: JSON.stringify({ choice: 'for' }),
-        })
-      ).status,
-    ).toBe(409)
+    const second = await api(`/decisions/${voting.id}/ballots`, {
+      method: 'POST',
+      cookie: cwMember.cookie,
+      body: JSON.stringify({ choice: 'for' }),
+    })
+    expect(second.status).toBe(409)
+    expect((await second.json()).error.code).toBe('already_voted')
+    // only the one valid ballot exists; the refused votes left no rows
+    expect(await countRows('decision-ballots', voting.id)).toBe(1)
   })
 
   it('rejects concurrent duplicate ballots via the unique index', { timeout: 90000 }, async () => {
@@ -331,6 +342,7 @@ describe('decision engine (S09)', () => {
       body: JSON.stringify({ requesterKind: 'org', groupKey: 'Demo Org' }),
     })
     expect(bad.status).toBe(400) // reasoning required
+    expect(await countRows('decision-vetoes', voting.id)).toBe(0)
     const ok = await api(`/decisions/${voting.id}/vetoes`, {
       method: 'POST',
       cookie: cwMember.cookie,
@@ -359,6 +371,7 @@ describe('decision engine (S09)', () => {
     expect((await file('finance')).status).toBe(201)
     // another spelling of the same group is still the same request
     expect((await file(' Finance  ')).status).toBe(409)
+    expect(await countRows('decision-vetoes', voting.id)).toBe(1)
   })
 
   it(
@@ -378,6 +391,7 @@ describe('decision engine (S09)', () => {
         })
       const statuses = (await Promise.all([file(), file()])).map((res) => res.status).sort()
       expect(statuses).toEqual([201, 409])
+      expect(await countRows('decision-vetoes', voting.id)).toBe(1)
     },
   )
 
@@ -427,6 +441,7 @@ describe('decision engine (S09)', () => {
         }),
       })
       expect(res.status).toBe(403)
+      expect(await countRows('decision-vetoes', voting.id)).toBe(0)
     },
   )
 
@@ -445,6 +460,14 @@ describe('decision engine (S09)', () => {
       }),
     })
     expect(res.status).toBe(403)
+    const forged = await (
+      await testPayload()
+    ).count({
+      collection: 'decision-proposals',
+      where: { title: { equals: 'forge' } },
+      overrideAccess: true,
+    })
+    expect(forged.totalDocs).toBe(0)
     // anonymous cannot read proposals
     expect((await api('/decision-proposals')).status).toBe(403)
   })

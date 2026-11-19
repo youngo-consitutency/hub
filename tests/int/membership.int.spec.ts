@@ -9,6 +9,11 @@ describe('membership lifecycle (S17)', () => {
   let staff: { cookie: string; account: AnyValue }
   let member: { cookie: string; account: AnyValue }
 
+  const accountOf = async (id: number) =>
+    (await (
+      await testPayload()
+    ).findByID({ collection: 'accounts', id, overrideAccess: true })) as AnyValue
+
   beforeAll(async () => {
     cwMember = await session({
       membershipTrack: 'constituency_work',
@@ -49,6 +54,7 @@ describe('membership lifecycle (S17)', () => {
         })
       ).status,
     ).toBe(400)
+    expect((await accountOf(member.account.id)).constituencyWorkStatus || null).toBeNull()
   })
 
   it(
@@ -122,6 +128,7 @@ describe('membership lifecycle (S17)', () => {
           })
         ).status,
       ).toBe(403)
+      expect((await accountOf(member.account.id)).membershipStatus).not.toBe('terminated')
 
       // Expiry sweep: lapse the renewal due date, then run the job.
       const lapsed = await session({
