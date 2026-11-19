@@ -1,3 +1,6 @@
+import { randomBytes } from 'node:crypto'
+import { mkdir, rename, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import nodemailer, { type Transporter } from 'nodemailer'
 import { defaultEmailFrom } from './env'
 import { deliveryDisabled } from './environment'
@@ -44,6 +47,14 @@ export function getEmailTransport(): Transporter | null {
   return transporter
 }
 
+async function captureEmail(dir: string, to: string, subject: string, text: string) {
+  await mkdir(dir, { recursive: true })
+  const name = `${Date.now()}-${randomBytes(4).toString('hex')}`
+  // rename last, so a reader never sees a half-written file
+  await writeFile(join(dir, `${name}.tmp`), JSON.stringify({ to, subject, text }))
+  await rename(join(dir, `${name}.tmp`), join(dir, `${name}.json`))
+}
+
 export async function sendEmail({
   to,
   subject,
@@ -55,10 +66,15 @@ export async function sendEmail({
   text: string
   html?: string
 }) {
+  // tests read what would have been sent from this folder; never set it on a deployed environment
+  if (process.env.HUB_CAPTURE_EMAIL_DIR)
+    await captureEmail(process.env.HUB_CAPTURE_EMAIL_DIR, to, subject, text)
   if (deliveryDisabled()) return { delivered: false }
   const t = getEmailTransport()
   if (!t) {
     console.warn('email not configured; dropping message to', to)
+    // locally the message is the only way to see a confirmation link
+    if (process.env.NODE_ENV !== 'production') console.info(`--- ${subject}\n${text}`)
     return { delivered: false }
   }
   await t.sendMail({

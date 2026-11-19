@@ -1,4 +1,5 @@
-import { scrypt, timingSafeEqual } from 'node:crypto'
+import { pbkdf2, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
+import type { Payload } from 'payload'
 import { promisify } from 'node:util'
 
 // Legacy password check: the pre-Payload system stored scrypt hex digests with
@@ -21,4 +22,18 @@ export async function verifyLegacyPassword(
   } catch {
     return false
   }
+}
+
+const pbkdf2Async = promisify(pbkdf2)
+
+/**
+ * Spends the same time a real password check would. Payload skips hashing when the email is
+ * unknown, so without this a login takes visibly longer for an address that has an account.
+ *
+ * Matches Payload's current hash (configured iterations, 32 bytes). Accounts still on the old
+ * 25 000-iteration hash differ slightly until their next sign-in rehashes it.
+ */
+export async function burnPasswordHash(payload: Payload, password: string): Promise<void> {
+  const iterations = payload.config.auth.passwordHashIterations
+  await pbkdf2Async(password, randomBytes(32).toString('hex'), iterations, 32, 'sha256')
 }
