@@ -1,8 +1,4 @@
-/**
- * Registration validator coverage. The validator reads its option lists and
- * the privacy notice from content documents, so the spec stubs
- * `req.payload.find` — no server or database required.
- */
+/** Registration validator coverage; stubs `req.payload.find`, so no server or database is needed. */
 import type { AnyValue, Doc } from '../../src/lib/domain'
 import { describe, it, expect } from 'vitest'
 

@@ -7,8 +7,7 @@ import { wgActivityView } from './views'
 import { TASK_FORCE_SLUGS } from '../shared/protocol'
 
 // One create path for working-group activity, shared by the contact-point
-// console and the agent gateway, so both validate and audit the same way.
-// The caller has already checked wg.manage for `wg`.
+// console and agent gateway. The caller has already checked wg.manage.
 export async function createWgActivity(
   req: PayloadRequest,
   account: AccountLike,

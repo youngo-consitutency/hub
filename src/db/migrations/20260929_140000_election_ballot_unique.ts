@@ -1,8 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// One ballot per credential per race, enforced at the database. The endpoint
-// previously relied on a check-then-insert sequence, which races under
-// concurrent submissions. IF NOT EXISTS keeps diverged environments safe.
+// One ballot per credential per race, enforced in the database (check-then-insert raced).
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
     CREATE UNIQUE INDEX IF NOT EXISTS "election_ballots_election_race_voter_idx"

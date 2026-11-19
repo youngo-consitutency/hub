@@ -1,7 +1,4 @@
-/**
- * Screenshot a LOCAL Hub route at exact widths: node scripts/ops/shot.mjs <path> <out-prefix> [widths...]
- * DIR=rtl flips the document direction. Set A11Y_EMAIL / A11Y_PASSWORD to sign in first. Local hosts only.
- */
+/** Screenshots a LOCAL Hub route: node scripts/ops/shot.mjs <path> <out-prefix> [widths...]. DIR=rtl flips direction; A11Y_EMAIL / A11Y_PASSWORD sign in. */
 import { chromium } from '@playwright/test'
 
 const [path = '/', prefix = 'shot', ...w] = process.argv.slice(2)

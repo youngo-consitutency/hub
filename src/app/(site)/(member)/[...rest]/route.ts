@@ -1,9 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { LEGACY_HUB_SEGMENTS, hubUrl } from '../../../../lib/hubUrl'
 
-// anything landing here has no route of its own: old Hub URLs move into the app, the rest
-// is unknown. the member layout gates children behind a client-side account fetch, so a
-// page-level notFound() never reaches the status line; a handler can answer a real 404
+// catch-all: old Hub URLs redirect into the app, the rest get a real 404
+// (the member layout's client-side gate hides a page-level notFound())
 const html = `<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page not found · YOUNGO Hub</title></head>
 <body style="font-family:system-ui,sans-serif;display:grid;place-content:center;min-height:100vh;margin:0;text-align:center">

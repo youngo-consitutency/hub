@@ -2,9 +2,8 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { requirePgPool } from './pg'
 import { sha256Hex } from './crypto'
 
-// A sign-up is confirmed by email before an account exists, so the form never reveals whether an
-// address is registered. The payload includes the password: encrypted at rest (AES-GCM, key from
-// PAYLOAD_SECRET), valid 24 hours, deleted once the account exists or by the daily purge.
+// Sign-ups are confirmed by email before an account exists, so the form never
+// reveals if an address is registered. Payload is AES-GCM encrypted, valid 24 hours.
 
 const LIFETIME_MS = 24 * 60 * 60 * 1000
 

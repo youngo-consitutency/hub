@@ -286,9 +286,8 @@ async function deliverOutboxRow(row: Doc, connectBody: Doc | undefined) {
   })
 }
 
-// Bounded batch; the next drain picks up whatever remains.
-// req stays untyped: the paused-delivery integration test passes a bare {}
-// req stays untyped: the paused-delivery integration test passes a bare {}
+// Bounded batch; the next drain picks up the rest.
+// req stays untyped: the paused-delivery integration test passes a bare {}.
 export async function drainNotificationOutbox(req: PayloadRequest, { limit = 50 } = {}) {
   // delivery is off: claim nothing, so the queue drains once it's back on
   // instead of marking unsent notifications as sent

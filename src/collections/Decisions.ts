@@ -1,9 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { noAccess, serverWrites } from '../lib/collectionAccess'
 
-// S09 decision-making: consultation → revision → decision → (consensus |
-// voting) via the src/endpoints/decisions.ts state machine. REST writes are
-// staff-only — members act through endpoints so rules and audit hold.
+// S09 decisions; REST writes are staff-only so members go through src/endpoints/decisions.ts.
 
 export const DecisionProposals: CollectionConfig = {
   slug: 'decision-proposals',

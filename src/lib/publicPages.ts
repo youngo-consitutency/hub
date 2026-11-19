@@ -6,10 +6,8 @@ import { getDocument } from './documents'
 import { txHandle, withTransaction } from './pg'
 import { baselinePage, publicPageDocument } from '../shared/publicPages'
 
-// Publication of the reviewed FAQ / contact pages. Each page's live state is
-// one content-document, `page-<slug>`; publishing and withdrawing hold a
-// transaction-scoped advisory lock per page, and the audit row is written
-// inside the same transaction, so a failed audit rolls the change back.
+// Publication of reviewed FAQ / contact pages; each live page is one
+// content-document, with publish/withdraw and audit in one locked transaction.
 const PAGE_LOCK_NS = 0x594f50 // 'YOP'
 const PAGE_LOCK_KEY: Record<string, number> = { faq: 1, contact: 2 }
 const pageDocSlug = (slug: string) => `page-${slug}`
@@ -71,11 +69,7 @@ async function writePageState(req: PayloadRequest, slug: string, body: Doc) {
     await req.payload.create({ collection: 'content-documents', data, overrideAccess: true, req })
 }
 
-/**
- * Publish an approved page draft. Refuses when the live page moved on since
- * the draft was written (a newer publish or a withdrawal), so an approved
- * draft can never silently overwrite someone else's published change.
- */
+/** Publish an approved draft; refuses if the live page moved on since it was written. */
 export async function publishPublicPage(req: PayloadRequest, draft: Doc, account: AccountLike) {
   const slug = draft.contentKey
   return withPageLock(req, slug, async () => {

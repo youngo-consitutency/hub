@@ -76,10 +76,8 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
     row.councilSeat = councilSeatFor(input.role, { scopeId, councilSeat: null })
   }
 
-  // Create + audit commit atomically under the shared lock. Substitute
-  // grants also lock the PRINCIPAL's account — revoking the covered seat is
-  // an authority write on that account, so both keys are held (ascending)
-  // before re-validating the principal inside the transaction.
+  // Create + audit commit atomically under the shared lock; substitute grants
+  // also lock the principal's account (ascending) before re-validating it.
   try {
     return await withAuthorityLock(req, lockAccounts, async () => {
       if (input.role === 'council.substitute') {
@@ -156,9 +154,8 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
   }
 }
 
-// The revocation write. Callers must hold the account's advisory lock —
-// revokeAuthority does so; composite flows call this directly to share one
-// lock scope.
+// The revocation write; callers must hold the account's advisory lock
+// (composite flows call this directly to share one lock scope).
 export async function revokeAuthorityInTx(
   req: PayloadRequest,
   recordId: number,

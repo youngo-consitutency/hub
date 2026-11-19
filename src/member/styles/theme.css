@@ -1,7 +1,4 @@
-/* The design tokens, exposed as Tailwind utilities (bg-card, text-ink-2, rounded-card, ...).
-   `inline` keeps the utilities pointing at the live variables, so they follow tokens.css.
-   There is no preflight reset, so a utility-built <button> must clear the native look itself
-   (border-0 bg-transparent p-0). Spacing already matches: --space-1 to --space-8 are Tailwind's 1 to 8 (4px steps). */
+/* Design tokens as Tailwind utilities (live via `inline`). No preflight: utility buttons must clear native styles. */
 @theme inline {
   --color-page: var(--bg-page);
   --color-card: var(--bg-card);

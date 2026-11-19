@@ -6,9 +6,8 @@ import { audit } from '../lib/audit'
 import type { AccountLike, Doc } from '../lib/domain'
 import type { FundingRequest, SafeguardingCase } from '../payload-types'
 
-// Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
-// recognition (S20), partnerships (S13), privacy (S08). Members file their
-// own records; teams review through scoped endpoints.
+// Operational workflows: funding, safeguarding, COI, recognition,
+// partnerships and privacy. Members file; teams review.
 
 // Review authority is capability-derived: only records the registry maps to
 // each review right (e.g. only gct.finance holds finance.review).

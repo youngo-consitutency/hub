@@ -2,10 +2,8 @@ import { createHash } from 'node:crypto'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 
-// The integration tests send writes to a running server, and their database guard only sees the
-// test process's own DATABASE_URL. This lets them confirm the server uses the same disposable
-// database. It exists only on a server started with the test-only rate-limit opt-out, which is
-// never set on a deployed environment.
+// Lets integration tests confirm the server uses the same disposable database.
+// Only exists with the test-only rate-limit opt-out, never on a deployed environment.
 export const testTargetEndpoints: Endpoint[] = [
   {
     path: '/test-target',

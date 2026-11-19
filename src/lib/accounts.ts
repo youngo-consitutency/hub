@@ -93,11 +93,8 @@ export const accountRef = (a: number | { id: number; name?: string } | null | un
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
 
-// Staff endpoints return raw documents, and Payload fills account relations with the whole account
-// (minority, guardian, date of birth, phone). Replace any nested account with what a staff list
-// needs, wherever it sits in the document.
-// Audit snapshots (`before`/`after`) are JSON we wrote ourselves, not populated relations, and
-// their status fields are the evidence of a transition, so they pass through untouched.
+// Staff endpoints return raw documents, so replace nested populated accounts
+// (minority, guardian, DOB, phone) with a list view. Audit snapshots pass through untouched.
 const SNAPSHOT_KEYS = new Set(['before', 'after'])
 
 export function slimAccounts<T>(value: T): T {

@@ -15,9 +15,8 @@ const p = (req: Req): Payload => ('payload' in req ? req.payload : req)
 const DAY = 86400000
 const OPEN_SUB_STATES = ['open', 'drafting', 'internal_review']
 
-// The public register reads the S09 decision engine — decision-proposals is
-// the single decision store. Terminal statuses normalize to the vocabulary
-// the member pills and platform stage map share.
+// The public register reads the S09 decision engine (decision-proposals is the
+// single store); terminal statuses normalise to the shared pill/stage vocabulary.
 const DECISION_STAGE: Record<string, string> = {
   adopted: 'adopted',
   rejected: 'not_adopted',

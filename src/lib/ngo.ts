@@ -5,9 +5,8 @@ import { getAccessProfile, hasCapability } from './access'
 import { toCamelCase } from './case'
 import type { Doc, AccountLike } from './domain'
 
-// Organisation-scope helpers shared by the NGO, organisations and
-// opportunities endpoints. Access derives from the member's active
-// `ngo-seats` row — never from a global role alone.
+// Organisation-scope helpers; access derives from the member's active
+// `ngo-seats` row, never a global role alone.
 
 export const AFFILIATION_ROLES = ['affiliate', 'viewer', 'representative']
 

@@ -1,10 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { grantsCapability, noAccess, noFieldAccess } from '../lib/collectionAccess'
 
-// Member accounts — replaces hub_accounts + hub_sessions + password/verify
-// token tables. Payload auth provides password hashing and httpOnly cookie
-// sessions behind /api/auth/*; the fields below carry YOUNGO's registration and
-// lifecycle model.
+// Member accounts: Payload auth for passwords and cookie sessions behind /api/auth/*.
 export const Accounts: CollectionConfig = {
   slug: 'accounts',
   auth: {
@@ -28,9 +25,7 @@ export const Accounts: CollectionConfig = {
       },
     ],
   },
-  // no generated rest here: payload's login/forgot/reset/first-register/unlock
-  // skip our rate limits and reset flow. /api/auth/* is the only way in;
-  // payload.login and cookie sessions still work without these
+  // no generated rest: payload's auth routes skip our rate limits; /api/auth/* is the only way in
   endpoints: false,
   access: {
     // the /cms console opens only for content publishers; authority derives from authority-records

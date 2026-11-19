@@ -1,22 +1,4 @@
-/* YOUNGO design language v1 — "a living community".
-   One layer, loaded last, shared by the public site and the signed-in Hub.
-
-   Principles
-   1. People first: illustrated avatars, groups, events and recent activity outrank decoration.
-   2. Alive, never fake: every live element reads real Hub data (counts, events, group
-      activity). Nothing here invents users or numbers.
-   2b. Safe by policy: no named individual presence, no leaderboards (Horizontality), no real
-      photos of members (Child Safeguarding: publishing a minor's image or name needs consent).
-      Presence is aggregate ("14 members here now"); people appear as illustrated avatars.
-   2c. Many languages: policies ship in six languages incl. Arabic, so layout uses logical
-      properties (inline-start/end) and survives longer text and RTL.
-   3. One accent: forest green, with lime as the "live / new" signal only.
-   4. Soft, round, calm: pill controls, 20px cards, green-tinted shadows, generous air.
-   5. Motion means something: pulse = live, lift = clickable, rise = new.
-
-   Borrowed on purpose: the floating glass nav, tracked eyebrow with a leading rule, dot-grid
-   and aurora washes (dclinics.uz); pill CTA pair, trust pill, big-number stat cards and the
-   quiet white canvas (courstore.com). */
+/* YOUNGO design language v1 — one layer, loaded last. Real data only, no member photos or named presence, logical properties for RTL. */
 
 :root {
   /* elevation: green-tinted so shadows feel warm, not grey */
@@ -358,15 +340,7 @@ h2,
   border-radius: var(--radius-card);
 }
 
-/* ═══ layout system ════════════════════════════════════════════════
-   Two kinds of breakpoint, never mixed:
-   - Viewport, for page chrome only (nav, shell, hero): phone ≤767 · tablet 768–1279 · desktop ≥1280
-     · wide ≥1920. Phone = top bar + bottom tabs. Tablet = icon rail. Desktop = full sidebar.
-   - Container (@container), for everything inside a page, so a card grid is right beside the
-     sidebar, the rail or a side column without knowing the screen.
-   Rules every layout follows: one column of reading at ≤ 62ch; 44px minimum touch targets on
-   coarse pointers; safe-area insets on fixed bars; no horizontal scroll at 320px; content
-   reflows rather than hides; logical properties for RTL. */
+/* ═══ layout system: viewport breakpoints for page chrome, @container inside pages ═══ */
 
 /* anchors and focus never hide under the floating nav, which only the public site has; a
    page-wide padding also makes the browser scroll dropdowns that open near the top edge */
@@ -519,10 +493,7 @@ html:has(.siteHeader) {
   text-underline-offset: 0.18em;
 }
 
-/* ═══ accessibility modes ══════════════════════════════════════════
-   Decoration is optional. Everything below only *removes* effects or *strengthens* edges, so the
-   default look stays sleek while the page stays legible for low-vision, high-contrast, motion-
-   sensitive and Windows High Contrast users. */
+/* ═══ accessibility modes: only remove effects or strengthen edges ═══ */
 
 /* focus: a 3px outline that clears 3:1 on every surface (WCAG 2.4.11/2.4.13); no halo shadow, so
    selected and active states keep their own shadows while focused */
@@ -972,11 +943,7 @@ textarea:focus-visible {
   }
 }
 
-/* ── working-group themes ──────────────────────────────────────────
-   design/tokens/wg-themes.json maps each group (by slug) to a contrast-checked colour family and
-   build.mjs generates [data-wg='slug'] rules. Any element carrying data-wg gets --wg-accent,
-   --wg-tint and --wg-on-tint; a group with no mapping falls back to the brand green. The theme
-   colours the *icon and accent*, never the only cue (the group name is always text). */
+/* ── working-group themes: [data-wg] sets --wg-accent/--wg-tint/--wg-on-tint, default brand green; never the only cue ── */
 .groupCardTitle > svg,
 .siteWgCard > :first-child > svg {
   box-sizing: content-box;

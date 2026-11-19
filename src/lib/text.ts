@@ -5,11 +5,8 @@ export const trimmed = (v: unknown, max: number) =>
     .trim()
     .slice(0, max)
 
-// Strips markup and collapses whitespace for fields that must never carry
-// HTML. The pattern requires a letter/! after `<` ("a < b" survives) and
-// tolerates a missing `>`. Applied to a fixpoint — one pass can weld
-// "<<x>script" into "<script". Fixpoint is O(len²) worst case, so raw input
-// is bounded to a window larger than `max`; `max` applies to the result.
+// Strips markup to a fixpoint (one pass can weld "<<x>script" into "<script") and
+// collapses whitespace; raw input is windowed to bound the O(len²) worst case.
 export const cleanText = (v: unknown, max: number) => {
   let s = String(v ?? '').slice(0, Math.max(max * 4, 8192))
   for (let prev = ''; prev !== s;) {

@@ -1,30 +1,15 @@
-// Canonical shapes crossing the endpoint/library boundary. `accountRow`
-// normalises Payload docs / SQL rows; `accountView` projects the member shape.
-// Types-only leaf — safe to import from any layer.
+// Canonical shapes across the endpoint/library boundary. Types-only leaf,
+// safe to import from any layer.
 
-/**
- * A Payload collection doc at an untyped boundary. Generated types exist in
- * `payload-types.ts` for strongly-typed call sites; helpers that work across
- * collections or map raw rows take `Doc` until they can take a concrete type.
- * The `any` inside is intentional — reads stay permissive like the legacy
- * JavaScript they replaced; tighten per-site as types land.
- */
+/** A Payload collection doc at an untyped boundary; the `any` is intentional, tighten per-site. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Doc = Record<string, any>
 
-/**
- * An untyped scalar, object, or callable at a boundary — where `Doc` is
- * wrong because the value is not necessarily an object. Named so remaining
- * untyped edges stay greppable; tighten per-site as shapes land.
- */
+/** An untyped value at a boundary where `Doc` is wrong; named to stay greppable. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyValue = any
 
-/**
- * Minimal identity recorded on events and audit entries. Satisfied by
- * AccountLike, AccountView and the platform module's Actor; system events
- * pass null.
- */
+/** Minimal identity recorded on events and audit entries; system events pass null. */
 export interface ActorLike {
   id: number | string
   email?: string

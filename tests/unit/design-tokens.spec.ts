@@ -1,8 +1,4 @@
-/**
- * The design-token build is an accessibility gate: a colour edited in Figma must never ship an
- * unreadable page. Each case copies design/ next to itself, breaks one thing, and expects
- * `build.mjs --check` to fail with a clear message (and to pass on the real tokens).
- */
+/** The token build is an accessibility gate: each case breaks one thing in a copy of design/ and expects `build.mjs --check` to fail. */
 import { spawnSync } from 'node:child_process'
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'

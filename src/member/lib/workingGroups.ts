@@ -2,9 +2,7 @@ import type { GroupSummary, PeopleResponse } from '../../shared/contracts'
 import { useApi } from './api'
 import { useDocument } from './documents'
 
-// Live working-group vocabulary: the `working-groups` collection is the
-// source of truth for slugs/names/topics; the `directory` document holds the
-// broad topic labels. SWR dedupes the fetch across callers.
+// Working-group vocabulary: the `working-groups` collection is the source of truth; `directory` holds topic labels.
 export function useWorkingGroups() {
   const query = useApi<{ items: GroupSummary[] }>('/groups')
   const { doc: directory } = useDocument<{ topics?: { key: string; label: string }[] }>('directory')

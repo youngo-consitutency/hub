@@ -1,22 +1,6 @@
 /**
- * Out-of-band authority recovery. When no account can sign in holding the
- * capability to grant mandates — for example every officer's Constituency
- * Work membership lapsed, so deriveAuthority skips their records and the
- * accounts console rejects them — this script writes one authority-record
- * row directly against the database and exits.
- *
- *   ACCOUNT_ID=<id> ROLE=gct.internal SCOPE_TYPE=team SCOPE_ID=gct \
- *     npx tsx scripts/setup/grant-authority.ts [--apply]
- *
- * A dry run unless --apply is passed: it checks the account and role, then prints the grant.
- *
- * GCT Internal Management is the role that runs the platform (S14); a Focal Point
- * record grants a council seat only (S11, S13).
- *
- * Optional: ENDS_AT=<iso date>, COUNCIL_SEAT=<seat>, EVIDENCE=<text>.
- *
- * This deliberately bypasses the governed assign() path, so the record's
- * provenance is stamped as a manual recovery for the audit trail.
+ * Out-of-band authority recovery: writes one authority-record row directly; a dry run unless --apply is passed.
+ * Needs ACCOUNT_ID, ROLE, SCOPE_TYPE, SCOPE_ID; bypasses assign(), so provenance is stamped as manual recovery.
  */
 import type { AnyValue } from '../../src/lib/domain'
 import { config as loadEnv } from 'dotenv'
@@ -57,10 +41,7 @@ async function main() {
     process.exit(1)
   }
 
-  // A requiresCw role is ignored by deriveAuthority while the holder's
-  // Constituency Work membership is inactive — the grant would restore
-  // nothing. Restore CW first (db update to constituency_work records or
-  // the account's cwActiveUntil), then re-run.
+  // A requiresCw role is ignored while the holder's Constituency Work membership is inactive: restore CW first.
   if (spec.requiresCw && !isCwActive(account)) {
     console.error(
       `Account ${accountId} has no active Constituency Work, and ${role} ` +

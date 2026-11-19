@@ -1,9 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// Turn notification_outbox into the single delivery queue for both channels.
-// Email rows keep their preference category; push jobs have none, so the
-// column goes nullable. lease_until + available_at (already present) provide
-// claiming and retry scheduling — the partial index covers the claim scan.
+// Make notification_outbox the delivery queue for email and push; push has no category, so it goes nullable.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
     CREATE TYPE "public"."enum_notification_outbox_channel" AS ENUM('email', 'push');

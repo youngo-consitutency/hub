@@ -1,6 +1,5 @@
-// The Hub is one web app at /hub; its pages live in the hash (/hub#/calendar/x).
-// Before that, each page had its own top-level URL, so old links, emails and push
-// notifications still carry these first segments and are redirected into the Hub.
+// The Hub lives at /hub with pages in the hash; old top-level URLs in emails
+// and push notifications are redirected into it.
 export const HUB_ROOT = '/hub'
 
 export const LEGACY_HUB_SEGMENTS: ReadonlySet<string> = new Set([

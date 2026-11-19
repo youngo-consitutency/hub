@@ -5,11 +5,7 @@ import path from 'node:path'
 import { applyAccountSpec } from '../../scripts/lib/accountSpec'
 import { testPayload } from '../int/provision'
 
-/**
- * Provision a member account and missing content and working-group fixtures
- * for the browser specs. Write the generated member credentials to the
- * gitignored .credentials.json file for the test workers.
- */
+/** Provisions a member account and missing fixtures; writes credentials to the gitignored .credentials.json. */
 export default async function globalSetup() {
   const payload = await testPayload()
 
@@ -21,9 +17,7 @@ export default async function globalSetup() {
     name: `E2E ${memberEmail}`,
   })
 
-  // The public-site specs assert rendered copy, so the `site` content
-  // document is provisioned like any other test fixture — nothing in the
-  // repository carries real content.
+  // Public-site specs assert rendered copy, so the `site` document is provisioned here.
   const ensureDoc = async (slug: string, title: string, body: AnyValue) => {
     const existing = await payload.find({
       collection: 'content-documents',
@@ -45,9 +39,7 @@ export default async function globalSetup() {
     home: { hero: { title: 'Your place in global climate action.' } },
   })
 
-  // The join flow gates on the membership-policy document; a fresh test
-  // database has none. Provision the shape only — fields present, content
-  // empty — so no copy lives in the repository.
+  // The join flow gates on the membership-policy document: provision the shape with empty content.
   await ensureDoc('membership-policy', 'Membership Policy', {
     POLICY_VERSION: `e2e-${crypto.randomBytes(4).toString('hex')}`,
     MANDATE_ANALYSIS: { title: '', lede: '', points: [] },
@@ -61,9 +53,7 @@ export default async function globalSetup() {
     POLICY_SECTIONS: [],
   })
 
-  // The registration spec opens the gender selector, whose options come
-  // from a staff-editable document — seed a generated entry so the list
-  // is non-empty without storing vocabulary in the repository.
+  // The gender selector needs a non-empty option list: seed a generated entry.
   await ensureDoc('registration-options', 'Registration options', {
     genders: [`E2E ${crypto.randomBytes(4).toString('hex')}`],
   })

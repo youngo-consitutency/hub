@@ -116,10 +116,8 @@ export const adminEndpoints: Endpoint[] = [
       if (!recordRole) throw fail.validation({ teamRole: 'Invalid team role.' })
       if (b.enabled === false) {
         roles.delete(teamRole)
-        // Under ONE advisory lock — including when no record exists — so a
-        // racing grant cannot interleave between lookup and revocation:
-        // revoke every active record for the tuple, whatever its
-        // provenance.
+        // Revoke every active record for the tuple under ONE advisory lock, even
+        // when none exists, so a racing grant cannot interleave.
         await withAuthorityLock(req, target.id, async () => {
           const { docs: active } = await req.payload.find({
             collection: 'authority-records',

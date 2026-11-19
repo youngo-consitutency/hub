@@ -1,8 +1,4 @@
-/**
- * Integration-test fixture helpers: accounts are provisioned straight into
- * the test database via the Payload local API, with generated emails and
- * per-run passwords. Nothing about the test identities lives in source.
- */
+/** Fixture helpers: accounts are provisioned into the test database via the Payload local API with generated credentials. */
 import type { AccountLike } from '../../src/lib/domain'
 import crypto, { createHash } from 'node:crypto'
 import { getPayload, Payload } from 'payload'
@@ -12,10 +8,8 @@ import { assertTestDatabase } from '../dbGuard'
 
 let payload: Payload
 
-// The server the tests talk to must use the same disposable database as this process, or the
-// writes it receives could land somewhere real. No server running means no HTTP writes to check.
-// Only a success is remembered: a server that was unreachable, or answered wrongly, is checked again
-// on the next call rather than trusted.
+// The server must use the same disposable database as this process, or its writes could land somewhere real.
+// Only a success is cached; failures are rechecked on the next call.
 let serverVerified = false
 export async function assertServerDatabase(): Promise<void> {
   if (serverVerified) return

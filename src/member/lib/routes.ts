@@ -1,6 +1,4 @@
-// one registry for every member page: the sidebar, the mobile bar, the command
-// palette, the home cards and the route guards all read from here, so they
-// can't drift apart. it only shapes the interface; the api enforces permissions
+// One registry for every member page (nav, palette, cards, guards). Shapes the UI only; the API enforces permissions.
 import type { IconType } from 'react-icons'
 import type { AccountAccess } from './types'
 import { canManageGroup, canManageGroups } from './groupPermissions'

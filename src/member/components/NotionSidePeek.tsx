@@ -58,11 +58,7 @@ interface NotionSidePeekProps {
 let openPeeks = 0
 let pageOverflow = ''
 
-/**
- * Notion-style Side Peek drawer.
- * Slides out from the right edge with breadcrumbs, full page expand,
- * structured database properties grid, and inner segmented tab menus.
- */
+/** Right-edge side peek drawer with breadcrumbs, expand, properties grid and tabs. */
 export function NotionSidePeek({
   isOpen,
   onClose,

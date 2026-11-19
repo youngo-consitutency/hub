@@ -1,10 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// Unify the legacy platform_decisions workflow with the S09 decision engine.
-// decision_proposals gains the fields the operational UI needs (versioning,
-// publication, recorded tallies, revision history); existing platform_*
-// records are imported and platform_decisions keeps a uuid projection so
-// platform_tasks/platform_enquiries foreign keys keep resolving.
+// Move platform_decisions into S09 decision_proposals; keep a uuid projection so existing foreign keys resolve.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   ALTER TABLE "decision_proposals"

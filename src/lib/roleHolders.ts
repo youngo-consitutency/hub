@@ -1,7 +1,5 @@
-// who currently holds a role in a scope, by the same rules that grant its
-// permissions: a current authority record on a verified, active account, plus
-// active constituency work where the role requires it. the directory and the
-// group page read this instead of storing or guessing names
+// Who currently holds a role in a scope, by the same rules that grant its
+// permissions: a current authority record on a verified, active account.
 import { AUTHORITY_ROLES, normaliseScopeType, recordCurrent, resolveRecordRole } from './authority'
 import { isCwActive, isVerifiedAccount } from './accountStatus'
 import { getPgPool } from './pg'

@@ -5,9 +5,8 @@ import { getAccessProfile, hasCapability, type AccessProfile } from './access'
 import { ApiError } from './respond'
 import { deliveryDisabled } from './environment'
 
-// Personal agent keys for the YOUNGO MCP gateway. Eligibility is derived
-// from authority records on every use, never stored: a key works only
-// while its holder still has the mandate it was minted for.
+// Personal agent keys for the YOUNGO MCP gateway. Eligibility is derived from
+// authority records on every use, never stored.
 const KEY_PREFIX = 'yk_live_'
 const KEY_LIFETIME_DAYS = 90
 const MAX_ACTIVE_KEYS = 3
@@ -69,12 +68,7 @@ interface EligibilityAccount {
   mustChangePassword?: boolean | null
 }
 
-/**
- * Who may hold a key, and what it may call. Operators need both the account
- * console capability and the deployment allowlist; focal points read
- * constituency counts; contact points get the tools of the groups they
- * manage. Group tools follow any wg.manage:{slug} the account holds.
- */
+/** Who may hold a key and which tools it may call. */
 export function decideEligibility(
   account: EligibilityAccount | null | undefined,
   access: Pick<AccessProfile, 'capabilities' | 'isFocalPoint'> | null | undefined,
@@ -191,11 +185,7 @@ export async function revokeKey(req: PayloadRequest, id: number, reason: string)
   })
 }
 
-/**
- * Resolve a presented key to its holder and current eligibility. A key
- * minted before the latest password change, or whose holder lost the
- * mandate, is revoked on the spot rather than left dangling.
- */
+/** Resolve a key to its holder; revoked if issued before a password change or the mandate lapsed. */
 export async function authenticateKey(req: PayloadRequest, secret: string) {
   if (!secret.startsWith(KEY_PREFIX)) return null
   const { docs } = await req.payload.find({

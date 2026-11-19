@@ -1,6 +1,4 @@
-// Shared negotiation-contribution internals: validation, citations,
-// idempotency, content hashing, evidence + audit writes, and the
-// project/amendment write guards.
+// Shared negotiation-contribution internals: validation, idempotency, evidence and write guards.
 import { createHash } from 'node:crypto'
 import { type Pool, type PoolClient } from 'pg'
 import type { Doc } from '../../lib/domain'

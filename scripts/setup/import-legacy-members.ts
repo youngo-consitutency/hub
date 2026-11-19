@@ -1,20 +1,6 @@
 /**
- * One-way import of member data from the legacy Hub (Genn25369/YOUNGO-HUB,
- * Express + raw SQL). Restore the production pg_dump into a scratch database
- * and point LEGACY_DATABASE_URL at it; DATABASE_URL is this Hub's database.
- *
- *   LEGACY_DATABASE_URL=postgres://… npx tsx scripts/setup/import-legacy-members.ts --apply
- *   LEGACY_DATABASE_URL=postgres://… npx tsx scripts/setup/import-legacy-members.ts
- *
- * Optional: LEGACY_COY_SLUG (default coy21) — the COY the legacy allowlist
- * and notices belong to; it must exist here with liveOps on.
- *
- * Accounts keep their legacy scrypt hash and are upgraded on first sign-in
- * (src/endpoints/auth.ts). Re-running converges: accounts match on legacyId,
- * authority records on provenance.assignmentId, everything else on its
- * natural key. An email already registered here without a legacyId is
- * reported and left alone. Sessions, tokens, agent keys and queue state are
- * never copied. Output carries counts and local ids only — no personal data.
+ * One-way import of legacy member data; set LEGACY_DATABASE_URL to a scratch restore of the dump (--apply to write).
+ * Re-running converges; output carries counts and local ids only.
  */
 import type { AnyValue, Doc } from '../../src/lib/domain'
 import { randomBytes } from 'node:crypto'
@@ -172,8 +158,7 @@ async function main() {
   const acc = (uuid: unknown) => (uuid ? (accountId.get(String(uuid)) ?? null) : null)
 
   // ── authority records ─────────────────────────────────────────────
-  // legacy assignments + team_roles[] + the focal_point account role, one
-  // record each, keyed by a provenance id so a rerun never duplicates
+  // keyed by a provenance id so a rerun never duplicates
   const grants: Doc[] = (await rows('select * from account_assignments')).map((r) => ({
     ...r,
     provenanceId: r.id,

@@ -1,9 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// Remove the legacy council_decisions content table — the decision register
-// now reads decision_proposals (S09) directly, and the fictional fixture rows
-// are gone from the seed. Any remaining rows are the same seeded fixtures, so
-// dropping the table loses no operational data.
+// Drop council_decisions; its remaining rows are seeded fixtures, so no operational data is lost.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "council_decisions_id";

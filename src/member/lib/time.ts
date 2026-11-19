@@ -8,9 +8,7 @@ function localTz() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
-// Intl.DateTimeFormat construction is the expensive part of date formatting;
-// cache one instance per (tz, options) pair — every card in a list used to
-// build three or four of these per render.
+// Cache one Intl.DateTimeFormat per (tz, options): construction is the expensive part.
 const formatterCache = new Map<string, Intl.DateTimeFormat>()
 
 function formatter(tz: string | undefined, options: Intl.DateTimeFormatOptions) {

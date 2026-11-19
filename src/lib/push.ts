@@ -5,9 +5,8 @@ import { defaultEmailFrom } from './env'
 import type { Doc } from './domain'
 import { deliveryDisabled } from './environment'
 
-// Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
 // Rows live in the Payload `push-subscriptions` table; endpoints are validated
-// against known browser push services before they're ever written.
+// against known browser push services before writing.
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY

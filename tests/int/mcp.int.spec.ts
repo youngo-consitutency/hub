@@ -1,9 +1,4 @@
-/**
- * Content-MCP integration tests. Transport-level cases run a real HTTP
- * server with no Hub dependency; the end-to-end case provisions an account
- * in the test database and drives a tools/call through the MCP protocol
- * into the live member API.
- */
+/** Content-MCP tests: transport cases on a real HTTP server, plus one end-to-end tools/call against the member API. */
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
 import { createMcpApp, createMcpHttpServer } from '../../mcp-content/server.mjs'

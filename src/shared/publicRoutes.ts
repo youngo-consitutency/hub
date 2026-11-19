@@ -1,8 +1,5 @@
-// the public website's pages, defined once. the header, footer, mobile menu and sitemap read
-// this list; plain data so the server-side sitemap can import it
-//
-// the paths avoid the Hub's own top-level names (/work, /resources, ...), which still redirect
-// into /hub for old links
+// public website pages, defined once as plain data (the sitemap imports it server-side)
+// paths avoid the Hub's own top-level names (/work, /resources, ...), which redirect into /hub
 
 interface SiteRoute {
   href: string

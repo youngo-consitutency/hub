@@ -13,10 +13,7 @@ import { useAlertSetup } from '../lib/useAlertSetup'
 import { NotificationGuide } from './NotificationGuide'
 import { Button } from './ui'
 
-/**
- * Persistent, dismissible prompt at the top of the Hub. Members were missing
- * install and alert setup because both lived only on Profile.
- */
+/** Dismissible prompt for install and alert setup. */
 export function AlertSetupNotice() {
   const path = usePath()
   const { account } = useAccount()

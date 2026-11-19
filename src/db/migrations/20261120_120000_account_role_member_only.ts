@@ -1,8 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// `accounts.role` narrows to the technical kind 'member' — its former
-// authority values now live in `authority_records`. Postgres can't remove
-// enum values, so the type is rebuilt (drop default → retype → restore).
+// Narrow accounts.role to 'member' (authority lives in authority_records); Postgres cannot drop enum values, so the type is rebuilt.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   UPDATE "accounts" SET "role"='member' WHERE "role" <> 'member';

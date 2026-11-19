@@ -182,9 +182,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     setForm((f) => ({ ...f, wgInterests: toggled(f.wgInterests, slug) }))
   }
 
-  // A 2xx without an account means the request was classified as automated and
-  // nothing was created. Surfacing it beats pretending to sign the person in
-  // and dropping them back at the start with no idea what went wrong.
+  // A 2xx without an account means the request was flagged as automated; show an error.
   const finishAuth = (data: Doc) => {
     if (!data?.account) {
       setStatus('idle')
@@ -456,12 +454,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
                     isOrg={isOrg}
                   />
 
-                  {/* The hidden honeypot input that used to sit here was filled by
-                  browser autofill and password managers, which silently voided
-                  real registrations. Browsers cannot fill a field that is not
-                  in the document, so the trap now lives only on the server —
-                  scripted posts that blindly include `hpWebsite` are still
-                  rejected there. */}
+                  {/* No honeypot input here: autofill filled it and voided real sign-ups. The server still rejects `hpWebsite`. */}
 
                   {error && <FormAlert>{error}</FormAlert>}
 

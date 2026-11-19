@@ -22,9 +22,7 @@ export function AccountProvider({ children }: AccountProviderProps) {
   const [account, setAccountState] = useState<Account | null>(getCachedAccount)
 
   const accountId = account?.id
-  // SWR's cache is global and keys carry no account, so another account signing in
-  // within this document would first see the last one's data. clear it whenever the
-  // account changes or ends (a sign-out reload already starts clean)
+  // SWR's cache is global and keyed without account: clear it when the account changes or ends.
   const { mutate } = useSWRConfig()
   const lastId = useRef(accountId)
   useEffect(() => {
@@ -64,9 +62,8 @@ export function AccountProvider({ children }: AccountProviderProps) {
     }
   }, [accountId, accessTry])
 
-  // endpoints hand back a bare accountView: keep the access state we hold for the
-  // same account (loaded, or failed and awaiting retry). a new id refetches via the
-  // effect; mutations that move access (course pass, seat) call reloadAccess
+  // Bare accountView endpoints keep the access state we hold for the same account;
+  // access-moving mutations call reloadAccess.
   const setAccount = useCallback((acc: Account | null) => {
     setAccountState((current) => mergeAccount(current, acc))
     if (acc) setSession({ account: acc })

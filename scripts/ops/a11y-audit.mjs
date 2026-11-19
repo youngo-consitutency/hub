@@ -1,13 +1,6 @@
 /**
- * Accessibility + layout audit for a LOCAL Hub: axe-core (WCAG 2.2 AA + best practice) on every
- * route at four widths, plus a reflow check (no horizontal scroll, WCAG 1.4.10).
- *
- *   A11Y_BASE=http://localhost:3000 A11Y_EMAIL=member@demo.test A11Y_PASSWORD=... \
- *     node scripts/ops/a11y-audit.mjs [--json]
- *
- * A11Y_ONLY=/path audits one route; A11Y_DETAIL=1 adds failing node html and reasons (use with --json).
- *
- * Refuses non-local hosts: it signs in. Uses the installed Chrome (no browser download).
+ * axe-core + reflow audit of a LOCAL Hub across every route and four widths.
+ * Needs A11Y_BASE, A11Y_EMAIL, A11Y_PASSWORD; refuses non-local hosts because it signs in.
  */
 import { chromium } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'

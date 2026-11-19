@@ -48,9 +48,8 @@ const OPTIONS: sanitizeHtml.IOptions = {
   exclusiveFilter: (frame) => (frame.tag === 'a' && !frame.attribs.href ? 'excludeTag' : false),
 }
 
-// loose top-level text from the editor gets a paragraph, so email clients style it.
-// a stray top-level <li> gets a <ul> instead, since <p><li> renders as junk.
-// input is already clean markup, so a depth count over tags is enough
+// Wrap loose top-level text in <p> and stray top-level <li> in <ul>, so
+// email clients style it; input is clean markup, so a tag depth count suffices.
 function wrapLooseText(html: string) {
   let out = ''
   let run = ''

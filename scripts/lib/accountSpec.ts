@@ -1,12 +1,4 @@
-/**
- * Shared account-provisioning primitive for provisioning scripts and the
- * integration-test fixture helpers. Applies a declarative account spec
- * to the database (account row + authority records). Contains no
- * identities or credentials — callers supply those.
- *
- * Every scope/role tuple lands in `authority-records`, matching the
- * runtime model in src/lib/authority.ts.
- */
+/** Applies a declarative account spec (account row + authority records) for provisioning scripts and test fixtures. */
 import type { AnyValue } from '../../src/lib/domain'
 import { recordKind, resolveLegacyRole, normaliseScopeType } from '../../src/lib/authority'
 
@@ -76,9 +68,7 @@ export async function applyAccountSpec(payload: AnyValue, spec: AccountSpec) {
       })
     : await payload.create({ collection: 'accounts', data, overrideAccess: true })
 
-  // One upsert into the single authority store: the tuple resolves to its
-  // canonical registry role and `kind` marks mandate vs participation.
-  // Unknown tuples are an error, never silently widened.
+  // Upsert into the authority store; unknown role/scope tuples are an error, never widened.
   const upsertRecord = async (role: string, scopeType: string, scopeId: string, kind?: string) => {
     const canonical = normaliseScopeType(scopeType)
     const existing = await payload.find({

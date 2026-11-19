@@ -1,9 +1,5 @@
-// Two location models share this module.
-//  - Site routes (/, /our-work, /learn, /about, /signin, ...) are real paths served by Next.
-//  - The Hub lives at /hub and keeps its own pages in the hash:
-//    /hub#/calendar/some-event?tab=notes. The server only ever serves /hub.
-// Call sites keep passing plain app paths ('/calendar'); this module decides
-// whether that means a real navigation or a hash change.
+// Site routes are real Next paths; the Hub lives at /hub with its pages in the hash.
+// Call sites pass plain app paths; this module picks navigation or hash change.
 'use client'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'

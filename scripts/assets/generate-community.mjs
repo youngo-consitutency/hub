@@ -1,6 +1,4 @@
-// regenerates the hero figures: Lorelei portraits by Lisa Wischofsky (CC0) via DiceBear (MIT).
-// each figure is fixed by hand (skin, hair, a friendly mouth, no random grimaces) so the set is
-// diverse and every portrait looks approachable
+// regenerates the hero figures: Lorelei portraits by Lisa Wischofsky (CC0) via DiceBear (MIT)
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { createAvatar } from '@dicebear/core'
 import * as lorelei from '@dicebear/lorelei'

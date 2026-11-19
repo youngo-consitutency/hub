@@ -1,9 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { serverWrites, noAccess } from '../lib/collectionAccess'
 
-// Live operations for a COY with `liveOps` on: an allowlist of participants
-// and the notices organisers send them. Members read and write only through
-// src/endpoints/coy.ts, which checks organiser rights and the allowlist.
+// COY live-ops participants and notices; members go through src/endpoints/coy.ts only.
 export const CoyParticipants: CollectionConfig = {
   slug: 'coy-participants',
   access: { read: noAccess, ...serverWrites },

@@ -1,9 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import { noAccess, serverWrites } from '../lib/collectionAccess'
 
-// Personal agent keys for the YOUNGO MCP gateway. Only the sha256 of the
-// secret is stored; the secret is shown once at creation. Keys die with the
-// password epoch they were minted under, and on expiry or revocation.
+// Personal agent keys for the MCP gateway; only the sha256 is stored.
+// Keys die with their password epoch, on expiry or on revocation.
 export const AgentKeys: CollectionConfig = {
   slug: 'agent-keys',
   access: { read: noAccess, ...serverWrites },

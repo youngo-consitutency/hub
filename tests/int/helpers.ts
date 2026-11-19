@@ -1,8 +1,4 @@
-/**
- * Shared helpers for the API contract specs: a BASE-scoped JSON fetch and a
- * `session()` that provisions an account and signs it in. Specs compose the
- * permissions they need; no identities or credentials are hardcoded.
- */
+/** Shared helpers for the API contract specs: a BASE-scoped JSON fetch and a `session()` that provisions and signs in. */
 import { expect } from 'vitest'
 
 import { assertServerDatabase, provisionAccount, type TestSpec } from './provision'

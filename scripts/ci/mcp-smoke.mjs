@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// CI smoke: boot mcp-content/server.mjs and complete the MCP handshake. The
-// Hub API is deliberately unreachable — tools/list must never need it. Also
-// proves the isolation contract: db secrets never reach the process, the
-// .env loader is allow-listed, and memory tools stay off the http surface.
+// CI smoke: boot mcp-content/server.mjs and complete the MCP handshake with the Hub API unreachable;
+// also checks db secrets never reach the process.
 import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'

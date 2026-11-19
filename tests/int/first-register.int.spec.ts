@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { api } from './helpers'
 
-// payload gives every auth collection a first-register endpoint that creates
-// an account with overrideAccess while the collection is empty; nothing may
-// create accounts outside the registration flow
+// payload's first-register endpoint creates accounts with overrideAccess while a collection is empty;
+// nothing may create accounts outside the registration flow
 describe('generated auth surface', () => {
   const attempt = (collection: string) =>
     api(`/${collection}/first-register`, {

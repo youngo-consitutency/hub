@@ -50,9 +50,8 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 export const publicEndpoints: Endpoint[] = [
   {
-    // Reviewed FAQ / contact page: the published revision, a withdrawn
-    // notice, or the baseline from the site document. Document only — no
-    // author or reviewer metadata.
+    // Reviewed FAQ / contact page: published revision, withdrawn notice or
+    // site-document baseline. Document only, no author metadata.
     path: '/pages/:slug',
     method: 'get',
     handler: endpoint(async (req) => {

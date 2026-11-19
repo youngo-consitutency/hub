@@ -1,10 +1,4 @@
-/**
- * The integration and browser tests CREATE accounts, working groups and content in whatever
- * DATABASE_URL names. `.env.example` and the README point that at `youngo_dev`, which on a
- * maintainer's machine can hold real member data, so tests refuse any database that is not
- * clearly disposable. Name it `*_test`, `*_ci`, `*_smoke`, `*_design` or `*_scratch`, or set
- * ALLOW_TEST_DB=1 when you are certain.
- */
+/** Tests refuse any DATABASE_URL not named `*_test`, `*_ci`, `*_smoke`, `*_design` or `*_scratch`; set ALLOW_TEST_DB=1 to override. */
 const DISPOSABLE = /(^|_)(test|ci|smoke|design|scratch)$/
 
 export function assertTestDatabase(url = process.env.DATABASE_URL) {

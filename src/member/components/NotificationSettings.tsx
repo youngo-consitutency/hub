@@ -17,13 +17,7 @@ import { useAlertSetup } from '../lib/useAlertSetup'
 import { DEVICE_GUIDES, NotificationGuide, type GuideDevice } from './NotificationGuide'
 import { Button } from './ui'
 
-/**
- * Per-device notification control.
- *
- * A push subscription belongs to a browser, not to an account, so this reads
- * as "this device" throughout: a member who enables notifications on their
- * phone has not enabled them on the shared laptop in the delegation office.
- */
+/** Per-device notification control; a push subscription belongs to a browser, not an account. */
 export function NotificationSettings() {
   const setup = useAlertSetup()
   const [helpDevice, setHelpDevice] = useState<GuideDevice | null>(null)

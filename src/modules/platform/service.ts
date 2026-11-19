@@ -97,9 +97,7 @@ async function audit(
     [actor.id, action, target, reason, after],
   )
 }
-// Lock every account this transaction may write, ascending, BEFORE
-// permissions()' FOR SHARE reads — the fixed order closes the mirrored-pair
-// deadlock (A writes B while B writes A). See lib/authorityLock.ts.
+// Lock written accounts in ascending order before permissions()' FOR SHARE reads, to avoid mirrored-pair deadlock.
 async function lockAuthority(client: Pick<PoolClient, 'query'>, ...accountIds: number[]) {
   for (const id of [...new Set(accountIds)].sort((a, b) => a - b))
     await client.query('SELECT pg_advisory_xact_lock($1,$2)', [AUTHORITY_LOCK_NS, id])
@@ -392,9 +390,7 @@ export async function assign(actor: Actor, input: Input) {
         : resolveLegacyRole(scopeType, scopeId, role)
     if (!resolvedRole) fail(400, 'Unknown role for this scope.')
 
-    // Partial unique index keeps one active row per (account, role, scope);
-    // re-recording refreshes term and evidence. The advisory lock serialises
-    // this insert against other authority writes.
+    // re-recording refreshes the single active row; the advisory lock serialises authority writes
     const councilSeat = councilSeatFor(resolvedRole, { scopeId, councilSeat: null })
     const { rows } = await client.query(
       `INSERT INTO authority_records(account_id,kind,role,scope_type,scope_id,council_seat,starts_at,ends_at,evidence,recorded_by_id)

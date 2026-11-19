@@ -242,10 +242,7 @@ function SiteNotFound() {
   )
 }
 
-/**
- * The public YOUNGO website: four pages, readable before any account, policy scroll, or
- * cookies. All data shown is served by the public API, which redacts member-only details.
- */
+/** The public website: four pages, readable before any account; data comes from the redacting public API. */
 export function PublicSite() {
   const path = usePath()
   const legacy = LEGACY_SITE_PATHS[path]

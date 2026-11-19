@@ -40,8 +40,7 @@ import type { OpportunitySummary } from '../../shared/contracts'
 import type { CoyDetail, EventDetail, GroupDetail, SubmissionDetail } from '../../shared/contracts'
 
 // ── Peek framework ─────────────────────────────────────────
-// Every entity is a declarative descriptor rendered by the same
-// wrapper, so panels can only diverge where the entity genuinely does.
+// Every entity is a descriptor rendered by one shared wrapper.
 
 type PeekIcon = ComponentType<{
   size?: number
@@ -315,9 +314,7 @@ export function EventPeek(props: { item: EventDetail | null; onClose: () => void
 }
 
 // ── Working Group Peek ───────────────────────────────────────
-// Descriptive copy tracks Governance Policy §4: Working Groups follow
-// international climate negotiations, conduct research and policy
-// analysis, and draft policy positions and submissions.
+// Copy tracks Governance Policy §4.
 
 const groupPeek: PeekDef<GroupDetail> = {
   eyebrow: () => 'Working Groups',

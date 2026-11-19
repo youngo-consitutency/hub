@@ -2,10 +2,8 @@ import type { CollectionConfig } from 'payload'
 import { AUTHORITY_ROLE_KEYS } from '../lib/authority'
 import { serverWrites } from '../lib/collectionAccess'
 
-// The single authority store: mandated (S13/S14/S25/S15) or participation
-// records, one row per (account, role, scope); the partial unique index
-// prevents duplicate actives. `role` is free text — lib/authority.ts resolves
-// canonical keys and migrated legacy strings to one vocabulary.
+// The single authority store, one row per (account, role, scope).
+// `role` is free text; lib/authority.ts resolves it to canonical keys.
 export const AuthorityRecords: CollectionConfig = {
   slug: 'authority-records',
   access: {

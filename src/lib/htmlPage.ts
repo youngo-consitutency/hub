@@ -1,6 +1,5 @@
-// Small server-rendered pages for links opened from email (unsubscribe, verification, sign-up).
-// Mail scanners and link previews fetch every URL in a message, so a GET must never change
-// anything: the link opens a page and the change happens on the POST from its button.
+// Small server-rendered pages for email links. Mail scanners fetch every URL,
+// so a GET never changes anything; the change happens on the button's POST.
 
 export const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)

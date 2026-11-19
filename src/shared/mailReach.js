@@ -1,8 +1,5 @@
 /**
- * Who may draft Hub mail and to whom, derived from authority capabilities.
- * Contact points reach their own working groups; focal points, the comms
- * team and operational-team liaisons reach the whole constituency.
- * Shared by the Mail Desk endpoints and the Shell nav.
+ * Who may draft Hub mail, and to whom, from authority capabilities.
  *
  * @param {{ capabilities?: string[] } | null | undefined} access
  */

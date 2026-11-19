@@ -1,10 +1,4 @@
-/**
- * The checks axe cannot make, on a LOCAL Hub: document language and title, one h1, skip link is the
- * first tab stop, every control reachable by keyboard shows a focus indicator, and the WCAG 1.4.12
- * text-spacing override does not clip text or force sideways scrolling.
- *
- *   A11Y_EMAIL=... A11Y_PASSWORD=... node scripts/ops/a11y-manual.mjs
- */
+/** Checks axe cannot make, on a LOCAL Hub: language, title, h1, skip link, focus indicators, text spacing. Needs A11Y_EMAIL and A11Y_PASSWORD. */
 import { chromium } from '@playwright/test'
 
 const base = process.env.A11Y_BASE || 'http://localhost:3000'

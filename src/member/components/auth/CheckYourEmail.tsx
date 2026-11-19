@@ -6,10 +6,7 @@ interface CheckYourEmailProps {
   onStartOver: () => void
 }
 
-/**
- * Shown after sign-up. The same message appears whether or not the address already has an account,
- * so the form never reveals who is registered; the email says which case it was.
- */
+/** Same message whether or not the address has an account, so registrations are not revealed. */
 export function CheckYourEmail({ email, onStartOver }: CheckYourEmailProps) {
   return (
     <section className="card authSection" role="status" aria-live="polite">

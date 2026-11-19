@@ -38,9 +38,8 @@ import {
 } from '../lib/decisionRuntime'
 import type { AccountLike, Doc } from '../lib/domain'
 
-// S09 decision workflow endpoints — members act through these; collection
-// REST writes are staff-only, and every transition is audited. The state
-// machine lives in src/lib/decisionRuntime.ts (shared with the bridge).
+// S09 decision workflow endpoints; members act here, collection writes are
+// staff-only, and every transition is audited.
 
 // A duplicate (proposal, account) surfaces as raw 23505 or a converted
 // ValidationError — ballots' only unique constraint is this pair.
@@ -407,9 +406,8 @@ export const decisionEndpoints: Endpoint[] = [
           return created
         })
       } catch (error) {
-        // The pre-check is a fast path only — the unique indexes are the real
-        // guard, and error shapes vary, so re-confirm against the table: a
-        // row for this pair after a failed insert means the race was lost.
+        // The pre-check is a fast path; the unique indexes are the real guard, so
+        // re-confirm against the table after a failed insert.
         if (isDuplicateBallot(error) || (await hasBallot()))
           throw fail.conflict('already_voted', 'Each member may vote once.')
         throw error
@@ -433,10 +431,8 @@ export const decisionEndpoints: Endpoint[] = [
       if (!b.groupKey?.trim()) fields.groupKey = 'Required.'
       if (!b.reasoning?.trim()) fields.reasoning = 'A veto request requires detailed reasoning.'
       if (Object.keys(fields).length) throw fail.validation(fields)
-      // A veto speaks for a group, so the requester must hold a current mandate in it.
-      // A veto speaks for a group, so the requester must belong to it. Working groups and
-      // operational teams use the decision runtime's own membership mapping; organisations use
-      // the member's organisation seat records.
+      // A veto speaks for a group, so the requester must belong to it (decision
+      // runtime mapping for teams, seat records for organisations).
       const access = await getAccessProfile(req, account)
       const key = normaliseGroupKey(b.groupKey)
       const keys =

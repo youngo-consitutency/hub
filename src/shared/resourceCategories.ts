@@ -93,11 +93,7 @@ function resourceCategory(resource: Doc) {
   return 'reference'
 }
 
-/**
- * Public group pages expose only open reference material and public-facing
- * social media. Join forms, chat invites, link hubs, working documents, and
- * shared drives stay behind the member workspace gate.
- */
+/** Public group pages show only open reference material and social media; the rest stays member-only. */
 export function isPublicGroupResource(resource: Doc) {
   const url = resourceUrl(resource)
   const host = url?.hostname.replace(/^www\./, '').toLowerCase() || ''

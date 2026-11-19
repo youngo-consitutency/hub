@@ -10,11 +10,7 @@ export function githubIssuesConfig(env: Record<string, string | undefined> = pro
   return { token, repo }
 }
 
-/**
- * Best-effort copy of a feedback ticket into GitHub Issues. The reporter is
- * named by account id only — never name or email. Returns the issue URL, or
- * null when mirroring is off or GitHub does not answer.
- */
+/** Best-effort copy of a feedback ticket into GitHub Issues; names the reporter by account id only. */
 export async function mirrorFeedbackIssue(ticket: Doc, log?: { warn: (entry: object) => void }) {
   const config = githubIssuesConfig()
   if (!config) return null

@@ -6,9 +6,7 @@ import { testPayload } from './provision'
 import { api, session, BASE } from './helpers'
 import { expireVote, expireWindows, jsonBody, makeVotingProposal } from './decisionFixtures'
 
-// Decision-integrity regressions: who may propose, no early close, one ballot
-// per council seat, writes that can't slip past a closing transition, child
-// ownership, snap deadlines, the bridge tally and the cron sweep.
+// Decision-integrity regressions: proposers, early close, ballots, closing-transition writes, tally and cron sweep.
 
 const slug = () => `it${Math.random().toString(36).slice(2, 8)}`
 const pool = async () => ((await testPayload()).db as AnyValue).pool

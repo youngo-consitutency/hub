@@ -469,9 +469,8 @@ export const contentEndpoints: Endpoint[] = [
           data: {
             contentType: contentType as ContentDraft['contentType'],
             contentKey: slug,
-            // only the fields sent, marked as a patch, with what each held when the draft was made:
-            // at publish time the live record is read again, so a change made meanwhile to another
-            // field is kept and a change to the same field is a conflict
+            // Patch of only the sent fields with their draft-time values; publish
+            // re-reads the live record, keeping other-field changes and flagging same-field ones.
             payload: {
               ...change,
               _patch: true,

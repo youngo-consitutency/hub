@@ -111,9 +111,8 @@ export function apiDelete<T = Doc>(path: string) {
   return request<T>(path, { method: 'DELETE' })
 }
 
-// Fetch state for independently rendered sections, backed by SWR (request dedup, revalidation,
-// retry). The path is the cache key. Record screens must not show the previous record under a new
-// URL, so keepPrevious is opt-in: lists, filters and search keep their rows while the next page loads.
+// SWR-backed fetch state; the path is the cache key. keepPrevious is opt-in so record screens
+// never show the previous record under a new URL.
 export interface ApiQuery<T> {
   data: T | null
   error: string | null

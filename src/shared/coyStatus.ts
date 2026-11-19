@@ -17,11 +17,7 @@ function endOfUtcDay(isoDate: string | null | undefined) {
   return Number.isFinite(time) ? time : null
 }
 
-/**
- * Display status for a COY. Stored `applications_open` becomes
- * `applications_closed` after `applicationsCloseAt`, and a past `endsOn`
- * becomes `concluded`.
- */
+/** Display status: applications close after `applicationsCloseAt`, and a past `endsOn` is `concluded`. */
 export function resolveCoyStatus(coy: CoyDates | null | undefined, now = new Date()) {
   if (!coy?.status) return coy?.status
   if (TERMINAL.has(coy.status) || CLOSED_APPLICATIONS.has(coy.status)) {
@@ -41,10 +37,7 @@ export function coyApplicationsAreOpen(coy: CoyDates | null | undefined, now = n
   return OPEN_APPLICATIONS.has(resolveCoyStatus(coy, now) ?? '')
 }
 
-/**
- * Label status for a tracker card. A conference in progress reads as
- * underway. An endorsed host with no published dates reads as endorsed.
- */
+/** Tracker-card label: in-progress conferences read as underway. */
 export function coyDisplayStatus(coy: CoyDates | null | undefined, now = new Date()) {
   const status = resolveCoyStatus(coy, now)
   if (status === 'cancelled' || status === 'concluded') return status

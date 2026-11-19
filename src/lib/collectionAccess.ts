@@ -2,13 +2,11 @@ import type { PayloadRequest } from 'payload'
 import type { Access, Field, FieldAccess } from 'payload'
 import { getAccessProfile, hasCapability } from './access'
 
-// access for the generated rest/graphql surfaces. domain endpoints authorise
-// the actor, then write through the local api with overrideAccess; these rules
-// keep the generated api from bypassing that
+// Access for generated rest/graphql surfaces. Domain endpoints authorise then
+// write via the local api; these rules stop the generated api bypassing that.
 
-// nothing writes through the generated api except the /cms console's content-document
-// edits (see ContentDocuments), and it only reads published content or a member's own
-// (or capability-scoped) rows
+// Only the /cms console's content-document edits write through the generated api;
+// it reads only published content or a member's own (or capability-scoped) rows.
 export const noAccess: Access = () => false
 
 // field-level equivalents (field access takes a different args shape)

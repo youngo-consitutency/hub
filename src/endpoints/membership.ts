@@ -18,10 +18,8 @@ import { idOf } from '../lib/narrow'
 import type { Account, Handover } from '../payload-types'
 import type { AuditEntry } from '../lib/audit'
 
-// S17 membership lifecycle: Constituency Work renewal (every February),
-// resignation, termination, and the two-week handover duty. Account status
-// columns are updated through the same helpers the staff console uses, and
-// every transition writes an audit-log entry.
+// S17 membership lifecycle: renewal, resignation, termination and handover.
+// Every transition writes an audit-log entry.
 
 const DAY = 86_400_000
 
@@ -67,18 +65,14 @@ async function openHandover(
       openedAt: new Date().toISOString(),
     },
     overrideAccess: true,
-    // Always bind to the request: inside an authority transaction an
-    // unbound create runs on another pooled connection and deadlocks on
-    // rows this transaction holds.
+    // Always bind to the request; an unbound create uses another pooled
+    // connection and deadlocks on rows this transaction holds.
     req,
   })
 }
 
-// End every active authority record — participation and mandates alike.
-// A record must not outlive the membership exit that ends it (S17).
-// `scopeTypes` limits which scopes are closed. The sweep runs under the
-// shared authority lock so a concurrent grant cannot slip a record past
-// the exit. Returns the number of rows ended.
+// End every active authority record (S17), limited to `scopeTypes`, under the
+// shared authority lock. Returns the number of rows ended.
 async function endRecords(
   req: PayloadRequest,
   accountId: number,
@@ -108,12 +102,8 @@ async function endRecords(
   })
 }
 
-// One atomic membership transition: the authority sweep, the account's
-// status change, the handover record and the audit entry commit or roll
-// back together under the account's advisory lock. A grant arriving between
-// the sweep and the status write queues on the lock and then re-verifies
-// eligibility against the post-exit state — it cannot slip a mandate past
-// the exit. `hooks.afterSweep` exists for concurrency tests only.
+// One atomic membership transition under the account's advisory lock, so a
+// concurrent grant re-verifies eligibility after the exit. `hooks.afterSweep` is for tests only.
 async function applyMembershipTransition(
   req: PayloadRequest,
   accountId: number,

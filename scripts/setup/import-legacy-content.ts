@@ -1,24 +1,6 @@
 /**
- * One-way import of the legacy Hub's public content (the Vite/Express app at
- * github.com/Genn25369/YOUNGO-HUB) into this database. The data stays out of
- * this repo: point LEGACY_DIR at a checkout of that repo.
- *
- *   LEGACY_DIR=../legacy-hub npx tsx scripts/setup/import-legacy-content.ts --apply
- *   LEGACY_DIR=../legacy-hub npx tsx scripts/setup/import-legacy-content.ts
- *
- * Reads data/fixtures.json and data/resource-hub.json, plus the WG onboarding
- * decks and copy in src/content/*.js, which become content-documents.
- *
- * Optional: FIXTURE_ANCHOR=<iso date>. Legacy fixtures store relative dates
- * (dayOffset, daysAgo, deadlineInDays) that the old server resolved against
- * "now" on every request; this import freezes them against the anchor, which
- * defaults to the time of the run.
- *
- * Upserts by slug (directory contacts by group + roleTitle + publicEmail), so re-running
- * converges instead of duplicating. Nothing is deleted: rows this database
- * holds that the legacy source lacks (old demo seed) are listed at the end
- * for a deliberate cleanup. Council fixtures are not imported: the
- * decision-proposals model needs a real proposer account.
+ * One-way import of the legacy Hub's public content; set LEGACY_DIR to a checkout of it (--apply to write).
+ * Upserts by slug and deletes nothing; FIXTURE_ANCHOR optionally freezes relative dates.
  */
 import type { AnyValue } from '../../src/lib/domain'
 import { readFileSync } from 'node:fs'

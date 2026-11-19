@@ -9,9 +9,7 @@ interface Entry {
   body: ReactNode
 }
 
-// A vertical timeline whose rail fills as you scroll down it, with the label held in view beside
-// each entry. The pattern is a common one (sticky labels, scroll-linked rail); this version is
-// written for this project on top of Motion's useScroll.
+// Vertical timeline whose rail fills on scroll, with sticky labels (Motion useScroll).
 export function ScrollTimeline({ entries }: { entries: Entry[] }) {
   const ref = useRef<HTMLOListElement>(null)
   const reduced = useReducedMotion()

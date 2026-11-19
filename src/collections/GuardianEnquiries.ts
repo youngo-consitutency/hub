@@ -1,9 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { grantsCapability, serverWrites } from '../lib/collectionAccess'
 
-// Under-18 safeguarding stop: a parent or legal guardian asks the Membership
-// Team to make contact. No link to an account and no child data; rows are
-// hard-deleted on close and purged after 12 months (src/lib/guardianEnquiries.ts).
+// Under-18 guardian enquiries: no account link or child data; hard-deleted on close, purged after 12 months.
 export const GuardianEnquiries: CollectionConfig = {
   slug: 'guardian-enquiries',
   access: {

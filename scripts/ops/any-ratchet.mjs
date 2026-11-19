@@ -1,11 +1,4 @@
-/**
- * Type-safety ratchet. `AnyValue` is an alias for `any`, so the compiler and eslint cannot see it;
- * this counts the remaining uses and fails if the number goes UP. Tighten a file and the count
- * drops; run with --update to lock in the lower number.
- *
- *   node scripts/ops/any-ratchet.mjs            check (CI)
- *   node scripts/ops/any-ratchet.mjs --update   write the new baseline
- */
+/** Counts `AnyValue` uses and fails if the number goes up; run with --update to write the new baseline. */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'

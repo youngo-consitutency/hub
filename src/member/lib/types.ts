@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
- * Boundary aliases for values crossing the REST API and for view models
- * whose shapes are not yet modelled per endpoint. Naming them keeps the
- * untyped edges greppable instead of scattering anonymous `any`; fields
- * should tighten to real shapes endpoint by endpoint.
+ * Boundary aliases for untyped REST values and view models; named so `any` stays greppable.
  */
 
 /** An untyped JSON object row at an API boundary. */

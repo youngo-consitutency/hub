@@ -19,9 +19,7 @@ import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
 import type { Doc } from '../../lib/domain'
 import type { DecisionFlag, DecisionProposal } from '../../payload-types'
 
-// Bridge: operational platform UI → S09 engine. decision_proposals is the
-// store; platform_decisions survives as a uuid-keyed projection for legacy
-// foreign keys. Mutations write S09 first, then sync the projection.
+// Bridge from the platform UI to the S09 engine: writes S09 first, then syncs the platform_decisions projection.
 
 const STAGE: Record<string, string> = {
   draft: 'draft',

@@ -131,9 +131,7 @@ import {
 import { TbArrowLeft as ArrowLeft } from './dirIcons'
 
 export function A({ href, className, children, onClick, target, ...rest }: AProps) {
-  // next/link prefetches the route chunk on viewport/hover, so soft
-  // navigations land without waiting on a fresh download. The click handler
-  // still owns the actual navigation (scroll handling, hash routing).
+  // next/link prefetches the chunk; the click handler still owns navigation.
   return (
     <Link
       href={hrefFor(href as string)}
@@ -200,11 +198,7 @@ interface CatalogToolbarProps {
   filters?: import('react').ReactNode
 }
 
-/**
- * The one toolbar every browse page uses, so they all behave and wrap alike. Slots, in order:
- * `search`; `sort` (how the list is ordered); `children` (quick pills: categories and on/off switches);
- * `filters` (a FilterMenu, only when there is a real choice to make).
- */
+/** Shared browse-page toolbar. Slots: `search`, `sort`, `children` (quick pills), `filters` (FilterMenu). */
 export function CatalogToolbar({
   search,
   sortLabel,
@@ -292,7 +286,7 @@ function filterStateLabel(filterState: FilterState) {
 }
 
 /**
- * Compact card metadata that controls the matching catalogue filter.
+ * Card metadata that controls the matching catalogue filter.
  * @param {{children?: import("react").ReactNode, state?: string, tone?: string, onClick?: import("react").MouseEventHandler<HTMLButtonElement>, icon?: import("react").ElementType, prefix?: string, className?: string}} props
  */
 export function FilterChip({
