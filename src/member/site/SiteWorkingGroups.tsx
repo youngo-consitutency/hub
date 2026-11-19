@@ -1,7 +1,7 @@
 import { createElement, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ToggleButton, ToggleButtonGroup } from 'react-aria-components'
-import type { AnyValue, Doc } from '../lib/types'
+import type { DirectoryTopic, PublicGroup } from '../../shared/contracts'
 import { TbUsers as Users } from 'react-icons/tb'
 import { A, Async, Empty, Skeletons } from '../components/ui'
 import { useApi } from '../lib/api'
@@ -11,21 +11,21 @@ import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { PublicSearch } from './PublicSearch'
 import { SiteSection } from './SitePage'
 
-const FILTERS = { topic: (group: Doc, value: string) => group.topic === value }
-const text = (group: Doc) => [group.name, group.focusLine, ...(group.tags ?? [])]
+const FILTERS = { topic: (group: PublicGroup, value: string) => group.topic === value }
+const text = (group: PublicGroup) => [group.name, group.focusLine, ...(group.tags ?? [])]
 
-function GroupCard({ group }: { group: Doc }) {
+function GroupCard({ group }: { group: PublicGroup }) {
   return (
-    <article className="card siteWgCard">
+    <article className="card siteWgCard" data-wg={group.slug}>
       <span className="siteWgMonogram" aria-hidden>
         {createElement(workingGroupIcon(group.slug), { size: 22, strokeWidth: 1.75 })}
       </span>
       <div>
         <h3>{group.name}</h3>
         {group.focusLine && <p className="meta">{group.focusLine}</p>}
-        {group.tags?.length > 0 && (
+        {group.tags?.length && (
           <ul className="siteWgTags" aria-label={`${group.name} topics`}>
-            {group.tags.slice(0, 3).map((tag: AnyValue) => (
+            {group.tags.slice(0, 3).map((tag) => (
               <li key={tag} className="chip chip-neutral">
                 {tag}
               </li>
@@ -38,7 +38,7 @@ function GroupCard({ group }: { group: Doc }) {
 }
 
 // every working group, browsed by topic or search instead of one long page
-function GroupBrowser({ groups, topics }: { groups: Doc[]; topics: Doc[] }) {
+function GroupBrowser({ groups, topics }: { groups: PublicGroup[]; topics: DirectoryTopic[] }) {
   const list = useCatalogue(groups, { text, filters: FILTERS, pageSize: 9 })
   const present = topics.filter((topic) => groups.some((group) => group.topic === topic.key))
   const topic = list.values.topic || ''
@@ -113,9 +113,9 @@ function GroupBrowser({ groups, topics }: { groups: Doc[]; topics: Doc[] }) {
 }
 
 export function WorkingGroupsSection() {
-  const query = useApi('/groups')
+  const query = useApi<{ items: PublicGroup[] }>('/groups')
   const { doc: site, loading } = useDocument('site')
-  const { doc: directory } = useDocument('directory')
+  const { doc: directory } = useDocument<{ topics?: DirectoryTopic[] }>('directory')
   const wg = site?.workingGroups
   const ready = Boolean(wg && directory)
   // the section only exists once its documents load, so a deep link scrolls here afterwards
@@ -131,13 +131,13 @@ export function WorkingGroupsSection() {
     <SiteSection id="working-groups" eyebrow={wg.eyebrow} title={wg.title} lead={wg.lead}>
       <Async
         query={query}
-        empty={(data: Doc) =>
+        empty={(data) =>
           data.items.length === 0 ? (
             <Empty icon={Users} title={empty.title} body={empty.body} />
           ) : null
         }
       >
-        {(data: Doc) => (
+        {(data) => (
           <>
             <GroupBrowser groups={data.items} topics={directory.topics || []} />
             <p className="metaMuted sitePageFootnote">

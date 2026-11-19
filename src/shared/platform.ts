@@ -6,17 +6,15 @@ export const BODY_KINDS = [
   'council',
   'task_force',
 ] as const
-export const DECISION_STATES = [
-  'draft',
-  'consultation',
-  'revision',
-  'decision',
-  'voting',
-  'adopted',
-  'not_adopted',
-  'withdrawn',
-] as const
-export type DecisionState = (typeof DECISION_STATES)[number]
+export type DecisionState =
+  | 'draft'
+  | 'consultation'
+  | 'revision'
+  | 'decision'
+  | 'voting'
+  | 'adopted'
+  | 'not_adopted'
+  | 'withdrawn'
 export type BodyKind = (typeof BODY_KINDS)[number]
 export interface Person {
   id: string

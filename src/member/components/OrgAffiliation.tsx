@@ -1,11 +1,11 @@
-import type { AnyValue } from '../lib/types'
+import type { AffiliationSeat, OrganisationOption } from '../../shared/contracts'
 import { useState } from 'react'
-import { apiPost, useApi } from '../lib/api'
+import { apiPost, useApi, errorMessage } from '../lib/api'
 import { Button } from './ui'
 import { SearchableSelect } from './FormControls'
 import { TbBuilding as Building2 } from 'react-icons/tb'
 
-const STATUS_COPY = {
+const STATUS_COPY: Record<string, { chip: string; label: string; note: string }> = {
   requested: {
     chip: 'chip-warn',
     label: 'Awaiting decision',
@@ -33,14 +33,14 @@ const STATUS_COPY = {
  * confirms, and decides whether the link also opens its portal.
  */
 export function OrgAffiliation() {
-  const affiliations = useApi('/member/affiliations')
-  const mine: AnyValue[] | null = affiliations.data ? affiliations.data.items || [] : null
+  const affiliations = useApi<{ items: AffiliationSeat[] }>('/member/affiliations')
+  const mine = affiliations.data ? affiliations.data.items || [] : null
   // a failed list leaves the picker empty; the rest still works
-  const orgs: AnyValue[] = useApi('/member/organisations').data?.items || []
+  const orgs = useApi<{ items: OrganisationOption[] }>('/member/organisations').data?.items || []
   const [choice, setChoice] = useState('')
-  const [actionError, setError] = useState<AnyValue>(null)
+  const [actionError, setError] = useState<string | null>(null)
   const error = actionError || affiliations.error
-  const [done, setDone] = useState<AnyValue>(null)
+  const [done, setDone] = useState<string | null>(null)
 
   const request = async () => {
     if (!choice) return
@@ -52,16 +52,16 @@ export function OrgAffiliation() {
       setChoice('')
       affiliations.retry()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
   // Organisations already requested or joined should not be offered again.
-  const taken = new Set((mine || []).map((m: AnyValue) => m.orgAccountId))
+  const taken = new Set((mine || []).map((m) => String(m.orgAccountId)))
   const options = orgs
-    .filter((o) => !taken.has(o.id))
+    .filter((o) => !taken.has(String(o.id)))
     .map((o) => ({
-      value: o.id,
+      value: String(o.id),
       label: o.country ? `${o.name} — ${o.country}` : o.name,
     }))
 
@@ -78,8 +78,8 @@ export function OrgAffiliation() {
       </div>
 
       <div className="organisationBody">
-        {(mine || []).map((seat: AnyValue) => {
-          const copy = (STATUS_COPY as AnyValue)[seat.status] || {
+        {(mine || []).map((seat) => {
+          const copy = STATUS_COPY[seat.status] || {
             chip: 'chip-neutral',
             label: seat.status,
             note: '',

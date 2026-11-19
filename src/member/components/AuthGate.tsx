@@ -1,17 +1,24 @@
+type AuthMode = 'register' | 'signin' | 'forgot'
+type LoginField = 'email' | 'password' | 'website'
+type PhoneField = 'phone' | 'dcpPhone' | 'ycpPhone'
+type PhoneCountryField = 'phoneCountry' | 'dcpPhoneCountry' | 'ycpPhoneCountry'
+
 interface AuthGateProps {
-  onAuthenticated?: AnyValue
-  initialMode?: AnyValue
+  onAuthenticated: (account: Account) => void
+  initialMode?: AuthMode
 }
 
-import type { AnyValue, Doc } from '../lib/types'
-import { useState } from 'react'
+import type { Doc, Account } from '../lib/types'
+import type { MembershipPolicyDoc, PrivacyNoticeDoc } from '../../shared/contracts'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { TbCheck as Check, TbKey as KeyRound, TbUserPlus as UserPlus } from 'react-icons/tb'
-import { apiPost } from '../lib/api'
+import { apiPost, fieldErrors } from '../lib/api'
 import { setSession } from '../lib/session'
 import { useDocument } from '../lib/documents'
 import { wordCount } from './auth/helpers'
 import { A, Button } from './ui'
 import { Brand } from './Brand'
+import { CommunityPanel } from './CommunityPanel'
 import { FieldError } from './FormControls'
 import {
   ageFromDob,
@@ -20,6 +27,8 @@ import {
   loadPhoneSupport,
   phoneInputValue,
   scrollToFirstError,
+  type RegistrationField,
+  type RegistrationForm,
 } from './auth/helpers'
 import { FormAlert, PrivacyConsentSection } from './auth/shared'
 import { ForgotPasswordForm } from './auth/ForgotPasswordForm'
@@ -27,23 +36,29 @@ import { SignInForm } from './auth/SignInForm'
 import { RegisterIndividualForm } from './auth/RegisterIndividualForm'
 import { RegisterOrgForm } from './auth/RegisterOrgForm'
 
+// add the item if absent, remove it if present
+const toggled = (items: string[], item: string) =>
+  items.includes(item) ? items.filter((x) => x !== item) : [...items, item]
+
 /**
  * Sign-in and registration for individuals and organisations.
  */
 export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGateProps) {
   // Versions stamped on registration come from the CMS documents the user
   // actually read — the bundle no longer ships legal copy.
-  const { doc: membershipPolicy } = useDocument('membership-policy')
-  const { doc: privacyNotice } = useDocument('privacy-notice')
-  const [mode, setMode] = useState(initialMode)
-  const [login, setLogin] = useState<Doc>({ email: '', password: '', website: '' })
-  const [form, setForm] = useState<AnyValue>(initialRegistrationForm)
-  const [countryOptions, setCountryOptions] = useState<AnyValue[]>([])
-  const [nationalityOptions, setNationalityOptions] = useState<AnyValue[]>([])
+  const { doc: membershipPolicy } = useDocument<MembershipPolicyDoc>('membership-policy')
+  const { doc: privacyNotice } = useDocument<PrivacyNoticeDoc>('privacy-notice')
+  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [login, setLogin] = useState({ email: '', password: '', website: '' })
+  const [form, setForm] = useState<RegistrationForm>(initialRegistrationForm)
+  const [countryOptions, setCountryOptions] = useState<{ value: string; label: string }[]>([])
+  const [nationalityOptions, setNationalityOptions] = useState<{ value: string; label: string }[]>(
+    [],
+  )
   const [fields, setFields] = useState<Doc>({})
-  const [error, setError] = useState<AnyValue>(null)
+  const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState('idle')
-  const [forgotMsg, setForgotMsg] = useState<AnyValue>(null)
+  const [forgotMsg, setForgotMsg] = useState<string | null>(null)
 
   // not memoised: an open page should notice a birthday at midnight
   const age = ageFromDob(form.dateOfBirth)
@@ -53,7 +68,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   const nonAdmitted = form.isUnfcccAdmitted === 'no'
   const missionWords = wordCount(form.orgMission)
 
-  const clearFieldError = (key: AnyValue) => {
+  const clearFieldError = (key: string) => {
     setFields((previous) => {
       if (!previous[key]) return previous
       const next = { ...previous }
@@ -64,30 +79,36 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   }
 
   const setChoice =
-    (key: AnyValue, errorKey = key) =>
-    (value: AnyValue) => {
-      setForm((current: AnyValue) => ({ ...current, [key]: value }))
+    <K extends RegistrationField>(key: K, errorKey: string = key) =>
+    (value: RegistrationForm[K]) => {
+      setForm((current) => ({ ...current, [key]: value }))
       clearFieldError(errorKey)
     }
 
-  const setReg = (k: AnyValue) => (e: AnyValue) => {
-    const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    setForm((f: AnyValue) => ({ ...f, [k]: v }))
-    setFields((prev) => {
-      if (
-        !prev[k] &&
-        !(k === 'password' && prev.passwordConfirm) &&
-        !(k === 'passwordConfirm' && prev.passwordConfirm)
-      ) {
-        return prev
-      }
-      const next = { ...prev }
-      delete next[k]
-      if (k === 'password' || k === 'passwordConfirm') delete next.passwordConfirm
-      return next
-    })
-    if (error) setError(null)
-  }
+  const setReg =
+    (k: RegistrationField) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { target } = e
+      const v =
+        target instanceof HTMLInputElement && target.type === 'checkbox'
+          ? target.checked
+          : target.value
+      setForm((f) => ({ ...f, [k]: v }))
+      setFields((prev) => {
+        if (
+          !prev[k] &&
+          !(k === 'password' && prev.passwordConfirm) &&
+          !(k === 'passwordConfirm' && prev.passwordConfirm)
+        ) {
+          return prev
+        }
+        const next = { ...prev }
+        delete next[k]
+        if (k === 'password' || k === 'passwordConfirm') delete next.passwordConfirm
+        return next
+      })
+      if (error) setError(null)
+    }
 
   const ensureCountryOptions = async () => {
     const support = await loadPhoneSupport()
@@ -99,23 +120,22 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     setNationalityOptions((current) => (current.length ? current : options))
   }
 
-  const setPhone = (phoneKey: AnyValue, countryKey: AnyValue) => (event: AnyValue) => {
-    const rawValue = phoneInputValue(event.target.value)
-    setForm((current: AnyValue) => ({ ...current, [phoneKey]: rawValue }))
-    clearFieldError(phoneKey)
+  const setPhone =
+    (phoneKey: PhoneField, countryKey: PhoneCountryField) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const rawValue = phoneInputValue(event.target.value)
+      setForm((current) => ({ ...current, [phoneKey]: rawValue }))
+      clearFieldError(phoneKey)
 
-    void loadPhoneSupport().then(({ formatPhoneWhileTyping }: AnyValue) => {
-      setForm((current: AnyValue) => ({
-        ...current,
-        [phoneKey]: formatPhoneWhileTyping(
-          (current as AnyValue)[phoneKey],
-          (current as AnyValue)[countryKey],
-        ),
-      }))
-    })
-  }
+      void loadPhoneSupport().then(({ formatPhoneWhileTyping }) => {
+        setForm((current) => ({
+          ...current,
+          [phoneKey]: formatPhoneWhileTyping(current[phoneKey], current[countryKey]),
+        }))
+      })
+    }
 
-  const setLog = (k: AnyValue) => (e: AnyValue) => {
+  const setLog = (k: LoginField) => (e: ChangeEvent<HTMLInputElement>) => {
     setLogin((f) => ({ ...f, [k]: e.target.value }))
     setFields((prev) => {
       if (!prev[k]) return prev
@@ -126,27 +146,21 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     if (error) setError(null)
   }
 
-  const applyErrors = (err: AnyValue) => {
+  const applyErrors = (err: unknown) => {
     setStatus('idle')
-    setFields(err.fields || {})
-    setError(err.message || 'Please fix the highlighted fields.')
+    setFields(fieldErrors(err))
+    setError(
+      err instanceof Error && err.message ? err.message : 'Please fix the highlighted fields.',
+    )
     scrollToFirstError()
   }
 
-  const toggleMinority = (label: AnyValue) => {
-    setForm((f: AnyValue) => {
-      const has = f.minorityGroups.includes(label)
-      return {
-        ...f,
-        minorityGroups: has
-          ? f.minorityGroups.filter((x: AnyValue) => x !== label)
-          : [...f.minorityGroups, label],
-      }
-    })
+  const toggleMinority = (label: string) => {
+    setForm((f) => ({ ...f, minorityGroups: toggled(f.minorityGroups, label) }))
   }
 
-  const setMinorityIdentity = (value: AnyValue) => {
-    setForm((current: AnyValue) => ({
+  const setMinorityIdentity = (value: string) => {
+    setForm((current) => ({
       ...current,
       minorityIdentity: value,
       ...(value === 'no' ? { minorityGroups: [], minorityOther: '' } : {}),
@@ -162,16 +176,8 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     })
   }
 
-  const toggleWg = (slug: AnyValue) => {
-    setForm((f: AnyValue) => {
-      const has = f.wgInterests.includes(slug)
-      return {
-        ...f,
-        wgInterests: has
-          ? f.wgInterests.filter((x: AnyValue) => x !== slug)
-          : [...f.wgInterests, slug],
-      }
-    })
+  const toggleWg = (slug: string) => {
+    setForm((f) => ({ ...f, wgInterests: toggled(f.wgInterests, slug) }))
   }
 
   // A 2xx without an account means the request was classified as automated and
@@ -189,7 +195,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     onAuthenticated(data.account)
   }
 
-  const submitLogin = async (e: AnyValue) => {
+  const submitLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setStatus('submitting')
     setError(null)
@@ -206,7 +212,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     }
   }
 
-  const submitForgot = async (e: AnyValue) => {
+  const submitForgot = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setStatus('submitting')
     setError(null)
@@ -224,19 +230,19 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
     }
   }
 
-  const submitRegister = async (e: AnyValue) => {
+  const submitRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setStatus('submitting')
     setError(null)
     setFields({})
 
     // Report password errors before sending the form.
-    const local = {}
+    const local: Record<string, string> = {}
     if (form.password && form.passwordConfirm && form.password !== form.passwordConfirm) {
-      ;(local as AnyValue).passwordConfirm = 'Passwords do not match.'
+      local.passwordConfirm = 'Passwords do not match.'
     }
     if (form.password && form.password.length < 10) {
-      ;(local as AnyValue).password = 'Password must be at least 10 characters.'
+      local.password = 'Password must be at least 10 characters.'
     }
     if (Object.keys(local).length) {
       setStatus('idle')
@@ -281,7 +287,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   }
 
   return (
-    <main className="mandateGate" aria-labelledby="auth-title">
+    <main className="mandateGate" data-auth-mode={mode} aria-labelledby="auth-title">
       <div className="mandateShell authShell" data-auth-mode={mode}>
         <header className="mandateHeader">
           <div className="gateBrand">
@@ -379,9 +385,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
                       type="radio"
                       name="entity"
                       checked={form.entityType === 'individual'}
-                      onChange={() =>
-                        setForm((f: AnyValue) => ({ ...f, entityType: 'individual' }))
-                      }
+                      onChange={() => setForm((f) => ({ ...f, entityType: 'individual' }))}
                     />
                     <strong>Individual</strong>
                     <span className="meta">Child or young person joining YOUNGO personally.</span>
@@ -393,9 +397,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
                       type="radio"
                       name="entity"
                       checked={form.entityType === 'organization'}
-                      onChange={() =>
-                        setForm((f: AnyValue) => ({ ...f, entityType: 'organization' }))
-                      }
+                      onChange={() => setForm((f) => ({ ...f, entityType: 'organization' }))}
                     />
                     <strong>Organisation / NGO</strong>
                     <span className="meta">
@@ -486,6 +488,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
           )}
         </div>
       </div>
+      {mode === 'signin' && <CommunityPanel />}
     </main>
   )
 }

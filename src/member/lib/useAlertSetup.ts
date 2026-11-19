@@ -1,6 +1,5 @@
-import type { AnyValue, Doc } from './types'
 import { useCallback, useEffect, useState } from 'react'
-import { apiGet, apiPost } from './api'
+import { apiGet, apiPost, errorMessage, errorStatus } from './api'
 import {
   getPushSubscriptionStatus,
   isInstallPromptAvailable,
@@ -14,12 +13,24 @@ import {
 
 const DISMISS_KEY = 'youngo-hub:alert-setup-dismissed'
 
+// the browser status from getPushSubscriptionStatus plus whether the server has push configured
+interface AlertState {
+  loading: boolean
+  configured?: boolean
+  supported?: boolean
+  registered?: boolean
+  subscribed?: boolean
+  permission?: NotificationPermission
+  subscription?: { endpoint: string; expirationTime: number | null } | null
+  error?: string
+}
+
 export function useAlertSetup() {
-  const [state, setState] = useState<Doc>({ loading: true })
+  const [state, setState] = useState<AlertState>({ loading: true })
   const [installAvailable, setInstallAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<AnyValue>(null)
-  const [error, setError] = useState<AnyValue>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISS_KEY) === '1'
@@ -35,7 +46,7 @@ export function useAlertSetup() {
       await apiGet('/push/vapid-key')
       configured = true
     } catch (fetchError) {
-      configured = (fetchError as AnyValue).status !== 503
+      configured = errorStatus(fetchError) !== 503
     }
     setState({ loading: false, configured, ...browser })
     setInstallAvailable(isInstallPromptAvailable())
@@ -46,7 +57,10 @@ export function useAlertSetup() {
   }, [refresh])
 
   useEffect(() => {
-    const onPrompt = (event: AnyValue) => setInstallAvailable(Boolean(event.detail?.available))
+    const onPrompt = (event: Event) =>
+      setInstallAvailable(
+        Boolean((event as CustomEvent<{ available?: boolean }>).detail?.available),
+      )
     window.addEventListener('pwa-install-available', onPrompt)
     return () => window.removeEventListener('pwa-install-available', onPrompt)
   }, [])
@@ -65,7 +79,7 @@ export function useAlertSetup() {
         )
         return false
       }
-      const { publicKey } = await apiGet('/push/vapid-key')
+      const { publicKey } = await apiGet<{ publicKey: string }>('/push/vapid-key')
       const result = await subscribeToPush(publicKey)
       if (!result.success) {
         setError(result.error || 'Could not turn notifications on.')
@@ -75,7 +89,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
       return false
     } finally {
       setBusy(false)
@@ -96,7 +110,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
       return false
     } finally {
       setBusy(false)
@@ -115,7 +129,7 @@ export function useAlertSetup() {
       setMessage('Test sent — it should appear within a few seconds.')
       return true
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
       return false
     } finally {
       setBusy(false)
@@ -132,7 +146,7 @@ export function useAlertSetup() {
         setError(
           result.error === 'No install prompt available'
             ? 'This browser has no install prompt. Use the device steps below.'
-            : result.error,
+            : (result.error ?? null),
         )
         return false
       }
@@ -141,7 +155,7 @@ export function useAlertSetup() {
       await refresh()
       return true
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
       return false
     } finally {
       setBusy(false)
@@ -159,13 +173,9 @@ export function useAlertSetup() {
 
   const supported = !state.loading && isPushSupported()
   const installFirst = !state.loading && needsHomeScreenInstall()
-  const blocked = (state as AnyValue).permission === 'denied'
+  const blocked = state.permission === 'denied'
   const needsAction =
-    !state.loading &&
-    supported &&
-    (state as AnyValue).configured &&
-    !(state as AnyValue).subscribed &&
-    !blocked
+    !state.loading && supported && state.configured && !state.subscribed && !blocked
 
   return {
     state,

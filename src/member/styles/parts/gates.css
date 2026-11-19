@@ -80,7 +80,7 @@
 
 .mandatePoints {
   margin: 0;
-  padding-left: 22px;
+  padding-inline-start: 22px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -178,7 +178,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 .privacyDataCategory {
@@ -195,14 +195,14 @@
 
 .privacyFields {
   margin: 0;
-  padding-left: 1.2em;
+  padding-inline-start: 1.2em;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
 .privacyBulletList {
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }
 
 .privacySection {
@@ -236,7 +236,7 @@
 
 .privacyGateFooter {
   position: fixed;
-  left: 50%;
+  inset-inline-start: 50%;
   bottom: var(--space-4);
   z-index: 4;
   width: min(720px, calc(100% - (2 * var(--space-4))));
@@ -281,7 +281,7 @@
 
 .mandateBulletGroup ul {
   margin: 0;
-  padding-left: 1.2em;
+  padding-inline-start: 1.2em;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -289,7 +289,7 @@
 
 ul.mandateBulletGroup {
   margin: 0;
-  padding-left: 1.2em;
+  padding-inline-start: 1.2em;
 }
 
 .mandateBulletGroup li {
@@ -518,7 +518,7 @@ ul.mandateBulletGroup {
 
 .authBullet {
   margin: 0;
-  padding-left: 1.2em;
+  padding-inline-start: 1.2em;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -684,13 +684,13 @@ ul.mandateBulletGroup {
 
 .comboInput .input {
   width: 100%;
-  padding-right: 44px;
+  padding-inline-end: 44px;
 }
 
 .comboButton {
   position: absolute;
   top: 50%;
-  right: 4px;
+  inset-inline-end: 4px;
   translate: 0 -50%;
   width: 36px;
   height: 36px;
@@ -762,8 +762,8 @@ ul.mandateBulletGroup {
     grid-template-columns: 1fr;
     align-items: stretch;
     gap: 10px;
-    margin-left: -2px;
-    margin-right: -2px;
+    margin-inline-start: -2px;
+    margin-inline-end: -2px;
   }
 
   .authSubmitCopy {
@@ -775,13 +775,13 @@ ul.mandateBulletGroup {
   }
 
   .authShell .mandateHeader {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-inline-start: 14px;
+    padding-inline-end: 14px;
   }
 
   .authBody {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-inline-start: 14px;
+    padding-inline-end: 14px;
   }
 
   .authSection .input,
@@ -825,7 +825,7 @@ ul.mandateBulletGroup {
 /* ── Onboarding FAQ ────────────────────────────────── */
 @media (max-width: 900px) {
   .mandateHeader {
-    padding-right: 0;
+    padding-inline-end: 0;
   }
 }
 
@@ -870,6 +870,7 @@ ul.mandateBulletGroup {
 
 .faqItem summary::after {
   content: '+';
+  content: '+' / '';
   font-family: var(--font-mono);
   font-size: 16px;
   color: var(--text-3);
@@ -878,6 +879,7 @@ ul.mandateBulletGroup {
 
 .faqItem[open] summary::after {
   content: '−';
+  content: '−' / '';
   color: var(--accent);
 }
 
@@ -897,7 +899,7 @@ ul.mandateBulletGroup {
   margin-top: var(--space-3);
   padding: var(--space-4);
   border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
-  border-left: 3px solid var(--warn);
+  border-inline-start: 3px solid var(--warn);
   border-radius: var(--radius-control);
   background: var(--warn-tint);
   display: flex;
@@ -932,7 +934,7 @@ ul.mandateBulletGroup {
 .guardianPathway {
   display: grid;
   gap: var(--space-3);
-  border-left: 3px solid var(--warn);
+  border-inline-start: 3px solid var(--warn);
 }
 
 .guardianHead,

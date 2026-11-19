@@ -1,10 +1,11 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { GysPublicResponse } from '../../shared/contracts'
 import { PageSectionNav } from '../components/PageSectionNav'
 import { useApi } from '../lib/api'
 import { Async, LifecycleTiming, PageHeader, Section } from '../components/ui'
 import { GysSignup } from '../components/GysSignup'
 import { DestinationIcon } from '../components/DestinationLink'
-import { TbArrowRight as ArrowRight, TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
+import { TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
+import { TbArrowRight as ArrowRight } from '../components/dirIcons'
 
 const PRIORITY_GROUP_ORDER = [
   'Climate ambition',
@@ -12,7 +13,7 @@ const PRIORITY_GROUP_ORDER = [
   'Participation and rights',
 ]
 
-const PROCESS_COPY = {
+const PROCESS_COPY: Record<string, string | undefined> = {
   'Collection of inputs':
     'Collect submissions from young people, working groups, and regional COYs.',
   'Regional & thematic synthesis': 'Combine regional outputs and working-group policy drafts.',
@@ -20,10 +21,10 @@ const PROCESS_COPY = {
   'Advocacy & handover': 'Present the final statement at COP31 and use it in YOUNGO advocacy.',
 }
 
-function groupPriorities(priorities: AnyValue) {
+function groupPriorities(priorities: GysPublicResponse['priorities']) {
   return PRIORITY_GROUP_ORDER.map((name) => ({
     name,
-    items: priorities.filter((priority: AnyValue) => {
+    items: priorities.filter((priority) => {
       if (priority.group) return priority.group === name
       if (/NDC|energy/i.test(priority.title)) return name === 'Climate ambition'
       if (/finance|adaptation|loss/i.test(priority.title)) {
@@ -35,27 +36,27 @@ function groupPriorities(priorities: AnyValue) {
 }
 
 export function Statement() {
-  const query = useApi('/gys')
+  const query = useApi<GysPublicResponse>('/gys')
 
   return (
     <div>
       <Async query={query} skeletons={4}>
-        {(gys: AnyValue) => {
+        {(gys) => {
           const current = gys.current
           const priorityGroups = groupPriorities(gys.priorities)
           return (
             <>
               <PageHeader
                 title={current.title}
-                description={current.intro}
+                description={current.intro ?? undefined}
                 action={
                   <a
                     className="btn btn-primary"
-                    href={current.fullUrl}
+                    href={current.fullUrl ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <DestinationIcon url={current.fullUrl} size={18} />
+                    <DestinationIcon url={current.fullUrl ?? undefined} size={18} />
                     Read the statement
                   </a>
                 }
@@ -117,7 +118,7 @@ export function Statement() {
                     <article key={group.name} className="card gysPriorityGroup">
                       <p className="pageEyebrow">{group.name}</p>
                       <ul className="gysPriorityList">
-                        {group.items.map((priority: AnyValue) => (
+                        {group.items.map((priority) => (
                           <li key={priority.title} className="gysPriority">
                             <h3>{priority.title}</h3>
                             <p className="meta">{priority.body}</p>
@@ -131,7 +132,7 @@ export function Statement() {
 
               <Section label="How the statement is developed">
                 <ol className="gysSteps">
-                  {gys.process.map((item: Doc, index: number) => (
+                  {gys.process.map((item, index) => (
                     <li key={item.step} className="card gysStep">
                       <div className="gysStepHeading">
                         <span className="stepNum" aria-hidden>
@@ -139,7 +140,7 @@ export function Statement() {
                         </span>
                         <h3>{item.step}</h3>
                       </div>
-                      <p className="meta">{(PROCESS_COPY as AnyValue)[item.step] || item.body}</p>
+                      <p className="meta">{PROCESS_COPY[item.step] || item.body}</p>
                       {index < gys.process.length - 1 && (
                         <span className="gysStepArrow gysStepArrowRight" aria-hidden>
                           <ArrowRight size={18} strokeWidth={1.75} />
@@ -163,7 +164,7 @@ export function Statement() {
                           </p>
                         </div>
                         <div className="gysArchiveLinks">
-                          {archive.links.map((link: AnyValue) => (
+                          {archive.links.map((link) => (
                             <a
                               key={link.url}
                               className="btn btn-ghost btn-sm"

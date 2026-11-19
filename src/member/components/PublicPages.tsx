@@ -1,6 +1,7 @@
 'use client'
 
-import type { AnyValue, Doc } from '../lib/types'
+import { Arrow } from './dirIcons'
+import type { Doc } from '../lib/types'
 import { useState } from 'react'
 import {
   TbArrowDown as ArrowDown,
@@ -9,7 +10,7 @@ import {
   TbPlus as Plus,
   TbTrash as Trash,
 } from 'react-icons/tb'
-import { apiPatch, apiPost } from '../lib/api'
+import { apiPatch, apiPost, errorMessage, fieldErrors, hasFieldErrors } from '../lib/api'
 import { formatDateTime } from '../lib/time'
 import { Button, ErrorCard, Section } from './ui'
 import { FieldError } from './FormControls'
@@ -72,7 +73,7 @@ export function PublicPagesSection({
       })
       onChanged()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
     }
   }
   return (
@@ -166,8 +167,8 @@ export function PublicPageEditor({
       else await apiPost('/member/content/drafts', { contentType: 'page', payload })
       onSaved()
     } catch (e) {
-      setFields((e as AnyValue).fields || {})
-      setError((e as AnyValue).fields ? 'Check the highlighted fields.' : (e as AnyValue).message)
+      setFields(fieldErrors(e))
+      setError(hasFieldErrors(e) ? 'Check the highlighted fields.' : errorMessage(e))
     } finally {
       setBusy(false)
     }
@@ -310,7 +311,7 @@ export function PageDraftPreview({ payload }: { payload: Doc }) {
             <p className="meta">{s.body}</p>
             {s.linkUrl && (
               <p className="metaMuted">
-                {s.linkLabel} → {s.linkUrl}
+                {s.linkLabel} <Arrow /> {s.linkUrl}
               </p>
             )}
           </li>

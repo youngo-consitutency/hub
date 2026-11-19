@@ -1,4 +1,5 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { CoySummary } from '../../shared/contracts'
+import type { CoyDetail } from '../../shared/contracts'
 import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbMapPin as CoysIcon } from 'react-icons/tb'
@@ -25,6 +26,7 @@ import {
   TbSearch as Search,
 } from 'react-icons/tb'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
+import type { FilterMap } from '../lib/filterState'
 
 const TYPES = [
   { key: 'all', label: 'All', icon: Layers3 },
@@ -45,12 +47,12 @@ const REGIONS = [
 
 /** Browse Conferences of Youth with search, type and region filters, sorting and catalogue layouts. */
 export function Coys({ slug }: { slug?: string }) {
-  const [typeFilters, setTypeFilters] = useState<Doc>({})
-  const [regionFilters, setRegionFilters] = useState<Doc>({})
+  const [typeFilters, setTypeFilters] = useState<FilterMap>({})
+  const [regionFilters, setRegionFilters] = useState<FilterMap>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('title')
-  const panel = usePeek('/coys', '/coys', slug)
-  const query = useApi('/coys?type=all&region=all')
+  const panel = usePeek<CoyDetail>('/coys', '/coys', slug)
+  const query = useApi<{ items: CoySummary[] }>('/coys?type=all&region=all')
 
   return (
     <div>
@@ -63,7 +65,7 @@ export function Coys({ slug }: { slug?: string }) {
         grid
         skeletons={6}
         query={query}
-        empty={(d: AnyValue) =>
+        empty={(d) =>
           d.items.length === 0 ? (
             <Empty
               icon={MapPin}
@@ -73,11 +75,11 @@ export function Coys({ slug }: { slug?: string }) {
           ) : null
         }
       >
-        {(data: Doc) => {
+        {(data) => {
           const needle = search.trim().toLocaleLowerCase()
           const items = data.items
             .filter(
-              (coy: AnyValue) =>
+              (coy) =>
                 matchesFilters(coy.type, typeFilters) &&
                 matchesFilters(coy.region, regionFilters) &&
                 (!needle ||
@@ -86,7 +88,7 @@ export function Coys({ slug }: { slug?: string }) {
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: AnyValue, b: AnyValue) => {
+            .sort((a, b) => {
               if (sort === 'region') {
                 const regionOrder = REGIONS.findIndex((region) => region.key === a.region)
                 const otherRegionOrder = REGIONS.findIndex((region) => region.key === b.region)
@@ -194,20 +196,25 @@ export function Coys({ slug }: { slug?: string }) {
               <CatalogueResults count={items.length}>
                 {items.length ? (
                   <div className="cardGrid">
-                    {items.map((c: AnyValue) => (
-                      <CoyCard
-                        key={c.slug}
-                        coy={c}
-                        typeFilterState={typeFilters[c.type] || 'neutral'}
-                        regionFilterState={regionFilters[c.region] || 'neutral'}
-                        onTypeFilter={() =>
-                          setTypeFilters((current) => toggleFilter(current, c.type))
-                        }
-                        onRegionFilter={() =>
-                          setRegionFilters((current) => toggleFilter(current, c.region))
-                        }
-                      />
-                    ))}
+                    {items.map((c) => {
+                      const { region } = c
+                      return (
+                        <CoyCard
+                          key={c.slug}
+                          coy={c}
+                          typeFilterState={typeFilters[c.type] || 'neutral'}
+                          regionFilterState={(region && regionFilters[region]) || 'neutral'}
+                          onTypeFilter={() =>
+                            setTypeFilters((current) => toggleFilter(current, c.type))
+                          }
+                          onRegionFilter={
+                            region
+                              ? () => setRegionFilters((current) => toggleFilter(current, region))
+                              : undefined
+                          }
+                        />
+                      )
+                    })}
                   </div>
                 ) : (
                   <Empty

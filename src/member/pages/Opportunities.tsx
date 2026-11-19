@@ -1,15 +1,16 @@
 interface OpportunityCardProps {
-  item?: AnyValue
-  kindFilterState?: AnyValue
-  formatFilterState?: AnyValue
-  regionFilterState?: AnyValue
-  onKindFilter?: AnyValue
-  onFormatFilter?: AnyValue
-  onRegionFilter?: AnyValue
+  item: OpportunitySummary
+  kindFilterState?: FilterState
+  formatFilterState?: FilterState
+  regionFilterState?: FilterState
+  onKindFilter?: MouseEventHandler<HTMLButtonElement>
+  onFormatFilter?: MouseEventHandler<HTMLButtonElement>
+  onRegionFilter?: MouseEventHandler<HTMLButtonElement>
 }
 
+import type { MouseEventHandler } from 'react'
+import type { OpportunitySummary } from '../../shared/contracts'
 import { usePeekFrom } from '../lib/peek'
-import type { AnyValue, Doc } from '../lib/types'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { OpportunityPeek } from '../components/EntityPeeks'
 import { TbSpeakerphone as OpportunitiesIcon } from 'react-icons/tb'
@@ -23,6 +24,7 @@ import {
 } from '../../shared/opportunities.js'
 import { CardSchedule } from '../components/cards'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
+import type { FilterMap, FilterState } from '../lib/filterState'
 import {
   A,
   Async,
@@ -56,21 +58,22 @@ import {
 } from 'react-icons/tb'
 import { regionKey, regionLabel, regionFilterPrefix } from '../lib/regions'
 
-function timestamp(value: AnyValue) {
+function timestamp(value: string | null) {
   if (!value) return null
   const time = new Date(value).getTime()
   return Number.isFinite(time) ? time : null
 }
 
-function groupOpportunitiesByStatus(items: Doc, now = Date.now()) {
-  return items.reduce(
-    (groups: Doc, item: Doc) => {
-      const closesAt = timestamp(item.deadlineAt) ?? timestamp(item.endsAt)
-      groups[closesAt != null && closesAt <= Number(now) ? 'closed' : 'open'].push(item)
-      return groups
-    },
-    { open: [], closed: [] },
-  )
+function groupOpportunitiesByStatus(items: OpportunitySummary[], now = Date.now()) {
+  const groups: { open: OpportunitySummary[]; closed: OpportunitySummary[] } = {
+    open: [],
+    closed: [],
+  }
+  for (const item of items) {
+    const closesAt = timestamp(item.deadlineAt) ?? timestamp(item.endsAt)
+    groups[closesAt != null && closesAt <= now ? 'closed' : 'open'].push(item)
+  }
+  return groups
 }
 
 // labels come from the shared vocabulary; icons are ours, with a fallback for new kinds
@@ -171,12 +174,12 @@ function OpportunityCard({
 
 /** Browse opportunities with search, filters, sorting and layouts, grouped by open or closed status. */
 export function Opportunities({ slug }: { slug?: string }) {
-  const [kindFilters, setKindFilters] = useState<Doc>({})
-  const [formatFilters, setFormatFilters] = useState<Doc>({})
-  const [regionFilters, setRegionFilters] = useState<Doc>({})
+  const [kindFilters, setKindFilters] = useState<FilterMap>({})
+  const [formatFilters, setFormatFilters] = useState<FilterMap>({})
+  const [regionFilters, setRegionFilters] = useState<FilterMap>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('deadline')
-  const query = useApi('/member/opportunities?kind=all&format=all')
+  const query = useApi<{ items: OpportunitySummary[] }>('/member/opportunities?kind=all&format=all')
   const panel = usePeekFrom('/opportunities', query.data?.items, slug)
 
   return (
@@ -190,7 +193,7 @@ export function Opportunities({ slug }: { slug?: string }) {
         grid
         skeletons={6}
         query={query}
-        empty={(data: Doc) =>
+        empty={(data) =>
           data.items.length === 0 ? (
             <Empty
               icon={Megaphone}
@@ -200,18 +203,18 @@ export function Opportunities({ slug }: { slug?: string }) {
           ) : null
         }
       >
-        {(data: Doc) => {
-          const normalizedItems = data.items.map((item: Doc) => ({
+        {(data) => {
+          const normalizedItems = data.items.map((item) => ({
             ...item,
             region: regionKey(item.region),
           }))
-          const regions = [...new Set(normalizedItems.map((item: Doc) => item.region))]
+          const regions = [...new Set(normalizedItems.map((item) => item.region))]
             .filter(Boolean)
             .sort((a, b) => regionLabel(a).localeCompare(regionLabel(b)))
           const needle = search.trim().toLocaleLowerCase()
           const items = normalizedItems
             .filter(
-              (item: Doc) =>
+              (item) =>
                 matchesFilters(item.kind, kindFilters) &&
                 matchesFilters(item.format, formatFilters) &&
                 matchesFilters(item.region, regionFilters) &&
@@ -227,7 +230,7 @@ export function Opportunities({ slug }: { slug?: string }) {
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: AnyValue, b: AnyValue) => {
+            .sort((a, b) => {
               if (sort === 'title') return a.title.localeCompare(b.title)
               const now = Date.now()
               const aTime = new Date(a.deadlineAt || 0).getTime()
@@ -238,25 +241,28 @@ export function Opportunities({ slug }: { slug?: string }) {
               return aUpcoming ? aTime - bTime : bTime - aTime
             })
           const groupedItems = groupOpportunitiesByStatus(items)
-          const renderCards = (group: Doc) =>
-            group.map((item: Doc) => (
-              <OpportunityCard
-                key={item.id}
-                item={item}
-                kindFilterState={kindFilters[item.kind] || 'neutral'}
-                formatFilterState={formatFilters[item.format] || 'neutral'}
-                regionFilterState={regionFilters[item.region] || 'neutral'}
-                onKindFilter={() => setKindFilters((current) => toggleFilter(current, item.kind))}
-                onFormatFilter={() =>
-                  setFormatFilters((current) => toggleFilter(current, item.format))
-                }
-                onRegionFilter={
-                  item.region
-                    ? () => setRegionFilters((current) => toggleFilter(current, item.region))
-                    : undefined
-                }
-              />
-            ))
+          const renderCards = (group: OpportunitySummary[]) =>
+            group.map((item) => {
+              const { region } = item
+              return (
+                <OpportunityCard
+                  key={item.id}
+                  item={item}
+                  kindFilterState={kindFilters[item.kind] || 'neutral'}
+                  formatFilterState={formatFilters[item.format] || 'neutral'}
+                  regionFilterState={(region && regionFilters[region]) || 'neutral'}
+                  onKindFilter={() => setKindFilters((current) => toggleFilter(current, item.kind))}
+                  onFormatFilter={() =>
+                    setFormatFilters((current) => toggleFilter(current, item.format))
+                  }
+                  onRegionFilter={
+                    region
+                      ? () => setRegionFilters((current) => toggleFilter(current, region))
+                      : undefined
+                  }
+                />
+              )
+            })
 
           return (
             <>
@@ -355,7 +361,7 @@ export function Opportunities({ slug }: { slug?: string }) {
                             >
                               All regions
                             </FilterPill>
-                            {regions.map((region: AnyValue) => (
+                            {regions.map((region) => (
                               <FilterPill
                                 key={region}
                                 state={regionFilters[region] || 'neutral'}

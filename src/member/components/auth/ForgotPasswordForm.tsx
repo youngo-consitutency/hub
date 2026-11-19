@@ -1,18 +1,18 @@
 interface ForgotPasswordFormProps {
-  login?: AnyValue
-  fields?: AnyValue
-  error?: string
-  forgotMsg?: AnyValue
-  status?: AnyValue
-  setLog?: AnyValue
-  onSubmit?: AnyValue
-  onBack?: AnyValue
+  login: { email: string; website: string }
+  fields: Record<string, string>
+  error?: string | null
+  forgotMsg?: string | null
+  status: string
+  setLog: (key: 'email' | 'website') => ChangeEventHandler<HTMLInputElement>
+  onSubmit: FormEventHandler<HTMLFormElement>
+  onBack: () => void
   className?: string
-  hideOperatorNote?: AnyValue
+  hideOperatorNote?: boolean
 }
 
-import type { AnyValue } from '../../lib/types'
-import { TbArrowLeft as ArrowLeft } from 'react-icons/tb'
+import type { ChangeEventHandler, FormEventHandler } from 'react'
+import { TbArrowLeft as ArrowLeft } from '../dirIcons'
 import { Button } from '../ui'
 import { FormAlert, Honeypot, LoginEmailField } from './shared'
 

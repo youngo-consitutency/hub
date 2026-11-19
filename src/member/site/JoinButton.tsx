@@ -1,8 +1,5 @@
-import {
-  TbChevronRight as ChevronRight,
-  TbLayoutDashboard as Dashboard,
-  TbUserPlus as UserPlus,
-} from 'react-icons/tb'
+import { TbLayoutDashboard as Dashboard, TbUserPlus as UserPlus } from 'react-icons/tb'
+import { TbChevronRight as ChevronRight } from '../components/dirIcons'
 import { A } from '../components/ui'
 import { HUB_ROOT } from '../../lib/hubUrl'
 import { useSignedIn } from '../lib/useSignedIn'

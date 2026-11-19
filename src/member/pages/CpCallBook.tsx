@@ -1,6 +1,6 @@
-import type { AnyValue } from '../lib/types'
+import type { CpCallSlotsResponse, CpCallSlotView } from '../../shared/contracts'
 import { useState } from 'react'
-import { useApi } from '../lib/api'
+import { useApi, errorMessage } from '../lib/api'
 import { apiPost } from '../lib/api'
 import { Async, Button, Empty, ErrorCard, PageHeader, Section } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
@@ -9,8 +9,8 @@ import { useWorkingGroups } from '../lib/workingGroups'
 import { useAccount } from '../lib/accountContext'
 import { TbCalendarCheck as CalendarCheck } from 'react-icons/tb'
 
-function groupByDay(slots: AnyValue) {
-  const map = new Map()
+function groupByDay(slots: CpCallSlotView[]) {
+  const map = new Map<string, CpCallSlotView[]>()
   for (const slot of slots) {
     const day = new Intl.DateTimeFormat('en-GB', {
       weekday: 'long',
@@ -18,8 +18,7 @@ function groupByDay(slots: AnyValue) {
       month: 'short',
       timeZone: 'UTC',
     }).format(new Date(slot.startsAt))
-    if (!map.has(day)) map.set(day, [])
-    map.get(day).push(slot)
+    map.set(day, [...(map.get(day) ?? []), slot])
   }
   return [...map.entries()]
 }
@@ -27,25 +26,25 @@ function groupByDay(slots: AnyValue) {
 export function CpCallBook() {
   const { account } = useAccount()
   const wg = useWorkingGroups()
-  const WG_OPTIONS = wg.groups.map((group: AnyValue) => ({
+  const WG_OPTIONS = wg.groups.map((group) => ({
     value: group.slug,
     label: group.name,
   }))
-  const query = useApi('/member/cp-calls/slots')
+  const query = useApi<CpCallSlotsResponse>('/member/cp-calls/slots')
   const [wgSlug, setWgSlug] = useState(
     account?.access?.wgAssignments?.[0]?.wgSlug || account?.wgInterests?.[0] || '',
   )
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
 
-  const book = async (id: AnyValue) => {
-    setBusy(id)
+  const book = async (id: number) => {
+    setBusy(String(id))
     setError('')
     try {
       await apiPost(`/member/cp-calls/slots/${id}/book`, { wgSlug })
       query.retry()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     } finally {
       setBusy('')
     }
@@ -58,7 +57,7 @@ export function CpCallBook() {
       await apiPost('/member/cp-calls/mine/cancel', {})
       query.retry()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     } finally {
       setBusy('')
     }
@@ -72,13 +71,15 @@ export function CpCallBook() {
       />
       {error && <ErrorCard message={error} onRetry={() => setError('')} />}
       <Async query={query}>
-        {(data: AnyValue) =>
-          data.mine ? (
+        {(data) => {
+          // the server sends `mine` as a list holding at most the caller's own booking
+          const mine = data.mine[0]
+          return mine ? (
             <Section label="Your call">
               <div className="card cardTight">
                 <p>
                   <CalendarCheck size={18} strokeWidth={1.75} aria-hidden />{' '}
-                  {fmtDual(data.mine.startsAt)} with {data.mine.hostLabel}
+                  {fmtDual(mine.startsAt)} with {mine.host?.name ?? 'your host'}
                 </p>
                 <p className="meta">
                   We’ll send the Meet link closer to the time. Change the slot if you need to.
@@ -104,9 +105,9 @@ export function CpCallBook() {
                     <div key={day} className="stackSm" style={{ marginBottom: 16 }}>
                       <h3>{day}</h3>
                       <div className="dashboardCardGrid">
-                        {slots.map((slot: AnyValue) => (
+                        {slots.map((slot) => (
                           <div key={slot.id} className="card cardTight">
-                            <strong>{slot.hostLabel}</strong>
+                            <strong>{slot.host?.name ?? 'Host'}</strong>
                             <p className="meta">{fmtDual(slot.startsAt)}</p>
                             <Button
                               variant="primary"
@@ -114,7 +115,7 @@ export function CpCallBook() {
                               disabled={Boolean(busy)}
                               onClick={() => book(slot.id)}
                             >
-                              {busy === slot.id ? 'Booking…' : 'Book'}
+                              {busy === String(slot.id) ? 'Booking…' : 'Book'}
                             </Button>
                           </div>
                         ))}
@@ -130,7 +131,7 @@ export function CpCallBook() {
               </Section>
             </>
           )
-        }
+        }}
       </Async>
     </div>
   )

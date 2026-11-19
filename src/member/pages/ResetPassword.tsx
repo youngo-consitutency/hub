@@ -1,9 +1,10 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { apiPost } from '../lib/api'
+import { apiPost, errorMessage, fieldErrors } from '../lib/api'
 import { Button } from '../components/ui'
 import { navigate } from '../lib/router'
-import { TbArrowLeft as ArrowLeft, TbCheck as Check, TbKey as KeyRound } from 'react-icons/tb'
+import { TbCheck as Check, TbKey as KeyRound } from 'react-icons/tb'
+import { TbArrowLeft as ArrowLeft } from '../components/dirIcons'
 
 function tokenFromUrl() {
   try {
@@ -17,12 +18,12 @@ export function ResetPassword() {
   const token = useMemo(() => tokenFromUrl(), [])
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [fields, setFields] = useState<Doc>({})
-  const [error, setError] = useState<AnyValue>(null)
+  const [fields, setFields] = useState<Record<string, string>>({})
+  const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = async (e: AnyValue) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
@@ -35,8 +36,8 @@ export function ResetPassword() {
       })
       setDone(true)
     } catch (err) {
-      setFields((err as AnyValue).fields || {})
-      setError((err as AnyValue).message)
+      setFields(fieldErrors(err))
+      setError(errorMessage(err))
     } finally {
       setSubmitting(false)
     }

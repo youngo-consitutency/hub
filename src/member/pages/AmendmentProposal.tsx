@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { NegotiationTrackDetail } from '../../shared/contracts'
 import { sourceLocation, useProposalForm } from '../lib/useProposalForm'
 import { ProposalFooter } from '../components/ProposalFooter'
 import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
@@ -41,7 +41,7 @@ const toBody = (form: Form, idempotencyKey: string) => {
 }
 
 // a new track always resets the target to its latest document version
-const onTrackLoaded = (form: Form, detail: AnyValue): Form => ({
+const onTrackLoaded = (form: Form, detail: NegotiationTrackDetail): Form => ({
   ...form,
   targetDocumentVersionId: detail.documents[0]?.latestVersion.id || '',
 })
@@ -75,7 +75,7 @@ export function AmendmentProposal() {
         description="Anchor an insert, replacement or deletion to one exact source version. Competing alternatives remain separate proposals."
       />
       <Async query={tracks}>
-        {(data: Doc) => (
+        {(data) => (
           <form onSubmit={submit}>
             <Section label="Exact target">
               <div className="card detailPanel formGrid">
@@ -83,7 +83,7 @@ export function AmendmentProposal() {
                   <span>Negotiation track</span>
                   <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
-                    {data.items.map((track: AnyValue) => (
+                    {data.items.map((track) => (
                       <option value={track.id} key={track.id}>
                         {track.topic}
                       </option>
@@ -100,7 +100,7 @@ export function AmendmentProposal() {
                     onChange={set('targetDocumentVersionId')}
                   >
                     <option value="">Select a source version</option>
-                    {(trackDetail?.documents || []).map((document: AnyValue) => (
+                    {(trackDetail?.documents || []).map((document) => (
                       <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>

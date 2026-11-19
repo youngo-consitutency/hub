@@ -1,8 +1,4 @@
-interface PageSectionNavProps {
-  section?: AnyValue
-}
-
-import type { AnyValue } from '../lib/types'
+import type { IconType } from 'react-icons'
 import {
   TbUsers,
   TbAt,
@@ -19,7 +15,7 @@ import { A } from './ui'
 import { usePath } from '../lib/router'
 import { PAGE_SECTIONS, pageSectionFor } from '../lib/pageSections'
 
-const SECTION_ICONS = {
+const SECTION_ICONS: Record<string, IconType> = {
   '/directory/people': TbUsers,
   '/directory': TbAt,
   '/groups': TbUsersGroup,
@@ -32,14 +28,18 @@ const SECTION_ICONS = {
   '/staff/review/opportunities': TbSpeakerphone,
 }
 
+interface PageSectionNavProps {
+  section: keyof typeof PAGE_SECTIONS
+}
+
 export function PageSectionNav({ section }: PageSectionNavProps) {
   const path = usePath()
   const current = pageSectionFor(path)
-  const { label, items } = (PAGE_SECTIONS as AnyValue)[section]
+  const { label, items } = PAGE_SECTIONS[section]
   return (
     <nav className="pageSectionNav" aria-label={label}>
-      {items.map(({ href, label }: AnyValue) => {
-        const Icon = (SECTION_ICONS as AnyValue)[href]
+      {items.map(({ href, label }) => {
+        const Icon = SECTION_ICONS[href]
         return (
           <A
             key={href}

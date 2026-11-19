@@ -1,19 +1,18 @@
 interface CopyFeedButtonProps {
-  path?: AnyValue
+  path: string
   label?: string
   className?: string
 }
 
 interface FeedRowProps {
   label?: string
-  path?: AnyValue
+  path: string
 }
 
 interface CalendarSubscribeProps {
   type?: string
 }
 
-import type { AnyValue } from '../lib/types'
 import { useState } from 'react'
 import {
   TbCalendarPlus as CalendarPlus,

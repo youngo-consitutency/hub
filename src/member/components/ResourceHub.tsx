@@ -1,38 +1,45 @@
-interface ResourceCardProps {
-  resource?: AnyValue
-  onReport?: AnyValue
-  onCorrect?: AnyValue
-  onReview?: AnyValue
+/** A resource as the card shows it: a draft's payload has no verification yet. */
+export type ResourceCardData = Omit<ResourceSummary, 'verification'> & {
+  verification?: ResourceSummary['verification']
+}
+
+interface ResourceCardProps<T extends ResourceCardData = ResourceSummary> {
+  resource: T
+  onReport?: (resource: T) => void
+  onCorrect?: (resource: T) => void
+  onReview?: (resource: T) => void
 }
 
 interface ResourceCatalogueProps {
-  heading?: AnyValue
-  onCorrect?: AnyValue
+  heading?: string
+  onCorrect?: (resource: ResourceSummary) => void
 }
 
 interface ResourcePathwayGroupProps {
-  group?: AnyValue
-  items?: AnyValue
-  onReport?: AnyValue
-  onCorrect?: AnyValue
+  group: VocabOption
+  items: ResourceSummary[]
+  onReport?: (resource: ResourceSummary) => void
+  onCorrect?: (resource: ResourceSummary) => void
 }
 
 interface ResourceSubmissionPanelProps {
-  initialResource?: AnyValue
-  onCancel?: AnyValue
+  initialResource?: ResourceSummary
+  onCancel?: () => void
 }
 
 interface ResourceReportProps {
-  resource?: AnyValue
-  onClose?: AnyValue
-  onSaved?: AnyValue
+  resource: ResourceSummary
+  onClose: () => void
+  onSaved: () => void
 }
 
-import type { AnyValue } from '../lib/types'
+import type { IconType } from 'react-icons'
+import type { ResourceSummary, VocabOption } from '../../shared/contracts'
+import type { ContentVocabularies } from '../lib/documents'
 import { SidePanel } from './SidePanel.tsx'
 import { SiteFavicon } from './SiteFavicon'
 import { regionLabel } from '../lib/regions'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import {
   TbArrowUpRight as ArrowUpRight,
   TbFlag as Flag,
@@ -54,7 +61,7 @@ import {
   TbWorld as World,
 } from 'react-icons/tb'
 import { optionLabel as resourceLabel, useContentOptions } from '../lib/documents'
-import { apiPatch, apiPost, useApi } from '../lib/api'
+import { apiPatch, apiPost, useApi, errorMessage, fieldErrors } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import { FieldError } from './FormControls'
 import {
@@ -70,14 +77,14 @@ import {
   StatusChip,
 } from './ui'
 
-const PATHWAY_ICONS = {
+const PATHWAY_ICONS: Record<string, IconType> = {
   career: Briefcase,
   research: Research,
   education: School,
   investment: Funding,
 }
 
-const TYPE_ICONS = {
+const TYPE_ICONS: Record<string, IconType> = {
   guide: BookOpen,
   report: Report,
   toolkit: Tool,
@@ -89,7 +96,7 @@ const TYPE_ICONS = {
   opportunity: Briefcase,
 }
 
-const EMPTY_RESOURCE = (vocab: AnyValue) => ({
+const EMPTY_RESOURCE = (vocab: ContentVocabularies) => ({
   title: '',
   url: '',
   summary: '',
@@ -102,9 +109,14 @@ const EMPTY_RESOURCE = (vocab: AnyValue) => ({
   language: vocab.resourceLanguages[0] || '',
 })
 
-export function ResourceCard({ resource, onReport, onCorrect, onReview }: ResourceCardProps) {
+export function ResourceCard<T extends ResourceCardData>({
+  resource,
+  onReport,
+  onCorrect,
+  onReview,
+}: ResourceCardProps<T>) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
-  const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
+  const TypeIcon = TYPE_ICONS[resource.type] || BookOpen
   return (
     <article className="card resourceHubCard linkedEntityCard">
       <div className="resourceHubCardTop">
@@ -128,7 +140,7 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: Resour
         <FilterChip icon={TypeIcon} tone="accent">
           {resourceLabel(RESOURCE_TYPES, resource.type)}
         </FilterChip>
-        {(resource.topics || [resource.topic]).map((topic: AnyValue) => (
+        {(resource.topics || [resource.topic]).map((topic) => (
           <FilterChip key={topic} icon={Filter}>
             {topic}
           </FilterChip>
@@ -139,13 +151,13 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: Resour
       <div className="resourceCardFooter">
         <p className="metaMuted">
           {resource.verification?.status === 'verified'
-            ? `Checked ${new Date(resource.verification.checkedAt).toLocaleDateString()}`
+            ? `Checked ${checkedOn(resource.verification.checkedAt)}`
             : resource.verification?.status === 'needs_changes'
               ? 'Needs attention'
               : resource.verification?.status === 'retired'
                 ? 'Retired'
                 : 'Needs verification'}
-          {resource.verification?.openIssues > 0 ? ' · Issue reported' : ''}
+          {(resource.verification?.openIssues ?? 0) > 0 ? ' · Issue reported' : ''}
         </p>
         <div className="resourceCardActions">
           {onReport && (
@@ -173,20 +185,49 @@ export function ResourceCard({ resource, onReport, onCorrect, onReview }: Resour
 // links a Content Publisher has checked (and nobody has reported) get the verified look
 // a check older than a year no longer counts: links rot
 const PAGE = 12
+type ResourceDraft = ReturnType<typeof EMPTY_RESOURCE>
+
+// a published resource as an editable draft: nulls become empty strings for the form controls
+const draftFrom = (resource: ResourceSummary, vocab: ContentVocabularies): ResourceDraft => ({
+  ...EMPTY_RESOURCE(vocab),
+  title: resource.title,
+  url: resource.url,
+  summary: resource.summary ?? '',
+  publisher: resource.publisher ?? '',
+  pathway: resource.pathway ?? '',
+  type: resource.type,
+  topic: resource.topic ?? '',
+  topics: resource.topics,
+  region: resource.region ?? '',
+  language: resource.language ?? '',
+})
+
+/** A member's own suggested resource (GET /api/member/resources/submissions/mine). */
+interface ResourceSubmission {
+  id: number
+  status: string
+  reviewNote?: string | null
+  payload: Partial<ResourceDraft>
+}
+
+const checkedOn = (checkedAt: string | null) =>
+  checkedAt ? new Date(checkedAt).toLocaleDateString() : 'recently'
+
 const NOT_CHECKED = 'Not yet checked'
 const CHECK_VALID_MS = 365 * 24 * 60 * 60 * 1000
-const isChecked = (item: AnyValue) =>
-  item.verification?.status === 'verified' &&
+const isChecked = (item: ResourceSummary) =>
+  item.verification.status === 'verified' &&
   !item.verification.openIssues &&
+  item.verification.checkedAt != null &&
   Date.now() - new Date(item.verification.checkedAt).getTime() < CHECK_VALID_MS
 
 function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
-  const TypeIcon = (TYPE_ICONS as AnyValue)[resource.type] || BookOpen
+  const TypeIcon = TYPE_ICONS[resource.type] || BookOpen
   const v = resource.verification
   const checked = isChecked(resource)
   const status = checked
-    ? `Checked ${new Date(v.checkedAt).toLocaleDateString()}`
+    ? `Checked ${checkedOn(v.checkedAt)}`
     : v?.status === 'needs_changes' || v?.openIssues > 0
       ? 'Under review'
       : v?.status === 'retired'
@@ -210,7 +251,7 @@ function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
           <FilterChip icon={TypeIcon} tone="accent">
             {resourceLabel(RESOURCE_TYPES, resource.type)}
           </FilterChip>
-          {topics.slice(0, 3).map((topic: AnyValue) => (
+          {topics.slice(0, 3).map((topic) => (
             <FilterChip key={topic}>{topic}</FilterChip>
           ))}
           <FilterChip icon={Map}>{regionLabel(resource.region)}</FilterChip>
@@ -246,21 +287,21 @@ function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
 }
 
 // one section per category; every resource's type is in `options`, so none is left out
-const sections = (options: AnyValue[]) =>
-  options.map((o) => ({ ...o, has: (item: AnyValue) => item.type === o.value }))
+const sections = (options: VocabOption[]) =>
+  options.map((o) => ({ ...o, has: (item: ResourceSummary) => item.type === o.value }))
 
 export function ResourceCatalogue({
   heading = 'Resource catalogue',
   onCorrect,
 }: ResourceCatalogueProps) {
-  const query = useApi('/resources')
+  const query = useApi<{ items: ResourceSummary[] }>('/resources')
   const {
     resourcePathways: RESOURCE_PATHWAYS,
     resourceTypes: RESOURCE_TYPES,
     resourceTopics: RESOURCE_TOPICS,
   } = useContentOptions()
   const { account } = useAccount()
-  const [reported, setReported] = useState<AnyValue>(null)
+  const [reported, setReported] = useState<ResourceSummary | null>(null)
   const [notice, setNotice] = useState('')
   const [limit, setLimit] = useState(PAGE)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
@@ -280,7 +321,7 @@ export function ResourceCatalogue({
   // everything but the category, so the category chips can show what each would give
   const pool = useMemo(() => {
     const words = search.toLowerCase().split(/\s+/).filter(Boolean)
-    return (query.data?.items || []).filter((item: AnyValue) => {
+    return (query.data?.items || []).filter((item) => {
       const haystack = [
         item.title,
         item.summary,
@@ -302,14 +343,14 @@ export function ResourceCatalogue({
   }, [pathway, query.data?.items, search, topic, verifiedOnly])
   // the vocabulary first, then any type that is in use but not listed there
   const typeOptions = useMemo(() => {
-    const listed = new Set(RESOURCE_TYPES.map((o: AnyValue) => o.value))
-    const extra = [...new Set<string>((query.data?.items || []).map((r: AnyValue) => r.type))]
+    const listed = new Set(RESOURCE_TYPES.map((o) => o.value))
+    const extra = [...new Set<string>((query.data?.items || []).map((r) => r.type))]
       .filter((value) => value && !listed.has(value))
       .map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))
     return [...RESOURCE_TYPES, ...extra]
   }, [RESOURCE_TYPES, query.data?.items])
   const items = useMemo(
-    () => pool.filter((item: AnyValue) => type === 'all' || item.type === type),
+    () => pool.filter((item) => type === 'all' || item.type === type),
     [pool, type],
   )
 
@@ -361,11 +402,11 @@ export function ResourceCatalogue({
                       >
                         All pathways
                       </FilterPill>
-                      {RESOURCE_PATHWAYS.map((item: AnyValue) => (
+                      {RESOURCE_PATHWAYS.map((item) => (
                         <FilterPill
                           key={item.value}
                           active={pathway === item.value}
-                          icon={(PATHWAY_ICONS as AnyValue)[item.value]}
+                          icon={PATHWAY_ICONS[item.value]}
                           onClick={() => reset(setPathway)(item.value)}
                         >
                           {item.label}
@@ -385,7 +426,7 @@ export function ResourceCatalogue({
                       >
                         All topics
                       </FilterPill>
-                      {RESOURCE_TOPICS.map((item: string) => (
+                      {RESOURCE_TOPICS.map((item) => (
                         <FilterPill
                           key={item}
                           active={topic === item}
@@ -405,13 +446,13 @@ export function ResourceCatalogue({
             <FilterPill active={type === 'all'} icon={World} onClick={() => reset(setType)('all')}>
               All {pool.length}
             </FilterPill>
-            {typeOptions.map((item: AnyValue) => {
-              const n = pool.filter((r: AnyValue) => r.type === item.value).length
+            {typeOptions.map((item) => {
+              const n = pool.filter((r) => r.type === item.value).length
               return n ? (
                 <FilterPill
                   key={item.value}
                   active={type === item.value}
-                  icon={(TYPE_ICONS as AnyValue)[item.value]}
+                  icon={TYPE_ICONS[item.value]}
                   onClick={() => reset(setType)(item.value)}
                 >
                   {item.label} {n}
@@ -432,14 +473,14 @@ export function ResourceCatalogue({
             items.length ? (
               groups ? (
                 <div className="catalogGroups">
-                  {groups.map((group: AnyValue) => {
-                    const matches = items.filter((item: AnyValue) => group.has(item))
+                  {groups.map((group) => {
+                    const matches = items.filter((item) => group.has(item))
                     return matches.length ? (
                       <ResourcePathwayGroup
                         key={`${group.value}:${search}:${type}:${topic}:${verifiedOnly}`}
                         group={group}
                         items={matches}
-                        onReport={account?.isVerified ? setReported : null}
+                        onReport={account?.isVerified ? setReported : undefined}
                         onCorrect={onCorrect}
                       />
                     ) : null
@@ -447,11 +488,11 @@ export function ResourceCatalogue({
                 </div>
               ) : (
                 <ul className="resourceList">
-                  {items.slice(0, limit).map((resource: AnyValue) => (
+                  {items.slice(0, limit).map((resource) => (
                     <ResourceRow
                       key={resource.slug}
                       resource={resource}
-                      onReport={account?.isVerified ? setReported : null}
+                      onReport={account?.isVerified ? setReported : undefined}
                       onCorrect={onCorrect}
                     />
                   ))}
@@ -492,7 +533,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePat
     <Section label={group.label} meta={`${items.length} resources`}>
       {group.description && <p className="catalogGroupDescription">{group.description}</p>}
       <ul className="resourceList">
-        {items.slice(0, visible).map((resource: AnyValue) => (
+        {items.slice(0, visible).map((resource) => (
           <ResourceRow
             key={resource.slug}
             resource={resource}
@@ -514,7 +555,7 @@ export function ResourceSubmissionPanel({
   initialResource,
   onCancel,
 }: ResourceSubmissionPanelProps) {
-  const submissions = useApi('/member/resources/submissions/mine')
+  const submissions = useApi<{ items: ResourceSubmission[] }>('/member/resources/submissions/mine')
   const vocab = useContentOptions()
   const {
     resourcePathways: RESOURCE_PATHWAYS,
@@ -523,26 +564,23 @@ export function ResourceSubmissionPanel({
     resourceRegions: RESOURCE_REGIONS,
     resourceLanguages: RESOURCE_LANGUAGES,
   } = vocab
-  const [payload, setPayload] = useState(
-    initialResource ? { ...EMPTY_RESOURCE(vocab), ...initialResource } : EMPTY_RESOURCE(vocab),
+  const [payload, setPayload] = useState<ResourceDraft>(
+    initialResource ? draftFrom(initialResource, vocab) : EMPTY_RESOURCE(vocab),
   )
-  const [editingId, setEditingId] = useState<AnyValue>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [open, setOpen] = useState(Boolean(initialResource))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [fields, setFields] = useState<AnyValue>({})
+  const [fields, setFields] = useState<Record<string, string>>({})
 
-  const set = (key: AnyValue, value: AnyValue) =>
-    setPayload((current: AnyValue) => ({
+  const set = (key: Exclude<keyof ResourceDraft, 'topics'>, value: string) =>
+    setPayload((current) => ({
       ...current,
       [key]: value,
       ...(key === 'topic'
         ? {
-            topics: [
-              value,
-              ...current.topics.filter((t: AnyValue) => t !== current.topic && t !== value),
-            ],
+            topics: [value, ...current.topics.filter((t) => t !== current.topic && t !== value)],
           }
         : {}),
     }))
@@ -552,18 +590,18 @@ export function ResourceSubmissionPanel({
     setOpen(false)
     setFields({})
   }
-  const edit = (item: AnyValue) => {
+  const edit = (item: ResourceSubmission) => {
     setPayload({
       ...EMPTY_RESOURCE(vocab),
       ...item.payload,
-      topics: item.payload.topics || [item.payload.topic],
+      topics: item.payload.topics || [item.payload.topic ?? ''],
     })
     setEditingId(item.id)
     setOpen(true)
     setMessage('')
     setError('')
   }
-  const submit = async (event: AnyValue) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -579,8 +617,8 @@ export function ResourceSubmissionPanel({
       submissions.retry()
       if (initialResource) onCancel?.()
     } catch (submissionError) {
-      setError((submissionError as AnyValue).message)
-      setFields((submissionError as AnyValue).fields || {})
+      setError(errorMessage(submissionError))
+      setFields(fieldErrors(submissionError))
     } finally {
       setBusy(false)
     }
@@ -664,7 +702,7 @@ export function ResourceSubmissionPanel({
                   value={payload.pathway}
                   onChange={(event) => set('pathway', event.target.value)}
                 >
-                  {RESOURCE_PATHWAYS.map((item: AnyValue) => (
+                  {RESOURCE_PATHWAYS.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -679,7 +717,7 @@ export function ResourceSubmissionPanel({
                   value={payload.type}
                   onChange={(event) => set('type', event.target.value)}
                 >
-                  {RESOURCE_TYPES.map((item: AnyValue) => (
+                  {RESOURCE_TYPES.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -694,7 +732,7 @@ export function ResourceSubmissionPanel({
                   value={payload.topic}
                   onChange={(event) => set('topic', event.target.value)}
                 >
-                  {RESOURCE_TOPICS.map((item: AnyValue) => (
+                  {RESOURCE_TOPICS.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -709,7 +747,7 @@ export function ResourceSubmissionPanel({
                   value={payload.region}
                   onChange={(event) => set('region', event.target.value)}
                 >
-                  {RESOURCE_REGIONS.map((item: AnyValue) => (
+                  {RESOURCE_REGIONS.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
                     </option>
@@ -724,7 +762,7 @@ export function ResourceSubmissionPanel({
                   value={payload.language}
                   onChange={(event) => set('language', event.target.value)}
                 >
-                  {RESOURCE_LANGUAGES.map((item: AnyValue) => (
+                  {RESOURCE_LANGUAGES.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -748,7 +786,7 @@ export function ResourceSubmissionPanel({
                 <span className="metaMuted">(up to five including the main topic)</span>
               </legend>
               <div className="resourceTopicOptions">
-                {RESOURCE_TOPICS.map((topic: AnyValue) => (
+                {RESOURCE_TOPICS.map((topic) => (
                   <label key={topic} className="resourceCheck">
                     <input
                       type="checkbox"
@@ -758,12 +796,12 @@ export function ResourceSubmissionPanel({
                         (!payload.topics.includes(topic) && payload.topics.length >= 5)
                       }
                       onChange={(event) =>
-                        set(
-                          'topics',
-                          event.target.checked
-                            ? [...payload.topics, topic]
-                            : payload.topics.filter((t: AnyValue) => t !== topic),
-                        )
+                        setPayload((current) => ({
+                          ...current,
+                          topics: event.target.checked
+                            ? [...current.topics, topic]
+                            : current.topics.filter((t) => t !== topic),
+                        }))
                       }
                     />
                     {topic}
@@ -794,10 +832,10 @@ export function ResourceSubmissionPanel({
       )}
 
       <Async query={submissions} skeletons={2}>
-        {(data: AnyValue) =>
+        {(data) =>
           data.items.length ? (
             <div className="resourceSubmissionList">
-              {data.items.map((item: AnyValue) => (
+              {data.items.map((item) => (
                 <article key={item.id} className="card cardTight resourceSubmissionItem">
                   <div>
                     <strong>{item.payload.title}</strong>
@@ -831,7 +869,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
   const [detail, setDetail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  async function submit(event: AnyValue) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -842,7 +880,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
       })
       onSaved()
     } catch (error) {
-      setError((error as AnyValue).message)
+      setError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -859,7 +897,7 @@ function ResourceReport({ resource, onClose, onSaved }: ResourceReportProps) {
           value={selectedKind}
           onChange={(event) => setKind(event.target.value)}
         >
-          {resourceIssueKinds.map((item: AnyValue) => (
+          {resourceIssueKinds.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>

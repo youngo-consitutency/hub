@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { FocalOverviewResponse } from '../../shared/contracts'
 import { useApi } from '../lib/api'
 import { A, Async, Empty, PageHeader, Section } from '../components/ui'
 import { ContactCard } from '../components/cards'
@@ -13,7 +13,7 @@ import {
 } from 'react-icons/tb'
 
 export function FocalPoint() {
-  const query = useApi('/member/focal/overview')
+  const query = useApi<FocalOverviewResponse>('/member/focal/overview')
   return (
     <div>
       <PageHeader
@@ -22,14 +22,29 @@ export function FocalPoint() {
         description="Follow constituency work, connect with mandate holders and coordinate UNFCCC communications."
       />
       <Async query={query} skeletons={5}>
-        {(data: Doc) => (
+        {(data) => (
           <>
             <div className="metricGrid">
               {[
-                [Calendar, data.events.length, 'upcoming calls', '/calendar'],
-                [FileText, data.submissions.length, 'open submissions', '/submissions'],
-                [Gavel, data.decisions.length, 'active decisions in your bodies', '/council'],
-              ].map(([Icon, count, label, href]) => (
+                {
+                  Icon: Calendar,
+                  count: data.events.length,
+                  label: 'upcoming calls',
+                  href: '/calendar',
+                },
+                {
+                  Icon: FileText,
+                  count: data.submissions.length,
+                  label: 'open submissions',
+                  href: '/submissions',
+                },
+                {
+                  Icon: Gavel,
+                  count: data.decisions.length,
+                  label: 'active decisions in your bodies',
+                  href: '/council',
+                },
+              ].map(({ Icon, count, label, href }) => (
                 <A key={href} href={href} className="metricCard">
                   <Icon size={20} aria-hidden />
                   <strong>{count}</strong>
@@ -47,7 +62,7 @@ export function FocalPoint() {
                 }
               >
                 <div className="stackSm">
-                  {data.events.slice(0, 4).map((event: AnyValue) => (
+                  {data.events.slice(0, 4).map((event) => (
                     <A key={event.slug} href={`/calendar/${event.slug}`} className="card recordRow">
                       <Calendar size={20} aria-hidden />
                       <div>
@@ -70,16 +85,13 @@ export function FocalPoint() {
                 }
               >
                 <div className="stackSm">
-                  {data.decisions.slice(0, 4).map((item: Doc) => (
-                    <A key={item.id} href={`/council/${item.id}`} className="card recordRow">
+                  {data.decisions.slice(0, 4).map((item) => (
+                    <A key={item.slug} href={`/council/${item.slug}`} className="card recordRow">
                       <Gavel size={20} aria-hidden />
                       <div>
                         <strong>{item.title}</strong>
-                        <p className="meta">{item.bodyName}</p>
                         <span className="chip chip-neutral">
-                          {item.stage
-                            .replaceAll('_', ' ')
-                            .replace(/^./, (c: AnyValue) => c.toUpperCase())}
+                          {item.status.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase())}
                         </span>
                       </div>
                       <Arrow size={17} aria-hidden />
@@ -100,7 +112,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.submissions.slice(0, 3).map((item: Doc) => (
+                {data.submissions.slice(0, 3).map((item) => (
                   <A key={item.slug} href={`/submissions/${item.slug}`} className="card entityCard">
                     <FileText size={22} aria-hidden />
                     <h3>{item.title}</h3>
@@ -120,7 +132,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.mandateContacts.slice(0, 3).map((contact: Doc, i: number) => (
+                {data.mandateContacts.slice(0, 3).map((contact, i) => (
                   <ContactCard key={i} contact={contact} />
                 ))}
               </div>
@@ -137,7 +149,7 @@ export function FocalPoint() {
               }
             >
               <div className="cardGrid">
-                {data.groups.map((group: Doc) => (
+                {data.groups.map((group) => (
                   <A key={group.slug} href={`/groups/${group.slug}`} className="card entityCard">
                     <Users size={22} aria-hidden />
                     <h3>{group.name}</h3>

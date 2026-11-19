@@ -1,4 +1,3 @@
-import type { AnyValue } from './types'
 import {
   TbBolt,
   TbBuildingCommunity,
@@ -21,8 +20,9 @@ import {
   TbUsersGroup,
   TbWind,
 } from 'react-icons/tb'
+import type { IconType } from 'react-icons'
 
-const WORKING_GROUP_ICONS = {
+const WORKING_GROUP_ICONS: Record<string, IconType> = {
   ace: TbSchool,
   ach: TbMask,
   adaptation: TbCloudRain,
@@ -49,6 +49,6 @@ const WORKING_GROUP_ICONS = {
   water: TbDroplet,
 }
 
-export function workingGroupIcon(slug: AnyValue) {
-  return (WORKING_GROUP_ICONS as AnyValue)[slug] || TbUsersGroup
+export function workingGroupIcon(slug: string): IconType {
+  return WORKING_GROUP_ICONS[slug] ?? TbUsersGroup
 }

@@ -6,7 +6,7 @@
 }
 
 .sidebar {
-  border-right: 1px solid var(--line-deep);
+  border-inline-end: 1px solid var(--line-deep);
   background: var(--glow-spot), linear-gradient(170deg, var(--deep) 25%, var(--deep-2));
   color: var(--on-deep);
 }

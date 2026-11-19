@@ -2,12 +2,14 @@ interface CpManageProps {
   slug: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { FormEvent } from 'react'
+import type { GroupSummary } from '../../shared/contracts'
+import type { CpMemberProgress, CpMembersResponse } from '../../shared/contracts'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as Users, TbPlus as Plus } from 'react-icons/tb'
 import { useContentOptionLabels, useContentOptions } from '../lib/documents'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiGet, apiPost, useApi } from '../lib/api'
+import { apiGet, apiPost, useApi, errorMessage } from '../lib/api'
 import { Async, BackLink, Button, Empty, ErrorCard, PageHeader, FilterPill } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
 
@@ -17,32 +19,32 @@ export function CpManage({ slug }: CpManageProps) {
   const [activityBusy, setActivityBusy] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [filter, setFilter] = useState('pending')
-  const groups = useApi('/groups')
-  const [members, setMembers] = useState<AnyValue[]>([])
-  const [error, setError] = useState<AnyValue>(null)
-  const [form, setForm] = useState<Doc>({
+  const groups = useApi<{ items: GroupSummary[] }>('/groups')
+  const [members, setMembers] = useState<
+    (CpMemberProgress & { account: CpMembersResponse['members'][number]['account'] })[]
+  >([])
+  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState({
     kind: 'call',
     title: '',
     body: '',
     startsAt: '',
   })
-  const [msg, setMsg] = useState<AnyValue>(null)
+  const [msg, setMsg] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setError(null)
-    apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
+    apiGet<CpMembersResponse>(`/member/cp/${encodeURIComponent(slug)}/members`)
       // flatten to progress fields plus the { id, name } account ref
-      .then((d) =>
-        setMembers((d.members || []).map((m: AnyValue) => ({ ...m.progress, account: m.account }))),
-      )
-      .catch((e) => setError(e.message))
+      .then((d) => setMembers(d.members.map((m) => ({ ...m.progress, account: m.account }))))
+      .catch((e) => setError(errorMessage(e)))
   }, [slug])
 
   useEffect(() => {
     load()
   }, [load])
 
-  const setRole = async (accountId: AnyValue, role: AnyValue, status: AnyValue) => {
+  const setRole = async (accountId: number, role: string, status: string) => {
     try {
       await apiPost(`/member/cp/${encodeURIComponent(slug)}/members/${accountId}/role`, {
         role,
@@ -50,11 +52,11 @@ export function CpManage({ slug }: CpManageProps) {
       })
       load()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
     }
   }
 
-  const addActivity = async (e: AnyValue) => {
+  const addActivity = async (e: FormEvent) => {
     e.preventDefault()
     setMsg(null)
     setError(null)
@@ -68,7 +70,7 @@ export function CpManage({ slug }: CpManageProps) {
       setActivityOpen(false)
       setMsg('Activity registered.')
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     } finally {
       setActivityBusy(false)
     }
@@ -85,8 +87,8 @@ export function CpManage({ slug }: CpManageProps) {
       <BackLink href="/cp">Working Group workspaces</BackLink>
 
       <Async query={groups} skeletons={2}>
-        {(g: AnyValue) => {
-          const group = (g.items || []).find((x: AnyValue) => x.slug === slug)
+        {(g) => {
+          const group = g.items.find((x) => x.slug === slug)
           return (
             <>
               <PageHeader
@@ -141,6 +143,7 @@ export function CpManage({ slug }: CpManageProps) {
                       ).map((m) => {
                         const needsReview =
                           m.status === 'pending_approval' || m.status === 'interested'
+                        const account = m.account
                         return (
                           <div
                             key={`${m.account?.id}-${m.wg_slug}`}
@@ -154,19 +157,19 @@ export function CpManage({ slug }: CpManageProps) {
                                 {assignmentLabels[m.role_in_wg] || m.role_in_wg}
                               </p>
                             </div>
-                            {needsReview && (
+                            {needsReview && account && (
                               <div className="mcQueueActions">
                                 <Button
                                   sm
                                   variant="secondary"
-                                  onClick={() => setRole(m.account?.id, 'member', 'active')}
+                                  onClick={() => setRole(account.id, 'member', 'active')}
                                 >
                                   Approve
                                 </Button>
                                 <Button
                                   sm
                                   variant="ghost"
-                                  onClick={() => setRole(m.account?.id, 'member', 'rejected')}
+                                  onClick={() => setRole(account.id, 'member', 'rejected')}
                                 >
                                   Reject
                                 </Button>
@@ -187,7 +190,7 @@ export function CpManage({ slug }: CpManageProps) {
                         label="Kind"
                         options={wgActivityKinds}
                         value={form.kind}
-                        onChange={(kind: AnyValue) => setForm((current) => ({ ...current, kind }))}
+                        onChange={(kind) => setForm((current) => ({ ...current, kind }))}
                         searchPlaceholder="Search activity types…"
                       />
                       <label className="field">

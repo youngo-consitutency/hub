@@ -1,36 +1,15 @@
-/* YOUNGO Hub design tokens — the only file where interface colours live.
+/* Colours, radii and spacing now live in design/tokens/*.json and are generated into
+   tokens.generated.css (npm run design:build). This file keeps the hand-authored rest:
+   elevation, motion, z-index, type and layout.
+
+   YOUNGO Hub design tokens — the only file where interface colours live.
    Follows European and international accessibility standards (WCAG 2.2 AA / EN 301 549).
    British English conventions apply throughout. */
 :root {
   /* logo variant per surface: the on-dark art swaps in on the deep brand bands */
   --brand-dark-display: none;
   --brand-light-display: inline-block;
-  --bg-page: #f7f9f6;
-  --bg-card: #ffffff;
-  --bg-raised: #edf3ec;
-  --bg-popover: #ffffff;
-  --text-1: #0e231a;
-  --text-2: #2b4538;
-  --text-3: #4b6657;
-  --border: #d2ddd6;
-  --border-strong: #708c7c;
   --border-card: var(--border);
-  --accent: #006e52;
-  --accent-hover: #00543e;
-  --on-accent: #ffffff;
-  --accent-tint: #ccf1de;
-  --on-accent-tint: #004d38;
-  --success: #006e52;
-  --success-tint: #ccf1de;
-  --on-success-tint: #004d38;
-  --live: #65a30d;
-  --live-tint: #ecfccb;
-  --warn: #b45309;
-  --warn-tint: #fef3c7;
-  --danger: #b91c1c;
-  --danger-tint: #fee2e2;
-  --info: #0369a1;
-  --info-tint: #e0f2fe;
 
   /* Natural, subtle ambient shadows for high readability and depth */
   --shadow-card: 0 1px 3px rgba(14, 35, 26, 0.04), 0 1px 2px rgba(14, 35, 26, 0.02);
@@ -41,13 +20,7 @@
   --overlay: rgba(10, 22, 16, 0.52);
   --glow-accent: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 
-  --radius-chip: 6px;
-  --radius-control: 8px;
-  --radius-card: 12px;
-  --radius-modal: 16px;
   /* the large surfaces: hero, page headers, footer and the closing card */
-  --radius-surface: 28px;
-  --radius-pill: 9999px;
   /* one rhythm for site and Hub: the public container, the page gutter, and the roomy section gap */
   --container: 1280px;
   --gutter: clamp(16px, 4vw, 32px);
@@ -77,43 +50,22 @@
   --motion-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
   --motion-shift: 6px;
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-
-  --font-size-sm: 13px;
+  --font-size-sm: 0.8125rem;
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --font-display: var(--font-ui);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
-  --calendar-gys: #6d28d9;
-  --calendar-coordination: #4338ca;
   --landing-canvas: var(--bg-page);
   --landing-surface: var(--bg-card);
   --landing-ink: var(--text-1);
-  --landing-teal: #62c4bb;
-  --landing-lime: #8bc65e;
-  --landing-forest: #1f6c38;
   --landing-line: rgba(11, 46, 34, 0.14);
   --landing-shadow: none;
 
   /* deep forest surfaces (heroes, stats band, closing card, Hub sidebar) stay deep in both
      themes; every pairing below was checked at 4.5:1 or better */
   --header-h: 65px;
-  --deep: #0f4631;
-  --deep-2: #1a6a4c;
-  --on-deep: #eaf6ee;
-  --on-deep-muted: #d3e6da;
   --line-deep: rgba(214, 243, 226, 0.2);
   --glass: rgba(15, 70, 49, 0.55);
-  --glow-green: #2dd4a0;
-  --glow-lime: #a3e635;
-  --glow-sky: #38bdf8;
-  --accent-deep: #4ade80;
   --spot: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
@@ -167,6 +119,7 @@ body {
 }
 
 html {
+  font-size: 100%;
   scrollbar-gutter: stable;
   color-scheme: light;
 }
@@ -175,7 +128,7 @@ body {
   background: var(--bg-page);
   color: var(--text-1);
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -184,8 +137,8 @@ body {
 h1 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 25px;
-  line-height: 32px;
+  font-size: 1.5625rem;
+  line-height: 1.28;
   letter-spacing: -0.015em;
   margin: 0;
 }
@@ -193,8 +146,8 @@ h1 {
 h2 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 20px;
-  line-height: 27px;
+  font-size: 1.25rem;
+  line-height: 1.35;
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -202,8 +155,8 @@ h2 {
 h3 {
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 16px;
-  line-height: 22px;
+  font-size: 1rem;
+  line-height: 1.375;
   letter-spacing: -0.005em;
   margin: 0;
 }

@@ -1,4 +1,6 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { DirectoryContact } from '../../shared/contracts'
+import type { DirectoryLayer } from '../../shared/contracts'
+import type { PeopleResponse, PersonSummary } from '../../shared/contracts'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbUsers as UsersIcon } from 'react-icons/tb'
 import { PageSectionNav } from '../components/PageSectionNav'
@@ -6,14 +8,15 @@ import { useState } from 'react'
 import { useApi } from '../lib/api'
 import { Async, CatalogToolbar, Empty, FilterMenu, FilterPill, PageHeader } from '../components/ui'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
-import { ContactCard, PersonCard, WorkingGroupContactCard } from '../components/cards'
+import { ContactCard, WorkingGroupContactCard } from '../components/cards'
+import { PersonCard } from '../components/PersonCard'
 import { useDocument } from '../lib/documents'
 import { useWorkingGroups } from '../lib/workingGroups'
 import { TbAt as AtSign, TbUsers as Users } from 'react-icons/tb'
 
 function PeopleDirectory() {
   const wg = useWorkingGroups()
-  const [selectedPerson, setSelectedPerson] = useState<AnyValue>(null)
+  const [selectedPerson, setSelectedPerson] = useState<PersonSummary | null>(null)
   const [search, setSearch] = useState('')
   const [workingGroup, setWorkingGroup] = useState('')
   const [tag, setTag] = useState('')
@@ -23,7 +26,9 @@ function PeopleDirectory() {
   if (term) params.set('search', term)
   if (workingGroup) params.set('workingGroup', workingGroup)
   if (tag) params.set('tag', tag)
-  const query = useApi(`/member/people?${params.toString()}`, [term, workingGroup, tag])
+  const query = useApi<PeopleResponse>(`/member/people?${params.toString()}`, {
+    keepPrevious: true,
+  })
 
   return (
     <section aria-label="Member profiles">
@@ -51,7 +56,7 @@ function PeopleDirectory() {
                 <FilterPill active={!workingGroup} onClick={() => setWorkingGroup('')}>
                   All groups
                 </FilterPill>
-                {wg.groups.map((group: Doc) => (
+                {wg.groups.map((group) => (
                   <FilterPill
                     key={group.slug}
                     active={workingGroup === group.slug}
@@ -73,7 +78,7 @@ function PeopleDirectory() {
       <Async
         query={query}
         skeletons={3}
-        empty={(data: Doc) =>
+        empty={(data) =>
           data.items.length === 0 ? (
             <Empty
               icon={Users}
@@ -83,13 +88,13 @@ function PeopleDirectory() {
           ) : null
         }
       >
-        {(data: Doc) => (
+        {(data) => (
           <div className="peopleGrid">
-            {data.items.map((person: AnyValue) => (
+            {data.items.map((person) => (
               <PersonCard
                 key={person.id}
                 person={person}
-                onTagClick={(value: AnyValue) => setTag(value)}
+                onTagClick={setTag}
                 onOpen={() => setSelectedPerson(person)}
               />
             ))}
@@ -106,10 +111,10 @@ function PeopleDirectory() {
 }
 
 export function Directory() {
-  const { doc: directory } = useDocument('directory')
+  const { doc: directory } = useDocument<{ DIRECTORY_LAYERS?: DirectoryLayer[] }>('directory')
   const DIRECTORY_LAYERS = directory?.DIRECTORY_LAYERS || []
 
-  const query = useApi('/directory')
+  const query = useApi<{ items: DirectoryContact[] }>('/directory')
   return (
     <div>
       <PageHeader
@@ -121,20 +126,20 @@ export function Directory() {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: AnyValue) =>
+        empty={(d) =>
           d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null
         }
       >
-        {(data: Doc) => {
-          const groups = new Map()
+        {(data) => {
+          const groups = new Map<string, DirectoryContact[]>()
           for (const contact of data.items) {
-            if (!groups.has(contact.group)) groups.set(contact.group, [])
-            groups.get(contact.group).push(contact)
+            if (!contact.group) continue
+            groups.set(contact.group, [...(groups.get(contact.group) ?? []), contact])
           }
-          const layers = DIRECTORY_LAYERS.map((layer: AnyValue) => ({
+          const layers = DIRECTORY_LAYERS.map((layer) => ({
             ...layer,
-            contacts: layer.groups.flatMap((group: Doc) => groups.get(group) || []),
-          })).filter((layer: AnyValue) => layer.contacts.length > 0)
+            contacts: layer.groups.flatMap((group) => groups.get(group) || []),
+          })).filter((layer) => layer.contacts.length > 0)
 
           return (
             <>
@@ -143,14 +148,14 @@ export function Directory() {
                 importance.
               </p>
               <ol className="directoryPyramid" aria-label="YOUNGO contact structure">
-                {layers.map((layer: AnyValue) => (
+                {layers.map((layer) => (
                   <li key={layer.id} className={`directoryLayer directoryLayer-${layer.level}`}>
                     <section aria-labelledby={`directory-${layer.id}`}>
                       <p className="pageEyebrow">{layer.eyebrow}</p>
                       <h2 id={`directory-${layer.id}`}>{layer.title}</h2>
                       <p className="meta directoryLayerDescription">{layer.description}</p>
                       <div className="directoryContacts">
-                        {layer.contacts.map((contact: Doc) =>
+                        {layer.contacts.map((contact) =>
                           layer.id === 'working-groups' && contact.wg ? (
                             <WorkingGroupContactCard
                               key={`${contact.group}-${contact.roleTitle}`}

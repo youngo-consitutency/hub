@@ -1,11 +1,11 @@
 'use client'
 
 interface TrackResultsProps {
-  data?: AnyValue
-  search?: AnyValue
+  data: NegotiationTracksResponse
+  search: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { NegotiationTracksResponse } from '../../shared/contracts'
 import { useMemo, useState } from 'react'
 import { useApi } from '../lib/api'
 import { A, Async, Empty, CatalogToolbar, FilterPill, PageHeader } from '../components/ui'
@@ -15,7 +15,10 @@ import { TbArrowUpRight as ArrowUpRight, TbWorldSearch as WorldSearch } from 're
 export function Negotiations() {
   const [search, setSearch] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
-  const query = useApi(`/negotiations${openOnly ? '?openCalls=true' : ''}`, [openOnly])
+  const query = useApi<NegotiationTracksResponse>(
+    `/negotiations${openOnly ? '?openCalls=true' : ''}`,
+    { keepPrevious: true },
+  )
 
   return (
     <div>
@@ -37,7 +40,7 @@ export function Negotiations() {
           </FilterPill>
         </div>
       </CatalogToolbar>
-      <Async query={query}>{(data: Doc) => <TrackResults data={data} search={search} />}</Async>
+      <Async query={query}>{(data) => <TrackResults data={data} search={search} />}</Async>
     </div>
   )
 }
@@ -46,7 +49,7 @@ function TrackResults({ data, search }: TrackResultsProps) {
   const items = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase()
     if (!needle) return data.items
-    return data.items.filter((track: AnyValue) =>
+    return data.items.filter((track) =>
       [track.topic, track.summary, ...(track.workingGroupSlugs || [])]
         .join(' ')
         .toLocaleLowerCase()
@@ -65,14 +68,14 @@ function TrackResults({ data, search }: TrackResultsProps) {
 
   return (
     <div className="cardGrid">
-      {items.map((track: AnyValue) => (
+      {items.map((track) => (
         <A className="card entityCard" href={`/negotiations/${track.slug}`} key={track.id}>
           <div className="cardBody">
             <div className="eyebrow">{track.activityStatus}</div>
             <h2>{track.topic}</h2>
             <p className="meta">{track.summary}</p>
             <div className="pillRow">
-              {(track.workingGroupSlugs || []).map((slug: AnyValue) => (
+              {(track.workingGroupSlugs || []).map((slug) => (
                 <span className="chip chip-neutral" key={slug}>
                   {slug}
                 </span>

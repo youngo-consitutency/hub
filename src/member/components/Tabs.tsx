@@ -26,7 +26,7 @@ export function Tabs({ items, label, ...props }: Props) {
           <Tab
             key={id}
             id={id}
-            className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 text-sm font-semibold text-ink-2 outline-none transition-colors data-[hovered]:text-ink data-[selected]:bg-card data-[selected]:text-ink data-[selected]:shadow-sm data-[focus-visible]:ring-2 data-[focus-visible]:ring-accent"
+            className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 text-sm font-semibold text-ink-2 outline-hidden transition-colors data-[hovered]:text-ink data-[selected]:bg-card data-[selected]:text-ink data-[selected]:shadow-sm data-[focus-visible]:outline-2 data-[focus-visible]:outline-accent"
           >
             {Icon && <Icon size={16} strokeWidth={1.75} aria-hidden />}
             {text}
@@ -34,7 +34,11 @@ export function Tabs({ items, label, ...props }: Props) {
         ))}
       </TabList>
       {items.map(({ id, content }) => (
-        <TabPanel key={id} id={id} className="mt-4 outline-none">
+        <TabPanel
+          key={id}
+          id={id}
+          className="mt-4 outline-hidden data-[focus-visible]:outline-2 data-[focus-visible]:outline-accent"
+        >
           {content}
         </TabPanel>
       ))}

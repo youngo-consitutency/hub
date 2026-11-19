@@ -1,14 +1,14 @@
 interface WgInterestsSectionProps {
-  selected?: AnyValue
-  onToggle?: AnyValue
+  selected: string[]
+  onToggle: (slug: string) => void
 }
 
 interface PhoneFieldProps {
   label?: string
-  value?: AnyValue
-  onValueChange?: AnyValue
-  onLoad?: AnyValue
-  error?: string
+  value?: string
+  onValueChange?: ChangeEventHandler<HTMLInputElement>
+  onLoad?: () => void
+  error?: string | null
   required?: boolean
 }
 
@@ -19,17 +19,18 @@ interface PolicyLinkProps {
 
 interface PrivacyConsentSectionProps {
   checked?: boolean
-  onChange?: AnyValue
-  error?: string
-  isOrg?: AnyValue
-  notice?: AnyValue
+  onChange?: ChangeEventHandler<HTMLInputElement>
+  error?: string | null
+  isOrg?: boolean
+  notice?: PrivacyNoticeDoc | null
 }
 
 interface FormAlertProps {
   children?: import('react').ReactNode
 }
 
-import type { AnyValue } from '../../lib/types'
+import type { ChangeEventHandler } from 'react'
+import type { PrivacyNoticeDoc } from '../../../shared/contracts'
 import { TbExternalLink as ExternalLink } from 'react-icons/tb'
 import { FieldError, MultiSelectDropdown } from '../FormControls'
 import { fieldClass, checkClass } from './helpers'
@@ -37,7 +38,7 @@ import { useWorkingGroups } from '../../lib/workingGroups'
 
 export function WgInterestsSection({ selected, onToggle }: WgInterestsSectionProps) {
   const wg = useWorkingGroups()
-  const options = wg.groups.map((g: AnyValue) => ({ value: g.slug, label: g.name }))
+  const options = wg.groups.map((g) => ({ value: g.slug, label: g.name }))
   return (
     <section className="card authSection">
       <h2 className="authSectionTitle">Working groups you’re interested in</h2>
@@ -88,12 +89,10 @@ export function PhoneField({
         onKeyDown={(event) => {
           const input = event.currentTarget
           if (
-            ((event as AnyValue).key === 'Backspace' &&
-              (input as AnyValue as AnyValue).selectionStart <= 2 &&
+            (event.key === 'Backspace' &&
+              (input.selectionStart ?? 0) <= 2 &&
               (input.selectionEnd ?? 0) <= 2) ||
-            (event.key === 'Delete' &&
-              (input as AnyValue as AnyValue).selectionStart === 0 &&
-              (input.selectionEnd ?? 0) <= 2)
+            (event.key === 'Delete' && input.selectionStart === 0 && (input.selectionEnd ?? 0) <= 2)
           ) {
             event.preventDefault()
           }
@@ -147,7 +146,7 @@ export function PrivacyConsentSection({
           : 'We use the information on this form to create and manage your Hub account. The Membership Policy covers participation in YOUNGO; the Privacy Notice covers how this information is used and protected.'}
       </p>
       <ul className="authBullet meta">
-        {CONSENT_SUMMARY.map((point: AnyValue) => (
+        {CONSENT_SUMMARY.map((point) => (
           <li key={point}>{point}</li>
         ))}
       </ul>
@@ -182,9 +181,9 @@ export function FormAlert({ children }: FormAlertProps) {
 }
 
 interface LoginEmailFieldProps {
-  login?: AnyValue
-  fields?: AnyValue
-  setLog?: AnyValue
+  login: { email: string }
+  fields: Record<string, string>
+  setLog: (key: 'email') => ChangeEventHandler<HTMLInputElement>
 }
 
 export function LoginEmailField({ login, fields, setLog }: LoginEmailFieldProps) {
@@ -194,7 +193,11 @@ export function LoginEmailField({ login, fields, setLog }: LoginEmailFieldProps)
       <input
         className="input"
         type="email"
-        autoComplete="email"
+        name="username"
+        autoComplete="username"
+        autoCapitalize="none"
+        spellCheck={false}
+        aria-required="true"
         value={login.email}
         onChange={setLog('email')}
         aria-invalid={!!fields.email}
@@ -205,7 +208,13 @@ export function LoginEmailField({ login, fields, setLog }: LoginEmailFieldProps)
 }
 
 // hidden from people, tempting to bots; the server drops any submission that fills it
-export function Honeypot({ value, onChange }: { value?: string; onChange?: AnyValue }) {
+export function Honeypot({
+  value,
+  onChange,
+}: {
+  value?: string
+  onChange?: ChangeEventHandler<HTMLInputElement>
+}) {
   return (
     <input
       className="hp"

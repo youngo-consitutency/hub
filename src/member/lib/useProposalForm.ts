@@ -1,7 +1,8 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import type { AnyValue } from './types'
-import { apiGet, apiPost, useApi } from './api'
+import type { NegotiationTracksResponse } from '../../shared/contracts'
+import type { Doc } from './types'
+import { apiGet, apiPost, errorMessage, useApi } from './api'
 
 // page/paragraph are optional pointers into a cited source
 export const sourceLocation = (page: string, paragraph: string) => ({
@@ -9,35 +10,36 @@ export const sourceLocation = (page: string, paragraph: string) => ({
   ...(paragraph ? { paragraph } : {}),
 })
 
-interface Options<F> {
+interface Options<F, D> {
   initial: F
   // POST target and the key the saved record comes back under
   endpoint: string
   resultKey: string
   toBody: (form: F, idempotencyKey: string) => unknown
   // runs when the chosen track's detail loads, e.g. to preselect a source
-  onTrackLoaded: (form: F, detail: AnyValue) => F
+  onTrackLoaded: (form: F, detail: D) => F
 }
 
 // shared state for the member proposal forms: pick a negotiation track, load its
 // detail, edit fields, save once (the idempotency key survives retries)
-export function useProposalForm<F extends Record<string, string>>({
+export function useProposalForm<F extends Record<string, string>, D = Doc>({
   initial,
   endpoint,
   resultKey,
   toBody,
   onTrackLoaded,
-}: Options<F>) {
-  const tracks = useApi('/negotiations')
+}: Options<F, D>) {
+  const tracks = useApi<NegotiationTracksResponse>('/negotiations')
   const [form, setForm] = useState(initial)
-  const [trackDetail, setTrackDetail] = useState<AnyValue>(null)
+  const [trackDetail, setTrackDetail] = useState<D | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [created, setCreated] = useState<AnyValue>(null)
+  const [created, setCreated] = useState<Doc | null>(null)
   const [idempotencyKey] = useState(() => crypto.randomUUID())
   const trackId = form.trackId
+  // the select holds the id as a string while the API sends a number
   const slug = useMemo(
-    () => tracks.data?.items.find((track: AnyValue) => track.id === trackId)?.slug,
+    () => tracks.data?.items.find((track) => String(track.id) === trackId)?.slug,
     [tracks.data, trackId],
   )
 
@@ -45,13 +47,13 @@ export function useProposalForm<F extends Record<string, string>>({
     let active = true
     setTrackDetail(null)
     if (!slug) return undefined
-    apiGet(`/negotiations/${slug}`)
+    apiGet<D>(`/negotiations/${slug}`)
       .then((detail) => {
         if (!active) return
         setTrackDetail(detail)
         setForm((current) => onTrackLoaded(current, detail))
       })
-      .catch((requestError) => active && setError(requestError.message))
+      .catch((requestError) => active && setError(errorMessage(requestError)))
     return () => {
       active = false
     }
@@ -69,10 +71,10 @@ export function useProposalForm<F extends Record<string, string>>({
     setSaving(true)
     setError('')
     try {
-      const result = await apiPost(endpoint, toBody(form, idempotencyKey))
+      const result = await apiPost<Record<string, Doc>>(endpoint, toBody(form, idempotencyKey))
       setCreated(result[resultKey])
     } catch (requestError) {
-      setError((requestError as Error).message)
+      setError(errorMessage(requestError))
     } finally {
       setSaving(false)
     }

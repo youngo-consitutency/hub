@@ -1,6 +1,6 @@
 'use client'
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { Doc } from '../lib/types'
 import { useState } from 'react'
 import { Tabs } from '../components/Tabs'
 import {
@@ -11,7 +11,7 @@ import {
   TbPlugConnected as Plug,
   TbPoint as Point,
 } from 'react-icons/tb'
-import { apiPost, useApi } from '../lib/api'
+import { apiPost, useApi, errorMessage, fieldErrors, hasFieldErrors } from '../lib/api'
 import { formatDateTime } from '../lib/time'
 import { useWorkingGroups } from '../lib/workingGroups'
 import { A, Async, Button, Empty, ErrorCard, PageHeader, Section } from '../components/ui'
@@ -132,8 +132,8 @@ function Connector({ data, reload }: { data: Doc; reload: () => void }) {
     } catch (e) {
       // a failed or refused call never leaves a secret on screen
       setSecret(null)
-      setFields((e as AnyValue).fields || {})
-      setError((e as AnyValue).fields ? null : (e as AnyValue).message)
+      setFields(fieldErrors(e))
+      setError(hasFieldErrors(e) ? null : errorMessage(e))
     } finally {
       setBusy(null)
     }

@@ -30,7 +30,7 @@ test.describe('Public site', () => {
 
   test('the header links to the pages and the old page paths still arrive', async ({ page }) => {
     await page.goto(`${BASE}/about`)
-    const nav = page.getByRole('navigation', { name: 'Pages' }).first()
+    const nav = page.getByRole('navigation', { name: 'Main' }).first()
     await expect(nav.getByRole('link')).toHaveText(['Our work', 'Resources', 'About'])
     await expect(nav.getByRole('link', { name: 'About' })).toHaveAttribute('aria-current', 'page')
     await page.goto(`${BASE}/about/coy`)

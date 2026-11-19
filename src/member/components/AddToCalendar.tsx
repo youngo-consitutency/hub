@@ -1,9 +1,13 @@
 interface AddToCalendarProps {
-  event?: AnyValue
+  event?: Omit<CalendarLinkEvent, 'startsAt' | 'endsAt'> & {
+    slug?: string
+    startsAt?: string | null
+    endsAt?: string | null
+  }
   className?: string
 }
 
-import type { AnyValue } from '../lib/types'
+import type { CalendarLinkEvent } from '../lib/calendarLinks'
 import {
   TbCalendarPlus as CalendarPlus,
   TbChevronDown as ChevronDown,
@@ -23,10 +27,11 @@ import {
  */
 export function AddToCalendar({ event, className = 'btn btn-secondary' }: AddToCalendarProps) {
   if (!event?.startsAt || !event?.endsAt) return null
+  const range = { ...event, startsAt: event.startsAt, endsAt: event.endsAt }
   const links = [
-    { href: googleCalendarUrl(event), label: 'Google Calendar', external: true },
-    { href: outlookWebUrl(event), label: 'Outlook.com', external: true },
-    { href: outlookOfficeUrl(event), label: 'Outlook 365', external: true },
+    { href: googleCalendarUrl(range), label: 'Google Calendar', external: true },
+    { href: outlookWebUrl(range), label: 'Outlook.com', external: true },
+    { href: outlookOfficeUrl(range), label: 'Outlook 365', external: true },
   ]
   return (
     <PopoverButton

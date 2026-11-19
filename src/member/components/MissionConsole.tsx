@@ -1,12 +1,12 @@
 interface MissionMetricProps {
-  value?: AnyValue
+  value?: ReactNode
   label?: string
-  tone?: AnyValue
+  tone?: string
   href?: string
   icon?: import('react').ElementType
 }
 
-import type { AnyValue } from '../lib/types'
+import type { ReactNode } from 'react'
 import { A } from './ui'
 import { NumberTicker } from './fx/NumberTicker'
 

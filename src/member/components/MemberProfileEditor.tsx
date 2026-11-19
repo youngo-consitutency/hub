@@ -1,19 +1,10 @@
-interface DetailProps {
-  term?: AnyValue
-  children?: import('react').ReactNode
-}
-
-interface MemberProfileEditorProps {
-  query?: AnyValue
-  account?: AnyValue
-  roleLabel?: AnyValue
-}
-
-import type { AnyValue, Doc } from '../lib/types'
+import type { ChangeEvent, FormEvent, ReactNode } from 'react'
+import type { Account } from '../lib/types'
+import type { OwnProfile, OwnProfileResponse } from '../../shared/contracts'
 import { useDocument } from '../lib/documents'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useState } from 'react'
-import { apiPatch } from '../lib/api'
+import { apiPatch, errorMessage, fieldErrors as apiFieldErrors, type ApiQuery } from '../lib/api'
 import { Async, Button, ErrorCard } from './ui'
 import { AvatarBuilder } from './AvatarBuilder'
 import { MemberAvatar } from './MemberAvatar'
@@ -25,7 +16,41 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 
-function formFromProfile(profile: AnyValue) {
+interface DetailProps {
+  term?: string
+  children?: ReactNode
+}
+
+interface MemberProfileEditorProps {
+  query: ApiQuery<OwnProfileResponse>
+  account?: Account | null
+  roleLabel?: string
+}
+
+/** The editable fields; the tags are held as one comma-separated string while typing. */
+interface ProfileForm {
+  displayName: string
+  headline: string
+  bio: string
+  pronouns: string
+  expertiseTags: string
+  directoryVisibility: string
+  showCountry: boolean
+  showOrganization: boolean
+  showWorkingGroups: boolean
+  showRoles: boolean
+}
+
+type VisibilityFlag = 'showCountry' | 'showOrganization' | 'showWorkingGroups' | 'showRoles'
+
+const VISIBILITY_CHECKS: [VisibilityFlag, string][] = [
+  ['showCountry', 'Show my country'],
+  ['showOrganization', 'Show my organisation'],
+  ['showWorkingGroups', 'Show my working groups'],
+  ['showRoles', 'Show my Hub roles'],
+]
+
+function formFromProfile(profile: OwnProfile): ProfileForm {
   return {
     displayName: profile.displayName || '',
     headline: profile.headline || '',
@@ -54,28 +79,32 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
   const { doc: privacyNotice } = useDocument('privacy-notice')
   const privacyContactEmail = privacyNotice?.PRIVACY_META?.contactEmail
 
-  const [form, setForm] = useState<AnyValue>(null)
+  const [form, setForm] = useState<ProfileForm | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Doc>({})
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const profile = query.data?.profile
 
   useEffect(() => {
     // seed once: a refetch (say, after saving the avatar) must not wipe typing
-    if (profile) setForm((current: AnyValue) => current ?? formFromProfile(profile))
+    if (profile) setForm((current) => current ?? formFromProfile(profile))
   }, [profile])
 
-  const change = (event: AnyValue) => {
-    const { name, type, checked, value } = event.target
-    setForm((current: AnyValue) => ({
-      ...current,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
+  const change = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const target = event.target
+    const next =
+      target instanceof HTMLInputElement && target.type === 'checkbox'
+        ? target.checked
+        : target.value
+    setForm((current) => (current ? { ...current, [target.name]: next } : current))
   }
 
-  const save = async (event: AnyValue) => {
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!form) return
     setSaving(true)
     setError('')
     setMessage('')
@@ -85,14 +114,14 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
         ...form,
         expertiseTags: form.expertiseTags
           .split(',')
-          .map((tag: AnyValue) => tag.trim())
+          .map((tag) => tag.trim())
           .filter(Boolean),
       })
       setMessage('Profile saved.')
       query.retry()
     } catch (caught) {
-      setError((caught as AnyValue).message)
-      setFieldErrors((caught as AnyValue).fields || {})
+      setError(errorMessage(caught))
+      setFieldErrors(apiFieldErrors(caught))
     } finally {
       setSaving(false)
     }
@@ -101,7 +130,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
   return (
     <section className="card memberProfileEditor" aria-labelledby="crm-profile-title">
       <Async query={query} skeletons={2}>
-        {(data: Doc) => {
+        {(data) => {
           const current = data.profile
           if (!form) return null
           return (
@@ -271,12 +300,7 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
                   </select>
                 </label>
                 <div className="profileVisibilityChecks">
-                  {[
-                    ['showCountry', 'Show my country'],
-                    ['showOrganization', 'Show my organisation'],
-                    ['showWorkingGroups', 'Show my working groups'],
-                    ['showRoles', 'Show my Hub roles'],
-                  ].map(([name, label]) => (
+                  {VISIBILITY_CHECKS.map(([name, label]) => (
                     <label key={name} className="authCheck">
                       <input type="checkbox" name={name} checked={form[name]} onChange={change} />
                       <span>{label}</span>

@@ -4,24 +4,26 @@ interface ExtLinkProps {
 }
 
 interface DataCategoryProps {
-  category?: AnyValue
+  category: PrivacyDataCategory
 }
 
 interface BodyProps {
-  notice?: AnyValue
-  policies?: AnyValue
+  notice: PrivacyNoticeFull
+  policies: PoliciesDoc | null
 }
 
 interface HeaderProps {
-  notice?: AnyValue
+  notice: PrivacyNoticeFull
 }
 
 interface PrivacyProps {
-  standalone?: AnyValue
+  standalone?: boolean
 }
 
-import type { AnyValue } from '../lib/types'
-import { TbArrowLeft as ArrowLeft, TbExternalLink as ExternalLink } from 'react-icons/tb'
+import type { PoliciesDoc } from '../../shared/contracts'
+import type { PrivacyDataCategory, PrivacyNoticeFull } from '../../shared/contracts'
+import { TbExternalLink as ExternalLink } from 'react-icons/tb'
+import { TbArrowLeft as ArrowLeft } from '../components/dirIcons'
 import { useDocument } from '../lib/documents'
 import { Brand } from '../components/Brand'
 
@@ -40,7 +42,7 @@ function DataCategory({ category }: DataCategoryProps) {
     <div className="privacyDataCategory">
       <h3>{category.label}</h3>
       <ul className="privacyFields">
-        {category.fields.map((field: AnyValue) => (
+        {category.fields.map((field) => (
           <li key={field} className="meta">
             {field}
           </li>
@@ -57,11 +59,11 @@ function DataCategory({ category }: DataCategoryProps) {
 }
 
 function Body({ notice, policies }: BodyProps) {
-  const PRIVACY_META = notice?.PRIVACY_META || {}
-  const PRIVACY_VERSION = notice?.PRIVACY_VERSION
-  const PRIVACY_SECTIONS = notice?.PRIVACY_SECTIONS || []
-  const DATA_CATEGORIES = notice?.DATA_CATEGORIES || []
-  const POLICY_BY_SLUG = policies?.POLICY_BY_SLUG || {}
+  const PRIVACY_META = notice.PRIVACY_META ?? {}
+  const PRIVACY_VERSION = notice.PRIVACY_VERSION
+  const PRIVACY_SECTIONS = notice.PRIVACY_SECTIONS ?? []
+  const DATA_CATEGORIES = notice.DATA_CATEGORIES ?? []
+  const POLICY_BY_SLUG = policies?.POLICY_BY_SLUG ?? {}
   return (
     <>
       <section className="mandateAnalysis card privacySummary">
@@ -72,29 +74,29 @@ function Body({ notice, policies }: BodyProps) {
           change.
         </p>
         <div className="mandatePoints privacyDataList">
-          {DATA_CATEGORIES.map((category: AnyValue) => (
+          {DATA_CATEGORIES.map((category) => (
             <DataCategory key={category.id} category={category} />
           ))}
         </div>
       </section>
 
-      {PRIVACY_SECTIONS.map((section: AnyValue) => (
+      {PRIVACY_SECTIONS.map((section) => (
         <section
           key={section.id}
           className="mandateSection card privacySection"
           id={`privacy-${section.id}`}
         >
           <h2>{section.heading}</h2>
-          {section.paragraphs?.map((para: AnyValue, i: number) => (
+          {section.paragraphs?.map((para, i) => (
             <p key={`${section.id}-p-${i}`} className="meta mandatePara">
               {para}
             </p>
           ))}
-          {section.bullets?.map((group: AnyValue) => (
+          {section.bullets?.map((group) => (
             <div key={group.label} className="mandateBulletGroup">
               <h3>{group.label}</h3>
               <ul>
-                {group.items.map((item: AnyValue, i: number) => (
+                {group.items.map((item, i) => (
                   <li key={`${group.label}-${i}`} className="meta">
                     {item}
                   </li>
@@ -102,7 +104,7 @@ function Body({ notice, policies }: BodyProps) {
               </ul>
             </div>
           ))}
-          {section.paragraphsAfter?.map((para: AnyValue, i: number) => (
+          {section.paragraphsAfter?.map((para, i) => (
             <p key={`${section.id}-pa-${i}`} className="meta mandatePara">
               {para}
             </p>
@@ -117,7 +119,7 @@ function Body({ notice, policies }: BodyProps) {
           constituency has adopted, and does not replace them.
         </p>
         <ul className="mandateBulletGroup privacyBulletList">
-          {PRIVACY_META.relatedPolicies.map((related: AnyValue) => (
+          {(PRIVACY_META.relatedPolicies ?? []).map((related) => (
             <li key={related.slug} className="meta">
               <ExtLink href={POLICY_BY_SLUG[related.slug]?.href}>{related.label}</ExtLink>
             </li>
@@ -125,7 +127,7 @@ function Body({ notice, policies }: BodyProps) {
         </ul>
         <h3>Who processes data on YOUNGO’s behalf</h3>
         <ul className="mandateBulletGroup privacyBulletList">
-          {PRIVACY_META.processors.map((processor: AnyValue) => (
+          {(PRIVACY_META.processors ?? []).map((processor) => (
             <li key={processor.name} className="meta">
               <ExtLink href={processor.href}>{processor.name}</ExtLink> — {processor.role}
             </li>
@@ -144,8 +146,8 @@ function Body({ notice, policies }: BodyProps) {
 }
 
 function Header({ notice }: HeaderProps) {
-  const PRIVACY_META = notice?.PRIVACY_META || {}
-  const PRIVACY_VERSION = notice?.PRIVACY_VERSION
+  const PRIVACY_META = notice.PRIVACY_META ?? {}
+  const PRIVACY_VERSION = notice.PRIVACY_VERSION
   return (
     <div className="privacyNoticeHeader">
       <p className="metaMuted">
@@ -166,8 +168,8 @@ function Header({ notice }: HeaderProps) {
  * The standalone route lets visitors review it before registration.
  */
 export function Privacy({ standalone = false }: PrivacyProps) {
-  const { doc: notice, loading, error, retry } = useDocument('privacy-notice')
-  const { doc: policies } = useDocument('policies')
+  const { doc: notice, loading, error, retry } = useDocument<PrivacyNoticeFull>('privacy-notice')
+  const { doc: policies } = useDocument<PoliciesDoc>('policies')
   if (loading) {
     return (
       <main className="mandateGate" aria-busy="true">
@@ -204,11 +206,11 @@ export function Privacy({ standalone = false }: PrivacyProps) {
             </div>
             <Header notice={notice} />
           </header>
-          <div className="mandateBody">
+          <main className="mandateBody" id="main">
             <div className="mandatePolicy privacyDocument">
               <Body notice={notice} policies={policies} />
             </div>
-          </div>
+          </main>
           <footer className="mandateFooter privacyGateFooter">
             <div className="privacyFooterRow">
               <p className="metaMuted privacyFooterCopy">

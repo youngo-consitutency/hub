@@ -1,10 +1,10 @@
 interface GysSignupProps {
-  embedded?: AnyValue
+  embedded?: boolean
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useState } from 'react'
-import { apiPost } from '../lib/api'
+import { apiPost, errorMessage, fieldErrors, hasFieldErrors } from '../lib/api'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
 import { Honeypot } from './auth/shared'
 
@@ -20,12 +20,13 @@ export function GysSignup({ embedded = false }: GysSignupProps) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState('idle') // idle | submitting | done
-  const [fields, setFields] = useState<Doc>({})
-  const [error, setError] = useState<AnyValue>(null)
+  const [fields, setFields] = useState<Record<string, string>>({})
+  const [error, setError] = useState<string | null>(null)
 
-  const set = (k: AnyValue) => (e: AnyValue) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const set = (k: keyof typeof EMPTY) => (e: ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  const submit = async (e: AnyValue) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     setStatus('submitting')
     setError(null)
@@ -35,8 +36,8 @@ export function GysSignup({ embedded = false }: GysSignupProps) {
       setStatus('done')
     } catch (err) {
       setStatus('idle')
-      setFields((err as AnyValue).fields || {})
-      if (!(err as AnyValue).fields) setError((err as AnyValue).message)
+      setFields(fieldErrors(err))
+      if (!hasFieldErrors(err)) setError(errorMessage(err))
     }
   }
 

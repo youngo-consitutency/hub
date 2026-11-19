@@ -1,4 +1,6 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { IconType } from 'react-icons'
+import type { CoyDetail } from '../../shared/contracts'
+import type { SiteIconCard, SiteLink } from '../../shared/contracts'
 import { BorderBeam } from '../components/fx/BorderBeam'
 import {
   TbCalendar as CalendarDays,
@@ -12,7 +14,7 @@ import { A, Async, Empty, Skeletons } from '../components/ui'
 import { useDocument } from '../lib/documents'
 
 // Icon names are stored in the site document; components live here.
-const FORMAT_ICONS = { Globe, Map, MapPin, Video }
+const FORMAT_ICONS: Record<string, IconType> = { Globe, Map, MapPin, Video }
 import { useApi } from '../lib/api'
 import { CoyDirectory, FeaturedConference } from './CoyDirectory'
 import { SiteSection } from './SitePage'
@@ -23,7 +25,7 @@ export function ConferencesSection() {
   const COY_CURRENT = connect?.COY_CURRENT || {}
   const COY_SITE_LINKS = connect?.COY_SITE_LINKS || []
   const coy = site?.coy
-  const query = useApi('/coys')
+  const query = useApi<{ items: CoyDetail[] }>('/coys')
   if (!coy) return loading ? <Skeletons n={4} /> : null
   const official = coy.officialSite || {}
   const upcoming = coy.upcoming || {}
@@ -45,8 +47,8 @@ export function ConferencesSection() {
           </a>
         </div>
         <div className="cardGrid cardGridFit">
-          {(coy.formats || []).map(({ icon, title, body }: AnyValue) => {
-            const Icon = (FORMAT_ICONS as AnyValue)[icon] || Globe
+          {(coy.formats || []).map(({ icon, title, body }: SiteIconCard) => {
+            const Icon = FORMAT_ICONS[icon] || Globe
             return (
               <article key={title} className="card siteFormatCard">
                 <span className="iconTile" aria-hidden>
@@ -69,7 +71,7 @@ export function ConferencesSection() {
             <p className="meta">{COY_CURRENT.note}</p>
           </div>
           <div className="siteCtaActions">
-            {COY_SITE_LINKS.map((link: AnyValue) => (
+            {COY_SITE_LINKS.map((link: SiteLink) => (
               <a
                 key={link.href}
                 className="btn btn-secondary btn-sm"
@@ -90,7 +92,7 @@ export function ConferencesSection() {
         <p className="siteSectionLead">{upcoming.lead}</p>
         <Async
           query={query}
-          empty={(data: Doc) =>
+          empty={(data) =>
             data.items.length === 0 ? (
               <Empty
                 icon={CalendarDays}
@@ -100,7 +102,7 @@ export function ConferencesSection() {
             ) : null
           }
         >
-          {(data: Doc) => (
+          {(data) => (
             <div className="stack">
               <FeaturedConference items={data.items} />
               <CoyDirectory items={data.items} />

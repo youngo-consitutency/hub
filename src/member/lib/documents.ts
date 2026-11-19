@@ -1,37 +1,42 @@
-import type { AnyValue, Doc } from './types'
+import type { ContentOptions, VocabOption } from '../../shared/contracts'
+import type { Doc } from './types'
 import { useApi } from './api'
 
 // Staff-editable records (`content-documents`) fetched via
 // GET /api/documents/:slug.
 
-export function useDocument(slug: AnyValue) {
-  const { data, error, loading, retry } = useApi(slug ? `/documents/${slug}` : null)
+export function useDocument<T = Doc>(slug: string | null | undefined) {
+  const { data, error, loading, retry } = useApi<{ body: T | null; title: string | null }>(
+    slug ? `/documents/${slug}` : null,
+  )
   return { doc: data?.body ?? null, title: data?.title ?? null, error, loading, retry }
 }
 
 // Event types + taxonomy from the `content-options` document; empty until
 // loaded.
+export type ContentVocabularies = ReturnType<typeof useContentOptions>
+
 export function useContentOptions() {
-  const { doc } = useDocument('content-options')
+  const { doc } = useDocument<ContentOptions>('content-options')
   return {
-    eventTypes: doc?.eventTypes || [],
-    resourcePathways: doc?.resourcePathways || [],
-    resourceTypes: doc?.resourceTypes || [],
-    resourceTopics: doc?.resourceTopics || [],
-    resourceRegions: doc?.resourceRegions || [],
-    resourceLanguages: doc?.resourceLanguages || [],
-    teamLabels: doc?.teamLabels || [],
-    assignmentLabels: doc?.assignmentLabels || [],
-    wgActivityKinds: doc?.wgActivityKinds || [],
-    resourceIssueKinds: doc?.resourceIssueKinds || [],
+    eventTypes: doc?.eventTypes ?? [],
+    resourcePathways: doc?.resourcePathways ?? [],
+    resourceTypes: doc?.resourceTypes ?? [],
+    resourceTopics: doc?.resourceTopics ?? [],
+    resourceRegions: doc?.resourceRegions ?? [],
+    resourceLanguages: doc?.resourceLanguages ?? [],
+    teamLabels: doc?.teamLabels ?? [],
+    assignmentLabels: doc?.assignmentLabels ?? [],
+    wgActivityKinds: doc?.wgActivityKinds ?? [],
+    resourceIssueKinds: doc?.resourceIssueKinds ?? [],
   }
 }
 
 // {value,label} lists become lookup maps.
 export function useContentOptionLabels() {
   const options = useContentOptions()
-  const toMap = (items: Doc) =>
-    Object.fromEntries((items || []).map((item: Doc) => [item.value, item.label]))
+  const toMap = (items: VocabOption[]): Record<string, string> =>
+    Object.fromEntries(items.map((item) => [item.value, item.label]))
   return {
     eventTypes: toMap(options.eventTypes),
     teamLabels: toMap(options.teamLabels),
@@ -43,19 +48,19 @@ export function useContentOptionLabels() {
 
 // ── Pure helpers over fetched bodies ──────────────────────────────
 
-export function publishedLinks(links: AnyValue) {
-  return (links || []).filter((link: AnyValue) => link.url)
+export function publishedLinks<T extends { url?: string | null }>(links: T[] | null | undefined) {
+  return (links ?? []).filter((link): link is T & { url: string } => Boolean(link.url))
 }
 
 // Single {value,label} lookup for display labels.
 // an unlisted value falls back to itself, capitalised, so a raw key like "platform" never shows
-export function optionLabel(items: Doc, value: AnyValue) {
-  const label = items.find((item: Doc) => item.value === value)?.label
+export function optionLabel(items: VocabOption[], value: string | null | undefined) {
+  const label = items.find((item) => item.value === value)?.label
   if (label) return label
   return typeof value === 'string' && value ? value[0]!.toUpperCase() + value.slice(1) : value
 }
 
-export function getWgOnboarding(wgOnboarding: AnyValue, slug: AnyValue) {
+export function getWgOnboarding(wgOnboarding: Doc | null | undefined, slug: string) {
   const base = wgOnboarding?.default || {}
   const specific = slug === 'default' ? {} : wgOnboarding?.[slug] || {}
   return {
@@ -64,7 +69,7 @@ export function getWgOnboarding(wgOnboarding: AnyValue, slug: AnyValue) {
   }
 }
 
-export function deckStyle(brand: AnyValue, defaults = {}): Doc {
+export function deckStyle(brand: Doc, defaults: Doc = {}): Doc {
   const colours = { ...defaults, ...brand }
   return {
     '--jt-mint': colours.mint,

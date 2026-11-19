@@ -1,4 +1,4 @@
-import type { AnyValue } from '../lib/types'
+import type { OwnProfileResponse } from '../../shared/contracts'
 import { WEBSITE_PERMISSIONS } from '../../shared/protocol'
 import { useContentOptionLabels } from '../lib/documents'
 import { TbUserCircle as ProfileIcon } from 'react-icons/tb'
@@ -20,7 +20,7 @@ import {
   TbUsers as Users,
 } from 'react-icons/tb'
 
-const SEAT_LABELS = {
+const SEAT_LABELS: Record<string, string> = {
   owner: 'Organisation owner',
   representative: 'Organisation representative',
   affiliate: 'Organisation affiliate',
@@ -30,22 +30,20 @@ const SEAT_LABELS = {
 export function Profile() {
   const { teamLabels, assignmentLabels } = useContentOptionLabels()
   const { account } = useAccount()
-  const profileQuery = useApi('/member/profile')
+  const profileQuery = useApi<OwnProfileResponse>('/member/profile')
   const wg = useWorkingGroups()
-  const access = account?.access || {}
-  const permissions = access.teamRoles || account?.teamRoles || []
-  const teamRoles = permissions.filter((role: AnyValue) => !WEBSITE_PERMISSIONS.includes(role))
-  const websitePermissions = permissions.filter((role: AnyValue) =>
-    WEBSITE_PERMISSIONS.includes(role),
-  )
-  const wgAssignments = access.wgAssignments || []
+  const access = account?.access
+  const permissions = access?.teamRoles || account?.teamRoles || []
+  const teamRoles = permissions.filter((role) => !WEBSITE_PERMISSIONS.includes(role))
+  const websitePermissions = permissions.filter((role) => WEBSITE_PERMISSIONS.includes(role))
+  const wgAssignments = access?.wgAssignments ?? []
   const interests = account?.wgInterests || []
   const interestGroups = wg.topics
-    .map((topic: AnyValue) => ({
+    .map((topic) => ({
       ...topic,
-      groups: interests.filter((slug: AnyValue) => wg.bySlug.get(slug)?.topic === topic.key),
+      groups: interests.filter((slug) => wg.bySlug.get(slug)?.topic === topic.key),
     }))
-    .filter((topic: AnyValue) => topic.groups.length > 0)
+    .filter((topic) => topic.groups.length > 0)
 
   return (
     <div>
@@ -62,7 +60,7 @@ export function Profile() {
           roleLabel={
             account?.access?.isFocalPoint
               ? 'Global Focal Point'
-              : (SEAT_LABELS as AnyValue)[account?.access?.ngo?.seatRole] || 'Member'
+              : SEAT_LABELS[account?.access?.ngo?.seatRole ?? ''] || 'Member'
           }
         />
         <div className="profileSideStack">
@@ -84,7 +82,7 @@ export function Profile() {
               <div className="card cardTight">
                 <h3>Teams</h3>
                 <ul className="profileList">
-                  {teamRoles.map((role: AnyValue) => (
+                  {teamRoles.map((role) => (
                     <li key={role}>{teamLabels[role] || role}</li>
                   ))}
                 </ul>
@@ -94,7 +92,7 @@ export function Profile() {
               <div className="card cardTight">
                 <h3>Website permissions</h3>
                 <ul className="profileList">
-                  {websitePermissions.map((role: AnyValue) => (
+                  {websitePermissions.map((role) => (
                     <li key={role}>{teamLabels[role] || role}</li>
                   ))}
                 </ul>
@@ -105,12 +103,12 @@ export function Profile() {
               <div className="card cardTight">
                 <h3>Working-group roles</h3>
                 <ul className="profileList">
-                  {wgAssignments.map((assignment: AnyValue) => (
+                  {wgAssignments.map((assignment) => (
                     <li
                       key={`${assignment.wgSlug}-${assignmentLabels[assignment.role] || 'Member'}`}
                     >
                       <A href={`/groups/${assignment.wgSlug}`} className="inlineLink">
-                        {assignment.wgName || wg.label(assignment.wgSlug)}
+                        {wg.label(assignment.wgSlug)}
                       </A>{' '}
                       · {assignmentLabels[assignment.role] || 'Member'}
                     </li>
@@ -122,11 +120,11 @@ export function Profile() {
               <div className="card cardTight profileInterestCard">
                 <h3>Working-group interests</h3>
                 <div className="profileInterestGroups">
-                  {interestGroups.map((topic: AnyValue) => (
+                  {interestGroups.map((topic) => (
                     <section key={topic.key} className="profileInterestGroup">
                       <h4>{topic.label}</h4>
                       <ul>
-                        {topic.groups.map((slug: AnyValue) => {
+                        {topic.groups.map((slug) => {
                           const GroupIcon = workingGroupIcon(slug)
                           return (
                             <li key={slug}>

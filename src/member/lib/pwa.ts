@@ -1,5 +1,11 @@
-import type { AnyValue } from './types'
-let deferredInstallPrompt: AnyValue = null
+import { errorMessage } from './api'
+// the non-standard Chromium install prompt event
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+let deferredInstallPrompt: BeforeInstallPromptEvent | null = null
 const HUB_CACHE_PREFIX = 'youngo-hub-'
 
 export async function disablePWAInDevelopment() {
@@ -103,7 +109,7 @@ async function getPushRegistration() {
 /**
  * Convert base64 string to Uint8Array for VAPID key
  */
-function urlBase64ToUint8Array(base64String: AnyValue) {
+function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = window.atob(base64)
@@ -118,7 +124,7 @@ function urlBase64ToUint8Array(base64String: AnyValue) {
  * Subscribe to push notifications
  * @param {string} vapidPublicKey - VAPID public key from backend
  */
-export async function subscribeToPush(vapidPublicKey: AnyValue) {
+export async function subscribeToPush(vapidPublicKey: string) {
   if (!isPushSupported()) {
     console.log('[Push] Push not supported')
     return { success: false, error: 'Push not supported' }
@@ -159,7 +165,7 @@ export async function subscribeToPush(vapidPublicKey: AnyValue) {
     return { success: true, subscription, isNew }
   } catch (error) {
     console.error('[Push] Subscription failed:', error)
-    return { success: false, error: (error as AnyValue).message }
+    return { success: false, error: errorMessage(error) }
   }
 }
 
@@ -192,7 +198,7 @@ export async function unsubscribeFromPush() {
     return { success: true }
   } catch (error) {
     console.error('[Push] Unsubscribe failed:', error)
-    return { success: false, error: (error as AnyValue).message }
+    return { success: false, error: errorMessage(error) }
   }
 }
 
@@ -232,7 +238,7 @@ export async function getPushSubscriptionStatus() {
     }
   } catch (error) {
     console.error('[Push] Status check failed:', error)
-    return { supported: true, subscribed: false, error: (error as AnyValue).message }
+    return { supported: true, subscribed: false, error: errorMessage(error) }
   }
 }
 
@@ -262,17 +268,19 @@ export async function requestNotificationPermission() {
 function isPWA() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as AnyValue).standalone === true
+    // Safari's non-standard flag for home-screen launches
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   )
 }
 
 /**
  * Check if app can be installed (beforeinstallprompt event)
  */
-function setupInstallPrompt(onPrompt?: AnyValue) {
+function setupInstallPrompt(onPrompt?: (available: boolean) => void) {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
-    deferredInstallPrompt = e
+    // the event is typed as plain Event; Chromium supplies the prompt members
+    deferredInstallPrompt = e as BeforeInstallPromptEvent
     onPrompt?.(true)
   })
 
@@ -295,7 +303,7 @@ export function isInstallPromptAvailable() {
 }
 
 export async function initPWA() {
-  setupInstallPrompt((available: AnyValue) => {
+  setupInstallPrompt((available) => {
     window.dispatchEvent(new CustomEvent('pwa-install-available', { detail: { available } }))
   })
   const registration = await registerServiceWorker()

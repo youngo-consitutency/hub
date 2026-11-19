@@ -1,13 +1,21 @@
-import type { AnyValue } from './types'
-import { AsYouType, getCountries, parsePhoneNumberFromString } from 'libphonenumber-js/min'
+import {
+  AsYouType,
+  getCountries,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from 'libphonenumber-js/min'
 
-function displayNameForCountry(countryCode: AnyValue) {
+function displayNameForCountry(countryCode: string): string {
   try {
     return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode
   } catch {
     return countryCode
   }
 }
+
+// Boundary: callers hold the ISO code as a plain string; libphonenumber rejects unknown ones itself
+const asCountry = (code: string | null | undefined) =>
+  (code || undefined) as CountryCode | undefined
 
 export function getCountryOptions() {
   return getCountries()
@@ -18,20 +26,20 @@ export function getCountryOptions() {
     .sort((a, b) => a.label.localeCompare(b.label))
 }
 
-export function formatPhoneWhileTyping(value: AnyValue, countryCode: AnyValue) {
+export function formatPhoneWhileTyping(value: unknown, countryCode: string | null | undefined) {
   const supplied = String(value || '')
   if (!supplied.replaceAll('+', '').trim()) return '+ '
 
   const international = supplied.trimStart().startsWith('+')
   const raw = international ? `+${supplied.replaceAll('+', '').trimStart()}` : supplied
-  const formatted = new AsYouType(international ? undefined : countryCode || undefined).input(raw)
+  const formatted = new AsYouType(international ? undefined : asCountry(countryCode)).input(raw)
   return international ? `+ ${formatted.slice(1).trimStart()}` : formatted
 }
 
-export function normalizePhone(value: AnyValue, countryCode: AnyValue) {
+export function normalizePhone(value: unknown, countryCode: string | null | undefined) {
   const raw = String(value || '').trim()
   if (!raw || !/\d/.test(raw)) return ''
 
-  const parsed = parsePhoneNumberFromString(raw, countryCode || undefined)
+  const parsed = parsePhoneNumberFromString(raw, asCountry(countryCode))
   return parsed?.isValid() ? parsed.number : raw
 }

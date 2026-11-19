@@ -1,4 +1,4 @@
-import type { AnyValue } from '../lib/types'
+import type { ReactNode } from 'react'
 import { TbLock as Lock } from 'react-icons/tb'
 import { A, Button, Empty, PageHeader } from './ui'
 import { signOut } from '../lib/session'
@@ -6,8 +6,8 @@ import { useAccount } from '../lib/accountContext'
 
 interface LockedProps {
   title?: string
-  body?: AnyValue
-  course?: AnyValue
+  body?: ReactNode
+  course?: boolean
   retry?: boolean
   busy?: boolean
 }

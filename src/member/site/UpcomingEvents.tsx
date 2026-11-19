@@ -1,4 +1,4 @@
-import type { AnyValue } from '../lib/types'
+import type { LandingResponse } from '../../shared/contracts'
 import { TbArrowUpRight, TbCalendarHeart } from 'react-icons/tb'
 import { A, Button } from '../components/ui'
 import { DateStamp } from '../components/DateStamp'
@@ -7,7 +7,7 @@ import { fmtMoment } from '../lib/time'
 
 /** Load public upcoming events with local times and full-page event links, including retry and empty states. */
 export function UpcomingEvents() {
-  const { data, loading, error, retry } = useApi('/landing')
+  const { data, loading, error, retry } = useApi<LandingResponse>('/landing')
   return (
     <aside className="siteUpcoming" aria-labelledby="upcoming-title">
       <div className="siteUpcomingHeading">
@@ -26,14 +26,16 @@ export function UpcomingEvents() {
           </p>
         ) : error ? (
           <div className="stackSm">
-            <p className="meta">Events could not be loaded.</p>
+            <p className="meta" role="alert">
+              Events could not be loaded.
+            </p>
             <Button sm onClick={retry}>
               Try again
             </Button>
           </div>
         ) : data?.events?.length ? (
           <ol className="siteEventList">
-            {data.events.map((event: AnyValue) => {
+            {data.events.map((event) => {
               const moment = fmtMoment(event.startsAt)
               return (
                 <li key={event.slug}>

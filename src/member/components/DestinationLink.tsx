@@ -1,8 +1,7 @@
 interface DestinationIconProps {
   url?: string
-  size?: AnyValue
+  size?: number
   className?: string
-  [key: string]: AnyValue
 }
 
 interface ExternalResourceRowProps {
@@ -12,7 +11,6 @@ interface ExternalResourceRowProps {
   className?: string
 }
 
-import type { AnyValue } from '../lib/types'
 import { createElement } from 'react'
 import {
   TbArrowUpRight,
@@ -46,7 +44,7 @@ import {
 
 // Exact host or a true subdomain — 'app.zoom.us' matches, 'notzoom.us'
 // does not.
-const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
+const hostIs = (host: string, domain: string) => host === domain || host.endsWith(`.${domain}`)
 
 function destinationIconFor(rawUrl = '') {
   if (/^mailto:/i.test(rawUrl)) return TbMail

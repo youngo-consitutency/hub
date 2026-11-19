@@ -1,14 +1,14 @@
 interface WgActivityCardProps {
-  activity?: AnyValue
+  activity: WgActivity
 }
 
-import type { AnyValue } from '../lib/types'
+import type { WgActivity } from '../../shared/contracts'
 import { AddToCalendar } from './AddToCalendar'
 import { DestinationIcon } from './DestinationLink'
 import { fmtMoment } from '../lib/time'
 import { TbCalendar as CalendarDays, TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
 
-function activityFields(activity: AnyValue) {
+function activityFields(activity: WgActivity) {
   return {
     id: activity.id,
     kind: activity.kind,
@@ -21,7 +21,7 @@ function activityFields(activity: AnyValue) {
   }
 }
 
-function calendarEvent(activity: AnyValue) {
+function calendarEvent(activity: ReturnType<typeof activityFields>) {
   if (!activity.startsAt) return null
   const start = new Date(activity.startsAt)
   if (Number.isNaN(start.getTime())) return null

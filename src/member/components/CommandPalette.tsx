@@ -1,93 +1,48 @@
 interface PaletteBodyProps {
-  onClose?: AnyValue
+  onClose?: () => void
 }
 
 interface CommandPaletteProps {
-  onClose?: AnyValue
+  onClose?: () => void
 }
 
-import type { AnyValue, Doc } from '../lib/types'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
+import {
+  Autocomplete,
+  Dialog,
+  Header,
+  Input,
+  ListBox,
+  ListBoxItem,
+  ListBoxSection,
+  Modal,
+  ModalOverlay,
+  SearchField,
+} from 'react-aria-components'
 import { useApi } from '../lib/api'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { navigate } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { paletteRoutesFor, viewerOf } from '../lib/routes'
-import { fmtDual, fmtDateRange } from '../lib/time'
-import {
-  TbSearch as Search,
-  TbCalendar as CalendarDays,
-  TbFileText as FileText,
-  TbGavel as Gavel,
-  TbMapPin as MapPin,
-  TbUsers as Users,
-  TbCornerDownLeft as CornerDownLeft,
-} from 'react-icons/tb'
-
-// Same content groups as the /search page, in palette result order.
-const GROUPS = [
-  {
-    key: 'events',
-    label: 'Events',
-    icon: CalendarDays,
-    to: (e: AnyValue) => `/calendar/${e.slug}`,
-    title: (e: AnyValue) => e.title,
-    line: (e: AnyValue) => fmtDual(e.startsAt),
-  },
-  {
-    key: 'submissions',
-    label: 'Submissions',
-    icon: FileText,
-    to: (s: AnyValue) => `/submissions/${s.slug}`,
-    title: (s: AnyValue) => s.title,
-    line: (s: AnyValue) => s.wg?.name || s.status,
-  },
-  {
-    key: 'decisions',
-    label: 'Council',
-    icon: Gavel,
-    to: (d: AnyValue) => `/council/${d.slug}`,
-    title: (d: AnyValue) => d.title,
-    line: (d: AnyValue) => d.proposer,
-  },
-  {
-    key: 'coys',
-    label: 'COYs',
-    icon: MapPin,
-    to: (c: AnyValue) => `/coys/${c.slug}`,
-    title: (c: AnyValue) => c.title,
-    line: (c: AnyValue) => fmtDateRange(c.startsOn, c.endsOn, c.datesTbc),
-  },
-  {
-    key: 'groups',
-    label: 'Working groups',
-    icon: Users,
-    to: (g: AnyValue) => `/groups/${g.slug}`,
-    title: (g: AnyValue) => g.name,
-    line: (g: AnyValue) => g.focusLine,
-  },
-  {
-    key: 'contacts',
-    label: 'Directory',
-    icon: Users,
-    to: () => '/directory',
-    title: (c: AnyValue) => c.roleTitle,
-    line: (c: AnyValue) => c.description,
-  },
-]
+import { DIRECT_SECTIONS } from '../lib/searchSections'
+import type { SearchResponse } from '../../shared/contracts'
+import { TbSearch as Search, TbCornerDownLeft as CornerDownLeft } from 'react-icons/tb'
 
 function PaletteBody({ onClose }: PaletteBodyProps) {
   const [q, setQ] = useState('')
-  const [active, setActive] = useState(0)
   // Debounced so typing does not fire a /search request per keystroke —
   // each call scans six collections server-side.
   const debounced = useDebouncedValue(q.trim())
-  const query = useApi(debounced ? `/search?q=${encodeURIComponent(debounced)}` : null, [debounced])
+  const query = useApi<SearchResponse>(
+    debounced ? `/search?q=${encodeURIComponent(debounced)}` : null,
+    {
+      keepPrevious: true,
+    },
+  )
   // Remote results are only trustworthy once the debounce has caught up with
   // the input and the fetch for the current key has finished — otherwise
   // `data` still matches an older query string.
   const settled = !query.loading && debounced === q.trim()
-  const listRef = useRef<AnyValue>(null)
   const { account } = useAccount()
   const viewer = useMemo(() => viewerOf(account), [account])
 
@@ -112,172 +67,119 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
       }))
     const data = settled ? query.data : null
     if (!data) return pages
-    const content = GROUPS.flatMap((g) =>
-      (data[g.key] || []).map((item: Doc) => ({
-        to: g.to(item),
-        title: g.title(item),
-        line: g.line(item),
-        Icon: g.icon,
-        group: g.label,
+    const content = DIRECT_SECTIONS.flatMap((section) =>
+      section.matches(data).map(({ href, title, line, Icon, group }) => ({
+        to: href,
+        title: title ?? '',
+        line,
+        Icon,
+        group,
       })),
     )
     return [...pages, ...content]
   }, [query.data, settled, q, viewer])
 
-  useEffect(() => {
-    setActive(0)
-  }, [flat.length])
-
-  const go = (to: AnyValue) => {
+  const go = (to: string) => {
     onClose?.()
     navigate(to)
   }
 
-  const onKeyDown = (e: AnyValue) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActive((i) => Math.min(i + 1, flat.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActive((i) => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter' && flat[active]) {
-      e.preventDefault()
-      go(flat[active].to)
+  // sections keep the registry order: pages first, then each content group
+  const sections = useMemo(() => {
+    const out: { name: string; items: (typeof flat)[number][] }[] = []
+    for (const item of flat) {
+      const last = out.at(-1)
+      if (last && last.name === item.group) last.items.push(item)
+      else out.push({ name: item.group, items: [item] })
     }
-  }
-
-  useEffect(() => {
-    listRef.current?.querySelector('.paletteItem.active')?.scrollIntoView({ block: 'nearest' })
-  }, [active])
+    return out
+  }, [flat])
+  const trimmed = q.trim()
 
   return (
-    <>
-      <div className="paletteInputRow">
+    <Autocomplete inputValue={q} onInputChange={setQ} filter={() => true}>
+      <SearchField className="paletteInputRow" aria-label="Search the Hub" autoFocus>
         <Search size={18} strokeWidth={1.75} aria-hidden style={{ color: 'var(--text-3)' }} />
-        <input
+        <Input
           className="paletteInput"
-          autoFocus
-          role="combobox"
-          aria-label="Search the Hub"
-          aria-controls="command-palette-results"
-          aria-expanded="true"
-          aria-autocomplete="list"
-          aria-activedescendant={flat[active] ? `command-palette-result-${active}` : undefined}
           placeholder="Search meetings, opportunities, decisions, groups…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={onKeyDown}
         />
-        <kbd className="kbd">Esc</kbd>
-      </div>
-      <div
+        <kbd className="kbd" aria-hidden>
+          Esc
+        </kbd>
+      </SearchField>
+      {/* one polite announcement when results settle, not one per keystroke */}
+      <p className="srOnly" role="status">
+        {trimmed && settled ? `${flat.length} ${flat.length === 1 ? 'result' : 'results'}` : ''}
+      </p>
+      <ListBox
         className="paletteResults"
-        id="command-palette-results"
-        role="listbox"
         aria-label="Search results"
         aria-busy={query.loading}
-        ref={listRef}
+        selectionMode="none"
+        onAction={(key) => go(String(key))}
+        renderEmptyState={() => (
+          <p className="metaMuted" style={{ padding: '16px 14px' }}>
+            {trimmed === ''
+              ? 'Type to search across the Hub.'
+              : settled
+                ? `No matches for “${q}”.`
+                : 'Searching…'}
+          </p>
+        )}
       >
-        {q.trim() === '' && (
-          <p className="metaMuted" style={{ padding: '16px 14px' }}>
-            Type to search across the Hub.
-          </p>
-        )}
-        {q.trim() !== '' && flat.length === 0 && settled && (
-          <p className="metaMuted" style={{ padding: '16px 14px' }}>
-            No matches for “{q}”.
-          </p>
-        )}
-        {flat.map((r, i) => (
-          <button
-            type="button"
-            key={r.to + i}
-            id={`command-palette-result-${i}`}
-            role="option"
-            aria-selected={i === active}
-            className={`paletteItem ${i === active ? 'active' : ''}`}
-            onMouseEnter={() => setActive(i)}
-            onClick={() => go(r.to)}
-          >
-            <r.Icon
-              size={18}
-              strokeWidth={1.75}
-              aria-hidden
-              style={{ color: 'var(--text-3)', flexShrink: 0 }}
-            />
-            <span className="paletteText">
-              <span className="paletteTitle">{r.title}</span>
-              <span className="metaMuted">
-                {r.group} · {r.line}
-              </span>
-            </span>
-            {i === active && (
-              <CornerDownLeft
-                size={14}
-                strokeWidth={1.75}
-                aria-hidden
-                style={{ color: 'var(--text-3)' }}
-              />
-            )}
-          </button>
+        {sections.map((section) => (
+          <ListBoxSection key={section.name}>
+            <Header className="paletteGroup">{section.name}</Header>
+            {section.items.map((r) => (
+              <ListBoxItem
+                key={r.to}
+                id={r.to}
+                textValue={`${r.title}, ${r.group}`}
+                className="paletteItem"
+              >
+                <r.Icon
+                  size={18}
+                  strokeWidth={1.75}
+                  aria-hidden
+                  style={{ color: 'var(--text-3)', flexShrink: 0 }}
+                />
+                <span className="paletteText">
+                  <span className="paletteTitle">{r.title}</span>
+                  <span className="metaMuted">{r.line}</span>
+                </span>
+                <CornerDownLeft
+                  className="paletteEnter"
+                  size={14}
+                  strokeWidth={1.75}
+                  aria-hidden
+                  style={{ color: 'var(--text-3)' }}
+                />
+              </ListBoxItem>
+            ))}
+          </ListBoxSection>
         ))}
-      </div>
-    </>
+      </ListBox>
+    </Autocomplete>
   )
 }
 
-// Mounted by Shell only while open — Shell owns the Cmd/Ctrl+K toggle, so the
-// shortcut still works before this lazy chunk arrives. Restores the focus it
-// found on mount when it unmounts.
+// Mounted by Shell only while open (Shell owns the Cmd/Ctrl+K toggle, so the shortcut works before
+// this lazy chunk arrives). React Aria's modal supplies the focus trap, background inerting,
+// Escape and click-outside dismissal, and returns focus to whatever opened it.
 export function CommandPalette({ onClose }: CommandPaletteProps) {
-  const dialogRef = useRef<AnyValue>(null)
-  const returnFocusRef = useRef<AnyValue>(null)
-
-  useEffect(() => {
-    returnFocusRef.current = document.activeElement
-    return () => returnFocusRef.current?.focus?.()
-  }, [])
-
-  useEffect(() => {
-    const onKey = (e: AnyValue) => {
-      if (e.key === 'Escape') onClose?.()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  const keepFocusInside = (event: AnyValue) => {
-    if (event.key !== 'Tab') return
-    const focusable = [
-      ...(dialogRef.current?.querySelectorAll(
-        'input, button, a[href], [tabindex]:not([tabindex="-1"])',
-      ) || []),
-    ]
-    if (focusable.length === 0) return
-    const first = focusable[0]
-    const last = focusable.at(-1)
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first.focus()
-    }
-  }
-
   return (
-    <div className="paletteBackdrop" onClick={() => onClose?.()}>
-      <div
-        className="palette"
-        role="dialog"
-        aria-label="Search the Hub"
-        aria-modal="true"
-        ref={dialogRef}
-        onKeyDown={keepFocusInside}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <PaletteBody onClose={onClose} />
-      </div>
-    </div>
+    <ModalOverlay
+      isOpen
+      isDismissable
+      onOpenChange={(open) => !open && onClose?.()}
+      className="paletteBackdrop"
+    >
+      <Modal className="palette">
+        <Dialog aria-label="Search the Hub" className="paletteDialog">
+          <PaletteBody onClose={onClose} />
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
   )
 }

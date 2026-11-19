@@ -1,17 +1,14 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { GysPublicResponse } from '../../shared/contracts'
 import { SiteSection } from './SitePage'
 import { ScrollTimeline } from '../components/fx/ScrollTimeline'
-import {
-  TbArrowUpRight as ArrowUpRight,
-  TbChevronRight as ChevronRight,
-  TbScript as Statement,
-} from 'react-icons/tb'
+import { TbArrowUpRight as ArrowUpRight, TbScript as Statement } from 'react-icons/tb'
+import { TbChevronRight as ChevronRight } from '../components/dirIcons'
 import { Async } from '../components/ui'
 import { useApi } from '../lib/api'
 import { useDocument } from '../lib/documents'
 
 export function StatementSection() {
-  const query = useApi('/gys')
+  const query = useApi<GysPublicResponse>('/gys')
   const { doc: site } = useDocument('site')
   const gysCopy = site?.gys || {}
   const processCopy = gysCopy.process || {}
@@ -19,7 +16,7 @@ export function StatementSection() {
   const footnote = gysCopy.footnote || {}
   return (
     <Async query={query} skeletons={4}>
-      {(gys: AnyValue) => (
+      {(gys) => (
         <SiteSection
           id="statement"
           eyebrow={gysCopy.eyebrow}
@@ -30,13 +27,11 @@ export function StatementSection() {
             <h3>{processCopy.title}</h3>
             <p className="siteSectionLead">{processCopy.lead}</p>
             <ScrollTimeline
-              entries={(Array.isArray(gys.process) ? gys.process : []).map(
-                (item: Doc, index: number) => ({
-                  label: String(index + 1).padStart(2, '0'),
-                  title: item.step,
-                  body: item.body,
-                }),
-              )}
+              entries={(Array.isArray(gys.process) ? gys.process : []).map((item, index) => ({
+                label: String(index + 1).padStart(2, '0'),
+                title: item.step,
+                body: item.body,
+              }))}
             />
           </div>
 

@@ -1,12 +1,12 @@
 interface TicketCardProps {
-  ticket?: AnyValue
-  onUpdate?: AnyValue
+  ticket: FeedbackTicket
+  onUpdate: (id: number, body: Record<string, string>) => Promise<void>
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { FeedbackTicket, FeedbackTicketsResponse } from '../../shared/contracts'
 import { formatDateTime } from '../lib/time'
-import { useCallback, useEffect, useState } from 'react'
-import { apiGet, apiPatch } from '../lib/api'
+import { useEffect, useState } from 'react'
+import { apiPatch, useApi, errorMessage } from '../lib/api'
 import { Button, Empty, ErrorCard, FilterPill, Section, Skeletons } from './ui'
 import { TbMessagePlus as MessageSquarePlus, TbExternalLink as ExternalLink } from 'react-icons/tb'
 
@@ -51,7 +51,7 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
     setNote(ticket.triageNote || '')
   }, [ticket.id, ticket.triageNote])
 
-  const patch = async (body: AnyValue) => {
+  const patch = async (body: Record<string, string>) => {
     setSaving(true)
     try {
       await onUpdate(ticket.id, body)
@@ -65,10 +65,10 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
       <div className="feedbackTicketMain">
         <div className="rowGap" style={{ flexWrap: 'wrap' }}>
           <span className="chip chip-info">
-            {(KIND_LABEL as AnyValue)[ticket.kind] || ticket.kind}
+            {KIND_LABEL[ticket.kind as keyof typeof KIND_LABEL] || ticket.kind}
           </span>
           <span
-            className={`chip ${(SEVERITY_CHIP as AnyValue)[ticket.severity] || 'chip-neutral'}`}
+            className={`chip ${SEVERITY_CHIP[ticket.severity as keyof typeof SEVERITY_CHIP] || 'chip-neutral'}`}
           >
             {ticket.severity}
           </span>
@@ -139,25 +139,26 @@ function TicketCard({ ticket, onUpdate }: TicketCardProps) {
 
 export function FeedbackQueue() {
   const [status, setStatus] = useState('new')
-  const [state, setState] = useState<Doc>({ items: null, error: null })
+  // SWR drops a response that arrives after the filter has changed
+  const {
+    data,
+    error: loadError,
+    retry,
+  } = useApi<FeedbackTicketsResponse>(`/member/feedback${status ? `?status=${status}` : ''}`, {
+    keepPrevious: true,
+  })
+  const [actionError, setActionError] = useState<string | null>(null)
+  const items: FeedbackTicket[] | null = data?.items ?? null
+  const error = actionError || loadError
 
-  const load = useCallback(() => {
-    apiGet(`/member/feedback${status ? `?status=${status}` : ''}`)
-      .then((data) => setState({ items: data.items, error: null }))
-      .catch((error) => setState({ items: null, error: error.message }))
-  }, [status])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const updateTicket = async (id: AnyValue, body: AnyValue) => {
+  const updateTicket = async (id: number, body: Record<string, string>) => {
     try {
       await apiPatch(`/member/feedback/${id}`, body)
-      load()
-    } catch (error) {
-      setState((current) => ({ ...current, error: (error as AnyValue).message }))
-      throw error
+      setActionError(null)
+      retry()
+    } catch (e) {
+      setActionError(errorMessage(e))
+      throw e
     }
   }
 
@@ -178,9 +179,9 @@ export function FeedbackQueue() {
         </div>
       }
     >
-      {state.error && <ErrorCard message={state.error} onRetry={load} />}
-      {!state.items && !state.error && <Skeletons n={2} />}
-      {state.items?.length === 0 && (
+      {error && <ErrorCard message={error} onRetry={retry} />}
+      {!items && !error && <Skeletons n={2} />}
+      {items?.length === 0 && (
         <Empty
           icon={MessageSquarePlus}
           title="Nothing in this queue"
@@ -188,8 +189,8 @@ export function FeedbackQueue() {
         />
       )}
       <div className="stackSm">
-        {(state.items || []).map((ticket: Doc) => (
-          <TicketCard key={(ticket as AnyValue).id} ticket={ticket} onUpdate={updateTicket} />
+        {(items || []).map((ticket) => (
+          <TicketCard key={ticket.id} ticket={ticket} onUpdate={updateTicket} />
         ))}
       </div>
     </Section>

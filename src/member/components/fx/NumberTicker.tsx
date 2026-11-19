@@ -35,8 +35,11 @@ export function NumberTicker({ value, delay = 0, className, ...props }: NumberTi
   )
 
   return (
-    <span ref={ref} className={`fxTicker ${className ?? ''}`.trim()} {...props}>
-      {reduced ? format.format(value) : 0}
-    </span>
+    <>
+      <span ref={ref} className={`fxTicker ${className ?? ''}`.trim()} aria-hidden {...props}>
+        {reduced ? format.format(value) : 0}
+      </span>
+      <span className="srOnly">{format.format(value)}</span>
+    </>
   )
 }

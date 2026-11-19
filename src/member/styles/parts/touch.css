@@ -11,14 +11,14 @@
    or a transparent ::after overlay, so the design does not change shape.
 
    The gate is "finger, or the narrow layout the rest of the app already treats
-   as mobile" — `max-width: 900px` is the same breakpoint shell.css uses to
+   as mobile" — `max-width: 767px` is the same breakpoint shell.css uses to
    swap the sidebar for the tab bar, and including it keeps the two in step and
    makes the sizing verifiable in a resized desktop window.
 
    Import order matters: this sheet is last in app.css so it overrides the
    component sheets it corrects. */
 
-@media (pointer: coarse), (max-width: 900px) {
+@media (pointer: coarse), (max-width: 767px) {
   /* ── Buttons and pills ──────────────────────────────
      .btn is 40px and .btn-sm is 32px by design. Both are below the 44px floor
      on touch, and .btn-sm carries primary actions like "Apply" and "Join". */

@@ -1,7 +1,13 @@
 'use client'
 
-import type { AnyValue, Doc } from '../lib/types'
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
+import type {
+  CoyAddResult,
+  CoyAnnounceResult,
+  CoyAudienceSummary,
+  CoyNoticesResponse,
+  CoyParticipantsResponse,
+} from '../../shared/contracts'
 import {
   TbBell as Bell,
   TbCircleCheck as CheckCircle2,
@@ -12,7 +18,7 @@ import {
   TbUsers as Users,
   TbX as X,
 } from 'react-icons/tb'
-import { apiDelete, apiPost, useApi } from '../lib/api'
+import { apiDelete, apiPost, useApi, errorMessage, fieldErrors, hasFieldErrors } from '../lib/api'
 import { formatDateTime } from '../lib/time'
 import { Tabs } from './Tabs'
 import { Async, Button, Empty, ErrorCard, Section } from './ui'
@@ -34,10 +40,10 @@ const CHANNELS = [
  * participants, and the allowlist and announcement tools for organisers.
  */
 export function CoyLive({ slug }: { slug: string }) {
-  const notices = useApi(`/member/coy/${slug}/notices`, [slug])
+  const notices = useApi<CoyNoticesResponse>(`/member/coy/${slug}/notices`)
   return (
     <Async query={notices} skeletons={2}>
-      {(data: Doc) => (
+      {(data) => (
         <>
           <Section label="Live notices">
             {!data.allowlisted ? (
@@ -54,7 +60,7 @@ export function CoyLive({ slug }: { slug: string }) {
               />
             ) : (
               <ol className="coyNotices">
-                {data.items.map((notice: Doc) => (
+                {data.items.map((notice) => (
                   <li key={notice.id} className="card coyNotice">
                     <div className="coyNoticeHead">
                       <h3>{notice.title}</h3>
@@ -65,7 +71,7 @@ export function CoyLive({ slug }: { slug: string }) {
                     {String(notice.body)
                       .split('\n')
                       .filter(Boolean)
-                      .map((line: string, i: number) => (
+                      .map((line, i) => (
                         <p key={i}>{line}</p>
                       ))}
                   </li>
@@ -81,12 +87,12 @@ export function CoyLive({ slug }: { slug: string }) {
 }
 
 function CoyOrganiserTools({ slug, onAnnounced }: { slug: string; onAnnounced: () => void }) {
-  const participants = useApi(`/member/coy/${slug}/participants`, [slug])
+  const participants = useApi<CoyParticipantsResponse>(`/member/coy/${slug}/participants`)
   return (
     <Section label="Organiser tools">
       <div className="card coyTools">
         <Async query={participants} skeletons={2}>
-          {(data: Doc) => (
+          {(data) => (
             <Tabs
               label="Organiser tools"
               items={[
@@ -120,7 +126,7 @@ function CoyOrganiserTools({ slug, onAnnounced }: { slug: string; onAnnounced: (
   )
 }
 
-function Summary({ summary }: { summary: Doc }) {
+function Summary({ summary }: { summary: CoyAudienceSummary }) {
   return (
     <div className="metricGrid coyMetrics">
       <div className="metricCard">
@@ -142,22 +148,30 @@ function Summary({ summary }: { summary: Doc }) {
   )
 }
 
-function Participants({ slug, data, onChange }: { slug: string; data: Doc; onChange: () => void }) {
+function Participants({
+  slug,
+  data,
+  onChange,
+}: {
+  slug: string
+  data: CoyParticipantsResponse
+  onChange: () => void
+}) {
   const [emails, setEmails] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Doc | null>(null)
+  const [result, setResult] = useState<CoyAddResult | null>(null)
 
   const add = async () => {
     setBusy(true)
     setError(null)
     try {
-      setResult(await apiPost(`/member/coy/${slug}/participants`, { emails, note }))
+      setResult(await apiPost<CoyAddResult>(`/member/coy/${slug}/participants`, { emails, note }))
       setEmails('')
       onChange()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
     } finally {
       setBusy(false)
     }
@@ -169,7 +183,7 @@ function Participants({ slug, data, onChange }: { slug: string; data: Doc; onCha
       await apiDelete(`/member/coy/${slug}/participants/${accountId}`)
       onChange()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
     }
   }
 
@@ -225,7 +239,7 @@ function Participants({ slug, data, onChange }: { slug: string; data: Doc; onCha
         />
       ) : (
         <ul className="coyParticipants">
-          {data.items.map((p: Doc) => (
+          {data.items.map((p) => (
             <li key={p.accountId} className="coyParticipant">
               <div>
                 <strong>{p.name || p.email}</strong>
@@ -250,16 +264,25 @@ function Participants({ slug, data, onChange }: { slug: string; data: Doc; onCha
   )
 }
 
-function Announce({ slug, summary, onSent }: { slug: string; summary: Doc; onSent: () => void }) {
+function Announce({
+  slug,
+  summary,
+  onSent,
+}: {
+  slug: string
+  summary: CoyAudienceSummary
+  onSent: () => void
+}) {
   const [form, setForm] = useState({ title: '', message: '', reason: '', confirm: '' })
   const [channels, setChannels] = useState<string[]>(['hub'])
   const [campaign, setCampaign] = useState(() => crypto.randomUUID())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fields, setFields] = useState<Doc>({})
-  const [sent, setSent] = useState<Doc | null>(null)
-  const set = (key: keyof typeof form) => (e: AnyValue) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }))
+  const [fields, setFields] = useState<Record<string, string>>({})
+  const [sent, setSent] = useState<CoyAnnounceResult | null>(null)
+  const set =
+    (key: keyof typeof form) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [key]: e.target.value }))
   const toggle = (value: string) =>
     setChannels((c) => (c.includes(value) ? c.filter((v) => v !== value) : [...c, value]))
   const ready =
@@ -276,7 +299,7 @@ function Announce({ slug, summary, onSent }: { slug: string; summary: Doc; onSen
     setFields({})
     try {
       const { confirm: _confirm, ...body } = form
-      const res = await apiPost(
+      const res = await apiPost<CoyAnnounceResult>(
         `/member/coy/${slug}/announce`,
         { ...body, channels },
         { 'x-idempotency-key': campaign },
@@ -286,8 +309,8 @@ function Announce({ slug, summary, onSent }: { slug: string; summary: Doc; onSen
       setCampaign(crypto.randomUUID())
       onSent()
     } catch (e) {
-      setFields((e as AnyValue).fields || {})
-      setError((e as AnyValue).fields ? null : (e as AnyValue).message)
+      setFields(fieldErrors(e))
+      setError(hasFieldErrors(e) ? null : errorMessage(e))
     } finally {
       setBusy(false)
     }

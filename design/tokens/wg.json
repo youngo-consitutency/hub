@@ -1,0 +1,103 @@
+{
+  "$description": "Working-group colour families, editable in Figma (Tokens Studio). Each family needs accent, tint and onTint; the build checks their contrast. Which group uses which family is design/wg-map.json.",
+  "wg": {
+    "forest": {
+      "accent": {
+        "$value": "#006e52",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#ccf1de",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#004d38",
+        "$type": "color"
+      }
+    },
+    "ocean": {
+      "accent": {
+        "$value": "#0369a1",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#e0f2fe",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#075985",
+        "$type": "color"
+      }
+    },
+    "sun": {
+      "accent": {
+        "$value": "#92400e",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#fef3c7",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#78350f",
+        "$type": "color"
+      }
+    },
+    "violet": {
+      "accent": {
+        "$value": "#6d28d9",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#ede9fe",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#4c1d95",
+        "$type": "color"
+      }
+    },
+    "rose": {
+      "accent": {
+        "$value": "#be123c",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#ffe4e6",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#881337",
+        "$type": "color"
+      }
+    },
+    "teal": {
+      "accent": {
+        "$value": "#0f766e",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#ccfbf1",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#134e4a",
+        "$type": "color"
+      }
+    },
+    "indigo": {
+      "accent": {
+        "$value": "#4338ca",
+        "$type": "color"
+      },
+      "tint": {
+        "$value": "#e0e7ff",
+        "$type": "color"
+      },
+      "on-tint": {
+        "$value": "#312e81",
+        "$type": "color"
+      }
+    }
+  }
+}

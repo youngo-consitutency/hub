@@ -1,11 +1,11 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { EmailPreferencesForm, NotificationPreferences } from '../../shared/contracts'
 import { useEffect, useState } from 'react'
 import {
   TbCircleCheck as CheckCircle2,
   TbMail as Mail,
   TbAlertTriangle as TriangleAlert,
 } from 'react-icons/tb'
-import { apiGet, apiPatch, apiPost } from '../lib/api'
+import { apiGet, apiPatch, apiPost, errorMessage } from '../lib/api'
 import { Button } from './ui'
 
 const CATEGORIES = [
@@ -34,15 +34,17 @@ const CATEGORIES = [
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function EmailNotificationSettings() {
-  const [state, setState] = useState<Doc>({ loading: true })
-  const [form, setForm] = useState<AnyValue>(null)
+  const [state, setState] = useState<{ loading: boolean } & Partial<NotificationPreferences>>({
+    loading: true,
+  })
+  const [form, setForm] = useState<EmailPreferencesForm | null>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
   const load = async () => {
     try {
-      const data = await apiGet('/member/notifications/preferences')
+      const data = await apiGet<NotificationPreferences>('/member/notifications/preferences')
       setState({ loading: false, ...data })
       setForm({
         timezone: data.timezone,
@@ -52,7 +54,7 @@ export function EmailNotificationSettings() {
       })
     } catch (thrown) {
       setState({ loading: false })
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     }
   }
 
@@ -68,7 +70,7 @@ export function EmailNotificationSettings() {
       await apiPost('/member/notifications/verify-email/request')
       setMessage('Verification email sent. Open its link within 24 hours.')
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     } finally {
       setBusy(false)
     }
@@ -79,11 +81,14 @@ export function EmailNotificationSettings() {
     setError('')
     setMessage('')
     try {
-      const result = await apiPatch('/member/notifications/preferences', form)
+      const result = await apiPatch<{ preferences: EmailPreferencesForm }>(
+        '/member/notifications/preferences',
+        form,
+      )
       setForm(result.preferences)
       setMessage('Email preferences saved.')
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     } finally {
       setBusy(false)
     }
@@ -120,9 +125,9 @@ export function EmailNotificationSettings() {
         <p className="meta" role="status">
           Loading email preferences…
         </p>
-      ) : !(state as AnyValue).deliveryConfigured ? (
+      ) : !state.deliveryConfigured ? (
         <p className="metaMuted">Email delivery is not configured for this Hub deployment yet.</p>
-      ) : !(state as AnyValue).emailVerified ? (
+      ) : !state.emailVerified ? (
         <div className="stackSm">
           <p className="meta">Confirm your account address before enabling digests or alerts.</p>
           <Button onClick={requestVerification} disabled={busy}>
@@ -137,13 +142,16 @@ export function EmailNotificationSettings() {
                 type="checkbox"
                 checked={Boolean(form.email[category.key])}
                 onChange={(event) =>
-                  setForm((current: AnyValue) => ({
-                    ...current,
-                    email: {
-                      ...current.email,
-                      [category.key]: event.target.checked,
-                    },
-                  }))
+                  setForm(
+                    (current) =>
+                      current && {
+                        ...current,
+                        email: {
+                          ...current.email,
+                          [category.key]: event.target.checked,
+                        },
+                      },
+                  )
                 }
               />
               <span>
@@ -159,10 +167,9 @@ export function EmailNotificationSettings() {
                 className="input"
                 value={form.digestDay}
                 onChange={(event) =>
-                  setForm((current: AnyValue) => ({
-                    ...current,
-                    digestDay: Number(event.target.value),
-                  }))
+                  setForm(
+                    (current) => current && { ...current, digestDay: Number(event.target.value) },
+                  )
                 }
               >
                 {DAYS.map((day, index) => (

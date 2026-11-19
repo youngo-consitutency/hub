@@ -1,9 +1,10 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { ChangeEvent } from 'react'
+import type { BroadcastResult, EmailPreview } from '../../shared/contracts'
 import { useContentOptionLabels } from '../lib/documents'
 import { useState } from 'react'
 import { TbMail as Mail, TbSend as Send } from 'react-icons/tb'
 import { useWorkingGroups } from '../lib/workingGroups'
-import { apiPost } from '../lib/api'
+import { apiPost, errorMessage } from '../lib/api'
 import { Button, ErrorCard } from './ui'
 
 const TEAM_ROLES = ['membership_team', 'gys_policy_team', 'content_editor', 'content_publisher']
@@ -11,7 +12,7 @@ const TEAM_ROLES = ['membership_team', 'gys_policy_team', 'content_editor', 'con
 export function AdminEmailBroadcast() {
   const { teamLabels } = useContentOptionLabels()
   const wg = useWorkingGroups()
-  const [form, setForm] = useState<Doc>({
+  const [form, setForm] = useState({
     title: '',
     message: '',
     actionPath: '',
@@ -21,10 +22,12 @@ export function AdminEmailBroadcast() {
   })
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
-  const [result, setResult] = useState<AnyValue>(null)
-  const [preview, setPreview] = useState<AnyValue>(null)
+  const [result, setResult] = useState<BroadcastResult | null>(null)
+  const [preview, setPreview] = useState<EmailPreview | null>(null)
 
-  const change = ({ target }: AnyValue) =>
+  const change = ({
+    target,
+  }: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((current) => ({ ...current, [target.name]: target.value }))
 
   const payload = () => ({
@@ -38,22 +41,19 @@ export function AdminEmailBroadcast() {
     },
   })
 
-  const run = async (mode: AnyValue) => {
+  const run = async (mode: 'preview' | 'send') => {
     setBusy(mode)
     setError('')
     setResult(null)
     try {
-      const response = await apiPost(
-        `/member/admin/notifications/${mode}`,
-        payload(),
-        mode === 'send'
-          ? {
-              'x-idempotency-key': globalThis.crypto?.randomUUID?.() || String(Date.now()),
-            }
-          : {},
-      )
-      if (mode === 'preview') setPreview(response)
-      else {
+      if (mode === 'preview') {
+        setPreview(await apiPost<EmailPreview>('/member/admin/notifications/preview', payload()))
+      } else {
+        const response = await apiPost<BroadcastResult>(
+          '/member/admin/notifications/send',
+          payload(),
+          { 'x-idempotency-key': globalThis.crypto?.randomUUID?.() || String(Date.now()) },
+        )
         setPreview(null)
         setResult(response)
         setForm((current) => ({
@@ -65,7 +65,7 @@ export function AdminEmailBroadcast() {
         }))
       }
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     } finally {
       setBusy('')
     }
@@ -108,7 +108,7 @@ export function AdminEmailBroadcast() {
               <span>Working group</span>
               <select className="input" name="scopeValue" value={form.scopeValue} onChange={change}>
                 <option value="">Choose a working group</option>
-                {wg.groups.map((group: Doc) => (
+                {wg.groups.map((group) => (
                   <option key={group.slug} value={group.slug}>
                     {group.name}
                   </option>
@@ -191,10 +191,14 @@ export function AdminEmailBroadcast() {
           </p>
         )}
         <div className="rowGap">
-          <Button variant="secondary" disabled={!ready || busy} onClick={() => run('preview')}>
+          <Button
+            variant="secondary"
+            disabled={!ready || Boolean(busy)}
+            onClick={() => run('preview')}
+          >
             Preview
           </Button>
-          <Button variant="primary" disabled={!ready || busy} onClick={() => run('send')}>
+          <Button variant="primary" disabled={!ready || Boolean(busy)} onClick={() => run('send')}>
             <Send size={17} aria-hidden />
             Queue announcement
           </Button>

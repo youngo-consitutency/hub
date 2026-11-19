@@ -1,4 +1,3 @@
-import type { AnyValue } from '../lib/types'
 import { useQuery } from '../lib/router'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -15,10 +14,8 @@ import {
 import { currentDevice } from '../lib/device'
 import { isPushSupported } from '../lib/pwa'
 import { useAlertSetup } from '../lib/useAlertSetup'
-import { DEVICE_GUIDES, NotificationGuide } from './NotificationGuide'
+import { DEVICE_GUIDES, NotificationGuide, type GuideDevice } from './NotificationGuide'
 import { Button } from './ui'
-
-export { DEVICE_GUIDES, NotificationGuide }
 
 /**
  * Per-device notification control.
@@ -29,8 +26,8 @@ export { DEVICE_GUIDES, NotificationGuide }
  */
 export function NotificationSettings() {
   const setup = useAlertSetup()
-  const [helpDevice, setHelpDevice] = useState<AnyValue>(null)
-  const cardRef = useRef<AnyValue>(null)
+  const [helpDevice, setHelpDevice] = useState<GuideDevice | null>(null)
+  const cardRef = useRef<HTMLElement>(null)
   const alertsRequested = useQuery().has('alerts')
 
   useEffect(() => {
@@ -59,10 +56,8 @@ export function NotificationSettings() {
       ) : (
         <>
           <div className="notificationStatusActions">
-            <span
-              className={`chip ${(state as AnyValue).subscribed ? 'chip-accent' : 'chip-neutral'}`}
-            >
-              {(state as AnyValue).subscribed ? 'On' : 'Off'}
+            <span className={`chip ${state.subscribed ? 'chip-accent' : 'chip-neutral'}`}>
+              {state.subscribed ? 'On' : 'Off'}
             </span>
             <button
               type="button"
@@ -76,7 +71,7 @@ export function NotificationSettings() {
           </div>
           <div className="notificationHeadingRow">
             <span className="iconTile" aria-hidden>
-              {(state as AnyValue).subscribed ? <BellRing size={20} /> : <Bell size={20} />}
+              {state.subscribed ? <BellRing size={20} /> : <Bell size={20} />}
             </span>
             <div className="notificationHeadingCopy">
               <h2>Alerts on this device</h2>
@@ -108,7 +103,7 @@ export function NotificationSettings() {
               This browser cannot show web notifications. Chrome, Edge, Firefox, and Safari 16.4 or
               later all can.
             </p>
-          ) : !(state as AnyValue).configured ? (
+          ) : !state.configured ? (
             <p className="meta notificationHint">
               Notifications are not switched on for this Hub deployment yet. The admin team enables
               them once the server keys are in place.
@@ -141,7 +136,7 @@ export function NotificationSettings() {
             </p>
           ) : (
             <div className="rowGap notificationActions">
-              {(state as AnyValue).subscribed ? (
+              {state.subscribed ? (
                 <>
                   <Button variant="secondary" onClick={setup.disable} disabled={busy}>
                     <BellOff size={16} strokeWidth={1.75} aria-hidden />

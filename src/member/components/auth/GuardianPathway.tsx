@@ -1,11 +1,12 @@
 interface GuardianPathwayProps {
-  form: AnyValue
+  form: RegistrationForm
   dobError?: string
-  setChoice: AnyValue
+  setChoice: RegistrationFormProps['setChoice']
   membershipEmail?: string
 }
 
-import type { AnyValue, Doc } from '../../lib/types'
+import type { Doc } from '../../lib/types'
+import type { RegistrationForm, RegistrationFormProps } from './helpers'
 import { useState } from 'react'
 import { TbCheck as Check, TbShieldLock as ShieldLock } from 'react-icons/tb'
 import {
@@ -13,7 +14,7 @@ import {
   GUARDIAN_FIELDS,
   GUARDIAN_RELATIONSHIPS,
 } from '../../../shared/guardianEnquiry'
-import { apiPost } from '../../lib/api'
+import { apiPost, errorMessage, fieldErrors, hasFieldErrors } from '../../lib/api'
 import { Button } from '../ui'
 import { DatePicker, FieldError } from '../FormControls'
 import { FormAlert } from './shared'
@@ -36,7 +37,7 @@ export function GuardianPathway({
   const [fields, setFields] = useState<Doc>({})
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent'>('idle')
-  const set = (key: string, value: AnyValue) => {
+  const set = (key: string, value: string | boolean) => {
     setGuardian((g) => ({ ...g, [key]: value }))
     setFields(({ [key]: _cleared, ...rest }) => rest)
   }
@@ -48,9 +49,9 @@ export function GuardianPathway({
       await apiPost('/auth/guardian-enquiry', guardian)
       setGuardian(EMPTY)
       setStatus('sent')
-    } catch (e: AnyValue) {
-      setFields(e.fields || {})
-      setError(e.fields ? null : e.message)
+    } catch (e) {
+      setFields(fieldErrors(e))
+      setError(hasFieldErrors(e) ? null : errorMessage(e))
       setStatus('idle')
     }
   }
@@ -114,7 +115,7 @@ export function GuardianPathway({
 
       <h3 className="guardianSubhead">What this request stores</h3>
       <ul className="guardianFields">
-        {GUARDIAN_FIELDS.map((item: AnyValue) => (
+        {GUARDIAN_FIELDS.map((item) => (
           <li key={item.id}>
             <strong>{item.label}</strong>
             <span className="meta">{item.why}</span>
@@ -141,7 +142,7 @@ export function GuardianPathway({
           <span>Guardian name *</span>
           <input
             className="input"
-            autoComplete="name"
+            autoComplete="off"
             disabled={busy}
             value={guardian.guardianName}
             onChange={(e) => set('guardianName', e.target.value)}
@@ -154,7 +155,7 @@ export function GuardianPathway({
           <input
             className="input"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             disabled={busy}
             value={guardian.guardianEmail}
             onChange={(e) => set('guardianEmail', e.target.value)}
@@ -166,7 +167,7 @@ export function GuardianPathway({
       <fieldset className="guardianRelationship">
         <legend className="meta">I am the *</legend>
         <div className="authChoiceGrid">
-          {GUARDIAN_RELATIONSHIPS.map((opt: AnyValue) => (
+          {GUARDIAN_RELATIONSHIPS.map((opt) => (
             <label
               key={opt.value}
               className={`authChoice ${guardian.relationship === opt.value ? 'active' : ''}`}

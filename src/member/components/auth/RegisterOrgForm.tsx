@@ -1,22 +1,19 @@
-interface RegisterOrgFormProps {
-  form?: AnyValue
-  fields?: AnyValue
-  admitted?: AnyValue
-  nonAdmitted?: AnyValue
-  missionWords?: AnyValue
-  countryOptions?: AnyValue
-  setForm?: AnyValue
-  setReg?: AnyValue
-  setChoice?: AnyValue
-  setPhone?: AnyValue
-  toggleWg?: AnyValue
-  ensureCountryOptions?: AnyValue
+interface RegisterOrgFormProps extends RegistrationFormProps {
+  admitted: boolean
+  nonAdmitted: boolean
+  missionWords: number
 }
 
-import type { AnyValue } from '../../lib/types'
+import type { ConnectDoc, PoliciesDoc, RegistrationOptionsDoc } from '../../../shared/contracts'
 import { useDocument } from '../../lib/documents'
 import { FieldError, SearchableSelect } from '../FormControls'
-import { asOptions, fieldClass, checkClass, loadPhoneSupport } from './helpers'
+import {
+  asOptions,
+  fieldClass,
+  checkClass,
+  loadPhoneSupport,
+  type RegistrationFormProps,
+} from './helpers'
 import { PhoneField, PolicyLink, WgInterestsSection } from './shared'
 
 export function RegisterOrgForm({
@@ -33,9 +30,9 @@ export function RegisterOrgForm({
   toggleWg,
   ensureCountryOptions,
 }: RegisterOrgFormProps) {
-  const { doc: policiesDoc } = useDocument('policies')
-  const { doc: connect } = useDocument('connect')
-  const { doc: regOptions } = useDocument('registration-options')
+  const { doc: policiesDoc } = useDocument<PoliciesDoc>('policies')
+  const { doc: connect } = useDocument<ConnectDoc>('connect')
+  const { doc: regOptions } = useDocument<RegistrationOptionsDoc>('registration-options')
   const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
   const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
   const REGION_OPTIONS = asOptions(regOptions?.regions || [])
@@ -93,7 +90,7 @@ export function RegisterOrgForm({
               type="radio"
               name="admitted"
               checked={form.isUnfcccAdmitted === 'yes'}
-              onChange={() => setForm((f: AnyValue) => ({ ...f, isUnfcccAdmitted: 'yes' }))}
+              onChange={() => setForm((f) => ({ ...f, isUnfcccAdmitted: 'yes' }))}
             />
             <strong>Yes — admitted</strong>
             <span className="meta">UNFCCC observer NGO path (DCP + youth affiliation).</span>
@@ -103,7 +100,7 @@ export function RegisterOrgForm({
               type="radio"
               name="admitted"
               checked={form.isUnfcccAdmitted === 'no'}
-              onChange={() => setForm((f: AnyValue) => ({ ...f, isUnfcccAdmitted: 'no' }))}
+              onChange={() => setForm((f) => ({ ...f, isUnfcccAdmitted: 'no' }))}
             />
             <strong>No — not admitted</strong>
             <span className="meta">Groups, movements, networks, non-admitted NGOs.</span>
@@ -152,7 +149,7 @@ export function RegisterOrgForm({
               Is your organisation affiliated with “youth” within the UNFCCC? *
             </p>
             <div className="authChoiceGrid">
-              {YOUTH_AFFILIATION_OPTIONS.map((opt: AnyValue) => (
+              {YOUTH_AFFILIATION_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
                   className={`authChoice ${form.youthAffiliation === opt.value ? 'active' : ''}`}
@@ -162,7 +159,7 @@ export function RegisterOrgForm({
                     name="youthAff"
                     checked={form.youthAffiliation === opt.value}
                     onChange={() =>
-                      setForm((f: AnyValue) => ({
+                      setForm((f) => ({
                         ...f,
                         youthAffiliation: opt.value,
                       }))
@@ -321,7 +318,7 @@ export function RegisterOrgForm({
               className="input"
               value={form.orgWebsite || form.orgSocial}
               onChange={(e) =>
-                setForm((f: AnyValue) => ({
+                setForm((f) => ({
                   ...f,
                   orgWebsite: e.target.value,
                   orgSocial: e.target.value,

@@ -1,11 +1,11 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { FeedbackTicket, FeedbackTicketsResponse } from '../../shared/contracts'
 import { formatDateTime } from '../lib/time'
 import { useEffect, useState } from 'react'
-import { apiGet } from '../lib/api'
+import { apiGet, errorMessage } from '../lib/api'
 import { Empty, ErrorCard, Section, Skeletons } from './ui'
 import { TbMessagePlus as MessageSquarePlus } from 'react-icons/tb'
 
-const KIND_LABEL = {
+const KIND_LABEL: Record<string, string> = {
   bug: 'Broken',
   ui_ux: 'Design / usability',
   feature: 'Idea',
@@ -14,7 +14,7 @@ const KIND_LABEL = {
   other: 'Other',
 }
 
-const STATUS_LABEL = {
+const STATUS_LABEL: Record<string, string> = {
   new: 'Received',
   triaged: 'Triaged',
   in_progress: 'In progress',
@@ -23,12 +23,15 @@ const STATUS_LABEL = {
 }
 
 export function MyFeedback() {
-  const [state, setState] = useState<Doc>({ items: null, error: null })
+  const [state, setState] = useState<{ items: FeedbackTicket[] | null; error: string | null }>({
+    items: null,
+    error: null,
+  })
 
   const load = () => {
-    apiGet('/member/feedback/mine')
+    apiGet<FeedbackTicketsResponse>('/member/feedback/mine')
       .then((data) => setState({ items: data.items, error: null }))
-      .catch((error) => setState({ items: null, error: error.message }))
+      .catch((error) => setState({ items: null, error: errorMessage(error) }))
   }
 
   useEffect(() => {
@@ -47,21 +50,18 @@ export function MyFeedback() {
         />
       )}
       <div className="stackSm">
-        {(state.items || []).map((ticket: Doc) => (
-          <div key={(ticket as AnyValue).id} className="card cardTight">
+        {(state.items || []).map((ticket) => (
+          <div key={ticket.id} className="card cardTight">
             <div className="rowGap" style={{ flexWrap: 'wrap' }}>
-              <span className="chip chip-info">
-                {(KIND_LABEL as AnyValue)[(ticket as AnyValue).kind] || (ticket as AnyValue).kind}
-              </span>
+              <span className="chip chip-info">{KIND_LABEL[ticket.kind] || ticket.kind}</span>
               <span className="chip chip-neutral">
-                {(STATUS_LABEL as AnyValue)[(ticket as AnyValue).status] ||
-                  (ticket as AnyValue).status}
+                {STATUS_LABEL[ticket.status] || ticket.status}
               </span>
             </div>
-            <h3 style={{ marginTop: 6 }}>{(ticket as AnyValue).title}</h3>
+            <h3 style={{ marginTop: 6 }}>{ticket.title}</h3>
             <p className="metaMuted">
-              {(ticket as AnyValue).pagePath ? `${(ticket as AnyValue).pagePath} · ` : ''}
-              {(ticket as AnyValue).createdAt ? formatDateTime((ticket as AnyValue).createdAt) : ''}
+              {ticket.pageUrl ? `${ticket.pageUrl} · ` : ''}
+              {ticket.createdAt ? formatDateTime(ticket.createdAt) : ''}
             </p>
           </div>
         ))}

@@ -1,35 +1,43 @@
 interface ResourceQueueProps {
-  account?: AnyValue
+  account: Account
 }
 
 interface LinkReviewProps {
-  item?: AnyValue
-  issues?: AnyValue
-  previous?: AnyValue
-  onClose?: AnyValue
-  onSaved?: AnyValue
-  onCorrect?: AnyValue
+  item: ResourceSummary
+  issues: ResourceIssue[]
+  previous?: ResourceReview
+  onClose: () => void
+  onSaved: (message: string) => void
+  onCorrect: () => void
 }
 
 interface SubmissionReviewProps {
-  item?: AnyValue
-  account?: AnyValue
-  onClose?: AnyValue
-  onSaved?: AnyValue
+  item: ContentDraftView
+  account: Account
+  onClose: () => void
+  onSaved: (message: string) => void
 }
 
-import type { AnyValue } from '../lib/types'
+import type {
+  ContentDraftView,
+  ResourceIssue,
+  ResourceIssuesResponse,
+  ResourceReview,
+  ResourceSummary,
+} from '../../shared/contracts'
+import type { ResourceCardData } from '../components/ResourceHub'
+import type { Account } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbShieldCheck as ReviewIcon } from 'react-icons/tb'
 import { regionLabel } from '../lib/regions'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { optionLabel as resourceLabel, useContentOptions } from '../lib/documents'
 import { ResourceCard, ResourceSubmissionPanel } from '../components/ResourceHub'
 import { A, Async, Button, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { Locked } from '../components/Locked'
 import { ACCESS_FAILED, CHECKING_ACCESS } from '../lib/routes'
 import { useAccount } from '../lib/accountContext'
-import { apiPost, useApi } from '../lib/api'
+import { apiPost, useApi, errorMessage } from '../lib/api'
 
 export function ResourceIssues() {
   const { account } = useAccount()
@@ -47,28 +55,34 @@ export function ResourceIssues() {
 }
 
 function ResourceQueue({ account }: ResourceQueueProps) {
-  const query = useApi('/member/resources/issues')
+  const query = useApi<ResourceIssuesResponse>('/member/resources/issues')
   const [filter, setFilter] = useState('needs_verification')
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<AnyValue>(null)
-  const [correction, setCorrection] = useState<AnyValue>(null)
+  const [selectedResource, setSelectedResource] = useState<ResourceSummary | null>(null)
+  const [selectedDraft, setSelectedDraft] = useState<ContentDraftView | null>(null)
+  const clearSelection = () => {
+    setSelectedResource(null)
+    setSelectedDraft(null)
+  }
+  const [correction, setCorrection] = useState<ResourceSummary | null>(null)
   const [limit, setLimit] = useState(12)
   const [message, setMessage] = useState('')
   const data = query.data
-  const items =
-    (filter === 'submissions' ? data?.submissions : data?.items)?.filter((item: AnyValue) => {
-      const title = item.title || item.payload.title
-      return (
-        title.toLowerCase().includes(search.toLowerCase()) &&
-        (filter === 'submissions' || filter === 'reported'
-          ? filter === 'submissions' || item.verification.openIssues > 0
-          : item.verification.status === filter)
-      )
-    }) || []
-  // flagged first, then never checked, then the stalest check
-  if (filter !== 'submissions')
-    items.sort((a: AnyValue, b: AnyValue) => {
-      const rank = (v: AnyValue) => [v.openIssues > 0 ? 0 : 1, v.checkedAt ? 1 : 0]
+  const needle = search.toLowerCase()
+  // the verification queue lists resources; the submissions queue lists member drafts
+  const resources = (data?.items ?? [])
+    .filter((item) => {
+      if (!item.title.toLowerCase().includes(needle)) return false
+      return filter === 'reported'
+        ? item.verification.openIssues > 0
+        : item.verification.status === filter
+    })
+    // flagged first, then never checked, then the stalest check
+    .sort((a, b) => {
+      const rank = (v: ResourceSummary['verification']) => [
+        v.openIssues > 0 ? 0 : 1,
+        v.checkedAt ? 1 : 0,
+      ]
       const [fa, ca] = rank(a.verification)
       const [fb, cb] = rank(b.verification)
       return (
@@ -77,8 +91,14 @@ function ResourceQueue({ account }: ResourceQueueProps) {
         String(a.verification.checkedAt).localeCompare(String(b.verification.checkedAt))
       )
     })
-  function saved(text: AnyValue) {
-    setSelected(null)
+  const submissions = (data?.submissions ?? []).filter((draft) =>
+    String(draft.payload.title ?? '')
+      .toLowerCase()
+      .includes(needle),
+  )
+  const queueLength = filter === 'submissions' ? submissions.length : resources.length
+  function saved(text: string) {
+    clearSelection()
     setMessage(text)
     query.retry()
   }
@@ -108,13 +128,13 @@ function ResourceQueue({ account }: ResourceQueueProps) {
             onChange={(event) => {
               setFilter(event.target.value)
               setLimit(12)
-              setSelected(null)
+              clearSelection()
             }}
           >
             <option value="needs_verification">
               Needs verification (
-              {data?.items.filter((i: AnyValue) => i.verification.status === 'needs_verification')
-                .length || 0}
+              {data?.items.filter((i) => i.verification.status === 'needs_verification').length ??
+                0}
               )
             </option>
             <option value="reported">Reported issues ({data?.issues.length || 0})</option>
@@ -140,29 +160,29 @@ function ResourceQueue({ account }: ResourceQueueProps) {
           />
         </label>
       </div>
-      {selected && filter === 'submissions' && (
-        <SidePanel title="Review resource submission" onClose={() => setSelected(null)}>
+      {selectedDraft && filter === 'submissions' && (
+        <SidePanel title="Review resource submission" onClose={clearSelection}>
           <SubmissionReview
-            key={selected.id}
-            item={selected}
+            key={selectedDraft.id}
+            item={selectedDraft}
             account={account}
-            onClose={() => setSelected(null)}
+            onClose={clearSelection}
             onSaved={saved}
           />
         </SidePanel>
       )}
-      {selected && filter !== 'submissions' && (
-        <SidePanel title="Verify resource" onClose={() => setSelected(null)}>
+      {selectedResource && filter !== 'submissions' && (
+        <SidePanel title="Verify resource" onClose={clearSelection}>
           <LinkReview
-            key={selected.slug + selected.fingerprint}
-            item={selected}
-            issues={(data?.issues || []).filter((i: AnyValue) => i.resourceSlug === selected.slug)}
-            previous={data?.reviews.find((i: AnyValue) => i.resourceSlug === selected.slug)}
-            onClose={() => setSelected(null)}
+            key={selectedResource.slug + selectedResource.fingerprint}
+            item={selectedResource}
+            issues={(data?.issues ?? []).filter((i) => i.resourceSlug === selectedResource.slug)}
+            previous={data?.reviews.find((i) => i.resourceSlug === selectedResource.slug)}
+            onClose={clearSelection}
             onSaved={saved}
             onCorrect={() => {
-              setCorrection(selected)
-              setSelected(null)
+              setCorrection(selectedResource)
+              clearSelection()
             }}
           />
         </SidePanel>
@@ -179,24 +199,36 @@ function ResourceQueue({ account }: ResourceQueueProps) {
       )}
       <Async query={query}>
         {() =>
-          items.length ? (
+          queueLength ? (
             <>
               <p className="metaMuted" role="status">
-                {items.length} resources in this queue
+                {queueLength} resources in this queue
               </p>
               <div className="cardGrid resourceHubGrid">
-                {items.slice(0, limit).map((item: AnyValue) => (
-                  <ResourceCard
-                    key={item.slug || item.id}
-                    resource={item.payload || item}
-                    onReview={() => {
-                      setSelected(item)
-                      setMessage('')
-                    }}
-                  />
-                ))}
+                {filter === 'submissions'
+                  ? submissions.slice(0, limit).map((draft) => (
+                      <ResourceCard
+                        key={draft.id}
+                        // a draft's payload is a resource that has not been published or verified yet
+                        resource={draft.payload as ResourceCardData}
+                        onReview={() => {
+                          setSelectedDraft(draft)
+                          setMessage('')
+                        }}
+                      />
+                    ))
+                  : resources.slice(0, limit).map((item) => (
+                      <ResourceCard
+                        key={item.slug}
+                        resource={item}
+                        onReview={() => {
+                          setSelectedResource(item)
+                          setMessage('')
+                        }}
+                      />
+                    ))}
               </div>
-              {items.length > limit && (
+              {queueLength > limit && (
                 <div className="resourceLoadMore">
                   <Button variant="secondary" onClick={() => setLimit((value) => value + 12)}>
                     Show more
@@ -213,23 +245,29 @@ function ResourceQueue({ account }: ResourceQueueProps) {
   )
 }
 
+const VERIFICATION_CHECKS: ['link' | 'description' | 'tags', string][] = [
+  ['link', 'I opened the destination and it is accessible and appropriate.'],
+  ['description', 'The title and description accurately explain a useful climate resource.'],
+  ['tags', 'The pathway, topic tags, type, region, and language are appropriate.'],
+]
+
 function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: LinkReviewProps) {
   const {
     resourcePathways: RESOURCE_PATHWAYS,
     resourceTypes: RESOURCE_TYPES,
     resourceIssueKinds: RESOURCE_ISSUE_KINDS,
   } = useContentOptions()
-  const [checks, setChecks] = useState<AnyValue>({
+  const [checks, setChecks] = useState<Record<'link' | 'description' | 'tags', boolean>>({
     link: false,
     description: false,
     tags: false,
   })
   const [status, setStatus] = useState('verified')
   const [note, setNote] = useState('')
-  const [resolved, setResolved] = useState<AnyValue[]>([])
+  const [resolved, setResolved] = useState<number[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  async function submit(event: AnyValue) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setBusy(true)
     setError('')
@@ -247,7 +285,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
           : 'Review saved. The catalogue now shows the updated verification state.',
       )
     } catch (error) {
-      setError((error as AnyValue).message)
+      setError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -293,7 +331,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
       {issues.length > 0 && (
         <fieldset className="resourceTopicPicker">
           <legend>Open reports</legend>
-          {issues.map((issue: AnyValue) => (
+          {issues.map((issue) => (
             <label key={issue.id} className="resourceCheck resourceIssue">
               <input
                 type="checkbox"
@@ -307,10 +345,8 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
                 }
               />
               <span>
-                <strong>
-                  {RESOURCE_ISSUE_KINDS.find((k: AnyValue) => k.value === issue.kind)?.label}
-                </strong>{' '}
-                — {issue.detail}
+                <strong>{RESOURCE_ISSUE_KINDS.find((k) => k.value === issue.kind)?.label}</strong> —{' '}
+                {issue.detail}
                 <small className="metaMuted">
                   {' '}
                   Select only if your review resolves this report.
@@ -322,20 +358,13 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
       )}
       <fieldset className="resourceTopicPicker">
         <legend>Human verification</legend>
-        {[
-          ['link', 'I opened the destination and it is accessible and appropriate.'],
-          [
-            'description',
-            'The title and description accurately explain a useful climate resource.',
-          ],
-          ['tags', 'The pathway, topic tags, type, region, and language are appropriate.'],
-        ].map(([key, label]) => (
+        {VERIFICATION_CHECKS.map(([key, label]) => (
           <label className="resourceCheck" key={key}>
             <input
               type="checkbox"
-              checked={(checks as AnyValue)[key]}
+              checked={checks[key]}
               onChange={(event) =>
-                setChecks((current: AnyValue) => ({
+                setChecks((current) => ({
                   ...current,
                   [key]: event.target.checked,
                 }))
@@ -395,7 +424,7 @@ function SubmissionReview({ item, account, onClose, onSaved }: SubmissionReviewP
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [checked, setChecked] = useState(false)
-  async function act(decision: AnyValue) {
+  async function act(decision: 'publish' | 'approve' | 'request_changes' | 'reject') {
     setBusy(true)
     setError('')
     try {
@@ -410,7 +439,7 @@ function SubmissionReview({ item, account, onClose, onSaved }: SubmissionReviewP
           : 'Submission review saved.',
       )
     } catch (error) {
-      setError((error as AnyValue).message)
+      setError(errorMessage(error))
     } finally {
       setBusy(false)
     }

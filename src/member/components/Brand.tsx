@@ -22,6 +22,10 @@ export function Brand({ constituencyOnly = false }: BrandProps) {
         width={width}
         height={height}
       />
+      {/* the icon rail has no room for the wordmark; css swaps this in there */}
+      {!constituencyOnly && (
+        <img className="brandMark" src="/icons/icon-96.png" alt="" width={40} height={40} />
+      )}
     </span>
   )
 }

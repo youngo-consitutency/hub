@@ -1,27 +1,32 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { FormEvent } from 'react'
+import type { CourseResponse, CourseSubmitResponse } from '../../shared/contracts'
 import { useState } from 'react'
-import { apiPost, useApi } from '../lib/api'
+import { apiPost, useApi, errorMessage } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import { A, Button, Skeletons, ErrorCard, PageHeader } from '../components/ui'
 import { navigate } from '../lib/router'
+import { TbCheck as Check } from 'react-icons/tb'
 import {
   TbArrowLeft as ArrowLeft,
-  TbCheck as Check,
   TbChevronLeft as ChevronLeft,
   TbChevronRight as ChevronRight,
-} from 'react-icons/tb'
+} from '../components/dirIcons'
 
 export function Course() {
   const { account, setAccount, reloadAccess } = useAccount()
-  const course = useApi('/member/course')
+  const course = useApi<CourseResponse>('/member/course')
   const data = course.data
-  const [submitError, setError] = useState<AnyValue>(null)
+  const [submitError, setError] = useState<string | null>(null)
   const error = submitError || course.error
   const [step, setStep] = useState('modules') // modules | quiz | done
   const [moduleIdx, setModuleIdx] = useState(0)
-  const [answers, setAnswers] = useState<Doc>({})
+  const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<AnyValue>(null)
+  const [result, setResult] = useState<{
+    score: number | null
+    total?: number
+    passed: boolean
+  } | null>(null)
 
   const load = () => {
     setError(null)
@@ -34,18 +39,18 @@ export function Course() {
   const mod = data.modules[moduleIdx]
   const lastModule = moduleIdx >= data.modules.length - 1
 
-  const submitQuiz = async (e: AnyValue) => {
+  const submitQuiz = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     try {
-      const res = await apiPost('/member/course/submit', { answers })
+      const res = await apiPost<CourseSubmitResponse>('/member/course/submit', { answers })
       setResult(res)
       setAccount(res.account)
       reloadAccess()
       setStep('done')
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
       setResult({ score: null, passed: false })
     } finally {
       setSubmitting(false)
@@ -124,7 +129,7 @@ export function Course() {
               </div>
             </div>
             <div className="stackSm courseModuleBody">
-              {mod.body.map((p: AnyValue, i: number) => (
+              {mod.body.map((p, i) => (
                 <p key={i} className="meta mandatePara">
                   {p}
                 </p>
@@ -143,13 +148,13 @@ export function Course() {
 
       {step === 'quiz' && (
         <form className="stack" style={{ marginTop: 16 }} onSubmit={submitQuiz}>
-          {data.quiz.map((q: AnyValue, qi: AnyValue) => (
+          {data.quiz.map((q, qi) => (
             <div key={q.id} className="card">
               <h3>
                 {qi + 1}. {q.prompt}
               </h3>
               <div className="stackSm" style={{ marginTop: 10 }}>
-                {q.choices.map((c: AnyValue) => (
+                {q.choices.map((c) => (
                   <label
                     key={c.id}
                     className={`authChoice ${answers[q.id] === c.id ? 'active' : ''}`}

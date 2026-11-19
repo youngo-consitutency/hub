@@ -9,7 +9,8 @@ import {
   Modal,
   ModalOverlay,
 } from 'react-aria-components'
-import { TbArrowBackUp, TbArrowsShuffle, TbPencil } from 'react-icons/tb'
+import { TbArrowsShuffle, TbPencil } from 'react-icons/tb'
+import { TbArrowBackUp } from './dirIcons'
 import {
   AVATAR_CHOICES,
   cleanAvatar,
@@ -18,8 +19,7 @@ import {
   type AvatarKey,
   type AvatarOptions,
 } from '../../shared/avatar'
-import { apiPut } from '../lib/api'
-import type { AnyValue } from '../lib/types'
+import { apiPut, errorMessage } from '../lib/api'
 import { Avatar } from './MemberAvatar'
 import { Tabs } from './Tabs'
 import { Button, ErrorCard } from './ui'
@@ -129,7 +129,7 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
       onSaved()
       close()
     } catch (caught) {
-      setError((caught as AnyValue).message)
+      setError(errorMessage(caught))
       setSaving(false)
     }
   }
@@ -177,7 +177,7 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
           <Button
             className="min-h-11"
             variant="ghost"
-            isDisabled={saving}
+            disabled={saving}
             onClick={() => setPicks(randomAvatar())}
           >
             <TbArrowsShuffle size={16} aria-hidden />
@@ -186,7 +186,7 @@ function AvatarEditor({ accountId, saved, onSaved, close }: EditorProps) {
           <Button
             className="min-h-11"
             variant="ghost"
-            isDisabled={saving}
+            disabled={saving}
             onClick={() => setPicks(null)}
           >
             <TbArrowBackUp size={16} aria-hidden />

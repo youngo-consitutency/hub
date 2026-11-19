@@ -1,4 +1,3 @@
-import type { AnyValue } from './types'
 const STORAGE_KEY = 'youngo-hub:membership-policy-ack'
 
 /**
@@ -6,7 +5,7 @@ const STORAGE_KEY = 'youngo-hub:membership-policy-ack'
  * A new policy version requires another acknowledgement. The current
  * version comes from the membership-policy content document.
  */
-export function hasAcknowledgedMembershipPolicy(policyVersion: AnyValue) {
+export function hasAcknowledgedMembershipPolicy(policyVersion: string | null | undefined) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return false
@@ -17,7 +16,7 @@ export function hasAcknowledgedMembershipPolicy(policyVersion: AnyValue) {
   }
 }
 
-export function acknowledgeMembershipPolicy(policyVersion: AnyValue) {
+export function acknowledgeMembershipPolicy(policyVersion: string | null | undefined) {
   const payload = {
     version: policyVersion,
     acknowledgedAt: new Date().toISOString(),
