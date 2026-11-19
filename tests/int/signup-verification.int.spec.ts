@@ -19,7 +19,9 @@ interface Captured {
 async function emailsTo(address: string, expected = 1, timeoutMs = 8000): Promise<Captured[]> {
   const deadline = Date.now() + timeoutMs
   for (;;) {
-    const names = await readdir(DIR!).catch(() => [] as string[])
+    const names = (await readdir(DIR!).catch(() => [] as string[])).filter((name) =>
+      name.endsWith('.json'),
+    )
     const mails = await Promise.all(
       names.map(async (name) => JSON.parse(await readFile(join(DIR!, name), 'utf8')) as Captured),
     )

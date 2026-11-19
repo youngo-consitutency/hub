@@ -16,11 +16,16 @@ import { hubUrl } from '../lib/hubUrl'
 import {
   isPendingRegistration,
   savePendingRegistration,
-  takePendingRegistration,
+  readPendingRegistration,
+  discardPendingRegistration,
+  purgeExpiredRegistrations,
 } from '../lib/pendingRegistration'
 import { rateLimit } from '../lib/rateLimit'
 import { isUniqueViolation, requirePgPool } from '../lib/pg'
 import { sendEmail, emailConfigured } from '../lib/email'
+import { audit } from '../lib/audit'
+import { deliveryDisabled } from '../lib/environment'
+import { requireCronSecret } from '../lib/cron'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
@@ -154,6 +159,31 @@ async function sendQuietly(req: PayloadRequest, message: Parameters<typeof sendE
   }
 }
 
+async function confirmOrNotify(req: PayloadRequest, data: RegistrationData) {
+  const origin = appBaseUrl()
+  const existing = await req.payload.find({
+    collection: 'accounts',
+    where: { email: { equals: data.email } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  if (existing.docs.length) {
+    await sendQuietly(req, {
+      to: data.email,
+      subject: 'Your YOUNGO Hub account',
+      text: `Someone used this address to join YOUNGO Hub, but you already have an account.\n\nSign in: ${origin}/signin\nForgot your password: ${origin}/reset-password\n\nIf this was not you, you can ignore this message; nothing has changed.`,
+    })
+    return
+  }
+  const token = await savePendingRegistration(data.email, data)
+  await sendQuietly(req, {
+    to: data.email,
+    subject: 'Confirm your email to join YOUNGO Hub',
+    text: `Confirm your email address to finish creating your YOUNGO Hub account:\n\n${origin}/api/auth/confirm-registration?token=${token}\n\nThis link works for 24 hours. If you did not ask to join, ignore this message and nothing will be created.`,
+  })
+}
+
 // the person confirmed their address, so it is marked verified from the start
 async function createRegisteredAccount(req: PayloadRequest, data: RegistrationData) {
   return req.payload.create({
@@ -268,38 +298,20 @@ export const authEndpoints: Endpoint[] = [
       }
       const data = result.data!
 
-      // Production must be able to send the confirmation, or nobody could finish signing up.
-      if (process.env.VERCEL_ENV === 'production' && !emailConfigured())
-        throw fail.unavailable('Sign-up is temporarily unavailable.')
+      // no way to deliver the confirmation link means nobody can finish signing up
+      const canConfirm =
+        Boolean(process.env.HUB_CAPTURE_EMAIL_DIR) ||
+        (process.env.VERCEL_ENV === 'production' ? emailConfigured() : !deliveryDisabled())
+      if (!canConfirm) throw fail.unavailable('Sign-up is not available on this environment.')
 
-      const existing = await req.payload.find({
-        collection: 'accounts',
-        where: { email: { equals: data.email } },
-        limit: 1,
-        depth: 0,
-        overrideAccess: true,
+      // same reply and same work before it whether or not the address exists
+      after(async () => {
+        try {
+          await confirmOrNotify(req, data)
+        } catch (error) {
+          req.payload.logger.error({ event: 'signup_confirmation_failed', err: String(error) })
+        }
       })
-      // The reply never depends on whether the address is registered: only its owner learns that,
-      // by email. Sending happens after the response so the two cases take the same time.
-      const origin = appBaseUrl()
-      if (existing.docs.length) {
-        after(() =>
-          sendQuietly(req, {
-            to: data.email,
-            subject: 'Your YOUNGO Hub account',
-            text: `Someone used this address to join YOUNGO Hub, but you already have an account.\n\nSign in: ${origin}/signin\nForgot your password: ${origin}/reset-password\n\nIf this was not you, you can ignore this message; nothing has changed.`,
-          }),
-        )
-      } else {
-        const token = await savePendingRegistration(data.email, data)
-        after(() =>
-          sendQuietly(req, {
-            to: data.email,
-            subject: 'Confirm your email to join YOUNGO Hub',
-            text: `Confirm your email address to finish creating your YOUNGO Hub account:\n\n${origin}/api/auth/confirm-registration?token=${token}\n\nThis link works for 24 hours. If you did not ask to join, ignore this message and nothing will be created.`,
-          }),
-        )
-      }
       return pendingReply()
     }),
   },
@@ -308,7 +320,7 @@ export const authEndpoints: Endpoint[] = [
     // account is created by the button on this page.
     path: '/auth/confirm-registration',
     method: 'get',
-    handler: async (req) => {
+    handler: endpoint(async (req) => {
       const token = String((req as Doc).query?.token || '')
       if (!token || !(await isPendingRegistration(token)))
         return htmlResponse(invalidSignupPage, 400)
@@ -320,18 +332,19 @@ export const authEndpoints: Endpoint[] = [
           'Create my account',
         ),
       )
-    },
+    }),
   },
   {
     path: '/auth/confirm-registration',
     method: 'post',
-    handler: async (req) => {
+    handler: endpoint(async (req) => {
       await confirmRegistrationLimit(req)
       const token = String((req as Doc).query?.token || '')
-      const data = token ? await takePendingRegistration<RegistrationData>(token) : null
+      const data = token ? await readPendingRegistration<RegistrationData>(token) : null
       if (!data) return htmlResponse(invalidSignupPage, 400)
+      let account: Account
       try {
-        await createRegisteredAccount(req, data)
+        account = await createRegisteredAccount(req, data)
       } catch (error) {
         // someone registered the address in the meantime
         if (isUniqueViolation(error, 'accounts', 'accounts'))
@@ -344,6 +357,13 @@ export const authEndpoints: Endpoint[] = [
           )
         throw error
       }
+      await discardPendingRegistration(token)
+      await audit(req, account, {
+        action: 'account.registered',
+        targetType: 'accounts',
+        targetId: String(account.id),
+        after: { emailVerified: true, membershipTrack: data.membershipTrack ?? null },
+      }).catch(() => req.payload.logger.error({ event: 'signup_audit_failed' }))
       const logged = await loginResponse(req, data.email, data.password)
       if (!logged) return htmlResponse(invalidSignupPage, 400)
       const expiresAt = new Date(logged.exp * 1000)
@@ -356,7 +376,16 @@ export const authEndpoints: Endpoint[] = [
           'Cache-Control': 'no-store',
         },
       })
-    },
+    }),
+  },
+  {
+    // daily cron: drops unconfirmed sign-ups
+    path: '/cron/pending-registrations-purge',
+    method: 'get',
+    handler: endpoint(async (req) => {
+      requireCronSecret(req)
+      return json({ purged: await purgeExpiredRegistrations() })
+    }),
   },
   {
     path: '/auth/login',

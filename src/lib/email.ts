@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import nodemailer, { type Transporter } from 'nodemailer'
 import { defaultEmailFrom } from './env'
@@ -49,10 +49,10 @@ export function getEmailTransport(): Transporter | null {
 
 async function captureEmail(dir: string, to: string, subject: string, text: string) {
   await mkdir(dir, { recursive: true })
-  await writeFile(
-    join(dir, `${Date.now()}-${randomBytes(4).toString('hex')}.json`),
-    JSON.stringify({ to, subject, text }),
-  )
+  const name = `${Date.now()}-${randomBytes(4).toString('hex')}`
+  // rename last, so a reader never sees a half-written file
+  await writeFile(join(dir, `${name}.tmp`), JSON.stringify({ to, subject, text }))
+  await rename(join(dir, `${name}.tmp`), join(dir, `${name}.json`))
 }
 
 export async function sendEmail({

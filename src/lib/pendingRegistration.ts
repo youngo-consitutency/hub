@@ -2,12 +2,9 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { requirePgPool } from './pg'
 import { sha256Hex } from './crypto'
 
-// A registration is confirmed by email before an account exists. That keeps "is this address
-// already registered?" from being answerable through the sign-up form: every request gets the
-// same reply, and only the address's owner learns the difference, by email.
-//
-// The payload holds the whole sign-up including the password, so it is encrypted at rest (AES-GCM,
-// key derived from PAYLOAD_SECRET), kept for 24 hours and deleted the moment it is used.
+// A sign-up is confirmed by email before an account exists, so the form never reveals whether an
+// address is registered. The payload includes the password: encrypted at rest (AES-GCM, key from
+// PAYLOAD_SECRET), valid 24 hours, deleted once the account exists or by the daily purge.
 
 const LIFETIME_MS = 24 * 60 * 60 * 1000
 
@@ -32,9 +29,7 @@ function decrypt<T>(encoded: string): T {
 /** Stores the sign-up (replacing any earlier one for the address) and returns the emailed token. */
 export async function savePendingRegistration(email: string, data: unknown): Promise<string> {
   const token = randomBytes(32).toString('hex')
-  const pool = requirePgPool()
-  await pool.query('DELETE FROM pending_registrations WHERE expires_at < now()')
-  await pool.query(
+  await requirePgPool().query(
     `INSERT INTO pending_registrations (email, token_hash, payload_enc, expires_at)
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (email) DO UPDATE SET
@@ -56,11 +51,26 @@ export async function isPendingRegistration(token: string): Promise<boolean> {
   return (rowCount ?? 0) > 0
 }
 
-/** Consumes the token: one conditional DELETE, so two requests cannot both use it. */
-export async function takePendingRegistration<T>(token: string): Promise<T | null> {
+/** The stored sign-up for a valid token; leaves it in place. */
+export async function readPendingRegistration<T>(token: string): Promise<T | null> {
   const { rows } = await requirePgPool().query<{ payload_enc: string }>(
-    'DELETE FROM pending_registrations WHERE token_hash = $1 AND expires_at > now() RETURNING payload_enc',
+    'SELECT payload_enc FROM pending_registrations WHERE token_hash = $1 AND expires_at > now()',
     [sha256Hex(token)],
   )
   return rows[0] ? decrypt<T>(rows[0].payload_enc) : null
+}
+
+/** Called once the account exists; until then the link stays retryable. */
+export async function discardPendingRegistration(token: string): Promise<void> {
+  await requirePgPool().query('DELETE FROM pending_registrations WHERE token_hash = $1', [
+    sha256Hex(token),
+  ])
+}
+
+/** Deletes expired sign-ups. */
+export async function purgeExpiredRegistrations(): Promise<number> {
+  const { rowCount } = await requirePgPool().query(
+    'DELETE FROM pending_registrations WHERE expires_at < now()',
+  )
+  return rowCount ?? 0
 }

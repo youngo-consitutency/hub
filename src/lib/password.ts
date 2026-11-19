@@ -29,6 +29,9 @@ const pbkdf2Async = promisify(pbkdf2)
 /**
  * Spends the same time a real password check would. Payload skips hashing when the email is
  * unknown, so without this a login takes visibly longer for an address that has an account.
+ *
+ * Matches Payload's current hash (configured iterations, 32 bytes). Accounts still on the old
+ * 25 000-iteration hash differ slightly until their next sign-in rehashes it.
  */
 export async function burnPasswordHash(payload: Payload, password: string): Promise<void> {
   const iterations = payload.config.auth.passwordHashIterations
