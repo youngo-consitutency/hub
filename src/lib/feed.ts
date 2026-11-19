@@ -6,7 +6,7 @@ type AnyRecord = Doc
 
 export function assembleFeed(data: AnyRecord, now = new Date()) {
   const t = now.getTime()
-  const events = [...data.events].sort(
+  const events: AnyRecord[] = data.events.toSorted(
     (a: AnyRecord, b: AnyRecord) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
   )
 

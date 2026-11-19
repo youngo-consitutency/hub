@@ -394,7 +394,7 @@ function resourceFingerprint(item: Doc) {
         item.publisher || null,
         item.pathway,
         item.type,
-        [...(item.topics || [item.topic])].sort(),
+        (item.topics || [item.topic]).toSorted(),
         item.topic,
         item.region,
         item.language,
