@@ -1,0 +1,61 @@
+# One small server running the whole Hub: app, Postgres and Caddy (HTTPS).
+# Runbook: the "Self-hosting" page of the project wiki. Copy .env.example to .env first.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hub
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hub -d hub']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # no published ports: only the other containers can reach the database
+
+  # applies pending migrations, then exits; the app starts after it succeeds
+  migrate:
+    image: ${HUB_IMAGE:?set HUB_IMAGE in .env}-migrate:${HUB_TAG:-latest}
+    restart: 'no'
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://hub:${POSTGRES_PASSWORD}@postgres:5432/hub
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ${HUB_IMAGE:?set HUB_IMAGE in .env}:${HUB_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://hub:${POSTGRES_PASSWORD}@postgres:5432/hub
+      # the real client address comes from Caddy (behind Cloudflare); see src/lib/rateLimit.ts
+      TRUST_PROXY: '1'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      HUB_DOMAIN: ${HUB_DOMAIN:?set HUB_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

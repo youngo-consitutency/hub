@@ -1,0 +1,6 @@
+# HTTPS certificates are issued and renewed automatically.
+{$HUB_DOMAIN} {
+	encode zstd gzip
+	# the Hub sends its own security headers (next.config.ts)
+	reverse_proxy app:3000
+}
