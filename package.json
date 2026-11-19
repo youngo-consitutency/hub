@@ -41,7 +41,7 @@
     "@payloadcms/richtext-lexical": "3.93.0",
     "@payloadcms/ui": "3.93.0",
     "@react-email/components": "1.0.12",
-    "@sentry/nextjs": "11.11.0",
+    "@sentry/nextjs": "11.13.0",
     "@tailwindcss/postcss": "4.3.5",
     "calendar-link": "^2.11.7",
     "cross-env": "^10.1.0",
