@@ -33,6 +33,7 @@ import {
 import { FormAlert, PrivacyConsentSection } from './auth/shared'
 import { ForgotPasswordForm } from './auth/ForgotPasswordForm'
 import { SignInForm } from './auth/SignInForm'
+import { CheckYourEmail } from './auth/CheckYourEmail'
 import { RegisterIndividualForm } from './auth/RegisterIndividualForm'
 import { RegisterOrgForm } from './auth/RegisterOrgForm'
 
@@ -59,6 +60,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState('idle')
   const [forgotMsg, setForgotMsg] = useState<string | null>(null)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
   // not memoised: an open page should notice a birthday at midnight
   const age = ageFromDob(form.dateOfBirth)
@@ -252,7 +254,6 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
       return
     }
 
-    let signedIn = false
     try {
       const { normalizePhone } = await loadPhoneSupport()
       const payload = {
@@ -275,14 +276,14 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
               ? false
               : form.isUnfcccAdmitted,
       }
-      const data = await apiPost('/auth/register', payload)
-      finishAuth(data)
-      signedIn = Boolean(data?.account)
+      const data = await apiPost<{ pendingVerification?: boolean }>('/auth/register', payload)
+      // the address owner finishes by email; nothing here says whether the address already exists
+      if (!data.pendingVerification) throw new Error('Unexpected sign-up response.')
+      setPendingEmail(form.email.trim())
     } catch (err) {
       applyErrors(err)
     } finally {
-      // AuthGate unmounts on success; only clear the stuck button on failure.
-      if (!signedIn) setStatus('idle')
+      setStatus('idle')
     }
   }
 
@@ -344,7 +345,9 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
         </header>
 
         <div className="mandateBody authBody">
-          {mode === 'forgot' ? (
+          {pendingEmail ? (
+            <CheckYourEmail email={pendingEmail} onStartOver={() => setPendingEmail(null)} />
+          ) : mode === 'forgot' ? (
             <ForgotPasswordForm
               login={login}
               fields={fields}
