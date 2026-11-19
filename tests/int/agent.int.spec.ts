@@ -45,7 +45,7 @@ describe('agent key rules', () => {
     expect(decideEligibility({ ...ready, mustChangePassword: true }, caps).gate).toBe(
       'password_change_required',
     )
-    expect(decideEligibility({ ...ready, accountKind: 'service' }, caps).gate).toBe(
+    expect(decideEligibility({ ...ready, principalType: 'service' }, caps).gate).toBe(
       'service_account',
     )
   })

@@ -17,13 +17,6 @@ const inviteLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, scope: 'ngo-i
 
 export const ngoEndpoints: Endpoint[] = [
   {
-    path: '/member/ngo/points',
-    method: 'get',
-    handler: endpoint(async () => {
-      throw new ApiError(410, 'retired', 'Contribution points have been retired.')
-    }),
-  },
-  {
     path: '/member/ngo/requests',
     method: 'get',
     handler: endpoint(async (req) => {
@@ -50,7 +43,6 @@ export const ngoEndpoints: Endpoint[] = [
           canWriteRequests: ctx.canManageRequests,
           canManageSeats: ctx.canManageSeats,
         },
-        deadlines: [],
       })
     }),
   },

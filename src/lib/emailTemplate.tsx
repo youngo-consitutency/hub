@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react'
 import { Body, Button, Container, Html, Link, Section, Text, render } from '@react-email/components'
 import { emailPlainText, sanitizeEmailHtml } from './emailHtml'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 
 // Server-only email templates. JSX escapes every value; member HTML is the one
 // raw insert, and it goes through sanitizeEmailHtml first.
@@ -53,13 +53,13 @@ const s = {
   footer: { textAlign: 'center', fontSize: '12px', lineHeight: 1.5, color: '#65736d', margin: 0 },
 } satisfies Record<string, CSSProperties>
 
-const singleLine = (value: AnyValue, max = 160) =>
+const singleLine = (value: unknown, max = 160) =>
   String(value ?? '')
     .replace(/[\r\n]+/g, ' ')
     .trim()
     .slice(0, max)
 
-const safeUrl = (value: AnyValue) => {
+const safeUrl = (value: unknown) => {
   const text = String(value || '').trim()
   if (!text) return null
   try {
@@ -71,7 +71,7 @@ const safeUrl = (value: AnyValue) => {
   }
 }
 
-const paragraphs = (value: AnyValue) =>
+const paragraphs = (value: unknown) =>
   String(value || '')
     .split(/\n{2,}/)
     .map((item) => item.trim())
@@ -129,7 +129,7 @@ function templateContent(templateKey: string, data: Doc = {}): Content {
     // staff-edited links, but still no javascript: hrefs
     const social: { label: string; url: string }[] = (
       Array.isArray(data.socialLinks) ? data.socialLinks : []
-    ).filter((link: AnyValue) => safeUrl(link?.url))
+    ).filter((link: Doc) => safeUrl(link?.url))
     const socialText = social.map((link) => `${link.label}: ${link.url}`).join('\n')
     return {
       subject: 'Welcome — your YOUNGO membership is active',

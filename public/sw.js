@@ -127,6 +127,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Prefer fresh HTML, but keep the installed app shell available offline.
+  // Server-rendered /cms admin pages are signed-in content: never keep them on the device.
+  if (url.pathname.startsWith('/cms')) return
+
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)

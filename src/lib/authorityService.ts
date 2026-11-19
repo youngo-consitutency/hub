@@ -1,6 +1,6 @@
 import type { PayloadRequest, RequiredDataFromCollectionSlug } from 'payload'
 import { fail } from './respond'
-import { isCwActive } from './accounts'
+import { isCwActive } from './accountStatus'
 import {
   AUTHORITY_ROLES,
   recordCurrent,
@@ -10,7 +10,7 @@ import {
 } from './authority'
 import { withAuthorityLock } from './authorityLock'
 import { audit } from './audit'
-import type { Doc, AccountLike, AnyValue } from './domain'
+import type { Doc, AccountLike } from './domain'
 
 // Writes to `authority-records`. Grants validate against the role registry
 // and are audited; the partial unique index backstops concurrent duplicates.
@@ -22,7 +22,7 @@ interface GrantInput {
   scopeId?: string
   startsAt?: Date | string
   endsAt?: Date | string | null
-  provenance?: AnyValue
+  provenance?: { source?: string; assignmentId?: number | string } | null
   recordedBy?: number
   evidence?: string
   substituteFor?: number
@@ -134,12 +134,17 @@ export async function grantAuthority(req: PayloadRequest, input: GrantInput) {
       )
       return created
     })
-  } catch (error: AnyValue) {
+  } catch (caught) {
+    const error = caught as {
+      message?: string
+      cause?: { message?: string }
+      data?: { errors?: { tableName?: string; message?: string }[] }
+    } | null
     // The partial unique index guards concurrent grants; Payload wraps the
     // violation in a ValidationError — check the whole error chain.
     const text = [error?.message, error?.cause?.message].filter(Boolean).join(' ')
     const uniqueViolation = (error?.data?.errors ?? []).some(
-      (e: AnyValue) => e.tableName === 'authority_records' && /unique/i.test(e.message ?? ''),
+      (e) => e.tableName === 'authority_records' && /unique/i.test(e.message ?? ''),
     )
     if (
       uniqueViolation ||

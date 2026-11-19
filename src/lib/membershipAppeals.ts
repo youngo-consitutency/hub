@@ -2,7 +2,7 @@ import { type Pool } from 'pg'
 import { ApiError } from './respond'
 import { requirePgPool, getPgPool } from './pg'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike, AnyValue } from './domain'
+import type { Doc, AccountLike } from './domain'
 
 // Identity appeals: members submit a statement + proof document; the
 // membership team reviews them. Proofs are bytea, access-scoped.
@@ -12,12 +12,25 @@ const APPEAL_PROOF_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'ap
 const APPEAL_PROOF_MAX_BYTES = 2 * 1024 * 1024
 const APPEAL_MAX_PER_ACCOUNT = 3
 
-function publicAppeal(row: Doc, { includeStatement = true } = {}): AnyValue {
-  if (!row) return null
+/** An appeal as the applicant and the team see it: the proof bytes never leave the database. */
+export interface PublicAppeal {
+  id: number
+  accountId: number
+  status: string
+  identityKind: string | null
+  statement: string | null
+  proofContentType: string | null
+  proofByteSize: number
+  submittedAt: string
+  reviewedAt: string | null
+  reviewerNote: string | null
+}
+
+function publicAppeal(row: Doc, { includeStatement = true } = {}): PublicAppeal {
   const r = toCamelCase<Doc>(row)
   return {
     id: r.id,
-    accountId: r.accountId ?? null,
+    accountId: r.accountId,
     status: r.status,
     identityKind: r.identityKind ?? null,
     statement: includeStatement ? (r.statement ?? null) : null,
@@ -95,7 +108,7 @@ export async function getOwnAppeal(accountId: number, pool?: Pool | null) {
      WHERE account_id=$1 ORDER BY created_at DESC LIMIT 1`,
     [accountId],
   )
-  return publicAppeal(rows[0])
+  return rows[0] ? publicAppeal(rows[0]) : null
 }
 
 export async function listLatestAppealsForAccounts(
@@ -167,8 +180,8 @@ export async function submitAppeal({
       [account.id, kind, text, type, bytes, bytes.length],
     )
     return publicAppeal(rows[0])
-  } catch (error: AnyValue) {
-    if (error.code === '23505')
+  } catch (error) {
+    if ((error as { code?: string }).code === '23505')
       throw new ApiError(
         409,
         'appeal_open',

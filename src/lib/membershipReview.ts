@@ -1,7 +1,7 @@
 import { accountView } from './accounts'
 import { requirePgPool, getPgPool } from './pg'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike, AnyValue } from './domain'
+import type { Doc, AccountLike } from './domain'
 
 // Shapes consumed by the membership-team review queue.
 
@@ -24,7 +24,7 @@ const REVIEW_COLUMNS = `
   created_at, last_login_at, email_verified_at, verified_by
 `
 
-function textList(value: AnyValue): string[] {
+function textList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean)
   if (typeof value === 'string' && value.trim()) return [value.trim()]
   return []
@@ -32,13 +32,13 @@ function textList(value: AnyValue): string[] {
 
 // Application booleans may arrive as booleans or 'yes'/'no' strings —
 // keep the tri-state: undecided stays null rather than collapsing to false.
-function toBool(value: AnyValue): boolean | null {
+function toBool(value: unknown): boolean | null {
   if (value === true || value === 'yes' || value === 'true') return true
   if (value === false || value === 'no' || value === 'false') return false
   return null
 }
 
-function toIsoDate(value: AnyValue) {
+function toIsoDate(value: unknown) {
   if (value == null || value === '') return null
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     const year = value.getUTCFullYear()
@@ -164,7 +164,7 @@ export async function listMembershipReviewItems() {
 }
 
 function profileShape(row: Doc, account: AccountLike) {
-  const r = toCamelCase<AnyValue>(row)
+  const r = toCamelCase<Doc>(row)
   const updatedAt = r.updatedAt ?? null
   return {
     accountId: account.id,

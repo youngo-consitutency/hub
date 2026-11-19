@@ -1,4 +1,3 @@
-import type { AnyValue } from './domain'
 // Policy-backed authority model: time-bounded, scoped, evidenced records in
 // `authority-records`. Authority derives from records, never account titles.
 // Sources: S13 Governance, S14 GCT Mandate, S25 WG CP Mandate, S15 Liaisons,
@@ -489,7 +488,7 @@ export function resolveRecordRole(row: {
 // A record counts only while active and inside its window; other rows are
 // still reported so members can see pending or finished mandates.
 export function recordCurrent(
-  row: { status: string; startsAt?: AnyValue; endsAt?: AnyValue },
+  row: { status: string; startsAt?: Date | string | null; endsAt?: Date | string | null },
   now = new Date(),
 ) {
   if (row.status !== 'active') return false
@@ -546,8 +545,8 @@ export interface AuthorityRow {
   scopeId: string
   councilSeat?: string | null
   status: string
-  startsAt?: AnyValue
-  endsAt?: AnyValue
+  startsAt?: string | null
+  endsAt?: string | null
   provenance?: { source?: string; assignmentId?: number | string } | null
 }
 

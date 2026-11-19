@@ -2,13 +2,8 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { z } from 'zod'
 import { ApiError, endpoint, fail, json, parseWith, readBody, param } from '../lib/respond'
 import { hasCapability } from '../lib/access'
-import {
-  accountView,
-  isVerifiedAccount,
-  requireAccount,
-  requireVerifiedMember,
-  memberContext,
-} from '../lib/accounts'
+import { accountView, requireAccount, requireVerifiedMember, memberContext } from '../lib/accounts'
+import { isVerifiedAccount } from '../lib/accountStatus'
 import { toCamelCase } from '../lib/case'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
@@ -17,16 +12,15 @@ import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { AVATAR_CHOICES, AVATAR_KEYS } from '../shared/avatar'
 import { wgActivityView } from '../lib/views'
-import type { AnyValue } from '../lib/domain'
-import type { Account } from '../payload-types'
+import type { Account, MemberProfile, WgProgress } from '../payload-types'
 
 // Course structure (modules, quiz, pass score) is staff-editable content —
 // the `membership-course` content document holds the whole definition.
 type CourseDoc = {
   version: string
   passScore: number
-  modules: AnyValue[]
-  quiz: { id: string; prompt: string; choices: AnyValue[]; correct: string }[]
+  modules: unknown[]
+  quiz: { id: string; prompt: string; choices: unknown[]; correct: string }[]
 }
 
 const COURSE_MAX_FAILURES = 5
@@ -49,19 +43,32 @@ async function ownProfile(req: PayloadRequest, accountId: number) {
     limit: 1,
     overrideAccess: true,
   })
-  return docs[0] as AnyValue
+  return docs[0]
 }
 
-const writeOwnProfile = (req: PayloadRequest, existing: AnyValue, data: AnyValue) =>
-  existing
-    ? req.payload.update({
-        collection: 'member-profiles',
-        id: existing.id,
-        data,
-        overrideAccess: true,
-        req,
-      })
-    : req.payload.create({ collection: 'member-profiles', data, overrideAccess: true, req })
+const writeOwnProfile = (
+  req: PayloadRequest,
+  existing: MemberProfile | undefined,
+  data: Partial<MemberProfile> & { account: number },
+) => {
+  if (existing)
+    return req.payload.update({
+      collection: 'member-profiles',
+      id: existing.id,
+      data,
+      overrideAccess: true,
+      req,
+    })
+  // a new profile needs its display name; both callers supply one
+  const { displayName } = data
+  if (!displayName) throw new Error('A new profile needs a display name.')
+  return req.payload.create({
+    collection: 'member-profiles',
+    data: { ...data, displayName },
+    overrideAccess: true,
+    req,
+  })
+}
 
 async function getCourse(req: PayloadRequest): Promise<CourseDoc> {
   const course = (await getDocument(req, 'membership-course', { answerKey: true }))?.body as
@@ -82,17 +89,24 @@ async function wgProgress(req: PayloadRequest, accountId: string | number, wgSlu
     limit: 1,
     overrideAccess: true,
   })
-  return (docs[0] as AnyValue) || null
+  return docs[0] ?? null
+}
+
+type WgPatch = {
+  presentationOk?: boolean
+  rulesOk?: boolean
+  status?: WgProgress['status']
+  roleInWg?: WgProgress['roleInWg']
 }
 
 async function upsertWgProgress(
   req: PayloadRequest,
   accountId: string | number,
   wgSlug: string,
-  patch: AnyValue,
+  patch: WgPatch,
 ) {
   const existing = await wgProgress(req, accountId, wgSlug)
-  const p = toCamelCase<AnyValue>(patch)
+  const p = toCamelCase<WgPatch>(patch)
   const presentationOk = p.presentationOk ?? existing?.presentationOk ?? false
   const rulesOk = p.rulesOk ?? existing?.rulesOk ?? false
   const unlocked =
@@ -131,7 +145,7 @@ async function upsertWgProgress(
   })
 }
 
-export function wgProgressView(d: AnyValue, accountId?: string | number) {
+export function wgProgressView(d: WgProgress | null | undefined, accountId?: string | number) {
   if (!d) return null
   return {
     account_id: accountId ?? (typeof d.account === 'object' ? d.account?.id : d.account),
@@ -162,11 +176,11 @@ export const memberEndpoints: Endpoint[] = [
           sort: '-acceptedAt',
           overrideAccess: true,
         })
-        .then((r) => r.docs[0] as AnyValue)
+        .then((r) => r.docs[0])
       return json({
         ...access,
         canAdminister: hasCapability(access, 'accounts.manage'),
-        managedWgs: access.wgAssignments.map((i: AnyValue) => i.wgSlug).sort(),
+        managedWgs: access.wgAssignments.map((i) => i.wgSlug).sort(),
         ngo: seat
           ? {
               orgAccountId:
@@ -304,7 +318,7 @@ export const memberEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       return json({
-        items: (docs as AnyValue[]).map((d) => wgProgressView(d, account.id)),
+        items: docs.map((d) => wgProgressView(d, account.id)),
       })
     }),
   },
@@ -316,7 +330,7 @@ export const memberEndpoints: Endpoint[] = [
       const wg = param(req, 'wg')
       const progress = await wgProgress(req, account.id, wg)
       const unlocked = Boolean(progress?.presentationOk && progress?.rulesOk)
-      let activities: AnyValue[] = []
+      let activities: ReturnType<typeof wgActivityView>[] = []
       if (unlocked) {
         // a task force card asks for its own slice, so the 50 cap applies per task force
         const taskForce = req.query?.taskForce as string | undefined
@@ -359,7 +373,7 @@ export const memberEndpoints: Endpoint[] = [
       const wg = param(req, 'wg')
       // a repeat request must not downgrade an approval or undo a rejection
       const existing = await wgProgress(req, account.id, wg)
-      if (existing && ['active', 'rejected', 'pending_approval'].includes(existing.status))
+      if (existing && ['active', 'rejected', 'pending_approval'].includes(existing.status ?? ''))
         return json({ progress: wgProgressView(existing, account.id) })
       const progress = await upsertWgProgress(req, account.id, wg, {
         status: 'pending_approval',

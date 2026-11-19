@@ -24,7 +24,8 @@ export const RED_FLAG_CATEGORIES = [
 const H = 3_600_000
 const D = 24 * H
 
-interface PhaseWindows {
+// a type alias (not an interface) so it is assignable to Record<string, unknown>
+type PhaseWindows = {
   consultationEndsAt: string
   revisionEndsAt: string
   decisionEndsAt: string
@@ -106,6 +107,9 @@ export function voteAdopted(votesFor: number, votesCast: number): boolean {
   return votesFor / votesCast >= 2 / 3
 }
 
+// "ORG A" and " org  a " name the same group
+export const normaliseGroupKey = (key: string) => key.trim().replace(/\s+/g, ' ').toLowerCase()
+
 export interface VetoRequest {
   requesterKind: 'org' | 'org_global_south' | 'wg_or_ot'
   groupKey: string
@@ -118,12 +122,12 @@ export function vetoThresholdMet(requests: VetoRequest[]): boolean {
   const orgsSouth = new Set<string>()
   const bodies = new Set<string>()
   for (const r of requests) {
-    if (r.requesterKind === 'org') orgs.add(r.groupKey)
+    if (r.requesterKind === 'org') orgs.add(normaliseGroupKey(r.groupKey))
     if (r.requesterKind === 'org_global_south') {
-      orgs.add(r.groupKey)
-      orgsSouth.add(r.groupKey)
+      orgs.add(normaliseGroupKey(r.groupKey))
+      orgsSouth.add(normaliseGroupKey(r.groupKey))
     }
-    if (r.requesterKind === 'wg_or_ot') bodies.add(r.groupKey)
+    if (r.requesterKind === 'wg_or_ot') bodies.add(normaliseGroupKey(r.groupKey))
   }
   return orgs.size >= 20 || orgsSouth.size >= 6 || bodies.size >= 5
 }

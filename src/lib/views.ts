@@ -1,4 +1,4 @@
-import type { AnyValue } from './domain'
+import type { Doc } from './domain'
 // Port of server/lib/publicViews.js — public/member view policy.
 // A conferencing *join* link is a credential: join links are stripped from
 // anonymous payloads while deliberate registration pages survive.
@@ -90,6 +90,17 @@ export function eventView(
   return publicEvent
 }
 
+// Drafting links are editable documents: the collection restricts them to members, but the public
+// endpoints read with overrideAccess, so the view has to drop them for everyone else.
+export function submissionView(
+  submission: Record<string, unknown> | null | undefined,
+  { includePrivate = false } = {},
+) {
+  if (!submission || includePrivate) return submission
+  const { draftUrl: _draftUrl, ...rest } = submission
+  return rest
+}
+
 export function groupView(
   group: Record<string, unknown> | null | undefined,
   { includePrivate = false, includeWorkspace = false } = {},
@@ -103,6 +114,13 @@ export function groupView(
       ? {
           events: (group.events as Record<string, unknown>[]).map((event) =>
             eventView(event, { includePrivate }),
+          ),
+        }
+      : {}),
+    ...(Array.isArray(group.submissions)
+      ? {
+          submissions: (group.submissions as Record<string, unknown>[]).map((s) =>
+            submissionView(s, { includePrivate }),
           ),
         }
       : {}),
@@ -174,6 +192,13 @@ export function searchView(
     groups: ((results.groups as Record<string, unknown>[]) || []).map((group) =>
       groupView(group, { includePrivate }),
     ),
+    ...(Array.isArray(results.submissions)
+      ? {
+          submissions: (results.submissions as Record<string, unknown>[]).map((s) =>
+            submissionView(s, { includePrivate }),
+          ),
+        }
+      : {}),
     contacts: ((results.contacts as Record<string, unknown>[]) || []).map((contact) =>
       contactView(contact, { includePrivate }),
     ),
@@ -185,7 +210,7 @@ export function directoryView(items: Record<string, unknown>[], { includePrivate
 }
 
 // WG activity rows -> member-facing JSON.
-export function wgActivityView(d: AnyValue) {
+export function wgActivityView(d: Doc) {
   return {
     id: d.id,
     wg_slug: d.wgSlug,

@@ -1,15 +1,9 @@
-import type { AnyValue } from '../lib/domain'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { withTransaction } from '../lib/pg'
-import {
-  updateMembershipLifecycle,
-  setAccountFields,
-  sendMembershipActivatedEmail,
-  findAccountRowById,
-} from '../lib/membership'
+import { updateMembershipLifecycle, findAccountRowById } from '../lib/membership'
 import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
 import {
   listLatestAppealsForAccounts,
@@ -57,39 +51,6 @@ export const membershipTeamEndpoints: Endpoint[] = [
         })
       })
       return json({ ok: true })
-    }),
-  },
-  {
-    path: '/member/team/membership/accounts/:id/verify',
-    method: 'post',
-    handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
-      const id = param(req, 'id')
-      const updatedRow = await setAccountFields(id, {
-        member_status: 'verified',
-        hub_access_status: 'active',
-        membership_status: 'active',
-        constituency_work_status: 'active',
-        verified_at: new Date().toISOString(),
-        verified_by: staff.email,
-      })
-      if (!updatedRow) throw fail.notFound('Account not found.')
-      const updated = accountView(updatedRow)
-      let verifyBody: AnyValue = {}
-      try {
-        verifyBody = await readBody(req)
-      } catch {
-        verifyBody = {}
-      }
-      await audit(req, staff, {
-        action: 'membership.status_changed',
-        targetType: 'account',
-        targetId: id,
-        after: updated,
-        reason: verifyBody?.reason,
-      })
-      const mail = await sendMembershipActivatedEmail(updated)
-      return json({ account: updated, emailSent: mail.sent })
     }),
   },
   {
@@ -144,7 +105,7 @@ export const membershipTeamEndpoints: Endpoint[] = [
         reviewerId: staff.id,
       })
       if (!appeal) throw fail.notFound('Appeal not found.')
-      let updated: AnyValue = null
+      let updated: Awaited<ReturnType<typeof updateMembershipLifecycle>>['updated'] | null = null
       let emailSent: boolean | null = null
       if (appeal.status === 'granted') {
         const targetRow = await findAccountRowById(appeal.accountId)

@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
-import type { AccountLike, AnyValue, Doc } from './domain'
+import type { AccountLike, Doc } from './domain'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
-import { getAccessProfile, hasCapability } from './access'
+import { getAccessProfile, hasCapability, type AccessProfile } from './access'
 import { ApiError } from './respond'
 import { deliveryDisabled } from './environment'
 
@@ -60,13 +60,25 @@ type Eligibility = {
   tools: string[]
 }
 
+interface EligibilityAccount {
+  id: number
+  principalType?: string | null
+  hubAccessStatus?: string | null
+  membershipStatus?: string | null
+  emailVerifiedAt?: string | null
+  mustChangePassword?: boolean | null
+}
+
 /**
  * Who may hold a key, and what it may call. Operators need both the account
  * console capability and the deployment allowlist; focal points read
  * constituency counts; contact points get the tools of the groups they
  * manage. Group tools follow any wg.manage:{slug} the account holds.
  */
-export function decideEligibility(account: AnyValue, access: AnyValue): Eligibility {
+export function decideEligibility(
+  account: EligibilityAccount | null | undefined,
+  access: Pick<AccessProfile, 'capabilities' | 'isFocalPoint'> | null | undefined,
+): Eligibility {
   const deny = (gate: Eligibility['gate']): Eligibility => ({
     ok: false,
     gate,
@@ -76,15 +88,15 @@ export function decideEligibility(account: AnyValue, access: AnyValue): Eligibil
   })
   if (deliveryDisabled()) return deny('delivery_disabled')
   if (!account) return deny('no_mandate')
-  if (account.accountKind === 'service') return deny('service_account')
+  if (account.principalType === 'service') return deny('service_account')
   if (
     account.hubAccessStatus !== 'active' ||
-    INACTIVE_MEMBERSHIP.includes(account.membershipStatus)
+    INACTIVE_MEMBERSHIP.includes(account.membershipStatus ?? '')
   )
     return deny('membership_blocked')
   if (!account.emailVerifiedAt) return deny('pending_email')
   if (account.mustChangePassword) return deny('password_change_required')
-  const capabilities: string[] = access?.capabilities || []
+  const capabilities = access?.capabilities || []
   const wgSlugs = capabilities
     .filter((cap) => cap.startsWith('wg.manage:'))
     .map((cap) => cap.slice('wg.manage:'.length))
@@ -105,11 +117,11 @@ export function decideEligibility(account: AnyValue, access: AnyValue): Eligibil
   return { ok: true, gate: 'ready', connectorRole, wgSlugs, tools }
 }
 
-export async function eligibilityFor(req: PayloadRequest, account: AnyValue) {
+export async function eligibilityFor(req: PayloadRequest, account: AccountLike | null | undefined) {
   return decideEligibility(account, await getAccessProfile(req, account))
 }
 
-async function activeKeys(req: PayloadRequest, accountId: AnyValue) {
+async function activeKeys(req: PayloadRequest, accountId: number) {
   const { docs } = await req.payload.find({
     collection: 'agent-keys',
     where: {
@@ -121,10 +133,10 @@ async function activeKeys(req: PayloadRequest, accountId: AnyValue) {
     limit: 20,
     overrideAccess: true,
   })
-  return docs as Doc[]
+  return docs
 }
 
-export async function listKeys(req: PayloadRequest, accountId: AnyValue) {
+export async function listKeys(req: PayloadRequest, accountId: number) {
   const { docs } = await req.payload.find({
     collection: 'agent-keys',
     where: { account: { equals: accountId } },
@@ -134,7 +146,7 @@ export async function listKeys(req: PayloadRequest, accountId: AnyValue) {
     overrideAccess: true,
   })
   const now = Date.now()
-  return (docs as Doc[]).map((key) => ({
+  return docs.map((key) => ({
     id: key.id,
     prefix: key.prefix,
     createdAt: key.createdAt,
@@ -145,7 +157,7 @@ export async function listKeys(req: PayloadRequest, accountId: AnyValue) {
   }))
 }
 
-export async function createKey(req: PayloadRequest, account: AnyValue) {
+export async function createKey(req: PayloadRequest, account: AccountLike) {
   if ((await activeKeys(req, account.id)).length >= MAX_ACTIVE_KEYS)
     throw new ApiError(
       409,
@@ -169,7 +181,7 @@ export async function createKey(req: PayloadRequest, account: AnyValue) {
   return { id: created.id, key: secret, prefix, expiresAt }
 }
 
-export async function revokeKey(req: PayloadRequest, id: AnyValue, reason: string) {
+export async function revokeKey(req: PayloadRequest, id: number, reason: string) {
   await req.payload.update({
     collection: 'agent-keys',
     id,
@@ -193,10 +205,15 @@ export async function authenticateKey(req: PayloadRequest, secret: string) {
     limit: 1,
     overrideAccess: true,
   })
-  const key = docs[0] as Doc | undefined
+  const key = docs[0]
   if (!key || key.revokedAt || Date.parse(key.expiresAt) <= Date.now()) return null
   const account = await req.payload
-    .findByID({ collection: 'accounts', id: key.account, depth: 0, overrideAccess: true })
+    .findByID({
+      collection: 'accounts',
+      id: typeof key.account === 'object' ? key.account.id : key.account,
+      depth: 0,
+      overrideAccess: true,
+    })
     .catch(() => null)
   if (!account) return null
   if ((account.credentialEpoch || 1) !== key.credentialEpoch) {
@@ -221,7 +238,11 @@ export async function authenticateKey(req: PayloadRequest, secret: string) {
 const WHOAMI_KEYS = ['accountId', 'displayName', 'connectorRole', 'groups', 'tools']
 
 // whoami answers with these fields only — never email, phone or capabilities.
-export function whoamiView(account: Doc, eligibility: Eligibility, groupName: AnyValue) {
+export function whoamiView(
+  account: Doc,
+  eligibility: Eligibility,
+  groupName: (slug: string) => string,
+) {
   const view = {
     accountId: account.id,
     displayName: account.name,

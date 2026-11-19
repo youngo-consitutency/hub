@@ -1,11 +1,11 @@
-import type { AnyValue, Doc } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 import { hubUrl } from '../lib/hubUrl'
 import type { Endpoint, PayloadRequest } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { requireAccount, verifiedContext } from '../lib/accounts'
-import { canManageWg, getAccessProfile } from '../lib/access'
+import { canManageWg, getAccessProfile, type AccessProfile } from '../lib/access'
 import { audit } from '../lib/audit'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanParagraphs, cleanText } from '../lib/text'
@@ -28,7 +28,7 @@ const announceLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 12, scope: 'coy
 
 // COY organisers are whoever manages the coy working group (its contact
 // points, or focal points through wg.manage_all).
-const isOrganiser = (access: AnyValue) => canManageWg(access, 'coy')
+const isOrganiser = (access: AccessProfile) => canManageWg(access, 'coy')
 
 async function liveCoy(req: PayloadRequest) {
   const { docs } = await req.payload.find({
@@ -47,7 +47,7 @@ async function organiserContext(req: PayloadRequest) {
   return { account, access, coy: await liveCoy(req) }
 }
 
-async function participantRows(req: PayloadRequest, coyId: AnyValue) {
+async function participantRows(req: PayloadRequest, coyId: number) {
   const { docs } = await req.payload.find({
     collection: 'coy-participants',
     where: { coy: { equals: coyId } },
@@ -89,7 +89,7 @@ const noticeView = (n: Doc) => ({
   createdAt: n.createdAt,
 })
 
-export function parseEmails(value: AnyValue): string[] {
+export function parseEmails(value: unknown): string[] {
   const raw = Array.isArray(value) ? value.join(' ') : String(value || '')
   return [
     ...new Set(
@@ -255,7 +255,13 @@ export const coyEndpoints: Endpoint[] = [
       const message = cleanParagraphs(b.message, 4000)
       const reason = cleanText(b.reason, 500)
       const channels: string[] = Array.isArray(b.channels)
-        ? [...new Set<string>(b.channels.filter((c: AnyValue) => CHANNELS.includes(c)))]
+        ? [
+            ...new Set<string>(
+              b.channels.filter(
+                (c: unknown): c is string => typeof c === 'string' && CHANNELS.includes(c),
+              ),
+            ),
+          ]
         : CHANNELS
       const fields: Record<string, string> = {}
       if (!title || title.length < 4) fields.title = 'Give the announcement a title.'

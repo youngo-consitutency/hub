@@ -344,6 +344,41 @@ describe('decision engine (S09)', () => {
     expect((await ok.json()).veto.status).toBe('pending')
   })
 
+  it('accepts one veto request per member per vote', { timeout: 90000 }, async () => {
+    const voting = await makeVoting()
+    const file = (groupKey: string) =>
+      api(`/decisions/${voting.id}/vetoes`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({
+          requesterKind: 'wg_or_ot',
+          groupKey,
+          reasoning: 'Test veto reasoning for the record.',
+        }),
+      })
+    expect((await file('finance')).status).toBe(201)
+    // another spelling of the same group is still the same request
+    expect((await file(' Finance  ')).status).toBe(409)
+  })
+
+  it(
+    'refuses a veto request for a group the member holds no role in',
+    { timeout: 90000 },
+    async () => {
+      const voting = await makeVoting()
+      const res = await api(`/decisions/${voting.id}/vetoes`, {
+        method: 'POST',
+        cookie: cwMember.cookie,
+        body: JSON.stringify({
+          requesterKind: 'wg_or_ot',
+          groupKey: 'some-other-group',
+          reasoning: 'Test veto reasoning for the record.',
+        }),
+      })
+      expect(res.status).toBe(403)
+    },
+  )
+
   it('generated REST cannot bypass the workflow', async () => {
     // members cannot write directly to the decision collections
     const res = await api('/decision-proposals', {

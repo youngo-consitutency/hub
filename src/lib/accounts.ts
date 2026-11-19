@@ -3,12 +3,9 @@ import { ApiError, fail } from './respond'
 import { getAccessProfile, hasCapability, hasTeamRole } from './access'
 import type { AccessProfile } from './access'
 import { accountRow, isCwActive, isVerifiedAccount } from './accountStatus'
-import type { AccountLike, AccountView, Doc, AnyValue } from './domain'
+import type { AccountLike, AccountView, Doc } from './domain'
 
 // The account shape the member UI reads from /api/auth/me and auth responses.
-
-// Re-exported from the leaf module to keep accounts/access acyclic.
-export { isVerifiedAccount, isCwActive }
 
 export function requireVerifiedMember(req: PayloadRequest) {
   const account = requireAccount(req)
@@ -91,10 +88,24 @@ export function accountView(row: AccountLike | Doc | null | undefined): AccountV
 }
 
 // member-facing actor: id + display name only, never the raw account doc
-export const accountRef = (a: AnyValue) =>
+export const accountRef = (a: number | { id: number; name?: string } | null | undefined) =>
   a == null
     ? null
     : { id: typeof a === 'object' ? a.id : a, name: typeof a === 'object' ? a.name : undefined }
+
+// Staff endpoints return raw documents, and Payload fills account relations with the whole account
+// (minority, guardian, date of birth, phone). Replace any nested account with what a staff list
+// needs, wherever it sits in the document.
+export function slimAccounts<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(slimAccounts) as T
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>
+    if ('memberStatus' in row && 'email' in row)
+      return { id: row.id, name: row.name, email: row.email } as T
+    return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, slimAccounts(v)])) as T
+  }
+  return value
+}
 
 // Bearer token (agent/MCP) as well as the cookie — req.user covers both.
 export function requireAccount(req: PayloadRequest): AccountLike {
@@ -145,7 +156,7 @@ export async function requirePlatformOperator(req: PayloadRequest): Promise<Memb
   return ctx
 }
 
-export function adminReason(body: AnyValue): string {
+export function adminReason(body: Doc | null | undefined): string {
   const reason = String(body?.reason || '').trim()
   if (reason.length < 8)
     throw fail.validation({

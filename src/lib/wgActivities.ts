@@ -1,5 +1,5 @@
 import type { PayloadRequest } from 'payload'
-import type { AnyValue } from './domain'
+import type { AccountLike, Doc } from './domain'
 import { ApiError, fail } from './respond'
 import { audit } from './audit'
 import { getDocument } from './documents'
@@ -11,17 +11,19 @@ import { TASK_FORCE_SLUGS } from '../shared/protocol'
 // The caller has already checked wg.manage for `wg`.
 export async function createWgActivity(
   req: PayloadRequest,
-  account: AnyValue,
+  account: AccountLike,
   wg: string,
-  b: AnyValue,
-  auditExtra: AnyValue = {},
+  b: Doc,
+  auditExtra: Doc = {},
 ) {
   const title = String(b.title || '')
     .trim()
     .slice(0, 200)
   if (!title || !b.kind) throw fail.validation({ title: 'title and kind are required.' })
   const options = await getDocument(req, 'content-options')
-  const kinds = (options?.body?.wgActivityKinds || []).map((k: AnyValue) => String(k.value))
+  const kinds = (options?.body?.wgActivityKinds || []).map((k: { value: unknown }) =>
+    String(k.value),
+  )
   if (!kinds.includes(String(b.kind)))
     throw new ApiError(400, 'validation', 'Invalid activity kind.')
   if (b.startsAt && Number.isNaN(Date.parse(b.startsAt)))

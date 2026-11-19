@@ -1,13 +1,13 @@
 import type { PayloadRequest } from 'payload'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 
 // Content documents carry console-editable structured content (onboarding,
 // policies, contact lists). The member UI fetches them via GET /api/documents/:slug.
-export async function getDocument(
+export async function getDocument<T = Doc>(
   req: PayloadRequest,
   slug: string,
   { answerKey = false }: { answerKey?: boolean } = {},
-): Promise<{ slug: string; title: string; body: AnyValue } | null> {
+): Promise<{ slug: string; title: string; body: T } | null> {
   const { docs } = await req.payload.find({
     collection: 'content-documents' as never,
     where: { slug: { equals: slug } },

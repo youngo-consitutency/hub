@@ -7,7 +7,7 @@ import { accountView } from './accounts'
 import { sendEmail } from './email'
 import { appBaseUrl } from './env'
 import { requirePgPool } from './pg'
-import type { AccountLike, Doc, AnyValue } from './domain'
+import type { AccountLike, Doc } from './domain'
 
 // Port of server/routes/member/guards.js updateMembershipLifecycle +
 // server/lib/accounts.js setAccountFields/destroyAllSessions.
@@ -24,8 +24,6 @@ export const MEMBERSHIP_STATUSES = [
 ]
 const CLOSED_MEMBERSHIP_STATUSES = ['expired', 'terminated']
 export const ENDED_MEMBERSHIP_STATUSES = [...CLOSED_MEMBERSHIP_STATUSES, 'rejected']
-
-export { isCwActive } from './accounts'
 
 const ACCOUNT_FIELD_COLUMNS = new Set([
   'member_status',
@@ -109,7 +107,7 @@ export async function updateMembershipLifecycle({
   /** Whether the actor holds platform.manage — gates officer-account edits. */
   actorIsOfficer?: boolean
   targetId: number | string
-  body: AnyValue
+  body: Doc | null | undefined
 }) {
   const status = String(body?.status || body?.membershipStatus || '')
   if (!MEMBERSHIP_STATUSES.includes(status))

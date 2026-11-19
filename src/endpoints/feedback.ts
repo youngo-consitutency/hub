@@ -1,7 +1,7 @@
-import type { AnyValue, Doc } from '../lib/domain'
-import type { Endpoint } from 'payload'
+import type { Doc } from '../lib/domain'
+import type { Endpoint, Where } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { requireAccount, memberContext } from '../lib/accounts'
+import { requireAccount, memberContext, slimAccounts } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
 import { hasCapability, hasTeamRole } from '../lib/access'
 import { trimmed } from '../lib/text'
@@ -19,7 +19,7 @@ const TRIAGE_STATUSES = ['new', 'triaged', 'in_progress', 'resolved', 'declined'
 const PAGE_PATH_RE = /^\/(?!\/)[\w\-/.?=&%]*$/
 const VIEWPORT_RE = /^\d{1,5}x\d{1,5}$/
 
-export function feedbackContext(b: AnyValue) {
+export function feedbackContext(b: Doc) {
   const pagePath = trimmed(b.pagePath ?? b.pageUrl, 300)
   const viewport = trimmed(b.viewport, 20)
   return {
@@ -71,7 +71,7 @@ export const feedbackEndpoints: Endpoint[] = [
         limit: 100,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -138,7 +138,7 @@ export const feedbackEndpoints: Endpoint[] = [
         hasCapability(access, 'accounts.manage') || hasTeamRole(access, 'membership_team')
       if (!canTriage)
         throw fail.forbidden('Feedback triage is for platform operators and the Membership Team.')
-      const where: AnyValue = {}
+      const where: Where = {}
       if (req.query?.status) where.status = { equals: req.query.status }
       if (req.query?.kind) where.kind = { equals: req.query.kind }
       const { docs } = await req.payload.find({
@@ -148,7 +148,7 @@ export const feedbackEndpoints: Endpoint[] = [
         limit: Math.min(200, Number(req.query?.limit || 100)),
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -186,7 +186,7 @@ export const feedbackEndpoints: Endpoint[] = [
         before: { status: before.status },
         after: { status: updated.status, noted: b.triageNote !== undefined },
       })
-      return json({ item: updated })
+      return json({ item: slimAccounts(updated) })
     }),
   },
 ]

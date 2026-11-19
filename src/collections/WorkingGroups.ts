@@ -8,7 +8,16 @@ export const WorkingGroups: CollectionConfig = {
     ...serverWrites,
   },
   fields: [
-    { name: 'slug', type: 'text', required: true, unique: true, index: true },
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      // the slug becomes a CSS selector ([data-wg='slug']) and a URL segment
+      validate: (value: string | null | undefined) =>
+        /^[a-z0-9-]+$/.test(value ?? '') || 'Use lowercase letters, numbers and hyphens only.',
+    },
     { name: 'name', type: 'text', required: true },
     { name: 'monogram', type: 'text' },
     { name: 'focusLine', type: 'text' },

@@ -1,15 +1,15 @@
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { Endpoint, PayloadRequest, Where } from 'payload'
 import { z } from 'zod'
 import { sql } from '@payloadcms/db-postgres'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountRef, requireVerifiedMember, verifiedContext } from '../lib/accounts'
-import { hasCapability } from '../lib/access'
+import { hasCapability, type AccessProfile } from '../lib/access'
 import * as store from '../lib/content'
 import { rateLimit } from '../lib/rateLimit'
 import { cleanText } from '../lib/text'
 import { audit } from '../lib/audit'
 import { isUniqueViolation, txHandle, withTransaction } from '../lib/pg'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 const intelligenceLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -28,7 +28,7 @@ type Evidence = {
 async function evidenceForQuery(
   req: PayloadRequest,
   query: string,
-  access: AnyValue,
+  access: AccessProfile,
   limit: number,
 ): Promise<Evidence[]> {
   const needle = query.toLowerCase()
@@ -130,7 +130,7 @@ const citationsSchema = z
   .min(1)
   .max(50)
 
-const reloadNote = (req: PayloadRequest, id: AnyValue) =>
+const reloadNote = (req: PayloadRequest, id: number) =>
   req.payload.findByID({ collection: 'research-notes', id, depth: 0, overrideAccess: true })
 
 // compare-and-set the status and audit it in one tx (withTransaction); no row
@@ -200,7 +200,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
-      const where: AnyValue = isOperator ? {} : { account: { equals: account.id } }
+      const where: Where = isOperator ? {} : { account: { equals: account.id } }
       const { docs } = await req.payload.find({
         collection: 'research-notes',
         where,
@@ -382,7 +382,7 @@ export const intelligenceEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const { account, access } = await verifiedContext(req)
       const isOperator = hasCapability(access, 'intelligence.operations.read')
-      const where: AnyValue = isOperator ? {} : { account: { equals: account.id } }
+      const where: Where = isOperator ? {} : { account: { equals: account.id } }
       const notes = await req.payload.find({
         collection: 'research-notes',
         where,

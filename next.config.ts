@@ -21,10 +21,23 @@ const nextConfig: NextConfig = {
   // React Compiler memoises components at build time — cuts redundant
   // re-renders across the member UI without manual memo/useMemo churn.
   reactCompiler: true,
-  // non-production builds keep out of search results, static microsite pages included
   async headers() {
-    if (isIndexable()) return []
-    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] }]
+    const security = [
+      // no other site may frame the member app or the /cms admin (clickjacking)
+      {
+        key: 'Content-Security-Policy',
+        value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+      },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+    ]
+    // non-production builds keep out of search results, static microsite pages included
+    const headers = isIndexable()
+      ? security
+      : [...security, { key: 'X-Robots-Tag', value: 'noindex' }]
+    return [{ source: '/:path*', headers }]
   },
   async redirects() {
     return [

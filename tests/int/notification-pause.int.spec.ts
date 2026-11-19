@@ -16,7 +16,7 @@ describe('notification outbox with delivery disabled', () => {
       [account.id, key],
     )
     vi.stubEnv('HUB_DELIVERY_DISABLED', 'true')
-    const result = await drainNotificationOutbox({}, { limit: 500 })
+    const result = await drainNotificationOutbox({} as never, { limit: 500 })
     expect(result).toMatchObject({ claimed: 0, sent: 0, paused: true })
     const { rows } = await pool.query(
       'SELECT status, attempts::int AS attempts FROM notification_outbox WHERE deduplication_key=$1',

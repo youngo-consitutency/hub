@@ -17,7 +17,8 @@ import {
 } from '../lib/push'
 import { drainNotificationOutbox, enqueueNotification } from '../lib/notifications'
 import { audit } from '../lib/audit'
-import type { Doc, AnyValue } from '../lib/domain'
+import { errorCode, errorMessage } from '../lib/narrow'
+import type { Doc } from '../lib/domain'
 
 // Keyed on the account rather than the caller IP — venue networks share IPs.
 const pushTestLimit = rateLimit({
@@ -61,9 +62,9 @@ export const pushEndpoints: Endpoint[] = [
           subscription: { id: saved.id, endpoint: saved.endpoint },
         })
       } catch (error) {
-        const code = (error as AnyValue).code
-        if (['invalid_push_endpoint', 'push_subscription_limit'].includes(code))
-          throw new ApiError(400, code, (error as AnyValue).message)
+        const code = errorCode(error)
+        if (code && ['invalid_push_endpoint', 'push_subscription_limit'].includes(code))
+          throw new ApiError(400, code, errorMessage(error))
         throw error
       }
     }),

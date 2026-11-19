@@ -1,15 +1,21 @@
 import type { CollectionConfig } from 'payload'
 import { grantsCapability, noAccess } from '../lib/collectionAccess'
 import { audit } from '../lib/audit'
-import type { AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 
 // quiz answer keys must not ride along on public reads; the grader opts in
 // with context.answerKey (see getDocument)
-function withoutAnswerKey(body: AnyValue): AnyValue {
-  if (!Array.isArray(body?.quiz)) return body
+const isRecord = (v: unknown): v is Doc => typeof v === 'object' && v !== null && !Array.isArray(v)
+
+function withoutAnswerKey(body: unknown): unknown {
+  if (!isRecord(body) || !Array.isArray(body.quiz)) return body
   return {
     ...body,
-    quiz: body.quiz.map(({ correct: _correct, ...question }: AnyValue) => question),
+    quiz: body.quiz.map((q: unknown) => {
+      if (!isRecord(q)) return q
+      const { correct: _correct, ...question } = q
+      return question
+    }),
   }
 }
 
@@ -51,7 +57,12 @@ export const ContentDocuments: CollectionConfig = {
         // (a new question has no key until one is set through a script)
         beforeChange: [
           async ({ value, originalDoc, operation, req }) => {
-            if (operation !== 'update' || !originalDoc?.id || !Array.isArray(value?.quiz))
+            if (
+              operation !== 'update' ||
+              !originalDoc?.id ||
+              !isRecord(value) ||
+              !Array.isArray(value.quiz)
+            )
               return value
             const stored = await req.payload.findByID({
               collection: 'content-documents',
@@ -61,12 +72,15 @@ export const ContentDocuments: CollectionConfig = {
               // no `req`: the context is shared with the request, so passing it would leave
               // answerKey set and the save response would carry the keys back out
             })
+            const storedBody: unknown = stored.body
+            const storedQuiz: unknown[] =
+              isRecord(storedBody) && Array.isArray(storedBody.quiz) ? storedBody.quiz : []
             const keys = new Map<string, string>(
-              ((stored.body as AnyValue)?.quiz ?? []).map((q: AnyValue) => [q.id, q.correct]),
+              storedQuiz.filter(isRecord).map((q) => [q.id, q.correct]),
             )
             return {
               ...value,
-              quiz: value.quiz.map((q: AnyValue) => ({
+              quiz: value.quiz.map((q: Doc) => ({
                 ...q,
                 correct: q.correct ?? keys.get(q.id),
               })),

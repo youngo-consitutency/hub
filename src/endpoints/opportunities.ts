@@ -8,7 +8,7 @@ import { requirePgPool } from '../lib/pg'
 import { audit } from '../lib/audit'
 import { trimmed } from '../lib/text'
 import { requireOrgScope } from '../lib/ngo'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 import type { Account } from '../payload-types'
 import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../shared/opportunities'
 
@@ -29,7 +29,7 @@ function safeUrl(value: unknown) {
   return url.toString()
 }
 
-async function orgPostingTrust(req: PayloadRequest, orgAccountId: AnyValue) {
+async function orgPostingTrust(req: PayloadRequest, orgAccountId: number | string) {
   const org = (await req.payload.findByID({
     collection: 'accounts',
     id: orgAccountId,

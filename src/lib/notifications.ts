@@ -1,3 +1,4 @@
+import type { PayloadRequest } from 'payload'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
@@ -6,7 +7,7 @@ import { deliverPush, listSubscriptionsForAccounts } from './push'
 import { getDocument } from './documents'
 import { appBaseUrl } from './env'
 import { renderEmailTemplate } from './emailTemplate'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 import { deliveryDisabled } from './environment'
 
 // Announcement broadcast surface (preview/send/outbox). Queue rows live in
@@ -17,7 +18,7 @@ const OPTIONAL_EMAIL_CATEGORIES = ['digest', 'deadline', 'announcement', 'group_
 // the other categories stay opt-in.
 const OPT_OUT_EMAIL_CATEGORIES = ['group_mail']
 
-export function emailPreferences(stored: AnyValue) {
+export function emailPreferences(stored: Doc | null | undefined) {
   return Object.fromEntries(
     OPTIONAL_EMAIL_CATEGORIES.map((category) => [
       category,
@@ -37,7 +38,7 @@ export { renderEmailTemplate }
 const unsubscribeSecret = () =>
   String(process.env.EMAIL_UNSUBSCRIBE_SECRET || '').trim() || process.env.PAYLOAD_SECRET!
 
-function createUnsubscribeToken(accountId: AnyValue, category: string) {
+export function createUnsubscribeToken(accountId: number | string, category: string) {
   if (!OPTIONAL_EMAIL_CATEGORIES.includes(category))
     throw new Error('Invalid unsubscribe category.')
   const payload = Buffer.from(
@@ -64,7 +65,7 @@ export function verifyUnsubscribeToken(token: string) {
   }
 }
 
-function unsubscribeUrl(accountId: AnyValue, category: string) {
+function unsubscribeUrl(accountId: number | string, category: string) {
   return `${appBaseUrl()}/api/notifications/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(accountId, category))}`
 }
 
@@ -78,7 +79,7 @@ async function sendTemplatedEmail({
 }: {
   to: string
   templateKey: string
-  data?: AnyValue
+  data?: Doc
   unsubscribe?: string | null
 }) {
   const allowlist = String(process.env.EMAIL_RECIPIENT_ALLOWLIST || '')
@@ -145,14 +146,14 @@ export async function enqueueNotification({
   payload = {},
   availableAt = new Date(),
 }: {
-  accountId: AnyValue
+  accountId: number | string
   channel?: string
   category?: string | null
   templateKey: string
   sourceType?: string | null
   sourceId?: string | null
   deduplicationKey: string
-  payload?: AnyValue
+  payload?: Doc | string
   availableAt?: Date
 }) {
   if (!NOTIFICATION_CHANNELS.includes(channel)) throw new Error('Invalid notification channel.')
@@ -185,7 +186,7 @@ export async function enqueueNotification({
   return { created: Boolean(rows[0]), item: publicOutbox(rows[0]) }
 }
 
-async function markNotificationSent(id: AnyValue) {
+async function markNotificationSent(id: number | string) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -196,7 +197,7 @@ async function markNotificationSent(id: AnyValue) {
   )
 }
 
-async function markNotificationFailed(id: AnyValue, code: string) {
+async function markNotificationFailed(id: number | string, code: string) {
   const pool = getPgPool()!
   await pool.query(
     `UPDATE notification_outbox
@@ -251,7 +252,7 @@ async function rescheduleNotification(row: Doc, code: string) {
   )
 }
 
-async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) {
+async function deliverOutboxRow(row: Doc, connectBody: Doc | undefined) {
   if (row.channel === 'push') {
     const subscriptions = await listSubscriptionsForAccounts([row.account_id])
     if (!subscriptions.length)
@@ -286,7 +287,9 @@ async function deliverOutboxRow(req: AnyValue, row: Doc, connectBody: AnyValue) 
 }
 
 // Bounded batch; the next drain picks up whatever remains.
-export async function drainNotificationOutbox(req: AnyValue, { limit = 50 } = {}) {
+// req stays untyped: the paused-delivery integration test passes a bare {}
+// req stays untyped: the paused-delivery integration test passes a bare {}
+export async function drainNotificationOutbox(req: PayloadRequest, { limit = 50 } = {}) {
   // delivery is off: claim nothing, so the queue drains once it's back on
   // instead of marking unsent notifications as sent
   if (deliveryDisabled()) return { claimed: 0, sent: 0, retried: 0, failed: 0, paused: true }
@@ -295,12 +298,12 @@ export async function drainNotificationOutbox(req: AnyValue, { limit = 50 } = {}
   const results = { claimed: claimed.length, sent: 0, retried: 0, failed: 0 }
   for (const row of claimed) {
     try {
-      await deliverOutboxRow(req, row, connectBody)
+      await deliverOutboxRow(row, connectBody)
       await markNotificationSent(row.id)
       results.sent += 1
-    } catch (error: AnyValue) {
+    } catch (error) {
       const attempts = Number(row.attempts || 0) + 1
-      await rescheduleNotification(row, error.code || 'send_failed')
+      await rescheduleNotification(row, (error as { code?: string })?.code || 'send_failed')
       if (attempts >= MAX_DELIVERY_ATTEMPTS) results.failed += 1
       else results.retried += 1
     }

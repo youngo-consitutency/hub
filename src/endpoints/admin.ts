@@ -1,15 +1,10 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, Where } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { accountView, adminReason, requireAccountsManager } from '../lib/accounts'
+import { accountView, adminReason, requireAccountsManager, slimAccounts } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { rateLimit } from '../lib/rateLimit'
-import {
-  updateMembershipLifecycle,
-  setAccountFields,
-  sendMembershipActivatedEmail,
-  findAccountRowById,
-} from '../lib/membership'
-import { listAccountsForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
+import { updateMembershipLifecycle, findAccountRowById } from '../lib/membership'
+import { findAccountForAdmin, queryAccountsForAdmin } from '../lib/adminAccounts'
 import { resolveLegacyRole } from '../lib/authority'
 import { hasCapability } from '../lib/access'
 import { grantAuthority, revokeAuthorityInTx } from '../lib/authorityService'
@@ -18,7 +13,8 @@ import { emailConfigured, sendEmail } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc, AnyValue } from '../lib/domain'
+import { errorCode } from '../lib/narrow'
+import type { Doc } from '../lib/domain'
 
 const adminLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -53,7 +49,7 @@ export const adminEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       await adminLimit(req)
       await requireAccountsManager(req)
-      const where: AnyValue = {}
+      const where: Where = {}
       if (req.query?.action) where.action = { contains: req.query.action }
       if (req.query?.actorId) where.actor = { equals: req.query.actorId }
       const { docs } = await req.payload.find({
@@ -63,38 +59,7 @@ export const adminEndpoints: Endpoint[] = [
         limit: Math.min(500, Number(req.query?.limit || 200)),
         overrideAccess: true,
       })
-      return json({ items: docs })
-    }),
-  },
-  {
-    path: '/member/admin/accounts/:id/verify',
-    method: 'post',
-    handler: endpoint(async (req) => {
-      await adminLimit(req)
-      const { account: admin } = await requireAccountsManager(req)
-      const id = param(req, 'id')
-      const b = await readBody(req)
-      const reason = adminReason(b)
-      const before = await findAccountRowById(id)
-      if (!before) throw fail.notFound('Account not found.')
-      const updatedRow = await setAccountFields(id, {
-        member_status: 'verified',
-        hub_access_status: 'active',
-        membership_status: 'active',
-        verified_at: new Date().toISOString(),
-        verified_by: 'staff',
-      })
-      const updated = accountView(updatedRow)
-      await audit(req, admin, {
-        action: 'membership.status_changed',
-        targetType: 'account',
-        targetId: id,
-        before: accountView(before),
-        after: updated,
-        reason,
-      })
-      const mail = await sendMembershipActivatedEmail(updated)
-      return json({ account: updated, emailSent: mail.sent })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -139,8 +104,9 @@ export const adminEndpoints: Endpoint[] = [
         )
       )
         throw fail.validation({ teamRole: 'Invalid team role.' })
-      const items = await listAccountsForAdmin()
-      const target = items.find((item) => item && String(item.id) === id)
+      if (id === String(admin.id))
+        throw fail.forbidden('Another administrator must change your team roles.')
+      const target = await findAccountForAdmin(id)
       if (!target) throw fail.notFound('Account not found.')
       const roles = new Set(target.teamRoles || [])
       // Team roles are canonical mandates written to `authority-records`
@@ -185,9 +151,9 @@ export const adminEndpoints: Endpoint[] = [
             recordedBy: admin.id,
             provenance: { source: 'admin_console' },
           })
-        } catch (error: AnyValue) {
+        } catch (error) {
           // Already holds the mandate — enabling twice is a no-op.
-          if (error?.code !== 'duplicate_record') throw error
+          if (errorCode(error) !== 'duplicate_record') throw error
         }
       }
       // No mirror column: the authority record IS the team assignment —

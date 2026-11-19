@@ -8,10 +8,12 @@ import crypto from 'node:crypto'
 import { getPayload, Payload } from 'payload'
 import config from '@/payload.config'
 import { applyAccountSpec, type AccountSpec } from '../../scripts/lib/accountSpec'
+import { assertTestDatabase } from '../dbGuard'
 
 let payload: Payload
 
 export async function testPayload(): Promise<Payload> {
+  assertTestDatabase()
   if (!payload) payload = await getPayload({ config: await config })
   return payload
 }

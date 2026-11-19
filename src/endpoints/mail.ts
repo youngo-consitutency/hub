@@ -1,5 +1,6 @@
-import type { AnyValue, Doc } from '../lib/domain'
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { Doc } from '../lib/domain'
+import type { MailDraft } from '../payload-types'
+import type { Endpoint, PayloadRequest, Where } from 'payload'
 import { after } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
@@ -20,7 +21,7 @@ const queueLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, scope: 'mail-q
 const INACTIVE_MEMBERSHIP = ['expired', 'terminated', 'rejected']
 
 type Reach = ReturnType<typeof mailReach>
-type Scope = { type: string; wgSlug: string | null; accountIds: number[] }
+type Scope = { type: MailDraft['scopeType']; wgSlug: string | null; accountIds: number[] }
 
 async function mailContext(req: PayloadRequest) {
   const { account, access } = await verifiedContext(req)
@@ -44,7 +45,11 @@ async function activeMemberIds(req: PayloadRequest, wgSlugs: string[]) {
 
 // Every scope is checked against the author's reach when saved and again
 // when queued, so a lapsed mandate cannot send a draft it saved earlier.
-async function resolveScope(req: PayloadRequest, reach: Reach, raw: AnyValue): Promise<Scope> {
+async function resolveScope(
+  req: PayloadRequest,
+  reach: Reach,
+  raw: Doc | undefined,
+): Promise<Scope> {
   const type = String(raw?.type || '')
   if (type === 'constituency') {
     if (!reach.everyone) throw fail.forbidden('This mandate can only write to its own groups.')
@@ -99,7 +104,7 @@ async function recipientIds(req: PayloadRequest, scope: Scope) {
   })
 }
 
-function cleanDraft(b: AnyValue) {
+function cleanDraft(b: Doc) {
   const title = cleanText(b.title, 160)
   const message = sanitizeEmailHtml(b.message)
   const actionUrl = cleanText(b.actionUrl, 500) || null
@@ -136,14 +141,14 @@ const draftView = (d: Doc) => ({
   updatedAt: d.updatedAt,
 })
 
-async function ownDraft(req: PayloadRequest, accountId: AnyValue) {
+async function ownDraft(req: PayloadRequest, accountId: number | string) {
   const draft = await req.payload
     .findByID({ collection: 'mail-drafts', id: param(req, 'id'), depth: 0, overrideAccess: true })
     .catch(() => null)
   // another author's draft reads as missing, not forbidden
   if (!draft || String(draft.author) !== String(accountId) || draft.status !== 'draft')
     throw fail.notFound('This draft is no longer editable.')
-  return draft as Doc
+  return draft
 }
 
 export const mailEndpoints: Endpoint[] = [
@@ -171,15 +176,14 @@ export const mailEndpoints: Endpoint[] = [
       const { reach } = await mailContext(req)
       const q = cleanText(req.query?.q, 80)
       if (q.length < 2) return json({ people: [] })
-      const where: AnyValue = {
-        and: [
-          { name: { like: q } },
-          { hubAccessStatus: { equals: 'active' } },
-          { membershipStatus: { not_in: INACTIVE_MEMBERSHIP } },
-          { emailVerifiedAt: { exists: true } },
-        ],
-      }
-      if (!reach.everyone) where.and.push({ id: { in: await activeMemberIds(req, reach.wgSlugs) } })
+      const and: Where[] = [
+        { name: { like: q } },
+        { hubAccessStatus: { equals: 'active' } },
+        { membershipStatus: { not_in: INACTIVE_MEMBERSHIP } },
+        { emailVerifiedAt: { exists: true } },
+      ]
+      if (!reach.everyone) and.push({ id: { in: await activeMemberIds(req, reach.wgSlugs) } })
+      const where: Where = { and }
       const { docs } = await req.payload.find({
         collection: 'accounts',
         where,
@@ -226,7 +230,7 @@ export const mailEndpoints: Endpoint[] = [
         data: {
           author: account.id,
           ...draft,
-          scopeType: scope.type as AnyValue,
+          scopeType: scope.type,
           wgSlug: scope.wgSlug,
           recipients: await personNames(req, scope.accountIds),
           status: 'draft',
@@ -257,7 +261,7 @@ export const mailEndpoints: Endpoint[] = [
         id: existing.id,
         data: {
           ...draft,
-          scopeType: scope.type as AnyValue,
+          scopeType: scope.type,
           wgSlug: scope.wgSlug,
           recipients: await personNames(req, scope.accountIds),
         },
@@ -283,7 +287,9 @@ export const mailEndpoints: Endpoint[] = [
       const scope = await resolveScope(req, reach, {
         type: draft.scopeType,
         wgSlug: draft.wgSlug,
-        accountIds: (draft.recipients || []).map((r: Doc) => r.id),
+        accountIds: (Array.isArray(draft.recipients) ? draft.recipients : []).map((r) =>
+          typeof r === 'object' && r !== null && 'id' in r ? r.id : undefined,
+        ),
       })
       const ids = await recipientIds(req, scope)
       if (!ids.length)

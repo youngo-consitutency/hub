@@ -1,5 +1,5 @@
 import type { PayloadRequest } from 'payload'
-import type { AnyValue, Doc } from './domain'
+import type { AccountLike, Doc } from './domain'
 import { ApiError } from './respond'
 import { audit } from './audit'
 import { getDocument } from './documents'
@@ -76,7 +76,7 @@ async function writePageState(req: PayloadRequest, slug: string, body: Doc) {
  * the draft was written (a newer publish or a withdrawal), so an approved
  * draft can never silently overwrite someone else's published change.
  */
-export async function publishPublicPage(req: PayloadRequest, draft: Doc, account: AnyValue) {
+export async function publishPublicPage(req: PayloadRequest, draft: Doc, account: AccountLike) {
   const slug = draft.contentKey
   return withPageLock(req, slug, async () => {
     const current = await readPublicPage(req, slug)
@@ -120,7 +120,7 @@ export async function unpublishPublicPage(
   slug: string,
   revisionId: number,
   reason: string,
-  account: AnyValue,
+  account: AccountLike,
 ) {
   return withPageLock(req, slug, async () => {
     const current = await readPublicPage(req, slug)
