@@ -273,6 +273,58 @@ describe('a drafted patch is merged onto the live record when it is published', 
   })
 })
 
+describe('a drafted patch conflicts with a later change to the same field', () => {
+  it('refuses to publish over it', async () => {
+    const payload = await testPayload()
+    const editor = await session({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'content.editor', scopeType: 'team', scopeId: 'content_editor' }],
+    })
+    const publisher = await session({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'content.publisher', scopeType: 'team', scopeId: 'content_publisher' }],
+    })
+    const slug = `${tag}-conflict`
+    const created = await payload.create({
+      collection: 'content-announcements',
+      data: { slug, title: 'Before', body: 'Body', state: 'published' },
+      overrideAccess: true,
+    })
+    const drafted = await api(`/member/content/live/announcement/${slug}`, {
+      method: 'PATCH',
+      cookie: editor.cookie,
+      body: json({ payload: { title: 'Editor title' } }),
+    })
+    const { item } = await drafted.json()
+    await payload.update({
+      collection: 'content-announcements',
+      id: created.id,
+      data: { title: 'Someone else title' },
+      overrideAccess: true,
+    })
+    const step = (path: string, cookie: string, body: object = {}) =>
+      api(`/member/content/drafts/${item.id}/${path}`, {
+        method: 'POST',
+        cookie,
+        body: json({ expectedVersion: item.revision, ...body }),
+      })
+    await step('submit', editor.cookie)
+    await step('review', publisher.cookie, { decision: 'approve' })
+    expect((await step('publish', publisher.cookie)).status).toBe(409)
+    const live = await payload.findByID({
+      collection: 'content-announcements',
+      id: created.id,
+      overrideAccess: true,
+    })
+    expect(live.title).toBe('Someone else title')
+    await payload.delete({
+      collection: 'content-announcements',
+      id: created.id,
+      overrideAccess: true,
+    })
+  })
+})
+
 describe('the membership status route', () => {
   it('refuses to change your own membership and caps the renewal date', async () => {
     const staff = await session({

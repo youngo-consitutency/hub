@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { Endpoint } from 'payload'
 import { endpoint, fail, json } from '../lib/respond'
 
@@ -11,13 +12,18 @@ export const testTargetEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async () => {
       if (process.env.HUB_DISABLE_RATE_LIMIT !== '1') throw fail.notFound()
-      let database = ''
+      // a digest of host, port and database name: enough to tell two servers apart, and it
+      // reveals no credentials
+      let identity = ''
       try {
-        database = new URL(process.env.DATABASE_URL ?? '').pathname.replace(/^\//, '')
+        const url = new URL(process.env.DATABASE_URL ?? '')
+        identity = createHash('sha256')
+          .update(`${url.hostname}:${url.port || '5432'}${url.pathname}`)
+          .digest('hex')
       } catch {
-        // an unreadable URL reports an empty name, which the test guard refuses
+        // an unreadable URL reports nothing, which the test guard refuses
       }
-      return json({ database })
+      return json({ identity })
     }),
   },
 ]

@@ -203,7 +203,11 @@ async function applyToLive(
 }
 
 // The live record as the studio edits it; null when the slug does not exist.
-async function currentLive(req: PayloadRequest, contentType: string, slug: string) {
+async function currentLive(
+  req: PayloadRequest,
+  contentType: string,
+  slug: string,
+): Promise<Doc | null | undefined> {
   if (contentType === 'event') return store.getEvent(req, slug)
   if (contentType === 'announcement') return store.getAnnouncement(req, slug)
   if (contentType === 'resource')
@@ -399,11 +403,20 @@ export const contentEndpoints: Endpoint[] = [
         assertPageVersion(draft, await readBody(req))
         return json({ item: draftView(await publishPublicPage(req, draft, account)) })
       }
-      const { _patch, ...change } = draft.payload as Doc
+      const { _patch, _base, ...change } = draft.payload as Doc
       let payload: Doc = draft.payload
       if (_patch === true) {
         const current = await currentLive(req, draft.contentType, draft.contentKey)
         if (!current) throw new ApiError(409, 'conflict', 'The published item no longer exists.')
+        const stale = Object.keys(change).filter(
+          (key) => JSON.stringify(current[key] ?? null) !== JSON.stringify(_base?.[key] ?? null),
+        )
+        if (stale.length)
+          throw new ApiError(
+            409,
+            'conflict',
+            `The live ${stale.join(', ')} changed after this draft was made. Draft it again.`,
+          )
         payload = mergeOntoLive(current, change)
       }
       await applyToLive(req, draft.contentType, draft.contentKey, payload)
@@ -456,9 +469,16 @@ export const contentEndpoints: Endpoint[] = [
           data: {
             contentType: contentType as ContentDraft['contentType'],
             contentKey: slug,
-            // only the fields sent, marked as a patch: the live record is read again at publish
-            // time, so a change made meanwhile to another field is not rolled back
-            payload: { ...change, _patch: true },
+            // only the fields sent, marked as a patch, with what each held when the draft was made:
+            // at publish time the live record is read again, so a change made meanwhile to another
+            // field is kept and a change to the same field is a conflict
+            payload: {
+              ...change,
+              _patch: true,
+              _base: Object.fromEntries(
+                Object.keys(change).map((key) => [key, current[key] ?? null]),
+              ),
+            },
             author: account.id,
             status: 'draft',
           },

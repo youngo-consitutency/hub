@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
-import { getAccessProfile } from './access'
+import { getAccessProfile, type AccessProfile } from './access'
 import {
   computeWindows,
   consensusOutcome,
@@ -89,6 +89,23 @@ export function isContactPerson(account: AccountLike, proposal: Doc): boolean {
     proposal.proposedBy === account.id ||
     (proposal.proposedBy as Doc)?.id === account.id
   )
+}
+
+/**
+ * The working groups and operational teams an account belongs to, by the same mapping
+ * isBodyMember uses: working-group assignments, derived team roles, body scopes and
+ * operational-team records. A role that does not derive membership (a conference liaison on a
+ * team scope, say) is deliberately absent.
+ */
+export function representedGroupKeys(
+  access: Pick<AccessProfile, 'wgAssignments' | 'teamRoles' | 'bodyScopes' | 'records'>,
+): Set<string> {
+  return new Set([
+    ...access.wgAssignments.map((w) => w.wgSlug),
+    ...access.teamRoles,
+    ...access.bodyScopes,
+    ...access.records.filter((r) => r.scopeType === 'operational_team').map((r) => r.scopeId),
+  ])
 }
 
 // Who may flag/vote in a body (S13 §1).

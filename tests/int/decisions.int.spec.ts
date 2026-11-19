@@ -382,6 +382,37 @@ describe('decision engine (S09)', () => {
   )
 
   it(
+    'counts a team role as membership of that team, but not a liaison record',
+    { timeout: 90000 },
+    async () => {
+      const file = async (who: { cookie: string }, groupKey: string) => {
+        const voting = await makeVoting()
+        return api(`/decisions/${voting.id}/vetoes`, {
+          method: 'POST',
+          cookie: who.cookie,
+          body: JSON.stringify({
+            requesterKind: 'wg_or_ot',
+            groupKey,
+            reasoning: 'Test veto reasoning for the record.',
+          }),
+        })
+      }
+      // a Membership Team appointment makes the member part of that team
+      const teamMember = await session({
+        membershipTrack: 'constituency_work',
+        teams: ['membership_team'],
+      })
+      expect((await file(teamMember, 'membership_team')).status).toBe(201)
+      // a conference liaison record sits on a team scope but derives no team membership
+      const liaison = await session({
+        membershipTrack: 'constituency_work',
+        records: [{ role: 'coy.lcoy_liaison', scopeType: 'team', scopeId: 'lcoy_liaison' }],
+      })
+      expect((await file(liaison, 'lcoy_liaison')).status).toBe(403)
+    },
+  )
+
+  it(
     'refuses a veto request for a group the member holds no role in',
     { timeout: 90000 },
     async () => {

@@ -34,6 +34,7 @@ import {
   transition,
   vetoView,
   withProposalLock,
+  representedGroupKeys,
 } from '../lib/decisionRuntime'
 import type { AccountLike, Doc } from '../lib/domain'
 
@@ -433,19 +434,18 @@ export const decisionEndpoints: Endpoint[] = [
       if (!b.reasoning?.trim()) fields.reasoning = 'A veto request requires detailed reasoning.'
       if (Object.keys(fields).length) throw fail.validation(fields)
       // A veto speaks for a group, so the requester must hold a current mandate in it.
-      // the same role representations the decision runtime accepts for a group or team: its roles
-      // may sit on working_group, operational_team, team or body scope rows
-      const scopeTypes =
-        b.requesterKind === 'wg_or_ot'
-          ? ['working_group', 'operational_team', 'team', 'body']
-          : ['organisation']
-      const { records } = await getAccessProfile(req, account)
+      // A veto speaks for a group, so the requester must belong to it. Working groups and
+      // operational teams use the decision runtime's own membership mapping; organisations use
+      // the member's organisation seat records.
+      const access = await getAccessProfile(req, account)
       const key = normaliseGroupKey(b.groupKey)
-      if (
-        !records.some(
-          (r) => scopeTypes.includes(r.scopeType) && normaliseGroupKey(r.scopeId) === key,
-        )
-      )
+      const keys =
+        b.requesterKind === 'wg_or_ot'
+          ? representedGroupKeys(access)
+          : new Set(
+              access.records.filter((r) => r.scopeType === 'organisation').map((r) => r.scopeId),
+            )
+      if (![...keys].some((k) => normaliseGroupKey(k) === key))
         throw fail.forbidden('You can only file a veto for a group you hold a role in.')
       // One request per member per vote; free-text spellings must not count as extra groups.
       const own = await req.payload.find({
