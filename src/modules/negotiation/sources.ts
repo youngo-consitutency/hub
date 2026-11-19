@@ -5,7 +5,8 @@ import { type Pool } from 'pg'
 import { getPgPool } from '../../lib/pg'
 import { withClientTransaction } from './contributionShared'
 import { getAccessProfile, hasCapability } from '../../lib/access'
-import type { Doc, AccountLike, AnyValue } from '../../lib/domain'
+import type { PayloadRequest } from 'payload'
+import type { Doc, AccountLike } from '../../lib/domain'
 
 export class SourceIngestionError extends Error {
   code: string
@@ -26,7 +27,7 @@ const EXTRACTION_RISKS: [string, RegExp][] = [
   ['contact_phone', /(?:\+?\d[\d ()-]{7,}\d)/],
 ]
 
-function assessExtractionText(value: AnyValue) {
+function assessExtractionText(value: unknown) {
   const text = String(value || '')
   if (!text.trim())
     throw new SourceIngestionError('invalid_extraction', 'Reviewed extraction text is required.')
@@ -69,7 +70,7 @@ export async function reviewDocumentExtraction({
   note: string
   requestId?: string | null
   pool?: Pool | null
-  req: AnyValue
+  req: PayloadRequest
 }) {
   if (!pool)
     throw new SourceIngestionError(

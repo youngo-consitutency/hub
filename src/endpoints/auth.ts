@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import { logoutOperation, type Endpoint, type PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody } from '../lib/respond'
 import { validateRegistration } from '../lib/registration'
 import { validateGuardianEnquiry } from '../shared/guardianEnquiry'
@@ -11,11 +11,12 @@ import {
 } from '../lib/accounts'
 import { verifyLegacyPassword } from '../lib/password'
 import { rateLimit } from '../lib/rateLimit'
+import { requirePgPool } from '../lib/pg'
 import { sendEmail, emailConfigured } from '../lib/email'
 import { randomBytes } from 'node:crypto'
 import { appBaseUrl } from '../lib/env'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 import type { Account } from '../payload-types'
 
 const registerLimit = rateLimit({
@@ -28,7 +29,10 @@ const loginAccountLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   scope: 'login-account',
-  key: (req) => `email:${String((req as Doc)._bodyEmail || '')}`,
+  key: (req) =>
+    `email:${String((req as Doc)._bodyEmail || '')
+      .trim()
+      .toLowerCase()}`,
 })
 const resetRequestLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -54,7 +58,14 @@ const noStore = (res: Response) => {
   return res
 }
 
-async function loginResponse(req: AnyValue, email: string, password: string) {
+type PayloadSession = { user?: Account; token?: string; exp?: number }
+type Login = { user: Account; token: string; exp: number }
+
+async function loginResponse(
+  req: PayloadRequest,
+  email: string,
+  password: string,
+): Promise<Login | null> {
   const { payload } = req
 
   // Find the account first so legacy scrypt credentials can be verified and
@@ -68,7 +79,7 @@ async function loginResponse(req: AnyValue, email: string, password: string) {
   })
   const doc = found.docs[0] as Doc
 
-  let logged: AnyValue
+  let logged: PayloadSession | null
   try {
     logged = await payload.login({
       collection: 'accounts',
@@ -101,7 +112,9 @@ async function loginResponse(req: AnyValue, email: string, password: string) {
     }
   }
 
-  return logged?.user ? logged : null
+  // a session without a token or expiry cannot be issued, so it fails closed
+  if (!logged?.user || !logged.token || logged.exp === undefined) return null
+  return { user: logged.user, token: logged.token, exp: logged.exp }
 }
 
 export const authEndpoints: Endpoint[] = [
@@ -129,6 +142,8 @@ export const authEndpoints: Endpoint[] = [
         return noStore(json({ ok: true }, { status: 201 }))
       }
       if (result.fields) throw fail.validation(result.fields)
+      // a request that is neither a honeypot nor invalid always carries data
+      if (!result.data) throw fail.validation({ request: 'The request could not be read.' })
       await createGuardianEnquiry(req, result.data)
       req.payload.logger.info({ event: 'hub_guardian_enquiry_received' })
       return noStore(
@@ -270,7 +285,7 @@ export const authEndpoints: Endpoint[] = [
       if (!password) fields.password = 'Please enter your password.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
-      let logged: AnyValue = null
+      let logged: Login | null = null
       try {
         logged = await loginResponse(req, email, password)
       } catch {
@@ -324,10 +339,14 @@ export const authEndpoints: Endpoint[] = [
     path: '/auth/logout',
     method: 'post',
     handler: endpoint(async (req) => {
-      try {
-        await (req.payload as Doc).logout?.({ collection: 'accounts', req })
-      } catch {
-        // Cookie clear below is the effective logout.
+      // revoke the session server-side, not just the cookie: a copied token must stop working too
+      if (req.user) {
+        try {
+          await logoutOperation({ collection: req.payload.collections.accounts, req })
+        } catch {
+          // the cookie below must be cleared even if the server-side revocation failed
+          req.payload.logger.warn({ event: 'logout_revocation_failed' })
+        }
       }
       return noStore(json({ ok: true }, { headers: { 'Set-Cookie': clearSessionCookieHeader() } }))
     }),
@@ -452,19 +471,15 @@ export const authEndpoints: Endpoint[] = [
       if (password !== passwordConfirm) fields.passwordConfirm = 'Passwords do not match.'
       if (Object.keys(fields).length) throw fail.validation(fields)
 
-      const tokenHash = sha256Hex(token)
-      const { docs } = await req.payload.find({
-        collection: 'password-resets' as never,
-        where: {
-          tokenHash: { equals: tokenHash },
-          usedAt: { exists: false },
-          expiresAt: { greater_than: new Date().toISOString() },
-        },
-        limit: 1,
-        overrideAccess: true,
-      })
-      const reset = docs[0] as Doc
-      if (!reset) {
+      // Claim the token with one conditional UPDATE, so two concurrent requests cannot both use it.
+      const { rows } = await requirePgPool().query<{ account_id: number }>(
+        `UPDATE password_resets SET used_at = now()
+         WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()
+         RETURNING account_id`,
+        [sha256Hex(token)],
+      )
+      const claimed = rows[0]
+      if (!claimed) {
         return json(
           {
             error: {
@@ -475,19 +490,22 @@ export const authEndpoints: Endpoint[] = [
           { status: 400 },
         )
       }
-      await req.payload.update({
-        collection: 'accounts',
-        id: typeof reset.account === 'object' ? reset.account.id : reset.account,
-        data: { password, mustChangePassword: false },
-        overrideAccess: true,
-        req,
-      })
-      await req.payload.update({
-        collection: 'password-resets' as never,
-        id: reset.id,
-        data: { usedAt: new Date().toISOString() } as never,
-        overrideAccess: true,
-      })
+      try {
+        await req.payload.update({
+          collection: 'accounts',
+          id: claimed.account_id,
+          data: { password, mustChangePassword: false },
+          overrideAccess: true,
+          req,
+        })
+      } catch (error) {
+        // the password did not change, so the link must stay usable for a retry
+        await requirePgPool().query(
+          'UPDATE password_resets SET used_at = NULL WHERE token_hash = $1',
+          [sha256Hex(token)],
+        )
+        throw error
+      }
       return noStore(
         json({
           ok: true,

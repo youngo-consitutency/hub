@@ -1,10 +1,11 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
-import { isVerifiedAccount, requireAccount } from '../lib/accounts'
+import { requireAccount } from '../lib/accounts'
+import { isVerifiedAccount } from '../lib/accountStatus'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import * as store from '../lib/content'
 import { audit } from '../lib/audit'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
 import type { ContentDraft } from '../payload-types'
 import { PUBLIC_PAGE_KEYS, validatePublicPage } from '../shared/publicPages'
 import { publishPublicPage, readPublicPage, unpublishPublicPage } from '../lib/publicPages'
@@ -12,7 +13,7 @@ import { cleanText } from '../lib/text'
 
 // Page drafts are versioned: every transition names the revision it acted
 // on, so two editors or reviewers cannot act on a stale view of the draft.
-function assertPageVersion(draft: Doc, b: AnyValue) {
+function assertPageVersion(draft: Doc, b: Doc) {
   if (draft.contentType !== 'page') return
   if (!Number.isInteger(b?.expectedVersion))
     throw fail.validation({ expectedVersion: 'Reload the draft and try again.' })
@@ -20,7 +21,7 @@ function assertPageVersion(draft: Doc, b: AnyValue) {
     throw new ApiError(409, 'conflict', 'Someone changed this draft. Reload it and try again.')
 }
 
-function pagePayload(payload: AnyValue) {
+function pagePayload(payload: unknown) {
   const result = validatePublicPage(payload)
   if (!result.ok) throw fail.validation(result.errors)
   return result.value
@@ -37,7 +38,7 @@ async function draftAccess(req: PayloadRequest) {
   return { account, access, canDraft, canReview, canPublish }
 }
 
-const draftView = (d: AnyValue) => ({
+const draftView = (d: Doc) => ({
   id: d.id,
   contentType: d.contentType,
   contentKey: d.contentKey,
@@ -69,13 +70,13 @@ async function getDraft(req: PayloadRequest, id: string) {
     })) as Doc
     if (!d) throw fail.notFound('Draft not found.')
     return d
-  } catch (e: AnyValue) {
+  } catch (e) {
     if (e instanceof ApiError) throw e
     throw fail.notFound('Draft not found.')
   }
 }
 
-const contentKeyFor = (contentType: string, payload: AnyValue) =>
+const contentKeyFor = (contentType: string, payload: Doc) =>
   String(payload?.slug || payload?.title || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -86,7 +87,7 @@ async function applyToLive(
   req: PayloadRequest,
   contentType: string,
   contentKey: string,
-  payload: AnyValue,
+  payload: Doc,
 ) {
   if (contentType === 'event') {
     const { docs } = await req.payload.find({
@@ -102,7 +103,7 @@ async function applyToLive(
       startsAt: payload.startsAt,
       endsAt: payload.endsAt || payload.startsAt,
       description: payload.description || '',
-      workingGroup: payload.wgSlug
+      wg: payload.wgSlug
         ? (
             (
               await req.payload.find({
@@ -144,9 +145,8 @@ async function applyToLive(
     const data = {
       slug: contentKey,
       title: payload.title,
-      kind: payload.kind || 'update',
       body: payload.body || '',
-      state: payload.state || 'published',
+      state: 'published' as const,
       pinned: Boolean(payload.pinned),
     }
     if (docs[0]) {
@@ -179,7 +179,8 @@ async function applyToLive(
       summary: payload.summary || '',
       url: payload.url || '',
       format: payload.format || 'link',
-      verified: Boolean(payload.verified),
+      // Verifying a resource is a separate review step, never part of a drafted publish.
+      verified: false,
       state: 'published',
     }
     if (docs[0]) {
@@ -201,6 +202,26 @@ async function applyToLive(
   throw fail.validation({ contentType: 'Unsupported content type.' })
 }
 
+// The live record as the studio edits it; null when the slug does not exist.
+async function currentLive(
+  req: PayloadRequest,
+  contentType: string,
+  slug: string,
+): Promise<Doc | null | undefined> {
+  if (contentType === 'event') return store.getEvent(req, slug)
+  if (contentType === 'announcement') return store.getAnnouncement(req, slug)
+  if (contentType === 'resource')
+    return (await store.listResources(req)).find((r) => r.slug === slug)
+  return null
+}
+
+// applyToLive rewrites a record whole, so a partial change is merged onto the live record first
+const mergeOntoLive = (current: Doc, change: Doc) => ({
+  wgSlug: current.wg?.slug,
+  ...current,
+  ...change,
+})
+
 export const contentEndpoints: Endpoint[] = [
   {
     path: '/member/content',
@@ -216,7 +237,7 @@ export const contentEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      const groups = (await await store.listGroups(req)).map((g) => ({
+      const groups = (await store.listGroups(req)).map((g) => ({
         slug: g.slug,
         name: g.name,
       }))
@@ -382,7 +403,23 @@ export const contentEndpoints: Endpoint[] = [
         assertPageVersion(draft, await readBody(req))
         return json({ item: draftView(await publishPublicPage(req, draft, account)) })
       }
-      await applyToLive(req, draft.contentType, draft.contentKey, draft.payload)
+      const { _patch, _base, ...change } = draft.payload as Doc
+      let payload: Doc = draft.payload
+      if (_patch === true) {
+        const current = await currentLive(req, draft.contentType, draft.contentKey)
+        if (!current) throw new ApiError(409, 'conflict', 'The published item no longer exists.')
+        const stale = Object.keys(change).filter(
+          (key) => JSON.stringify(current[key] ?? null) !== JSON.stringify(_base?.[key] ?? null),
+        )
+        if (stale.length)
+          throw new ApiError(
+            409,
+            'conflict',
+            `The live ${stale.join(', ')} changed after this draft was made. Draft it again.`,
+          )
+        payload = mergeOntoLive(current, change)
+      }
+      await applyToLive(req, draft.contentType, draft.contentKey, payload)
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
@@ -408,7 +445,7 @@ export const contentEndpoints: Endpoint[] = [
       if (contentType === 'event') item = await store.getEvent(req, slug)
       else if (contentType === 'announcement') item = await store.getAnnouncement(req, slug)
       else if (contentType === 'resource')
-        item = (await store.listResources(req)).find((r: AnyValue) => r.slug === slug)
+        item = (await store.listResources(req)).find((r) => r.slug === slug)
       if (!item) throw fail.notFound()
       return json({ item })
     }),
@@ -417,13 +454,46 @@ export const contentEndpoints: Endpoint[] = [
     path: '/member/content/live/:contentType/:slug',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const { account, canPublish } = await draftAccess(req)
-      if (!canPublish) throw fail.forbidden('Publishing is not assigned.')
+      const { account, canDraft, canReview, canPublish } = await draftAccess(req)
       const contentType = param(req, 'contentType')
       const slug = param(req, 'slug')
       const b = await readBody(req)
-      const payload = b.payload ?? b
-      const item = await applyToLive(req, contentType, slug, payload)
+      const current = await currentLive(req, contentType, slug)
+      if (!current) throw fail.notFound()
+      const change: Doc = b.payload ?? {}
+      // The default is a draft: going live straight away needs both review and publish rights.
+      if (b.mode !== 'apply') {
+        if (!canDraft) throw fail.forbidden('Content drafting is not assigned.')
+        const draft = await req.payload.create({
+          collection: 'content-drafts',
+          data: {
+            contentType: contentType as ContentDraft['contentType'],
+            contentKey: slug,
+            // only the fields sent, marked as a patch, with what each held when the draft was made:
+            // at publish time the live record is read again, so a change made meanwhile to another
+            // field is kept and a change to the same field is a conflict
+            payload: {
+              ...change,
+              _patch: true,
+              _base: Object.fromEntries(
+                Object.keys(change).map((key) => [key, current[key] ?? null]),
+              ),
+            },
+            author: account.id,
+            status: 'draft',
+          },
+          overrideAccess: true,
+          req,
+        })
+        await audit(req, account, {
+          action: 'content.draft_create',
+          targetType: contentType,
+          targetId: slug,
+        })
+        return json({ item: draftView(draft) }, { status: 201 })
+      }
+      if (!canPublish || !canReview) throw fail.forbidden('Publishing is not assigned.')
+      const item = await applyToLive(req, contentType, slug, mergeOntoLive(current, change))
       await audit(req, account, {
         action: 'content.live_patch',
         targetType: contentType,

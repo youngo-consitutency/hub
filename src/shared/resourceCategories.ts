@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../member/lib/types'
+import type { Doc } from '../member/lib/types'
 const RESOURCE_CATEGORIES = [
   { key: 'join', label: 'Join' },
   { key: 'channels', label: 'Channels' },
@@ -34,7 +34,7 @@ function resourceUrl(resource: Doc) {
 
 // Exact host or a true subdomain — 'app.whatsapp.com' matches,
 // 'notwhatsapp.com' does not.
-const hostIs = (host: AnyValue, domain: AnyValue) => host === domain || host.endsWith(`.${domain}`)
+const hostIs = (host: string, domain: string) => host === domain || host.endsWith(`.${domain}`)
 
 function resourceCategory(resource: Doc) {
   const url = resourceUrl(resource)
@@ -118,7 +118,7 @@ export function isPublicGroupResource(resource: Doc) {
   )
 }
 
-export function groupResourcesByCategory(resources = []) {
+export function groupResourcesByCategory<T extends Doc>(resources: T[] = []) {
   return RESOURCE_CATEGORIES.map((category) => ({
     ...category,
     resources: resources.filter((resource) => resourceCategory(resource) === category.key),

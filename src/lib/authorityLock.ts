@@ -1,5 +1,5 @@
 import type { Payload, PayloadRequest } from 'payload'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 import { txHandle, withTransaction } from './pg'
 
 // Shared writer coordination for authority records (S11/S13). Every path
@@ -22,7 +22,7 @@ export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
 async function advisoryAuthorityLock(
   payload: Payload,
-  transactionID: AnyValue,
+  transactionID: string | number,
   accountId: number,
 ): Promise<void> {
   if (!Number.isInteger(accountId))
@@ -45,7 +45,7 @@ export async function withAuthorityLock<T>(
   fn: () => Promise<T>,
 ): Promise<T> {
   const accountIds = [...new Set([accountId].flat())].sort((a, b) => a - b)
-  const acquire = async (transactionID: AnyValue) => {
+  const acquire = async (transactionID: string | number) => {
     for (const id of accountIds) await advisoryAuthorityLock(req.payload, transactionID, id)
   }
   return withTransaction(req, async (transactionID) => {

@@ -9,8 +9,6 @@
 import { OPPORTUNITY_FORMATS, OPPORTUNITY_KINDS } from '../../src/shared/opportunities.js'
 import { slugify } from '../../src/shared/slug.js'
 
-export { slugify }
-
 // Vocab + working groups are live Hub data — fetched per call so the MCP
 // advertises what the database actually accepts, not a bundled snapshot.
 async function catalogOptions(client) {

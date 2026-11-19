@@ -6,10 +6,11 @@ import { getAccessProfile, canManageWg } from '../lib/access'
 import { wgActivityView } from '../lib/views'
 import { createWgActivity } from '../lib/wgActivities'
 import { wgProgressView } from './member'
-import type { Doc, AnyValue } from '../lib/domain'
+import type { Doc } from '../lib/domain'
+import type { CpCallSlot } from '../payload-types'
 
-function publicSlot(s: AnyValue, { withEmail = false } = {}) {
-  const person = (a: AnyValue) =>
+function publicSlot(s: CpCallSlot, { withEmail = false } = {}) {
+  const person = (a: CpCallSlot['hostAccount'] | CpCallSlot['bookedByAccount']) =>
     a && typeof a === 'object'
       ? withEmail
         ? { id: a.id, name: a.name, email: a.email }
@@ -197,7 +198,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      const slots = docs as Doc[]
+      const slots = docs
       return json({
         slots: slots
           .filter(
@@ -298,7 +299,7 @@ export const contactPointEndpoints: Endpoint[] = [
         overrideAccess: true,
         depth: 1,
       })
-      return json({ slots: (docs as Doc[]).map((s) => publicSlot(s, { withEmail: true })) })
+      return json({ slots: docs.map((s) => publicSlot(s, { withEmail: true })) })
     }),
   },
   {
@@ -313,7 +314,7 @@ export const contactPointEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ slots: (docs as Doc[]).map((s) => publicSlot(s, { withEmail: true })) })
+      return json({ slots: docs.map((s) => publicSlot(s, { withEmail: true })) })
     }),
   },
   {
@@ -323,7 +324,7 @@ export const contactPointEndpoints: Endpoint[] = [
       const { account } = await requirePlatformOperator(req)
       const b = await readBody(req)
       const slots = Array.isArray(b.slots) ? b.slots : [b]
-      const created: Doc[] = []
+      const created: CpCallSlot[] = []
       for (const s of slots) {
         const startsAt = Date.parse(s.startsAt)
         const duration = Number(s.durationMinutes || 30)

@@ -7,7 +7,8 @@ import { audit } from '../lib/audit'
 import { beleniosVoterList, eligibleVoters, isFacilitator, loadElection } from '../lib/governance'
 import { txHandle, withTransaction } from '../lib/pg'
 import { cleanText } from '../lib/text'
-import type { AccountLike, Doc, AnyValue } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
+import type { Election, ElectionCandidate } from '../payload-types'
 
 // S10 elections. the hub runs nominations and screening, decides who may
 // vote and records the result; the vote itself happens on belenios, whose
@@ -51,7 +52,7 @@ const createSchema = z.object({
   quorumOrganisations: quorum(25),
 })
 
-const candidateView = (c: AnyValue) => ({
+const candidateView = (c: ElectionCandidate) => ({
   id: c.id,
   race: c.race,
   account: accountRef(c.account),
@@ -61,13 +62,13 @@ const candidateView = (c: AnyValue) => ({
   nominatedAt: c.nominatedAt,
 })
 
-const electionView = (e: AnyValue, extra?: AnyValue) => ({
+const electionView = (e: Election, extra?: Record<string, unknown>) => ({
   id: e.id,
   title: e.title,
   kind: e.kind,
   status: e.status,
   description: e.description,
-  races: (e.races ?? []).map((r: AnyValue) => ({ slug: r.slug, label: r.label })),
+  races: (e.races ?? []).map((r) => ({ slug: r.slug, label: r.label })),
   nominationsOpenAt: e.nominationsOpenAt,
   nominationsCloseAt: e.nominationsCloseAt,
   votingOpensAt: e.votingOpensAt,
@@ -91,7 +92,7 @@ export const electionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as Doc[]).map((e) => electionView(e)) })
+      return json({ items: docs.map((e) => electionView(e)) })
     }),
   },
   {
@@ -143,7 +144,7 @@ export const electionEndpoints: Endpoint[] = [
       return json({
         election: electionView(e, {
           candidateCount: all.length,
-          candidates: published ? (all as Doc[]).map(candidateView) : undefined,
+          candidates: published ? all.map(candidateView) : undefined,
         }),
       })
     }),
@@ -156,7 +157,7 @@ export const electionEndpoints: Endpoint[] = [
       if (!(await isFacilitator(req, account)))
         throw fail.forbidden('Only the Election Facilitation Team may advance phases.')
       const e = await loadElection(req, param(req, 'id'))
-      const flow: Record<string, string> = {
+      const flow: Partial<Record<Election['status'], Election['status']>> = {
         announced: 'nominations',
         nominations: 'voting',
         voting: 'tallying',
@@ -165,7 +166,7 @@ export const electionEndpoints: Endpoint[] = [
       const next = flow[e.status]
       if (!next) throw fail.conflict('invalid_phase', `Cannot advance from ${e.status}.`)
       const now = new Date().toISOString()
-      const patch: AnyValue = { status: next }
+      const patch: Partial<Election> = { status: next }
       if (next === 'nominations') {
         patch.nominationsOpenAt = now
         patch.nominationsCloseAt = new Date(Date.now() + 7 * 86400000).toISOString()
@@ -225,7 +226,7 @@ export const electionEndpoints: Endpoint[] = [
         throw fail.conflict('invalid_phase', 'Nominations are not open.')
       const b = await readBody(req)
       const fields: Record<string, string> = {}
-      const raceSlugs = (e.races ?? []).map((r: AnyValue) => r.slug)
+      const raceSlugs = (e.races ?? []).map((r) => r.slug)
       if (!raceSlugs.includes(b.race)) fields.race = `Must be one of: ${raceSlugs.join(', ')}.`
       const statement = typeof b.statement === 'string' ? cleanText(b.statement, 4000) : ''
       if (!statement) fields.statement = 'A statement of motivation is required.'
@@ -291,6 +292,12 @@ export const electionEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Candidate not found.')
         })
+      const candidateAccount = candidate.account
+      if (
+        String(typeof candidateAccount === 'object' ? candidateAccount?.id : candidateAccount) ===
+        String(account.id)
+      )
+        throw fail.forbidden('Another facilitator must screen your own candidacy.')
       // a candidate id from another election must not be screened through this one
       const owner = candidate.election
       if ((typeof owner === 'object' ? owner.id : owner) !== e.id)
@@ -454,7 +461,7 @@ export const electionEndpoints: Endpoint[] = [
         organisationsMet: organisations !== null && organisations >= (e.quorumOrganisations ?? 25),
       }
       const quorumMet = quorum.individualsMet && quorum.organisationsMet
-      const raceSlugs: string[] = (e.races ?? []).map((race: AnyValue) => race.slug)
+      const raceSlugs: string[] = (e.races ?? []).map((race) => race.slug)
       for (const slug of Object.keys(b.races ?? {}))
         if (!raceSlugs.includes(slug)) fields[slug] = 'Not a race in this election.'
       const races: Doc = {}

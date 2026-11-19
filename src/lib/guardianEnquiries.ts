@@ -1,9 +1,10 @@
-import type { AnyValue } from './domain'
+import type { PayloadRequest } from 'payload'
+import type { GuardianEnquiry } from '../payload-types'
 import { retentionCutoff } from '../shared/guardianEnquiry'
 
 // Guardian requests are kept only while the Membership Team needs them:
 // expired rows are purged on every create, list and close, and by the daily cron.
-export async function purgeExpiredGuardianEnquiries(req: AnyValue) {
+export async function purgeExpiredGuardianEnquiries(req: PayloadRequest) {
   await req.payload.delete({
     collection: 'guardian-enquiries',
     where: { createdAt: { less_than: retentionCutoff().toISOString() } },
@@ -12,7 +13,7 @@ export async function purgeExpiredGuardianEnquiries(req: AnyValue) {
   })
 }
 
-const view = (row: AnyValue) => ({
+const view = (row: GuardianEnquiry) => ({
   id: row.id,
   guardianName: row.guardianName,
   guardianEmail: row.guardianEmail,
@@ -22,18 +23,27 @@ const view = (row: AnyValue) => ({
   createdAt: row.createdAt,
 })
 
-export async function createGuardianEnquiry(req: AnyValue, data: AnyValue) {
+/** What validateGuardianEnquiry returns for a valid request. */
+export type GuardianEnquiryInput = Omit<
+  GuardianEnquiry,
+  'id' | 'createdAt' | 'updatedAt' | 'relationship'
+> & {
+  relationship: string
+}
+
+export async function createGuardianEnquiry(req: PayloadRequest, data: GuardianEnquiryInput) {
   await purgeExpiredGuardianEnquiries(req)
   const row = await req.payload.create({
     collection: 'guardian-enquiries',
-    data,
+    // the relationship was checked against the allowed list by validateGuardianEnquiry
+    data: { ...data, relationship: data.relationship as GuardianEnquiry['relationship'] },
     overrideAccess: true,
     req,
   })
   return view(row)
 }
 
-export async function listGuardianEnquiries(req: AnyValue) {
+export async function listGuardianEnquiries(req: PayloadRequest) {
   await purgeExpiredGuardianEnquiries(req)
   const { docs } = await req.payload.find({
     collection: 'guardian-enquiries',
@@ -46,7 +56,7 @@ export async function listGuardianEnquiries(req: AnyValue) {
   return docs.map(view)
 }
 
-export async function closeGuardianEnquiry(req: AnyValue, id: number) {
+export async function closeGuardianEnquiry(req: PayloadRequest, id: number) {
   await purgeExpiredGuardianEnquiries(req)
   const { docs } = await req.payload.delete({
     collection: 'guardian-enquiries',

@@ -1,9 +1,17 @@
-import type { AnyValue } from '../member/lib/types'
+/** The fields the status rules read from a COY. */
+export interface CoyDates {
+  status?: string | null
+  startsOn?: string | null
+  endsOn?: string | null
+  applicationsCloseAt?: string | null
+  datesTbc?: boolean
+}
+
 const TERMINAL = new Set(['cancelled', 'concluded'])
 const CLOSED_APPLICATIONS = new Set(['applications_closed', 'registration_closed'])
 const OPEN_APPLICATIONS = new Set(['applications_open', 'registration_open'])
 
-function endOfUtcDay(isoDate: AnyValue) {
+function endOfUtcDay(isoDate: string | null | undefined) {
   if (!isoDate) return null
   const time = Date.parse(`${String(isoDate).slice(0, 10)}T23:59:59.000Z`)
   return Number.isFinite(time) ? time : null
@@ -14,7 +22,7 @@ function endOfUtcDay(isoDate: AnyValue) {
  * `applications_closed` after `applicationsCloseAt`, and a past `endsOn`
  * becomes `concluded`.
  */
-export function resolveCoyStatus(coy: AnyValue, now = new Date()) {
+export function resolveCoyStatus(coy: CoyDates | null | undefined, now = new Date()) {
   if (!coy?.status) return coy?.status
   if (TERMINAL.has(coy.status) || CLOSED_APPLICATIONS.has(coy.status)) {
     return coy.status
@@ -29,15 +37,15 @@ export function resolveCoyStatus(coy: AnyValue, now = new Date()) {
   return coy.status
 }
 
-export function coyApplicationsAreOpen(coy: AnyValue, now = new Date()) {
-  return OPEN_APPLICATIONS.has(resolveCoyStatus(coy, now))
+export function coyApplicationsAreOpen(coy: CoyDates | null | undefined, now = new Date()) {
+  return OPEN_APPLICATIONS.has(resolveCoyStatus(coy, now) ?? '')
 }
 
 /**
  * Label status for a tracker card. A conference in progress reads as
  * underway. An endorsed host with no published dates reads as endorsed.
  */
-export function coyDisplayStatus(coy: AnyValue, now = new Date()) {
+export function coyDisplayStatus(coy: CoyDates | null | undefined, now = new Date()) {
   const status = resolveCoyStatus(coy, now)
   if (status === 'cancelled' || status === 'concluded') return status
   const start = coy?.startsOn

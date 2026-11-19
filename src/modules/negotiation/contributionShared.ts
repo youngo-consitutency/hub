@@ -3,7 +3,7 @@
 // project/amendment write guards.
 import { createHash } from 'node:crypto'
 import { type Pool, type PoolClient } from 'pg'
-import type { Doc, AnyValue } from '../../lib/domain'
+import type { Doc } from '../../lib/domain'
 
 export class ContributionError extends Error {
   status: number
@@ -18,7 +18,7 @@ export class ContributionError extends Error {
   }
 }
 
-export const requiredText = (value: AnyValue, name: string, max: number) => {
+export const requiredText = (value: unknown, name: string, max: number) => {
   const text = String(value || '').trim()
   if (!text || text.length > max)
     throw new ContributionError(
@@ -30,11 +30,11 @@ export const requiredText = (value: AnyValue, name: string, max: number) => {
   return text
 }
 
-export const optionalUrl = (value: AnyValue, name: string) => {
+export const optionalUrl = (value: unknown, name: string) => {
   if (!value) return null
   let url
   try {
-    url = new URL(value)
+    url = new URL(String(value))
   } catch {
     throw new ContributionError(422, 'validation', `${name} must be a valid URL.`)
   }
@@ -43,7 +43,7 @@ export const optionalUrl = (value: AnyValue, name: string) => {
   return url.toString()
 }
 
-export const idempotencyKey = (value: AnyValue) => {
+export const idempotencyKey = (value: unknown) => {
   const key = String(value || '').trim()
   if (!key || key.length > 200)
     throw new ContributionError(
@@ -54,7 +54,7 @@ export const idempotencyKey = (value: AnyValue) => {
   return key
 }
 
-export function citations(input: AnyValue) {
+export function citations(input: unknown) {
   if (!Array.isArray(input) || input.length === 0)
     throw new ContributionError(
       422,
@@ -77,18 +77,20 @@ export function citations(input: AnyValue) {
   }))
 }
 
-const stableValue = (value: AnyValue): AnyValue => {
+const stableValue = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(stableValue)
-  if (value && typeof value === 'object')
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
     return Object.fromEntries(
-      Object.keys(value)
+      Object.keys(record)
         .sort()
-        .map((key) => [key, stableValue(value[key])]),
+        .map((key) => [key, stableValue(record[key])]),
     )
+  }
   return value
 }
 
-export const contentHash = (payload: AnyValue) =>
+export const contentHash = (payload: unknown) =>
   `sha256:${createHash('sha256')
     .update(JSON.stringify(stableValue(payload)))
     .digest('hex')}`
@@ -98,7 +100,7 @@ export async function beginIdempotentMutation(
   operation: string,
   actorId: number,
   key: string,
-  payload: AnyValue,
+  payload: unknown,
 ) {
   const requestHash = contentHash(payload)
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))`, [

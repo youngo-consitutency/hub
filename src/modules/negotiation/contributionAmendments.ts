@@ -15,7 +15,7 @@ import {
 } from './contributionShared'
 import { normalizeAmendmentInput, normalizeAmendmentRevisionInput } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
-import type { AccountLike, AnyValue } from '../../lib/domain'
+import type { AccountLike, Doc } from '../../lib/domain'
 
 export async function createAmendment({
   account,
@@ -23,7 +23,7 @@ export async function createAmendment({
   pool = getPgPool(),
 }: {
   account: AccountLike
-  input: AnyValue
+  input: Doc
   pool?: Pool | null
 }) {
   const data = normalizeAmendmentInput(input)
@@ -137,7 +137,7 @@ export async function appendAmendmentVersion({
 }: {
   account: AccountLike
   amendmentId: string
-  input: AnyValue
+  input: Doc
   pool?: Pool | null
 }) {
   const data = normalizeAmendmentRevisionInput(input)

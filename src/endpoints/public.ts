@@ -2,8 +2,15 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import { PUBLIC_PAGE_KEYS } from '../shared/publicPages'
 import { readPublicPage } from '../lib/publicPages'
 import { endpoint, fail, json, PUBLIC_CACHE, viewCache, param, readBody } from '../lib/respond'
-import { isVerifiedAccount } from '../lib/accounts'
-import { eventView, groupView, feedView, searchView, directoryView } from '../lib/views'
+import { isVerifiedAccount } from '../lib/accountStatus'
+import {
+  eventView,
+  groupView,
+  feedView,
+  searchView,
+  directoryView,
+  submissionView,
+} from '../lib/views'
 import * as store from '../lib/content'
 import { getDocument } from '../lib/documents'
 import { rateLimit } from '../lib/rateLimit'
@@ -35,6 +42,9 @@ const gysSignupLimit = rateLimit({
   max: 6,
   scope: 'gys-signup',
 })
+
+// each search scans six collections, and varying q defeats the cache
+const searchLimit = rateLimit({ windowMs: 60_000, max: 30, scope: 'public-search' })
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
@@ -87,21 +97,6 @@ export const publicEndpoints: Endpoint[] = [
     }),
   },
   {
-    path: '/recognition',
-    method: 'get',
-    handler: endpoint(() =>
-      json(
-        {
-          error: {
-            code: 'retired',
-            message: 'Contribution points have been retired.',
-          },
-        },
-        { status: 410 },
-      ),
-    ),
-  },
-  {
     path: '/feed',
     method: 'get',
     handler: endpoint(async (req) => {
@@ -135,7 +130,11 @@ export const publicEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       const state = (req.query?.state as string) || 'open'
-      return viewCache(json({ items: await store.listSubmissions(req, state) }), false)
+      const opts = viewOptions(req)
+      const items = (await store.listSubmissions(req, state)).map((s: Doc) =>
+        submissionView(s, opts),
+      )
+      return viewCache(json({ items }), opts.includePrivate)
     }),
   },
   {
@@ -144,7 +143,8 @@ export const publicEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       const sub = await store.getSubmission(req, param(req, 'slug'))
       if (!sub) throw fail.notFound('Unknown submission')
-      return viewCache(json(sub), false)
+      const opts = viewOptions(req)
+      return viewCache(json(submissionView(sub, opts)), opts.includePrivate)
     }),
   },
   {
@@ -211,7 +211,10 @@ export const publicEndpoints: Endpoint[] = [
       const group = await store.getGroup(req, slug)
       if (!group) throw fail.notFound('Unknown working group')
       const progress = opts.account ? await wgProgressFor(req, slug) : null
-      const includeWorkspace = Boolean(progress?.presentationOk && progress?.rulesOk)
+      // Workspace links are credentials: only verified members who finished onboarding get them,
+      // and any response that carries them must stay out of the shared cache.
+      const includeWorkspace =
+        opts.includePrivate && Boolean(progress?.presentationOk && progress?.rulesOk)
       return viewCache(json(groupView(group, { ...opts, includeWorkspace })), opts.includePrivate)
     }),
   },
@@ -300,6 +303,7 @@ export const publicEndpoints: Endpoint[] = [
     path: '/search',
     method: 'get',
     handler: endpoint(async (req) => {
+      await searchLimit(req)
       const opts = viewOptions(req)
       const q = String(req.query?.q || '')
       const results = await store.search(req, q, opts.includePrivate)

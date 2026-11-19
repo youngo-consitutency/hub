@@ -1,15 +1,17 @@
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { Endpoint, PayloadRequest, RequiredDataFromCollectionSlug } from 'payload'
 import { sql } from '@payloadcms/db-postgres'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountRef, requireCwMember, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { isSelector, loadSelection } from '../lib/governance'
 import { txHandle, withTransaction } from '../lib/pg'
-import type { AccountLike, AnyValue, Doc } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
+import type { Selection, SelectionCommittee, SelectionEvaluation } from '../payload-types'
+import { idOf } from '../lib/narrow'
 
 // S24 selections.
 
-const selectionView = (s: AnyValue, extra?: AnyValue) => ({
+const selectionView = (s: Selection, extra?: Record<string, unknown>) => ({
   id: s.id,
   title: s.title,
   opportunityNote: s.opportunityNote,
@@ -17,7 +19,7 @@ const selectionView = (s: AnyValue, extra?: AnyValue) => ({
   bodyRef: s.bodyRef,
   status: s.status,
   method: s.method,
-  criteria: (s.criteria ?? []).map((c: AnyValue) => ({ name: c.name, weightPct: c.weightPct })),
+  criteria: (s.criteria ?? []).map((c) => ({ name: c.name, weightPct: c.weightPct })),
   deadlineAt: s.deadlineAt,
   spotsAvailable: s.spotsAvailable,
   selectionSummary: s.selectionSummary,
@@ -26,7 +28,7 @@ const selectionView = (s: AnyValue, extra?: AnyValue) => ({
 })
 
 // explicit projections: payload docs carry the populated account record
-const memberView = (m: AnyValue) => ({
+const memberView = (m: SelectionCommittee) => ({
   id: m.id,
   selection: typeof m.selection === 'object' ? m.selection.id : m.selection,
   account: accountRef(m.account),
@@ -35,7 +37,7 @@ const memberView = (m: AnyValue) => ({
   coiNote: m.coiNote ?? null,
 })
 
-const evaluationView = (e: AnyValue) => ({
+const evaluationView = (e: SelectionEvaluation) => ({
   id: e.id,
   application: typeof e.application === 'object' ? e.application.id : e.application,
   evaluator: accountRef(e.evaluator),
@@ -44,8 +46,6 @@ const evaluationView = (e: AnyValue) => ({
   comment: e.comment ?? null,
   evaluatedAt: e.evaluatedAt,
 })
-
-const idOf = (v: AnyValue) => (v != null && typeof v === 'object' ? v.id : v)
 
 // an application of this selection, or 404 (never another selection's)
 async function loadApplication(req: PayloadRequest, selectionId: number, id: number) {
@@ -61,7 +61,7 @@ async function loadApplication(req: PayloadRequest, selectionId: number, id: num
         .catch(() => null)
     : null
   if (!app || idOf(app.selection) !== selectionId) throw fail.notFound('Application not found.')
-  return app as AnyValue
+  return app
 }
 
 async function committeeMember(req: PayloadRequest, selectionId: number, accountId: number) {
@@ -74,7 +74,7 @@ async function committeeMember(req: PayloadRequest, selectionId: number, account
     overrideAccess: true,
     req,
   })
-  return docs[0] as AnyValue
+  return docs[0]
 }
 
 // joining the committee and applying exclude each other (S24 §2.2.4) but live in two tables,
@@ -96,8 +96,8 @@ async function withSelectionLock<T>(
 
 // Recording a selection stage belongs to the Selections Team (S24) —
 // no account attribute grants selection authority on its own.
-async function canAdminister(req: PayloadRequest, s: AnyValue, account: AccountLike) {
-  const creator = (s.createdBy as AnyValue)?.id ?? s.createdBy
+async function canAdminister(req: PayloadRequest, s: Selection, account: AccountLike) {
+  const creator = idOf(s.createdBy)
   return creator === account.id || (await isSelector(req, account))
 }
 
@@ -121,7 +121,7 @@ export const selectionEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as AnyValue[]).map((s) => selectionView(s)) })
+      return json({ items: docs.map((s) => selectionView(s)) })
     }),
   },
   {
@@ -147,7 +147,7 @@ export const selectionEndpoints: Endpoint[] = [
           bodyRef: b.bodyRef?.trim() || null,
           status: 'committee_forming',
           method: b.method,
-          criteria: (b.criteria ?? []).map((c: AnyValue) => ({
+          criteria: (b.criteria ?? []).map((c: Doc) => ({
             name: String(c.name).trim(),
             weightPct: Number(c.weightPct),
           })),
@@ -396,6 +396,9 @@ export const selectionEndpoints: Endpoint[] = [
       if (idOf(application.account) === account.id)
         throw fail.conflict('conflict_of_interest', 'You cannot evaluate your own application.')
       // Recusal check (S24 §2.2.4): conflicted members may not evaluate.
+      // a JSON column: an unreadable value must stop the evaluation, never count as "no recusals"
+      if (member.recusedApplicantIds != null && !Array.isArray(member.recusedApplicantIds))
+        throw fail.conflict('conflict_of_interest', 'Your recusal list could not be read.')
       const recused = (member.recusedApplicantIds ?? []).map(Number)
       if (recused.includes(applicationId))
         throw fail.conflict(
@@ -403,7 +406,7 @@ export const selectionEndpoints: Endpoint[] = [
           'You declared a conflict of interest on this application.',
         )
       const b = await readBody(req)
-      const data: AnyValue = {
+      const data: RequiredDataFromCollectionSlug<'selection-evaluations'> = {
         selection: s.id,
         application: applicationId,
         evaluator: account.id,
@@ -562,7 +565,7 @@ export const selectionEndpoints: Endpoint[] = [
       })
       return json({
         selection: selectionView(updated),
-        selected: (apps as AnyValue[]).map((a) => ({
+        selected: apps.map((a) => ({
           id: a.id,
           account: accountRef(a.account),
         })),

@@ -4,7 +4,7 @@ import { profileShape } from './membershipReview'
 import { AUTHORITY_ROLES } from './authority'
 import { holderKey, holdersFor } from './roleHolders'
 import { requirePgPool, getPgPool } from './pg'
-import type { Doc, AccountLike, AccountView, AnyValue } from './domain'
+import type { Doc, AccountLike, AccountView } from './domain'
 
 // Member directory: profile rows, relationship maps and visibility-safe
 // person shapes for the member interface.
@@ -22,9 +22,24 @@ async function profileRow(accountId: number) {
   return rows[0] || null
 }
 
-async function relationshipMaps(accounts: Doc[]) {
+interface WgProgressRow {
+  account_id: number
+  wg_slug: string
+  role_in_wg: string | null
+  status: string
+}
+
+interface RelationshipMaps {
+  progressByAccount: Map<number, WgProgressRow[]>
+  orgByAccount: Map<number, Doc>
+  mandateByAccount: Map<number, string>
+  workingGroupNames?: Record<string, string>
+  teamLabels?: Record<string, string>
+}
+
+async function relationshipMaps(accounts: Doc[]): Promise<RelationshipMaps> {
   const ids = accounts.map((account) => account.id)
-  const progressByAccount = new Map<number, AnyValue[]>(ids.map((id) => [id, []]))
+  const progressByAccount = new Map<number, WgProgressRow[]>(ids.map((id) => [id, []]))
   const orgByAccount = new Map<number, Doc>()
   const mandateByAccount = new Map<number, string>()
   if (!ids.length) return { progressByAccount, orgByAccount, mandateByAccount }
@@ -67,15 +82,18 @@ async function relationshipMaps(accounts: Doc[]) {
       seatRole: row.seat_role,
     })
   const workingGroupNames = Object.fromEntries(
-    (wgResult.rows || []).map((g: AnyValue) => [g.slug, g.name]),
+    (wgResult.rows || []).map((g: { slug: string; name: string }) => [g.slug, g.name]),
   )
   const teamLabels = Object.fromEntries(
-    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: AnyValue) => [t.value, t.label]),
+    (optionsResult.rows[0]?.body?.teamLabels || []).map((t: { value: string; label: string }) => [
+      t.value,
+      t.label,
+    ]),
   )
   return { progressByAccount, orgByAccount, workingGroupNames, teamLabels, mandateByAccount }
 }
 
-function relationshipsFor(account: AccountLike, maps: AnyValue) {
+function relationshipsFor(account: AccountLike, maps: RelationshipMaps) {
   const wgName = (slug: string) => maps.workingGroupNames?.[slug] || slug
   const progress = maps.progressByAccount.get(account.id) || []
   const bySlug = new Map<string, Doc>()
@@ -108,9 +126,9 @@ function relationshipsFor(account: AccountLike, maps: AnyValue) {
 }
 
 function safePerson(
-  profile: AnyValue,
+  profile: ReturnType<typeof profileShape>,
   account: AccountLike,
-  relationships: AnyValue,
+  relationships: ReturnType<typeof relationshipsFor>,
   { duty = false, workingGroup = '', contactPointIds = new Set<number>() } = {},
 ) {
   // contact points come from current authority records, never the participation row
@@ -138,8 +156,8 @@ function safePerson(
   }
 }
 
-function cleanPageNumber(value: AnyValue) {
-  const n = Number.parseInt(value, 10) || 1
+function cleanPageNumber(value: unknown) {
+  const n = Number.parseInt(String(value), 10) || 1
   return Math.min(50, Math.max(1, n))
 }
 
@@ -150,12 +168,20 @@ export async function listMemberPeople({
   workingGroupRole = '',
   page = 1,
   pageSize = 24,
-}: AnyValue = {}) {
+}: {
+  search?: unknown
+  tag?: unknown
+  workingGroup?: unknown
+  workingGroupRole?: unknown
+  page?: unknown
+  pageSize?: unknown
+} = {}) {
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanTag = String(tag).trim().slice(0, 32)
   const cleanWg = String(workingGroup).trim().slice(0, 80)
-  const cleanWgRole = ['manager', 'participant'].includes(workingGroupRole) ? workingGroupRole : ''
-  const cleanPage = Number.parseInt(page, 10) || 1
+  const cleanWgRole =
+    workingGroupRole === 'manager' || workingGroupRole === 'participant' ? workingGroupRole : ''
+  const cleanPage = Number.parseInt(String(page), 10) || 1
   const cleanPageSize = cleanPageNumber(pageSize)
   const dutyManagers = cleanWgRole === 'manager' && Boolean(cleanWg)
   const pool = requirePgPool()
@@ -164,24 +190,27 @@ export async function listMemberPeople({
   let accounts: AccountView[] = []
   let profileRows: Doc[] = []
 
-  const values: AnyValue[] = []
+  const values: unknown[] = []
   const where = [
     ...(dutyManagers ? [] : [`p.directory_visibility='members'`]),
     `a.entity_type='individual'`,
     `a.member_status='verified'`,
     `a.hub_access_status='active'`,
   ]
-  const add = (sql: string, value: AnyValue) => {
+  const add = (sql: string, value: string) => {
     values.push(value)
     where.push(sql.replaceAll('?', `$${values.length}`))
   }
   if (cleanSearch)
     add(
-      `concat_ws(' ', COALESCE(NULLIF(p.display_name,''), a.name), p.headline, array_to_string(p.expertise_tags, ' ')) ILIKE ?`,
+      `concat_ws(' ', COALESCE(NULLIF(p.display_name,''), a.name), p.headline, COALESCE((SELECT string_agg(t, ' ') FROM jsonb_array_elements_text(COALESCE(p.expertise_tags, '[]'::jsonb)) t), '')) ILIKE ?`,
       `%${cleanSearch}%`,
     )
   if (cleanTag)
-    add(`EXISTS (SELECT 1 FROM unnest(p.expertise_tags) t WHERE lower(t)=lower(?))`, cleanTag)
+    add(
+      `EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(p.expertise_tags, '[]'::jsonb)) t WHERE lower(t)=lower(?))`,
+      cleanTag,
+    )
   let contactPointIds = new Set<number>()
   if (cleanWg) {
     // contact points come from authority records, the same source as the
@@ -221,7 +250,11 @@ export async function listMemberPeople({
   const limitSlot = values.length + 1
   const offsetSlot = values.length + 2
   const { rows } = await pool.query(
-    `SELECT a.*, p.*,
+    // p.* would overwrite the account's id, created_at and updated_at with the profile's
+    `SELECT a.*,
+            p.display_name, p.headline, p.bio, p.pronouns, p.expertise_tags, p.directory_visibility,
+            p.show_country, p.show_organization, p.show_working_groups, p.show_roles, p.role_title,
+            p.revision, p.avatar, p.updated_at AS profile_updated_at,
             (SELECT COALESCE(jsonb_agg(DISTINCT ar.scope_id), '[]'::jsonb) FROM authority_records ar WHERE ar.account_id=a.id AND ar.scope_type='team' AND ar.status='active' AND ar.starts_at<=now() AND (ar.ends_at IS NULL OR ar.ends_at>now())) AS team_roles
      FROM ${fromSql}
      ${clause}
@@ -235,7 +268,10 @@ export async function listMemberPeople({
   const maps = await relationshipMaps(accounts)
   return {
     items: accounts.map((account, index) => {
-      const profile = profileShape(profileRows[index], account)
+      const profile = profileShape(
+        { ...profileRows[index], updated_at: profileRows[index].profile_updated_at },
+        account,
+      )
       return safePerson(profile, account, relationshipsFor(account, maps), {
         duty: dutyManagers,
         workingGroup: cleanWg,
@@ -249,7 +285,7 @@ export async function listMemberPeople({
   }
 }
 
-export async function getMemberPerson(viewer: AccountLike, accountId: AnyValue) {
+export async function getMemberPerson(viewer: AccountLike, accountId: number | string) {
   const pool = requirePgPool()
   const { rows } = await pool.query(`SELECT * FROM accounts WHERE id=$1`, [Number(accountId)])
   const account = accountView(rows[0])

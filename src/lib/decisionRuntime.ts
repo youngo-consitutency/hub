@@ -1,13 +1,12 @@
 import type { PayloadRequest } from 'payload'
 import { fail } from './respond'
-import { getAccessProfile } from './access'
+import { getAccessProfile, type AccessProfile } from './access'
 import {
   computeWindows,
   consensusOutcome,
   quorumMet,
   quorumNeeded,
   requiresQuorum,
-  unresolvedRed,
   vetoThresholdMet,
   voteAdopted,
   VOTING_WINDOW_MS,
@@ -17,12 +16,13 @@ import { accountRef } from './accounts'
 import { sql } from '@payloadcms/db-postgres'
 import { txHandle, withTransaction } from './pg'
 import type { VetoRequest } from './decisions'
-import type { AccountLike, ActorLike, Doc, AnyValue } from './domain'
+import type { AccountLike, ActorLike, Doc } from './domain'
 
 // Shared S09 decision state machine — driven by the member endpoints and
 // the platform bridge so there is exactly one runtime.
 
-export const ids = (rel: AnyValue): number[] =>
+type Rel = number | { id: number }
+export const ids = (rel: Rel | Rel[] | null | undefined): number[] =>
   (Array.isArray(rel) ? rel : rel ? [rel] : []).map((x) => (typeof x === 'object' ? x.id : x))
 
 // Resolve by numeric id, or by the imported legacy platform uuid.
@@ -60,7 +60,7 @@ export async function recordEvent(
   proposalId: number,
   type: string,
   actor: ActorLike | null,
-  detail?: AnyValue,
+  detail?: Record<string, unknown>,
 ) {
   await req.payload.create({
     collection: 'decision-events',
@@ -89,6 +89,23 @@ export function isContactPerson(account: AccountLike, proposal: Doc): boolean {
     proposal.proposedBy === account.id ||
     (proposal.proposedBy as Doc)?.id === account.id
   )
+}
+
+/**
+ * The working groups and operational teams an account belongs to, by the same mapping
+ * isBodyMember uses: working-group assignments, derived team roles, body scopes and
+ * operational-team records. A role that does not derive membership (a conference liaison on a
+ * team scope, say) is deliberately absent.
+ */
+export function representedGroupKeys(
+  access: Pick<AccessProfile, 'wgAssignments' | 'teamRoles' | 'bodyScopes' | 'records'>,
+): Set<string> {
+  return new Set([
+    ...access.wgAssignments.map((w) => w.wgSlug),
+    ...access.teamRoles,
+    ...access.bodyScopes,
+    ...access.records.filter((r) => r.scopeType === 'operational_team').map((r) => r.scopeId),
+  ])
 }
 
 // Who may flag/vote in a body (S13 §1).
@@ -256,7 +273,7 @@ export async function transition(
   data: Doc,
   type: string,
   actor: ActorLike | null = null,
-  detail?: AnyValue,
+  detail?: Record<string, unknown>,
 ): Promise<Doc | null> {
   return withTransaction(req, async (transactionID) => {
     // the row lock from this UPDATE holds racers until commit, then they miss
@@ -335,7 +352,7 @@ export async function advanceIfDue(req: PayloadRequest, proposal: Doc) {
   const now = Date.now()
   const past = (d?: string | null) => d && new Date(d).getTime() <= now
   // losers reload and carry on from whatever the winner committed
-  const update = async (data: Doc, type: string, detail?: AnyValue) => {
+  const update = async (data: Doc, type: string, detail?: Record<string, unknown>) => {
     proposal =
       (await transition(req, proposal, data, type, null, detail)) ??
       (await loadProposal(req, proposal.id))
@@ -462,7 +479,7 @@ export async function checkVeto(req: PayloadRequest, proposal: Doc) {
   return proposal
 }
 
-export const flagView = (f: AnyValue) => ({
+export const flagView = (f: Doc) => ({
   id: f.id,
   kind: f.kind,
   rationaleCategory: f.rationaleCategory,
@@ -476,21 +493,21 @@ export const flagView = (f: AnyValue) => ({
   raisedAt: f.raisedAt,
 })
 
-export const commentView = (c: AnyValue) => ({
+export const commentView = (c: Doc) => ({
   id: c.id,
   account: accountRef(c.account),
   body: c.body,
   createdAt: c.createdAt,
 })
 
-export const ballotView = (b: AnyValue) => ({
+export const ballotView = (b: Doc) => ({
   id: b.id,
   account: accountRef(b.account),
   choice: b.choice,
   castAt: b.castAt,
 })
 
-export const vetoView = (v: AnyValue) => ({
+export const vetoView = (v: Doc) => ({
   id: v.id,
   requesterKind: v.requesterKind,
   groupKey: v.groupKey,
@@ -500,7 +517,7 @@ export const vetoView = (v: AnyValue) => ({
   createdAt: v.createdAt,
 })
 
-export const proposalView = (p: AnyValue, flags?: AnyValue[], counts?: AnyValue) => ({
+export const proposalView = (p: Doc, flags?: Doc[], counts?: object) => ({
   id: p.id,
   title: p.title,
   context: p.context,
@@ -519,7 +536,7 @@ export const proposalView = (p: AnyValue, flags?: AnyValue[], counts?: AnyValue)
   decisionEndsAt: p.decisionEndsAt,
   votingEndsAt: p.votingEndsAt,
   eligibleVoterCount: p.eligibleVoterCount,
-  ballotOptions: (p.ballotOptions ?? []).map((o: AnyValue) => o.option),
+  ballotOptions: (p.ballotOptions ?? []).map((o: { option: string }) => o.option),
   adoptedVia: p.adoptedVia,
   decidedAt: p.decidedAt,
   resultSummary: p.resultSummary,
@@ -528,11 +545,4 @@ export const proposalView = (p: AnyValue, flags?: AnyValue[], counts?: AnyValue)
   ...(counts ? { counts } : {}),
 })
 
-export {
-  computeWindows,
-  consensusOutcome,
-  quorumNeeded,
-  requiresQuorum,
-  unresolvedRed,
-  voteAdopted,
-}
+export { computeWindows }

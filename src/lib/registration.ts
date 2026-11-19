@@ -1,6 +1,7 @@
 // Registration validation: zod shapes; option lists (regions, genders,
 // nationalities, …) live in the `registration-options` content document.
-import type { AnyValue, Doc } from './domain'
+import type { PayloadRequest } from 'payload'
+import type { Doc } from './domain'
 import { ageFromDob } from '../shared/age'
 import { UNDER18_STOP_MESSAGE } from '../shared/guardianEnquiry'
 import { z } from 'zod'
@@ -169,7 +170,7 @@ function privacyConsentFragment(notice: { PRIVACY_VERSION?: string; CONSENT_STAT
   }
 }
 
-export async function validateRegistration(req: AnyValue, body: Body) {
+export async function validateRegistration(req: PayloadRequest, body: Body) {
   const [noticeDoc, optionsDoc] = await Promise.all([
     getDocument(req, 'privacy-notice'),
     getDocument(req, 'registration-options'),

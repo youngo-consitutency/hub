@@ -6,7 +6,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['tests/int/**/*.int.spec.ts'],
+    // unit specs need nothing running; int specs need the dev server and a local database
+    include: ['tests/unit/**/*.spec.ts', 'tests/int/**/*.int.spec.ts'],
     // Specs share one database and one dev server — run files sequentially
     // so cross-file fixtures (working groups, provisioned accounts) cannot race.
     fileParallelism: false,

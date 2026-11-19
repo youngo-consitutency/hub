@@ -3,7 +3,7 @@ import { fail } from './respond'
 import { requireVerifiedMember } from './accounts'
 import { getAccessProfile, hasCapability } from './access'
 import { toCamelCase } from './case'
-import type { Doc, AccountLike, AnyValue } from './domain'
+import type { Doc, AccountLike } from './domain'
 
 // Organisation-scope helpers shared by the NGO, organisations and
 // opportunities endpoints. Access derives from the member's active
@@ -22,7 +22,8 @@ async function resolveOrgContext(
   req: PayloadRequest,
   account: AccountLike,
 ): Promise<OrgContext | null> {
-  const requestedOrgId = (req.query?.orgId as string) || (req.body as Doc)?.orgId || null
+  // `?orgId=` only: Payload's req.body is an unread stream here, and no client sends a body id
+  const requestedOrgId = (req.query?.orgId as string) || null
   const access = await getAccessProfile(req, account)
   if (hasCapability(access, 'ngo.manage_all')) {
     if (!requestedOrgId) return null
@@ -71,7 +72,7 @@ export async function requireOrgScope(
 }
 
 export const seatView = (row: Doc) => {
-  const r = toCamelCase<AnyValue>(row)
+  const r = toCamelCase<Doc>(row)
   return {
     id: r.id,
     orgAccountId:

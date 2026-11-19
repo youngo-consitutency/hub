@@ -1,4 +1,3 @@
-import type { AnyValue } from '../lib/domain'
 import type { CollectionConfig } from 'payload'
 import { AUTHORITY_ROLE_KEYS } from '../lib/authority'
 import { serverWrites } from '../lib/collectionAccess'
@@ -92,8 +91,7 @@ export const AuthorityRecords: CollectionConfig = {
       type: 'json',
       hooks: {
         beforeChange: [
-          ({ originalDoc, value }) =>
-            originalDoc ? ((originalDoc as AnyValue).provenance ?? value) : value,
+          ({ originalDoc, value }) => (originalDoc ? (originalDoc.provenance ?? value) : value),
         ],
       },
     },

@@ -7,7 +7,7 @@ import { accountView } from './accounts'
 import { sendEmail } from './email'
 import { appBaseUrl } from './env'
 import { requirePgPool } from './pg'
-import type { AccountLike, Doc, AnyValue } from './domain'
+import type { AccountLike, Doc } from './domain'
 
 // Port of server/routes/member/guards.js updateMembershipLifecycle +
 // server/lib/accounts.js setAccountFields/destroyAllSessions.
@@ -24,8 +24,6 @@ export const MEMBERSHIP_STATUSES = [
 ]
 const CLOSED_MEMBERSHIP_STATUSES = ['expired', 'terminated']
 export const ENDED_MEMBERSHIP_STATUSES = [...CLOSED_MEMBERSHIP_STATUSES, 'rejected']
-
-export { isCwActive } from './accounts'
 
 const ACCOUNT_FIELD_COLUMNS = new Set([
   'member_status',
@@ -109,7 +107,7 @@ export async function updateMembershipLifecycle({
   /** Whether the actor holds platform.manage — gates officer-account edits. */
   actorIsOfficer?: boolean
   targetId: number | string
-  body: AnyValue
+  body: Doc | null | undefined
 }) {
   const status = String(body?.status || body?.membershipStatus || '')
   if (!MEMBERSHIP_STATUSES.includes(status))
@@ -139,6 +137,9 @@ export async function updateMembershipLifecycle({
     throw new ApiError(400, 'validation', 'A reason is required when rejecting an application.')
   if (body?.renewalDueAt && Number.isNaN(Date.parse(body.renewalDueAt)))
     throw new ApiError(400, 'validation', 'Invalid renewal date.')
+  // a typo (or abuse) must not grant membership for decades
+  if (body?.renewalDueAt && Date.parse(body.renewalDueAt) > Date.now() + 400 * 86_400_000)
+    throw new ApiError(400, 'validation', 'Set a renewal date within about 13 months.')
 
   const now = new Date().toISOString()
   const closed = CLOSED_MEMBERSHIP_STATUSES.includes(status)

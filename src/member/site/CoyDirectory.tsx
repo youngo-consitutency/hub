@@ -27,7 +27,7 @@ const STATUS: Record<string, [chip: string, label: string, rank: number]> = {
   cancelled: ['chip-danger', 'Cancelled', 4],
 }
 
-const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy)] ?? ['chip-neutral', '', 1]
+const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy) ?? ''] ?? ['chip-neutral', '', 1]
 const isWeb = (url: unknown): url is string => typeof url === 'string' && /^https?:\/\//.test(url)
 
 // what is open comes first, then what is coming, then what is over

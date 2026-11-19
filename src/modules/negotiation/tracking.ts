@@ -1,7 +1,7 @@
 // Public negotiation tracking reads — ported from server/lib/negotiations.js.
 // Relational model only; the JSON-fixture fallback path is not carried over.
 import { getPgPool } from '../../lib/pg'
-import type { Doc, AnyValue } from '../../lib/domain'
+import type { Doc } from '../../lib/domain'
 
 const MAX_PAGE_SIZE = 50
 
@@ -11,7 +11,7 @@ function pagination(query: Doc = {}) {
   return { page, pageSize, offset: (page - 1) * pageSize }
 }
 
-function normalizeFollowPreferences(input: AnyValue = {}) {
+function normalizeFollowPreferences(input: Doc = {}) {
   const digestFrequency = ['none', 'daily', 'weekly'].includes(input.digestFrequency)
     ? input.digestFrequency
     : 'weekly'
@@ -29,9 +29,9 @@ export async function listPublicTracks(filters: Doc = {}) {
     return { items: [], page: paging.page, pageSize: paging.pageSize, total: 0 }
   }
 
-  const values: Doc[] = []
+  const values: unknown[] = []
   const where = ["t.publication_status = 'published'"]
-  const add = (sql: string, value: AnyValue) => {
+  const add = (sql: string, value: unknown) => {
     values.push(value)
     where.push(sql.replace('?', `$${values.length}`))
   }
@@ -212,7 +212,7 @@ export async function listPublicCalls(filters: Doc = {}) {
       .map((item) => getPublicTrack(item.slug)),
   )
   const byId = new Map()
-  details.flatMap((item) => item?.calls ?? []).forEach((call: AnyValue) => byId.set(call.id, call))
+  details.flatMap((item) => item?.calls ?? []).forEach((call) => byId.set(call.id, call))
   return { items: [...byId.values()] }
 }
 
@@ -261,7 +261,7 @@ export async function putFollow({
 }: {
   accountId: number
   slug: string
-  preferences: AnyValue
+  preferences: Doc
 }) {
   const pool = getPgPool()
   if (!pool) return { unavailable: true }

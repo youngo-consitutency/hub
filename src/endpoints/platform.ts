@@ -1,5 +1,4 @@
-import type { AnyValue } from '../lib/domain'
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, json, param, readBody } from '../lib/respond'
 import { requireAccount } from '../lib/accounts'
 import { rateLimit } from '../lib/rateLimit'
@@ -13,7 +12,7 @@ const enquiryLimit = rateLimit({
   scope: 'platform-enquiry',
 })
 
-const actor = async (req: AnyValue): Promise<Actor> => {
+const actor = async (req: PayloadRequest): Promise<Actor> => {
   const account = await requireAccount(req)
   return account as unknown as Actor
 }

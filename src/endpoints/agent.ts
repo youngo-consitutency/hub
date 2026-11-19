@@ -1,4 +1,4 @@
-import type { AccountLike, AnyValue, Doc } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
 import type { Endpoint, PayloadRequest } from 'payload'
 import { createHash } from 'node:crypto'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
@@ -54,7 +54,7 @@ const mcpUrl = () =>
     .replace(/\/+$/, '') || null
 
 // Key minting and revocation re-check the password, as on the legacy Hub.
-async function confirmPassword(req: PayloadRequest, account: AnyValue, password: unknown) {
+async function confirmPassword(req: PayloadRequest, account: { email: string }, password: unknown) {
   const ok = await req.payload
     .login({
       collection: 'accounts',
@@ -78,15 +78,17 @@ async function groupNames(req: PayloadRequest) {
   return (slug: string) => names.get(slug) || slug
 }
 
-const stableJson = (value: AnyValue): string =>
-  Array.isArray(value)
-    ? `[${value.map(stableJson).join(',')}]`
-    : value && typeof value === 'object'
-      ? `{${Object.keys(value)
-          .sort()
-          .map((k) => `${JSON.stringify(k)}:${stableJson(value[k])}`)
-          .join(',')}}`
-      : JSON.stringify(value)
+const stableJson = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return `{${Object.keys(record)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson(record[k])}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
 
 type Caller = NonNullable<Awaited<ReturnType<typeof authenticateKey>>>
 
@@ -103,8 +105,8 @@ async function withIdempotency(
   req: PayloadRequest,
   caller: Caller,
   tool: string,
-  args: AnyValue,
-  run: () => Promise<AnyValue>,
+  args: Doc,
+  run: () => Promise<Record<string, unknown>>,
 ) {
   const idempotencyKey = String(args.idempotencyKey || '')
   if (idempotencyKey.length < 8 || idempotencyKey.length > 80)
@@ -144,7 +146,7 @@ async function withIdempotency(
 
 const TOOL_HANDLERS: Record<
   string,
-  (req: PayloadRequest, caller: Caller, args: AnyValue) => Promise<AnyValue>
+  (req: PayloadRequest, caller: Caller, args: Doc) => Promise<Record<string, unknown>>
 > = {
   async whoami(req, caller) {
     return whoamiView(caller.account, caller.eligibility, await groupNames(req))

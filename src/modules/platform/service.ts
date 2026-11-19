@@ -333,6 +333,8 @@ export async function assign(actor: Actor, input: Input) {
     await lockAuthority(client, intId(actor.id), accountId)
     const p = await permissions(actor, client)
     if (!p.officer) fail(403, 'Only platform administrators can record an evidenced assignment.')
+    if (accountId === intId(actor.id))
+      fail(403, 'Another administrator must record this assignment.')
     // Accept both spellings; canonicalise to 'organisation'.
     const scopeType = normaliseScopeType(text(input, 'scopeType')),
       scopeId = text(input, 'scopeId'),
@@ -620,6 +622,11 @@ export async function membershipAction(actor: Actor, id: string, input: Input) {
       reason = text(input, 'reason', 2000),
       renewalDueAt = date(input, 'renewalDueAt')
     if (reason.length < 8) fail(400, 'Record the onboarding or renewal evidence.')
+    if (intId(id) === intId(actor.id))
+      fail(403, 'Another Membership Team member must act on your own membership.')
+    // a typo (or abuse) must not grant membership for decades
+    if (renewalDueAt && Date.parse(renewalDueAt) > Date.now() + 400 * 86_400_000)
+      fail(400, 'Set a renewal date within about 13 months.')
     const { rows } = await client.query('SELECT * FROM accounts WHERE id=$1 FOR UPDATE', [
         intId(id),
       ]),

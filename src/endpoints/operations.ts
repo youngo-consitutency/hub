@@ -1,9 +1,10 @@
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { CollectionSlug, Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { accountRef, requireVerifiedMember, verifiedContext } from '../lib/accounts'
+import { accountRef, requireVerifiedMember, slimAccounts, verifiedContext } from '../lib/accounts'
 import { hasCapability } from '../lib/access'
 import { audit } from '../lib/audit'
-import type { AccountLike, Doc, AnyValue } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
+import type { FundingRequest, SafeguardingCase } from '../payload-types'
 
 // Operational workflows: funding (S12), safeguarding (S23/S04), COI (S07),
 // recognition (S20), partnerships (S13), privacy (S08). Members file their
@@ -23,24 +24,22 @@ const own = (doc: Doc) => {
   return typeof id === 'object' ? id?.id : id
 }
 
-async function loadDoc(
+async function loadDoc<C extends CollectionSlug>(
   req: PayloadRequest,
-  collection: string,
+  collection: C,
   id: string | number,
   notFound = 'Record not found.',
 ) {
-  return req.payload
-    .findByID({ collection: collection as AnyValue, id: Number(id), overrideAccess: true })
-    .catch(() => {
-      throw fail.notFound(notFound)
-    })
+  return req.payload.findByID({ collection, id: Number(id), overrideAccess: true }).catch(() => {
+    throw fail.notFound(notFound)
+  })
 }
 
 function ownOr404(doc: Doc, account: AccountLike) {
   if (own(doc) !== account.id) throw fail.notFound('Record not found.') // don't leak existence
 }
 
-const fundingView = (f: AnyValue, staff = false) => ({
+const fundingView = (f: FundingRequest, staff = false) => ({
   id: f.id,
   title: f.title,
   purpose: f.purpose,
@@ -78,7 +77,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: (docs as Doc[]).map((f) => fundingView(f)) })
+      return json({ items: docs.map((f) => fundingView(f)) })
     }),
   },
   {
@@ -193,12 +192,12 @@ export const operationEndpoints: Endpoint[] = [
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'funding-requests',
-        where: status ? { status: { equals: status as AnyValue } } : {},
+        where: status ? { status: { equals: status } } : {},
         sort: '-submittedAt',
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: (docs as Doc[]).map((f) => fundingView(f, true)) })
+      return json({ items: docs.map((f) => fundingView(f, true)) })
     }),
   },
   {
@@ -221,7 +220,7 @@ export const operationEndpoints: Endpoint[] = [
         collection: 'funding-requests',
         id: f.id,
         data: {
-          status: next as AnyValue,
+          status: next as FundingRequest['status'],
           reviewNote: b.reviewNote?.trim() || f.reviewNote,
           reviewedBy: staff.id,
           reviewedAt: new Date().toISOString(),
@@ -271,7 +270,7 @@ export const operationEndpoints: Endpoint[] = [
       const fields: Record<string, string> = {}
       if (!['safeguarding', 'child_safeguarding', 'concern', 'coc'].includes(b.kind))
         fields.kind = 'Invalid case type.'
-      if (!b.description?.trim() || b.description.trim().length < 20)
+      if (typeof b.description !== 'string' || b.description.trim().length < 20)
         fields.description = 'Describe the concern in at least 20 characters.'
       if (Object.keys(fields).length) throw fail.validation(fields)
       const rec = await req.payload.create({
@@ -290,7 +289,8 @@ export const operationEndpoints: Endpoint[] = [
         },
         overrideAccess: true,
       })
-      await audit(req, account, {
+      // An anonymous report must not be traceable through the audit log either.
+      await audit(req, b.anonymous ? null : account, {
         action: 'safeguarding.reported',
         targetType: 'safeguarding_case',
         targetId: String(rec.id),
@@ -330,7 +330,7 @@ export const operationEndpoints: Endpoint[] = [
       const status = req.query?.status as string | undefined
       const { docs } = await req.payload.find({
         collection: 'safeguarding-cases',
-        where: status ? { status: { equals: status as AnyValue } } : {},
+        where: status ? { status: { equals: status } } : {},
         sort: '-receivedAt',
         limit: 200,
         overrideAccess: true,
@@ -388,7 +388,7 @@ export const operationEndpoints: Endpoint[] = [
         collection: 'safeguarding-cases',
         id: c.id,
         data: {
-          status: next as AnyValue,
+          status: next as SafeguardingCase['status'],
           updates,
           assignedTo: b.assignTo ?? c.assignedTo ?? staff.id,
           outcomeNote: b.outcomeNote?.trim() || c.outcomeNote,
@@ -418,7 +418,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -463,7 +463,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -511,7 +511,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -557,7 +557,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -640,7 +640,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -703,7 +703,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 50,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {
@@ -749,7 +749,7 @@ export const operationEndpoints: Endpoint[] = [
         limit: 200,
         overrideAccess: true,
       })
-      return json({ items: docs })
+      return json({ items: slimAccounts(docs) })
     }),
   },
   {

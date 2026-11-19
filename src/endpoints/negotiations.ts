@@ -1,6 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
-import { isVerifiedAccount, requireAccount } from '../lib/accounts'
+import { requireAccount } from '../lib/accounts'
+import { isVerifiedAccount } from '../lib/accountStatus'
 import {
   getPublicTrack,
   getPublicDocumentVersion,

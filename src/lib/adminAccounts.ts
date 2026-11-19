@@ -2,7 +2,7 @@ import { accountView } from './accounts'
 import { requirePgPool } from './pg'
 import { MEMBERSHIP_STATUSES } from './membership'
 import { AUTHORITY_ROLES } from './authority'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 
 // Admin account surface: sortable account lists filtered by status or
 // authority-record role.
@@ -24,12 +24,13 @@ const ADMIN_COLUMNS = `id, email, name, first_name, last_name, entity_type,
   membership_ended_at, membership_end_reason, created_at, last_login_at, phone,
   email_verified_at`
 
-export async function listAccountsForAdmin() {
-  const pool = requirePgPool()
-  const { rows } = await pool.query(
-    `SELECT ${ADMIN_COLUMNS} FROM accounts ORDER BY created_at DESC LIMIT 500`,
+export async function findAccountForAdmin(id: string) {
+  if (!/^\d+$/.test(id)) return null
+  const { rows } = await requirePgPool().query(
+    `SELECT ${ADMIN_COLUMNS} FROM accounts WHERE id = $1`,
+    [id],
   )
-  return rows.map(accountView)
+  return rows[0] ? accountView(rows[0]) : null
 }
 
 export async function queryAccountsForAdmin({
@@ -40,7 +41,7 @@ export async function queryAccountsForAdmin({
   sort = 'newest',
   page = 1,
   pageSize = 12,
-}: AnyValue = {}) {
+}: Doc = {}) {
   const cleanSearch = String(search).trim().slice(0, 120)
   const cleanEntityType = ['individual', 'organization'].includes(entityType) ? entityType : ''
   const cleanStatus = MEMBERSHIP_STATUSES.includes(status) ? status : ''
@@ -50,9 +51,9 @@ export async function queryAccountsForAdmin({
   const cleanPage = Math.min(100_000, Math.max(1, Number.parseInt(page, 10) || 1))
   const cleanPageSize = Math.min(50, Math.max(1, Number.parseInt(pageSize, 10) || 12))
   const pool = requirePgPool()
-  const values: Doc[] = []
+  const values: unknown[] = []
   const where: string[] = []
-  const add = (clause: string, value: AnyValue) => {
+  const add = (clause: string, value: unknown) => {
     values.push(value)
     where.push(clause.replace('?', `$${values.length}`))
   }

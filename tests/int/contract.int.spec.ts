@@ -92,12 +92,6 @@ describe('API contract (requires dev server on :3000)', () => {
     expect(p).toHaveProperty('workingGroups')
   })
 
-  it('retires the legacy member points route with 410', async () => {
-    const res = await api('/member/ngo/points', { cookie: member.cookie })
-    expect(res.status).toBe(410)
-    expect((await res.json()).error.code).toBe('retired')
-  })
-
   it('validates push endpoints against the browser push allowlist', async () => {
     const bad = await api('/push/subscribe', {
       method: 'POST',

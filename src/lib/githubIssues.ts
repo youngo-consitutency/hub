@@ -1,9 +1,9 @@
-import type { AnyValue } from './domain'
+import type { Doc } from './domain'
 
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/
 
 // Mirroring is off unless both a token and an owner/repo pair are set.
-export function githubIssuesConfig(env: AnyValue = process.env) {
+export function githubIssuesConfig(env: Record<string, string | undefined> = process.env) {
   const token = String(env.GITHUB_ISSUE_TOKEN || '').trim()
   const repo = String(env.GITHUB_ISSUE_REPO || '').trim()
   if (!token || !REPO_RE.test(repo)) return null
@@ -15,7 +15,7 @@ export function githubIssuesConfig(env: AnyValue = process.env) {
  * named by account id only — never name or email. Returns the issue URL, or
  * null when mirroring is off or GitHub does not answer.
  */
-export async function mirrorFeedbackIssue(ticket: AnyValue, log?: AnyValue) {
+export async function mirrorFeedbackIssue(ticket: Doc, log?: { warn: (entry: object) => void }) {
   const config = githubIssuesConfig()
   if (!config) return null
   const body = [
@@ -47,7 +47,7 @@ export async function mirrorFeedbackIssue(ticket: AnyValue, log?: AnyValue) {
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) throw new Error(`GitHub answered ${res.status}`)
-    return ((await res.json()) as AnyValue).html_url || null
+    return ((await res.json()) as { html_url?: string }).html_url || null
   } catch (error) {
     log?.warn({ event: 'hub_feedback_github_mirror_failed', message: String(error) })
     return null

@@ -1,4 +1,4 @@
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { Endpoint, PayloadRequest, Where } from 'payload'
 import { ApiError, endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireAccount, requireVerifiedMember } from '../lib/accounts'
 import { audit } from '../lib/audit'
@@ -13,8 +13,9 @@ import { getOwnAppeal, submitAppeal } from '../lib/membershipAppeals'
 import { requireTeam } from '../lib/accounts'
 
 import { withAuthorityLock } from '../lib/authorityLock'
-import type { AnyValue, AccountLike } from '../lib/domain'
-import type { Handover } from '../payload-types'
+import type { AccountLike } from '../lib/domain'
+import { idOf } from '../lib/narrow'
+import type { Account, Handover } from '../payload-types'
 import type { AuditEntry } from '../lib/audit'
 
 // S17 membership lifecycle: Constituency Work renewal (every February),
@@ -84,7 +85,7 @@ async function endRecords(
   { scopeTypes }: { scopeTypes?: string[] } = {},
 ) {
   return withAuthorityLock(req, accountId, async () => {
-    const and: AnyValue[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
+    const and: Where[] = [{ account: { equals: accountId } }, { status: { equals: 'active' } }]
     if (scopeTypes?.length) and.push({ scopeType: { in: scopeTypes } })
     const { docs } = await req.payload.find({
       collection: 'authority-records',
@@ -94,7 +95,7 @@ async function endRecords(
       req,
     })
     const ended = new Date().toISOString()
-    for (const doc of docs as AnyValue[]) {
+    for (const doc of docs) {
       await req.payload.update({
         collection: 'authority-records',
         id: doc.id,
@@ -118,10 +119,10 @@ async function applyMembershipTransition(
   accountId: number,
   transition: {
     scopeTypes?: string[]
-    accountFields: AnyValue
+    accountFields: Partial<Account>
     handover: { reason: string; scopeLabel: string; items?: string[] }
     actor: AccountLike
-    auditEntry: (result: { ended: number; updated: AnyValue }) => AuditEntry
+    auditEntry: (result: { ended: number; updated: Account }) => AuditEntry
   },
   hooks?: { beforeSweep?: () => Promise<void>; afterSweep?: () => Promise<void> },
 ) {
@@ -148,11 +149,11 @@ async function applyMembershipTransition(
   })
 }
 
-const handoverView = (h: AnyValue) => ({
+const handoverView = (h: Handover) => ({
   id: h.id,
   reason: h.reason,
   scopeLabel: h.scopeLabel,
-  items: (h.items ?? []).map((i: AnyValue) => ({
+  items: (h.items ?? []).map((i) => ({
     label: i.label,
     done: Boolean(i.done),
     doneAt: i.doneAt,
@@ -198,7 +199,7 @@ export const membershipEndpoints: Endpoint[] = [
         membershipEndedAt: account.membershipEndedAt,
         // All authority — participation and mandates (WG Contact Points,
         // team roles, Council seats) — in one list.
-        records: (recordRes.docs as AnyValue[]).map((a) => ({
+        records: recordRes.docs.map((a) => ({
           id: a.id,
           kind: a.kind,
           role: a.role,
@@ -209,7 +210,7 @@ export const membershipEndpoints: Endpoint[] = [
           startsAt: a.startsAt,
           endsAt: a.endsAt,
         })),
-        openHandovers: (handovers as AnyValue[]).map(handoverView),
+        openHandovers: handovers.map(handoverView),
       })
     }),
   },
@@ -314,7 +315,7 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 20,
         overrideAccess: true,
       })
-      return json({ items: (docs as AnyValue[]).map(handoverView) })
+      return json({ items: docs.map(handoverView) })
     }),
   },
   {
@@ -331,11 +332,11 @@ export const membershipEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Handover not found.')
         })
-      const owner = (h.account as AnyValue)?.id ?? h.account
+      const owner = idOf(h.account)
       if (owner !== account.id) throw fail.forbidden('This is not your handover.')
       if (h.status !== 'open') throw fail.conflict('invalid_phase', `Handover is ${h.status}.`)
       const idx = Number(param(req, 'idx'))
-      const items = (h.items ?? []) as AnyValue[]
+      const items = h.items ?? []
       if (!Number.isInteger(idx) || idx < 0 || idx >= items.length)
         throw fail.validation({ idx: 'No such handover item.' })
       items[idx] = {
@@ -388,8 +389,8 @@ export const membershipEndpoints: Endpoint[] = [
         limit: 10000,
         overrideAccess: true,
       })
-      const results: AnyValue[] = []
-      for (const row of docs as AnyValue[]) {
+      const results: { accountId: number; recordsEnded: number }[] = []
+      for (const row of docs) {
         const { ended } = await applyMembershipTransition(req, row.id, {
           scopeTypes: CW_SCOPES,
           accountFields: { constituencyWorkStatus: '', renewalDueAt: null },
@@ -482,7 +483,7 @@ export const membershipEndpoints: Endpoint[] = [
         .catch(() => {
           throw fail.notFound('Authority record not found.')
         })
-      const owner = (record.account as AnyValue)?.id ?? record.account
+      const owner = idOf(record.account)
       if (String(owner) !== param(req, 'id'))
         throw fail.validation({ id: 'Record does not belong to that account.' })
       if (record.status !== 'active')
@@ -491,12 +492,12 @@ export const membershipEndpoints: Endpoint[] = [
         throw fail.forbidden('Only a platform officer can end a platform mandate.')
       const { updated, handover } = await withAuthorityLock(req, Number(owner), async () => {
         // Re-read under the lock — only an active record may transition.
-        const current = (await req.payload.findByID({
+        const current = await req.payload.findByID({
           collection: 'authority-records',
           id: record.id,
           overrideAccess: true,
           req,
-        })) as AnyValue
+        })
         if (current.status !== 'active')
           throw fail.conflict('invalid_phase', `Record is already ${current.status}.`)
         const endsAt = new Date().toISOString()
@@ -551,7 +552,7 @@ export const membershipEndpoints: Endpoint[] = [
         overrideAccess: true,
       })
       const items = []
-      for (const h of docs as AnyValue[]) {
+      for (const h of docs) {
         const acct =
           typeof h.account === 'object'
             ? { id: h.account.id, name: h.account.name }
@@ -624,9 +625,17 @@ export const membershipEndpoints: Endpoint[] = [
       if (account.membershipStatus !== 'rejected') {
         throw new ApiError(409, 'not_rejected', 'Only a rejected application can be appealed.')
       }
-      const bytes = Buffer.from(await (req as AnyValue).arrayBuffer())
+      // arrayBuffer is optional on PayloadRequest; a missing body reader is a bad request
+      if (!req.arrayBuffer)
+        throw new ApiError(400, 'invalid_body', 'The request body could not be read.')
+      const bytes = Buffer.from(await req.arrayBuffer())
       const identityKind = String(req.headers.get('x-identity-kind') || '')
-      const statement = decodeURIComponent(String(req.headers.get('x-appeal-statement') || ''))
+      let statement: string
+      try {
+        statement = decodeURIComponent(String(req.headers.get('x-appeal-statement') || ''))
+      } catch {
+        throw fail.validation({ statement: 'The statement could not be read. Please try again.' })
+      }
       const appeal = await submitAppeal({
         account,
         statement,

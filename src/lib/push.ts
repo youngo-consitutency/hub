@@ -2,7 +2,7 @@ import webPush from 'web-push'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
-import type { Doc, AnyValue } from './domain'
+import type { Doc } from './domain'
 import { deliveryDisabled } from './environment'
 
 // Port of server/lib/pushStore.js + the delivery path of server/routes/push.js.
@@ -31,7 +31,7 @@ const publicRow = (row: Doc) => {
 }
 
 // Push endpoints are browser-issued capabilities, never arbitrary webhook URLs.
-export function validatedPushEndpoint(value: AnyValue) {
+export function validatedPushEndpoint(value: unknown) {
   const invalid = () =>
     Object.assign(new Error('Use a supported browser push endpoint.'), {
       code: 'invalid_push_endpoint',
@@ -71,7 +71,7 @@ export async function saveSubscription({
   userAgent = null,
 }: {
   accountId: number | string
-  subscription: AnyValue
+  subscription?: { endpoint?: unknown; keys?: unknown } | null
   userAgent?: string | null
 }) {
   const endpoint = validatedPushEndpoint(subscription?.endpoint)
@@ -106,7 +106,9 @@ export async function saveSubscription({
   }
 }
 
-export async function listSubscriptionsForAccounts(accountIds: AnyValue) {
+export async function listSubscriptionsForAccounts(
+  accountIds: number | string | (number | string)[] | null | undefined,
+) {
   const ids = (Array.isArray(accountIds) ? accountIds : [accountIds])
     .filter(Boolean)
     .map(Number)
@@ -176,7 +178,7 @@ async function pruneEndpoints(endpoints: string[]) {
 export async function deliverPush(rows: Doc[], payload: string) {
   if (deliveryDisabled()) return { sent: 0, failed: 0, pruned: 0, total: rows.length }
 
-  const results: PromiseSettledResult<AnyValue>[] = []
+  const results: PromiseSettledResult<unknown>[] = []
   for (let offset = 0; offset < rows.length; offset += 10) {
     results.push(
       ...(await Promise.allSettled(

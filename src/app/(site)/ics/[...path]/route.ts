@@ -1,5 +1,5 @@
-import type { AnyValue } from '../../../../lib/domain'
-import { getPayload } from 'payload'
+import { getPayload, type PayloadRequest } from 'payload'
+import type { Doc } from '@/lib/domain'
 import config from '@payload-config'
 import ical, { ICalAlarmType, ICalCalendarMethod } from 'ical-generator'
 import { getEvent, getGroup, listEventsForIcs } from '@/lib/content'
@@ -10,13 +10,15 @@ export const dynamic = 'force-dynamic'
 
 // Feed names come from the `content-options` document so new event types
 // need no code change. `plural` labels the per-type feeds.
-async function typeLabels(req: AnyValue): Promise<Record<string, string>> {
+async function typeLabels(req: PayloadRequest): Promise<Record<string, string>> {
   const doc = await getDocument(req, 'content-options').catch(() => null)
-  const entries = Array.isArray(doc?.body?.eventTypes) ? doc.body.eventTypes : []
+  const entries: unknown[] = Array.isArray(doc?.body?.eventTypes) ? doc.body.eventTypes : []
   return Object.fromEntries(
     entries
-      .filter((t: AnyValue) => t?.value)
-      .map((t: AnyValue) => [t.value, String(t.plural || t.label || t.value)]),
+      .filter((t): t is { value: string; plural?: string; label?: string } =>
+        Boolean(t && typeof t === 'object' && 'value' in t && t.value),
+      )
+      .map((t) => [t.value, String(t.plural || t.label || t.value)]),
   )
 }
 
@@ -24,14 +26,15 @@ const stripIcs = (file: string) => file.replace(/\.ics$/, '')
 
 // calendar feeds carry UTC times and a 15-minute VALARM. they are public and cached, so events go through the same redaction as the json api
 // (no meeting url, join links scrubbed from the description)
-function buildCalendar({ name, events }: { name: string; events: AnyValue[] }) {
+function buildCalendar({ name, events }: { name: string; events: Record<string, unknown>[] }) {
   const cal = ical({
     name,
     prodId: { company: 'YOUNGO Hub', product: 'Hub', language: 'EN' },
     method: ICalCalendarMethod.PUBLISH,
   })
   for (const event of events) {
-    const e = eventView(event) as AnyValue
+    const e: Doc | null | undefined = eventView(event)
+    if (!e) continue
     cal.createEvent({
       id: `${e.slug}@youngohub`,
       start: new Date(e.startsAt),
@@ -60,7 +63,8 @@ const notFound = (message: string) =>
 export async function GET(_request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const payload = await getPayload({ config })
-  const req = { payload } as AnyValue
+  // only `payload` is read by the content helpers and getDocument; there is no request here
+  const req = { payload } as PayloadRequest
 
   const [scope, file] = path
   if (scope === 'all.ics') {

@@ -18,7 +18,7 @@ import {
   normalizeReconciliationSuggestionInput,
 } from './contributionInputs'
 import { getPgPool } from '../../lib/pg'
-import type { AccountLike, Doc, AnyValue } from '../../lib/domain'
+import type { AccountLike, Doc } from '../../lib/domain'
 
 export async function suggestAmendmentReconciliation({
   account,
@@ -28,7 +28,7 @@ export async function suggestAmendmentReconciliation({
 }: {
   account: AccountLike
   amendmentId: string
-  input: AnyValue
+  input: Doc
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationSuggestionInput(input)
@@ -126,7 +126,7 @@ export async function confirmAmendmentReconciliation({
   account: AccountLike
   amendmentId: string
   reconciliationId: string
-  input: AnyValue
+  input: Doc
   pool?: Pool | null
 }) {
   const data = normalizeReconciliationConfirmationInput(input)

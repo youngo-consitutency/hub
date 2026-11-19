@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadRequest } from 'payload'
 import { hubUrl } from '../lib/hubUrl'
 import { after } from 'next/server'
 import { ApiError, endpoint, fail, json, readBody } from '../lib/respond'
@@ -22,8 +22,10 @@ import { audit } from '../lib/audit'
 import { appBaseUrl } from '../lib/env'
 import { cleanText } from '../lib/text'
 import { sha256Hex } from '../lib/crypto'
-import type { Doc, AnyValue } from '../lib/domain'
+import { errorMessage } from '../lib/narrow'
+import type { Doc } from '../lib/domain'
 import { purgeExpiredGuardianEnquiries } from '../lib/guardianEnquiries'
+import { requireCronSecret } from '../lib/cron'
 
 const verificationLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -40,13 +42,32 @@ const broadcastLimit = rateLimit({
 const resultPage = (title: string, message: string) =>
   `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;max-width:42rem;margin:4rem auto;padding:0 1rem;color:#14251d"><h1>${title}</h1><p>${message}</p><p><a href="/profile">Return to YOUNGO Hub</a></p></body></html>`
 
+// Mail scanners and link previews fetch every URL in a message, so a GET must never change
+// anything: the link opens this page and the change happens on the POST from its button.
+const confirmPage = (title: string, message: string, action: string, button: string) =>
+  resultPage(
+    title,
+    `${message}</p><form method="post" action="${action}"><button type="submit" style="font:inherit;padding:.6rem 1.2rem">${button}</button></form><p style="display:none">`,
+  )
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
+const invalidUnsubscribePage = resultPage(
+  'Link not valid',
+  'This unsubscribe link is invalid. You can still change email settings from your Profile.',
+)
+const invalidVerificationPage = resultPage(
+  'Verification link not valid',
+  'This verification link is invalid or expired. Request another from your Profile.',
+)
+
 const html = (body: string, status = 200) =>
   new Response(body, {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   })
 
-function trustedActionUrl(value: AnyValue) {
+function trustedActionUrl(value: unknown) {
   const text = String(value || '').trim()
   if (!text) return null
   const url = new URL(text, appBaseUrl())
@@ -57,7 +78,7 @@ function trustedActionUrl(value: AnyValue) {
   return url.toString()
 }
 
-function broadcastInput(body: AnyValue) {
+function broadcastInput(body: Doc) {
   const title = String(body?.title || '')
     .trim()
     .slice(0, 160)
@@ -85,7 +106,7 @@ function broadcastInput(body: AnyValue) {
   }
 }
 
-const requireNotifyCapability = async (req: AnyValue) => {
+const requireNotifyCapability = async (req: PayloadRequest) => {
   const { account, access } = await memberContext(req)
   if (!hasCapability(access, 'notifications.send'))
     throw fail.forbidden('Sending Hub email is not assigned to this account.')
@@ -102,8 +123,8 @@ export const notificationEndpoints: Endpoint[] = [
       let input
       try {
         input = broadcastInput(b)
-      } catch (error: AnyValue) {
-        throw new ApiError(400, 'validation', error.message)
+      } catch (error) {
+        throw new ApiError(400, 'validation', errorMessage(error))
       }
       const connect = (await getDocument(req, 'connect'))?.body
       return json(
@@ -133,8 +154,8 @@ export const notificationEndpoints: Endpoint[] = [
       let input
       try {
         input = broadcastInput(b)
-      } catch (error: AnyValue) {
-        throw new ApiError(400, 'validation', error.message)
+      } catch (error) {
+        throw new ApiError(400, 'validation', errorMessage(error))
       }
       const eligible = await listEligibleNotificationAccountIds({
         category: 'announcement',
@@ -198,15 +219,7 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/cron/notifications-drain',
     method: 'get',
     handler: endpoint(async (req) => {
-      const secret = String(process.env.CRON_SECRET || '')
-      const supplied = String(req.headers.get('authorization') || '')
-      const expected = `Bearer ${secret}`
-      if (
-        !secret ||
-        supplied.length !== expected.length ||
-        !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
-      )
-        throw fail.unauthorized()
+      requireCronSecret(req)
       // same daily slot enforces guardian-request retention when nobody opens the queue
       await purgeExpiredGuardianEnquiries(req)
       return json(await drainNotificationOutbox(req, { limit: 200 }))
@@ -217,15 +230,25 @@ export const notificationEndpoints: Endpoint[] = [
     path: '/notifications/unsubscribe',
     method: 'get',
     handler: async (req) => {
+      const token = String((req as Doc).query?.token || '')
+      const verified = verifyUnsubscribeToken(token)
+      if (!verified) return html(invalidUnsubscribePage, 400)
+      return html(
+        confirmPage(
+          'Unsubscribe from email?',
+          `Stop receiving ${escapeHtml(verified.category)} email from YOUNGO Hub. Other categories are not changed.`,
+          `/api/notifications/unsubscribe?token=${encodeURIComponent(token)}`,
+          'Unsubscribe',
+        ),
+      )
+    },
+  },
+  {
+    path: '/notifications/unsubscribe',
+    method: 'post',
+    handler: async (req) => {
       const verified = verifyUnsubscribeToken(String((req as Doc).query?.token || ''))
-      if (!verified)
-        return html(
-          resultPage(
-            'Link not valid',
-            'This unsubscribe link is invalid. You can still change email settings from your Profile.',
-          ),
-          400,
-        )
+      if (!verified) return html(invalidUnsubscribePage, 400)
       // disable that category
       const { docs } = await req.payload.find({
         collection: 'notification-prefs',
@@ -262,6 +285,22 @@ export const notificationEndpoints: Endpoint[] = [
   {
     path: '/notifications/verify-email',
     method: 'get',
+    handler: async (req) => {
+      const token = String((req as Doc).query?.token || '')
+      if (!token) return html(invalidVerificationPage, 400)
+      return html(
+        confirmPage(
+          'Confirm your email address',
+          'Confirm that this is your email address for YOUNGO Hub.',
+          `/api/notifications/verify-email?token=${encodeURIComponent(token)}`,
+          'Confirm email',
+        ),
+      )
+    },
+  },
+  {
+    path: '/notifications/verify-email',
+    method: 'post',
     handler: async (req) => {
       const token = String((req as Doc).query?.token || '')
       const { docs } = await req.payload.find({

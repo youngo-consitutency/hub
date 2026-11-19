@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, Where } from 'payload'
 import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import {
   accountRef,
@@ -6,9 +6,14 @@ import {
   requireVerifiedMember,
   verifiedContext,
 } from '../lib/accounts'
-import { isUniqueViolation } from '../lib/pg'
+import { isUniqueViolation, requirePgPool } from '../lib/pg'
 import { requireCronSecret } from '../lib/cron'
-import { DECISION_TYPES, RED_FLAG_CATEGORIES, snapDeadlinePassed } from '../lib/decisions'
+import {
+  DECISION_TYPES,
+  normaliseGroupKey,
+  RED_FLAG_CATEGORIES,
+  snapDeadlinePassed,
+} from '../lib/decisions'
 import { getAccessProfile, hasCapability } from '../lib/access'
 import {
   advanceIfDue,
@@ -29,8 +34,9 @@ import {
   transition,
   vetoView,
   withProposalLock,
+  representedGroupKeys,
 } from '../lib/decisionRuntime'
-import type { AccountLike, Doc, AnyValue } from '../lib/domain'
+import type { AccountLike, Doc } from '../lib/domain'
 
 // S09 decision workflow endpoints — members act through these; collection
 // REST writes are staff-only, and every transition is audited. The state
@@ -52,7 +58,7 @@ export const decisionEndpoints: Endpoint[] = [
     method: 'get',
     handler: endpoint(async (req) => {
       requireVerifiedMember(req)
-      const where: AnyValue = {}
+      const where: Where = {}
       const body = req.query?.body as string | undefined
       const status = req.query?.status as string | undefined
       if (body) where.body = { equals: body }
@@ -353,7 +359,7 @@ export const decisionEndpoints: Endpoint[] = [
       if (!(await isBodyMember(req, account, p)))
         throw fail.forbidden('Only members of the decision-making body may vote.')
       const b = await readBody(req)
-      const options = (p.ballotOptions ?? []).map((o: AnyValue) => o.option)
+      const options = (p.ballotOptions ?? []).map((o: Doc) => o.option)
       if (!options.includes(b.choice))
         throw fail.validation({ choice: `Must be one of: ${options.join(', ')}.` })
       const hasBallot = async () => {
@@ -400,7 +406,7 @@ export const decisionEndpoints: Endpoint[] = [
           await recordEvent(req, p.id, 'ballot_cast', account)
           return created
         })
-      } catch (error: AnyValue) {
+      } catch (error) {
         // The pre-check is a fast path only — the unique indexes are the real
         // guard, and error shapes vary, so re-confirm against the table: a
         // row for this pair after a failed insert means the race was lost.
@@ -427,19 +433,50 @@ export const decisionEndpoints: Endpoint[] = [
       if (!b.groupKey?.trim()) fields.groupKey = 'Required.'
       if (!b.reasoning?.trim()) fields.reasoning = 'A veto request requires detailed reasoning.'
       if (Object.keys(fields).length) throw fail.validation(fields)
-      const veto = await req.payload.create({
+      // A veto speaks for a group, so the requester must hold a current mandate in it.
+      // A veto speaks for a group, so the requester must belong to it. Working groups and
+      // operational teams use the decision runtime's own membership mapping; organisations use
+      // the member's organisation seat records.
+      const access = await getAccessProfile(req, account)
+      const key = normaliseGroupKey(b.groupKey)
+      const keys =
+        b.requesterKind === 'wg_or_ot'
+          ? representedGroupKeys(access)
+          : new Set(
+              access.records.filter((r) => r.scopeType === 'organisation').map((r) => r.scopeId),
+            )
+      if (![...keys].some((k) => normaliseGroupKey(k) === key))
+        throw fail.forbidden('You can only file a veto for a group you hold a role in.')
+      // One request per member per vote; free-text spellings must not count as extra groups.
+      const own = await req.payload.find({
         collection: 'decision-vetoes',
-        data: {
-          proposal: p.id,
-          requesterKind: b.requesterKind,
-          groupKey: b.groupKey.trim(),
-          reasoning: b.reasoning.trim(),
-          requestedBy: account.id,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        },
+        where: { and: [{ proposal: { equals: p.id } }, { requestedBy: { equals: account.id } }] },
+        limit: 1,
+        depth: 0,
         overrideAccess: true,
       })
+      if (own.totalDocs > 0)
+        throw fail.conflict('already_requested', 'You have already filed a veto request.')
+      // the unique index (proposal, member) settles a race the check above cannot
+      const veto = await req.payload
+        .create({
+          collection: 'decision-vetoes',
+          data: {
+            proposal: p.id,
+            requesterKind: b.requesterKind,
+            groupKey: normaliseGroupKey(b.groupKey),
+            reasoning: b.reasoning.trim(),
+            requestedBy: account.id,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+        })
+        .catch((error) => {
+          if (isUniqueViolation(error, 'decision-vetoes', 'decision_vetoes'))
+            throw fail.conflict('already_requested', 'You have already filed a veto request.')
+          throw error
+        })
       await recordEvent(req, p.id, 'veto_requested', account, { vetoId: veto.id })
       return json({ veto: vetoView(veto) }, { status: 201 })
     }),
@@ -463,10 +500,19 @@ export const decisionEndpoints: Endpoint[] = [
           throw fail.notFound('Veto request not found.')
         })
       if (!ownedBy(veto, p)) throw fail.notFound('Veto request not found.')
-      const updated = await req.payload.update({
+      // One statement checks the veto and the proposal's phase together and holds the proposal row
+      // while it runs, so a withdrawal cannot slip in between the check and the write.
+      const { rowCount } = await requirePgPool().query(
+        `WITH live AS (SELECT id FROM decision_proposals WHERE id = $2 AND status = 'voting' FOR SHARE)
+         UPDATE decision_vetoes SET status = 'confirmed', updated_at = now()
+         WHERE id = $1 AND proposal_id = $2 AND status = 'pending' AND EXISTS (SELECT 1 FROM live)`,
+        [veto.id, p.id],
+      )
+      if (!rowCount)
+        throw fail.conflict('invalid_phase', 'This veto request can no longer be confirmed.')
+      const updated = await req.payload.findByID({
         collection: 'decision-vetoes',
         id: veto.id,
-        data: { status: 'confirmed' },
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'veto_confirmed', account, { vetoId: veto.id })

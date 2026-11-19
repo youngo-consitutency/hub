@@ -16,7 +16,7 @@ import {
 } from '../../lib/decisionRuntime'
 import { consensusOutcome, snapDeadlinePassed, unresolvedRed } from '../../lib/decisions'
 import { requireCwMember, requireVerifiedMember } from '../../lib/accounts'
-import type { Doc, AnyValue } from '../../lib/domain'
+import type { Doc } from '../../lib/domain'
 import type { DecisionFlag, DecisionProposal } from '../../payload-types'
 
 // Bridge: operational platform UI → S09 engine. decision_proposals is the
@@ -38,11 +38,11 @@ const STAGE: Record<string, string> = {
 
 const CLOSED = ['adopted', 'vetoed', 'withdrawn', 'rejected', 'failed_quorum']
 
-function platformBodyId(p: AnyValue): string {
+function platformBodyId(p: Doc): string {
   return p.body === 'council' ? 'council' : String(p.bodyRef ?? '')
 }
 
-function deadlineFor(p: AnyValue): string | null {
+function deadlineFor(p: Doc): string | null {
   if (p.status === 'consultation') return p.consultationEndsAt
   if (p.status === 'revision') return p.revisionEndsAt
   if (p.status === 'decision') return p.decisionEndsAt
@@ -62,7 +62,7 @@ async function resolveProposal(req: PayloadRequest, raw: string) {
   return loadProposal(req, id) // legacy_ref fallback inside loadProposal
 }
 
-async function publicId(p: AnyValue): Promise<string> {
+async function publicId(p: Doc): Promise<string> {
   if (p.legacyRef) return p.legacyRef
   const { rows } = await db().query(
     'SELECT id FROM platform_decisions WHERE s09_proposal_id = $1',
@@ -72,7 +72,7 @@ async function publicId(p: AnyValue): Promise<string> {
 }
 
 // Mirror display columns into platform_decisions for raw-SQL readers.
-async function syncProjection(p: AnyValue) {
+async function syncProjection(p: Doc) {
   await db().query(
     `UPDATE platform_decisions SET
        title=$2, proposal=$3, stage=$4, deadline_at=$5, outcome=$6,
@@ -106,7 +106,7 @@ async function s09Body(bodySlug: string) {
   return { body: 'working_group', bodyRef: bodySlug }
 }
 
-async function bodyView(req: PayloadRequest, p: AnyValue) {
+async function bodyView(req: PayloadRequest, p: Doc) {
   const { rows } = await db().query(`${DECISION_VIEW_SELECT} WHERE dp.id = $1`, [p.id])
   return rows[0]
 }
@@ -270,18 +270,24 @@ export async function decisionDetail(req: PayloadRequest, actor: Actor, id: stri
     })),
   ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 
+  const revisions: {
+    version: number
+    title: string
+    proposal: string
+    createdAt?: string | null
+  }[] = proposal.revisions ?? []
   return {
     viewerId: actor.id,
     decision: await bodyView(req, proposal),
     contributions,
-    revisions: (proposal.revisions ?? [])
-      .map((r: AnyValue) => ({
+    revisions: revisions
+      .map((r) => ({
         version: r.version,
         title: r.title,
         proposal: r.proposal,
         createdAt: r.createdAt,
       }))
-      .sort((a: AnyValue, b: AnyValue) => b.version - a.version),
+      .sort((a, b) => b.version - a.version),
     history: (events as Doc[]).map((e) => ({
       action: e.type,
       reason: e.detail ? JSON.stringify(e.detail) : '',
@@ -435,7 +441,7 @@ export async function transition(req: PayloadRequest, actor: Actor, id: string, 
     fail(400, 'Choose a recognised outcome basis.')
 
   const version = (proposal.version ?? 1) + 1
-  const bump = async (data: Doc, event: string, detail?: AnyValue) => {
+  const bump = async (data: Doc, event: string, detail?: Record<string, unknown>) => {
     const updated = await transitionStatus(
       req,
       proposal,
