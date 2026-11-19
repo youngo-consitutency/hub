@@ -19,15 +19,23 @@ RUN \
 
 FROM base AS builder
 WORKDIR /app
+# The build only compiles: it needs a secret and a database URL to exist, not to work. They are
+# placeholders set for the build command alone, so no image carries them.
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN \
-  if [ -f yarn.lock ]; then STANDALONE_BUILD=1 yarn run build; \
-  elif [ -f package-lock.json ]; then STANDALONE_BUILD=1 npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && STANDALONE_BUILD=1 pnpm run build; \
+  if [ -f yarn.lock ]; then STANDALONE_BUILD=1 PAYLOAD_SECRET=build-placeholder DATABASE_URL=postgres://build:build@127.0.0.1:1/build yarn run build; \
+  elif [ -f package-lock.json ]; then STANDALONE_BUILD=1 PAYLOAD_SECRET=build-placeholder DATABASE_URL=postgres://build:build@127.0.0.1:1/build npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && STANDALONE_BUILD=1 PAYLOAD_SECRET=build-placeholder DATABASE_URL=postgres://build:build@127.0.0.1:1/build pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
+
+# Applies database migrations (needs the full source and dev dependencies, so it is built from
+# the builder stage). deploy/docker-compose.yml runs it before the app starts.
+FROM builder AS migrate
+ENV NODE_ENV=production
+CMD ["npm", "run", "migrate"]
 
 FROM base AS runner
 WORKDIR /app
