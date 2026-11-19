@@ -1,7 +1,6 @@
 import type { Doc } from './domain'
-// Port of server/lib/publicViews.js — public/member view policy.
-// A conferencing *join* link is a credential: join links are stripped from
-// anonymous payloads while deliberate registration pages survive.
+// Public/member view policy: conferencing join links are credentials and are
+// stripped from anonymous payloads.
 
 const JOIN_LINK_PATTERNS = [/^meet\.google\.com$/, /^meet\.jit\.si$/, /^(www\.)?whereby\.com$/]
 

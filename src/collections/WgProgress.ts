@@ -1,9 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { serverWrites } from '../lib/collectionAccess'
 
-// Per-account working-group membership progress — replaces
-// wg_workspace_progress. The presentation/rules gates decide when a member
-// sees a WG's workspace material (join links, drive, internal resources).
+// Per-account working-group progress; its gates decide when workspace material is visible.
 export const WgProgress: CollectionConfig = {
   slug: 'wg-progress',
   access: {

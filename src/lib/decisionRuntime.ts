@@ -91,12 +91,7 @@ export function isContactPerson(account: AccountLike, proposal: Doc): boolean {
   )
 }
 
-/**
- * The working groups and operational teams an account belongs to, by the same mapping
- * isBodyMember uses: working-group assignments, derived team roles, body scopes and
- * operational-team records. A role that does not derive membership (a conference liaison on a
- * team scope, say) is deliberately absent.
- */
+/** Working groups and teams an account belongs to, by the same mapping as isBodyMember. */
 export function representedGroupKeys(
   access: Pick<AccessProfile, 'wgAssignments' | 'teamRoles' | 'bodyScopes' | 'records'>,
 ): Set<string> {
@@ -175,9 +170,8 @@ async function eligibleAccounts(req: PayloadRequest, accountIds: Set<number>) {
   return new Set<number>((accounts as Doc[]).map((a) => a.id))
 }
 
-// Council electorate (S13 §6): distinct held seats, not accounts — a
-// substitute covers its principal's seat; lapsed CW holders don't vote.
-// Focal Point seats are personal and count per holder.
+// Council electorate (S13 §6): distinct held seats, not accounts; substitutes
+// cover their principal's seat and lapsed CW holders don't vote.
 async function councilElectorate(req: PayloadRequest, now: string): Promise<number> {
   const { docs } = await req.payload.find({
     collection: 'authority-records',
@@ -262,11 +256,8 @@ export async function countEligible(req: PayloadRequest, proposal: Doc): Promise
   return Math.max((await eligibleAccounts(req, accounts)).size, 1)
 }
 
-// compare-and-set on status: every status writer goes through here, so
-// concurrent racers (deadline reads, withdraw, facilitator moves) can't
-// overwrite each other. only the one that moves the row off its current
-// status writes the rest + the event, all in one tx (withTransaction). null
-// means someone else got there first
+// Compare-and-set on status; every status writer goes through here. Only the
+// racer that moves the row writes the rest and the event, in one tx. null means it lost.
 export async function transition(
   req: PayloadRequest,
   proposal: Doc,
@@ -295,9 +286,8 @@ export async function transition(
   })
 }
 
-// row lock on the proposal while status still matches: flag and ballot
-// writers and the deadline closers all take it first, so a write is either
-// counted by the closer or refused after it. null means status moved on
+// Row lock on the proposal while status still matches, so a write is either
+// counted by the deadline closer or refused after it. null means status moved on.
 export async function withProposalLock<T>(
   req: PayloadRequest,
   proposal: Doc,

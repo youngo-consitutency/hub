@@ -14,10 +14,7 @@ interface PopoverButtonProps {
   children: ReactNode | ((close: () => void) => ReactNode)
 }
 
-/**
- * A button that opens a floating panel. react-aria supplies the positioning, focus handling, Escape
- * and outside-click dismissal that each caller used to hand-roll.
- */
+/** Button that opens a floating panel; react-aria handles positioning, focus and dismissal. */
 export function PopoverButton({
   label,
   buttonClassName = 'btn btn-secondary',

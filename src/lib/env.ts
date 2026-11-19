@@ -1,6 +1,5 @@
-// Canonical app origin for absolute links (emails, redirects). APP_BASE_URL
-// wins when set (production alias); on Vercel previews without it, fall back
-// to the per-branch deployment URL so generated links stay on the preview.
+// Canonical app origin for absolute links: APP_BASE_URL, else the Vercel
+// per-branch preview URL.
 export const appBaseUrl = () => {
   const explicit = process.env.APP_BASE_URL
   const vercel = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL

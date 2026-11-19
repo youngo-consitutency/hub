@@ -1,25 +1,9 @@
 #!/usr/bin/env node
 /**
- * The unified Hub MCP for local agents — Hub content tools plus the shared
- * session-memory bank behind a single stdio server.
- *
- * Talks to the Hub HTTP API (default http://localhost:3000). Authorisation,
- * review queues, and the audit trail stay on the server. Never uses
- * DATABASE_URL — set HUB_EMAIL + HUB_PASSWORD, or HUB_TOKEN.
- *
- * Env:
- *   HUB_ORIGIN        default http://localhost:3000
- *   HUB_EMAIL
- *   HUB_PASSWORD
- *   HUB_TOKEN         optional session token instead of email/password
- *   HINDSIGHT_API_KEY adds the shared session-memory tools (recall/retain…)
- *
- * Remote / phone clients should use the hosted HTTP server instead:
- *   node mcp-content/server.mjs   (content tools only — memory stays local)
+ * Unified Hub MCP for local agents: content tools plus session memory over one stdio server.
+ * Set HUB_EMAIL + HUB_PASSWORD or HUB_TOKEN (HUB_ORIGIN, HINDSIGHT_API_KEY optional); never uses DATABASE_URL.
  */
-// Deps first: a bare `npm ci`-less checkout makes static imports throw a
-// raw ERR_MODULE_NOT_FOUND that agent UIs surface as an opaque crash.
-// Import dynamically so the failure is a readable message instead.
+// Import dynamically so missing deps give a readable message, not ERR_MODULE_NOT_FOUND.
 let StdioServerTransport, createHubMcpServer, attachMemoryTools, loadMcpEnv
 try {
   ;({ StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js'))

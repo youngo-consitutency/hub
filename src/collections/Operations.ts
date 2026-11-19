@@ -194,9 +194,7 @@ export const RecognitionRequests: CollectionConfig = {
   ],
 }
 
-// S13: the Council holds authority over major partnerships and financial
-// sponsorships — records link back to the council decision that approved
-// them where required.
+// S13: major partnerships and sponsorships need Council approval.
 export const PartnershipRequests: CollectionConfig = {
   slug: 'partnership-requests',
   access: {

@@ -1,10 +1,5 @@
 /**
- * Probes every live resource URL and files a "broken" issue for dead ones. It never marks
- * anything verified: that stays a Content Publisher decision. A dry run unless told to apply:
- *
- *   npx tsx scripts/ops/check-resource-links.ts           # prints the report
- *   npx tsx scripts/ops/check-resource-links.ts --apply   # files issues for dead links
- *
+ * Probes live resource URLs and files "broken" issues; a dry run unless --apply is passed.
  * Reads DATABASE_URL from .env.local, so check which database it names first.
  */
 import dns from 'node:dns/promises'

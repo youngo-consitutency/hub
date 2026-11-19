@@ -2,10 +2,7 @@
    Colours come from tokens.css variables only. */
 
 /* ── Route quick view / Notion Side Peek ─────────────────────────── */
-/* Native dialog:modal UA styles cap max-width/height at
-   calc(100% - 2em - 6px) and centre with margin: auto. Combined with the
-   right-docked margin that leaves a left gutter on phones, so the sidebar
-   shows through. Reset those constraints here. */
+/* Reset the UA dialog:modal max-size and margin, which leave a left gutter on phones. */
 .routePeek {
   inset: 0;
   width: min(780px, calc(100% - 48px));

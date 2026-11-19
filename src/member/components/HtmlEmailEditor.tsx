@@ -21,11 +21,7 @@ const COMMANDS = [
   { command: 'insertOrderedList', label: 'Numbered list', Icon: ListNumbers },
 ]
 
-/**
- * Minimal rich-text field for member-written email. The server sanitises
- * whatever this produces (src/lib/emailHtml.ts), so the toolbar only
- * offers what survives: emphasis, lists, a heading and safe links.
- */
+/** Minimal rich-text field; the toolbar offers only what the server sanitiser (src/lib/emailHtml.ts) keeps. */
 export function HtmlEmailEditor({
   value,
   onChange,

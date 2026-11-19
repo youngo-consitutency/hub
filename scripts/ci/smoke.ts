@@ -1,11 +1,4 @@
-/**
- * Pre-production smoke check, run against a started server (npm start):
- * verifies the health endpoint, then exercises the critical authentication
- * flow with a generated throwaway account — nothing is hardcoded.
- *
- *   npm start &           # built app on DATABASE_URL
- *   npx tsx scripts/ci/smoke.ts
- */
+/** Pre-production smoke check against a started server (npm start): health endpoint, then sign-in with a throwaway account. */
 import crypto from 'node:crypto'
 import dotenv from 'dotenv'
 import { getPayload } from 'payload'

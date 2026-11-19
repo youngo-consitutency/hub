@@ -1,7 +1,5 @@
 // Policy-backed authority model: time-bounded, scoped, evidenced records in
 // `authority-records`. Authority derives from records, never account titles.
-// Sources: S13 Governance, S14 GCT Mandate, S25 WG CP Mandate, S15 Liaisons,
-// S02 Awareness, S23/S04 Safeguarding, S17 Membership, S24 Selections, S10 Elections.
 
 interface AuthorityRoleSpec {
   label: string
@@ -530,11 +528,8 @@ function wgLegacyRoleFor(roleKey: string): string {
   }
 }
 
-// ── Shared authority derivation ─────────────────────────────────────
-// ONE engine for both endpoint families: the Payload access layer and the
-// platform service feed rows from the single store into `deriveAuthority`
-// and consume the same capabilities/team keys/seats — no parallel
-// scope-identifier logic.
+// Shared authority derivation: one engine for the Payload access layer and
+// the platform service, with no parallel scope-identifier logic.
 
 // Raw authority row (Payload doc or aliased SQL result).
 export interface AuthorityRow {
@@ -641,11 +636,8 @@ export function deriveAuthority(
   }
 }
 
-// ── Record kind ─────────────────────────────────────────────────────
-// Member-joinable scopes: a 'member' record in one of these is
-// participation (opted membership, no appointing authority needed);
-// anything else is a mandate. Writers use this to set `kind`; readers
-// never branch on it — authority resolves from the role either way.
+// Record kind: a 'member' record in a member-joinable scope is participation,
+// anything else a mandate. Writers set `kind`; readers never branch on it.
 const PARTICIPATION_SCOPES = new Set([
   'body',
   'working_group',

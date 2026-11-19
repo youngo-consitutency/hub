@@ -1,7 +1,4 @@
-/**
- * "Add this event" deep links for major calendar clients via the
- * calendar-link package. ICS remains for Apple Calendar / desktop Outlook.
- */
+/** "Add this event" links for calendar clients (calendar-link); ICS covers Apple and desktop Outlook. */
 import { google, outlook, office365 } from 'calendar-link'
 
 /** "Add this event" deep links via the calendar-link package. */
@@ -53,10 +50,7 @@ export function googleAddByUrlPage() {
   return 'https://calendar.google.com/calendar/u/0/r/settings/addbyurl'
 }
 
-/**
- * One-click Google Calendar subscribe. Google adds the ICS URL to the
- * signed-in Google account — the Hub never receives Google credentials.
- */
+/** One-click Google Calendar subscribe; the Hub never receives Google credentials. */
 export function googleSubscribeUrl(path: string, origin?: string | null) {
   const base =
     origin ||

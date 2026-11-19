@@ -3,19 +3,11 @@ import type { PayloadRequest } from 'payload'
 import { getPgPool } from './pg'
 import { ApiError } from './respond'
 
-// Fixed-window limiter. Counters live in Postgres (`rate_limits`) so every serverless instance
-// shares them; without a database (builds, unit tests) or if it is briefly unreachable we fall
-// back to a per-process memory limiter rather than failing the request.
-//
-// Tests drive far more auth requests than any real client: the suite opts out via
-// HUB_DISABLE_RATE_LIMIT on the local/CI test server only.
+// Fixed-window limiter with Postgres counters shared across instances, falling
+// back to per-process memory without a database. Tests opt out via HUB_DISABLE_RATE_LIMIT.
 const DISABLED = process.env.HUB_DISABLE_RATE_LIMIT === '1'
 
-/**
- * Who is calling. A forwarded-for header is only trustworthy behind a proxy we control:
- * Vercel overwrites it with the client address; behind your own proxy set TRUST_PROXY=1 and the
- * last entry (the one the proxy appended) is used. Otherwise every client shares one bucket.
- */
+/** Who is calling; forwarded-for is trusted only behind Vercel or TRUST_PROXY=1 (last entry). */
 export function clientId(req: PayloadRequest): string {
   const forwarded = req.headers
     .get('x-forwarded-for')

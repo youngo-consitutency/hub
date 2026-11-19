@@ -1,9 +1,7 @@
 import { createAvatar } from '@dicebear/core'
 import * as openPeeps from '@dicebear/open-peeps'
 
-// Member avatars are built, never uploaded: a profile stores a few picks from
-// the Open Peeps style's own option lists and the drawing comes from the
-// library, so there is nothing to moderate.
+// Avatars are built from Open Peeps option picks, never uploaded, so nothing needs moderating.
 
 const NONE = 'none'
 const properties = openPeeps.schema.properties as Record<
@@ -41,10 +39,7 @@ export const AVATAR_KEYS = Object.keys(AVATAR_CHOICES) as AvatarKey[]
 // the style draws these by chance; a pick switches the chance to all or nothing
 const OPTIONAL: AvatarKey[] = ['facialHair', 'accessories', 'mask']
 
-/**
- * Keeps only allowlisted picks, so nothing else ever reaches the renderer. A
- * stored pick that has since left the allowlist falls back to the seeded default.
- */
+/** Keeps only allowlisted picks; a pick no longer allowed falls back to the seeded default. */
 export function cleanAvatar(input: unknown): AvatarOptions {
   const out: AvatarOptions = {}
   if (!input || typeof input !== 'object') return out

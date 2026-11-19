@@ -1,6 +1,5 @@
 // Membership lifecycle: staff-side status transitions, field updates,
-// session destruction and activation email. Ported from
-// server/lib/memberProfiles.js + membershipAppeals.js + membershipReview.js.
+// session destruction and activation email.
 import { ApiError } from './respond'
 import { hubUrl } from './hubUrl'
 import { accountView } from './accounts'

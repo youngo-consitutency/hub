@@ -1,14 +1,6 @@
 /**
- * Loads the fictional demo dataset (docs/Hub-demo/dataset.json) into a LOCAL, empty development
- * database so the Hub can be reviewed with realistic content. Never run it against a database
- * that holds member data.
- *
- *   DATABASE_URL=postgres://postgres:postgres@localhost:5440/youngo_design \
- *   DEMO_DOCUMENTS=<dir of {slug,title,body}.json public documents, optional> \
- *   PAYLOAD_SECRET=... DEMO_DATASET=../docs/Hub-demo/dataset.json \
- *     npx tsx scripts/setup/seed-demo.ts
- *
- * Refuses to run unless DATABASE_URL points at localhost and the accounts table is empty.
+ * Loads the fictional demo dataset into a LOCAL, empty development database; never run it against member data.
+ * Refuses unless DATABASE_URL points at localhost and the accounts table is empty.
  */
 import type { AnyValue } from '../../src/lib/domain'
 import { readdirSync, readFileSync } from 'node:fs'

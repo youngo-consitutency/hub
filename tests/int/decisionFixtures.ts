@@ -1,8 +1,4 @@
-/**
- * Decision-test fixtures. Windows are expired with direct SQL (the way the
- * platform and elections specs do) because there is deliberately no
- * production endpoint that closes a window early.
- */
+/** Decision-test fixtures. Windows are expired with direct SQL: no production endpoint closes one early. */
 import type { AnyValue } from '../../src/lib/domain'
 import { expect } from 'vitest'
 

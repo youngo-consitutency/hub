@@ -1,7 +1,4 @@
-// Governance-protocol contracts shared by the web app and server: which
-// roles exist per body kind, which roles grant website access, and which
-// task-force slugs are routable. Display labels live in the
-// `content-options` document (teamLabels / assignmentLabels).
+// Governance-protocol contracts shared by web and server; display labels live in `content-options`.
 export const WEBSITE_PERMISSIONS = ['content_editor', 'content_publisher']
 
 export function bodyRoles(kind: string | null | undefined) {

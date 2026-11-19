@@ -3,9 +3,8 @@ import { describe, it, expect } from 'vitest'
 
 import { provisionAccount, testPayload } from './provision'
 
-// Authority-store regression coverage: all capabilities and Council seats
-// derive from `authority-records`. Unmapped legacy strings deny, never widen.
-// All records are generated at runtime; no real people embedded.
+// Authority-store regressions: capabilities and Council seats derive from `authority-records`;
+// unmapped legacy strings deny. All records are generated.
 
 const NOW = Date.now()
 const iso = (ms: number) => new Date(NOW + ms).toISOString()

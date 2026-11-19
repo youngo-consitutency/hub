@@ -1,10 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// drops the leftover payload console login. `users` signed in outside the
-// authority model with read access to every account and write access to
-// authority records over the generated rest api, and an empty `users` table
-// let anyone create the first one through /api/users/first-register.
-// accounts is now the only auth collection
+// drop the payload `users` login: it bypassed the authority model and an empty table allowed open first-register
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   DELETE FROM "payload_preferences" WHERE "id" IN (

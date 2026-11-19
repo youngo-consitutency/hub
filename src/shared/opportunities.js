@@ -1,6 +1,4 @@
-// Opportunity kinds/formats are schema-level enums: the Payload select fields
-// need static options at boot, so the list lives in this pure module shared by
-// src/collections/Opportunities.ts and mcp-content.
+// Payload select fields need static options at boot; shared with mcp-content.
 export const OPPORTUNITY_KINDS = Object.freeze([
   { value: 'event', label: 'Event' },
   { value: 'workshop', label: 'Workshop' },

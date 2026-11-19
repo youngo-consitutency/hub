@@ -1,12 +1,7 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// One authority store: `authority_records` replaces the appointments /
-// assignments split (kind='mandate' or 'participation'). `assignments` rows
-// copy losslessly — role string, status and term window verbatim; resolving
-// roles stays in lib/authority.ts. Scope types canonicalise on copy.
-//
-// `appointments` renames to `authority_records` to carry history forward;
-// provenance->>'assignmentId' uniqueness keeps one record per source row.
+// Merge appointments and assignments into authority_records; assignments copy verbatim.
+// provenance->>'assignmentId' is unique so each source row yields one record.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   CREATE TYPE "public"."enum_authority_records_kind" AS ENUM('mandate', 'participation');

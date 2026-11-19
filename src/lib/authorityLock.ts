@@ -2,22 +2,8 @@ import type { Payload, PayloadRequest } from 'payload'
 import type { Doc } from './domain'
 import { txHandle, withTransaction } from './pg'
 
-// Shared writer coordination for authority records (S11/S13). Every path
-// that creates or ends a record takes the same transaction-scoped advisory
-// lock on (AUTHORITY_LOCK_NS, accountId), so a check→insert can never
-// interleave with a concurrent write — first commit wins.
-//
-// Lock order (deadlock-free), always:
-//   1. advisory locks on EVERY account the transaction may write —
-//      ascending account-id order, deduplicated (self-target = one key)
-//   2. row locks (FOR UPDATE / FOR SHARE / UPDATEs)
-//   3. writes to `authority_records`
-//
-// Advisory-first matters: permissions() holds FOR SHARE on the actor's rows
-// before writing, so taking the advisory lock after row locks could cycle
-// with a self-targeting write. Multi-key ordering closes the mirrored pair
-// (A writes B while B writes A). No transaction waits on a row lock while
-// holding an advisory key another writer needs first.
+// Shared advisory lock on (AUTHORITY_LOCK_NS, accountId) for every authority write.
+// Lock order: advisory locks (ascending account id) first, then row locks, then writes.
 export const AUTHORITY_LOCK_NS = 0x594f48 // 'YOH'
 
 async function advisoryAuthorityLock(
@@ -33,12 +19,8 @@ async function advisoryAuthorityLock(
   })
 }
 
-// Run `fn` inside a transaction holding the account's advisory authority
-// lock — lock-order step 1 for callers that don't manage a transaction. An
-// existing request transaction is joined (caller still owns commit/rollback).
-// Locks release at commit/rollback; re-acquiring the same key inside
-// one transaction is a no-op. Multiple accounts are locked in ascending
-// id order, exactly as the lock-order contract requires.
+// Run `fn` in a transaction holding the account's advisory lock (lock-order
+// step 1); joins an existing request transaction, locking multiple accounts in ascending id order.
 export async function withAuthorityLock<T>(
   req: PayloadRequest,
   accountId: number | number[],

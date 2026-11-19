@@ -1,10 +1,4 @@
-/**
- * Safeguarding stop for under-18 membership.
- *
- * Choosing Under 18 does not open the normal application and does not create
- * an account. A parent or legal guardian may send a separate request. That
- * request stores only the fields listed in GUARDIAN_FIELDS.
- */
+/** Under-18 safeguarding stop: no application or account; a guardian request stores only GUARDIAN_FIELDS. */
 
 const GUARDIAN_ENQUIRY_RETENTION_MONTHS = 12
 
@@ -54,10 +48,7 @@ export function retentionCutoff(now = new Date()) {
   return cutoff
 }
 
-/**
- * Validate a guardian pathway request.
- * Child application fields on the body are ignored and are not returned.
- */
+/** Validate a guardian request; child application fields are ignored and not returned. */
 export function validateGuardianEnquiry(body) {
   const b = body || {}
   if (b.hpWebsite || b.website) return { honeypot: true }

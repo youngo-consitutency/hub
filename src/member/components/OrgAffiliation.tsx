@@ -28,10 +28,7 @@ const STATUS_COPY: Record<string, { chip: string; label: string; note: string }>
   },
 }
 
-/**
- * Lets a member say which organisation they work with. The organisation
- * confirms, and decides whether the link also opens its portal.
- */
+/** Lets a member name their organisation; the organisation confirms and decides on portal access. */
 export function OrgAffiliation() {
   const affiliations = useApi<{ items: AffiliationSeat[] }>('/member/affiliations')
   const mine = affiliations.data ? affiliations.data.items || [] : null

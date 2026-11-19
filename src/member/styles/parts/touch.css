@@ -1,22 +1,4 @@
-/* Touch-target layer.
-
-   Members use the Hub on a phone, one-handed, often standing in a corridor at
-   a session. The desktop density stays as designed; everything here applies
-   only where the primary pointer is a finger, so a mouse-driven console keeps
-   its compact controls.
-
-   Rule of thumb (WCAG 2.1 AA §2.5.5 / iOS HIG): every control a finger has to
-   hit is at least 44x44 CSS px. Where the visible control must stay small for
-   the layout to read correctly, the *hit area* is grown instead with padding
-   or a transparent ::after overlay, so the design does not change shape.
-
-   The gate is "finger, or the narrow layout the rest of the app already treats
-   as mobile" — `max-width: 767px` is the same breakpoint shell.css uses to
-   swap the sidebar for the tab bar, and including it keeps the two in step and
-   makes the sizing verifiable in a resized desktop window.
-
-   Import order matters: this sheet is last in app.css so it overrides the
-   component sheets it corrects. */
+/* Touch-target layer: 44x44px hit areas on coarse pointers or max-width 767px; loaded last in app.css. */
 
 @media (pointer: coarse), (max-width: 767px) {
   /* ── Buttons and pills ──────────────────────────────
@@ -53,10 +35,7 @@
     inset: -9px;
   }
 
-  /* ── Section "see all" links ────────────────────────
-     "Calendar →", "All →", "Browse →" are 14px tall text links that sit in the
-     section header. Padding keeps the type size and alignment while giving the
-     thumb a full-height target. */
+  /* ── Section "see all" links: padding grows the hit area ── */
   .sectionAction,
   .sectionAction > a {
     display: inline-flex;

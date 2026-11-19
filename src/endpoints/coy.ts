@@ -242,9 +242,8 @@ export const coyEndpoints: Endpoint[] = [
     }),
   },
   {
-    // One announcement fans out to the chosen channels. Every channel is
-    // checked before anything is written, so a missing email or push setup
-    // never leaves a half-sent announcement behind.
+    // Check every channel before writing, so a missing email or push setup
+    // never leaves a half-sent announcement.
     path: '/member/coy/:slug/announce',
     method: 'post',
     handler: endpoint(async (req) => {

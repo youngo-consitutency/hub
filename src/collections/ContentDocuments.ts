@@ -19,9 +19,7 @@ function withoutAnswerKey(body: unknown): unknown {
   }
 }
 
-// Structured content documents — onboarding courses, policy catalogues,
-// contact lists — edited in the console and served read-only to the member UI.
-// `body` is JSON so documents keep the shape their consumers expect.
+// Structured content documents, edited in the console and served read-only to members.
 export const ContentDocuments: CollectionConfig = {
   slug: 'content-documents',
   access: {

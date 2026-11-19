@@ -42,9 +42,8 @@ export function txHandle(payload: Payload, transactionID: TransactionID) {
   return tx
 }
 
-// run fn in a payload transaction. an open req transaction is joined and its
-// owner commits or rolls back; otherwise this begins one, commits on success,
-// rolls back on any throw, and always clears req.transactionID
+// Run fn in a payload transaction: joins an open req transaction (its owner
+// commits), else begins one and rolls back on throw.
 export async function withTransaction<T>(
   req: PayloadRequest,
   fn: (transactionID: TransactionID) => Promise<T>,

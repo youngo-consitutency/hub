@@ -16,9 +16,7 @@ import { isSitePath } from '../../shared/publicRoutes'
 import { navigate, useInHub, usePath } from '../lib/router'
 import { ErrorCard } from './ui'
 
-// Sign-in, registration and the public site are only rendered for signed-out
-// or gated sessions — dynamic imports keep them out of the chunk every
-// signed-in member downloads.
+// Dynamic imports keep sign-in and the public site out of the signed-in chunk.
 const MembershipMandateGate = dynamic(() =>
   import('./MembershipMandateGate').then((m) => m.MembershipMandateGate),
 )
@@ -40,12 +38,7 @@ function GoToHub() {
   return null
 }
 
-/**
- * Controls access before the main application loads. Signed-out visitors land
- * on the public YOUNGO homepage. New members still accept the
- * membership policy before registering. App.jsx handles course-verification
- * and role-specific routes.
- */
+/** Gates access before the main app loads; signed-out visitors see the public homepage. */
 export function AccessGate({ children }: AccessGateProps) {
   const path = usePath()
   const inHub = useInHub()

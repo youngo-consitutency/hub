@@ -2,11 +2,8 @@ import type { CollectionConfig } from 'payload'
 import { noAccess, serverWrites } from '../lib/collectionAccess'
 import { AUTHORITY_ROLES, normaliseScopeType, recordKind } from '../lib/authority'
 
-// role contact channels: a mailbox plus a member-only channel per role
-// holders come from authority-records via role + scopeId (working-group rows
-// imply that group's contact point), never from stored names
-// personName is unread; drop the column once nothing needs it
-// channelValue and holders are members-only
+// role contact channels; holders derive from authority-records, never stored names
+// personName is unread; drop it once nothing needs it
 export const DirectoryContacts: CollectionConfig = {
   slug: 'directory-contacts',
   access: {

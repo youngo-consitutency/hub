@@ -122,10 +122,7 @@ export function PolicyLink({ href, children }: PolicyLinkProps) {
   )
 }
 
-/**
- * Privacy consent is separate from agreeing to follow YOUNGO policies. The
- * summary remains visible without opening the full notice.
- */
+/** Privacy consent is separate from policy agreement; the summary stays visible. */
 export function PrivacyConsentSection({
   checked,
   onChange,

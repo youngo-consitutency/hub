@@ -20,10 +20,7 @@ function Count({ path, label }: { path: string; label: string }) {
   )
 }
 
-/**
- * The "someone is home" side of sign-in: what is actually coming up and how big the community's
- * work is, from the same public endpoints as the landing page. Renders nothing it cannot back up.
- */
+/** Upcoming events and community stats from the public endpoints; renders nothing it cannot back up. */
 export function CommunityPanel() {
   const { data } = useApi<{ events: Pick<EventSummary, 'slug' | 'title' | 'startsAt'>[] }>(
     '/landing',

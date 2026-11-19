@@ -35,10 +35,7 @@ const CHANNELS = [
   },
 ]
 
-/**
- * Live operations for a COY with liveOps on: the notice feed for allowlisted
- * participants, and the allowlist and announcement tools for organisers.
- */
+/** Live notice feed for participants; allowlist and announcement tools for organisers. */
 export function CoyLive({ slug }: { slug: string }) {
   const notices = useApi<CoyNoticesResponse>(`/member/coy/${slug}/notices`)
   return (

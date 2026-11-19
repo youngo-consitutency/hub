@@ -151,9 +151,8 @@ export const pushEndpoints: Endpoint[] = [
         data: data || { url: hubUrl() },
         requireInteraction: Boolean(requireInteraction),
       })
-      // One outbox job per member — delivery, endpoint pruning and retries
-      // happen in the post-response drain (after() and the cron backstop),
-      // never inside this request.
+      // One outbox job per member; delivery and retries run in the
+      // post-response drain, never in this request.
       const accountIds = [...new Set(rows.map((row: Doc) => row.accountId))]
       const campaignId =
         String(req.headers.get('x-idempotency-key') || '')

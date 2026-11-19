@@ -60,11 +60,7 @@ async function registerServiceWorker() {
   }
 }
 
-/**
- * True when this browser can do Web Push at all. Safari on iOS reports both
- * APIs but only honours them for a home-screen install; `canSubscribeToPush`
- * below is the check the UI should gate its button on.
- */
+/** True if the browser supports Web Push at all; gate UI on `canSubscribeToPush` (iOS Safari lies). */
 export function isPushSupported() {
   return (
     typeof navigator !== 'undefined' &&
@@ -82,21 +78,12 @@ function isIOS() {
   return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
 }
 
-/**
- * iOS only delivers Web Push to a site installed on the Home Screen (16.4+).
- * In a Safari tab the subscribe call fails, so the UI must show the install
- * steps instead of an enable button.
- */
+/** iOS delivers Web Push only to Home Screen installs (16.4+); otherwise show install steps. */
 export function needsHomeScreenInstall() {
   return isIOS() && !isPWA()
 }
 
-/**
- * Resolve the active service worker registration without hanging.
- * `navigator.serviceWorker.ready` never settles when nothing is registered —
- * which is the normal state in local development, where the worker is
- * deliberately unregistered.
- */
+/** Resolve the service worker registration without hanging: `ready` never settles when none is registered. */
 async function getPushRegistration() {
   if (!isPushSupported()) return null
   try {
@@ -121,7 +108,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 /**
- * Subscribe to push notifications
+ * Subscribe to push notifications.
  * @param {string} vapidPublicKey - VAPID public key from backend
  */
 export async function subscribeToPush(vapidPublicKey: string) {

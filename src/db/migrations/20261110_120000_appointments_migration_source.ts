@@ -1,8 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// Migration-source uniqueness for the backfill: the active-only index can't
-// cover revoked/expired rows, so the immutable source link
-// (`appointed_via->>'assignmentId'`) is unique across ALL statuses.
+// The active-only index misses revoked/expired rows, so make the source link unique across all statuses.
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
   CREATE UNIQUE INDEX "appointments_migration_source_unique"

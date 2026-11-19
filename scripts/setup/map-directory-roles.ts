@@ -1,7 +1,4 @@
-// one-off provisioning: focal point directory rows hold the focal_point role on the platform scope
-// a dry run unless told to apply:
-//   npx tsx scripts/setup/map-directory-roles.ts           # shows the rows
-//   npx tsx scripts/setup/map-directory-roles.ts --apply   # writes them
+// one-off: gives focal point directory rows the focal_point role on the platform scope; a dry run unless --apply
 import { config as loadEnv } from 'dotenv'
 import { getPayload } from 'payload'
 

@@ -1,10 +1,4 @@
-/* Colours, radii and spacing now live in design/tokens/*.json and are generated into
-   tokens.generated.css (npm run design:build). This file keeps the hand-authored rest:
-   elevation, motion, z-index, type and layout.
-
-   YOUNGO Hub design tokens — the only file where interface colours live.
-   Follows European and international accessibility standards (WCAG 2.2 AA / EN 301 549).
-   British English conventions apply throughout. */
+/* Hand-authored tokens (elevation, motion, z-index, type, layout); colours, radii, spacing are generated from design/tokens. */
 :root {
   /* logo variant per surface: the on-dark art swaps in on the deep brand bands */
   --brand-dark-display: none;

@@ -10,9 +10,8 @@ import { cleanText } from '../lib/text'
 import type { AccountLike, Doc } from '../lib/domain'
 import type { Election, ElectionCandidate } from '../payload-types'
 
-// S10 elections. the hub runs nominations and screening, decides who may
-// vote and records the result; the vote itself happens on belenios, whose
-// ballots are secret and publicly verifiable (see lib/governance.ts)
+// S10 elections: the hub runs nominations, screening and eligibility, and
+// records the result; voting happens on belenios (see lib/governance.ts).
 
 const text = (max: number) => z.string().transform((v) => cleanText(v, max))
 const quorum = (fallback: number) =>
@@ -489,9 +488,8 @@ export const electionEndpoints: Endpoint[] = [
       const status = quorumMet ? 'completed' : 'restart_required'
       // a double submit or a concurrent restart loses here with 409
       const updated = await withPhase(req, e.id, ['voting', 'tallying'], status, async () => {
-        // status alone can't tell rounds apart: a restart and a new ballot put it back
-        // in voting. the round is its open time and ballot, so a stale request can't
-        // record the old vote's result on the new one
+        // Status can't tell rounds apart (restart or new ballot), so match on the
+        // round's open time and ballot to reject stale requests.
         const round = await req.payload.findByID({
           collection: 'elections',
           id: e.id,
@@ -533,9 +531,8 @@ export const electionEndpoints: Endpoint[] = [
   },
 ]
 
-// compare-and-set on status, then fn in the same tx. the UPDATE's row lock
-// makes export and advance serialise: whoever loses re-reads the committed
-// status and misses. next=null just locks the row without moving it
+// Compare-and-set on status, then fn in the same tx; the row lock
+// serialises export and advance. next=null only locks.
 async function withPhase<T>(
   req: PayloadRequest,
   id: number,

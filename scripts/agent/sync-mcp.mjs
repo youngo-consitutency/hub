@@ -1,23 +1,13 @@
 #!/usr/bin/env node
-// Render this project's agent MCP configuration into every supported tool.
-// The canonical server map lives here, not in per-tool files — never edit
-// those by hand. Secrets come from the environment or .env.local; nothing
-// this script writes lands in a tracked file (all outputs are gitignored —
-// keep them that way).
-//
-//   HINDSIGHT_API_KEY=hsk_… npm run sync:mcp
-//
-// Get the key from a maintainer or the Hindsight/Vectorize dashboard.
-// Restart agents afterwards — MCP clients read config at launch.
+// Renders the agent MCP config into every supported tool; never edit the outputs by hand.
+// Secrets come from the environment or .env.local; outputs are gitignored. Restart agents afterwards.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
-// This script itself needs dotenv + jsonc-parser — check deps before
-// importing them, so a fresh clone gets a readable error instead of
-// ERR_MODULE_NOT_FOUND. The generated `hub` server would fail the same way.
+// Check deps before importing them so a fresh clone gets a readable error.
 if (!existsSync(join(ROOT, 'node_modules/@modelcontextprotocol/sdk'))) {
   console.error('Dependencies not installed — run `npm ci` in the repo root')
   process.exit(1)
@@ -37,10 +27,8 @@ if (!key && !hasHubCreds) {
   process.exit(1)
 }
 
-// One unified `hub` server per tool: content tools + memory tools behind a
-// single stdio entry (memory attaches when HINDSIGHT_API_KEY is present).
-// Project-scoped only — shared/agnostic servers (context7, supabase, vercel,
-// github) belong in each maintainer's global config, never here.
+// One unified `hub` server per tool; memory attaches when HINDSIGHT_API_KEY is set.
+// Project-scoped only: shared servers belong in each maintainer's global config.
 const canonical = {
   hub: {
     command: 'node',
@@ -54,15 +42,11 @@ const canonical = {
     },
   },
 }
-// Names this script owns — removed before rewriting even when absent from
-// the map above (a credential-less sync must still clear stale tables,
-// including the pre-unification `memory`/`hub-content` entries).
+// Names this script owns: removed before rewriting so stale entries are cleared.
 const MANAGED = [...new Set([...Object.keys(canonical), 'hub', 'memory', 'hub-content'])]
 
 const json = (o) => JSON.stringify(o, null, 2) + '\n'
-// writeFileSync truncates before writing — a crash mid-write would leave a
-// truncated settings file. Write a sibling temp file and rename over the
-// target so the swap is atomic.
+// Write a temp file and rename over the target so the swap is atomic.
 const write = (p, s) => {
   mkdirSync(dirname(p), { recursive: true })
   const tmp = join(dirname(p), `.${basename(p)}.${process.pid}.tmp`)

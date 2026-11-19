@@ -235,9 +235,8 @@ export const contactPointEndpoints: Endpoint[] = [
       if (slot.bookedByAccount) throw new ApiError(409, 'conflict', 'This slot was already booked.')
       if (Date.parse(slot.startsAt) < Date.now())
         throw fail.validation({ startsAt: 'This slot is in the past.' })
-      // Conditional write claims the slot atomically: if another request
-      // booked it between our read and this update, no row matches and we
-      // surface the conflict instead of overwriting their booking.
+      // Conditional write claims the slot atomically; a concurrent booking
+      // matches no row and surfaces as a conflict.
       const claimed = await req.payload.update({
         collection: 'cp-call-slots',
         where: {

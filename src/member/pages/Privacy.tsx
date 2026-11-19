@@ -163,10 +163,7 @@ function Header({ notice }: HeaderProps) {
   )
 }
 
-/**
- * Renders the privacy notice inside the app or as a standalone public page.
- * The standalone route lets visitors review it before registration.
- */
+/** Privacy notice inside the app or as a standalone public page. */
 export function Privacy({ standalone = false }: PrivacyProps) {
   const { doc: notice, loading, error, retry } = useDocument<PrivacyNoticeFull>('privacy-notice')
   const { doc: policies } = useDocument<PoliciesDoc>('policies')

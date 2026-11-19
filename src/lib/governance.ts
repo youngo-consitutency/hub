@@ -5,9 +5,8 @@ import type { AccountLike } from './domain'
 import { isCwActive, isVerifiedAccount } from './accountStatus'
 import { requirePgPool } from './pg'
 
-// shared S10/S24 helpers. votes are cast on belenios (verifiable secret
-// ballots); the hub decides who is eligible and records the result.
-// facilitation/selection authority comes from authority records
+// Shared S10/S24 helpers: votes are cast on belenios, the hub decides
+// eligibility and records the result.
 
 export async function isFacilitator(req: PayloadRequest, account: AccountLike) {
   const access = await getAccessProfile(req, account)
@@ -45,10 +44,8 @@ export async function eligibleVoters(): Promise<EligibleVoter[]> {
     }))
 }
 
-// one line per voter, `address,login`: belenios emails each address its own
-// credential. the login carries the voter kind, so belenios's records show
-// how many individuals and organisations voted (quorum counts them apart),
-// and no names leave the hub
+// One `address,login` line per voter; the login carries the voter kind so
+// belenios can count individuals and organisations apart, and no names leave the hub.
 export const beleniosVoterList = (voters: EligibleVoter[]) =>
   voters.map((voter) => `${voter.email},hub-${voter.kind}-${voter.id}`).join('\n') +
   (voters.length ? '\n' : '')

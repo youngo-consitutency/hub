@@ -4,9 +4,7 @@ import { join } from 'node:path'
 import nodemailer, { type Transporter } from 'nodemailer'
 import { defaultEmailFrom } from './env'
 import { deliveryDisabled } from './environment'
-// Outbound email. Mirrors EMAIL_* / SMTP_* envs from the legacy service; when
-// unconfigured, messages are logged and dropped (delivery-failure pattern from
-// server/lib/notifications/transport.js).
+// Outbound email; when unconfigured, messages are logged and dropped.
 export function emailConfigured(): boolean {
   return (
     !deliveryDisabled() &&
@@ -16,10 +14,8 @@ export function emailConfigured(): boolean {
 
 let transporter: Transporter | null = null
 
-// Shared transport — payload.config.ts wires the same connection into
-// Payload's nodemailer adapter so console emails use identical SMTP settings.
-// Bound every phase of the SMTP exchange — the outbox worker must not hang a
-// whole batch on an unresponsive gateway.
+// Shared transport, also wired into Payload's nodemailer adapter.
+// Every SMTP phase is bounded so the outbox worker can't hang on a dead gateway.
 const SMTP_TIMEOUTS = {
   connectionTimeout: 20_000,
   greetingTimeout: 20_000,

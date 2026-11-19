@@ -1,9 +1,4 @@
-/**
- * Reviewed public pages (FAQ, contact). The baseline is derived from the
- * staff-editable `site` content document; an editor drafts a change, a
- * reviewer approves it and a publisher publishes it into `page-<slug>`.
- * Shared by the content endpoints and the public site.
- */
+/** Reviewed public pages (FAQ, contact); the baseline comes from the `site` content document. */
 
 export const PUBLIC_PAGE_KEYS = Object.freeze(['faq', 'contact'])
 const PAGE_STATES = Object.freeze(['baseline', 'published', 'unpublished'])
@@ -60,11 +55,7 @@ export function baselinePage(slug, site) {
   }
 }
 
-/**
- * Validate a page draft payload. `baseRevisionId` names the published
- * revision the draft was written against (null for the baseline), so a
- * publish can refuse a draft whose base has moved on.
- */
+/** Validate a draft; `baseRevisionId` (null for baseline) lets publish refuse a stale base. */
 export function validatePublicPage(input) {
   /** @type {Record<string, string>} */
   const errors = {}

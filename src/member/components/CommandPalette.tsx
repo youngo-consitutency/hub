@@ -39,9 +39,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
       keepPrevious: true,
     },
   )
-  // Remote results are only trustworthy once the debounce has caught up with
-  // the input and the fetch for the current key has finished — otherwise
-  // `data` still matches an older query string.
+  // Remote results are valid only once the debounce and current fetch have settled.
   const settled = !query.loading && debounced === q.trim()
   const { account } = useAccount()
   const viewer = useMemo(() => viewerOf(account), [account])
@@ -164,9 +162,7 @@ function PaletteBody({ onClose }: PaletteBodyProps) {
   )
 }
 
-// Mounted by Shell only while open (Shell owns the Cmd/Ctrl+K toggle, so the shortcut works before
-// this lazy chunk arrives). React Aria's modal supplies the focus trap, background inerting,
-// Escape and click-outside dismissal, and returns focus to whatever opened it.
+// Shell mounts this only while open and owns the Cmd/Ctrl+K toggle. React Aria supplies focus trap and dismissal.
 export function CommandPalette({ onClose }: CommandPaletteProps) {
   return (
     <ModalOverlay

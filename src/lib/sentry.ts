@@ -2,8 +2,7 @@
 import type { ErrorEvent } from '@sentry/nextjs'
 
 // Shared beforeSend scrubbing: credentials and member-identifying fields
-// never leave the process — this strips anything arriving via payloads,
-// headers, breadcrumbs or extras.
+// never leave the process.
 
 // v11 replacement for `sendDefaultPii: false` — leaving dataCollection
 // unset would collect more than the old restrictive default.

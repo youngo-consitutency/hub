@@ -1,7 +1,4 @@
-// vercel runs this instead of `build`. production migrates first so code never
-// ships ahead of its schema, and a failed migration aborts the deploy (the live
-// one keeps serving). previews skip it: their env can share a database, and an
-// unmerged pr's migrations must never reach it
+// vercel runs this instead of `build`: production migrates first and aborts on failure; previews skip migrations
 import { spawnSync } from 'node:child_process'
 
 const run = (script) => {

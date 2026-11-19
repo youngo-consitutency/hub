@@ -1,8 +1,6 @@
 'use client'
 
-// Layout for member routes ported to the App Router. Gate chain:
-// AccountProvider (the one account copy) → AccessGate (public/auth surfaces)
-// → MemberGate (route guards) → Shell → page.
+// Gate chain: AccountProvider → AccessGate → MemberGate → Shell → page.
 import { useEffect } from 'react'
 import { SWRConfig } from 'swr'
 import '../../../member/styles/app.css'

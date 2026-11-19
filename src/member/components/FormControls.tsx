@@ -16,9 +16,7 @@ import {
 } from 'react-aria-components'
 import { TbSelector, TbX } from 'react-icons/tb'
 
-// react aria owns the combobox pattern (keyboard, aria, focus, positioning);
-// these wrappers keep the props every form already passes. anatomy follows the
-// docs: label + group(input, button) + popover(listbox)
+// react-aria owns the combobox pattern; these wrappers keep the props forms already pass.
 
 interface Option {
   value: string

@@ -181,9 +181,7 @@ export function ResourceCard<T extends ResourceCardData>({
   )
 }
 
-// one scannable line per resource: the whole row opens the link in a new tab, and only
-// links a Content Publisher has checked (and nobody has reported) get the verified look
-// a check older than a year no longer counts: links rot
+// One row per resource, opening in a new tab; only links checked within the past year look verified.
 const PAGE = 12
 type ResourceDraft = ReturnType<typeof EMPTY_RESOURCE>
 

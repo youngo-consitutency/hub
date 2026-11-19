@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// Returns `value` after it has been stable for `delay` ms. Search-style inputs
-// feed the debounced value into useApi so each keystroke does not fire a
-// request — one request per pause instead.
+// Returns `value` once stable for `delay` ms, so search inputs fire one request per pause.
 export function useDebouncedValue<T>(value: T, delay = 250): T {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {

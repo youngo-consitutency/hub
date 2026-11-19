@@ -1,9 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { noAccess, serverWrites } from '../lib/collectionAccess'
 
-// S10 elections: nominations, screening, eligibility and results live here.
-// votes are cast on belenios (secret, publicly verifiable ballots); the
-// election's belenios link is externalRef
+// S10 elections; votes are cast on belenios, linked via externalRef
 
 export const Elections: CollectionConfig = {
   slug: 'elections',

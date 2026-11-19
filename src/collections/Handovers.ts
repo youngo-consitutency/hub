@@ -1,10 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { accountField, ownRowsOrStaffRead, serverWrites } from '../lib/collectionAccess'
 
-// S17 handover duty: when membership ends — or a mandate is revoked — the
-// member has two weeks to return YOUNGO data and complete handover tasks.
-// One record per trigger, with a checklist the member works through and the
-// membership team confirms.
+// S17 handover: one record per ended membership or revoked mandate, with a checklist.
 export const Handovers: CollectionConfig = {
   slug: 'handovers',
   access: {

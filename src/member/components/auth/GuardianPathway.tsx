@@ -21,12 +21,7 @@ import { FormAlert } from './shared'
 
 const EMPTY = { guardianName: '', guardianEmail: '', relationship: '', guardianAuthority: false }
 
-/**
- * Safeguarding stop for under-18 applicants. The application ends here and
- * nothing from it is saved; a parent or legal guardian may ask the
- * Membership Team to make contact instead. It renders inside the
- * registration <form>, so it submits with a button rather than a nested form.
- */
+/** Safeguarding stop for under-18s: nothing is saved. Submits with a button as it sits inside the registration form. */
 export function GuardianPathway({
   form,
   dobError,

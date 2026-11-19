@@ -1,10 +1,8 @@
 import type { Account } from './types'
 import { apiPost } from './api'
 
-// The session credential lives ONLY in the HttpOnly `youngo_session` cookie —
-// unreadable from JS so XSS cannot exfiltrate it. Nothing here stores a token.
-// What is cached is the account *profile* only, so first paint doesn't flash a
-// signed-out shell while `/auth/me` is in flight.
+// The session credential lives only in the HttpOnly cookie (XSS cannot read it).
+// Only the account profile is cached, to avoid a signed-out flash while /auth/me loads.
 const ACCOUNT_KEY = 'youngo-hub:session-account'
 
 // Earlier builds stored the token in localStorage; remove leftover copies

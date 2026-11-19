@@ -75,18 +75,13 @@ import {
 import { domainEndpoints } from './endpoints'
 import { noAccess, serverWrites } from './lib/collectionAccess'
 import { deliveryDisabled } from './lib/environment'
-// Negotiation tracking/contributions use the relational negotiation_* tables
-// (migration-managed), not Payload collections — the source pipeline needs
-// immutable version rows, join tables, and uuid identity.
+// Negotiation data uses migration-managed negotiation_* tables, not Payload collections.
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  // The admin lives at /cms and is the content console only: it opens for accounts
-  // holding content.publish (see Accounts.access.admin) and edits content-documents.
-  // Everything else still runs through domain endpoints, scripts and the Local API.
-  // `accounts` is the only auth collection.
+  // /cms is the content console only, open to accounts holding content.publish
   routes: { admin: '/cms' },
   admin: {
     user: 'accounts',
@@ -161,9 +156,7 @@ export default buildConfig({
   ),
   endpoints: domainEndpoints,
   editor: lexicalEditor(),
-  // payload's own emails share the app's smtp settings. with delivery off a
-  // no-op adapter keeps anything from leaving; without smtp the default
-  // adapter logs messages, which suits local development
+  // shares the app's smtp settings; a no-op adapter when delivery is off
   email: deliveryDisabled()
     ? () => ({
         name: 'delivery-disabled',

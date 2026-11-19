@@ -17,11 +17,7 @@ import { useDocument } from '../lib/documents'
 import { A, Button } from './ui'
 import { Brand } from './Brand'
 
-/**
- * Full-screen mandatory Membership Policy read (step 1 of access).
- * Landing is summary-first for readability; full legal text is available
- * in a collapsible section that still requires scroll-to-end.
- */
+/** Mandatory Membership Policy read (step 1 of access); full text requires scroll-to-end. */
 export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps) {
   const { doc, loading, error, retry } = useDocument<MembershipPolicyFullDoc>('membership-policy')
   const [scrolledToEnd, setScrolledToEnd] = useState(false)
