@@ -21,9 +21,21 @@ loadEnv()
 const { default: config } = await import('../../src/payload.config')
 const { applyAccountSpec } = await import('../lib/accountSpec')
 
+// pg lets a `?host=` or `?hostaddr=` query parameter override the host in the URL, so the URL's
+// own hostname proves nothing unless those are absent
+function isLocalDatabase(value: string) {
+  try {
+    const parsed = new URL(value)
+    const overridden = parsed.searchParams.has('host') || parsed.searchParams.has('hostaddr')
+    return !overridden && ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 const url = process.env.DATABASE_URL || ''
-if (!/@(localhost|127\.0\.0\.1)[:/]/.test(url)) {
-  console.error('Refusing to seed: DATABASE_URL must point at localhost.')
+if (!isLocalDatabase(url)) {
+  console.error('Refusing to seed: DATABASE_URL must point at localhost, with no host override.')
   process.exit(1)
 }
 
@@ -34,6 +46,20 @@ const existing = await payload.count({ collection: 'accounts', overrideAccess: t
 if (existing.totalDocs > 0) {
   console.error(`Refusing to seed: accounts already holds ${existing.totalDocs} rows.`)
   process.exit(1)
+}
+
+// data scripts are dry runs unless given --apply
+if (!process.argv.includes('--apply')) {
+  const kinds = (dataset.records as { collection: string }[]).reduce<Record<string, number>>(
+    (n, r) => ({ ...n, [r.collection]: (n[r.collection] ?? 0) + 1 }),
+    {},
+  )
+  console.log(
+    `Dry run: would create ${dataset.accounts.length} accounts and`,
+    JSON.stringify(kinds),
+    '\nRe-run with --apply to write them.',
+  )
+  process.exit(0)
 }
 
 // the dataset points at other records as { "$ref": key }; swap in the ids created so far

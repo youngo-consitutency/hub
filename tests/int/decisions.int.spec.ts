@@ -362,6 +362,26 @@ describe('decision engine (S09)', () => {
   })
 
   it(
+    'lets only one of two simultaneous veto requests from a member through',
+    { timeout: 90000 },
+    async () => {
+      const voting = await makeVoting()
+      const file = () =>
+        api(`/decisions/${voting.id}/vetoes`, {
+          method: 'POST',
+          cookie: cwMember.cookie,
+          body: JSON.stringify({
+            requesterKind: 'wg_or_ot',
+            groupKey: 'finance',
+            reasoning: 'Test veto reasoning for the record.',
+          }),
+        })
+      const statuses = (await Promise.all([file(), file()])).map((res) => res.status).sort()
+      expect(statuses).toEqual([201, 409])
+    },
+  )
+
+  it(
     'refuses a veto request for a group the member holds no role in',
     { timeout: 90000 },
     async () => {

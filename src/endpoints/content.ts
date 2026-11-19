@@ -202,6 +202,22 @@ async function applyToLive(
   throw fail.validation({ contentType: 'Unsupported content type.' })
 }
 
+// The live record as the studio edits it; null when the slug does not exist.
+async function currentLive(req: PayloadRequest, contentType: string, slug: string) {
+  if (contentType === 'event') return store.getEvent(req, slug)
+  if (contentType === 'announcement') return store.getAnnouncement(req, slug)
+  if (contentType === 'resource')
+    return (await store.listResources(req)).find((r) => r.slug === slug)
+  return null
+}
+
+// applyToLive rewrites a record whole, so a partial change is merged onto the live record first
+const mergeOntoLive = (current: Doc, change: Doc) => ({
+  wgSlug: current.wg?.slug,
+  ...current,
+  ...change,
+})
+
 export const contentEndpoints: Endpoint[] = [
   {
     path: '/member/content',
@@ -383,7 +399,14 @@ export const contentEndpoints: Endpoint[] = [
         assertPageVersion(draft, await readBody(req))
         return json({ item: draftView(await publishPublicPage(req, draft, account)) })
       }
-      await applyToLive(req, draft.contentType, draft.contentKey, draft.payload)
+      const { _patch, ...change } = draft.payload as Doc
+      let payload: Doc = draft.payload
+      if (_patch === true) {
+        const current = await currentLive(req, draft.contentType, draft.contentKey)
+        if (!current) throw new ApiError(409, 'conflict', 'The published item no longer exists.')
+        payload = mergeOntoLive(current, change)
+      }
+      await applyToLive(req, draft.contentType, draft.contentKey, payload)
       const updated = await req.payload.update({
         collection: 'content-drafts',
         id: draft.id,
@@ -422,14 +445,9 @@ export const contentEndpoints: Endpoint[] = [
       const contentType = param(req, 'contentType')
       const slug = param(req, 'slug')
       const b = await readBody(req)
-      // Only the fields sent change: merge onto the live record, because applyToLive rewrites it whole.
-      let current: Doc | null | undefined = null
-      if (contentType === 'event') current = await store.getEvent(req, slug)
-      else if (contentType === 'announcement') current = await store.getAnnouncement(req, slug)
-      else if (contentType === 'resource')
-        current = (await store.listResources(req)).find((r: Doc) => r.slug === slug)
+      const current = await currentLive(req, contentType, slug)
       if (!current) throw fail.notFound()
-      const merged = { wgSlug: current.wg?.slug, ...current, ...(b.payload ?? {}) }
+      const change: Doc = b.payload ?? {}
       // The default is a draft: going live straight away needs both review and publish rights.
       if (b.mode !== 'apply') {
         if (!canDraft) throw fail.forbidden('Content drafting is not assigned.')
@@ -438,17 +456,24 @@ export const contentEndpoints: Endpoint[] = [
           data: {
             contentType: contentType as ContentDraft['contentType'],
             contentKey: slug,
-            payload: merged,
+            // only the fields sent, marked as a patch: the live record is read again at publish
+            // time, so a change made meanwhile to another field is not rolled back
+            payload: { ...change, _patch: true },
             author: account.id,
             status: 'draft',
           },
           overrideAccess: true,
           req,
         })
+        await audit(req, account, {
+          action: 'content.draft_create',
+          targetType: contentType,
+          targetId: slug,
+        })
         return json({ item: draftView(draft) }, { status: 201 })
       }
       if (!canPublish || !canReview) throw fail.forbidden('Publishing is not assigned.')
-      const item = await applyToLive(req, contentType, slug, merged)
+      const item = await applyToLive(req, contentType, slug, mergeOntoLive(current, change))
       await audit(req, account, {
         action: 'content.live_patch',
         targetType: contentType,

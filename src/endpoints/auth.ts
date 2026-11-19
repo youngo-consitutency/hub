@@ -341,7 +341,12 @@ export const authEndpoints: Endpoint[] = [
     handler: endpoint(async (req) => {
       // revoke the session server-side, not just the cookie: a copied token must stop working too
       if (req.user) {
-        await logoutOperation({ collection: req.payload.collections.accounts, req })
+        try {
+          await logoutOperation({ collection: req.payload.collections.accounts, req })
+        } catch {
+          // the cookie below must be cleared even if the server-side revocation failed
+          req.payload.logger.warn({ event: 'logout_revocation_failed' })
+        }
       }
       return noStore(json({ ok: true }, { headers: { 'Set-Cookie': clearSessionCookieHeader() } }))
     }),
@@ -485,13 +490,22 @@ export const authEndpoints: Endpoint[] = [
           { status: 400 },
         )
       }
-      await req.payload.update({
-        collection: 'accounts',
-        id: claimed.account_id,
-        data: { password, mustChangePassword: false },
-        overrideAccess: true,
-        req,
-      })
+      try {
+        await req.payload.update({
+          collection: 'accounts',
+          id: claimed.account_id,
+          data: { password, mustChangePassword: false },
+          overrideAccess: true,
+          req,
+        })
+      } catch (error) {
+        // the password did not change, so the link must stay usable for a retry
+        await requirePgPool().query(
+          'UPDATE password_resets SET used_at = NULL WHERE token_hash = $1',
+          [sha256Hex(token)],
+        )
+        throw error
+      }
       return noStore(
         json({
           ok: true,

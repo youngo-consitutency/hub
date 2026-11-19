@@ -396,10 +396,10 @@ export const selectionEndpoints: Endpoint[] = [
       if (idOf(application.account) === account.id)
         throw fail.conflict('conflict_of_interest', 'You cannot evaluate your own application.')
       // Recusal check (S24 §2.2.4): conflicted members may not evaluate.
-      // a JSON column: trust it only as far as it is an array
-      const recused = Array.isArray(member.recusedApplicantIds)
-        ? member.recusedApplicantIds.map(Number)
-        : []
+      // a JSON column: an unreadable value must stop the evaluation, never count as "no recusals"
+      if (member.recusedApplicantIds != null && !Array.isArray(member.recusedApplicantIds))
+        throw fail.conflict('conflict_of_interest', 'Your recusal list could not be read.')
+      const recused = (member.recusedApplicantIds ?? []).map(Number)
       if (recused.includes(applicationId))
         throw fail.conflict(
           'conflict_of_interest',

@@ -62,7 +62,11 @@ export function rateLimit({
         if (rows[0].count > max) throw tooMany()
         // expired windows are harmless but pile up: sweep now and then
         if (Math.random() < 0.01)
-          void pool.query(`DELETE FROM rate_limits WHERE reset_at < now() - interval '1 day'`)
+          // cleanup is best effort: its failure must neither reach the caller nor trigger a second
+          // count through the memory fallback below
+          pool
+            .query(`DELETE FROM rate_limits WHERE reset_at < now() - interval '1 day'`)
+            .catch(() => {})
         return
       } catch (error) {
         if (error instanceof ApiError) throw error

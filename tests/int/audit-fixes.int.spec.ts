@@ -1,7 +1,7 @@
 import type { Payload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { testPayload } from './provision'
+import { provisionAccount, testPayload } from './provision'
 import { api, session } from './helpers'
 
 const tag = `fix-${Math.random().toString(36).slice(2, 8)}`
@@ -76,13 +76,14 @@ describe('content update goes through review by default', () => {
   })
 
   it('refuses apply-now without publish rights', async () => {
+    const before = (await live()).title
     const res = await api(`/member/content/live/announcement/${slug}`, {
       method: 'PATCH',
       cookie: editor.cookie,
       body: json({ mode: 'apply', payload: { title: 'Sneaky' } }),
     })
     expect(res.status).toBe(403)
-    expect((await live()).title).toBe('Edited')
+    expect((await live()).title).toBe(before)
   })
 })
 
@@ -157,11 +158,26 @@ describe('member directory search', () => {
 
   it('returns account ids, not profile ids', async () => {
     const member = await session({})
-    const res = await api('/member/people?pageSize=50', { cookie: member.cookie })
+    const payload = await testPayload()
+    const listed = await provisionAccount({})
+    const profile = await payload.create({
+      collection: 'member-profiles',
+      data: {
+        account: listed.account.id,
+        displayName: `Directory ${tag}`,
+        directoryVisibility: 'members',
+      },
+      overrideAccess: true,
+    })
+    // the bug returned the profile's id as the person's id, which only shows if the two differ
+    expect(profile.id).not.toBe(listed.account.id)
+
+    const res = await api(`/member/people?search=${encodeURIComponent(`Directory ${tag}`)}`, {
+      cookie: member.cookie,
+    })
     expect(res.status).toBe(200)
-    const { items } = await res.json()
-    const ids = items.map((p: { accountId?: number; id?: number }) => p.accountId ?? p.id)
-    expect(new Set(ids).size).toBe(ids.length)
+    const { items } = (await res.json()) as { items: { id: number; displayName: string }[] }
+    expect(items.map((p) => p.id)).toEqual([listed.account.id])
   })
 })
 
@@ -195,5 +211,85 @@ describe('email links need a confirming click', () => {
       const res = await api('/notifications/unsubscribe?token=forged.token', { method })
       expect(res.status, method).toBe(400)
     }
+  })
+})
+
+describe('a drafted patch is merged onto the live record when it is published', () => {
+  it('keeps a change made to another field in the meantime', async () => {
+    const payload = await testPayload()
+    const editor = await session({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'content.editor', scopeType: 'team', scopeId: 'content_editor' }],
+    })
+    const publisher = await session({
+      membershipTrack: 'constituency_work',
+      records: [{ role: 'content.publisher', scopeType: 'team', scopeId: 'content_publisher' }],
+    })
+    const slug = `${tag}-patch`
+    const created = await payload.create({
+      collection: 'content-announcements',
+      data: { slug, title: 'Before', body: 'Original body', state: 'published' },
+      overrideAccess: true,
+    })
+
+    const drafted = await api(`/member/content/live/announcement/${slug}`, {
+      method: 'PATCH',
+      cookie: editor.cookie,
+      body: json({ payload: { title: 'After' } }),
+    })
+    expect(drafted.status).toBe(201)
+    const { item } = await drafted.json()
+
+    // someone else edits the body while the draft waits for review
+    await payload.update({
+      collection: 'content-announcements',
+      id: created.id,
+      data: { body: 'Changed meanwhile' },
+      overrideAccess: true,
+    })
+
+    const step = (path: string, cookie: string, body: object = {}) =>
+      api(`/member/content/drafts/${item.id}/${path}`, {
+        method: 'POST',
+        cookie,
+        body: json({ expectedVersion: item.revision, ...body }),
+      })
+    expect((await step('submit', editor.cookie)).status).toBe(200)
+    expect((await step('review', publisher.cookie, { decision: 'approve' })).status).toBe(200)
+    expect((await step('publish', publisher.cookie)).status).toBe(200)
+
+    const live = await payload.findByID({
+      collection: 'content-announcements',
+      id: created.id,
+      overrideAccess: true,
+    })
+    expect(live.title).toBe('After')
+    expect(live.body).toBe('Changed meanwhile')
+    await payload.delete({
+      collection: 'content-announcements',
+      id: created.id,
+      overrideAccess: true,
+    })
+  })
+})
+
+describe('the membership status route', () => {
+  it('refuses to change your own membership and caps the renewal date', async () => {
+    const staff = await session({
+      membershipTrack: 'constituency_work',
+      teams: ['membership_team'],
+    })
+    const target = await provisionAccount({})
+    const patch = (id: number | string, body: object) =>
+      api(`/member/team/membership/accounts/${id}/status`, {
+        method: 'PATCH',
+        cookie: staff.cookie,
+        body: json(body),
+      })
+    expect((await patch(staff.account.id, { status: 'active' })).status).toBe(403)
+    const far = new Date(Date.now() + 3 * 365 * 86_400_000).toISOString()
+    expect((await patch(target.account.id, { status: 'active', renewalDueAt: far })).status).toBe(
+      400,
+    )
   })
 })

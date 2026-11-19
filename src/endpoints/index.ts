@@ -1,4 +1,5 @@
 import { publicEndpoints } from './public'
+import { testTargetEndpoints } from './testTarget'
 import { authEndpoints } from './auth'
 import { memberEndpoints } from './member'
 import { peopleEndpoints } from './people'
@@ -29,6 +30,7 @@ import { agentEndpoints } from './agent'
 export const domainEndpoints = [
   ...authEndpoints,
   ...publicEndpoints,
+  ...testTargetEndpoints,
   ...memberEndpoints,
   ...peopleEndpoints,
   ...feedbackEndpoints,

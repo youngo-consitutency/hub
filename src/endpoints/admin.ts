@@ -104,10 +104,11 @@ export const adminEndpoints: Endpoint[] = [
         )
       )
         throw fail.validation({ teamRole: 'Invalid team role.' })
-      if (id === String(admin.id))
-        throw fail.forbidden('Another administrator must change your team roles.')
       const target = await findAccountForAdmin(id)
       if (!target) throw fail.notFound('Account not found.')
+      // compare the resolved account, not the raw route text: "007" and "7" are the same account
+      if (target.id === admin.id)
+        throw fail.forbidden('Another administrator must change your team roles.')
       const roles = new Set(target.teamRoles || [])
       // Team roles are canonical mandates written to `authority-records`
       // (with the shared lock and audit trail).

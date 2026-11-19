@@ -3,7 +3,12 @@ import { endpoint, fail, json, readBody, param } from '../lib/respond'
 import { accountView, requireTeam } from '../lib/accounts'
 import { audit } from '../lib/audit'
 import { withTransaction } from '../lib/pg'
-import { updateMembershipLifecycle, findAccountRowById } from '../lib/membership'
+import {
+  ENDED_MEMBERSHIP_STATUSES,
+  updateMembershipLifecycle,
+  findAccountRowById,
+} from '../lib/membership'
+import { hasCapability } from '../lib/access'
 import { listMembershipReviewItems, listMemberProfileSummaries } from '../lib/membershipReview'
 import {
   listLatestAppealsForAccounts,
@@ -57,11 +62,17 @@ export const membershipTeamEndpoints: Endpoint[] = [
     path: '/member/team/membership/accounts/:id/status',
     method: 'patch',
     handler: endpoint(async (req) => {
-      const { account: staff } = await requireTeam(req, 'membership_team')
+      const { account: staff, access } = await requireTeam(req, 'membership_team')
       const id = param(req, 'id')
       const b = await readBody(req)
+      const status = String(b.status || b.membershipStatus || '')
+      // another team member must act on your own membership; ending it stays the helper's
+      // `self_suspend` refusal
+      if (Number(id) === staff.id && !ENDED_MEMBERSHIP_STATUSES.includes(status))
+        throw fail.forbidden('Another Membership Team member must act on your own membership.')
       const result = await updateMembershipLifecycle({
         actor: accountView(staff),
+        actorIsOfficer: hasCapability(access, 'platform.manage'),
         targetId: id,
         body: b,
       })

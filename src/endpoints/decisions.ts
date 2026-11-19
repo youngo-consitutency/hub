@@ -6,7 +6,7 @@ import {
   requireVerifiedMember,
   verifiedContext,
 } from '../lib/accounts'
-import { isUniqueViolation } from '../lib/pg'
+import { isUniqueViolation, requirePgPool } from '../lib/pg'
 import { requireCronSecret } from '../lib/cron'
 import {
   DECISION_TYPES,
@@ -433,8 +433,12 @@ export const decisionEndpoints: Endpoint[] = [
       if (!b.reasoning?.trim()) fields.reasoning = 'A veto request requires detailed reasoning.'
       if (Object.keys(fields).length) throw fail.validation(fields)
       // A veto speaks for a group, so the requester must hold a current mandate in it.
+      // the same role representations the decision runtime accepts for a group or team: its roles
+      // may sit on working_group, operational_team, team or body scope rows
       const scopeTypes =
-        b.requesterKind === 'wg_or_ot' ? ['working_group', 'operational_team'] : ['organisation']
+        b.requesterKind === 'wg_or_ot'
+          ? ['working_group', 'operational_team', 'team', 'body']
+          : ['organisation']
       const { records } = await getAccessProfile(req, account)
       const key = normaliseGroupKey(b.groupKey)
       if (
@@ -453,19 +457,26 @@ export const decisionEndpoints: Endpoint[] = [
       })
       if (own.totalDocs > 0)
         throw fail.conflict('already_requested', 'You have already filed a veto request.')
-      const veto = await req.payload.create({
-        collection: 'decision-vetoes',
-        data: {
-          proposal: p.id,
-          requesterKind: b.requesterKind,
-          groupKey: normaliseGroupKey(b.groupKey),
-          reasoning: b.reasoning.trim(),
-          requestedBy: account.id,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        },
-        overrideAccess: true,
-      })
+      // the unique index (proposal, member) settles a race the check above cannot
+      const veto = await req.payload
+        .create({
+          collection: 'decision-vetoes',
+          data: {
+            proposal: p.id,
+            requesterKind: b.requesterKind,
+            groupKey: normaliseGroupKey(b.groupKey),
+            reasoning: b.reasoning.trim(),
+            requestedBy: account.id,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+        })
+        .catch((error) => {
+          if (isUniqueViolation(error, 'decision-vetoes', 'decision_vetoes'))
+            throw fail.conflict('already_requested', 'You have already filed a veto request.')
+          throw error
+        })
       await recordEvent(req, p.id, 'veto_requested', account, { vetoId: veto.id })
       return json({ veto: vetoView(veto) }, { status: 201 })
     }),
@@ -489,12 +500,19 @@ export const decisionEndpoints: Endpoint[] = [
           throw fail.notFound('Veto request not found.')
         })
       if (!ownedBy(veto, p)) throw fail.notFound('Veto request not found.')
-      if (veto.status !== 'pending' || p.status !== 'voting')
+      // One statement checks the veto and the proposal's phase together and holds the proposal row
+      // while it runs, so a withdrawal cannot slip in between the check and the write.
+      const { rowCount } = await requirePgPool().query(
+        `WITH live AS (SELECT id FROM decision_proposals WHERE id = $2 AND status = 'voting' FOR SHARE)
+         UPDATE decision_vetoes SET status = 'confirmed', updated_at = now()
+         WHERE id = $1 AND proposal_id = $2 AND status = 'pending' AND EXISTS (SELECT 1 FROM live)`,
+        [veto.id, p.id],
+      )
+      if (!rowCount)
         throw fail.conflict('invalid_phase', 'This veto request can no longer be confirmed.')
-      const updated = await req.payload.update({
+      const updated = await req.payload.findByID({
         collection: 'decision-vetoes',
         id: veto.id,
-        data: { status: 'confirmed' },
         overrideAccess: true,
       })
       await recordEvent(req, p.id, 'veto_confirmed', account, { vetoId: veto.id })

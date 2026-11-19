@@ -27,5 +27,8 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
       "voided_by" integer REFERENCES "accounts"("id") ON DELETE SET NULL,
       "void_reason" text
     );
+    CREATE INDEX IF NOT EXISTS "idx_ngo_point_ledger_org" ON "ngo_point_ledger" ("org_account_id","status","created_at" DESC);
+    CREATE INDEX IF NOT EXISTS "idx_ngo_point_ledger_reason" ON "ngo_point_ledger" ("reason_code","created_at" DESC);
+    CREATE INDEX IF NOT EXISTS "idx_ngo_point_ledger_related" ON "ngo_point_ledger" ("related_type","related_id") WHERE related_id IS NOT NULL;
   `)
 }

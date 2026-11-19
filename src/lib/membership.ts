@@ -137,6 +137,9 @@ export async function updateMembershipLifecycle({
     throw new ApiError(400, 'validation', 'A reason is required when rejecting an application.')
   if (body?.renewalDueAt && Number.isNaN(Date.parse(body.renewalDueAt)))
     throw new ApiError(400, 'validation', 'Invalid renewal date.')
+  // a typo (or abuse) must not grant membership for decades
+  if (body?.renewalDueAt && Date.parse(body.renewalDueAt) > Date.now() + 400 * 86_400_000)
+    throw new ApiError(400, 'validation', 'Set a renewal date within about 13 months.')
 
   const now = new Date().toISOString()
   const closed = CLOSED_MEMBERSHIP_STATUSES.includes(status)

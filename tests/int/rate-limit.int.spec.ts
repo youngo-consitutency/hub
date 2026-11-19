@@ -40,6 +40,8 @@ describe('rate limiter', () => {
 
   it('ignores a spoofed forwarded-for header unless behind a trusted proxy', async () => {
     const { clientId } = await limiterModule()
+    vi.stubEnv('TRUST_PROXY', '')
+    vi.stubEnv('VERCEL', '')
     expect(clientId(request({ 'x-forwarded-for': '203.0.113.9' }))).toBe('local')
     vi.stubEnv('TRUST_PROXY', '1')
     expect(clientId(request({ 'x-forwarded-for': '1.2.3.4, 203.0.113.9' }))).toBe('203.0.113.9')
