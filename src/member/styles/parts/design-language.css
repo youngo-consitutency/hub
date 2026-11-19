@@ -368,8 +368,9 @@ h2,
    coarse pointers; safe-area insets on fixed bars; no horizontal scroll at 320px; content
    reflows rather than hides; logical properties for RTL. */
 
-html {
-  /* anchors and focus never hide under the floating nav */
+/* anchors and focus never hide under the floating nav, which only the public site has; a
+   page-wide padding also makes the browser scroll dropdowns that open near the top edge */
+html:has(.siteHeader) {
   scroll-padding-top: 96px;
 }
 
