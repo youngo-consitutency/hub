@@ -1,6 +1,7 @@
 import pg from 'pg'
 import type { Payload, PayloadRequest } from 'payload'
 import type { Doc } from './domain'
+import { databaseSsl } from './dbSsl'
 
 // Shared pool for modules that bypass the ORM (platform, negotiations,
 // binary blobs). Lazily created so builds without DATABASE_URL still work.
@@ -12,6 +13,7 @@ export function getPgPool(): pg.Pool | null {
   if (!pool)
     pool = new pg.Pool({
       connectionString,
+      ssl: databaseSsl(),
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,

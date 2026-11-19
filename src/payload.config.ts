@@ -75,6 +75,7 @@ import {
 import { domainEndpoints } from './endpoints'
 import { noAccess, serverWrites } from './lib/collectionAccess'
 import { deliveryDisabled } from './lib/environment'
+import { databaseSsl } from './lib/dbSsl'
 // Negotiation data uses migration-managed negotiation_* tables, not Payload collections.
 
 const filename = fileURLToPath(import.meta.url)
@@ -181,6 +182,7 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
+      ssl: databaseSsl(),
     },
     // Schema is managed exclusively through SQL migrations — never push.
     push: false,
