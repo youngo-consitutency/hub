@@ -1,12 +1,13 @@
 interface ChangePasswordFormProps {
-  onChanged?: AnyValue
-  submitLabel?: AnyValue
-  intro?: AnyValue
+  onChanged?: (account?: Account) => void
+  submitLabel?: string
+  intro?: ReactNode
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { FormEvent, ReactNode } from 'react'
+import type { Account } from '../lib/types'
 import { useState } from 'react'
-import { apiPost } from '../lib/api'
+import { apiPost, errorMessage, fieldErrors } from '../lib/api'
 import { Button } from './ui'
 import { FormAlert } from './auth/shared'
 import { fieldClass } from './auth/helpers'
@@ -20,19 +21,19 @@ export function ChangePasswordForm({
   const [currentPassword, setCurrentPassword] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [fields, setFields] = useState<Doc>({})
-  const [error, setError] = useState<AnyValue>(null)
+  const [fields, setFields] = useState<Record<string, string>>({})
+  const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = async (event: AnyValue) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
     setMessage('')
     setFields({})
     try {
-      const data = await apiPost('/auth/change-password', {
+      const data = await apiPost<{ account?: Account }>('/auth/change-password', {
         currentPassword,
         password,
         passwordConfirm,
@@ -43,8 +44,8 @@ export function ChangePasswordForm({
       setMessage('Password updated.')
       onChanged?.(data.account)
     } catch (err) {
-      setFields((err as AnyValue).fields || {})
-      setError((err as AnyValue).message)
+      setFields(fieldErrors(err))
+      setError(errorMessage(err))
     } finally {
       setSubmitting(false)
     }

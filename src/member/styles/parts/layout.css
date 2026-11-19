@@ -11,7 +11,7 @@
 .pageEyebrow {
   margin-bottom: var(--space-1);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -277,7 +277,7 @@
   outline-offset: 2px;
 }
 .filterChevron {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .filterMenu[open] .filterChevron {
   transform: rotate(180deg);
@@ -352,7 +352,7 @@
   clip: auto;
   white-space: normal;
   color: var(--text-3);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -374,8 +374,12 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     /* Trailing-edge fade reads as "there is more" when the row overflows. */
-    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+    mask-image: linear-gradient(to var(--end, right), black calc(100% - 32px), transparent 100%);
+    -webkit-mask-image: linear-gradient(
+      to var(--end, right),
+      black calc(100% - 32px),
+      transparent 100%
+    );
   }
 
   .filterMenuPanel .pillRow::-webkit-scrollbar {
@@ -681,7 +685,7 @@
   display: grid;
   gap: 2px;
   padding: 9px 10px;
-  text-align: left;
+  text-align: start;
   border: 1px solid transparent;
   border-radius: var(--radius-control);
   background: var(--bg-raised);
@@ -928,7 +932,7 @@
 .pillPrefix {
   min-width: 2.2em;
   color: currentColor;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -952,7 +956,7 @@
   display: inline-flex;
   flex: 0 0 13px;
   width: 13px;
-  margin-left: var(--space-1);
+  margin-inline-start: var(--space-1);
 }
 
 .pill[data-filter-state='neutral'] .pillStateIcon {

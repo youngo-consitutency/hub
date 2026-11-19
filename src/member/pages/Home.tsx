@@ -1,22 +1,29 @@
 'use client'
 
 interface LiveBannerProps {
-  event?: AnyValue
+  event: EventSummary
 }
 
 interface ResponsibilitySectionProps {
-  account?: AnyValue
+  account?: Account | null
 }
 
 interface WorkspaceSectionProps {
-  groups?: AnyValue
-  workspaces?: AnyValue
+  groups: ApiQuery<{ items: GroupSummary[] }>
+  workspaces: ApiQuery<{ items: WorkspaceProgress[] }>
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import { Arrow } from '../components/dirIcons'
+import type {
+  EventSummary,
+  FeedResponse,
+  GroupSummary,
+  WorkspaceProgress,
+} from '../../shared/contracts'
+import type { Account } from '../lib/types'
 import { canManageGroups } from '../lib/groupPermissions'
 import { responsibilitiesFor, viewerOf } from '../lib/routes'
-import { useApi } from '../lib/api'
+import { useApi, type ApiQuery } from '../lib/api'
 import { A, Async, Empty, LifecycleTiming, Section } from '../components/ui'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
@@ -65,15 +72,15 @@ function LiveBanner({ event }: LiveBannerProps) {
 
 /** Show the member feed, summary counts, workspaces, responsibilities and upcoming activities. */
 export function Home() {
-  const feed = useApi('/feed')
-  const groups = useApi('/groups')
-  const workspaces = useApi('/member/workspace')
+  const feed = useApi<FeedResponse>('/feed')
+  const groups = useApi<{ items: GroupSummary[] }>('/groups')
+  const workspaces = useApi<{ items: WorkspaceProgress[] }>('/member/workspace')
   const { account } = useAccount()
 
   return (
     <div className="homePage">
       <Async query={feed} skeletons={4}>
-        {(data: Doc) => (
+        {(data) => (
           <>
             {data.live && <LiveBanner event={data.live} />}
             <HeroBand
@@ -115,12 +122,12 @@ export function Home() {
                     label="Closing soon"
                     action={
                       <A href="/submissions" className="metaMuted">
-                        All →
+                        All <Arrow />
                       </A>
                     }
                   >
                     <div className="dashboardCardGrid">
-                      {data.closing.map((x: AnyValue) => (
+                      {data.closing.map((x) => (
                         <ClosingCard key={`${x.kind}-${x.slug}`} item={x} />
                       ))}
                     </div>
@@ -130,7 +137,7 @@ export function Home() {
                 {data.pinned.length > 0 && (
                   <Section label="Pinned">
                     <div className="pinnedStack">
-                      {data.pinned.map((a: AnyValue) => (
+                      {data.pinned.map((a) => (
                         <div key={a.slug || a.title} className="pinnedBanner">
                           <span className="pinnedBannerIcon" aria-hidden>
                             <Pin size={16} strokeWidth={2} />
@@ -167,13 +174,13 @@ export function Home() {
                   label="This week"
                   action={
                     <A href="/calendar" className="metaMuted">
-                      Calendar →
+                      Calendar <Arrow />
                     </A>
                   }
                 >
                   {data.week.length ? (
                     <div className="dashboardCardGrid">
-                      {data.week.map((e: AnyValue) => (
+                      {data.week.map((e) => (
                         <EventCard key={e.slug} event={e} />
                       ))}
                     </div>
@@ -191,12 +198,12 @@ export function Home() {
                     label="COYs"
                     action={
                       <A href="/coys" className="metaMuted">
-                        All →
+                        All <Arrow />
                       </A>
                     }
                   >
                     <div className="dashboardCardGrid">
-                      {data.coys.map((c: AnyValue) => (
+                      {data.coys.map((c) => (
                         <CoyCard key={c.slug} coy={c} />
                       ))}
                     </div>
@@ -260,18 +267,18 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
       label="Your workspaces"
       action={
         <A href="/groups" className="metaMuted">
-          Manage →
+          Manage <Arrow />
         </A>
       }
     >
       <Async query={workspaces} skeletons={2}>
-        {(workspaceData: AnyValue) => (
+        {(workspaceData) => (
           <Async query={groups} skeletons={2}>
-            {(groupData: AnyValue) => {
-              const progressBySlug = new Map<AnyValue, AnyValue>(
-                workspaceData.items.map((item: Doc) => [item.wg_slug, item]),
+            {(groupData) => {
+              const progressBySlug = new Map(
+                workspaceData.items.map((item) => [item.wg_slug, item] as const),
               )
-              const joined = groupData.items.filter((group: Doc) => progressBySlug.has(group.slug))
+              const joined = groupData.items.filter((group) => progressBySlug.has(group.slug))
               if (!joined.length) {
                 return (
                   <A href="/groups" className="card cardTight roleHubCard">
@@ -287,7 +294,7 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
               }
               return (
                 <div className="dashboardCardGrid">
-                  {joined.map((group: Doc) => {
+                  {joined.map((group) => {
                     const progress = progressBySlug.get(group.slug)
                     const ready = Boolean(progress?.presentation_ok && progress?.rules_ok)
                     return (

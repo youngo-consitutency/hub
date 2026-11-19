@@ -40,7 +40,7 @@
   position: absolute;
   top: 6px;
   bottom: 6px;
-  left: 7px;
+  inset-inline-start: 7px;
   width: 2px;
   border-radius: 2px;
   background: var(--border);
@@ -65,7 +65,7 @@
   content: '';
   position: absolute;
   top: 8px;
-  left: calc(var(--space-8) * -1 + 1px);
+  inset-inline-start: calc(var(--space-8) * -1 + 1px);
   width: 14px;
   height: 14px;
   border: 2px solid var(--accent);

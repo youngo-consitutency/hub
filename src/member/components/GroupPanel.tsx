@@ -4,25 +4,27 @@ interface GroupCommunityProps {
 
 interface GroupResourceGroupsProps {
   slug: string
-  resources?: AnyValue
-  locked?: AnyValue
+  resources: { url: string; label: string }[]
+  locked: boolean
 }
 
 interface GroupPanelProps {
-  g: AnyValue
+  g: GroupDetail
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { Doc } from '../lib/types'
+import type { PersonSummary, PeopleResponse } from '../../shared/contracts'
+import type { GroupDetail } from '../../shared/contracts'
 import { useApi } from '../lib/api'
 import { useContactPoints } from '../lib/workingGroups'
 import { A, Async, Section, Empty } from './ui'
-import { EventCard, PersonCard, SubmissionCard } from './cards'
+import { EventCard, SubmissionCard } from './cards'
+import { PersonCard } from './PersonCard'
 import { CopyFeedButton } from './Subscribe'
 import { TaskForceCard } from './TaskForceCard'
 import { ExternalResourceRow } from './DestinationLink'
 import { groupResourcesByCategory, isPublicGroupResource } from '../../shared/resourceCategories'
 import {
-  TbArrowRight as ArrowRight,
   TbBook2 as Book,
   TbCalendarOff as CalendarOff,
   TbFiles as Files,
@@ -32,6 +34,7 @@ import {
   TbUserQuestion as UserQuestion,
   TbUsersPlus as UsersPlus,
 } from 'react-icons/tb'
+import { TbArrowRight as ArrowRight } from './dirIcons'
 
 const RESOURCE_CATEGORY_ICONS = {
   join: UsersPlus,
@@ -47,9 +50,8 @@ const PUBLIC_RESOURCE_LABELS = {
 
 function GroupCommunity({ slug }: GroupCommunityProps) {
   const contactQuery = useContactPoints(slug)
-  const memberQuery = useApi(
+  const memberQuery = useApi<PeopleResponse>(
     `/member/people?workingGroup=${encodeURIComponent(slug)}&workingGroupRole=participant&pageSize=6`,
-    [slug],
   )
   return (
     <>
@@ -58,7 +60,7 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
           {(data: Doc) =>
             data.items.length ? (
               <div className="peopleGrid groupContactAccountGrid">
-                {data.items.map((person: AnyValue) => (
+                {data.items.map((person: PersonSummary) => (
                   <PersonCard key={person.id} person={person} />
                 ))}
               </div>
@@ -73,7 +75,7 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
         </Async>
       </Section>
       <Async query={memberQuery} skeletons={1}>
-        {(data: Doc) =>
+        {(data) =>
           data.items.length ? (
             <Section label="People in this group">
               <p className="meta groupPeopleNote">
@@ -81,7 +83,7 @@ function GroupCommunity({ slug }: GroupCommunityProps) {
                 update from the workspace automatically.
               </p>
               <div className="peopleGrid groupPeopleGrid">
-                {data.items.map((person: AnyValue) => (
+                {data.items.map((person: PersonSummary) => (
                   <PersonCard key={person.id} person={person} />
                 ))}
               </div>
@@ -111,7 +113,8 @@ function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsPro
         <div className="groupResourceColumn" key={columnIndex}>
           {column.map((category) => {
             const headingId = `resource-group-${slug}-${category.key}`
-            const CategoryIcon = (RESOURCE_CATEGORY_ICONS as AnyValue)[category.key]
+            const CategoryIcon =
+              RESOURCE_CATEGORY_ICONS[category.key as keyof typeof RESOURCE_CATEGORY_ICONS]
             return (
               <section
                 className="groupResourceGroup"
@@ -121,15 +124,16 @@ function GroupResourceGroups({ slug, resources, locked }: GroupResourceGroupsPro
                 <h3 className="groupResourceGroupTitle" id={headingId}>
                   <CategoryIcon size={16} strokeWidth={1.75} aria-hidden />
                   {locked
-                    ? (PUBLIC_RESOURCE_LABELS as AnyValue)[category.key] || category.label
+                    ? PUBLIC_RESOURCE_LABELS[category.key as keyof typeof PUBLIC_RESOURCE_LABELS] ||
+                      category.label
                     : category.label}
                 </h3>
                 <div className="resourceList groupResourceList">
                   {category.resources.map((resource) => (
                     <ExternalResourceRow
-                      key={(resource as AnyValue).url}
-                      href={(resource as AnyValue).url}
-                      label={(resource as AnyValue).label}
+                      key={resource.url}
+                      href={resource.url}
+                      label={resource.label}
                     />
                   ))}
                 </div>
@@ -175,10 +179,10 @@ export function GroupPanel({ g }: GroupPanelProps) {
         </div>
       </section>
 
-      {g.taskForces?.length > 0 && (
+      {g.taskForces && g.taskForces.length > 0 && (
         <Section label="Task forces">
           <div className="cardGrid groupActivityGrid">
-            {g.taskForces.map((force: AnyValue) => (
+            {g.taskForces.map((force) => (
               <TaskForceCard key={force.slug} group={g} force={force} />
             ))}
           </div>
@@ -201,7 +205,7 @@ export function GroupPanel({ g }: GroupPanelProps) {
       >
         {g.events?.length ? (
           <div className="cardGrid groupActivityGrid">
-            {g.events.map((e: AnyValue) => (
+            {g.events.map((e) => (
               <EventCard key={e.slug} event={e} />
             ))}
           </div>
@@ -214,17 +218,17 @@ export function GroupPanel({ g }: GroupPanelProps) {
         )}
       </Section>
 
-      {g.submissions?.length > 0 && (
+      {g.submissions && g.submissions.length > 0 && (
         <Section label="Open submissions">
           <div className="cardGrid groupActivityGrid">
-            {g.submissions.map((s: AnyValue) => (
+            {g.submissions.map((s) => (
               <SubmissionCard key={s.slug} sub={s} />
             ))}
           </div>
         </Section>
       )}
 
-      {(g.resources?.length > 0 || g.workspaceResourcesLocked) && (
+      {((g.resources && g.resources.length > 0) || g.workspaceResourcesLocked) && (
         <section
           className="section groupResourcesSection"
           aria-labelledby={`group-resources-${g.slug}`}

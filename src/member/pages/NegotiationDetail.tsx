@@ -2,15 +2,15 @@ interface NegotiationDetailProps {
   slug?: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { NegotiationCall, NegotiationTrackDetail } from '../../shared/contracts'
 import { useState } from 'react'
 import { useAccount } from '../lib/accountContext'
-import { apiDelete, apiPut, useApi } from '../lib/api'
+import { apiDelete, apiPut, useApi, errorMessage } from '../lib/api'
 import { Async, BackLink, PageHeader, Section } from '../components/ui'
 import { TbBell as Bell, TbExternalLink as ExternalLink } from 'react-icons/tb'
 
-function deadlineText(deadline: AnyValue) {
-  if (!deadline?.date) return 'Deadline not specified'
+function deadlineText(deadline: NegotiationCall['externalDeadline']) {
+  if (!deadline.date) return 'Deadline not specified'
   const date = new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
     month: 'long',
@@ -22,7 +22,7 @@ function deadlineText(deadline: AnyValue) {
 }
 
 export function NegotiationDetail({ slug }: NegotiationDetailProps) {
-  const query = useApi(`/negotiations/${slug}`)
+  const query = useApi<NegotiationTrackDetail>(`/negotiations/${slug}`)
   const { account } = useAccount()
   const [following, setFollowing] = useState(false)
   const [followError, setFollowError] = useState('')
@@ -41,7 +41,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
         })
       setFollowing((value) => !value)
     } catch (error) {
-      setFollowError((error as AnyValue).message)
+      setFollowError(errorMessage(error))
     } finally {
       setSaving(false)
     }
@@ -51,9 +51,9 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
     <div className="detailPage">
       <BackLink href="/negotiations">Negotiations</BackLink>
       <Async query={query}>
-        {(track: AnyValue) => (
+        {(track) => (
           <>
-            <PageHeader title={track.topic} description={track.summary}>
+            <PageHeader title={track.topic} description={track.summary ?? undefined}>
               {account?.isVerified && (
                 <button
                   className={`btn ${following ? 'btn-secondary' : 'btn-primary'}`}
@@ -75,7 +75,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
 
             <Section label="Agenda lineage">
               <div className="cardGrid">
-                {track.agendaItems.map((item: Doc) => (
+                {track.agendaItems.map((item) => (
                   <article className="card" key={item.id}>
                     <div className="cardBody">
                       <div className="eyebrow">
@@ -100,7 +100,7 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
             <Section label="Calls for input">
               {track.calls.length ? (
                 <div className="cardGrid">
-                  {track.calls.map((call: AnyValue) => (
+                  {track.calls.map((call) => (
                     <article className="card" key={call.id}>
                       <div className="cardBody">
                         <div className="eyebrow">{call.status}</div>
@@ -121,8 +121,9 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
 
             <Section label="Documents and source health">
               <div className="cardGrid">
-                {track.documents.map((document: AnyValue) => {
-                  const uncertain = Number(document.latestVersion.extraction.confidence) < 0.9
+                {track.documents.map((document) => {
+                  const confidence = Number(document.latestVersion.extraction.confidence)
+                  const uncertain = confidence < 0.9
                   return (
                     <article className="card" key={document.id}>
                       <div className="cardBody">
@@ -146,9 +147,8 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
                         )}
                         {uncertain && (
                           <p className="meta">
-                            Extraction is uncertain (
-                            {Math.round(document.latestVersion.extraction.confidence * 100)}%
-                            confidence). Verify against the original.
+                            Extraction is uncertain ({Math.round(confidence * 100)}% confidence).
+                            Verify against the original.
                           </p>
                         )}
                         <a

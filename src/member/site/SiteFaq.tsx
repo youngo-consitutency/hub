@@ -1,10 +1,15 @@
 interface FaqItemProps {
-  q?: AnyValue
-  a?: AnyValue
+  q?: string
+  a?: string
   id?: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+interface FaqEntry {
+  q?: string
+  a?: string
+}
+
+import type { PublicPageResponse } from '../../shared/contracts'
 import { useState } from 'react'
 import {
   Button,
@@ -23,7 +28,7 @@ import { PublicSearch } from './PublicSearch'
 import { SiteSection } from './SitePage'
 import { PageWithdrawn } from './PageWithdrawn'
 
-const text = (item: Doc) => [item.q, item.a]
+const text = (item: FaqEntry) => [item.q, item.a]
 
 // one question: react-aria's Disclosure supplies the button, heading and panel semantics
 function FaqItem({ q, a, id }: FaqItemProps) {
@@ -43,11 +48,11 @@ function FaqItem({ q, a, id }: FaqItemProps) {
 }
 
 // a help-centre list: search first, answers stay collapsed until asked for
-function FaqList({ items }: { items: Doc[] }) {
+function FaqList({ items }: { items: FaqEntry[] }) {
   const list = useCatalogue(items, { text, pageSize: items.length || 1 })
   const [expanded, setExpanded] = useState<Set<Key>>(new Set())
   // ids follow the question's place in the full list, so they survive filtering
-  const idOf = (item: Doc) => `faq-${items.indexOf(item)}`
+  const idOf = (item: FaqEntry) => `faq-${items.indexOf(item)}`
   return (
     <div className="siteFaqBody">
       <div className="siteFaqTools">
@@ -95,7 +100,7 @@ function FaqList({ items }: { items: Doc[] }) {
           onExpandedChange={setExpanded}
           className="siteFaqList"
         >
-          {list.matches.map((item: Doc) => (
+          {list.matches.map((item) => (
             <FaqItem key={idOf(item)} q={item.q} a={item.a} id={idOf(item)} />
           ))}
         </DisclosureGroup>
@@ -108,7 +113,7 @@ export function FaqSection() {
   const { doc: site, loading } = useDocument('site')
   // title, intro and questions come from the reviewed page; the rest of the
   // page furniture stays in the site document
-  const page = useApi('/pages/faq')
+  const page = useApi<PublicPageResponse>('/pages/faq')
   const faq = site?.faq
   if (!faq || page.loading) return loading || page.loading ? <Skeletons n={5} /> : null
   if (page.data?.state === 'unpublished')
@@ -118,8 +123,8 @@ export function FaqSection() {
       </SiteSection>
     )
   const doc = page.data?.document
-  const items = doc
-    ? doc.sections.map((section: Doc) => ({ q: section.title, a: section.body }))
+  const items: FaqEntry[] = doc
+    ? doc.sections.map((section) => ({ q: section.title, a: section.body }))
     : faq.items || []
   const more = faq.more || {}
   return (

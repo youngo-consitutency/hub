@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
-import { TbCheck, TbChevronRight, TbLink, TbX, TbInfoCircle } from 'react-icons/tb'
+import { TbCheck, TbLink, TbX, TbInfoCircle } from 'react-icons/tb'
+import { TbChevronRight } from './dirIcons'
 import { UNSAFE_PortalProvider as PortalProvider } from 'react-aria'
 import { Tab, TabList, TabPanel, Tabs as AriaTabs } from 'react-aria-components'
 

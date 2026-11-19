@@ -1,0 +1,995 @@
+/* YOUNGO design language v1 — "a living community".
+   One layer, loaded last, shared by the public site and the signed-in Hub.
+
+   Principles
+   1. People first: illustrated avatars, groups, events and recent activity outrank decoration.
+   2. Alive, never fake: every live element reads real Hub data (counts, events, group
+      activity). Nothing here invents users or numbers.
+   2b. Safe by policy: no named individual presence, no leaderboards (Horizontality), no real
+      photos of members (Child Safeguarding: publishing a minor's image or name needs consent).
+      Presence is aggregate ("14 members here now"); people appear as illustrated avatars.
+   2c. Many languages: policies ship in six languages incl. Arabic, so layout uses logical
+      properties (inline-start/end) and survives longer text and RTL.
+   3. One accent: forest green, with lime as the "live / new" signal only.
+   4. Soft, round, calm: pill controls, 20px cards, green-tinted shadows, generous air.
+   5. Motion means something: pulse = live, lift = clickable, rise = new.
+
+   Borrowed on purpose: the floating glass nav, tracked eyebrow with a leading rule, dot-grid
+   and aurora washes (dclinics.uz); pill CTA pair, trust pill, big-number stat cards and the
+   quiet white canvas (courstore.com). */
+
+:root {
+  /* elevation: green-tinted so shadows feel warm, not grey */
+  --elev-1: 0 1px 2px rgba(14, 35, 26, 0.05), 0 1px 1px rgba(14, 35, 26, 0.03);
+  --elev-2: 0 8px 24px -8px rgba(14, 35, 26, 0.12), 0 2px 6px rgba(14, 35, 26, 0.04);
+  --elev-3: 0 24px 56px -16px rgba(14, 35, 26, 0.22), 0 6px 14px rgba(14, 35, 26, 0.06);
+  --elev-cta: 0 10px 22px -8px color-mix(in srgb, var(--accent) 65%, transparent);
+
+  --aurora-mint: radial-gradient(55% 60% at 12% 0%, rgba(45, 212, 160, 0.16), transparent 70%);
+  --aurora-lime: radial-gradient(40% 50% at 92% 8%, rgba(163, 230, 53, 0.14), transparent 70%);
+  --dot-grid: radial-gradient(
+      circle at 1px 1px,
+      color-mix(in srgb, var(--text-3) 20%, transparent) 1px,
+      transparent 0
+    )
+    0 0 / 28px 28px;
+}
+
+/* ── type ─────────────────────────────────────────────────────────── */
+h1,
+h2,
+.pageTitle,
+.ldIntro h2 {
+  font-family: var(--font-display);
+}
+
+/* eyebrow: small tracked caps with a leading rule */
+.eyebrow,
+.sectionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before,
+.sectionLabel::before {
+  content: '';
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--live));
+}
+
+/* ── buttons: pill pair ───────────────────────────────────────────── */
+.btn {
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-standard) var(--motion-ease),
+    background var(--motion-standard) var(--motion-ease);
+}
+
+.btn-primary {
+  box-shadow: var(--elev-cta);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+}
+
+/* ── cards ────────────────────────────────────────────────────────── */
+.card,
+.entityCard,
+.ldCard {
+  border-radius: var(--radius-card);
+  border-color: var(--border);
+  box-shadow: var(--elev-1);
+}
+
+@media (hover: hover) {
+  .entityCard:hover,
+  .ldCard:hover {
+    box-shadow: var(--elev-2);
+  }
+}
+
+.chip,
+.pill {
+  border-radius: var(--radius-pill);
+}
+
+/* ── people: avatars, stacks, presence ────────────────────────────── */
+.dlAvatar {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  width: var(--size, 36px);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: visible;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  font-size: calc(var(--size, 36px) * 0.38);
+  font-weight: 700;
+}
+
+.dlAvatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dlStack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dlStack > .dlAvatar {
+  border: 2px solid var(--bg-card);
+}
+
+.dlStack > .dlAvatar + .dlAvatar {
+  margin-inline-start: -10px;
+}
+
+/* live pill: aggregate only, e.g. "14 members here now", "next call in 2h" */
+.dlLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--live) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--live-tint);
+  color: #365314;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dlLive::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dlLive::before {
+    animation: dlPulse 2.4s ease-out infinite;
+  }
+}
+
+@keyframes dlPulse {
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (max-width: 620px) {
+}
+
+/* ═══ public site ══════════════════════════════════════════════════ */
+
+/* floating glass nav: detached from the top, pill-shaped */
+.siteHeader {
+  top: 12px;
+  width: min(calc(100% - 24px), 1120px);
+  margin: 12px auto 0;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius-pill);
+  /* opaque enough that scrolled headings never show through the logo (WCAG 1.4.3 for the nav text) */
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--elev-2);
+}
+
+.siteHeader[data-overlay] {
+  box-shadow: none;
+}
+
+.siteHeaderInner {
+  min-height: 56px;
+  padding-inline: 18px;
+}
+
+.siteShell:has(.ldHero, .heroBand-page) .siteHeader[data-overlay] {
+  border-color: var(--line-deep);
+  background: rgba(15, 70, 49, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+/* hero sits behind the floating nav */
+.ldHero {
+  margin-top: calc(-76px);
+  padding-top: calc(76px + clamp(32px, 6vw, 80px));
+}
+
+/* dot grid on the hero too, plus a ghost wordmark for scale */
+.ldHero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 1px 1px, rgba(214, 243, 226, 0.12) 1px, transparent 0) 0 0 /
+    28px 28px;
+  mask-image: linear-gradient(#000 40%, transparent);
+  pointer-events: none;
+}
+
+.ldHero::after {
+  content: 'YOUNGO' / '';
+  position: absolute;
+  inset-inline-end: -2%;
+  bottom: 56px;
+  z-index: -1;
+  font-family: var(--font-display);
+  font-size: clamp(120px, 22vw, 320px);
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  color: rgba(234, 246, 238, 0.045);
+  pointer-events: none;
+}
+
+/* the trust chip becomes a live pill: green dot beats the globe */
+.ldChip {
+  border-color: color-mix(in srgb, var(--glow-lime) 45%, transparent);
+  background: rgba(163, 230, 53, 0.1);
+  letter-spacing: 0.08em;
+}
+
+.ldHero .btn-primary {
+  box-shadow: 0 12px 28px -8px rgba(45, 212, 160, 0.55);
+}
+
+/* sections: aurora wash behind light sections so the page is not flat paper */
+.ldSection {
+  position: relative;
+}
+
+.ldSection:nth-of-type(even)::before {
+  content: '';
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
+  background: var(--aurora-mint), var(--aurora-lime);
+  pointer-events: none;
+}
+
+.ldIntro {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ldIntro h2 {
+  letter-spacing: -0.04em;
+}
+
+/* take-part tiles: equal height, icon chip, lift on hover */
+.ldGrid3 > li {
+  display: flex;
+}
+
+.ldGrid3 .ldTile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.ldIcon {
+  border-radius: 16px;
+}
+
+/* ═══ signed-in Hub ════════════════════════════════════════════════ */
+
+/* a quiet aurora at the top of every Hub page */
+.shell > main,
+.shell .main {
+  background: var(--aurora-mint), var(--aurora-lime), var(--dot-grid);
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size:
+    100% 420px,
+    100% 420px,
+    28px 28px;
+}
+
+/* sidebar: pill nav items, a dot marks where you are */
+.navItem {
+  border-inline-start: 0;
+  border-radius: var(--radius-pill);
+  padding-inline: 14px;
+}
+
+.navItem.active {
+  border-inline-start-color: transparent;
+  background: rgba(234, 246, 238, 0.14);
+  color: var(--on-deep);
+  box-shadow: inset 0 0 0 1px var(--line-deep);
+}
+
+.navItem.active::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background: var(--glow-lime);
+  box-shadow: 0 0 10px var(--glow-lime);
+}
+
+.navSection {
+  letter-spacing: 0.12em;
+}
+
+/* the live banner (this week's call) is the Hub's front door: deep surface, big type */
+.liveBanner {
+  border: 0;
+  border-radius: var(--radius-surface);
+  background: var(--glow-spot, none), linear-gradient(150deg, var(--deep) 30%, var(--deep-2));
+  color: var(--on-deep);
+  box-shadow: var(--elev-3);
+}
+
+.homeMetrics > * {
+  border-radius: 16px;
+  background: rgba(234, 246, 238, 0.08);
+  border: 1px solid var(--line-deep);
+}
+
+.pinnedBanner {
+  border-radius: var(--radius-card);
+}
+
+/* ═══ layout system ════════════════════════════════════════════════
+   Two kinds of breakpoint, never mixed:
+   - Viewport, for page chrome only (nav, shell, hero): phone ≤767 · tablet 768–1279 · desktop ≥1280
+     · wide ≥1920. Phone = top bar + bottom tabs. Tablet = icon rail. Desktop = full sidebar.
+   - Container (@container), for everything inside a page, so a card grid is right beside the
+     sidebar, the rail or a side column without knowing the screen.
+   Rules every layout follows: one column of reading at ≤ 62ch; 44px minimum touch targets on
+   coarse pointers; safe-area insets on fixed bars; no horizontal scroll at 320px; content
+   reflows rather than hides; logical properties for RTL. */
+
+html {
+  /* anchors and focus never hide under the floating nav */
+  scroll-padding-top: 96px;
+}
+
+/* main + aside: stacked until the *container* (.content, .homeMain, ...) is wide enough */
+
+@container (min-width: 60rem) {
+}
+
+/* ── public site ── */
+.siteHeader {
+  top: max(12px, env(safe-area-inset-top));
+}
+
+.siteMenuButton {
+  /* over the dark hero the button inherited a white fill and a white glyph */
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.siteHeader[data-overlay] .siteMenuButton {
+  border-color: var(--line-deep);
+  background: rgba(234, 246, 238, 0.12);
+  color: var(--on-deep);
+}
+
+.siteSignInLink,
+.siteJoinBtn,
+.siteNavItem {
+  min-height: 44px;
+}
+
+.siteFooterCol a,
+.siteFooterCol button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* phones: the orbit art is garnish, not the first screen */
+@media (max-width: 767px) {
+  .ldCommunity {
+    width: min(100%, 300px);
+  }
+
+  .ldHero::after {
+    bottom: 96px;
+  }
+
+  .siteHeaderInner {
+    gap: var(--space-2);
+    padding-inline: 12px;
+  }
+}
+
+/* landscape phones and short windows: no min-height theatre */
+@media (max-height: 480px) and (orientation: landscape) {
+  .ldHero {
+    padding-block-end: var(--space-6);
+  }
+
+  .ldCommunity {
+    width: min(100%, 220px);
+  }
+
+  .siteHeader {
+    position: static;
+    margin-top: 8px;
+  }
+}
+
+/* wide screens: more air, bigger display type, same measure */
+@media (min-width: 1920px) {
+  :root {
+    --container: 1440px;
+    --content-max: 1760px;
+  }
+
+  .ldHero h1 {
+    font-size: 88px;
+  }
+}
+
+/* small stat strips read as a 2×2 on phones instead of four stacked rows */
+@media (max-width: 480px) {
+}
+
+/* ── Hub shell by device ── */
+.brandMark {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* tablet rail (768–1279): monogram instead of a clipped wordmark; the active dot would sit on the icon */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .sidebar .brandLogo {
+    display: none;
+  }
+
+  .sidebar .brandMark {
+    display: block;
+  }
+
+  .sidebarBrandRow {
+    justify-content: center;
+  }
+
+  .navItem.active::after {
+    display: none;
+  }
+
+  .navItem.active {
+    background: rgba(234, 246, 238, 0.2);
+  }
+}
+
+/* the rail never scrolls sideways or shows a bar inside a 72px column */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .sidebar {
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* finger-sized logo and social links (WCAG 2.5.8 floor is 24px; the 44px target is the house rule) */
+.siteWordmark {
+  min-height: 44px;
+}
+
+.siteSocials a,
+.siteSocials button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* links inside running text are underlined, never colour alone (WCAG 1.4.1) */
+:where(p, li, .meta, .siteFaqMore) > a:not([class*='btn']):not([class*='card']):not(.inlineLink),
+.siteFaqMore a {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+/* ═══ accessibility modes ══════════════════════════════════════════
+   Decoration is optional. Everything below only *removes* effects or *strengthens* edges, so the
+   default look stays sleek while the page stays legible for low-vision, high-contrast, motion-
+   sensitive and Windows High Contrast users. */
+
+/* focus: a 3px outline that clears 3:1 on every surface (WCAG 2.4.11/2.4.13); no halo shadow, so
+   selected and active states keep their own shadows while focused */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.ldDark :focus-visible,
+.heroBand :focus-visible,
+.sidebar :focus-visible,
+.siteFooter :focus-visible,
+.liveBanner :focus-visible,
+.authCommunity :focus-visible {
+  outline-color: var(--glow-lime);
+}
+
+/* inside clipping containers an outset ring would be cut off */
+.calendarMonthGrid :focus-visible,
+.sidebar :focus-visible,
+.sidebarBrandRow :focus-visible,
+.catalogueViewSwitch :focus-visible {
+  outline-offset: -3px;
+}
+
+/* text fields: the legacy rule removed the outline and left a 1.2:1 tint halo */
+.input:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+.queueSearch:focus-within,
+.sitePublicSearch:focus-within,
+.searchInputWrap:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* more contrast requested: drop washes, dots and ghost art; solid edges; no translucency */
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--border-strong);
+    --text-3: var(--text-2);
+  }
+
+  .ldHero::before,
+  .ldHero::after,
+  .ldAurora,
+  .ldSection::before,
+  .shell > main,
+  .shell .main {
+    background-image: none;
+    content: none;
+  }
+
+  .siteHeader,
+  .mobileBottomNav,
+  .topbar {
+    background: var(--bg-card);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .siteHeader,
+  .mobileBottomNav,
+  .topbar,
+  .ldChip,
+  .ldDark .btn-secondary {
+    backdrop-filter: none;
+  }
+}
+
+/* motion: nothing pulses, drifts or lifts */
+@media (prefers-reduced-motion: reduce) {
+  .dlLive::before,
+  .ldAurora {
+    animation: none;
+  }
+
+  .entityCard:hover,
+  .ldCard:hover,
+  .btn-primary:hover {
+    transform: none;
+  }
+}
+
+/* Windows High Contrast / forced colours: let the system palette win, keep shapes and focus */
+@media (forced-colors: active) {
+  .ldHero::before,
+  .ldHero::after,
+  .ldAurora,
+  .ldSection::before {
+    display: none;
+  }
+
+  .btn-primary {
+    background: ButtonText;
+    color: ButtonFace;
+  }
+
+  .navItem.active,
+  .mobileBottomItem.active {
+    outline: 2px solid Highlight;
+  }
+
+  /* the lime dot carries "you are here" by colour; add a shape that survives forced colours */
+  .navItem.active::after {
+    background: Highlight;
+    border-radius: 0;
+    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+
+  /* shapes that are only a background colour vanish in forced colours; give them a system colour */
+  .dlLive::before,
+  .liveDot,
+  .cdot,
+  .calendarEventDot,
+  .tdot,
+  .noticeDot {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+
+  .calendarDayNumber.today {
+    outline: 2px solid CanvasText;
+  }
+
+  .calendarDayButton.selected,
+  [role='tab'][aria-selected='true'],
+  .mobileBottomItem.active,
+  .sortOption.active,
+  .pill.active {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .input,
+  .searchInputWrap,
+  .queueSearch {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* ═══ sign-in: the community beside the form ═══════════════════════
+   Phone and tablet portrait: the form first, the panel below it. From 900px: two panes. */
+.authCommunity {
+  display: grid;
+  align-content: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-surface);
+  background: var(--glow-spot, none), linear-gradient(155deg, var(--deep) 30%, var(--deep-2));
+  color: var(--on-deep);
+  order: 2;
+}
+
+.authCommunity h2 {
+  max-width: 18ch;
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.authCommunity .eyebrow {
+  color: var(--glow-lime);
+}
+
+.authCommunity .dlLive {
+  border-color: var(--line-deep);
+  background: rgba(234, 246, 238, 0.1);
+  color: var(--on-deep);
+}
+
+.authCommunity a {
+  color: var(--on-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.authPeople {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.authPeople .dlAvatar {
+  background: var(--deep-2);
+  border: 2px solid var(--deep);
+}
+
+.authCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.authCounts strong {
+  font-family: var(--font-display);
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+
+.authNext {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.authNextRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.authNextRow .dateStamp {
+  --text-1: var(--on-deep);
+  background: rgba(234, 246, 238, 0.08);
+  border-color: var(--line-deep);
+}
+
+.authNextRow .dateStamp span {
+  color: var(--glow-lime);
+}
+
+@media (min-width: 900px) {
+  .mandateGate[data-auth-mode='signin'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+    align-items: center;
+    gap: var(--space-6);
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-block: var(--space-6);
+  }
+
+  .mandateGate[data-auth-mode='signin'] .authShell {
+    order: 2;
+  }
+
+  .mandateGate[data-auth-mode='signin'] .authCommunity {
+    order: 1;
+    min-height: min(560px, 80dvh);
+    padding: var(--space-8);
+  }
+
+  .mandateGate[data-auth-mode='signin'] .authShell {
+    align-self: center;
+    margin-block: 0;
+  }
+}
+
+@media (max-width: 899px) {
+  .mandateGate[data-auth-mode='signin'] {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .mandateGate[data-auth-mode='signin'] .authCommunity {
+    width: min(100%, 520px);
+  }
+}
+
+.heroPulse {
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+  border-color: var(--line-deep);
+  background: rgba(234, 246, 238, 0.08);
+  color: var(--on-deep);
+}
+
+.heroPulse a {
+  color: var(--on-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* directional icons and glyphs mirror in right-to-left layouts */
+.dirGlyph {
+  display: inline-block;
+}
+
+:dir(rtl) .dirIcon,
+[dir='rtl'] .dirIcon {
+  transform: scaleX(-1);
+}
+
+/* direction variables for the few constructs that cannot be written with logical properties */
+:root {
+  --dir: 1;
+  --end: right;
+}
+
+:root:dir(rtl),
+:root[dir='rtl'] {
+  --dir: -1;
+  --end: left;
+}
+
+/* ── contrast fixes found in review ── */
+/* lime #65a30d on its tint was 2.85:1; this ink is 8:1 */
+.chip-live {
+  color: #365314;
+}
+
+/* on the deep banner the live time uses the bright lime (7:1) */
+.liveBanner .liveBannerTime,
+.liveBanner .liveBannerTime svg {
+  color: var(--glow-lime);
+}
+
+/* links inside running text: underline always (1.4.1), including links nested in strong/span */
+:where(p, li, .meta, .siteFaqMore) a:not([class*='btn']):not([class*='card']),
+.inlineLink {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+/* reduced transparency: solid surfaces, not just no blur */
+@media (prefers-reduced-transparency: reduce) {
+  .siteHeader:not([data-overlay]),
+  .topbar,
+  .mobileBottomNav {
+    background: var(--bg-card);
+  }
+
+  .siteHeader[data-overlay] {
+    background: var(--deep);
+  }
+}
+
+/* zoom to 400% / short windows: fixed bars would cover half the viewport and hide focus (1.4.10, 2.4.11) */
+@media (max-height: 500px) {
+  .topbar,
+  .mobileBottomNav {
+    position: static;
+  }
+
+  .content {
+    padding-block-end: var(--space-4);
+  }
+}
+
+/* text spacing (1.4.12) and long translations: controls grow instead of clipping */
+.btn {
+  height: auto;
+  min-height: 40px;
+  padding-block: 8px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.mobileBottomItem span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* "you are here" is a shape as well as a colour */
+.mobileBottomItem.active {
+  font-weight: 700;
+}
+
+.mobileBottomItem.active::before {
+  content: '';
+  inline-size: 24px;
+  block-size: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.navItem.active {
+  box-shadow:
+    inset 3px 0 0 var(--glow-lime),
+    inset 0 0 0 1px var(--line-deep);
+}
+
+:dir(rtl) .navItem.active,
+[dir='rtl'] .navItem.active {
+  box-shadow:
+    inset -3px 0 0 var(--glow-lime),
+    inset 0 0 0 1px var(--line-deep);
+}
+
+/* rail tooltip: same deep green as the rail, readable text, never clipped (it is portalled) */
+.railTooltip {
+  z-index: var(--z-popover);
+  padding: 6px 12px;
+  border: 1px solid var(--line-deep);
+  border-radius: var(--radius-control);
+  background: var(--deep);
+  color: var(--on-deep);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--elev-2);
+}
+
+@media (forced-colors: active) {
+  .railTooltip {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+
+/* command palette (React Aria): virtual focus marks the option with data-focused, not :focus */
+.paletteDialog {
+  display: contents;
+  outline: none;
+}
+
+.paletteItem[data-focused] {
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.paletteItem:not([data-focused]) .paletteEnter {
+  display: none;
+}
+
+.paletteGroup {
+  padding: var(--space-3) 14px var(--space-1);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (forced-colors: active) {
+  .paletteItem[data-focused] {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* ── working-group themes ──────────────────────────────────────────
+   design/tokens/wg-themes.json maps each group (by slug) to a contrast-checked colour family and
+   build.mjs generates [data-wg='slug'] rules. Any element carrying data-wg gets --wg-accent,
+   --wg-tint and --wg-on-tint; a group with no mapping falls back to the brand green. The theme
+   colours the *icon and accent*, never the only cue (the group name is always text). */
+.groupCardTitle > svg,
+.siteWgCard > :first-child > svg {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--wg-tint);
+  color: var(--wg-on-tint);
+}
+
+[data-wg] .pageTitleIcon {
+  background: var(--wg-tint);
+  color: var(--wg-on-tint);
+}
+
+[data-wg] .pageHeader::after {
+  background: linear-gradient(90deg, var(--wg-accent), transparent 70%);
+}

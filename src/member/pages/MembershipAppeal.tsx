@@ -1,7 +1,8 @@
-import type { AnyValue } from '../lib/types'
+import type { FormEvent } from 'react'
+import type { MembershipAppealView } from '../../shared/contracts'
 import { useRef, useState } from 'react'
 import { useDocument } from '../lib/documents'
-import { apiPostFile, useApi } from '../lib/api'
+import { apiPostFile, useApi, errorMessage } from '../lib/api'
 import { Button, ErrorCard } from '../components/ui'
 import { Brand } from '../components/Brand'
 import { signOut } from '../lib/session'
@@ -24,18 +25,22 @@ export function MembershipAppeal() {
   const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
 
   const { account } = useAccount()
-  const query = useApi('/member/membership/appeal')
+  const query = useApi<{
+    membershipStatus?: string
+    membershipEndReason: string | null
+    appeal: MembershipAppealView | null
+  }>('/member/membership/appeal')
   const [identityKind, setIdentityKind] = useState('passport')
   const [statement, setStatement] = useState('')
   const [consent, setConsent] = useState(false)
-  const [file, setFile] = useState<AnyValue>(null)
+  const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const fileRef = useRef<AnyValue>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const appeal = query.data?.appeal
   const reason = query.data?.membershipEndReason || account?.membershipEndReason || null
 
-  const submit = async (event: AnyValue) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
     if (!consent) {
@@ -62,7 +67,7 @@ export function MembershipAppeal() {
       if (fileRef.current) fileRef.current.value = ''
       query.retry()
     } catch (submitError) {
-      setError((submitError as AnyValue).message)
+      setError(errorMessage(submitError))
     } finally {
       setBusy(false)
     }

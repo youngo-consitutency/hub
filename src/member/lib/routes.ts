@@ -1,8 +1,8 @@
 // one registry for every member page: the sidebar, the mobile bar, the command
 // palette, the home cards and the route guards all read from here, so they
 // can't drift apart. it only shapes the interface; the api enforces permissions
-import type { ComponentType } from 'react'
-import type { AnyValue } from './types'
+import type { IconType } from 'react-icons'
+import type { AccountAccess } from './types'
 import { canManageGroup, canManageGroups } from './groupPermissions'
 import { mailReach } from '../../shared/mailReach'
 import {
@@ -41,9 +41,20 @@ interface Viewer {
   canDraftMail: boolean
 }
 
-export function viewerOf(account: AnyValue): Viewer {
-  const access = account?.access || {}
-  const capabilities: string[] = access.capabilities || []
+/** What route checks read from an account: satisfied by the signed-in Account and by test doubles. */
+export type RoutedAccount =
+  | {
+      isVerified?: boolean
+      teamRoles?: string[]
+      access?: Partial<AccountAccess>
+      accessFailed?: boolean
+    }
+  | null
+  | undefined
+
+export function viewerOf(account: RoutedAccount): Viewer {
+  const access = account?.access ?? {}
+  const capabilities = access.capabilities ?? []
   return {
     signedIn: Boolean(account),
     verified: Boolean(account?.isVerified),
@@ -74,7 +85,7 @@ interface HubRoute {
   href: string
   label: string
   group: GroupId
-  icon: ComponentType<AnyValue>
+  icon: IconType
   // who sees it; defaults to verified members
   allow?: (viewer: Viewer, path: string) => boolean
   // guarded routes show this screen to anyone `allow` rejects
@@ -308,7 +319,7 @@ const allowed = (route: HubRoute, viewer: Viewer, path: string) =>
 interface NavItem {
   href: string
   label: string
-  icon: ComponentType<AnyValue>
+  icon: IconType
 }
 
 // sidebar sections for this viewer, empty sections dropped
@@ -370,7 +381,7 @@ export const ACCESS_FAILED = {
 } as const
 
 // the locked screen this account would see on `path`, or null
-export function lockFor(path: string, account: AnyValue) {
+export function lockFor(path: string, account: RoutedAccount) {
   // no account means no roles: every guarded page locks
   const viewer = viewerOf(account)
   // anyone signed in may open a seat invite before holding a seat

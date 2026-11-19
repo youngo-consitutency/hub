@@ -1,11 +1,10 @@
 import { createElement } from 'react'
-import type { AnyValue } from '../lib/types'
+import type { IconType } from 'react-icons'
 import { motion } from 'motion/react'
 import {
   TbAward as Award,
   TbBook as BookOpen,
   TbArrowUpRight as ArrowUpRight,
-  TbChevronRight as ChevronRight,
   TbBuildingCommunity as BuildingCommunity,
   TbFriends as Friends,
   TbWorld as Globe,
@@ -29,15 +28,17 @@ import {
   TbUsersGroup as UsersGroup,
   TbMessages as Messages,
 } from 'react-icons/tb'
+import { TbChevronRight as ChevronRight } from '../components/dirIcons'
 import { A, Skeletons, ErrorCard, Empty } from '../components/ui'
 import { useDocument } from '../lib/documents'
 import { inView, reveal, rise } from '../lib/motion'
 import { HeroCommunity } from './HeroCommunity'
 import { JoinButton } from './JoinButton'
 import { HubPulse } from './HubPulse'
+import { HeroPulse } from './HeroPulse'
 
 // Icon names are stored in the site document; components live here.
-const ICONS = {
+const ICONS: Record<string, IconType> = {
   GraduationCap,
   Handshake,
   ScrollText: Writing,
@@ -49,10 +50,24 @@ const ICONS = {
   Globe,
   HandHeart: UserHeart,
 }
-const iconFor = (name: AnyValue) => (ICONS as AnyValue)[name] || Users
+const iconFor = (name: string) => ICONS[name] || Users
+
+interface TakePartItem {
+  icon: string
+  title: string
+  body: string
+  href: string
+  link: string
+}
+
+interface HistoryItem {
+  year: string
+  title: string
+  body: string
+}
 
 // heading and optional lead shared by every home section
-function SectionIntro({ id, title, lead }: AnyValue) {
+function SectionIntro({ id, title, lead }: { id: string; title?: string; lead?: string }) {
   return (
     <header className="ldIntro">
       <h2 id={id}>{title}</h2>
@@ -118,7 +133,7 @@ export function SiteHome() {
   const lead = words.slice(0, -2).join(' ')
   const accent = words.slice(-2).join(' ')
   const principleItems: string[] = principles.items || []
-  const items: AnyValue[] = takePart.items || []
+  const items: TakePartItem[] = takePart.items || []
 
   return (
     <>
@@ -142,6 +157,7 @@ export function SiteHome() {
               </A>
             </div>
             <p className="ldFine">{hero.reassurance}</p>
+            <HeroPulse />
           </div>
           <HeroCommunity label="Your seat" />
         </div>
@@ -162,7 +178,7 @@ export function SiteHome() {
       <section className="ldSection ldWrap" aria-labelledby="what-heading">
         <SectionIntro {...takePart} id="what-heading" />
         <motion.ul className="ldGrid ldGrid3" {...reveal}>
-          {items.map(({ icon, title, body, href, link }: AnyValue) => {
+          {items.map(({ icon, title, body, href, link }) => {
             const Icon = iconFor(icon)
             return (
               <motion.li key={title} variants={rise} whileHover={{ y: -4 }}>
@@ -200,7 +216,7 @@ export function SiteHome() {
             transition={{ duration: 1.2, ease: 'easeOut' }}
           />
           <motion.ol {...reveal}>
-            {(history.items || []).map(({ year, title, body }: AnyValue, i: number) => {
+            {(history.items || []).map(({ year, title, body }: HistoryItem, i: number) => {
               const MilestoneIcon = MILESTONE_ICONS[i % MILESTONE_ICONS.length]
               return (
                 <motion.li key={year} variants={rise}>

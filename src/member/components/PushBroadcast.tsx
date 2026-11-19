@@ -1,11 +1,15 @@
-import type { AnyValue } from '../lib/types'
+import type {
+  PushAdminSummary,
+  PushSendResult,
+  PushSubscriberAccount,
+} from '../../shared/contracts'
 import { useEffect, useMemo, useState } from 'react'
 import {
   TbBellRinging as BellRing,
   TbCircleCheck as CheckCircle2,
   TbAlertTriangle as TriangleAlert,
 } from 'react-icons/tb'
-import { apiGet, apiPost } from '../lib/api'
+import { apiGet, apiPost, errorMessage } from '../lib/api'
 import { SearchableSelect } from './FormControls'
 import { Button, ErrorCard } from './ui'
 
@@ -14,8 +18,8 @@ const BODY_MAX = 180
 const ALL_CONFIRM = 'SEND'
 
 export function PushBroadcast() {
-  const [summary, setSummary] = useState<AnyValue>(null)
-  const [subscribers, setSubscribers] = useState<AnyValue[]>([])
+  const [summary, setSummary] = useState<PushAdminSummary | null>(null)
+  const [subscribers, setSubscribers] = useState<PushSubscriberAccount[]>([])
   const [audience, setAudience] = useState('one')
   const [accountId, setAccountId] = useState('')
   const [title, setTitle] = useState('YOUNGO Hub')
@@ -23,19 +27,19 @@ export function PushBroadcast() {
   const [confirmAll, setConfirmAll] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [result, setResult] = useState<AnyValue>(null)
+  const [result, setResult] = useState<PushSendResult | null>(null)
 
   const load = async () => {
     try {
       const [nextSummary, nextSubscribers] = await Promise.all([
-        apiGet('/push/admin/summary'),
-        apiGet('/push/admin/subscribers'),
+        apiGet<PushAdminSummary>('/push/admin/summary'),
+        apiGet<{ items: PushSubscriberAccount[] }>('/push/admin/subscribers'),
       ])
       setSummary(nextSummary)
       setSubscribers(nextSubscribers.items || [])
       setError('')
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     }
   }
 
@@ -46,13 +50,13 @@ export function PushBroadcast() {
   const options = useMemo(
     () =>
       subscribers.map((row) => ({
-        value: row.id,
+        value: String(row.id),
         label: `${row.name} (${row.email}) · ${row.devices} device${row.devices === 1 ? '' : 's'}`,
       })),
     [subscribers],
   )
 
-  const selected = subscribers.find((row) => row.id === accountId)
+  const selected = subscribers.find((row) => String(row.id) === accountId)
   const allReady = audience === 'all' && confirmAll.trim().toUpperCase() === ALL_CONFIRM
   const oneReady = audience === 'one' && Boolean(accountId)
   const copyReady = title.trim() && body.trim()
@@ -64,7 +68,7 @@ export function PushBroadcast() {
     setError('')
     setResult(null)
     try {
-      const payload = await apiPost('/push/send', {
+      const payload = await apiPost<PushSendResult>('/push/send', {
         userIds: audience === 'all' ? 'all' : [accountId],
         title: title.trim(),
         body: body.trim(),
@@ -74,7 +78,7 @@ export function PushBroadcast() {
       setConfirmAll('')
       await load()
     } catch (thrown) {
-      setError((thrown as AnyValue).message)
+      setError(errorMessage(thrown))
     } finally {
       setBusy(false)
     }
@@ -103,7 +107,7 @@ export function PushBroadcast() {
         {result && (
           <p className="notificationNotice notificationNoticeOk" role="status">
             <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden />
-            Queued for {result.targeted ?? result.total} member
+            Queued for {result.targeted} member
             {result.targeted === 1 ? '' : 's'} — delivery runs in the background and retries
             automatically.
           </p>

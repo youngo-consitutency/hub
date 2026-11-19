@@ -1,15 +1,15 @@
 interface SignInFormProps {
-  login?: AnyValue
-  fields?: AnyValue
-  error?: string
-  status?: AnyValue
-  setLog?: AnyValue
-  onSubmit?: AnyValue
-  onForgot?: AnyValue
+  login: { email: string; password: string; website: string }
+  fields: Record<string, string>
+  error?: string | null
+  status: string
+  setLog: (key: 'email' | 'password' | 'website') => ChangeEventHandler<HTMLInputElement>
+  onSubmit: FormEventHandler<HTMLFormElement>
+  onForgot: () => void
   className?: string
 }
 
-import type { AnyValue } from '../../lib/types'
+import type { ChangeEventHandler, FormEventHandler } from 'react'
 import { Button } from '../ui'
 import { FieldError } from '../FormControls'
 import { fieldClass } from './helpers'
@@ -34,7 +34,9 @@ export function SignInForm({
         <input
           className="input"
           type="password"
+          name="password"
           autoComplete="current-password"
+          aria-required="true"
           value={login.password}
           onChange={setLog('password')}
           aria-invalid={!!fields.password}

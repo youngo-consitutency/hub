@@ -1,4 +1,4 @@
-import type { AnyValue } from '../lib/types'
+import type { ResourceSummary } from '../../shared/contracts'
 import { TbBooks as ResourcesIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { ResourceGuides } from '../components/ResourceGuides'
@@ -11,7 +11,7 @@ import { useQuery } from '../lib/router'
 export function Resources() {
   const guides = useQuery().get('view') === 'guides'
   const { account } = useAccount()
-  const [correction, setCorrection] = useState<AnyValue>(null)
+  const [correction, setCorrection] = useState<ResourceSummary | null>(null)
   const canReview = account?.access?.capabilities?.includes('content.review')
   return (
     <div>
@@ -47,12 +47,12 @@ export function Resources() {
       {guides ? (
         <ResourceGuides />
       ) : (
-        <ResourceCatalogue onCorrect={account?.isVerified ? setCorrection : null} />
+        <ResourceCatalogue onCorrect={account?.isVerified ? setCorrection : undefined} />
       )}
       {!guides && account?.isVerified && (
         <ResourceSubmissionPanel
           key={correction?.slug || 'new'}
-          initialResource={correction}
+          initialResource={correction ?? undefined}
           onCancel={() => setCorrection(null)}
         />
       )}

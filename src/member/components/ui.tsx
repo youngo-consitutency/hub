@@ -1,87 +1,80 @@
-interface AProps {
+type NativeProps<T extends keyof import('react').JSX.IntrinsicElements> =
+  import('react').ComponentPropsWithoutRef<T>
+
+interface AProps extends Omit<NativeProps<'a'>, 'href'> {
   href?: string
-  className?: string
-  children?: import('react').ReactNode
-  onClick?: AnyValue
-  target?: AnyValue
-  [key: string]: AnyValue
 }
 
-interface ButtonProps {
-  variant?: AnyValue
+interface ButtonProps extends NativeProps<'button'> {
+  variant?: string
   sm?: boolean
   glow?: boolean
-  className?: string
-  [key: string]: AnyValue
 }
 
-interface FilterPillProps {
+interface FilterPillProps extends Omit<NativeProps<'button'>, 'prefix'> {
   active?: boolean
-  state?: AnyValue
+  state?: FilterState
   icon?: import('react').ElementType
-  prefix?: AnyValue
-  children?: import('react').ReactNode
-  className?: string
-  [key: string]: AnyValue
+  prefix?: string
 }
+
+type ButtonClick = import('react').MouseEventHandler<HTMLButtonElement>
 
 interface FilterChipProps {
   children?: import('react').ReactNode
-  state?: AnyValue
-  tone?: AnyValue
-  onClick?: AnyValue
-  icon?: import('react').ElementType
-  prefix?: AnyValue
+  state?: FilterState
+  tone?: string
+  onClick?: ButtonClick
+  icon?: import('react').ElementType | null
+  prefix?: string
   className?: string
 }
 
-interface SortButtonProps {
+interface SortButtonProps extends NativeProps<'button'> {
   active?: boolean
   icon?: import('react').ElementType
-  children?: import('react').ReactNode
-  [key: string]: AnyValue
 }
 
 interface FilterMenuProps {
   children?: import('react').ReactNode
-  activeCount?: AnyValue
+  activeCount?: number
   label?: string
-  onClear?: AnyValue
+  onClear?: () => void
 }
 
 interface PageHeaderProps {
   title?: string
   description?: string
-  action?: AnyValue
+  action?: import('react').ReactNode
   children?: import('react').ReactNode
   icon?: import('react').ElementType
 }
 
 interface StatusChipProps {
-  status?: AnyValue
-  filterState?: AnyValue
-  onClick?: AnyValue
+  status?: string | null
+  filterState?: FilterState
+  onClick?: ButtonClick
 }
 
 interface LifecycleTimingProps {
-  status?: AnyValue
-  iso?: string
+  status?: string | null
+  iso?: string | null
   label?: string
   showCountdown?: boolean
-  statusFilterState?: AnyValue
-  onStatusFilter?: AnyValue
+  statusFilterState?: FilterState
+  onStatusFilter?: ButtonClick
   className?: string
 }
 
 interface SectionProps {
   label?: string
   meta?: string | null
-  action?: AnyValue
+  action?: import('react').ReactNode
   children?: import('react').ReactNode
 }
 
 interface SkeletonsProps {
-  n?: AnyValue
+  n?: number
   /** card-shaped placeholders in the real card grid, so the page does not jump when data lands */
   grid?: boolean
 }
@@ -89,13 +82,13 @@ interface SkeletonsProps {
 interface EmptyProps {
   icon?: import('react').ElementType
   title?: string
-  body?: AnyValue
-  cta?: AnyValue
+  body?: import('react').ReactNode
+  cta?: import('react').ReactNode
 }
 
 interface ErrorCardProps {
-  message?: AnyValue
-  onRetry?: AnyValue
+  message?: string
+  onRetry?: () => void
 }
 
 interface BackLinkProps {
@@ -104,29 +97,30 @@ interface BackLinkProps {
 }
 
 interface TimelineProps {
-  steps?: AnyValue
-  currentIndex?: AnyValue
+  steps?: string[]
+  currentIndex?: number
 }
 
-interface AsyncProps {
-  query?: AnyValue
-  skeletons?: AnyValue
+interface AsyncProps<T> {
+  query: ApiQuery<T>
+  skeletons?: number
   grid?: boolean
-  children: (data: Doc) => import('react').ReactNode
-  empty?: AnyValue
+  children: (data: T) => import('react').ReactNode
+  empty?: (data: T) => import('react').ReactNode
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { Doc } from '../lib/types'
 import { Fragment } from 'react'
 import { Button as RacButton, Input, SearchField } from 'react-aria-components'
 import Link from 'next/link'
 import { hrefFor, isPanelPath, navigate } from '../lib/router'
+import type { ApiQuery } from '../lib/api'
+import type { FilterState } from '../lib/filterState'
 import { countdown, fmtMoment } from '../lib/time'
 import {
   TbAlarm as AlarmClock,
   TbCalendarTime as CalendarTime,
   TbRefresh as RefreshCw,
-  TbArrowLeft as ArrowLeft,
   TbCheck as Check,
   TbMinus as Minus,
   TbX,
@@ -134,6 +128,7 @@ import {
   TbChevronDown,
   TbSearch,
 } from 'react-icons/tb'
+import { TbArrowLeft as ArrowLeft } from './dirIcons'
 
 export function A({ href, className, children, onClick, target, ...rest }: AProps) {
   // next/link prefetches the route chunk on viewport/hover, so soft
@@ -288,7 +283,7 @@ export function FilterPill({
   )
 }
 
-function filterStateLabel(filterState: AnyValue) {
+function filterStateLabel(filterState: FilterState) {
   return filterState === 'include'
     ? 'included; activate to exclude'
     : filterState === 'exclude'
@@ -417,7 +412,7 @@ export function PageHeader({ title, description, action, children, icon: Icon }:
 }
 
 // Status → chip class + label, per design system §6.2.
-const CHIP = {
+const CHIP: Record<string, [cls: string, label: string, pulse?: boolean]> = {
   live_now: ['chip-live', 'Live now', true],
   open: ['chip-accent', 'Open'],
   drafting: ['chip-info', 'Drafting'],
@@ -443,7 +438,7 @@ const CHIP = {
 }
 
 export function StatusChip({ status, filterState = 'neutral', onClick }: StatusChipProps) {
-  const [cls, label, pulse] = (CHIP as AnyValue)[status] || [
+  const [cls, label, pulse] = CHIP[status ?? ''] || [
     'chip-neutral',
     String(status || '').replaceAll('_', ' '),
   ]
@@ -485,14 +480,14 @@ export function LifecycleTiming({
   const remaining = iso && showCountdown ? countdown(iso) : null
 
   return (
-    <div className={`lifecycleTiming ${className}`.trim()} aria-label={label}>
+    <div className={`lifecycleTiming ${className}`.trim()} role="group" aria-label={label}>
       {status && (
         <StatusChip status={status} filterState={statusFilterState} onClick={onStatusFilter} />
       )}
       {moment && (
         <div className="lifecycleTimingDate">
           <CalendarTime size={15} strokeWidth={1.75} aria-hidden />
-          <time dateTime={iso}>
+          <time dateTime={iso ?? undefined}>
             {!status && label !== 'Deadline' && (
               <span className="lifecycleTimingRelation">{label}</span>
             )}
@@ -529,7 +524,8 @@ export function Section({ label, meta, action, children }: SectionProps) {
 
 export function Skeletons({ n = 3, grid }: SkeletonsProps) {
   return (
-    <div className={grid ? 'cardGrid' : 'stack'} role="status" aria-label="Loading content">
+    <div className={grid ? 'cardGrid' : 'stack'} role="status">
+      <span className="srOnly">Loading content…</span>
       {Array.from({ length: n }).map((_, i) => (
         <div key={i} className={grid ? 'skeleton skeletonCard' : 'skeleton'} />
       ))}
@@ -576,10 +572,10 @@ export function BackLink({ href, children }: BackLinkProps) {
 
 // Process timeline strip (submissions, decisions). Steps before currentIndex are
 // "done", the current step is highlighted, later steps are muted future states.
-export function Timeline({ steps, currentIndex }: TimelineProps) {
+export function Timeline({ steps = [], currentIndex = 0 }: TimelineProps) {
   return (
-    <div className="timelineStrip" aria-label="Process timeline">
-      {steps.map((label: AnyValue, i: number) => (
+    <div className="timelineStrip" role="group" aria-label="Process timeline">
+      {steps.map((label, i) => (
         <Fragment key={label}>
           {i > 0 && <span className="timelineLine" />}
           <span
@@ -587,6 +583,8 @@ export function Timeline({ steps, currentIndex }: TimelineProps) {
           >
             <span className="tdot" />
             {label}
+            {i < currentIndex && <span className="srOnly"> (done)</span>}
+            {i === currentIndex && <span className="srOnly"> (current step)</span>}
           </span>
         </Fragment>
       ))}
@@ -595,9 +593,12 @@ export function Timeline({ steps, currentIndex }: TimelineProps) {
 }
 
 // Wrap an async section: shows skeletons, error-retry, or children(data).
-export function Async({ query, skeletons = 3, grid, children, empty }: AsyncProps) {
+export function Async<T = Doc>({ query, skeletons = 3, grid, children, empty }: AsyncProps<T>) {
   if (query.loading) return <Skeletons n={skeletons} grid={grid} />
   if (query.error) return <ErrorCard message={query.error} onRetry={query.retry} />
-  if (empty && empty(query.data)) return empty(query.data)
-  return children(query.data)
+  // children only run for a settled request; data is null only when the path was null (no fetch)
+  const data = query.data as T
+  const emptyState = empty?.(data)
+  if (emptyState) return emptyState
+  return children(data)
 }

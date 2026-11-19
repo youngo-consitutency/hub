@@ -35,7 +35,9 @@ import { regionLabel } from '../lib/regions'
 import { useContentOptionLabels } from '../lib/documents'
 import { OPPORTUNITY_FORMAT_LABELS, OPPORTUNITY_KIND_LABELS } from '../../shared/opportunities.js'
 import { coyDisplayStatus, coyApplicationsAreOpen } from '../../shared/coyStatus'
-import type { AnyValue, Doc } from '../lib/types'
+import type { Doc } from '../lib/types'
+import type { OpportunitySummary } from '../../shared/contracts'
+import type { CoyDetail, EventDetail, GroupDetail, SubmissionDetail } from '../../shared/contracts'
 
 // ── Peek framework ─────────────────────────────────────────
 // Every entity is a declarative descriptor rendered by the same
@@ -70,7 +72,7 @@ interface PeekDef<T, P = object> {
   tabs: (ctx: PeekContext<T, P>) => NotionPeekTab[]
 }
 
-function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
+function createPeek<T extends object, P = object>(def: PeekDef<T, P>) {
   // Keyed inner component: `now` is captured per opened entity, not per
   // page mount, so live/concluded state is fresh each time a opens.
   function PeekBody({ item, extras, onClose }: { item: T; extras: P; onClose: () => void }) {
@@ -111,7 +113,7 @@ function createPeek<T extends AnyValue, P = object>(def: PeekDef<T, P>) {
 
 // Declarative property rows: null/false entries drop out, so a missing
 // field produces no row rather than fabricated fallback copy.
-function properties(rows: Array<NotionProperty | null | false>): NotionProperty[] {
+function properties(rows: Array<NotionProperty | null | undefined | false | ''>): NotionProperty[] {
   return rows.filter((row): row is NotionProperty => Boolean(row))
 }
 
@@ -131,7 +133,7 @@ const external = { target: '_blank', rel: 'noreferrer' } as const
 
 // ── Opportunity Peek ─────────────────────────────────────────
 
-const opportunityPeek: PeekDef<AnyValue> = {
+const opportunityPeek: PeekDef<OpportunitySummary> = {
   eyebrow: () => 'Opportunities',
   title: ({ item }) => item.title,
   subtitle: ({ item }) => item.organizationName,
@@ -140,7 +142,7 @@ const opportunityPeek: PeekDef<AnyValue> = {
       {OPPORTUNITY_KIND_LABELS[item.kind] || item.kind || 'Opportunity'}
     </span>
   ),
-  copyUrl: ({ item }) => item.linkUrl,
+  copyUrl: ({ item }) => item.linkUrl ?? undefined,
   // the organisation is the subtitle and the type is the chip, so neither repeats here
   properties: ({ item }) => {
     const formatLabel = OPPORTUNITY_FORMAT_LABELS[item.format] || item.format
@@ -207,12 +209,12 @@ export const OpportunityPeek = createPeek(opportunityPeek)
 const eventTypeLabel = (type: string, labels: Record<string, string>) =>
   labels[type] ?? (EVENT_LABEL as Record<string, string>)[type] ?? 'Event'
 
-const eventPhase = (item: AnyValue, now: number) => {
-  if (now > Date.parse(item.endsAt)) return 'concluded'
+const eventPhase = (item: EventDetail, now: number) => {
+  if (now > Date.parse(item.endsAt ?? '')) return 'concluded'
   return now >= Date.parse(item.startsAt) ? 'live' : 'upcoming'
 }
 
-const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
+const eventPeek: PeekDef<EventDetail, { typeLabels: Record<string, string> }> = {
   eyebrow: () => 'Calendar',
   title: ({ item }) => item.title,
   // type and status appear once, as chips under the bar
@@ -307,7 +309,7 @@ const eventPeek: PeekDef<AnyValue, { typeLabels: Record<string, string> }> = {
 
 const EventPeekBody = createPeek(eventPeek)
 
-export function EventPeek(props: { item: AnyValue | null; onClose: () => void }) {
+export function EventPeek(props: { item: EventDetail | null; onClose: () => void }) {
   const { eventTypes } = useContentOptionLabels()
   return <EventPeekBody {...props} typeLabels={eventTypes} />
 }
@@ -317,7 +319,7 @@ export function EventPeek(props: { item: AnyValue | null; onClose: () => void })
 // international climate negotiations, conduct research and policy
 // analysis, and draft policy positions and submissions.
 
-const groupPeek: PeekDef<AnyValue> = {
+const groupPeek: PeekDef<GroupDetail> = {
   eyebrow: () => 'Working Groups',
   title: ({ item }) => item.name,
   subtitle: ({ item }) => item.focusLine,
@@ -351,7 +353,7 @@ export const GroupPeek = createPeek(groupPeek)
 
 // ── COY Peek ─────────────────────────────────────────────────
 
-const coyPeek: PeekDef<AnyValue> = {
+const coyPeek: PeekDef<CoyDetail> = {
   eyebrow: () => 'COY Tracker',
   title: ({ item }) => item.title,
   subtitle: ({ item }) => [item.city, item.country].filter(Boolean).join(', ') || undefined,
@@ -424,7 +426,7 @@ const SUBMISSION_STEP_INDEX: Record<string, number> = {
   archived: 3,
 }
 
-function SubmissionProgress({ sub }: { sub: AnyValue }) {
+function SubmissionProgress({ sub }: { sub: SubmissionDetail }) {
   const archived = !['open', 'drafting', 'internal_review'].includes(sub.status)
   return (
     <div className="notionTabContent">
@@ -449,7 +451,7 @@ function SubmissionProgress({ sub }: { sub: AnyValue }) {
 
 // ── Submission Peek ──────────────────────────────────────────
 
-const submissionPeek: PeekDef<AnyValue> = {
+const submissionPeek: PeekDef<SubmissionDetail> = {
   eyebrow: () => 'Policy & Statements',
   title: ({ item }) => item.title,
   badge: ({ item }) => <StatusChip status={item.status} />,

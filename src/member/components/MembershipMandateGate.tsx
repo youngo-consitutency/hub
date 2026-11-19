@@ -1,8 +1,9 @@
+import type { MembershipPolicyFullDoc } from '../../shared/contracts'
+
 interface MembershipMandateGateProps {
-  onComplete?: AnyValue
+  onComplete?: () => void
 }
 
-import type { AnyValue } from '../lib/types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   TbBook as BookOpen,
@@ -22,17 +23,13 @@ import { Brand } from './Brand'
  * in a collapsible section that still requires scroll-to-end.
  */
 export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps) {
-  const { doc, loading, error, retry } = useDocument('membership-policy')
-  const MANDATE_ANALYSIS = doc?.MANDATE_ANALYSIS
-  const POLICY_META = doc?.POLICY_META
-  const POLICY_SECTIONS = doc?.POLICY_SECTIONS || []
-  const POLICY_VERSION = doc?.POLICY_VERSION
+  const { doc, loading, error, retry } = useDocument<MembershipPolicyFullDoc>('membership-policy')
   const [scrolledToEnd, setScrolledToEnd] = useState(false)
   const [progress, setProgress] = useState(0)
   const [checked, setChecked] = useState(false)
   const [showFull, setShowFull] = useState(false)
-  const gateRef = useRef<AnyValue>(null)
-  const bodyRef = useRef<AnyValue>(null)
+  const gateRef = useRef<HTMLElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   const onScroll = useCallback(() => {
     const el = gateRef.current
@@ -104,6 +101,8 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
     )
   }
 
+  const { MANDATE_ANALYSIS, POLICY_META, POLICY_VERSION } = doc
+  const POLICY_SECTIONS = doc.POLICY_SECTIONS || []
   const canContinue = scrolledToEnd && checked
 
   const finish = () => {
@@ -164,7 +163,7 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
             </div>
             <p className="meta mandateAnalysisLead">{MANDATE_ANALYSIS.lede}</p>
             <ol className="mandatePoints">
-              {MANDATE_ANALYSIS.points.map((p: AnyValue) => (
+              {MANDATE_ANALYSIS.points.map((p) => (
                 <li key={p.title} className="mandatePoint">
                   <h3>{p.title}</h3>
                   <p className="meta">{p.body}</p>
@@ -201,7 +200,7 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
             </p>
             <p className="metaMuted" style={{ marginTop: 8 }}>
               Translations:{' '}
-              {POLICY_META.translations.map((t: AnyValue, i: number) => (
+              {POLICY_META.translations.map((t, i: number) => (
                 <span key={t.lang}>
                   {i > 0 && ' · '}
                   <a href={t.href} target="_blank" rel="noreferrer" className="mandateExtLink">
@@ -228,19 +227,19 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
               <p className="metaMuted" style={{ marginBottom: 12 }}>
                 Full policy text · scroll to the end to enable the checkbox
               </p>
-              {POLICY_SECTIONS.map((section: AnyValue) => (
+              {POLICY_SECTIONS.map((section) => (
                 <section key={section.id} className="mandateSection" id={`policy-${section.id}`}>
                   <h2>{section.heading}</h2>
-                  {section.paragraphs?.map((para: AnyValue, i: number) => (
+                  {section.paragraphs?.map((para, i: number) => (
                     <p key={`${section.id}-p-${i}`} className="meta mandatePara">
                       {para}
                     </p>
                   ))}
-                  {section.bullets?.map((group: AnyValue) => (
+                  {section.bullets?.map((group) => (
                     <div key={group.label} className="mandateBulletGroup">
                       <h3>{group.label}</h3>
                       <ul>
-                        {group.items.map((item: AnyValue, i: number) => (
+                        {group.items.map((item, i: number) => (
                           <li key={`${group.label}-${i}`} className="meta">
                             {item}
                           </li>
@@ -248,7 +247,7 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
                       </ul>
                     </div>
                   ))}
-                  {section.paragraphsAfter?.map((para: AnyValue, i: number) => (
+                  {section.paragraphsAfter?.map((para, i: number) => (
                     <p key={`${section.id}-pa-${i}`} className="meta mandatePara">
                       {para}
                     </p>

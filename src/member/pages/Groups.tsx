@@ -1,4 +1,7 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { IconType } from 'react-icons'
+import type { GroupDetail } from '../../shared/contracts'
+import type { DirectoryTopic } from '../../shared/contracts'
+import type { GroupSummary } from '../../shared/contracts'
 import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
@@ -31,8 +34,9 @@ import {
 } from 'react-icons/tb'
 import { useDocument } from '../lib/documents'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
+import type { FilterMap } from '../lib/filterState'
 
-const TOPIC_ICONS = {
+const TOPIC_ICONS: Record<string, IconType> = {
   'climate-action': CloudSun,
   'nature-food': Leaf,
   'people-rights': HeartHandshake,
@@ -44,13 +48,14 @@ const TOPIC_ICONS = {
 /** Browse working groups with search, topic filters, name sorting and catalogue layouts. */
 export function Groups({ slug }: { slug?: string }) {
   const [search, setSearch] = useState('')
-  const [topics, setTopics] = useState<Doc>({})
+  const [topics, setTopics] = useState<FilterMap>({})
   const [descending, setDescending] = useState(false)
-  const panel = usePeek('/groups', '/groups', slug)
-  const query = useApi('/groups')
-  const { doc: directory } = useDocument('directory')
+  const panel = usePeek<GroupDetail>('/groups', '/groups', slug)
+  const query = useApi<{ items: GroupSummary[] }>('/groups')
+  const { doc: directory } = useDocument<{ topics?: DirectoryTopic[] }>('directory')
   const topicList = directory?.topics || []
-  const topicLabel = (key: AnyValue) => topicList.find((t: AnyValue) => t.key === key)?.label || key
+  const topicLabel = (key: string | null | undefined) =>
+    topicList.find((t) => t.key === key)?.label || key
 
   return (
     <div>
@@ -61,14 +66,14 @@ export function Groups({ slug }: { slug?: string }) {
         grid
         skeletons={6}
         query={query}
-        empty={(d: AnyValue) =>
+        empty={(d) =>
           d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null
         }
       >
-        {(data: Doc) => {
+        {(data) => {
           const needle = search.trim().toLocaleLowerCase()
           const groups = data.items
-            .filter((group: Doc) => {
+            .filter((group) => {
               const matchesSearch =
                 !needle ||
                 [group.name, group.focusLine, topicLabel(group.topic)]
@@ -79,15 +84,15 @@ export function Groups({ slug }: { slug?: string }) {
               const matchesTopic = matchesFilters(topicKey, topics)
               return matchesSearch && matchesTopic
             })
-            .sort((a: AnyValue, b: AnyValue) =>
+            .sort((a, b) =>
               descending ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name),
             )
 
-          const renderGroup = (group: Doc) => (
+          const renderGroup = (group: GroupSummary) => (
             <GroupCard
               key={group.slug}
               group={group}
-              topicFilterState={topics[group.topic] || 'neutral'}
+              topicFilterState={(group.topic && topics[group.topic]) || 'neutral'}
               onTopicFilter={() => {
                 const topicKey = group.topic
                 if (!topicKey) return
@@ -133,11 +138,11 @@ export function Groups({ slug }: { slug?: string }) {
                           >
                             All topics
                           </FilterPill>
-                          {topicList.map((item: Doc) => (
+                          {topicList.map((item) => (
                             <FilterPill
                               key={item.key}
                               state={topics[item.key] || 'neutral'}
-                              icon={(TOPIC_ICONS as AnyValue)[item.key]}
+                              icon={TOPIC_ICONS[item.key]}
                               onClick={() =>
                                 setTopics((current) => toggleFilter(current, item.key))
                               }

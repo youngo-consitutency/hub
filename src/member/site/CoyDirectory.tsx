@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { TbArrowUpRight as ArrowUpRight } from 'react-icons/tb'
-import type { AnyValue } from '../lib/types'
+import type { CoyDetail } from '../../shared/contracts'
 import { regionLabel } from '../lib/regions'
 import { coyDisplayStatus } from '../../shared/coyStatus'
 import { BorderBeam } from '../components/fx/BorderBeam'
@@ -27,16 +27,16 @@ const STATUS: Record<string, [chip: string, label: string, rank: number]> = {
   cancelled: ['chip-danger', 'Cancelled', 4],
 }
 
-const statusOf = (coy: AnyValue) => STATUS[coyDisplayStatus(coy) ?? ''] ?? ['chip-neutral', '', 1]
+const statusOf = (coy: CoyDetail) => STATUS[coyDisplayStatus(coy) ?? ''] ?? ['chip-neutral', '', 1]
 const isWeb = (url: unknown): url is string => typeof url === 'string' && /^https?:\/\//.test(url)
 
 // what is open comes first, then what is coming, then what is over
-const byRelevance = (a: AnyValue, b: AnyValue) =>
+const byRelevance = (a: CoyDetail, b: CoyDetail) =>
   statusOf(a)[2] - statusOf(b)[2] ||
   String(a.startsOn ?? '9999').localeCompare(String(b.startsOn ?? '9999')) ||
   String(a.title).localeCompare(String(b.title))
 
-function CoyCard({ coy }: { coy: AnyValue }) {
+function CoyCard({ coy }: { coy: CoyDetail }) {
   const [chip, label] = statusOf(coy)
   const place = [coy.city, coy.country].filter(Boolean).join(', ') || regionLabel(coy.region)
   const href = [coy.registerUrl, coy.websiteUrl].find(isWeb)
@@ -60,17 +60,18 @@ function CoyCard({ coy }: { coy: AnyValue }) {
 }
 
 const FILTERS = {
-  format: (coy: AnyValue, value: string) => coy.type === value,
-  region: (coy: AnyValue, value: string) => coy.region === value,
+  format: (coy: CoyDetail, value: string) => coy.type === value,
+  region: (coy: CoyDetail, value: string) => coy.region === value,
 }
-const text = (coy: AnyValue) => [coy.title, coy.city, coy.country]
+const text = (coy: CoyDetail) => [coy.title, coy.city, coy.country]
 
 // a searchable, filterable catalogue: long lists are browsed, not dumped
-export function CoyDirectory({ items }: { items: AnyValue[] }) {
+export function CoyDirectory({ items }: { items: CoyDetail[] }) {
   const list = useCatalogue(items, { text, filters: FILTERS, sort: byRelevance })
   const { values, setFilter, matches, visible, remaining, pageSize } = list
   const regions = useMemo(
-    () => [...new Set(items.map((coy) => coy.region).filter(Boolean))].sort(),
+    () =>
+      [...new Set(items.map((coy) => coy.region).filter((r): r is string => Boolean(r)))].sort(),
     [items],
   )
   const countOf = (id: string) =>
@@ -147,7 +148,7 @@ export function CoyDirectory({ items }: { items: AnyValue[] }) {
 }
 
 // the one conference that is open right now gets the spotlight; the directory below lists the rest
-export function FeaturedConference({ items }: { items: AnyValue[] }) {
+export function FeaturedConference({ items }: { items: CoyDetail[] }) {
   const featured = [...items].sort(byRelevance)[0]
   if (!featured || statusOf(featured)[2] !== 0) return null
   const [chip, label] = statusOf(featured)

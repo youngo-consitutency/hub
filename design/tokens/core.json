@@ -1,0 +1,213 @@
+{
+  "$description": "YOUNGO Hub core tokens. Edit in Figma with Tokens Studio (git sync to this folder) or by hand, then run `npm run design:build`. Names become CSS custom properties 1:1 (color.bg-page -> --bg-page).",
+  "color": {
+    "bg-page": {
+      "$value": "#f7f9f6",
+      "$type": "color"
+    },
+    "bg-card": {
+      "$value": "#ffffff",
+      "$type": "color"
+    },
+    "bg-raised": {
+      "$value": "#edf3ec",
+      "$type": "color"
+    },
+    "bg-popover": {
+      "$value": "#ffffff",
+      "$type": "color"
+    },
+    "text-1": {
+      "$value": "#0e231a",
+      "$type": "color"
+    },
+    "text-2": {
+      "$value": "#2b4538",
+      "$type": "color"
+    },
+    "text-3": {
+      "$value": "#4b6657",
+      "$type": "color"
+    },
+    "border": {
+      "$value": "#d2ddd6",
+      "$type": "color"
+    },
+    "border-strong": {
+      "$value": "#708c7c",
+      "$type": "color"
+    },
+    "accent": {
+      "$value": "#006e52",
+      "$type": "color"
+    },
+    "accent-hover": {
+      "$value": "#00543e",
+      "$type": "color"
+    },
+    "on-accent": {
+      "$value": "#ffffff",
+      "$type": "color"
+    },
+    "accent-tint": {
+      "$value": "#ccf1de",
+      "$type": "color"
+    },
+    "on-accent-tint": {
+      "$value": "#004d38",
+      "$type": "color"
+    },
+    "success": {
+      "$value": "#006e52",
+      "$type": "color"
+    },
+    "success-tint": {
+      "$value": "#ccf1de",
+      "$type": "color"
+    },
+    "on-success-tint": {
+      "$value": "#004d38",
+      "$type": "color"
+    },
+    "live": {
+      "$value": "#65a30d",
+      "$type": "color"
+    },
+    "live-tint": {
+      "$value": "#ecfccb",
+      "$type": "color"
+    },
+    "warn": {
+      "$value": "#b45309",
+      "$type": "color"
+    },
+    "warn-tint": {
+      "$value": "#fef3c7",
+      "$type": "color"
+    },
+    "danger": {
+      "$value": "#b91c1c",
+      "$type": "color"
+    },
+    "danger-tint": {
+      "$value": "#fee2e2",
+      "$type": "color"
+    },
+    "info": {
+      "$value": "#0369a1",
+      "$type": "color"
+    },
+    "info-tint": {
+      "$value": "#e0f2fe",
+      "$type": "color"
+    },
+    "calendar-gys": {
+      "$value": "#6d28d9",
+      "$type": "color"
+    },
+    "calendar-coordination": {
+      "$value": "#4338ca",
+      "$type": "color"
+    },
+    "landing-teal": {
+      "$value": "#62c4bb",
+      "$type": "color"
+    },
+    "landing-lime": {
+      "$value": "#8bc65e",
+      "$type": "color"
+    },
+    "landing-forest": {
+      "$value": "#1f6c38",
+      "$type": "color"
+    },
+    "deep": {
+      "$value": "#0f4631",
+      "$type": "color"
+    },
+    "deep-2": {
+      "$value": "#1a6a4c",
+      "$type": "color"
+    },
+    "on-deep": {
+      "$value": "#eaf6ee",
+      "$type": "color"
+    },
+    "on-deep-muted": {
+      "$value": "#d3e6da",
+      "$type": "color"
+    },
+    "glow-green": {
+      "$value": "#2dd4a0",
+      "$type": "color"
+    },
+    "glow-lime": {
+      "$value": "#a3e635",
+      "$type": "color"
+    },
+    "glow-sky": {
+      "$value": "#38bdf8",
+      "$type": "color"
+    },
+    "accent-deep": {
+      "$value": "#4ade80",
+      "$type": "color"
+    }
+  },
+  "radius": {
+    "chip": {
+      "$value": "6px",
+      "$type": "dimension"
+    },
+    "control": {
+      "$value": "12px",
+      "$type": "dimension"
+    },
+    "card": {
+      "$value": "20px",
+      "$type": "dimension"
+    },
+    "modal": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "surface": {
+      "$value": "32px",
+      "$type": "dimension"
+    },
+    "pill": {
+      "$value": "9999px",
+      "$type": "dimension"
+    }
+  },
+  "space": {
+    "1": {
+      "$value": "4px",
+      "$type": "dimension"
+    },
+    "2": {
+      "$value": "8px",
+      "$type": "dimension"
+    },
+    "3": {
+      "$value": "12px",
+      "$type": "dimension"
+    },
+    "4": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "5": {
+      "$value": "20px",
+      "$type": "dimension"
+    },
+    "6": {
+      "$value": "24px",
+      "$type": "dimension"
+    },
+    "8": {
+      "$value": "32px",
+      "$type": "dimension"
+    }
+  }
+}

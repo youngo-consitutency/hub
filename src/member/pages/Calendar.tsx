@@ -3,7 +3,8 @@ interface CalendarEventDotProps {
 }
 
 import { usePeek } from '../lib/peek'
-import type { AnyValue, Doc } from '../lib/types'
+import type { EventDetail } from '../../shared/contracts'
+import type { EventSummary } from '../../shared/contracts'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { useState } from 'react'
 import { useApi } from '../lib/api'
@@ -12,6 +13,7 @@ import { EventCard } from '../components/cards'
 import { EventPeek } from '../components/EntityPeeks'
 import { CalendarSubscribe } from '../components/Subscribe'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
+import type { FilterMap } from '../lib/filterState'
 import {
   buildCalendarDays,
   calendarMonth,
@@ -55,15 +57,15 @@ function CalendarEventDot({ type }: CalendarEventDotProps) {
 }
 
 export function Calendar({ slug }: { slug?: string }) {
-  const [typeFilters, setTypeFilters] = useState<Doc>({})
+  const [typeFilters, setTypeFilters] = useState<FilterMap>({})
   const [month, setMonth] = useState(calendarMonth)
-  const [selectedDay, setSelectedDay] = useState<AnyValue>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [agendaScope, setAgendaScope] = useState('month')
-  const panel = usePeek('/calendar', '/events', slug)
-  const query = useApi('/events?type=all')
+  const panel = usePeek<EventDetail>('/calendar', '/events', slug)
+  const query = useApi<{ items: EventSummary[] }>('/events?type=all')
   const today = new Date().toISOString().slice(0, 10)
 
-  const changeType = (nextType: AnyValue) => {
+  const changeType = (nextType: string) => {
     if (nextType === 'all') setTypeFilters({})
     else {
       setTypeFilters((current) => toggleFilter(current, nextType))
@@ -72,7 +74,7 @@ export function Calendar({ slug }: { slug?: string }) {
     if (agendaScope === 'day') setAgendaScope('month')
   }
 
-  const changeMonth = (amount: AnyValue) => {
+  const changeMonth = (amount: number) => {
     setMonth((current) => shiftCalendarMonth(current, amount))
     setSelectedDay(null)
     setAgendaScope('month')
@@ -84,7 +86,7 @@ export function Calendar({ slug }: { slug?: string }) {
     setAgendaScope('month')
   }
 
-  const changeAgendaScope = (scope: AnyValue) => {
+  const changeAgendaScope = (scope: string) => {
     setAgendaScope(scope)
     setSelectedDay(null)
     if (scope !== 'month') setMonth(calendarMonth())
@@ -118,7 +120,7 @@ export function Calendar({ slug }: { slug?: string }) {
       </CatalogToolbar>
       <Async
         query={query}
-        empty={(d: AnyValue) =>
+        empty={(d) =>
           d.items.length === 0 ? (
             <Empty
               icon={CalendarOff}
@@ -128,10 +130,8 @@ export function Calendar({ slug }: { slug?: string }) {
           ) : null
         }
       >
-        {(data: Doc) => {
-          const events = data.items.filter((event: AnyValue) =>
-            matchesFilters(event.type, typeFilters),
-          )
+        {(data) => {
+          const events = data.items.filter((event) => matchesFilters(event.type, typeFilters))
           const grouped = groupEventsByDate(events)
           const days = buildCalendarDays(month, grouped)
           const monthEvents = eventsInCalendarMonth(events, month)
@@ -200,7 +200,7 @@ export function Calendar({ slug }: { slug?: string }) {
                 <div className="calendarMonthGrid">
                   {days.map((date) => {
                     const dots = date.events.slice(0, 4)
-                    const label = `${formatCalendarDay(date.key)}: ${date.events.map((event: AnyValue) => event.title).join(', ')}`
+                    const label = `${formatCalendarDay(date.key)}: ${date.events.map((event) => event.title).join(', ')}`
                     const content = (
                       <>
                         <time
@@ -212,7 +212,7 @@ export function Calendar({ slug }: { slug?: string }) {
                         </time>
                         {dots.length > 0 && (
                           <span className="calendarDots" aria-hidden>
-                            {dots.map((event: AnyValue) => (
+                            {dots.map((event) => (
                               <CalendarEventDot key={event.slug} type={event.type} />
                             ))}
                             {date.events.length > dots.length && (
@@ -322,7 +322,7 @@ export function Calendar({ slug }: { slug?: string }) {
                           </div>
                         )}
                         <div className="calendarAgendaCards">
-                          {dateEvents.map((event: AnyValue) => (
+                          {dateEvents.map((event) => (
                             <EventCard key={event.slug} event={event} />
                           ))}
                         </div>

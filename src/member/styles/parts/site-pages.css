@@ -484,7 +484,7 @@
   color: var(--text-1);
   font: inherit;
   font-weight: 600;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -540,7 +540,7 @@
   background: var(--bg-page);
   color: var(--text-1);
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     border-color var(--motion-standard) var(--motion-ease),

@@ -1,0 +1,29 @@
+{
+  "$description": "Which theme family each working group uses, by slug. A group not listed uses the brand colours. Edit by pull request; `npm run design:groups` shows groups that are missing.",
+  "groups": {
+    "mitigation": "forest",
+    "ndcs": "forest",
+    "nature": "forest",
+    "agriculture": "forest",
+    "cities": "forest",
+    "oceans": "ocean",
+    "water": "ocean",
+    "adaptation": "ocean",
+    "energy": "sun",
+    "finance": "sun",
+    "technology": "sun",
+    "gender": "violet",
+    "human-rights": "violet",
+    "child-rights": "violet",
+    "migration": "violet",
+    "just-transition": "violet",
+    "health": "rose",
+    "loss-and-damage": "rose",
+    "peace-and-security": "rose",
+    "science": "teal",
+    "ach": "teal",
+    "coy": "teal",
+    "conflict-of-interest": "indigo",
+    "ace": "indigo"
+  }
+}

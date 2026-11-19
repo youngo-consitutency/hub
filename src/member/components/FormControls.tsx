@@ -33,11 +33,7 @@ const valueFor = (list: Option[], key: Key | null) =>
 
 export function FieldError({ msg }: { msg?: ReactNode }) {
   if (!msg) return null
-  return (
-    <span className="fieldError" role="alert">
-      {msg}
-    </span>
-  )
+  return <span className="fieldError">{msg}</span>
 }
 
 // native date input: already accessible and localised by the browser

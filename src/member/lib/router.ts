@@ -5,7 +5,6 @@
 // Call sites keep passing plain app paths ('/calendar'); this module decides
 // whether that means a real navigation or a hash change.
 'use client'
-import type { AnyValue } from './types'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
@@ -93,14 +92,23 @@ export function RouterBridge() {
 
 type Options = { scroll?: boolean }
 
-function go(method: 'push' | 'replace', to: AnyValue, { scroll = true }: Options = {}) {
+// In-page jump (skip link, citation chip). A plain "#id" href would replace the Hub route in the
+// hash, so reloading or sharing the URL would land on Home; this scrolls and moves focus instead.
+export function jumpTo(id: string) {
+  const target = document.getElementById(id)
+  if (!target) return
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+  target.focus()
+  target.scrollIntoView()
+}
+
+function go(method: 'push' | 'replace', to: string | URL, { scroll = true }: Options = {}) {
   const target = resolve(String(to))
   if (target.hub && inHubNow()) {
     window.history[method === 'push' ? 'pushState' : 'replaceState'](null, '', target.href)
     window.dispatchEvent(new Event(HUB_EVENT))
     if (scroll) {
       window.scrollTo(0, 0)
-      document.getElementById('main-content')?.scrollTo?.(0, 0)
     }
     return
   }
@@ -109,8 +117,8 @@ function go(method: 'push' | 'replace', to: AnyValue, { scroll = true }: Options
   else window.location.replace(target.href)
 }
 
-export const navigate = (to: AnyValue, options?: Options) => go('push', to, options)
-export const replace = (to: AnyValue, options?: Options) => go('replace', to, options)
+export const navigate = (to: string | URL, options?: Options) => go('push', to, options)
+export const replace = (to: string | URL, options?: Options) => go('replace', to, options)
 
 // the lists whose records open in the side panel: /groups/:slug is the Groups page with the panel open
 const PANEL_PATH = /^\/(calendar|groups|coys|submissions|opportunities|council)\/[^/]+$/

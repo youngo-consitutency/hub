@@ -2,18 +2,24 @@ interface AccountProviderProps {
   children?: import('react').ReactNode
 }
 
-import type { AnyValue } from './types'
+import type { Account, AccountAccess } from './types'
 import { createContext, useContext, useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { useSWRConfig } from 'swr'
 import { setSession, getCachedAccount } from './session'
 import { apiGet } from './api'
 import { mergeAccount, withoutAccess } from './accountState'
 
-const AccountContext = createContext<AnyValue>(null)
+interface AccountContextValue {
+  account: Account | null
+  setAccount: (account: Account | null) => void
+  reloadAccess: () => void
+}
+
+const AccountContext = createContext<AccountContextValue | null>(null)
 
 export function AccountProvider({ children }: AccountProviderProps) {
   // cached profile first so a signed-in member doesn't flash the signed-out shell
-  const [account, setAccountState] = useState(getCachedAccount)
+  const [account, setAccountState] = useState<Account | null>(getCachedAccount)
 
   const accountId = account?.id
   // SWR's cache is global and keys carry no account, so another account signing in
@@ -38,22 +44,20 @@ export function AccountProvider({ children }: AccountProviderProps) {
     if (!accountId) return
     let alive = true
     // a retry goes back to the calm loading lock
-    setAccountState((current: AnyValue) =>
+    setAccountState((current) =>
       current?.accessFailed ? { ...current, accessFailed: false } : current,
     )
-    apiGet('/member/access')
+    apiGet<AccountAccess>('/member/access')
       .then((access) => {
         if (!alive) return
-        setAccountState((current: AnyValue) =>
+        setAccountState((current) =>
           current ? { ...current, access, accessFailed: false } : current,
         )
       })
       .catch(() => {
         // role workspaces stay locked; the lock switches to a retry
         if (!alive) return
-        setAccountState((current: AnyValue) =>
-          current ? { ...current, accessFailed: true } : current,
-        )
+        setAccountState((current) => (current ? { ...current, accessFailed: true } : current))
       })
     return () => {
       alive = false
@@ -63,8 +67,8 @@ export function AccountProvider({ children }: AccountProviderProps) {
   // endpoints hand back a bare accountView: keep the access state we hold for the
   // same account (loaded, or failed and awaiting retry). a new id refetches via the
   // effect; mutations that move access (course pass, seat) call reloadAccess
-  const setAccount = useCallback((acc: AnyValue) => {
-    setAccountState((current: AnyValue) => mergeAccount(current, acc))
+  const setAccount = useCallback((acc: Account | null) => {
+    setAccountState((current) => mergeAccount(current, acc))
     if (acc) setSession({ account: acc })
   }, [])
 

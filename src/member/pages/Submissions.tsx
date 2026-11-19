@@ -1,4 +1,5 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { SubmissionSummary } from '../../shared/contracts'
+import type { SubmissionDetail } from '../../shared/contracts'
 import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbFileText as PolicyIcon } from 'react-icons/tb'
@@ -8,7 +9,6 @@ import { useApi } from '../lib/api'
 import {
   Async,
   Empty,
-  A,
   FilterMenu,
   FilterPill,
   PageHeader,
@@ -19,6 +19,7 @@ import { SubmissionCard } from '../components/cards'
 import { SubmissionPeek } from '../components/EntityPeeks'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
 import { activeFilterCount, matchesFilters, toggleFilter } from '../lib/filterState'
+import type { FilterMap } from '../lib/filterState'
 import {
   TbArchive as Archive,
   TbSortAscendingLetters as ArrowDownAZ,
@@ -48,14 +49,16 @@ const ARCHIVE_STATUSES = [
 /** Browse open or archived submissions with search, stage and group filters, sorting and layouts. */
 export function Submissions({ slug }: { slug?: string }) {
   const [state, setState] = useState('open')
-  const [statusFilters, setStatusFilters] = useState<Doc>({})
-  const [groupFilters, setGroupFilters] = useState<Doc>({})
+  const [statusFilters, setStatusFilters] = useState<FilterMap>({})
+  const [groupFilters, setGroupFilters] = useState<FilterMap>({})
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('date')
-  const panel = usePeek('/submissions', '/submissions', slug)
-  const query = useApi(`/submissions?state=${state}`, [state])
+  const panel = usePeek<SubmissionDetail>('/submissions', '/submissions', slug)
+  const query = useApi<{ items: SubmissionSummary[] }>(`/submissions?state=${state}`, {
+    keepPrevious: true,
+  })
 
-  const changeState = (nextState: AnyValue) => {
+  const changeState = (nextState: string) => {
     setState(nextState)
     setStatusFilters({})
     setGroupFilters({})
@@ -85,7 +88,7 @@ export function Submissions({ slug }: { slug?: string }) {
       </PageHeader>
       <Async
         query={query}
-        empty={(d: AnyValue) =>
+        empty={(d) =>
           d.items.length === 0 ? (
             state === 'open' ? (
               <Empty
@@ -93,16 +96,13 @@ export function Submissions({ slug }: { slug?: string }) {
                 title="Nothing open right now"
                 body="The archive shows what YOUNGO has said before."
                 cta={
-                  <A
-                    href="#"
+                  <button
+                    type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={(e: AnyValue) => {
-                      e.preventDefault()
-                      setState('archive')
-                    }}
+                    onClick={() => setState('archive')}
                   >
                     View archive
-                  </A>
+                  </button>
                 }
               />
             ) : (
@@ -111,26 +111,26 @@ export function Submissions({ slug }: { slug?: string }) {
           ) : null
         }
       >
-        {(data: Doc) => {
+        {(data) => {
           const statuses = state === 'open' ? OPEN_STATUSES : ARCHIVE_STATUSES
           const groups = [
             ...new Map(
-              data.items.filter((item: Doc) => item.wg).map((item: Doc) => [item.wg.slug, item.wg]),
+              data.items.flatMap((item) => (item.wg ? [[item.wg.slug, item.wg] as const] : [])),
             ).values(),
-          ].sort((a, b) => (a as AnyValue).name.localeCompare((b as AnyValue).name))
+          ].sort((a, b) => a.name.localeCompare(b.name))
           const needle = search.trim().toLocaleLowerCase()
           const submissions = data.items
             .filter(
-              (submission: Doc) =>
+              (submission) =>
                 matchesFilters(submission.status, statusFilters) &&
                 matchesFilters(submission.wg?.slug, groupFilters) &&
                 (!needle ||
-                  [submission.title, submission.description, submission.wg?.name]
+                  [submission.title, submission.contributeNote, submission.wg?.name]
                     .join(' ')
                     .toLocaleLowerCase()
                     .includes(needle)),
             )
-            .sort((a: AnyValue, b: AnyValue) =>
+            .sort((a, b) =>
               sort === 'title'
                 ? a.title.localeCompare(b.title)
                 : state === 'archive'
@@ -215,16 +215,14 @@ export function Submissions({ slug }: { slug?: string }) {
                             </FilterPill>
                             {groups.map((item) => (
                               <FilterPill
-                                key={(item as AnyValue).slug}
-                                state={groupFilters[(item as AnyValue).slug] || 'neutral'}
-                                icon={workingGroupIcon((item as AnyValue).slug)}
+                                key={item.slug}
+                                state={groupFilters[item.slug] || 'neutral'}
+                                icon={workingGroupIcon(item.slug)}
                                 onClick={() =>
-                                  setGroupFilters((current) =>
-                                    toggleFilter(current, (item as AnyValue).slug),
-                                  )
+                                  setGroupFilters((current) => toggleFilter(current, item.slug))
                                 }
                               >
-                                {(item as AnyValue).name}
+                                {item.name}
                               </FilterPill>
                             ))}
                           </div>
@@ -237,25 +235,25 @@ export function Submissions({ slug }: { slug?: string }) {
               <CatalogueResults count={submissions.length}>
                 {submissions.length ? (
                   <div className="cardGrid">
-                    {submissions.map((submission: Doc) => (
-                      <SubmissionCard
-                        key={submission.slug}
-                        sub={submission}
-                        statusFilterState={statusFilters[submission.status] || 'neutral'}
-                        groupFilterState={groupFilters[submission.wg?.slug] || 'neutral'}
-                        onStatusFilter={() =>
-                          setStatusFilters((current) => toggleFilter(current, submission.status))
-                        }
-                        onGroupFilter={
-                          submission.wg
-                            ? () =>
-                                setGroupFilters((current) =>
-                                  toggleFilter(current, submission.wg.slug),
-                                )
-                            : undefined
-                        }
-                      />
-                    ))}
+                    {submissions.map((submission) => {
+                      const { wg } = submission
+                      return (
+                        <SubmissionCard
+                          key={submission.slug}
+                          sub={submission}
+                          statusFilterState={statusFilters[submission.status] || 'neutral'}
+                          groupFilterState={(wg && groupFilters[wg.slug]) || 'neutral'}
+                          onStatusFilter={() =>
+                            setStatusFilters((current) => toggleFilter(current, submission.status))
+                          }
+                          onGroupFilter={
+                            wg
+                              ? () => setGroupFilters((current) => toggleFilter(current, wg.slug))
+                              : undefined
+                          }
+                        />
+                      )
+                    })}
                   </div>
                 ) : (
                   <Empty

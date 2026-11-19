@@ -98,11 +98,9 @@ a.entityCard {
   line-height: 1.3;
 }
 
+/* a title is never cut off: long or translated names wrap and the card grows (WCAG 1.4.12) */
 .entityCardHeading h3 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
   line-height: 1.25;
 }
 
@@ -134,7 +132,7 @@ a.entityCard {
 .entityCardMetaLabel {
   margin-bottom: 1px;
   color: var(--text-3);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -215,7 +213,7 @@ a.entityCard {
   display: block;
   margin-bottom: 1px;
   color: var(--text-3);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -240,7 +238,7 @@ a.entityCard {
 
 .chipPrefix {
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.04em;
 }
@@ -504,7 +502,7 @@ a.resourceRow:hover {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-right: 22px;
+  padding-inline-end: 22px;
 }
 
 .workingGroupContactCopy h3 {
@@ -526,7 +524,7 @@ a.resourceRow:hover {
 .workingGroupContactAction {
   position: absolute;
   top: var(--space-3);
-  right: var(--space-3);
+  inset-inline-end: var(--space-3);
   color: var(--accent);
 }
 
@@ -655,7 +653,7 @@ a.resourceRow:hover {
     var(--bg-card) 100%
   );
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-left: 4px solid var(--accent);
+  border-inline-start: 4px solid var(--accent);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
 }
@@ -710,7 +708,7 @@ a.resourceRow:hover {
 
   .pinnedBannerActions {
     width: 100%;
-    padding-left: calc(36px + var(--space-3));
+    padding-inline-start: calc(36px + var(--space-3));
   }
 }
 
@@ -913,7 +911,7 @@ a.resourceRow:hover {
 }
 .dateStamp span {
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -956,7 +954,7 @@ a.resourceRow:hover {
   align-items: start;
   gap: var(--space-4);
   padding: var(--space-4);
-  border-left: 3px solid transparent;
+  border-inline-start: 3px solid transparent;
   transition:
     background 0.2s,
     border-color 0.2s;
@@ -971,7 +969,7 @@ a.resourceRow:hover {
 }
 
 .resourceListRow[data-checked] {
-  border-left-color: var(--accent);
+  border-inline-start-color: var(--accent);
 }
 
 .resourceListRow[data-checked]:hover {

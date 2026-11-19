@@ -9,6 +9,8 @@ export function CatalogueResults({ count, children }: { count?: number; children
   const [view, setView] = useState<View>('grid')
   return (
     <div className="catalogueResults" data-view={view}>
+      {/* cards are h3: give them the h2 they sit under */}
+      <h2 className="srOnly">Results</h2>
       <div className="catalogueResultBar">
         <p className="meta" role="status">
           {count} {count === 1 ? 'result' : 'results'}

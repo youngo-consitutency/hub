@@ -1,4 +1,6 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { GroupSummary } from '../../shared/contracts'
+import type { CpMembersResponse } from '../../shared/contracts'
+import type { AccountAccess } from '../lib/types'
 import { useContentOptionLabels } from '../lib/documents'
 import { useMemo } from 'react'
 import useSWR from 'swr'
@@ -6,36 +8,36 @@ import { apiGet, useApi } from '../lib/api'
 import { A, Async, Empty, StatusChip, PageHeader } from '../components/ui'
 import { useAccount } from '../lib/accountContext'
 import {
-  TbArrowRight as ArrowRight,
   TbBriefcase as Briefcase,
   TbListCheck as ListChecks,
   TbRadio as Radio,
   TbUsers as Users,
 } from 'react-icons/tb'
+import { TbArrowRight as ArrowRight } from '../components/dirIcons'
 
-function roleForGroup(access: AnyValue, slug: AnyValue) {
+function roleForGroup(access: Pick<AccountAccess, 'wgAssignments' | 'manageAllWgs'>, slug: string) {
   return (
-    access.wgAssignments?.find((item: Doc) => item.wgSlug === slug)?.role ||
+    access.wgAssignments?.find((item) => item.wgSlug === slug)?.role ||
     (access.manageAllWgs ? 'officer' : 'contact')
   )
 }
 
 export function CpOverview() {
   const { assignmentLabels } = useContentOptionLabels()
-  const groups = useApi('/groups')
+  const groups = useApi<{ items: GroupSummary[] }>('/groups')
   const { account } = useAccount()
   const access = account?.access || { wgAssignments: [], manageAllWgs: false }
 
   const assignedSlugs = useMemo(() => {
     if (access.manageAllWgs) return null
-    return new Set((access.wgAssignments || []).map((item: Doc) => item.wgSlug).filter(Boolean))
+    return new Set((access.wgAssignments || []).map((item) => item.wgSlug).filter(Boolean))
   }, [access.manageAllWgs, access.wgAssignments])
 
   // no batched endpoint exists, so one SWR entry runs the per-group reads together:
   // cached, deduped and ignored after unmount (the old effect refetched on every change)
   const pendingSlugs: string[] = (groups.data?.items || [])
-    .filter((group: Doc) => access.manageAllWgs || assignedSlugs?.has(group.slug))
-    .map((group: Doc) => group.slug)
+    .filter((group) => access.manageAllWgs || assignedSlugs?.has(group.slug))
+    .map((group) => group.slug)
   const { data: pendingByWg, error: pendingError } = useSWR<Record<string, number>>(
     pendingSlugs.length ? ['cp-pending', ...pendingSlugs] : null,
     async ([, ...slugs]: string[]) =>
@@ -43,9 +45,11 @@ export function CpOverview() {
         await Promise.all(
           // a failed read rejects so SWR keeps the last counts and retries, never a fake zero
           slugs.map(async (slug) => {
-            const data = await apiGet(`/member/cp/${encodeURIComponent(slug)}/members`)
-            const pending = (data.members || []).filter(
-              ({ progress }: AnyValue) =>
+            const data = await apiGet<CpMembersResponse>(
+              `/member/cp/${encodeURIComponent(slug)}/members`,
+            )
+            const pending = data.members.filter(
+              ({ progress }) =>
                 progress.status === 'pending_approval' || progress.status === 'interested',
             ).length
             return [slug, pending]
@@ -86,16 +90,16 @@ export function CpOverview() {
 
         <Async
           query={groups}
-          empty={(data: Doc) =>
+          empty={(data) =>
             !data.items?.length ? (
               <Empty icon={Briefcase} title="No working groups available" />
             ) : null
           }
         >
-          {(data: Doc) => {
+          {(data) => {
             const assigned = access.manageAllWgs
               ? data.items
-              : data.items.filter((group: Doc) => assignedSlugs?.has(group.slug))
+              : data.items.filter((group) => assignedSlugs?.has(group.slug))
             if (!assigned.length) {
               return (
                 <Empty
@@ -107,7 +111,7 @@ export function CpOverview() {
             }
             return (
               <div className="cardGrid">
-                {assigned.map((group: Doc) => {
+                {assigned.map((group) => {
                   const pending = pendingByWg?.[group.slug] || 0
                   const role = roleForGroup(access, group.slug)
                   return (

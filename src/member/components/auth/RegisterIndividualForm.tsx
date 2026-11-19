@@ -1,25 +1,22 @@
-interface RegisterIndividualFormProps {
-  form?: AnyValue
-  fields?: AnyValue
-  under18?: AnyValue
-  countryOptions?: AnyValue
-  nationalityOptions?: AnyValue
-  setForm?: AnyValue
-  setReg?: AnyValue
-  setChoice?: AnyValue
-  setPhone?: AnyValue
-  setMinorityIdentity?: AnyValue
-  toggleMinority?: AnyValue
-  toggleWg?: AnyValue
-  ensureCountryOptions?: AnyValue
-  ensureNationalityOptions?: AnyValue
+interface RegisterIndividualFormProps extends RegistrationFormProps {
+  under18: boolean
+  nationalityOptions: { value: string; label: string }[]
+  setMinorityIdentity: (value: string) => void
+  toggleMinority: (label: string) => void
+  ensureNationalityOptions: () => Promise<void>
 }
 
-import type { AnyValue } from '../../lib/types'
+import type { ConnectDoc, PoliciesDoc, RegistrationOptionsDoc } from '../../../shared/contracts'
 import { useDocument } from '../../lib/documents'
 import { Button } from '../ui'
 import { DatePicker, FieldError, MultiSelectDropdown, SearchableSelect } from '../FormControls'
-import { asOptions, fieldClass, checkClass, loadPhoneSupport } from './helpers'
+import {
+  asOptions,
+  fieldClass,
+  checkClass,
+  loadPhoneSupport,
+  type RegistrationFormProps,
+} from './helpers'
 import { PhoneField, PolicyLink, WgInterestsSection } from './shared'
 import { GuardianPathway } from './GuardianPathway'
 
@@ -39,9 +36,9 @@ export function RegisterIndividualForm({
   ensureCountryOptions,
   ensureNationalityOptions,
 }: RegisterIndividualFormProps) {
-  const { doc: policiesDoc } = useDocument('policies')
-  const { doc: connect } = useDocument('connect')
-  const { doc: regOptions } = useDocument('registration-options')
+  const { doc: policiesDoc } = useDocument<PoliciesDoc>('policies')
+  const { doc: connect } = useDocument<ConnectDoc>('connect')
+  const { doc: regOptions } = useDocument<RegistrationOptionsDoc>('registration-options')
   const membershipEmail = connect?.MEMBERSHIP_CONTACT_EMAIL
   const POLICY_BY_SLUG = policiesDoc?.POLICY_BY_SLUG || {}
   const GENDER_OPTIONS = asOptions(regOptions?.genders || [])
@@ -72,7 +69,7 @@ export function RegisterIndividualForm({
       <section className="card authSection">
         <h2 className="authSectionTitle">How old are you? *</h2>
         <div className="authChoiceGrid">
-          {AGE_BAND_OPTIONS.map((opt: AnyValue) => (
+          {AGE_BAND_OPTIONS.map((opt) => (
             <label
               key={opt.value}
               className={`authChoice ${form.ageBand === opt.value ? 'active' : ''}`}
@@ -81,7 +78,7 @@ export function RegisterIndividualForm({
                 type="radio"
                 name="ageBand"
                 checked={form.ageBand === opt.value}
-                onChange={() => setForm((f: AnyValue) => ({ ...f, ageBand: opt.value }))}
+                onChange={() => setForm((f) => ({ ...f, ageBand: opt.value }))}
               />
               <strong>{opt.label}</strong>
             </label>
@@ -108,7 +105,7 @@ export function RegisterIndividualForm({
                 variant="secondary"
                 sm
                 onClick={() => {
-                  setForm((f: AnyValue) => ({
+                  setForm((f) => ({
                     ...f,
                     entityType: 'organization',
                   }))
@@ -354,7 +351,7 @@ export function RegisterIndividualForm({
                   name="ngoStat"
                   checked={form.memberOfAccreditedNgo === 'yes'}
                   onChange={() =>
-                    setForm((f: AnyValue) => ({
+                    setForm((f) => ({
                       ...f,
                       memberOfAccreditedNgo: 'yes',
                     }))
@@ -370,7 +367,7 @@ export function RegisterIndividualForm({
                   name="ngoStat"
                   checked={form.memberOfAccreditedNgo === 'no'}
                   onChange={() =>
-                    setForm((f: AnyValue) => ({
+                    setForm((f) => ({
                       ...f,
                       memberOfAccreditedNgo: 'no',
                     }))

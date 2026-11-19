@@ -1,6 +1,6 @@
 'use client'
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { Doc } from '../lib/types'
 import { useEffect, useRef, useState } from 'react'
 import {
   TbCircleCheck as CheckCircle2,
@@ -11,7 +11,15 @@ import {
   TbUsers as Users,
   TbX as X,
 } from 'react-icons/tb'
-import { apiGet, apiPatch, apiPost, useApi } from '../lib/api'
+import {
+  apiGet,
+  apiPatch,
+  apiPost,
+  useApi,
+  errorMessage,
+  fieldErrors,
+  hasFieldErrors,
+} from '../lib/api'
 import { useWorkingGroups } from '../lib/workingGroups'
 import { formatDateTime } from '../lib/time'
 import { Async, Button, Empty, ErrorCard, PageHeader, Section } from '../components/ui'
@@ -98,8 +106,8 @@ function Desk({ reach, drafts, reload }: { reach: Doc; drafts: Doc[]; reload: ()
     try {
       await task()
     } catch (e) {
-      setFields((e as AnyValue).fields || {})
-      setError((e as AnyValue).fields ? null : (e as AnyValue).message)
+      setFields(fieldErrors(e))
+      setError(hasFieldErrors(e) ? null : errorMessage(e))
     } finally {
       setBusy(null)
     }
@@ -392,7 +400,7 @@ function DraftRow({
       await apiPost(`/member/mail/drafts/${draft.id}/${path}`, {})
       reload()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
       setBusy(false)
     }
   }

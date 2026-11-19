@@ -1,22 +1,24 @@
 interface AdminDialogProps {
   title: string
   children?: import('react').ReactNode
-  onClose?: AnyValue
+  onClose: () => void
 }
 
 interface AccountManagerProps {
-  account?: AnyValue
-  onClose?: AnyValue
-  onChanged?: AnyValue
-  onReset?: AnyValue
+  /** A row of the admin account list, not the signed-in member. */
+  account: AccountView
+  onClose: () => void
+  onChanged: () => Promise<void>
+  onReset: (result: AdminResetResult) => void
 }
 
 interface ResetHandoffProps {
-  reset?: AnyValue
-  onClose?: AnyValue
+  reset: AdminResetResult
+  onClose: () => void
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { AccountView } from '../../lib/domain'
+import type { AdminAccountsResponse, AdminResetResult, AuditEntry } from '../../shared/contracts'
 import { formatDateTime } from '../lib/time'
 import { WEBSITE_PERMISSIONS } from '../../shared/protocol'
 import { optionLabel as labelFor, useContentOptionLabels } from '../lib/documents'
@@ -33,7 +35,7 @@ import {
   TbSettings as Settings2,
   TbShieldCheck as ShieldCheck,
 } from 'react-icons/tb'
-import { apiGet, apiPatch, apiPost } from '../lib/api'
+import { apiGet, apiPatch, apiPost, errorMessage } from '../lib/api'
 import {
   A,
   Button,
@@ -108,7 +110,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
   const [error, setError] = useState('')
   const reasonReady = reason.trim().length >= 8
 
-  const run = async (key: AnyValue, request: AnyValue) => {
+  const run = async <T,>(key: string, request: () => Promise<T>) => {
     setBusy(key)
     setError('')
     try {
@@ -116,7 +118,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
       await onChanged()
       return result
     } catch (requestError) {
-      setError((requestError as AnyValue).message)
+      setError(errorMessage(requestError))
       return null
     } finally {
       setBusy('')
@@ -131,7 +133,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
       }),
     )
 
-  const toggleTeamRole = (teamRole: AnyValue) => {
+  const toggleTeamRole = (teamRole: string) => {
     const enabled = !account.teamRoles?.includes(teamRole)
     return run(teamRole, () =>
       apiPost(`/member/admin/accounts/${account.id}/team-role`, {
@@ -144,7 +146,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
 
   const issueReset = async () => {
     const result = await run('reset', () =>
-      apiPost(`/member/admin/accounts/${account.id}/reset-link`, { reason }),
+      apiPost<AdminResetResult>(`/member/admin/accounts/${account.id}/reset-link`, { reason }),
     )
     if (result) {
       onClose()
@@ -184,7 +186,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
         />
         <Button
           variant="secondary"
-          disabled={!reasonReady || busy || status === account.membershipStatus}
+          disabled={!reasonReady || Boolean(busy) || status === account.membershipStatus}
           onClick={updateStatus}
         >
           <ShieldCheck size={16} aria-hidden />
@@ -203,7 +205,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
                 key={teamRole}
                 sm
                 variant={assigned ? 'secondary' : 'ghost'}
-                disabled={!reasonReady || busy}
+                disabled={!reasonReady || Boolean(busy)}
                 onClick={() => toggleTeamRole(teamRole)}
               >
                 {busy === teamRole ? 'Updating…' : `${assigned ? 'Remove' : 'Assign'} ${label}`}
@@ -219,7 +221,7 @@ function AccountManager({ account, onClose, onChanged, onReset }: AccountManager
       </div>
 
       <div className="adminDialogFooter">
-        <Button variant="ghost" disabled={!reasonReady || busy} onClick={issueReset}>
+        <Button variant="ghost" disabled={!reasonReady || Boolean(busy)} onClick={issueReset}>
           <KeyRound size={16} aria-hidden />
           {busy === 'reset' ? 'Issuing…' : 'Issue password reset'}
         </Button>
@@ -254,9 +256,9 @@ function ResetHandoff({ reset, onClose }: ResetHandoffProps) {
 }
 
 export function Admin() {
-  const [composer, setComposer] = useState<AnyValue>(null)
-  const [data, setData] = useState<AnyValue>(null)
-  const [audit, setAudit] = useState<AnyValue[]>([])
+  const [composer, setComposer] = useState<'email' | 'push' | null>(null)
+  const [data, setData] = useState<AdminAccountsResponse | null>(null)
+  const [audit, setAudit] = useState<AuditEntry[]>([])
   const [error, setError] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -266,8 +268,8 @@ export function Admin() {
   const [sort, setSort] = useState('newest')
   const [page, setPage] = useState(1)
   const [nonce, setNonce] = useState(0)
-  const [selected, setSelected] = useState<AnyValue>(null)
-  const [reset, setReset] = useState<AnyValue>(null)
+  const [selected, setSelected] = useState<AccountView | null>(null)
+  const [reset, setReset] = useState<AdminResetResult | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 250)
@@ -290,9 +292,9 @@ export function Admin() {
       pageSize: '12',
     })
     setError('')
-    apiGet(`/member/admin/accounts?${params}`)
+    apiGet<AdminAccountsResponse>(`/member/admin/accounts?${params}`)
       .then((result) => active && setData(result))
-      .catch((requestError) => active && setError(requestError.message))
+      .catch((requestError) => active && setError(errorMessage(requestError)))
     return () => {
       active = false
     }
@@ -300,10 +302,10 @@ export function Admin() {
 
   const loadAudit = async () => {
     try {
-      const history = await apiGet('/member/admin/audit?limit=30')
+      const history = await apiGet<{ items: AuditEntry[] }>('/member/admin/audit?limit=30')
       setAudit(history.items || [])
     } catch (requestError) {
-      setError((requestError as AnyValue).message)
+      setError(errorMessage(requestError))
     }
   }
 
@@ -389,7 +391,7 @@ export function Admin() {
       >
         {data.items.length ? (
           <div className="cardGrid">
-            {data.items.map((account: Doc) => (
+            {data.items.map((account) => (
               <article key={account.id} className="card cardTight adminAccount">
                 <div>
                   <h3>{account.organizationName || account.name}</h3>
@@ -412,7 +414,7 @@ export function Admin() {
                     <Settings2 size={16} aria-hidden />
                     Manage
                   </Button>
-                  {account.teamRoles?.length > 0 && (
+                  {account.teamRoles.length > 0 && (
                     <span className="metaMuted">
                       {account.teamRoles.length} assigned{' '}
                       {account.teamRoles.length === 1
@@ -465,21 +467,14 @@ export function Admin() {
       <Section label="Governance audit" action={<span>Latest 30</span>}>
         <div className="stackSm">
           {audit.map((entry) => (
-            <div
-              key={entry.id || `${entry.createdAt}-${entry.action}`}
-              className="card cardTight auditRow"
-            >
+            <div key={entry.id} className="card cardTight auditRow">
               <div>
                 <strong>{entry.action}</strong>
                 <p className="meta">
-                  {entry.target_type || entry.targetType}:{' '}
-                  {entry.target_id || entry.targetId || '—'} ·{' '}
-                  {entry.actor_email || entry.actorId || 'system'}
+                  {entry.targetType}: {entry.targetId || '—'} · {entry.actorEmail || 'system'}
                 </p>
               </div>
-              <time className="metaMuted">
-                {formatDateTime(entry.created_at || entry.createdAt)}
-              </time>
+              <time className="metaMuted">{formatDateTime(entry.createdAt)}</time>
             </div>
           ))}
           {!audit.length && <p className="metaMuted">No audited governance changes yet.</p>}

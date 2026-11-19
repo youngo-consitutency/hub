@@ -1,10 +1,21 @@
-import type { AnyValue, Doc } from '../lib/types'
-import { createElement } from 'react'
+import type { DirectoryContact } from '../../shared/contracts'
+import type {
+  ClosingItem,
+  CoySummary,
+  EventSummary,
+  GroupSummary,
+  SubmissionSummary,
+} from '../../shared/contracts'
+import { createElement, type ElementType, type MouseEventHandler } from 'react'
+import type { FilterState } from '../lib/filterState'
+
+type ButtonClick = MouseEventHandler<HTMLButtonElement>
+
 interface EntityHeaderProps {
   title?: string
-  status?: AnyValue
-  statusFilterState?: AnyValue
-  onStatusFilter?: AnyValue
+  status?: string | null
+  statusFilterState?: FilterState
+  onStatusFilter?: ButtonClick
   children?: import('react').ReactNode
 }
 
@@ -16,61 +27,53 @@ interface LinkedEntityCardProps {
 }
 
 interface CardScheduleProps {
-  iso?: string
+  iso: string
   label?: string
 }
 
 interface EventCardProps {
-  event?: AnyValue
+  event: EventSummary
 }
 
 interface SubmissionCardProps {
-  sub?: AnyValue
-  statusFilterState?: AnyValue
-  groupFilterState?: AnyValue
-  onStatusFilter?: AnyValue
-  onGroupFilter?: AnyValue
+  sub: SubmissionSummary
+  statusFilterState?: FilterState
+  groupFilterState?: FilterState
+  onStatusFilter?: ButtonClick
+  onGroupFilter?: ButtonClick
 }
 
 interface ClosingCardProps {
-  item?: AnyValue
+  item: ClosingItem
 }
 
 interface CoyCardProps {
-  coy?: AnyValue
-  typeFilterState?: AnyValue
-  regionFilterState?: AnyValue
-  onTypeFilter?: AnyValue
-  onRegionFilter?: AnyValue
+  coy: CoySummary
+  typeFilterState?: FilterState
+  regionFilterState?: FilterState
+  onTypeFilter?: ButtonClick
+  onRegionFilter?: ButtonClick
 }
 
 interface GroupCardProps {
-  group?: AnyValue
+  group: GroupSummary
   href?: string
-  statusLabel?: AnyValue
-  statusIcon?: AnyValue
-  topicFilterState?: AnyValue
-  onTopicFilter?: AnyValue
-}
-
-interface PersonCardProps {
-  person?: AnyValue
-  onTagClick?: AnyValue
-  onOpen?: AnyValue
-  expanded?: boolean
+  statusLabel?: string | null
+  statusIcon?: ElementType
+  topicFilterState?: FilterState
+  onTopicFilter?: ButtonClick
 }
 
 interface ContactCardProps {
-  contact?: AnyValue
+  contact: DirectoryContact
 }
 
 interface WorkingGroupContactCardProps {
-  contact?: AnyValue
+  contact: DirectoryContact
 }
 
 import { A, StatusChip, FilterChip, LifecycleTiming } from './ui'
 import { DateStamp } from './DateStamp'
-import { MemberAvatar } from './MemberAvatar'
 import { fmtMoment, fmtDateRange } from '../lib/time'
 import { useWorkingGroups } from '../lib/workingGroups'
 import { workingGroupIcon } from '../lib/workingGroupIcons'
@@ -83,19 +86,17 @@ import {
   TbUsersGroup as UsersRound,
   TbArrowUpRight as ArrowUpRight,
   TbBuildingCommunity as Building,
-  TbBriefcase as Briefcase,
   TbGavel as Gavel,
   TbGlobe as Globe,
   TbMap as Map,
   TbMessageCircle as MessageCircle,
   TbPresentation as Presentation,
   TbSitemap as Network,
-  TbTag as Tag,
   TbMail as Mail,
   TbPhone as Phone,
 } from 'react-icons/tb'
 
-const EVENT_ICONS = {
+const EVENT_ICONS: Record<string, ElementType> = {
   constituency_call: UsersRound,
   wg_call: UsersRound,
   wgf: MessageCircle,
@@ -104,9 +105,9 @@ const EVENT_ICONS = {
   coordination: Network,
 }
 
-const COY_ICONS = { lcoy: MapPin, rcoy: Map, coy: Globe }
+const COY_ICONS: Record<string, ElementType> = { lcoy: MapPin, rcoy: Map, coy: Globe }
 
-export const EVENT_LABEL = {
+export const EVENT_LABEL: Record<string, string> = {
   constituency_call: 'Constituency',
   wg_call: 'WG',
   wgf: 'Forum',
@@ -116,7 +117,7 @@ export const EVENT_LABEL = {
   coordination: 'Coordination',
 }
 
-const COY_LABEL = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
+const COY_LABEL: Record<string, string> = { lcoy: 'LCOY', rcoy: 'RCOY', coy: 'COY' }
 
 function EntityHeader({
   title,
@@ -171,7 +172,7 @@ export function CardSchedule({ iso, label }: CardScheduleProps) {
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const TypeIcon = (EVENT_ICONS as AnyValue)[event.type] || CalendarDays
+  const TypeIcon = EVENT_ICONS[event.type] || CalendarDays
   const GroupIcon = event.wg?.slug ? workingGroupIcon(event.wg.slug) : null
   return (
     <article className="card entityCard eventCard linkedEntityCard">
@@ -183,9 +184,7 @@ export function EventCard({ event }: EventCardProps) {
       <div className="eventCardIdentity">
         <DateStamp iso={event.startsAt} />
         <EntityHeader title={event.title}>
-          <FilterChip icon={TypeIcon}>
-            {(EVENT_LABEL as AnyValue)[event.type] || event.type}
-          </FilterChip>
+          <FilterChip icon={TypeIcon}>{EVENT_LABEL[event.type] || event.type}</FilterChip>
           {event.wg && <FilterChip icon={GroupIcon}>{event.wg.name}</FilterChip>}
         </EntityHeader>
       </div>
@@ -248,12 +247,12 @@ export function CoyCard({
   onRegionFilter,
 }: CoyCardProps) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
-  const CoyIcon = (COY_ICONS as AnyValue)[coy.type] || Globe
+  const CoyIcon = COY_ICONS[coy.type] || Globe
   return (
     <LinkedEntityCard href={`/coys/${coy.slug}`} label={`Open ${coy.title}`} className="coyCard">
       <EntityHeader title={coy.title} status={coyDisplayStatus(coy)}>
         <FilterChip state={typeFilterState} icon={CoyIcon} onClick={onTypeFilter}>
-          {(COY_LABEL as AnyValue)[coy.type]}
+          {COY_LABEL[coy.type]}
         </FilterChip>
         {coy.region && (
           <FilterChip
@@ -297,7 +296,7 @@ export function GroupCard({
   const wg = useWorkingGroups()
   const topicLabel = group.topic ? wg.topicLabel(group.topic) : null
   return (
-    <div className="card cardTight groupCard entityCard">
+    <div className="card cardTight groupCard entityCard" data-wg={group.slug}>
       <A
         href={destination}
         className="groupCardLinkOverlay"
@@ -338,114 +337,8 @@ export function GroupCard({
   )
 }
 
-export function PersonCard({ person, onTagClick, onOpen, expanded = false }: PersonCardProps) {
-  return (
-    <article className={`card cardTight personCard ${expanded ? 'personDetail' : ''}`}>
-      <header className="personCardHeader">
-        <MemberAvatar person={person} size="lg" />
-        <div>
-          <h3>
-            {onOpen ? (
-              <button
-                className="personNameButton"
-                type="button"
-                aria-haspopup="dialog"
-                onClick={onOpen}
-              >
-                {person.displayName}
-              </button>
-            ) : (
-              person.displayName
-            )}
-          </h3>
-          {person.pronouns && <p className="metaMuted">{person.pronouns}</p>}
-        </div>
-      </header>
-      {person.headline && <p className="personHeadline">{person.headline}</p>}
-      {person.bio && <p className="meta personBio">{person.bio}</p>}
-      {(person.country || person.organization) && (
-        <div className="personConnections">
-          {person.country && (
-            <p className="entityCardMetaRow">
-              <MapPin size={15} aria-hidden />
-              <span>{person.country}</span>
-            </p>
-          )}
-          {person.organization?.name && (
-            <p className="entityCardMetaRow">
-              <Building size={15} aria-hidden />
-              <span>
-                {person.organization.name}
-                {person.organization.seatRole ? ` · ${person.organization.seatRole}` : ''}
-              </span>
-            </p>
-          )}
-        </div>
-      )}
-      {(person.teams?.length > 0 || person.platformRole) && (
-        <div className="personRoles" aria-label="Hub roles">
-          <Briefcase size={15} aria-hidden />
-          <span>
-            {[
-              ...person.teams.map((team: AnyValue) => team.name),
-              person.platformRole?.replaceAll('_', ' '),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        </div>
-      )}
-      {person.workingGroups?.length > 0 && (
-        <div className="entityCardTags personGroupTags" aria-label="Working groups">
-          {person.workingGroups.slice(0, expanded ? undefined : 5).map((group: Doc) => {
-            return (
-              <A
-                key={group.slug}
-                href={`/groups/${group.slug}`}
-                className="chip chip-neutral personLinkChip"
-              >
-                {createElement(workingGroupIcon(group.slug), {
-                  size: 13,
-                  strokeWidth: 1.75,
-                  'aria-hidden': true,
-                })}
-                {group.name}
-                {['contact', 'lead'].includes(group.role)
-                  ? ` · ${group.role === 'contact' ? 'Contact Point' : 'Legacy access'}`
-                  : ''}
-              </A>
-            )
-          })}
-        </div>
-      )}
-      {person.expertiseTags?.length > 0 && (
-        <div className="entityCardTags personExpertiseTags" aria-label="Skills and topics">
-          {person.expertiseTags.map((tag: AnyValue) =>
-            onTagClick ? (
-              <button
-                key={tag}
-                type="button"
-                className="chip chip-accent personTagButton"
-                onClick={() => onTagClick(tag)}
-              >
-                <Tag size={13} strokeWidth={1.75} aria-hidden />
-                {tag}
-              </button>
-            ) : (
-              <span key={tag} className="chip chip-accent">
-                <Tag size={13} strokeWidth={1.75} aria-hidden />
-                {tag}
-              </span>
-            ),
-          )}
-        </div>
-      )}
-    </article>
-  )
-}
-
-const holderNames = (contact: Doc): string[] =>
-  (contact.holders || []).map((holder: Doc) => holder.displayName).filter(Boolean)
+const holderNames = (contact: DirectoryContact): string[] =>
+  (contact.holders || []).flatMap((holder) => (holder.displayName ? [holder.displayName] : []))
 
 export function ContactCard({ contact }: ContactCardProps) {
   const rawChannel = contact.channelValue?.trim()
@@ -505,7 +398,7 @@ export function ContactCard({ contact }: ContactCardProps) {
 }
 
 export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProps) {
-  const slug = contact.wg?.slug || contact.wg
+  const slug = contact.wg?.slug
   const name = contact.wg?.name || contact.roleTitle.replace(/\s+WG.*$/i, '')
   // holders come from authority records on the server, never from the row's text
   const holders = holderNames(contact)
@@ -518,7 +411,7 @@ export function WorkingGroupContactCard({ contact }: WorkingGroupContactCardProp
       <div className="workingGroupContactCopy">
         <div className="workingGroupContactTitle">
           <span className="workingGroupContactIcon" aria-hidden>
-            {createElement(workingGroupIcon(slug), { size: 18, strokeWidth: 1.75 })}
+            {createElement(workingGroupIcon(slug ?? ''), { size: 18, strokeWidth: 1.75 })}
           </span>
           <h3>{name}</h3>
         </div>

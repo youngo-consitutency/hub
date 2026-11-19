@@ -2,12 +2,19 @@
  * "Add this event" deep links for major calendar clients via the
  * calendar-link package. ICS remains for Apple Calendar / desktop Outlook.
  */
-import type { AnyValue } from './types'
 import { google, outlook, office365 } from 'calendar-link'
 
 /** "Add this event" deep links via the calendar-link package. */
 
-const toCalEvent = (event: AnyValue) => ({
+export type CalendarLinkEvent = {
+  title?: string | null
+  startsAt: string | number | Date
+  endsAt: string | number | Date
+  description?: string | null
+  meetingUrl?: string | null
+}
+
+const toCalEvent = (event: CalendarLinkEvent) => ({
   title: event.title || 'YOUNGO event',
   start: new Date(event.startsAt).toISOString(),
   end: new Date(event.endsAt).toISOString(),
@@ -16,26 +23,26 @@ const toCalEvent = (event: AnyValue) => ({
 })
 
 /** Google Calendar "create event" template URL. */
-export function googleCalendarUrl(event: AnyValue) {
+export function googleCalendarUrl(event: CalendarLinkEvent) {
   return google(toCalEvent(event))
 }
 
 /** Outlook on the web (live.com) compose deep link. */
-export function outlookWebUrl(event: AnyValue) {
+export function outlookWebUrl(event: CalendarLinkEvent) {
   return outlook(toCalEvent(event))
 }
 
 /** Office 365 Outlook web. */
-export function outlookOfficeUrl(event: AnyValue) {
+export function outlookOfficeUrl(event: CalendarLinkEvent) {
   return office365(toCalEvent(event))
 }
 
-export function icsDownloadPath(slug: AnyValue) {
+export function icsDownloadPath(slug: string) {
   return `/ics/event/${encodeURIComponent(slug)}.ics`
 }
 
 /** Absolute webcal URL for subscribe feeds (Apple / some clients). */
-export function webcalFeedUrl(path: AnyValue) {
+export function webcalFeedUrl(path: string) {
   if (typeof window === 'undefined') return path
   const abs = new URL(path, window.location.origin)
   abs.protocol = 'webcal:'
@@ -50,7 +57,7 @@ export function googleAddByUrlPage() {
  * One-click Google Calendar subscribe. Google adds the ICS URL to the
  * signed-in Google account — the Hub never receives Google credentials.
  */
-export function googleSubscribeUrl(path: AnyValue, origin?: AnyValue) {
+export function googleSubscribeUrl(path: string, origin?: string | null) {
   const base =
     origin ||
     (typeof window !== 'undefined' && window.location?.origin) ||

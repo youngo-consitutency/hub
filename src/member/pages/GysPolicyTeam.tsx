@@ -1,13 +1,19 @@
 interface CountListProps {
-  title?: string
-  items?: AnyValue
+  title: string
+  items?: GysCount[]
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type {
+  GysCount,
+  GysImportPreview,
+  GysOverview,
+  GysSynthesisBullet,
+} from '../../shared/contracts'
+import type { Doc } from '../lib/types'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbFileText as StatementIcon } from 'react-icons/tb'
-import { useState } from 'react'
-import { apiPatch, apiPost, useApi } from '../lib/api'
+import { useState, type FormEvent } from 'react'
+import { apiPatch, apiPost, useApi, errorMessage } from '../lib/api'
 import {
   A,
   Async,
@@ -31,7 +37,7 @@ import {
 } from 'react-icons/tb'
 import { DestinationIcon } from '../components/DestinationLink'
 
-const NEXT = {
+const NEXT: Record<string, string[]> = {
   submitted: ['triaged', 'rejected'],
   triaged: ['drafting', 'rejected'],
   drafting: ['needs_review'],
@@ -47,7 +53,7 @@ function CountList({ title, items }: CountListProps) {
     <div className="gysCountBlock">
       <strong>{title}</strong>
       <ul>
-        {items.slice(0, 8).map((item: Doc) => (
+        {items.slice(0, 8).map((item) => (
           <li key={item.label}>
             <span>{item.label}</span>
             <span className="mono">{item.count}</span>
@@ -59,16 +65,16 @@ function CountList({ title, items }: CountListProps) {
 }
 
 export function GysPolicyTeam() {
-  const [panel, setPanel] = useState<AnyValue>(null)
-  const query = useApi('/member/team/gys/overview')
+  const [panel, setPanel] = useState<'contribution' | 'import' | null>(null)
+  const query = useApi<GysOverview>('/member/team/gys/overview')
   const [draft, setDraft] = useState<Doc>({ title: '', body: '', theme: '' })
   const [csvText, setCsvText] = useState('')
-  const [preview, setPreview] = useState<AnyValue>(null)
+  const [preview, setPreview] = useState<GysImportPreview | null>(null)
   const [busy, setBusy] = useState(false)
-  const [actionError, setActionError] = useState<AnyValue>(null)
-  const [importMessage, setImportMessage] = useState<AnyValue>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [importMessage, setImportMessage] = useState<string | null>(null)
 
-  const create = async (event: AnyValue) => {
+  const create = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setBusy(true)
     try {
@@ -78,37 +84,37 @@ export function GysPolicyTeam() {
       setPanel(null)
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(false)
     }
   }
 
-  const move = async (id: AnyValue, status: AnyValue) => {
+  const move = async (id: number, status: string) => {
     setBusy(true)
     try {
       setActionError(null)
       await apiPatch(`/member/team/gys/contributions/${id}`, { status })
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(false)
     }
   }
 
-  const promoteBullet = async (bullet: AnyValue) => {
+  const promoteBullet = async (bullet: GysSynthesisBullet) => {
     setBusy(true)
     try {
       setActionError(null)
       await apiPost('/member/team/gys/contributions', {
         title: bullet.theme ? `${bullet.theme} — synthesis demand` : 'Synthesis demand',
         theme: bullet.theme || '',
-        body: `${bullet.text}\n\nCited inputs: ${bullet.citations.map((c: AnyValue) => c.title).join('; ')}`,
+        body: `${bullet.text}\n\nCited inputs: ${bullet.citations.map((c) => c.title).join('; ')}`,
       })
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -119,13 +125,13 @@ export function GysPolicyTeam() {
     setImportMessage(null)
     try {
       setActionError(null)
-      const result = await apiPost('/member/team/gys/inputs/preview', {
+      const result = await apiPost<GysImportPreview>('/member/team/gys/inputs/preview', {
         csvText,
       })
       setPreview(result)
     } catch (error) {
       setPreview(null)
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -149,7 +155,7 @@ export function GysPolicyTeam() {
       setPreview(null)
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -188,7 +194,7 @@ export function GysPolicyTeam() {
         description="Turn youth inputs into a reviewed statement with a visible handover."
       />
       <Async query={query} skeletons={5}>
-        {(data: Doc) => (
+        {(data) => (
           <>
             <div className="cycleBanner card">
               <div>
@@ -317,14 +323,14 @@ export function GysPolicyTeam() {
                       items={data.synthesis.counts?.bySubmitterType}
                     />
                   </div>
-                  {data.synthesis.bullets?.length > 0 && (
+                  {(data.synthesis.bullets?.length ?? 0) > 0 && (
                     <ul className="gysSynthesisBullets">
-                      {data.synthesis.bullets.map((bullet: AnyValue, index: number) => (
+                      {data.synthesis.bullets?.map((bullet, index) => (
                         <li key={`${bullet.citations[0]?.contributionId}-${index}`}>
                           <div>
                             <p>{bullet.text}</p>
                             <p className="meta">
-                              Cited: {bullet.citations.map((c: AnyValue) => c.title).join(', ')}
+                              Cited: {bullet.citations.map((c) => c.title).join(', ')}
                             </p>
                           </div>
                           <Button
@@ -346,7 +352,7 @@ export function GysPolicyTeam() {
 
             <Section label="Production cycle">
               <ol className="workflowSteps">
-                {data.process.map((step: AnyValue, index: number) => (
+                {data.process.map((step, index) => (
                   <li key={step.step} className={index === 0 ? 'active' : ''}>
                     <span>{index + 1}</span>
                     <div>
@@ -421,15 +427,15 @@ export function GysPolicyTeam() {
                           label={`Change status for ${item.title}`}
                           hideLabel
                           className="queueSelect"
-                          disabled={busy || !(NEXT as AnyValue)[item.status]?.length}
+                          disabled={busy || !NEXT[item.status]?.length}
                           value={item.status}
-                          onChange={(status: AnyValue) => move(item.id, status)}
+                          onChange={(status: string) => move(item.id, status)}
                           options={[
                             {
                               value: item.status,
                               label: item.status.replaceAll('_', ' '),
                             },
-                            ...((NEXT as AnyValue)[item.status] || []).map((status: AnyValue) => ({
+                            ...(NEXT[item.status] || []).map((status) => ({
                               value: status,
                               label: status.replaceAll('_', ' '),
                             })),

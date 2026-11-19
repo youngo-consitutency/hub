@@ -1,4 +1,5 @@
 import { DecisionPage } from './DecisionPage.tsx'
+import { Arrow } from '../../components/dirIcons'
 import { bodyRoles } from '../../../shared/protocol'
 import { useContentOptionLabels } from '../../lib/documents'
 import { SidePanel } from '../../components/SidePanel.tsx'
@@ -403,7 +404,7 @@ function Workspace({ tab }: { tab: Tab }) {
                           : teamLabels[a.scopeId] || a.scopeId.replaceAll('_', ' ')}
                       </p>
                       <p className="meta">
-                        {formatDate(a.startsAt)} → {formatDate(a.endsAt)} · {a.status}
+                        {formatDate(a.startsAt)} <Arrow /> {formatDate(a.endsAt)} · {a.status}
                       </p>
                       {a.evidence && <p>{a.evidence}</p>}
                       {data.canAdminister && a.status === 'active' && (

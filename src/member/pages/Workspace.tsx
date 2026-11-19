@@ -2,9 +2,10 @@ interface WorkspaceProps {
   slug: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { WgActivity } from '../../shared/contracts'
+import type { WgProgressView, WorkspaceGroup } from '../../shared/contracts'
 import { useCallback, useEffect, useState } from 'react'
-import { apiGet, apiPost } from '../lib/api'
+import { apiGet, apiPost, errorMessage } from '../lib/api'
 import { useApi } from '../lib/api'
 import {
   Button,
@@ -29,8 +30,13 @@ import {
 } from 'react-icons/tb'
 
 export function Workspace({ slug }: WorkspaceProps) {
-  const groupQuery = useApi(`/groups/${encodeURIComponent(slug)}`, [slug])
-  const [state, setState] = useState<Doc>({
+  const groupQuery = useApi<WorkspaceGroup>(`/groups/${encodeURIComponent(slug)}`)
+  const [state, setState] = useState<{
+    progress: WgProgressView | null
+    activities: WgActivity[]
+    loading: boolean
+    error: string | null
+  }>({
     progress: null,
     activities: [],
     loading: true,
@@ -45,7 +51,9 @@ export function Workspace({ slug }: WorkspaceProps) {
 
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
-    apiGet(`/member/workspace/${encodeURIComponent(slug)}`)
+    apiGet<{ progress: WgProgressView | null; activities?: WgActivity[] }>(
+      `/member/workspace/${encodeURIComponent(slug)}`,
+    )
       .then((data) => {
         setState({
           progress: data.progress,
@@ -62,7 +70,7 @@ export function Workspace({ slug }: WorkspaceProps) {
           progress: null,
           activities: [],
           loading: false,
-          error: e.message,
+          error: errorMessage(e),
         }),
       )
   }, [slug])
@@ -83,13 +91,16 @@ export function Workspace({ slug }: WorkspaceProps) {
   const saveOnboard = async () => {
     setSaving(true)
     try {
-      const res = await apiPost(`/member/workspace/${encodeURIComponent(slug)}/onboard`, {
-        presentationOk,
-        rulesOk,
-      })
+      const res = await apiPost<{ progress: WgProgressView | null }>(
+        `/member/workspace/${encodeURIComponent(slug)}/onboard`,
+        {
+          presentationOk,
+          rulesOk,
+        },
+      )
       setState((s) => ({ ...s, progress: res.progress }))
     } catch (e) {
-      setState((s) => ({ ...s, error: (e as AnyValue).message }))
+      setState((s) => ({ ...s, error: errorMessage(e) }))
     } finally {
       setSaving(false)
     }
@@ -99,10 +110,12 @@ export function Workspace({ slug }: WorkspaceProps) {
     <div className="workspacePage">
       <BackLink href="/groups">Working groups</BackLink>
       <Async query={groupQuery} skeletons={2}>
-        {(group: Doc) => {
+        {(group) => {
           return (
             <>
-              <PageHeader title={group.name} description={group.focusLine} />
+              <div data-wg={group.slug}>
+                <PageHeader title={group.name} description={group.focusLine ?? undefined} />
+              </div>
 
               {state.loading && <Skeletons n={3} />}
               {state.error && <ErrorCard message={state.error} onRetry={load} />}
@@ -196,7 +209,7 @@ export function Workspace({ slug }: WorkspaceProps) {
                             <span>1</span> Group introduction
                           </legend>
                           <div className="workspaceIntroduction">
-                            {onboard.presentation.map((paragraph: AnyValue) => (
+                            {onboard.presentation.map((paragraph: string) => (
                               <p key={paragraph} className="meta mandatePara">
                                 {paragraph}
                               </p>
@@ -310,8 +323,8 @@ export function Workspace({ slug }: WorkspaceProps) {
                   <Section label="WG activities">
                     {state.activities?.length ? (
                       <div className="cardGrid">
-                        {state.activities.map((activity: AnyValue) => (
-                          <WgActivityCard key={(activity as AnyValue).id} activity={activity} />
+                        {state.activities.map((activity) => (
+                          <WgActivityCard key={activity.id} activity={activity} />
                         ))}
                       </div>
                     ) : (

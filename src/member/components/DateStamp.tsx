@@ -14,9 +14,10 @@ export function DateStamp({ iso }: DateStampProps) {
   const date = new Date(iso)
   if (!iso || Number.isNaN(date.getTime())) return null
   return (
-    <time className="dateStamp" dateTime={iso} aria-label={dateFormat.format(date)}>
-      <span>{monthFormat.format(date)}</span>
-      <strong>{date.getDate()}</strong>
+    <time className="dateStamp" dateTime={iso}>
+      <span aria-hidden>{monthFormat.format(date)}</span>
+      <strong aria-hidden>{date.getDate()}</strong>
+      <span className="srOnly">{dateFormat.format(date)}</span>
     </time>
   )
 }

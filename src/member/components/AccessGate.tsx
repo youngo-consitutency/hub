@@ -2,12 +2,13 @@ interface AccessGateProps {
   children?: import('react').ReactNode
 }
 
-import type { AnyValue } from '../lib/types'
+import type { Account } from '../lib/types'
+import type { MembershipPolicyDoc } from '../../shared/contracts'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { hasAcknowledgedMembershipPolicy } from '../lib/membershipGate'
 import { useDocument } from '../lib/documents'
-import { apiGet } from '../lib/api'
+import { apiGet, errorStatus } from '../lib/api'
 import { clearSession } from '../lib/session'
 import { useAccount } from '../lib/accountContext'
 import { HUB_ROOT } from '../../lib/hubUrl'
@@ -54,11 +55,11 @@ export function AccessGate({ children }: AccessGateProps) {
   const { account, setAccount } = useAccount()
   const [sessionFailed, setSessionFailed] = useState(false)
   // The governing policy version lives in the CMS document, not the bundle.
-  const { doc: membershipPolicy } = useDocument('membership-policy')
+  const { doc: membershipPolicy } = useDocument<MembershipPolicyDoc>('membership-policy')
   const policyVersion = membershipPolicy?.POLICY_VERSION
 
   const handleAuthenticated = useCallback(
-    (acc: AnyValue) => {
+    (acc: Account) => {
       setAccount(acc)
       if (!inHub && (path === '/join' || path === '/signin')) navigate(HUB_ROOT)
     },
@@ -67,12 +68,12 @@ export function AccessGate({ children }: AccessGateProps) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const data = await apiGet('/auth/me')
+      const data = await apiGet<{ account: Account }>('/auth/me')
       setAccount(data.account)
       setSessionFailed(false)
     } catch (err) {
       // only a 401 ends the session; a blip or 5xx keeps the cached account
-      if ((err as AnyValue)?.status === 401) {
+      if (errorStatus(err) === 401) {
         clearSession()
         setAccount(null)
         setSessionFailed(false)
@@ -159,7 +160,7 @@ export function AccessGate({ children }: AccessGateProps) {
       return (
         <ChangePasswordGate
           account={account}
-          onChanged={(next: AnyValue) => {
+          onChanged={(next) => {
             if (next) {
               setAccount(next)
             } else {

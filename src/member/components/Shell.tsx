@@ -2,7 +2,6 @@ interface ShellProps {
   children?: import('react').ReactNode
 }
 
-import type { AnyValue, Doc } from '../lib/types'
 import { trackPointer } from '../lib/pointerGlow'
 import { mobileNavFor, navFor, viewerOf } from '../lib/routes'
 import { navigationActive as isActive } from '../lib/pageSections'
@@ -10,7 +9,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { A } from './ui'
 import { Brand } from './Brand'
-import { usePath } from '../lib/router'
+import { RailTip } from './RailTip'
+import { jumpTo, usePath } from '../lib/router'
 import { useAccount } from '../lib/accountContext'
 import { AlertSetupNotice } from './AlertSetupNotice'
 import { useSessionCheck } from './AccessGate'
@@ -19,9 +19,9 @@ import {
   TbMenu2 as Menu,
   TbUserCircle as UserCircle,
   TbRosetteDiscountCheck as BadgeCheck,
-  TbChevronRight as ChevronRight,
   TbHelpCircle as CircleHelp,
 } from 'react-icons/tb'
+import { TbChevronRight as ChevronRight } from './dirIcons'
 
 // The palette only renders on Cmd/Ctrl+K — keep it out of the shell chunk
 // and fetch it on first use instead of shipping it to every member.
@@ -31,8 +31,8 @@ export function Shell({ children }: ShellProps) {
   const path = usePath()
   const [sheet, setSheet] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const menuButtonRef = useRef<AnyValue>(null)
-  const sheetRef = useRef<AnyValue>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
   const { account } = useAccount()
   useEffect(() => {
     setSheet(false)
@@ -41,7 +41,7 @@ export function Shell({ children }: ShellProps) {
   // The shortcut lives here (not inside the palette) so it works before the
   // lazily imported palette chunk has arrived — the chunk mounts already open.
   useEffect(() => {
-    const onKey = (e: AnyValue) => {
+    const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen((open) => !open)
@@ -66,7 +66,7 @@ export function Shell({ children }: ShellProps) {
 
     ;(focusable()[0] as HTMLElement | undefined)?.focus()
 
-    const handleKeyboard = (event: AnyValue) => {
+    const handleKeyboard = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
         setSheet(false)
@@ -80,10 +80,10 @@ export function Shell({ children }: ShellProps) {
       const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()
-        ;(last as AnyValue).focus()
+        ;(last as HTMLElement).focus()
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault()
-        ;(first as AnyValue).focus()
+        ;(first as HTMLElement).focus()
       }
     }
 
@@ -106,9 +106,34 @@ export function Shell({ children }: ShellProps) {
   const nav = useMemo(() => navFor(viewer, path), [viewer, path])
   const mobilePrimaryNav = useMemo(() => mobileNavFor(viewer, path), [viewer, path])
 
+  // the Hub routes with pushState, so the browser announces nothing: set the title from the page
+  // heading, and after a navigation (not the first load) move focus there
+  const shownPath = useRef(path)
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const main = document.getElementById('main-content')
+      const heading = main?.querySelector<HTMLElement>('h1')
+      document.title = `${heading?.textContent?.trim() || 'Hub'} · YOUNGO Hub`
+      if (shownPath.current !== path) {
+        const target = heading ?? main
+        target?.setAttribute('tabindex', '-1')
+        target?.focus({ preventScroll: true })
+      }
+      shownPath.current = path
+    }, 150)
+    return () => window.clearTimeout(timer)
+  }, [path])
+
   return (
     <div className="shell" onPointerMove={trackPointer}>
-      <a className="skipLink" href="#main-content">
+      <a
+        className="skipLink"
+        href="#main-content"
+        onClick={(e) => {
+          e.preventDefault()
+          jumpTo('main-content')
+        }}
+      >
         Skip to main content
       </a>
       <nav
@@ -128,33 +153,34 @@ export function Shell({ children }: ShellProps) {
             <span className="navLabel">Search the Hub</span>
           </A>
         )}
-        {nav.map((group: Doc) => (
+        {nav.map((group) => (
           <div className="navGroup" key={group.section || 'home'}>
             {group.section && <p className="navSection">{group.section}</p>}
-            {group.items.map(({ href, label, icon: Icon }: AnyValue) => (
-              <A
-                key={href}
-                href={href}
-                className={`navItem ${isActive(path, href) ? 'active' : ''}`}
-                aria-current={isActive(path, href) ? 'page' : undefined}
-                title={label}
-              >
-                <Icon size={18} strokeWidth={1.75} aria-hidden />
-                <span className="navLabel">{label}</span>
-              </A>
+            {group.items.map(({ href, label, icon: Icon }) => (
+              <RailTip key={href} label={label}>
+                <A
+                  href={href}
+                  className={`navItem ${isActive(path, href) ? 'active' : ''}`}
+                  aria-current={isActive(path, href) ? 'page' : undefined}
+                >
+                  <Icon size={18} strokeWidth={1.75} aria-hidden />
+                  <span className="navLabel">{label}</span>
+                </A>
+              </RailTip>
             ))}
           </div>
         ))}
         <div className="sidebarFooter">
-          <A
-            href="/help"
-            className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
-            aria-current={isActive(path, '/help') ? 'page' : undefined}
-            title="Help"
-          >
-            <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
-            <span className="navLabel">Help</span>
-          </A>
+          <RailTip label="Help">
+            <A
+              href="/help"
+              className={`navItem sidebarHelpLink ${isActive(path, '/help') ? 'active' : ''}`}
+              aria-current={isActive(path, '/help') ? 'page' : undefined}
+            >
+              <CircleHelp size={18} strokeWidth={1.75} aria-hidden />
+              <span className="navLabel">Help</span>
+            </A>
+          </RailTip>
           {account && verified && (
             <A
               href="/profile"
@@ -164,7 +190,7 @@ export function Shell({ children }: ShellProps) {
               aria-current={isActive(path, '/profile') ? 'page' : undefined}
             >
               <span className="accountInitial" aria-hidden>
-                {account.name.trim().charAt(0).toUpperCase()}
+                {(account.name ?? '').trim().charAt(0).toUpperCase()}
               </span>
               <span className="accountChipHeader">
                 <span className="accountNameRow">
@@ -295,11 +321,11 @@ export function Shell({ children }: ShellProps) {
               )}
             </div>
             <div className="sheetSections">
-              {nav.map((group: Doc) => (
+              {nav.map((group) => (
                 <section className="sheetSection" key={group.section}>
                   {group.section && <p className="navSection">{group.section}</p>}
                   <div className="sheetNavGrid">
-                    {group.items.map(({ href, label, icon: Icon }: AnyValue) => (
+                    {group.items.map(({ href, label, icon: Icon }) => (
                       <A
                         key={href}
                         href={href}
@@ -316,7 +342,7 @@ export function Shell({ children }: ShellProps) {
               ))}
             </div>
             {account && (
-              <div className="sheetUtilities" aria-label="Support">
+              <div className="sheetUtilities" role="group" aria-label="Support">
                 <A
                   href="/help"
                   className="navItem"
@@ -345,10 +371,11 @@ export function Shell({ children }: ShellProps) {
               href={href}
               className={`mobileBottomItem ${isActive(path, href) ? 'active' : ''}`}
               aria-current={isActive(path, href) ? 'page' : undefined}
-              aria-label={mobileLabel ? label : undefined}
             >
               <Icon size={20} strokeWidth={1.75} aria-hidden />
               <span>{mobileLabel || label}</span>
+              {/* the short visible label stays first so voice control ("click Calls") still matches */}
+              {mobileLabel && mobileLabel !== label && <span className="srOnly">, {label}</span>}
             </A>
           ))}
         </nav>

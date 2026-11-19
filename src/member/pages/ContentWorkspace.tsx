@@ -1,8 +1,8 @@
-import type { AnyValue } from '../lib/types'
+import type { ContentDraftView, ContentWorkspaceResponse } from '../../shared/contracts'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbEdit as ContentIcon } from 'react-icons/tb'
-import { useMemo, useState } from 'react'
-import { apiPatch, apiPost, useApi } from '../lib/api'
+import { useMemo, useState, type FormEvent } from 'react'
+import { apiPatch, apiPost, useApi, errorMessage, fieldErrors } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import {
   A,
@@ -55,44 +55,49 @@ const EMPTY_ANNOUNCEMENT = {
   ctaDeadlineAt: '',
 }
 
-function localDateTime(value: AnyValue) {
+type EventForm = typeof EMPTY_EVENT
+type AnnouncementForm = typeof EMPTY_ANNOUNCEMENT
+/** The editor holds one form at a time, so every field of either kind is optional. */
+type ContentForm = Partial<EventForm & AnnouncementForm>
+
+function localDateTime(value: string | null | undefined) {
   if (!value) return ''
   const date = new Date(value)
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
   return local.toISOString().slice(0, 16)
 }
 
-function eventForm(payload = {}) {
+function eventForm(payload: ContentDraftView['payload'] = {}): EventForm {
   return {
     ...EMPTY_EVENT,
     ...payload,
-    wg: (payload as AnyValue).wg?.slug || (payload as AnyValue).wg || '',
-    startsAt: localDateTime((payload as AnyValue).startsAt),
-    endsAt: localDateTime((payload as AnyValue).endsAt),
+    wg: payload.wg?.slug || payload.wg || '',
+    startsAt: localDateTime(payload.startsAt),
+    endsAt: localDateTime(payload.endsAt),
   }
 }
 
-function announcementForm(payload = {}) {
+function announcementForm(payload: ContentDraftView['payload'] = {}): AnnouncementForm {
   return {
     ...EMPTY_ANNOUNCEMENT,
     ...payload,
-    ctaUrl: (payload as AnyValue).ctaUrl || '',
-    ctaLabel: (payload as AnyValue).ctaLabel || '',
-    ctaDeadlineAt: localDateTime((payload as AnyValue).ctaDeadlineAt),
+    ctaUrl: payload.ctaUrl || '',
+    ctaLabel: payload.ctaLabel || '',
+    ctaDeadlineAt: localDateTime(payload.ctaDeadlineAt),
   }
 }
 
 export function ContentWorkspace() {
   const { eventTypes } = useContentOptions()
   const [editorOpen, setEditorOpen] = useState(false)
-  const query = useApi('/member/content')
+  const query = useApi<ContentWorkspaceResponse>('/member/content')
   const { account } = useAccount()
   const [contentType, setContentType] = useState('event')
-  const [payload, setPayload] = useState<AnyValue>(EMPTY_EVENT)
-  const [editingId, setEditingId] = useState<AnyValue>(null)
-  const [busy, setBusy] = useState<AnyValue>(null)
-  const [actionError, setActionError] = useState<AnyValue>(null)
-  const [fields, setFields] = useState<AnyValue>({})
+  const [payload, setPayload] = useState<ContentForm>(EMPTY_EVENT)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [busy, setBusy] = useState<string | number | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [fields, setFields] = useState<Record<string, string>>({})
   const [pageEdit, setPageEdit] = useState<PageEdit | null>(null)
 
   const resetForm = (type = contentType) => {
@@ -102,12 +107,16 @@ export function ContentWorkspace() {
     setFields({})
   }
 
-  const chooseType = (type: AnyValue) => {
+  const chooseType = (type: string) => {
     resetForm(type)
     setActionError(null)
   }
 
-  const editPayload = (type: AnyValue, value: AnyValue, id = null) => {
+  const editPayload = (
+    type: string,
+    value: ContentDraftView['payload'],
+    id: number | null = null,
+  ) => {
     setContentType(type)
     setPayload(type === 'event' ? eventForm(value) : announcementForm(value))
     setEditingId(id)
@@ -116,10 +125,10 @@ export function ContentWorkspace() {
     setEditorOpen(true)
   }
 
-  const set = (key: AnyValue, value: AnyValue) =>
-    setPayload((current: AnyValue) => ({ ...current, [key]: value }))
+  const set = <K extends keyof ContentForm>(key: K, value: ContentForm[K]) =>
+    setPayload((current) => ({ ...current, [key]: value }))
 
-  const save = async (event: AnyValue) => {
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setBusy('save')
     setActionError(null)
@@ -135,8 +144,8 @@ export function ContentWorkspace() {
             }
           : {
               ...payload,
-              ctaDeadlineAt: (payload as AnyValue).ctaDeadlineAt
-                ? new Date((payload as AnyValue).ctaDeadlineAt).toISOString()
+              ctaDeadlineAt: payload.ctaDeadlineAt
+                ? new Date(payload.ctaDeadlineAt).toISOString()
                 : '',
             },
     }
@@ -150,31 +159,31 @@ export function ContentWorkspace() {
       setEditorOpen(false)
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
-      setFields((error as AnyValue).fields || {})
+      setActionError(errorMessage(error))
+      setFields(fieldErrors(error))
     } finally {
       setBusy(null)
     }
   }
 
-  const act = async (key: AnyValue, call: AnyValue) => {
+  const act = async (key: string | number, call: () => Promise<unknown>) => {
     setBusy(key)
     setActionError(null)
     try {
       await call()
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(null)
     }
   }
 
-  const requestReview = (item: AnyValue) =>
+  const requestReview = (item: ContentDraftView) =>
     act(item.id, () =>
       apiPost(`/member/content/drafts/${item.id}/submit`, { expectedVersion: item.revision }),
     )
-  const review = (item: AnyValue, decision: AnyValue) => {
+  const review = (item: ContentDraftView, decision: 'approve' | 'request_changes' | 'reject') => {
     const note =
       decision === 'approve'
         ? ''
@@ -194,7 +203,7 @@ export function ContentWorkspace() {
       }),
     )
   }
-  const publish = (item: AnyValue) =>
+  const publish = (item: ContentDraftView) =>
     act(item.id, () =>
       apiPost(`/member/content/drafts/${item.id}/publish`, { expectedVersion: item.revision }),
     )
@@ -241,7 +250,7 @@ export function ContentWorkspace() {
       />
 
       <Async query={query} skeletons={5}>
-        {(data: AnyValue) => (
+        {(data) => (
           <>
             {actionError && !editorOpen && <ErrorCard message={actionError} />}
 
@@ -297,7 +306,7 @@ export function ContentWorkspace() {
                           label="Event type"
                           options={eventTypes}
                           value={payload.type}
-                          onChange={(type: AnyValue) => set('type', type)}
+                          onChange={(type: string) => set('type', type)}
                           error={fields.type}
                           searchPlaceholder="Search event types…"
                         />
@@ -305,13 +314,13 @@ export function ContentWorkspace() {
                           label="Working group"
                           options={[
                             { value: '', label: 'Whole constituency' },
-                            ...data.groups.map((group: AnyValue) => ({
+                            ...data.groups.map((group) => ({
                               value: group.slug,
                               label: group.name,
                             })),
                           ]}
                           value={payload.wg}
-                          onChange={(wg: AnyValue) => set('wg', wg)}
+                          onChange={(wg: string) => set('wg', wg)}
                           error={fields.wg}
                           searchPlaceholder="Search working groups…"
                         />
@@ -383,7 +392,7 @@ export function ContentWorkspace() {
                           className="input textarea"
                           required
                           rows={5}
-                          value={(payload as AnyValue).body}
+                          value={payload.body}
                           onChange={(event) => set('body', event.target.value)}
                         />
                         <FieldError msg={fields.body} />
@@ -391,7 +400,7 @@ export function ContentWorkspace() {
                       <label className="contentCheck">
                         <input
                           type="checkbox"
-                          checked={(payload as AnyValue).pinned}
+                          checked={payload.pinned}
                           onChange={(event) => set('pinned', event.target.checked)}
                         />
                         Pin this announcement on the home feed
@@ -402,7 +411,7 @@ export function ContentWorkspace() {
                           <input
                             className="input"
                             type="url"
-                            value={(payload as AnyValue).ctaUrl}
+                            value={payload.ctaUrl}
                             onChange={(event) => set('ctaUrl', event.target.value)}
                             placeholder="https://forms.gle/…"
                           />
@@ -412,7 +421,7 @@ export function ContentWorkspace() {
                           CTA label
                           <input
                             className="input"
-                            value={(payload as AnyValue).ctaLabel}
+                            value={payload.ctaLabel}
                             onChange={(event) => set('ctaLabel', event.target.value)}
                             placeholder="Submit inputs"
                           />
@@ -424,7 +433,7 @@ export function ContentWorkspace() {
                         <input
                           className="input"
                           type="datetime-local"
-                          value={(payload as AnyValue).ctaDeadlineAt}
+                          value={payload.ctaDeadlineAt}
                           onChange={(event) => set('ctaDeadlineAt', event.target.value)}
                         />
                         <FieldError msg={fields.ctaDeadlineAt} />
@@ -480,9 +489,7 @@ export function ContentWorkspace() {
                           </div>
                           <p className="meta">
                             {item.contentType} · {item.contentKey} · by{' '}
-                            {own
-                              ? 'you'
-                              : item.creatorName || item.creatorEmail || 'another editor'}
+                            {own ? 'you' : item.creatorName || 'another editor'}
                           </p>
                           {item.reviewNote && (
                             <p className="contentReviewNote">Review note: {item.reviewNote}</p>
@@ -597,7 +604,7 @@ export function ContentWorkspace() {
                   <div className="card cardTight">
                     <h3>Events</h3>
                     <div className="contentLiveList">
-                      {data.live.events.map((event: AnyValue) => (
+                      {data.live.events.map((event) => (
                         <button
                           key={event.slug}
                           type="button"
@@ -613,7 +620,7 @@ export function ContentWorkspace() {
                   <div className="card cardTight">
                     <h3>Announcements</h3>
                     <div className="contentLiveList">
-                      {data.live.announcements.map((announcement: AnyValue) => (
+                      {data.live.announcements.map((announcement) => (
                         <button
                           key={announcement.slug}
                           type="button"

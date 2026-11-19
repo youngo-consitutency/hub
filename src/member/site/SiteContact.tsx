@@ -1,4 +1,6 @@
-import type { AnyValue } from '../lib/types'
+import type { IconType } from 'react-icons'
+import type { ConnectDoc } from '../../shared/contracts'
+import type { ContactRoute, PublicPageResponse } from '../../shared/contracts'
 import { BorderBeam } from '../components/fx/BorderBeam'
 import { SiteSection } from './SitePage'
 import {
@@ -17,12 +19,12 @@ import { useApi } from '../lib/api'
 import { PageWithdrawn } from './PageWithdrawn'
 
 // Icon names are stored in the site document; components live here.
-const ROUTE_ICONS = { Users, Network, AtSign, LifeBuoy }
+const ROUTE_ICONS: Record<string, IconType> = { Users, Network, AtSign, LifeBuoy }
 
 export function ContactSection() {
-  const { doc: connect } = useDocument('connect')
+  const { doc: connect } = useDocument<ConnectDoc>('connect')
   const { doc: site, loading } = useDocument('site')
-  const page = useApi('/pages/contact')
+  const page = useApi<PublicPageResponse>('/pages/contact')
   const contact = site?.contact
   if (!contact || page.loading) return loading || page.loading ? <Skeletons n={4} /> : null
   if (page.data?.state === 'unpublished')
@@ -34,8 +36,8 @@ export function ContactSection() {
   const doc = page.data?.document
   // reviewed sections become routes; icons stay with the site document's routes
   const baseRoutes = contact.routes || []
-  const routes = doc
-    ? doc.sections.map((section: AnyValue, i: number) => ({
+  const routes: ContactRoute[] = doc
+    ? doc.sections.map((section, i) => ({
         icon: baseRoutes[i]?.icon,
         title: section.title,
         body: section.body,
@@ -62,8 +64,8 @@ export function ContactSection() {
       <div className="siteSub">
         <h3>{contact.routesTitle}</h3>
         <div className="siteBento">
-          {routes.map(({ icon, title, body, cta }: AnyValue, index: number) => {
-            const Icon = (ROUTE_ICONS as AnyValue)[icon] || Users
+          {routes.map(({ icon, title, body, cta }, index) => {
+            const Icon = (icon && ROUTE_ICONS[icon]) || Users
             return (
               <article key={title} className="card siteContactCard">
                 {index === 0 && <BorderBeam />}
@@ -112,7 +114,7 @@ export function ContactSection() {
           <h3>{follow.title}</h3>
           <p className="siteSectionLead">{follow.lead}</p>
           <ul className="siteSocialList" aria-label="Official YOUNGO channels">
-            {socials.map((link: AnyValue) => (
+            {socials.map((link) => (
               <li key={link.key}>
                 <a href={link.url} target="_blank" rel="noreferrer noopener">
                   <DestinationIcon url={link.url} size={16} />

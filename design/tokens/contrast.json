@@ -1,0 +1,32 @@
+{
+  "$description": "Foreground/background pairs that must pass WCAG 2.2 at build time. min 4.5 = normal text, 3 = large text or UI component edges. Add a pair whenever a new token is used as text or as a control boundary.",
+  "pairs": [
+    ["text-1", "bg-page", 4.5],
+    ["text-2", "bg-page", 4.5],
+    ["text-3", "bg-page", 4.5],
+    ["text-1", "bg-card", 4.5],
+    ["text-3", "bg-raised", 4.5],
+    ["text-3", "bg-card", 4.5],
+    ["accent", "bg-page", 4.5],
+    ["accent", "bg-card", 4.5],
+    ["on-accent", "accent", 4.5],
+    ["on-accent", "accent-hover", 4.5],
+    ["on-accent-tint", "accent-tint", 4.5],
+    ["on-success-tint", "success-tint", 4.5],
+    ["warn", "warn-tint", 4.5],
+    ["danger", "danger-tint", 4.5],
+    ["danger", "bg-card", 4.5],
+    ["info", "info-tint", 4.5],
+    ["on-deep", "deep", 4.5],
+    ["on-deep", "deep-2", 4.5],
+    ["on-deep-muted", "deep", 4.5],
+    ["on-deep-muted", "deep-2", 4.5],
+    ["accent-deep", "deep", 4.5],
+    ["glow-lime", "deep", 4.5],
+    ["border-strong", "bg-page", 3],
+    ["border-strong", "bg-card", 3],
+    ["accent", "bg-raised", 3],
+    ["on-accent", "accent-hover", 4.5],
+    ["accent", "bg-page", 3]
+  ]
+}

@@ -1,4 +1,6 @@
-import type { AnyValue } from './types'
+/** Anything `new Date()` accepts: an ISO string, a timestamp or a Date. */
+type DateInput = string | number | Date
+
 // Canonical time display and countdown.
 // All params explicit so node --test can pin tz/now.
 
@@ -11,7 +13,7 @@ function localTz() {
 // build three or four of these per render.
 const formatterCache = new Map<string, Intl.DateTimeFormat>()
 
-function formatter(tz: AnyValue, options: Intl.DateTimeFormatOptions) {
+function formatter(tz: string | undefined, options: Intl.DateTimeFormatOptions) {
   const key = `${tz || ''}|${JSON.stringify(options)}`
   let fmt = formatterCache.get(key)
   if (!fmt) {
@@ -21,15 +23,15 @@ function formatter(tz: AnyValue, options: Intl.DateTimeFormatOptions) {
   return fmt
 }
 
-function fmtDay(iso: AnyValue, tz: AnyValue) {
+function fmtDay(iso: DateInput, tz: string) {
   return formatter(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
 }
 
-function hm(iso: AnyValue, tz: AnyValue) {
+function hm(iso: DateInput, tz: string) {
   return formatter(tz, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
 }
 
-function zoneAbbr(iso: AnyValue, tz: AnyValue) {
+function zoneAbbr(iso: DateInput, tz: string) {
   const parts = formatter(tz, { hour: '2-digit', timeZoneName: 'short' }).formatToParts(
     new Date(iso),
   )
@@ -37,7 +39,7 @@ function zoneAbbr(iso: AnyValue, tz: AnyValue) {
 }
 
 // "Wed 15 Jul · 13:00 UTC · 16:00 EAT"; single time when viewer zone is UTC.
-export function fmtDual(iso: AnyValue, tz = localTz()) {
+export function fmtDual(iso: DateInput, tz = localTz()) {
   const day = fmtDay(iso, 'UTC')
   const utc = `${hm(iso, 'UTC')} UTC`
   const zone = zoneAbbr(iso, tz)
@@ -45,7 +47,7 @@ export function fmtDual(iso: AnyValue, tz = localTz()) {
   return `${day} · ${utc} · ${hm(iso, tz)} ${zone}`
 }
 
-export function fmtMoment(iso: AnyValue, tz = localTz()) {
+export function fmtMoment(iso: DateInput, tz = localTz()) {
   const zone = zoneAbbr(iso, tz)
   const isUtc = zone === 'UTC' || zone === 'GMT'
   return {
@@ -57,9 +59,13 @@ export function fmtMoment(iso: AnyValue, tz = localTz()) {
   }
 }
 
-export function fmtDateRange(startsOn: AnyValue, endsOn: AnyValue, datesTbc: AnyValue) {
+export function fmtDateRange(
+  startsOn: string | null | undefined,
+  endsOn?: string | null,
+  datesTbc?: boolean,
+) {
   if (!startsOn) return 'Dates TBC'
-  const fmt = (d: AnyValue) =>
+  const fmt = (d: string) =>
     formatter('UTC', { day: 'numeric', month: 'short' }).format(new Date(d + 'T00:00:00Z'))
   const year = startsOn.slice(0, 4)
   const range = endsOn && endsOn !== startsOn ? `${fmt(startsOn)}–${fmt(endsOn)}` : fmt(startsOn)
@@ -67,7 +73,10 @@ export function fmtDateRange(startsOn: AnyValue, endsOn: AnyValue, datesTbc: Any
 }
 
 // Thresholds per design system §6.3: >7d neutral, ≤7d warn, ≤48h danger.
-export function countdown(iso: AnyValue, now = new Date()) {
+export function countdown(
+  iso: DateInput,
+  now = new Date(),
+): { label: string; tone: 'danger' | 'warn' | 'neutral' } {
   const ms = new Date(iso).getTime() - now.getTime()
   if (ms <= 0) return { label: 'closed', tone: 'danger' }
   const totalH = Math.floor(ms / 3600000)
@@ -82,7 +91,7 @@ export function countdown(iso: AnyValue, now = new Date()) {
   return { label, tone }
 }
 
-export function formatDateTime(value: AnyValue) {
+export function formatDateTime(value: DateInput | null | undefined) {
   if (!value) return 'Not set'
   const date = new Date(value)
   return Number.isNaN(date.getTime())

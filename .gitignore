@@ -66,3 +66,5 @@ youngo/
 # local tool symlinks, never committed
 .cursor
 .devin
+design/.build
+design/.test-*

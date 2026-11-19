@@ -1,23 +1,25 @@
-import type { AnyValue } from '../../lib/types'
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
 import { apiGet } from '../../lib/api'
 
-export const asOptions = (values: AnyValue) =>
-  values.map((value: AnyValue) => ({ value, label: value }))
+/** The staff-edited registration-options document, as far as the sign-up forms read it. */
+type RegistrationOptions = { nationalities?: string[] }
+
+export const asOptions = (values: string[]) => values.map((value) => ({ value, label: value }))
 
 // Registration option lists (regions, genders, nationalities, …) are
 // staff-editable content in the `registration-options` document.
-let registrationOptionsPromise
-let nationalityOptionsPromise
-let phoneSupportPromise
+let registrationOptionsPromise: Promise<RegistrationOptions> | undefined
+let nationalityOptionsPromise: Promise<{ value: string; label: string }[]> | undefined
+let phoneSupportPromise: Promise<typeof import('../../lib/phone')> | null | undefined
 
 function loadRegistrationOptions() {
-  registrationOptionsPromise ||= apiGet('/documents/registration-options').then(
-    (data) => data?.body || {},
-  )
+  registrationOptionsPromise ||= apiGet<{ body?: RegistrationOptions }>(
+    '/documents/registration-options',
+  ).then((data) => data?.body || {})
   return registrationOptionsPromise
 }
 
-export function wordCount(value: AnyValue) {
+export function wordCount(value: string | null | undefined) {
   const text = String(value || '').trim()
   return text ? text.split(/\s+/).length : 0
 }
@@ -33,8 +35,8 @@ export function loadPhoneSupport() {
 }
 
 export function loadNationalityOptions() {
-  nationalityOptionsPromise ||= loadRegistrationOptions().then((options: AnyValue) =>
-    (options.nationalities || []).map((nationality: AnyValue) => ({
+  nationalityOptionsPromise ||= loadRegistrationOptions().then((options) =>
+    (options.nationalities || []).map((nationality) => ({
       value: nationality,
       label: nationality,
     })),
@@ -67,7 +69,7 @@ const EMPTY_REGISTER = {
   genderOther: '',
   dateOfBirth: '',
   minorityIdentity: '',
-  minorityGroups: [],
+  minorityGroups: [] as string[],
   minorityOther: '',
   region: '',
   nationality: '',
@@ -101,10 +103,14 @@ const EMPTY_REGISTER = {
   ycpPhoneCountry: '',
   acceptAllOrgPolicies: false,
   membershipTrack: 'network',
-  wgInterests: [],
+  wgInterests: [] as string[],
 }
 
-export function initialRegistrationForm() {
+export type RegistrationForm = typeof EMPTY_REGISTER
+/** A registration field name (string keys only, so it can also index the error map). */
+export type RegistrationField = Extract<keyof RegistrationForm, string>
+
+export function initialRegistrationForm(): RegistrationForm {
   const country = browserPhoneCountry()
   return {
     ...EMPTY_REGISTER,
@@ -114,17 +120,17 @@ export function initialRegistrationForm() {
   }
 }
 
-export function phoneInputValue(value: AnyValue) {
+export function phoneInputValue(value: string | null | undefined) {
   return `+ ${String(value || '')
     .replaceAll('+', '')
     .trimStart()}`
 }
 
-export function fieldClass(err: AnyValue) {
+export function fieldClass(err: string | null | undefined) {
   return err ? 'field hasError' : 'field'
 }
 
-export function checkClass(err: AnyValue) {
+export function checkClass(err: string | null | undefined) {
   return err ? 'authCheck hasError' : 'authCheck'
 }
 
@@ -133,9 +139,34 @@ export function scrollToFirstError() {
     const el = document.querySelector(
       '.formAlert, .field.hasError, .authCheck.hasError, .fieldError',
     )
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+    // the alert is announced by its role; a field error moves focus to the field itself
+    const invalid = document.querySelector<HTMLElement>('[aria-invalid="true"]')
+    if (!document.querySelector('.formAlert')) invalid?.focus({ preventScroll: true })
   })
 }
 
 // same calendar-age rule the server applies at registration
 export { ageFromDob } from '../../../shared/age'
+
+/** The state and handlers AuthGate hands to the individual and organisation sign-up forms. */
+export interface RegistrationFormProps {
+  form: RegistrationForm
+  fields: Record<string, string>
+  countryOptions: { value: string; label: string }[]
+  setForm: Dispatch<SetStateAction<RegistrationForm>>
+  setReg: (
+    field: RegistrationField,
+  ) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+  setChoice: <K extends RegistrationField>(
+    field: K,
+    errorKey?: string,
+  ) => (value: RegistrationForm[K]) => void
+  setPhone: (
+    phoneKey: 'phone' | 'dcpPhone' | 'ycpPhone',
+    countryKey: 'phoneCountry' | 'dcpPhoneCountry' | 'ycpPhoneCountry',
+  ) => (event: ChangeEvent<HTMLInputElement>) => void
+  toggleWg: (slug: string) => void
+  ensureCountryOptions: () => Promise<void>
+}

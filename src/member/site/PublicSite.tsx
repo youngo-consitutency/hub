@@ -1,13 +1,14 @@
 import type { ComponentType } from 'react'
+import type { ConnectDoc } from '../../shared/contracts'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { MotionConfig } from 'motion/react'
 import {
-  TbArrowRight as ArrowRight,
   TbChevronDown as ChevronDown,
   TbLogin as LogIn,
   TbMenu2 as Menu,
   TbX as X,
 } from 'react-icons/tb'
+import { TbArrowRight as ArrowRight } from '../components/dirIcons'
 import {
   LEGACY_SITE_PATHS,
   SITE_ROUTES,
@@ -70,7 +71,7 @@ function SiteHeader() {
         <A href="/" className="wordmark siteWordmark" aria-label="YOUNGO home">
           <Brand constituencyOnly />
         </A>
-        <nav className="siteNav siteNavDesktop" aria-label="Pages">
+        <nav className="siteNav siteNavDesktop" aria-label="Main">
           {NAV_LINKS.map(({ href, label, sections }) => {
             const link = (
               <A
@@ -123,7 +124,7 @@ function SiteHeader() {
         </button>
       </div>
       {open && (
-        <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="Pages">
+        <nav id="site-mobile-navigation" className="siteMobileNav" aria-label="Main menu">
           {[SITE_ROUTES[0], ...NAV_LINKS].map(({ href, label, sections }) => (
             <Fragment key={href}>
               <A
@@ -160,7 +161,7 @@ function SiteHeader() {
 const REPO_URL = 'https://github.com/youngo-consitutency/hub'
 
 function SiteFooter() {
-  const { doc: connect } = useDocument('connect')
+  const { doc: connect } = useDocument<ConnectDoc>('connect')
   const { doc: site } = useDocument('site')
   const footer = site?.footer || {}
   const socials = publishedLinks(connect?.SOCIAL_LINKS)
@@ -171,7 +172,7 @@ function SiteFooter() {
           <Brand constituencyOnly />
           <p className="meta">{footer.brand}</p>
           <ul className="siteSocials" aria-label={footer.followTitle}>
-            {socials.map((link: { key: string; url: string; label: string }) => (
+            {socials.map((link) => (
               <li key={link.key}>
                 <a
                   href={link.url}
@@ -190,7 +191,7 @@ function SiteFooter() {
             </li>
           </ul>
         </div>
-        <nav className="siteFooterCol" aria-label="Pages">
+        <nav className="siteFooterCol" aria-label="Footer">
           <h2>{footer.exploreTitle}</h2>
           {SITE_ROUTES.map(({ href, label }) => (
             <A key={href} href={href}>
@@ -248,7 +249,7 @@ function SiteNotFound() {
 export function PublicSite() {
   const path = usePath()
   const legacy = LEGACY_SITE_PATHS[path]
-  const first = useRef(true)
+  const shownPath = useRef(path)
 
   // old page paths move to their section in the page that now holds them
   useEffect(() => {
@@ -257,10 +258,8 @@ export function PublicSite() {
 
   // a new page starts at its top, and screen readers land on its content
   useEffect(() => {
-    if (first.current) {
-      first.current = false
-      return
-    }
+    if (shownPath.current === path) return
+    shownPath.current = path
     document.getElementById('site-main')?.focus({ preventScroll: true })
   }, [path])
 

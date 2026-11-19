@@ -7,6 +7,7 @@
    base styles). Utilities come last so a utility class always wins over a component rule. */
 @import 'tailwindcss/theme.css' layer(theme);
 @import './theme.css';
+@import './tokens.generated.css' layer(tokens);
 @import './tokens.css' layer(tokens);
 
 @import './parts/shell.css' layer(components);
@@ -24,6 +25,8 @@
 @import './parts/hub-design.css' layer(components);
 @import './parts/search.css' layer(components);
 @import './parts/surfaces.css' layer(components);
+/* the design language sits above every component sheet, below motion and touch */
+@import './parts/design-language.css' layer(components);
 /* motion then touch come last: they adjust the sheets above */
 @import './parts/motion.css' layer(components);
 @import './parts/touch.css' layer(components);

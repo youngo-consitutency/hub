@@ -6,13 +6,14 @@ interface SubmissionWorkspaceProps {
   slug?: string
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type { FormEvent } from 'react'
+import type { SubmissionProjectDetail, SubmissionProjectRow } from '../../shared/contracts'
 import { useEffect, useRef, useState } from 'react'
-import { apiPost, useApi } from '../lib/api'
+import { apiPost, useApi, errorMessage, errorCode } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section, StatusChip } from '../components/ui'
 import { TbFileDescription as FileDescription, TbHistory as History } from 'react-icons/tb'
 
-const formatDate = (value: AnyValue) =>
+const formatDate = (value: string | null | undefined) =>
   value
     ? new Intl.DateTimeFormat(undefined, {
         dateStyle: 'medium',
@@ -21,7 +22,7 @@ const formatDate = (value: AnyValue) =>
     : 'Unknown date'
 
 function ProjectList() {
-  const query = useApi('/negotiations/projects')
+  const query = useApi<{ items: SubmissionProjectRow[] }>('/negotiations/projects')
   return (
     <div>
       <BackLink href="/submissions">Submissions</BackLink>
@@ -35,7 +36,7 @@ function ProjectList() {
       </PageHeader>
       <Async
         query={query}
-        empty={(data: Doc) =>
+        empty={(data) =>
           data.items.length === 0 ? (
             <Empty
               icon={FileDescription}
@@ -50,9 +51,9 @@ function ProjectList() {
           ) : null
         }
       >
-        {(data: Doc) => (
+        {(data) => (
           <div className="cardGrid">
-            {data.items.map((project: Doc) => (
+            {data.items.map((project) => (
               <A
                 className="card entityCard"
                 href={`/submissions/workspace/${project.id}`}
@@ -81,17 +82,19 @@ function ProjectList() {
 }
 
 function ProjectDetail({ id }: ProjectDetailProps) {
-  const query = useApi(`/negotiations/projects/${encodeURIComponent(id)}`)
+  const query = useApi<{ project: SubmissionProjectDetail }>(
+    `/negotiations/projects/${encodeURIComponent(id)}`,
+  )
   const [content, setContent] = useState('')
   const [sourceVersionId, setSourceVersionId] = useState('')
   const [location, setLocation] = useState('')
   const [quote, setQuote] = useState('')
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<AnyValue>(null)
+  const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
 
   const project = query.data?.project
   const latest = project?.versions?.[0]
-  const hydratedId = useRef<unknown>(null)
+  const hydratedId = useRef<string | null>(null)
   useEffect(() => {
     if (!latest || hydratedId.current === latest.id) return
     hydratedId.current = latest.id
@@ -101,8 +104,9 @@ function ProjectDetail({ id }: ProjectDetailProps) {
     setQuote(latest.citations?.[0]?.quote || '')
   }, [latest])
 
-  const saveRevision = async (event: AnyValue) => {
+  const saveRevision = async (event: FormEvent) => {
     event.preventDefault()
+    if (!project) return
     setSaving(true)
     setMessage(null)
     try {
@@ -127,11 +131,11 @@ function ProjectDetail({ id }: ProjectDetailProps) {
       setMessage({
         tone: 'error',
         text:
-          (error as AnyValue).code === 'version_conflict'
+          errorCode(error) === 'version_conflict'
             ? 'Someone saved a newer version. Reloaded the project so you can review it before trying again.'
-            : (error as AnyValue).message,
+            : errorMessage(error),
       })
-      if ((error as AnyValue).code === 'version_conflict') query.retry()
+      if (errorCode(error) === 'version_conflict') query.retry()
     } finally {
       setSaving(false)
     }
@@ -141,7 +145,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
     <div className="detailPage">
       <BackLink href="/submissions/workspace">My proposals</BackLink>
       <Async query={query}>
-        {({ project: item }: AnyValue) => (
+        {({ project: item }) => (
           <>
             <PageHeader title={item.title} description={item.purpose}>
               <div className="detailHeaderMeta">
@@ -214,7 +218,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
 
             <Section label="Version history">
               <div className="stackList">
-                {item.versions.map((version: Doc) => (
+                {item.versions.map((version) => (
                   <article className="card detailPanel" key={version.id}>
                     <div className="detailHeaderMeta">
                       <h3>Version {version.version}</h3>
@@ -222,7 +226,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
                     </div>
                     <p className="preWrap">{version.contentText}</p>
                     <p className="muted">Snapshot hash: {version.contentHash}</p>
-                    {version.citations.map((citation: Doc, index: number) => (
+                    {version.citations.map((citation, index) => (
                       <p className="muted" key={`${citation.sourceVersionId}-${index}`}>
                         Evidence: {citation.sourceVersionId}
                         {citation.location?.paragraph ? ` · ${citation.location.paragraph}` : ''}
@@ -237,7 +241,7 @@ function ProjectDetail({ id }: ProjectDetailProps) {
             <Section label="Paragraph amendment proposals">
               {item.amendments.length ? (
                 <div className="stackList">
-                  {item.amendments.map((amendment: AnyValue) => (
+                  {item.amendments.map((amendment) => (
                     <article className="card detailPanel" key={amendment.id}>
                       <div className="detailHeaderMeta">
                         <StatusChip status={amendment.decisionStatus} />

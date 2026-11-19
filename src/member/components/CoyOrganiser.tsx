@@ -1,4 +1,4 @@
-import type { AnyValue } from '../lib/types'
+import type { CoyDetail } from '../../shared/contracts'
 import { DestinationIcon } from './DestinationLink'
 import { Section } from './ui'
 import {
@@ -10,7 +10,7 @@ import {
 } from 'react-icons/tb'
 
 /** Who runs a conference and where to read more, for the conference side panel. */
-export function CoyOrganiser({ coy }: { coy: AnyValue }) {
+export function CoyOrganiser({ coy }: { coy: CoyDetail }) {
   const place = [coy.city, coy.country].filter(Boolean).join(', ')
   const mapUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(place || coy.title)}`
   const links = [

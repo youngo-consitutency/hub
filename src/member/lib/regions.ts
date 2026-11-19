@@ -1,5 +1,4 @@
-import type { AnyValue } from './types'
-const REGION_ABBREVIATIONS = {
+const REGION_ABBREVIATIONS: Record<string, string> = {
   global: 'GLO',
   africa: 'AFR',
   asia_pacific: 'AP',
@@ -20,17 +19,17 @@ const REGION_ABBREVIATIONS = {
   weog: 'WEOG',
 }
 
-function regionAbbreviation(value: AnyValue) {
+function regionAbbreviation(value: unknown) {
   const normalized = regionKey(value)
   if (!normalized) return ''
-  if ((REGION_ABBREVIATIONS as AnyValue)[normalized]) {
-    return (REGION_ABBREVIATIONS as AnyValue)[normalized]
+  if (REGION_ABBREVIATIONS[normalized]) {
+    return REGION_ABBREVIATIONS[normalized]
   }
 
   const words = normalized.split(/[\s–—-]+/).filter(Boolean)
   if (words.length > 1) {
     return words
-      .map((word: AnyValue) => word[0])
+      .map((word) => word[0])
       .join('')
       .slice(0, 4)
       .toLocaleUpperCase()
@@ -38,7 +37,7 @@ function regionAbbreviation(value: AnyValue) {
   return normalized.slice(0, 3).toLocaleUpperCase()
 }
 
-export function regionFilterPrefix(value: AnyValue, label = value) {
+export function regionFilterPrefix(value: unknown, label = value) {
   const abbreviation = regionAbbreviation(value)
   return abbreviation ===
     String(label || '')
@@ -48,7 +47,7 @@ export function regionFilterPrefix(value: AnyValue, label = value) {
     : abbreviation
 }
 
-const REGION_NAMES = {
+const REGION_NAMES: Record<string, string> = {
   global: 'Global',
   africa: 'Africa',
   asia_pacific: 'Asia-Pacific',
@@ -61,7 +60,7 @@ const REGION_NAMES = {
   pacific: 'Pacific',
   weog: 'Western Europe & Others',
 }
-const REGION_ALIASES = {
+const REGION_ALIASES: Record<string, string> = {
   apac: 'asia_pacific',
   'asia pacific': 'asia_pacific',
   'europe & central asia': 'eca',
@@ -77,19 +76,19 @@ const REGION_ALIASES = {
   'western europe & others': 'weog',
 }
 
-export function regionKey(value: AnyValue) {
+export function regionKey(value: unknown) {
   const key = String(value || '')
     .trim()
     .toLowerCase()
     .replace(/[_–—-]+/g, ' ')
     .replace(/\s+/g, ' ')
-  return (REGION_ALIASES as AnyValue)[key] || key
+  return REGION_ALIASES[key] || key
 }
 
-export function regionLabel(value: AnyValue) {
+export function regionLabel(value: unknown) {
   const key = regionKey(value)
   return (
-    (REGION_NAMES as AnyValue)[key] ||
+    REGION_NAMES[key] ||
     String(value || '')
       .trim()
       .replace(/[_-]+/g, ' ')

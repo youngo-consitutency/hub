@@ -9,30 +9,34 @@ interface ResponseGroupProps {
 }
 
 interface SocialLinksProps {
-  links?: AnyValue
+  links?: { href: string; host: string }[]
 }
 
 interface ApplicationResponsesProps {
-  item?: AnyValue
+  item: MembershipReviewItem
 }
 
 interface GuardianRequestsProps {
-  items: Doc[]
+  items: GuardianEnquiryView[]
   onClosed: () => void
 }
 
 interface AppealPanelProps {
-  item?: AnyValue
+  item: MembershipReviewItem
   busy?: boolean
-  onReview?: AnyValue
+  onReview: (item: MembershipReviewItem, decision: 'grant' | 'uphold') => void
 }
 
-import type { AnyValue, Doc } from '../lib/types'
+import type {
+  GuardianEnquiryView,
+  MembershipOverviewResponse,
+  MembershipReviewItem,
+} from '../../shared/contracts'
 import { Children, useState } from 'react'
 import { useContentOptionLabels } from '../lib/documents'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { PageSectionNav } from '../components/PageSectionNav'
-import { apiPatch, apiPost, useApi } from '../lib/api'
+import { apiPatch, apiPost, useApi, errorMessage } from '../lib/api'
 import { Async, Button, Empty, ErrorCard, FilterPill, PageHeader, Section } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
 import { MemberAvatar } from '../components/MemberAvatar'
@@ -51,7 +55,7 @@ import {
   TbScale as Scale,
 } from 'react-icons/tb'
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   registered: 'Registered',
   course_passed: 'Course passed',
   awaiting_onboarding: 'Awaiting onboarding',
@@ -62,42 +66,47 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 }
 
-const IDENTITY_LABELS = {
+const IDENTITY_LABELS: Record<string, string> = {
   passport: 'Passport',
   national_id: 'National ID / residence card',
   organisational_letter: 'Organisation letterhead',
   other: 'Other identity proof',
 }
 
-const AGE_LABELS = {
+const AGE_LABELS: Record<string, string> = {
   under_18: 'Under 18',
   '18_35': '18–35',
   '35_plus': '35+',
 }
 
-const ENTITY_LABELS = {
+const ENTITY_LABELS: Record<string, string> = {
   individual: 'Individual',
   organization: 'Organisation',
 }
 
-const TRACK_LABELS = {
+const TRACK_LABELS: Record<string, string> = {
   network: 'Network',
   constituency_work: 'Constituency work',
 }
 
-const YOUTH_AFFILIATION_LABELS = {
+const YOUTH_AFFILIATION_LABELS: Record<string, string> = {
   primary: 'Yes — Primary',
   secondary: 'Yes — Secondary',
   no: 'No',
 }
 
-function yesNo(value: AnyValue) {
+// a code without a label shows as itself
+function labelOf(labels: Record<string, string>, key: string | null | undefined) {
+  return (key ? labels[key] : undefined) || key
+}
+
+function yesNo(value: boolean | string | null | undefined) {
   if (value === true || value === 'yes') return 'Yes'
   if (value === false || value === 'no') return 'No'
   return null
 }
 
-function formatDateOnly(value: AnyValue) {
+function formatDateOnly(value: string | null | undefined) {
   if (!value) return null
   const text = String(value)
   const match = text.match(/^(\d{4}-\d{2}-\d{2})/)
@@ -134,7 +143,7 @@ function ResponseGroup({ title, children }: ResponseGroupProps) {
   )
 }
 
-function applicationSearchText(item: Doc) {
+function applicationSearchText(item: MembershipReviewItem) {
   const app = item.application || {}
   return [
     item.name,
@@ -175,7 +184,7 @@ function SocialLinks({ links }: SocialLinksProps) {
   if (!links?.length) return null
   return (
     <div className="membershipSocialLinks">
-      {links.map((link: AnyValue) => (
+      {links.map((link) => (
         <a
           key={link.href}
           href={link.href}
@@ -208,14 +217,10 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
       <dl className="membershipResponseList">
         <ResponseGroup title="Account">
           <ResponseField label="Account type">
-            {(ENTITY_LABELS as AnyValue)[app.entityType || item.entityType] ||
-              app.entityType ||
-              item.entityType}
+            {labelOf(ENTITY_LABELS, app.entityType || item.entityType)}
           </ResponseField>
           <ResponseField label="Membership track">
-            {(TRACK_LABELS as AnyValue)[app.membershipTrack || item.membershipTrack] ||
-              app.membershipTrack ||
-              item.membershipTrack}
+            {labelOf(TRACK_LABELS, app.membershipTrack || item.membershipTrack)}
           </ResponseField>
           <ResponseField label="First name">{app.firstName || item.firstName}</ResponseField>
           <ResponseField label="Last name">{app.lastName || item.lastName}</ResponseField>
@@ -226,9 +231,7 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
             <ResponseField label="Phone">{app.phone}</ResponseField>
             <ResponseField label="Gender">{gender}</ResponseField>
             <ResponseField label="Date of birth">{formatDateOnly(app.dateOfBirth)}</ResponseField>
-            <ResponseField label="Age band">
-              {(AGE_LABELS as AnyValue)[app.ageBand] || app.ageBand}
-            </ResponseField>
+            <ResponseField label="Age band">{labelOf(AGE_LABELS, app.ageBand)}</ResponseField>
           </ResponseGroup>
         )}
         {!isOrg && (
@@ -264,7 +267,7 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
               {yesNo(app.isUnfcccAdmitted)}
             </ResponseField>
             <ResponseField label="Youth affiliation within the UNFCCC">
-              {(YOUTH_AFFILIATION_LABELS as AnyValue)[app.youthAffiliation] || app.youthAffiliation}
+              {labelOf(YOUTH_AFFILIATION_LABELS, app.youthAffiliation)}
             </ResponseField>
             <ResponseField label="Region where legally established">{app.region}</ResponseField>
             <ResponseField label="Country where legally established">
@@ -340,9 +343,7 @@ function AppealPanel({ item, busy, onReview }: AppealPanelProps) {
         >
           Appeal {appeal.status}
         </span>
-        <span className="chip chip-neutral">
-          {(IDENTITY_LABELS as AnyValue)[appeal.identityKind] || appeal.identityKind}
-        </span>
+        <span className="chip chip-neutral">{labelOf(IDENTITY_LABELS, appeal.identityKind)}</span>
       </div>
       {appeal.statement && <p className="meta">{appeal.statement}</p>}
       {image ? (
@@ -384,11 +385,11 @@ const RELATIONSHIP_LABEL: Record<string, string> = {
 // Under-18 safeguarding requests. Closing deletes the request outright;
 // open ones are purged after 12 months.
 function GuardianRequests({ items, onClosed }: GuardianRequestsProps) {
-  const [confirming, setConfirming] = useState<AnyValue>(null)
-  const [busy, setBusy] = useState<AnyValue>(null)
+  const [confirming, setConfirming] = useState<string | number | null>(null)
+  const [busy, setBusy] = useState<string | number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const close = async (id: AnyValue) => {
+  const close = async (id: string | number) => {
     setBusy(id)
     setError(null)
     try {
@@ -396,7 +397,7 @@ function GuardianRequests({ items, onClosed }: GuardianRequestsProps) {
       setConfirming(null)
       onClosed()
     } catch (e) {
-      setError((e as AnyValue).message)
+      setError(errorMessage(e))
     } finally {
       setBusy(null)
     }
@@ -462,15 +463,15 @@ function GuardianRequests({ items, onClosed }: GuardianRequestsProps) {
 
 export function MembershipTeam() {
   const { teamLabels } = useContentOptionLabels()
-  const [ending, setEnding] = useState<AnyValue>(null)
+  const [ending, setEnding] = useState<string | number | null>(null)
   const [reason, setReason] = useState('')
-  const query = useApi('/member/team/membership/overview')
+  const query = useApi<MembershipOverviewResponse>('/member/team/membership/overview')
   const [filter, setFilter] = useState('pending')
   const [search, setSearch] = useState('')
-  const [busy, setBusy] = useState<AnyValue>(null)
-  const [actionError, setActionError] = useState<AnyValue>(null)
+  const [busy, setBusy] = useState<string | number | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const setStatus = async (id: AnyValue, status: AnyValue, confirmed = false) => {
+  const setStatus = async (id: string | number, status: string, confirmed = false) => {
     if (status === 'terminated' && !confirmed) {
       setReason('')
       setActionError(null)
@@ -487,20 +488,21 @@ export function MembershipTeam() {
       setEnding(null)
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(null)
     }
   }
 
-  const reviewAppeal = async (item: Doc, decision: Doc) => {
+  const reviewAppeal = async (item: MembershipReviewItem, decision: 'grant' | 'uphold') => {
+    if (!item.appeal) return
     setBusy(item.id)
     try {
       setActionError(null)
       await apiPost(`/member/team/membership/appeals/${item.appeal.id}/review`, { decision })
       query.retry()
     } catch (error) {
-      setActionError((error as AnyValue).message)
+      setActionError(errorMessage(error))
     } finally {
       setBusy(null)
     }
@@ -516,12 +518,12 @@ export function MembershipTeam() {
         <PageSectionNav section="membership" />
       </PageHeader>
       <Async query={query} skeletons={5}>
-        {(data: Doc) => {
-          const active = data.items.filter((item: Doc) => item.membershipStatus === 'active')
-          const pending = data.items.filter((item: Doc) => item.membershipStatus !== 'active')
-          const appeals = data.items.filter((item: Doc) => item.appeal?.status === 'submitted')
-          const rejected = data.items.filter((item: Doc) => item.membershipStatus === 'rejected')
-          const shown = data.items.filter((item: Doc) => {
+        {(data) => {
+          const active = data.items.filter((item) => item.membershipStatus === 'active')
+          const pending = data.items.filter((item) => item.membershipStatus !== 'active')
+          const appeals = data.items.filter((item) => item.appeal?.status === 'submitted')
+          const rejected = data.items.filter((item) => item.membershipStatus === 'rejected')
+          const shown = data.items.filter((item) => {
             const stateMatch =
               filter === 'all' ||
               (filter === 'pending'
@@ -549,10 +551,7 @@ export function MembershipTeam() {
                 <div className="metricCard">
                   <RefreshCw size={18} aria-hidden />
                   <strong>
-                    {
-                      data.items.filter((item: Doc) => item.membershipStatus === 'renewal_due')
-                        .length
-                    }
+                    {data.items.filter((item) => item.membershipStatus === 'renewal_due').length}
                   </strong>
                   <span>renewals due</span>
                 </div>
@@ -600,7 +599,7 @@ export function MembershipTeam() {
                   <Empty icon={ClipboardCheck} title="No applications in this view" />
                 ) : (
                   <div className="stackSm">
-                    {shown.map((item: Doc) => (
+                    {shown.map((item) => (
                       <div key={item.id} className="card cardTight membershipQueueCard">
                         <div className="queueRow">
                           <div className="queueIdentity membershipQueueIdentity">
@@ -624,16 +623,15 @@ export function MembershipTeam() {
                                 <span
                                   className={`taskState ${item.membershipStatus === 'active' ? 'taskState-complete' : 'taskState-review'}`}
                                 >
-                                  {(STATUS_LABELS as AnyValue)[item.membershipStatus] ||
-                                    item.membershipStatus}
+                                  {STATUS_LABELS[item.membershipStatus] || item.membershipStatus}
                                 </span>
                                 <span className="chip chip-neutral">
-                                  {(ENTITY_LABELS as AnyValue)[item.entityType] || item.entityType}
+                                  {labelOf(ENTITY_LABELS, item.entityType)}
                                 </span>
                                 <span className="chip chip-neutral">
                                   Hub: {item.hubAccessStatus}
                                 </span>
-                                {item.teamRoles?.map((role: AnyValue) => (
+                                {item.teamRoles?.map((role: string) => (
                                   <span key={role} className="chip chip-neutral">
                                     {teamLabels[role] || role.replaceAll('_', ' ')}
                                   </span>
@@ -652,7 +650,7 @@ export function MembershipTeam() {
                                 label,
                               }))}
                               value={item.membershipStatus}
-                              onChange={(status: AnyValue) => setStatus(item.id, status)}
+                              onChange={(status: string) => setStatus(item.id, status)}
                               disabled={busy === item.id}
                               className="queueSelect"
                               searchPlaceholder="Search statuses…"
@@ -703,7 +701,11 @@ export function MembershipTeam() {
                 minLength={8}
               />
             </label>
-            <Button type="submit" variant="primary" disabled={busy || reason.trim().length < 8}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={Boolean(busy) || reason.trim().length < 8}
+            >
               Confirm end of membership
             </Button>
           </form>

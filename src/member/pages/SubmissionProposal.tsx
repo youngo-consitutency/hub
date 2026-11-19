@@ -1,4 +1,4 @@
-import type { AnyValue, Doc } from '../lib/types'
+import type { NegotiationTrackDetail } from '../../shared/contracts'
 import { sourceLocation, useProposalForm } from '../lib/useProposalForm'
 import { ProposalFooter } from '../components/ProposalFooter'
 import { Async, BackLink, Empty, PageHeader, Section } from '../components/ui'
@@ -41,7 +41,7 @@ const toBody = (form: Form, idempotencyKey: string) => ({
 })
 
 // keep a source the member already chose
-const onTrackLoaded = (form: Form, detail: AnyValue): Form => ({
+const onTrackLoaded = (form: Form, detail: NegotiationTrackDetail): Form => ({
   ...form,
   sourceVersionId: form.sourceVersionId || detail.documents[0]?.latestVersion.id || '',
 })
@@ -84,7 +84,7 @@ export function SubmissionProposal() {
         description="Create an internal member proposal with an immutable first draft and source evidence. Saving does not claim YOUNGO endorsement or an external submission route."
       />
       <Async query={tracks}>
-        {(data: Doc) => (
+        {(data) => (
           <form onSubmit={submit}>
             <Section label="Scope and purpose">
               <div className="card detailPanel formGrid">
@@ -92,7 +92,7 @@ export function SubmissionProposal() {
                   <span>Negotiation track</span>
                   <select className="input" required value={form.trackId} onChange={set('trackId')}>
                     <option value="">Select a track</option>
-                    {data.items.map((track: AnyValue) => (
+                    {data.items.map((track) => (
                       <option value={track.id} key={track.id}>
                         {track.topic}
                       </option>
@@ -109,8 +109,8 @@ export function SubmissionProposal() {
                   >
                     <option value="">No call — save as an initiative</option>
                     {(trackDetail?.calls || [])
-                      .filter((call: AnyValue) => call.status === 'open')
-                      .map((call: AnyValue) => (
+                      .filter((call) => call.status === 'open')
+                      .map((call) => (
                         <option value={call.id} key={call.id}>
                           {call.title}
                         </option>
@@ -196,7 +196,7 @@ export function SubmissionProposal() {
                     disabled={!trackDetail}
                   >
                     <option value="">Select evidence</option>
-                    {(trackDetail?.documents || []).map((document: AnyValue) => (
+                    {(trackDetail?.documents || []).map((document) => (
                       <option value={document.latestVersion.id} key={document.latestVersion.id}>
                         {document.title} · {document.latestVersion.id}
                       </option>

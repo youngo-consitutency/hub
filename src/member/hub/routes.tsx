@@ -1,14 +1,15 @@
 import type { ComponentType } from 'react'
 import dynamic from 'next/dynamic'
-import type { AnyValue } from '../lib/types'
 
 // The Hub's pages, matched against the app path in the hash (/hub#/calendar/x).
 // One table replaces the old per-folder route files; pages load on demand.
 type Props = Record<string, string>
-type Loader = () => Promise<ComponentType<AnyValue>>
+// pages that read a :slug param declare it as required, so the shared page type does too
+type PageProps = Props & { slug: string }
+type Loader = () => Promise<ComponentType<PageProps>>
 
 type HubRoute =
-  | { kind: 'page'; pattern: RegExp; keys: string[]; Page: ComponentType<AnyValue>; fixed?: Props }
+  | { kind: 'page'; pattern: RegExp; keys: string[]; Page: ComponentType<PageProps>; fixed?: Props }
   | { kind: 'redirect'; pattern: RegExp; keys: string[]; to: string }
 
 const compile = (path: string) => {
@@ -43,7 +44,7 @@ const redirect = (path: string, to: string): HubRoute => ({
 
 // named exports, so each entry picks its component out of the page module
 const from =
-  <M extends Record<string, ComponentType<AnyValue>>>(load: () => Promise<M>, name: keyof M) =>
+  <M extends Record<string, ComponentType<PageProps>>>(load: () => Promise<M>, name: keyof M) =>
   async () =>
     (await load())[name]
 
@@ -241,7 +242,8 @@ const HUB_ROUTES: HubRoute[] = [
 ]
 
 type HubMatch =
-  { kind: 'page'; Page: ComponentType<AnyValue>; props: Props } | { kind: 'redirect'; to: string }
+  | { kind: 'page'; Page: ComponentType<PageProps>; props: PageProps }
+  | { kind: 'redirect'; to: string }
 
 export function matchHubRoute(path: string): HubMatch | null {
   for (const route of HUB_ROUTES) {
@@ -256,7 +258,12 @@ export function matchHubRoute(path: string): HubMatch | null {
     const params = Object.fromEntries(
       route.keys.map((key, i) => [key, decodeURIComponent(found[i + 1])]),
     )
-    return { kind: 'page', Page: route.Page, props: { ...params, ...route.fixed } }
+    return {
+      kind: 'page',
+      Page: route.Page,
+      // boundary: params come from the URL pattern, so slug is present wherever a page requires it
+      props: { ...params, ...route.fixed } as PageProps,
+    }
   }
   return null
 }

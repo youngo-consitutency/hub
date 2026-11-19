@@ -1,12 +1,12 @@
 interface PostingMetaProps {
-  item?: AnyValue
+  item: OpportunitySummary
 }
 
-import type { AnyValue } from '../lib/types'
+import type { OpportunityReviewResponse, OpportunitySummary } from '../../shared/contracts'
 import { formatDateTime } from '../lib/time'
 import { regionLabel } from '../lib/regions'
 import { useEffect, useState } from 'react'
-import { apiGet, apiPost } from '../lib/api'
+import { apiGet, apiPost, errorMessage } from '../lib/api'
 import { Button, Empty, ErrorCard, Section, Skeletons } from './ui'
 import { TbSpeakerphone as Megaphone } from 'react-icons/tb'
 
@@ -40,17 +40,22 @@ function PostingMeta({ item }: PostingMetaProps) {
 }
 
 export function OpportunityReview() {
-  const [state, setState] = useState<AnyValue>({
+  const [state, setState] = useState<{
+    items: OpportunitySummary[] | null
+    published: OpportunitySummary[] | null
+    organisations: OpportunityReviewResponse['organisations'] | null
+    error: string | null
+  }>({
     items: null,
     published: null,
     organisations: null,
     error: null,
   })
-  const [notes, setNotes] = useState<AnyValue>({})
-  const [busy, setBusy] = useState<AnyValue>(null)
+  const [notes, setNotes] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState<string | null>(null)
 
   const load = () => {
-    apiGet('/member/opportunities/review')
+    ;(apiGet('/member/opportunities/review') as Promise<OpportunityReviewResponse>)
       .then((data) =>
         setState({
           items: data.items,
@@ -64,7 +69,7 @@ export function OpportunityReview() {
           items: null,
           published: null,
           organisations: null,
-          error: error.message,
+          error: errorMessage(error),
         }),
       )
   }
@@ -73,21 +78,21 @@ export function OpportunityReview() {
     load()
   }, [])
 
-  const setNote = (id: AnyValue, value: AnyValue) =>
-    setNotes((current: AnyValue) => ({ ...current, [id]: value }))
+  const setNote = (id: string | number, value: string) =>
+    setNotes((current) => ({ ...current, [id]: value }))
 
-  const run = async (key: AnyValue, work: AnyValue) => {
+  const run = async (key: string, work: () => Promise<unknown>) => {
     setBusy(key)
     try {
       await work()
       load()
     } catch (error) {
-      setState((current: AnyValue) => ({ ...current, error: (error as AnyValue).message }))
+      setState((current) => ({ ...current, error: errorMessage(error) }))
     }
     setBusy(null)
   }
 
-  const decide = (id: AnyValue, decision: AnyValue) =>
+  const decide = (id: number, decision: 'approve' | 'reject') =>
     run(`review:${id}`, () =>
       apiPost(`/member/opportunities/${id}/review`, {
         decision,
@@ -95,14 +100,14 @@ export function OpportunityReview() {
       }).then(() => setNote(id, '')),
     )
 
-  const unpublish = (id: AnyValue) =>
+  const unpublish = (id: number) =>
     run(`unpublish:${id}`, () =>
       apiPost(`/member/opportunities/${id}/unpublish`, {
         note: notes[id] || '',
       }).then(() => setNote(id, '')),
     )
 
-  const setTrust = (orgAccountId: AnyValue, nextState: AnyValue) =>
+  const setTrust = (orgAccountId: number, nextState: 'trusted' | 'review_required') =>
     run(`trust:${orgAccountId}`, () =>
       apiPost(`/member/opportunities/trust/${orgAccountId}`, {
         state: nextState,
@@ -126,31 +131,31 @@ export function OpportunityReview() {
           />
         )}
         <div className="stack">
-          {(state.items || []).map((item: AnyValue) => (
-            <div key={(item as AnyValue).id} className="card stackSm">
+          {(state.items || []).map((item) => (
+            <div key={item.id} className="card stackSm">
               <PostingMeta item={item} />
               <label className="field">
                 <span>Note to the organisation (required to reject)</span>
                 <input
                   className="input"
-                  value={notes[(item as AnyValue).id] || ''}
-                  onChange={(event) => setNote((item as AnyValue).id, event.target.value)}
+                  value={notes[item.id] || ''}
+                  onChange={(event) => setNote(item.id, event.target.value)}
                 />
               </label>
               <div className="rowGap">
                 <Button
                   sm
                   variant="primary"
-                  disabled={busy === `review:${(item as AnyValue).id}`}
-                  onClick={() => decide((item as AnyValue).id, 'approve')}
+                  disabled={busy === `review:${item.id}`}
+                  onClick={() => decide(item.id, 'approve')}
                 >
                   Approve and publish
                 </Button>
                 <Button
                   sm
                   variant="ghost"
-                  disabled={busy === `review:${(item as AnyValue).id}`}
-                  onClick={() => decide((item as AnyValue).id, 'reject')}
+                  disabled={busy === `review:${item.id}`}
+                  onClick={() => decide(item.id, 'reject')}
                 >
                   Reject
                 </Button>
@@ -162,7 +167,7 @@ export function OpportunityReview() {
 
       {state.published && (
         <Section label="Live NGO postings" action={<span>Staff can take a posting down</span>}>
-          {(state.published as AnyValue).length === 0 ? (
+          {state.published.length === 0 ? (
             <Empty
               icon={Megaphone}
               title="Nothing live"
@@ -170,7 +175,7 @@ export function OpportunityReview() {
             />
           ) : (
             <div className="stack">
-              {(state.published as AnyValue).map((item: AnyValue) => (
+              {state.published.map((item) => (
                 <div key={item.id} className="card stackSm">
                   <PostingMeta item={item} />
                   <label className="field">
@@ -196,13 +201,13 @@ export function OpportunityReview() {
         </Section>
       )}
 
-      {state.organisations && (state.organisations as AnyValue).length > 0 && (
+      {state.organisations && state.organisations.length > 0 && (
         <Section
           label="Organisation posting trust"
           action={<span>Override the first-posting rule</span>}
         >
           <div className="stackSm">
-            {(state.organisations as AnyValue).map((org: AnyValue) => (
+            {state.organisations.map((org) => (
               <div key={org.orgAccountId} className="card cardTight stackSm">
                 <div className="rowBetween" style={{ flexWrap: 'wrap', gap: 8 }}>
                   <div>

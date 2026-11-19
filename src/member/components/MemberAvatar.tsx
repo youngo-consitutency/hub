@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import type { AnyValue } from '../lib/types'
 import { avatarDataUri } from '../../shared/avatar'
 
 interface AvatarProps {
@@ -17,8 +16,15 @@ export function Avatar({ seed, options, alt, className }: AvatarProps) {
 }
 
 interface MemberAvatarProps {
-  person?: AnyValue
-  size?: AnyValue
+  /** Anything person-shaped: a directory entry, a profile or a hand-built stub. */
+  person?: {
+    id?: string | number
+    accountId?: string | number
+    name?: string | null
+    displayName?: string | null
+    avatar?: unknown
+  } | null
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 

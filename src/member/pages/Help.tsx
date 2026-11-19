@@ -1,8 +1,8 @@
 interface PersonBehindHubProps {
-  person?: AnyValue
+  person: HubLauncher
 }
 
-import type { AnyValue } from '../lib/types'
+import type { HubLauncher } from '../../shared/contracts'
 import { TbHelpCircle as HelpIcon } from 'react-icons/tb'
 import {
   TbHome as Home,
@@ -19,7 +19,7 @@ import { useDocument } from '../lib/documents'
 function PersonBehindHub({ person }: PersonBehindHubProps) {
   const initials = person.name
     .split(' ')
-    .map((part: AnyValue) => part[0])
+    .map((part) => part[0])
     .slice(0, 2)
     .join('')
   return (
@@ -37,7 +37,7 @@ function PersonBehindHub({ person }: PersonBehindHubProps) {
 
 /** Show support actions, published Hub contributor details and privacy information. */
 export function Help() {
-  const { doc: connect } = useDocument('connect')
+  const { doc: connect } = useDocument<{ HUB_LAUNCHERS?: HubLauncher[] }>('connect')
   const HUB_LAUNCHERS = connect?.HUB_LAUNCHERS || []
 
   return (
@@ -111,7 +111,7 @@ export function Help() {
       {HUB_LAUNCHERS.length > 0 && (
         <Section label="People behind the Hub">
           <div className="helpPeopleGrid">
-            {HUB_LAUNCHERS.map((person: AnyValue) => (
+            {HUB_LAUNCHERS.map((person) => (
               <PersonBehindHub key={person.name} person={person} />
             ))}
           </div>

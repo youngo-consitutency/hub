@@ -120,7 +120,7 @@
 
 .searchInputWrap > svg {
   position: absolute;
-  left: 14px;
+  inset-inline-start: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-3);
@@ -135,7 +135,7 @@
 .searchClear {
   position: absolute;
   top: 50%;
-  right: 8px;
+  inset-inline-end: 8px;
   display: grid;
   place-items: center;
   width: 26px;
@@ -427,7 +427,7 @@
 
 .wgOnboardRules li {
   padding: 8px 10px 8px 12px;
-  border-left: 3px solid var(--jt-lime);
+  border-inline-start: 3px solid var(--jt-lime);
   border-radius: 0 8px 8px 0;
   background: var(--jt-mint);
   color: var(--jt-ink);
@@ -722,7 +722,7 @@
   gap: 0.3cqw 1.2cqw;
   align-items: center;
   padding: 0.75cqw 1.2cqw;
-  border-left: 5px solid var(--jt-bar, var(--jt-lime));
+  border-inline-start: 5px solid var(--jt-bar, var(--jt-lime));
 }
 
 .jtFace--split .jtBody {
@@ -742,11 +742,11 @@
 
 .jtLeadCard {
   padding: 1.4cqw 1.5cqw;
-  border-left: 6px solid var(--jt-lime);
+  border-inline-start: 6px solid var(--jt-lime);
 }
 
 .jtLeadCard--wide {
-  border-left-width: 6px;
+  border-inline-start-width: 6px;
 }
 
 .jtMonths {
@@ -811,13 +811,13 @@
   width: 24cqw;
   height: 24cqw;
   top: -12cqw;
-  left: -8cqw;
+  inset-inline-start: -8cqw;
 }
 
 .jtFace--cover::after {
   width: 30cqw;
   height: 30cqw;
-  right: -10cqw;
+  inset-inline-end: -10cqw;
   bottom: -14cqw;
 }
 
@@ -916,7 +916,7 @@
 
 .jtPageNum {
   position: absolute;
-  right: 3.2cqw;
+  inset-inline-end: 3.2cqw;
   bottom: 2.2cqw;
   margin: 0;
   color: var(--jt-forest);
@@ -1202,7 +1202,7 @@ a.monogram:hover {
 
 .detailPageActions {
   justify-content: flex-end;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 /* Multi-action sets behave like compact toolbars. Labels determine each
@@ -1214,7 +1214,7 @@ a.monogram:hover {
   justify-content: flex-end;
   width: fit-content;
   max-width: min(100%, 390px);
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .detailPanel {
@@ -1386,7 +1386,7 @@ a.monogram:hover {
 .coyNotice {
   display: grid;
   gap: var(--space-2);
-  border-left: 3px solid var(--accent);
+  border-inline-start: 3px solid var(--accent);
 }
 
 .coyNotice p {
@@ -1636,7 +1636,7 @@ a.monogram:hover {
 
 .gysStepArrowRight {
   top: 50%;
-  right: calc((var(--space-3) / -2) - 11px);
+  inset-inline-end: calc((var(--space-3) / -2) - 11px);
   transform: translateY(-50%);
 }
 
@@ -1682,7 +1682,7 @@ a.monogram:hover {
   height: 32px;
   display: grid;
   grid-template-columns: 17px minmax(0, 1fr) 16px;
-  text-align: left;
+  text-align: start;
   padding-inline: var(--space-2);
   background: var(--bg-raised);
 }
@@ -1862,7 +1862,7 @@ a.monogram:hover {
 
   .coyDetailFact + .coyDetailFact {
     border-top: 1px solid var(--border);
-    border-left: 0;
+    border-inline-start: 0;
   }
 }
 
@@ -1995,7 +1995,7 @@ a.monogram:hover {
 .policyInlineIcon {
   display: inline;
   vertical-align: -1px;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   opacity: 0.85;
 }
 
@@ -2167,7 +2167,7 @@ a.monogram:hover {
   display: grid;
   gap: var(--space-3);
   margin: var(--space-5) 0;
-  padding-left: var(--space-5);
+  padding-inline-start: var(--space-5);
   color: var(--text-2);
 }
 
@@ -2213,7 +2213,7 @@ a.monogram:hover {
   .notificationStatusActions {
     grid-row: 2;
     justify-content: flex-start;
-    padding-left: calc(44px + var(--space-3));
+    padding-inline-start: calc(44px + var(--space-3));
   }
 
   .notificationGuideHeader {
@@ -2415,7 +2415,7 @@ a.monogram:hover {
   width: 100%;
   min-height: 40px;
   padding: var(--space-2) var(--space-3);
-  text-align: left;
+  text-align: start;
 }
 
 .mailResults button:hover {
@@ -2461,7 +2461,7 @@ a.monogram:hover {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .htmlMailLink .input {
@@ -2513,7 +2513,7 @@ a.monogram:hover {
   display: grid;
   gap: var(--space-2);
   margin: var(--space-2) 0 0;
-  padding-left: var(--space-5);
+  padding-inline-start: var(--space-5);
 }
 
 /* Agent connector */
@@ -2601,7 +2601,7 @@ a.monogram:hover {
 }
 
 .agentSecret {
-  border-left: 3px solid var(--warn);
+  border-inline-start: 3px solid var(--warn);
 }
 
 .agentSecretValue {

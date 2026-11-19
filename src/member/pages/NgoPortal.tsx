@@ -1,41 +1,43 @@
-import type { AnyValue } from '../lib/types'
+import type { NgoRequestsResponse } from '../../shared/contracts'
 import { SidePanel } from '../components/SidePanel.tsx'
 import { TbBuildingCommunity as OrganisationIcon } from 'react-icons/tb'
-import { useEffect, useState } from 'react'
-import { apiPost, apiPatch, useApi } from '../lib/api'
+import { useEffect, useState, type FormEvent } from 'react'
+import { apiPost, apiPatch, useApi, errorMessage } from '../lib/api'
 import { useAccount } from '../lib/accountContext'
 import { replace, usePath, useQuery } from '../lib/router'
-import { A, Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
+import { Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { DatePicker, SearchableSelect } from '../components/FormControls'
 import { NgoOpportunities } from '../components/NgoOpportunities'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
 
 export function NgoPortal() {
-  const [panel, setPanel] = useState<AnyValue>(null)
+  const [panel, setPanel] = useState<'request' | 'invite' | null>(null)
   const { account, setAccount, reloadAccess } = useAccount()
   const path = usePath()
   const query = useQuery()
-  const requests = useApi(path.includes('accept') ? null : '/member/ngo/requests')
+  const requests = useApi<NgoRequestsResponse>(
+    path.includes('accept') ? null : '/member/ngo/requests',
+  )
   const data = requests.data
-  const [actionError, setError] = useState<AnyValue>(null)
-  const [form, setForm] = useState<AnyValue>({
+  const [actionError, setError] = useState<string | null>(null)
+  const [form, setForm] = useState({
     kind: 'endorse',
     title: '',
     body: '',
     deadlineAt: '',
   })
-  const [invite, setInvite] = useState<AnyValue>({
+  const [invite, setInvite] = useState({
     email: '',
     name: '',
     seatRole: 'representative',
   })
   // Seat role the organisation intends to grant, per pending request.
-  const [decisionRole, setDecisionRole] = useState<AnyValue>({})
-  const [inviteResult, setInviteResult] = useState<AnyValue>(null)
-  const [acceptMsg, setAcceptMsg] = useState<AnyValue>(null)
-  const [inviteToken, setInviteToken] = useState<AnyValue>(null)
+  const [decisionRole, setDecisionRole] = useState<Record<number, string>>({})
+  const [inviteResult, setInviteResult] = useState<{ note: string } | null>(null)
+  const [acceptMsg, setAcceptMsg] = useState<string | null>(null)
+  const [inviteToken, setInviteToken] = useState<string | null>(null)
   // preview first; accepting requires an explicit user action
-  const preview = useApi(
+  const preview = useApi<{ seat: { organizationName?: string; email: string; seatRole: string } }>(
     inviteToken ? `/member/ngo/invite/${encodeURIComponent(inviteToken)}` : null,
   )
   const invitePreview = inviteToken ? preview.data?.seat : null
@@ -64,10 +66,10 @@ export function NgoPortal() {
         // leaving /ngo/accept switches the requests fetch on
         replace('/ngo')
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(errorMessage(e)))
   }
 
-  const create = async (e: AnyValue) => {
+  const create = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       await apiPost('/member/ngo/requests', {
@@ -78,33 +80,33 @@ export function NgoPortal() {
       setPanel(null)
       load()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
-  const sendInvite = async (e: AnyValue) => {
+  const sendInvite = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setInviteResult(null)
     try {
-      const res = await apiPost('/member/ngo/seats/invite', invite)
+      const res = await apiPost<{ note: string }>('/member/ngo/seats/invite', invite)
       setInviteResult(res)
       setInvite({ email: '', name: '', seatRole: 'representative' })
       load()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
-  const revoke = async (id: AnyValue) => {
+  const revoke = async (id: number) => {
     try {
       await apiPost(`/member/ngo/seats/${id}/revoke`, {})
       load()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
-  const decideAffiliation = async (id: AnyValue, decision: AnyValue) => {
+  const decideAffiliation = async (id: number, decision: 'approve' | 'decline') => {
     try {
       await apiPost(`/member/affiliations/${id}/decide`, {
         decision,
@@ -112,21 +114,17 @@ export function NgoPortal() {
       })
       load()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
-  const markDone = async (id: AnyValue) => {
+  const markDone = async (id: number) => {
     try {
-      const res = await apiPatch(`/member/ngo/requests/${id}`, {
-        status: 'done',
-      })
-      if (res?.awardSuggestion) {
-        setAcceptMsg('Request marked done.')
-      }
+      await apiPatch(`/member/ngo/requests/${id}`, { status: 'done' })
+      setAcceptMsg('Request marked done.')
       load()
     } catch (err) {
-      setError((err as AnyValue).message)
+      setError(errorMessage(err))
     }
   }
 
@@ -184,26 +182,6 @@ export function NgoPortal() {
       {data && <NgoOpportunities />}
 
       {data && (
-        <Section label="Deadlines for NGOs">
-          <div className="stackSm">
-            {(data?.deadlines || []).map((d: AnyValue, i: number) => (
-              <div key={i} className="card cardTight">
-                <h3>{d.title}</h3>
-                <p className="meta" style={{ marginTop: 4 }}>
-                  {d.note}
-                </p>
-                {d.href && (
-                  <A href={d.href} className="metaMuted">
-                    Open →
-                  </A>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {data && (
         <Section label="Requests inbox">
           {!data?.items?.length ? (
             <Empty
@@ -212,7 +190,7 @@ export function NgoPortal() {
             />
           ) : (
             <div className="stackSm">
-              {data.items.map((r: AnyValue) => (
+              {data.items.map((r) => (
                 <div key={r.id} className="card cardTight rowBetween">
                   <div>
                     <span className="chip chip-info">{r.kind}</span>
@@ -257,7 +235,7 @@ export function NgoPortal() {
                 { value: 'other', label: 'Other' },
               ]}
               value={form.kind}
-              onChange={(kind: AnyValue) => setForm((current: AnyValue) => ({ ...current, kind }))}
+              onChange={(kind: string) => setForm((current) => ({ ...current, kind }))}
               searchPlaceholder="Search request types…"
             >
               <p className="metaMuted" style={{ marginTop: 4 }}>
@@ -270,7 +248,7 @@ export function NgoPortal() {
                 className="input"
                 required
                 value={form.title}
-                onChange={(e) => setForm((f: AnyValue) => ({ ...f, title: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               />
             </label>
             <label className="field">
@@ -279,15 +257,13 @@ export function NgoPortal() {
                 className="input textarea"
                 rows={3}
                 value={form.body}
-                onChange={(e) => setForm((f: AnyValue) => ({ ...f, body: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
               />
             </label>
             <DatePicker
               label="Deadline"
               value={form.deadlineAt}
-              onChange={(deadlineAt: AnyValue) =>
-                setForm((current: AnyValue) => ({ ...current, deadlineAt }))
-              }
+              onChange={(deadlineAt: string) => setForm((current) => ({ ...current, deadlineAt }))}
             />
             <Button type="submit" variant="primary">
               Save request
@@ -300,12 +276,12 @@ export function NgoPortal() {
         <>
           {/* People who asked to be linked to this organisation. The org
               decides whether that is a label only, or also opens the portal. */}
-          {(data?.seats || []).some((s: AnyValue) => s.status === 'requested') && (
+          {(data?.seats || []).some((s) => s.status === 'requested') && (
             <Section label="Affiliation requests">
               <div className="stack">
                 {(data?.seats || [])
-                  .filter((s: AnyValue) => s.status === 'requested')
-                  .map((s: AnyValue) => (
+                  .filter((s) => s.status === 'requested')
+                  .map((s) => (
                     <div key={s.id} className="card affiliationRequest">
                       <div>
                         <strong>{s.memberName || s.name || s.email}</strong>
@@ -329,8 +305,8 @@ export function NgoPortal() {
                               },
                             ]}
                             value={decisionRole[s.id] || 'affiliate'}
-                            onChange={(seatRole: AnyValue) =>
-                              setDecisionRole((current: AnyValue) => ({
+                            onChange={(seatRole: string) =>
+                              setDecisionRole((current) => ({
                                 ...current,
                                 [s.id]: seatRole,
                               }))
@@ -365,8 +341,8 @@ export function NgoPortal() {
           <Section label="Team seats">
             <div className="stack">
               {(data?.seats || [])
-                .filter((s: AnyValue) => s.status !== 'requested')
-                .map((s: AnyValue) => (
+                .filter((s) => s.status !== 'requested')
+                .map((s) => (
                   <div key={s.id} className="card cardTight rowBetween">
                     <div>
                       <strong>{s.memberName || s.name || s.email}</strong>
@@ -404,9 +380,7 @@ export function NgoPortal() {
                         type="email"
                         required
                         value={invite.email}
-                        onChange={(e) =>
-                          setInvite((f: AnyValue) => ({ ...f, email: e.target.value }))
-                        }
+                        onChange={(e) => setInvite((f) => ({ ...f, email: e.target.value }))}
                       />
                     </label>
                     <label className="field">
@@ -414,9 +388,7 @@ export function NgoPortal() {
                       <input
                         className="input"
                         value={invite.name}
-                        onChange={(e) =>
-                          setInvite((f: AnyValue) => ({ ...f, name: e.target.value }))
-                        }
+                        onChange={(e) => setInvite((f) => ({ ...f, name: e.target.value }))}
                       />
                     </label>
                   </div>
@@ -427,8 +399,8 @@ export function NgoPortal() {
                       { value: 'viewer', label: 'Viewer' },
                     ]}
                     value={invite.seatRole}
-                    onChange={(seatRole: AnyValue) =>
-                      setInvite((current: AnyValue) => ({ ...current, seatRole }))
+                    onChange={(seatRole: string) =>
+                      setInvite((current) => ({ ...current, seatRole }))
                     }
                     searchPlaceholder="Search seat roles…"
                   />

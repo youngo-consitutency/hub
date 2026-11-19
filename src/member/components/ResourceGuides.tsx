@@ -1,10 +1,10 @@
-import type { AnyValue } from '../lib/types'
+import type { LibraryDoc } from '../../shared/contracts'
 import { A, Section, Skeletons, Empty, ErrorCard } from './ui'
 import { useDocument } from '../lib/documents'
 
 /** Load published library guides, with loading, retry and empty states. */
 export function ResourceGuides() {
-  const { doc: library, loading, error, retry } = useDocument('library')
+  const { doc: library, loading, error, retry } = useDocument<LibraryDoc>('library')
   if (loading) return <Skeletons n={3} />
   if (error) return <ErrorCard message={error} onRetry={retry} />
   if (!library?.guides?.length) return <Empty title="No guides published yet" />
@@ -13,7 +13,7 @@ export function ResourceGuides() {
       <Section label={library.sectionLabel}>
         {library.description && <p className="sectionIntro">{library.description}</p>}
         <div className="resourceList">
-          {(library.guides || []).map((guide: AnyValue) => (
+          {(library.guides || []).map((guide) => (
             <A key={guide.title} href={guide.href} className="resourceRow">
               <span className="resourceCopy">
                 <strong>{guide.title}</strong>

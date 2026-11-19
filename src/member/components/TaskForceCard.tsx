@@ -1,12 +1,12 @@
 import { Button, Disclosure, DisclosurePanel, Heading } from 'react-aria-components'
 import { TbChevronDown as ChevronDown, TbFlag as Flag, TbLock as Lock } from 'react-icons/tb'
 import { useApi } from '../lib/api'
-import type { AnyValue } from '../lib/types'
+import type { TaskForce, WorkspaceResponse } from '../../shared/contracts'
 import { A, Async, Empty } from './ui'
 import { WgActivityCard } from './WgActivityCard'
 
 /** A task force inside its group's panel: opens in place to show the activities posted to it. */
-export function TaskForceCard({ group, force }: { group: AnyValue; force: AnyValue }) {
+export function TaskForceCard({ group, force }: { group: { slug: string }; force: TaskForce }) {
   return (
     <Disclosure className="group card cardTight self-start data-[expanded]:col-span-full">
       {({ isExpanded }) => (
@@ -38,17 +38,16 @@ export function TaskForceCard({ group, force }: { group: AnyValue; force: AnyVal
   )
 }
 
-function TaskForceActivities({ group, force }: { group: AnyValue; force: AnyValue }) {
-  const workspace = useApi(
+function TaskForceActivities({ group, force }: { group: { slug: string }; force: TaskForce }) {
+  const workspace = useApi<WorkspaceResponse>(
     `/member/workspace/${encodeURIComponent(group.slug)}?taskForce=${encodeURIComponent(force.slug)}`,
   )
   return (
     <Async query={workspace} skeletons={1}>
-      {(data: AnyValue) => {
+      {(data) => {
         const unlocked = Boolean(data?.progress?.presentation_ok && data?.progress?.rules_ok)
         const activities = (data?.activities || []).filter(
-          (activity: AnyValue) =>
-            (activity.taskForceSlug || activity.task_force_slug) === force.slug,
+          (activity) => (activity.taskForceSlug || activity.task_force_slug) === force.slug,
         )
         if (!unlocked)
           return (
@@ -73,7 +72,7 @@ function TaskForceActivities({ group, force }: { group: AnyValue; force: AnyValu
           )
         return (
           <div className="cardGrid">
-            {activities.map((activity: AnyValue) => (
+            {activities.map((activity) => (
               <WgActivityCard key={activity.id} activity={activity} />
             ))}
           </div>

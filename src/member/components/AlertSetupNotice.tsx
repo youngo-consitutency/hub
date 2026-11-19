@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Arrow } from './dirIcons'
 import {
   TbBell as Bell,
   TbDeviceMobile as Smartphone,
@@ -57,8 +58,8 @@ export function AlertSetupNotice() {
           <p>{title}</p>
           {ios && (
             <p className="metaMuted">
-              Safari cannot send banners from a tab. Tap Show me how for the Share → Add to Home
-              Screen steps.
+              Safari cannot send banners from a tab. Tap Show me how for the Share <Arrow /> Add to
+              Home Screen steps.
             </p>
           )}
         </div>

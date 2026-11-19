@@ -33,7 +33,7 @@
 
 @keyframes hubRightPanelIn {
   from {
-    transform: translateX(100%);
+    transform: translateX(calc(100% * var(--dir, 1)));
     opacity: 0.8;
   }
   to {
@@ -48,7 +48,7 @@
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(calc(100% * var(--dir, 1)));
     opacity: 0.8;
   }
 }
