@@ -54,7 +54,9 @@ export function Groups({ slug }: { slug?: string }) {
   const panel = usePeek<GroupDetail>('/groups', '/groups', slug)
   const query = useApi<{ items: GroupSummary[] }>('/groups')
   const workspaces = useApi<{ items: WorkspaceProgress[] }>('/member/workspace')
-  const joined = new Set(workspaces.data?.items.map((item) => item.wg_slug))
+  const joined = new Set(
+    workspaces.data?.items.filter((item) => item.status === 'active').map((item) => item.wg_slug),
+  )
   const { doc: directory } = useDocument<{ topics?: DirectoryTopic[] }>('directory')
   const topicList = directory?.topics || []
   const topicLabel = (key: string | null | undefined) =>

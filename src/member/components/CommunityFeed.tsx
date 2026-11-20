@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { OpportunitySummary, ResourceSummary } from '../../shared/contracts'
 import {
@@ -11,7 +11,7 @@ import {
 } from 'react-icons/tb'
 import { useApi } from '../lib/api'
 import { fmtStamp } from '../lib/time'
-import { A, Section } from './ui'
+import { A, ErrorCard, Section } from './ui'
 import { Arrow, TbChevronRight as ChevronRight } from './dirIcons'
 
 type Post = {
@@ -58,7 +58,12 @@ export function CommunityFeed() {
   const opps = useApi<{ items: OpportunitySummary[] }>('/member/opportunities?kind=all&format=all')
   const res = useApi<{ items: ResourceSummary[] }>('/resources')
 
-  const [now] = useState(() => Date.now())
+  const [now, setNow] = useState(() => Date.now())
+  // an opportunity that closes while Home is open drops out of the feed
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
   const open = (opps.data?.items ?? [])
     .filter((o) => !o.deadlineAt || Date.parse(o.deadlineAt) > now)
     .slice(0, 2)
@@ -68,7 +73,20 @@ export function CommunityFeed() {
     .slice(0, SHOWN - open.length)
     .map(fromResource)
   const posts = [...open, ...shared].slice(0, SHOWN)
-  if (!posts.length) return null
+  if (!posts.length) {
+    const failed = Boolean(opps.error && res.error)
+    return failed ? (
+      <Section label="Shared with the community">
+        <ErrorCard
+          message="The community feed could not be loaded."
+          onRetry={() => {
+            opps.retry()
+            res.retry()
+          }}
+        />
+      </Section>
+    ) : null
+  }
   // a label that every row shares says nothing, so it only shows when kinds are mixed
   const mixed = new Set(posts.map((p) => p.kind)).size > 1
 

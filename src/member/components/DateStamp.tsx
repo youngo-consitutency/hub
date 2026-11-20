@@ -14,7 +14,7 @@ export function DateStamp({ iso }: DateStampProps) {
     <time className="dateStamp" dateTime={iso}>
       <span aria-hidden>{monthFormat.format(date)}</span>
       <strong aria-hidden>{date.getDate()}</strong>
-      <span className="srOnly">{fmtDate(iso)}</span>
+      <span className="srOnly">{fmtDate(date)}</span>
     </time>
   )
 }

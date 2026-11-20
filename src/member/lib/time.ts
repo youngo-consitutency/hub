@@ -39,7 +39,8 @@ export function fmtDate(value: DateInput, tz = localTz()) {
 
 /** The one date-and-time format: "09:45, Mon 01 Nov, 2026". */
 export function fmtStamp(iso: DateInput, tz = localTz()) {
-  return `${hm(iso, tz)}, ${fmtDate(iso, tz)}`
+  const dateOnly = typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(iso)
+  return `${hm(dateOnly ? `${iso}T00:00:00Z` : iso, dateOnly ? 'UTC' : tz)}, ${fmtDate(iso, tz)}`
 }
 
 function hm(iso: DateInput, tz: string) {

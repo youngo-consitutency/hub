@@ -85,6 +85,8 @@ export interface WorkspaceProgress {
   wg_slug: string
   presentation_ok?: boolean
   rules_ok?: boolean
+  /** membership state; a join request stays pending_approval until a Contact Point approves it */
+  status?: string | null
 }
 
 /** One member in GET /api/member/people (src/lib/memberDirectory.ts safePerson). */
