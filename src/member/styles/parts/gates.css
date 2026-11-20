@@ -66,7 +66,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  outline: none;
+}
+
+.mandateBody:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
 }
 
 .mandateAnalysis h2 {
@@ -106,7 +110,7 @@
 }
 
 .mandatePoint h3 {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 4px;
 }
 
@@ -146,12 +150,12 @@
 }
 
 .mandateSection h2 {
-  font-size: 17px;
+  font-size: 1.0625rem;
   margin-bottom: 0;
 }
 
 .mandateSection h3 {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin: 0;
   color: var(--text-1);
 }
@@ -190,7 +194,7 @@
 }
 
 .privacyDataCategory h3 {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .privacyFields {
@@ -325,7 +329,7 @@ ul.mandateBulletGroup {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--text-1);
   cursor: pointer;
@@ -341,7 +345,6 @@ ul.mandateBulletGroup {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  accent-color: var(--accent);
 }
 
 @media (max-width: 560px) {
@@ -420,7 +423,7 @@ ul.mandateBulletGroup {
 
 .authAboutLink {
   color: var(--accent);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
@@ -449,7 +452,7 @@ ul.mandateBulletGroup {
   color: var(--text-2);
   border-radius: var(--radius-control);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
 }
@@ -489,7 +492,7 @@ ul.mandateBulletGroup {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 15px;
+  font-size: 0.9375rem;
   margin-bottom: 0;
 }
 
@@ -500,7 +503,7 @@ ul.mandateBulletGroup {
 
 .authSectionSubheading {
   margin-top: var(--space-1);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .authChoiceGrid {
@@ -549,14 +552,14 @@ ul.mandateBulletGroup {
 }
 
 .authChoice strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .authCheck {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--text-1);
   cursor: pointer;
@@ -569,7 +572,6 @@ ul.mandateBulletGroup {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  accent-color: var(--accent);
 }
 
 .authCheck span {
@@ -786,7 +788,7 @@ ul.mandateBulletGroup {
 
   .authSection .input,
   .authSection .textarea {
-    font-size: 16px;
+    font-size: 1rem;
     /* prevent iOS zoom on focus */
     min-height: 44px;
   }
@@ -814,7 +816,7 @@ ul.mandateBulletGroup {
 }
 
 .accountName {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-1);
   white-space: nowrap;
@@ -855,7 +857,7 @@ ul.mandateBulletGroup {
   cursor: pointer;
   list-style: none;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-1);
   display: flex;
@@ -872,7 +874,7 @@ ul.mandateBulletGroup {
   content: '+';
   content: '+' / '';
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--text-3);
   flex-shrink: 0;
 }
@@ -908,12 +910,12 @@ ul.mandateBulletGroup {
 }
 
 .ageIneligible h3 {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--text-1);
 }
 
 .ageIneligible p {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: var(--text-2);
   max-width: var(--text-measure);
@@ -959,7 +961,7 @@ ul.mandateBulletGroup {
 }
 
 .guardianSubhead {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--text-1);
 }
 

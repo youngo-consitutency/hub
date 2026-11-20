@@ -380,7 +380,7 @@ export function Opportunities({ slug }: { slug?: string }) {
                   </>
                 }
               />
-              <CatalogueResults count={items.length}>
+              <CatalogueResults count={items.length} quiet>
                 {items.length ? (
                   <div className="opportunityGroups">
                     {groupedItems.open.length > 0 && (

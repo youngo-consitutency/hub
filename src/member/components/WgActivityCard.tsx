@@ -67,7 +67,7 @@ export function WgActivityCard({ activity }: WgActivityCardProps) {
         <p className="entityCardMetaRow">
           <CalendarDays size={16} strokeWidth={1.75} aria-hidden />
           <span>
-            {start.day} · {start.localTime} {start.localZone}
+            {start.stamp} {start.localZone}
           </span>
         </p>
       )}

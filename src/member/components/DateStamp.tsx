@@ -1,13 +1,10 @@
+import { fmtDate } from '../lib/time'
+
 interface DateStampProps {
   iso: string
 }
 
 const monthFormat = new Intl.DateTimeFormat('en-GB', { month: 'short' })
-const dateFormat = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-})
 
 /** Compact calendar date, shared by public previews and member event cards. */
 export function DateStamp({ iso }: DateStampProps) {
@@ -17,7 +14,7 @@ export function DateStamp({ iso }: DateStampProps) {
     <time className="dateStamp" dateTime={iso}>
       <span aria-hidden>{monthFormat.format(date)}</span>
       <strong aria-hidden>{date.getDate()}</strong>
-      <span className="srOnly">{dateFormat.format(date)}</span>
+      <span className="srOnly">{fmtDate(iso)}</span>
     </time>
   )
 }

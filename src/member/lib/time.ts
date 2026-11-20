@@ -22,7 +22,24 @@ function formatter(tz: string | undefined, options: Intl.DateTimeFormatOptions) 
 }
 
 function fmtDay(iso: DateInput, tz: string) {
-  return formatter(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
+  return formatter(tz, { weekday: 'short', day: '2-digit', month: 'short' }).format(new Date(iso))
+}
+
+function fmtYear(iso: DateInput, tz: string) {
+  return formatter(tz, { year: 'numeric' }).format(new Date(iso))
+}
+
+/** The one date format: "Mon 01 Nov, 2026". A date-only string ("2026-11-01") is read as UTC. */
+export function fmtDate(value: DateInput, tz = localTz()) {
+  const dateOnly = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+  const iso = dateOnly ? `${value}T00:00:00Z` : value
+  const zone = dateOnly ? 'UTC' : tz
+  return `${fmtDay(iso, zone)}, ${fmtYear(iso, zone)}`
+}
+
+/** The one date-and-time format: "09:45, Mon 01 Nov, 2026". */
+export function fmtStamp(iso: DateInput, tz = localTz()) {
+  return `${hm(iso, tz)}, ${fmtDate(iso, tz)}`
 }
 
 function hm(iso: DateInput, tz: string) {
@@ -36,20 +53,20 @@ function zoneAbbr(iso: DateInput, tz: string) {
   return parts.find((p) => p.type === 'timeZoneName')?.value || tz
 }
 
-// "Wed 15 Jul · 13:00 UTC · 16:00 EAT"; single time when viewer zone is UTC.
+// "09:45, Mon 01 Nov, 2026 UTC"; adds "· 12:45 EAT" when the viewer's zone is not UTC.
 export function fmtDual(iso: DateInput, tz = localTz()) {
-  const day = fmtDay(iso, 'UTC')
-  const utc = `${hm(iso, 'UTC')} UTC`
+  const utc = `${fmtStamp(iso, 'UTC')} UTC`
   const zone = zoneAbbr(iso, tz)
-  if (zone === 'UTC' || zone === 'GMT') return `${day} · ${utc}`
-  return `${day} · ${utc} · ${hm(iso, tz)} ${zone}`
+  if (zone === 'UTC' || zone === 'GMT') return utc
+  return `${utc} · ${hm(iso, tz)} ${zone}`
 }
 
 export function fmtMoment(iso: DateInput, tz = localTz()) {
   const zone = zoneAbbr(iso, tz)
   const isUtc = zone === 'UTC' || zone === 'GMT'
   return {
-    day: fmtDay(iso, tz),
+    stamp: fmtStamp(iso, tz),
+    date: fmtDate(iso, tz),
     localTime: hm(iso, tz),
     localZone: isUtc ? 'UTC' : zone,
     utcTime: hm(iso, 'UTC'),
@@ -63,11 +80,10 @@ export function fmtDateRange(
   datesTbc?: boolean,
 ) {
   if (!startsOn) return 'Dates TBC'
-  const fmt = (d: string) =>
-    formatter('UTC', { day: 'numeric', month: 'short' }).format(new Date(d + 'T00:00:00Z'))
-  const year = startsOn.slice(0, 4)
-  const range = endsOn && endsOn !== startsOn ? `${fmt(startsOn)}–${fmt(endsOn)}` : fmt(startsOn)
-  return `${range} ${year}${datesTbc ? ' · TBC' : ''}`
+  const dm = (d: string) =>
+    formatter('UTC', { day: '2-digit', month: 'short' }).format(new Date(d + 'T00:00:00Z'))
+  const range = endsOn && endsOn !== startsOn ? `${dm(startsOn)} – ${dm(endsOn)}` : dm(startsOn)
+  return `${range}, ${startsOn.slice(0, 4)}${datesTbc ? ' · TBC' : ''}`
 }
 
 // Thresholds per design system §6.3: >7d neutral, ≤7d warn, ≤48h danger.
@@ -91,11 +107,12 @@ export function countdown(
 
 export function formatDateTime(value: DateInput | null | undefined) {
   if (!value) return 'Not set'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? 'Not set'
-    : date.toLocaleString(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      })
+  return Number.isNaN(new Date(value).getTime()) ? 'Not set' : fmtStamp(value)
+}
+
+/** Date only, for fields that may be empty or malformed. */
+export function formatDateOnly(value: DateInput | null | undefined, fallback = 'Not set') {
+  if (!value) return fallback
+  const text = String(value).match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? value
+  return Number.isNaN(new Date(text as DateInput).getTime()) ? String(value) : fmtDate(text)
 }

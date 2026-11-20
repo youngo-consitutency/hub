@@ -83,7 +83,7 @@ function PeopleDirectory() {
             <Empty
               icon={Users}
               title="No visible profiles match"
-              body="Members can publish their profile from the Profile page."
+              body="Be the first: share your interests from your Profile page so others can find you."
             />
           ) : null
         }
@@ -127,7 +127,13 @@ export function Directory() {
       <Async
         query={query}
         empty={(d) =>
-          d.items.length === 0 ? <Empty icon={AtSign} title="Directory is empty" /> : null
+          d.items.length === 0 ? (
+            <Empty
+              icon={AtSign}
+              title="No contacts listed yet"
+              body="Contacts appear here as teams publish them."
+            />
+          ) : null
         }
       >
         {(data) => {
@@ -187,7 +193,7 @@ export function Members() {
       <PageHeader
         icon={UsersIcon}
         title="Members"
-        description="Find people by their working groups, skills and interests."
+        description="Meet the community: find people by working group, skills and interests."
       >
         <PageSectionNav section="people" />
       </PageHeader>

@@ -45,10 +45,10 @@ export function Help() {
       <PageHeader
         icon={HelpIcon}
         title="Help &amp; support"
-        description="Get help with your account or report a problem."
+        description="Report a problem or ask a question."
       />
 
-      <Section label="Get help">
+      <Section>
         <div className="helpActionGrid">
           <article className="card cardTight helpActionCard">
             <span className="iconTile" aria-hidden>

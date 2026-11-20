@@ -4,7 +4,7 @@ import { useApi, errorMessage } from '../lib/api'
 import { apiPost } from '../lib/api'
 import { Async, Button, Empty, ErrorCard, PageHeader, Section } from '../components/ui'
 import { SearchableSelect } from '../components/FormControls'
-import { fmtDual } from '../lib/time'
+import { fmtDate, fmtDual } from '../lib/time'
 import { useWorkingGroups } from '../lib/workingGroups'
 import { useAccount } from '../lib/accountContext'
 import { TbCalendarCheck as CalendarCheck } from 'react-icons/tb'
@@ -12,12 +12,7 @@ import { TbCalendarCheck as CalendarCheck } from 'react-icons/tb'
 function groupByDay(slots: CpCallSlotView[]) {
   const map = new Map<string, CpCallSlotView[]>()
   for (const slot of slots) {
-    const day = new Intl.DateTimeFormat('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'UTC',
-    }).format(new Date(slot.startsAt))
+    const day = fmtDate(slot.startsAt, 'UTC')
     map.set(day, [...(map.get(day) ?? []), slot])
   }
   return [...map.entries()]
