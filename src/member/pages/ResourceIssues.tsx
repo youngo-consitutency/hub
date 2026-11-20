@@ -38,6 +38,7 @@ import { Locked } from '../components/Locked'
 import { ACCESS_FAILED, CHECKING_ACCESS } from '../lib/routes'
 import { useAccount } from '../lib/accountContext'
 import { apiPost, useApi, errorMessage } from '../lib/api'
+import { fmtDate } from '../lib/time'
 
 export function ResourceIssues() {
   const { account } = useAccount()
@@ -325,7 +326,7 @@ function LinkReview({ item, issues, previous, onClose, onSaved, onCorrect }: Lin
       {previous && (
         <p className="contentReviewNote">
           Previous review by {previous.reviewerName || 'a Content Publisher'} (
-          {new Date(previous.reviewedAt).toLocaleDateString()}): {previous.note}
+          {fmtDate(previous.reviewedAt)}): {previous.note}
         </p>
       )}
       {issues.length > 0 && (

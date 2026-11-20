@@ -8,6 +8,23 @@ import { fmtMoment } from '../lib/time'
 // (child safeguarding: no member photos or names are ever published here)
 const FIGURES = ['amara', 'jun', 'lucia', 'tariq', 'ingrid', 'kofi']
 
+/** Overlapping illustrated avatars; decorative, so hidden from assistive tech. */
+export function FigureStack({ size = 44, className = '' }: { size?: number; className?: string }) {
+  return (
+    <ul className={`dlStack ${className}`.trim()} aria-hidden>
+      {FIGURES.map((name) => (
+        <li
+          key={name}
+          className="dlAvatar"
+          style={{ '--size': `${size}px` } as React.CSSProperties}
+        >
+          <img src={`/illustrations/community/${name}.svg`} alt="" width={size} height={size} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function Count({ path, label }: { path: string; label: string }) {
   const { data } = useApi(path)
   const n = data?.items?.length ?? 0
@@ -29,15 +46,8 @@ export function CommunityPanel() {
   const moment = next ? fmtMoment(next.startsAt) : null
   return (
     <aside className="authCommunity" aria-labelledby="auth-community-title">
-      <p className="eyebrow">YOUNGO Hub</p>
       <h2 id="auth-community-title">Young people shaping climate policy, together.</h2>
-      <ul className="dlStack authPeople" aria-hidden>
-        {FIGURES.map((name) => (
-          <li key={name} className="dlAvatar" style={{ '--size': '44px' } as React.CSSProperties}>
-            <img src={`/illustrations/community/${name}.svg`} alt="" width={44} height={44} />
-          </li>
-        ))}
-      </ul>
+      <FigureStack className="authPeople" />
       <ul className="authCounts">
         <Count path="/groups" label="working groups" />
         <Count path="/coys" label="Conferences of Youth" />
@@ -45,12 +55,15 @@ export function CommunityPanel() {
       </ul>
       {next && moment && (
         <div className="authNext">
-          <p className="dlLive">
-            Next call · {moment.day}, {moment.localTime} {moment.localZone}
-          </p>
+          <p className="dlLive">Next call</p>
           <div className="authNextRow">
             <DateStamp iso={next.startsAt} />
-            <A href={`/calendar/${next.slug}`}>{next.title}</A>
+            <div>
+              <A href={`/calendar/${next.slug}`}>{next.title}</A>
+              <p className="meta">
+                {moment.localTime} {moment.localZone}
+              </p>
+            </div>
           </div>
         </div>
       )}

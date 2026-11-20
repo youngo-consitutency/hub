@@ -485,7 +485,7 @@ export function LifecycleTiming({
             {!status && label !== 'Deadline' && (
               <span className="lifecycleTimingRelation">{label}</span>
             )}
-            {moment.day} · {moment.localTime} {moment.localZone}
+            {moment.stamp} {moment.localZone}
           </time>
         </div>
       )}

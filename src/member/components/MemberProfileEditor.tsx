@@ -183,7 +183,6 @@ export function MemberProfileEditor({ query, account, roleLabel }: MemberProfile
 
               <div className="memberProfileOverview">
                 <div>
-                  <p className="pageEyebrow">Member directory</p>
                   <h3>Profile information</h3>
                   <p className="meta">
                     Your Hub roles and group connections update automatically. You control the

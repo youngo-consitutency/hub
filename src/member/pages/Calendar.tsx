@@ -21,6 +21,7 @@ import {
   eventsInCalendarMonth,
   eventsOnCalendarDay,
   formatCalendarDay,
+  spokenCalendarDay,
   formatCalendarMonth,
   groupEventsByDate,
   shiftCalendarMonth,
@@ -97,7 +98,7 @@ export function Calendar({ slug }: { slug?: string }) {
       <PageHeader
         icon={CalendarIcon}
         title="Calendar"
-        description="Calls, forums, sessions, and webinars in one UTC-first agenda."
+        description="Calls, forums, sessions and webinars. Drop in, listen, join the conversation."
         action={<CalendarSubscribe type="all" />}
       />
       <CatalogToolbar>
@@ -125,7 +126,7 @@ export function Calendar({ slug }: { slug?: string }) {
             <Empty
               icon={CalendarOff}
               title="Nothing scheduled for this filter"
-              body="Try another type or check back soon."
+              body="Try another type, or check back soon: new sessions are added all the time."
             />
           ) : null
         }
@@ -200,7 +201,7 @@ export function Calendar({ slug }: { slug?: string }) {
                 <div className="calendarMonthGrid">
                   {days.map((date) => {
                     const dots = date.events.slice(0, 4)
-                    const label = `${formatCalendarDay(date.key)}: ${date.events.map((event) => event.title).join(', ')}`
+                    const label = `${spokenCalendarDay(date.key)}: ${date.events.map((event) => event.title).join(', ')}`
                     const content = (
                       <>
                         <time
@@ -216,9 +217,10 @@ export function Calendar({ slug }: { slug?: string }) {
                               <CalendarEventDot key={event.slug} type={event.type} />
                             ))}
                             {date.events.length > dots.length && (
-                              <span className="calendarMore">
-                                +{date.events.length - dots.length}
-                              </span>
+                              <span
+                                className="calendarMore"
+                                data-more={date.events.length - dots.length}
+                              />
                             )}
                           </span>
                         )}

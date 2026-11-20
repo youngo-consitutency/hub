@@ -45,7 +45,7 @@ export function UpcomingEvents() {
                       <A href={`/calendar/${event.slug}`}>{event.title}</A>
                     </h3>
                     <p className="meta">
-                      {moment.localTime} {moment.localZone}
+                      {moment.stamp} {moment.localZone}
                     </p>
                   </div>
                 </li>

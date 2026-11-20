@@ -27,7 +27,8 @@ import { useApi, type ApiQuery } from '../lib/api'
 import { A, Async, Empty, LifecycleTiming, Section } from '../components/ui'
 import { TbCalendar as CalendarIcon } from 'react-icons/tb'
 import { EventCard, ClosingCard, CoyCard, GroupCard } from '../components/cards'
-import { MissionMetric } from '../components/MissionConsole'
+import { CommunityFeed } from '../components/CommunityFeed'
+import { FigureStack } from '../components/CommunityPanel'
 import { HeroBand } from '../components/HeroBand'
 import { fmtDual } from '../lib/time'
 import { useAccount } from '../lib/accountContext'
@@ -40,9 +41,6 @@ import {
   TbClipboardCheck as ClipboardCheck,
   TbCircleCheck as CircleCheck,
   TbProgress as Progress,
-  TbAlarm as Alarm,
-  TbCalendarStats as CalendarStats,
-  TbSpeakerphone as Megaphone,
 } from 'react-icons/tb'
 
 function LiveBanner({ event }: LiveBannerProps) {
@@ -90,36 +88,26 @@ export function Home() {
                 account?.name ? `Welcome back, ${account.name.split(' ')[0]}` : 'Welcome back'
               }
               title="Your Hub"
-              lead="Here is what needs you, and what is coming up."
             >
-              <div className="homeMetrics">
-                <MissionMetric
-                  value={String(data.counts?.closing ?? data.closing.length)}
-                  label="Closing soon"
-                  href="/submissions"
-                  tone={data.closing.length > 0 ? 'warn' : undefined}
-                  icon={Alarm}
-                />
-                <MissionMetric
-                  value={String(data.counts?.week ?? data.week.length)}
-                  label="Events this week"
-                  href="/calendar"
-                  icon={CalendarStats}
-                />
-                <MissionMetric
-                  value={String(data.counts?.coys ?? data.coys.length)}
-                  label="COYs listed"
-                  href="/coys"
-                  icon={Megaphone}
-                />
-              </div>
+              {groups.data && groups.data.items.length > 0 && (
+                <div className="homeWelcome">
+                  <FigureStack size={32} />
+                  <p>
+                    {groups.data.items.length} working groups, one community. Pick up where you left
+                    off, or say hello somewhere new.
+                  </p>
+                </div>
+              )}
             </HeroBand>
 
             <div className="homeColumns">
               <div className="homeMain">
+                <WorkspaceSection groups={groups} workspaces={workspaces} />
+
                 {data.closing.length > 0 && (
                   <Section
                     label="Closing soon"
+                    meta={String(data.counts?.closing ?? data.closing.length)}
                     action={
                       <A href="/submissions" className="metaMuted">
                         All <Arrow />
@@ -172,6 +160,7 @@ export function Home() {
 
                 <Section
                   label="This week"
+                  meta={String(data.counts?.week ?? data.week.length)}
                   action={
                     <A href="/calendar" className="metaMuted">
                       Calendar <Arrow />
@@ -193,9 +182,12 @@ export function Home() {
                   )}
                 </Section>
 
+                <CommunityFeed />
+
                 {data.coys.length > 0 && (
                   <Section
                     label="COYs"
+                    meta={String(data.counts?.coys ?? data.coys.length)}
                     action={
                       <A href="/coys" className="metaMuted">
                         All <Arrow />
@@ -211,7 +203,6 @@ export function Home() {
                 )}
               </div>
               <div className="homeSide">
-                <WorkspaceSection groups={groups} workspaces={workspaces} />
                 {canManageGroups(account) && (
                   <Section label="Group support">
                     <A href="/book" className="card cardTight roleHubCard">
@@ -264,14 +255,14 @@ function ResponsibilitySection({ account }: ResponsibilitySectionProps) {
 function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
   return (
     <Section
-      label="Your workspaces"
+      label="Your groups"
       action={
         <A href="/groups" className="metaMuted">
           Manage <Arrow />
         </A>
       }
     >
-      <Async query={workspaces} skeletons={2}>
+      <Async query={workspaces} skeletons={2} grid>
         {(workspaceData) => (
           <Async query={groups} skeletons={2}>
             {(groupData) => {
@@ -286,8 +277,8 @@ function WorkspaceSection({ groups, workspaces }: WorkspaceSectionProps) {
                       <Users size={20} strokeWidth={1.75} />
                     </span>
                     <span className="roleHubCopy">
-                      <strong>Join a working group</strong>
-                      <small>Your groups and their workspaces appear here.</small>
+                      <strong>Find your people: join a working group</strong>
+                      <small>Groups are where the work and the welcome happen.</small>
                     </span>
                   </A>
                 )

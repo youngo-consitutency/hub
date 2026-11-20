@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import type { NegotiationTracksResponse } from '../../shared/contracts'
 import type { Doc } from './types'
 import { apiGet, apiPost, errorMessage, useApi } from './api'
@@ -43,6 +43,10 @@ export function useProposalForm<F extends Record<string, string>, D = Doc>({
     [tracks.data, trackId],
   )
 
+  const trackLoaded = useEffectEvent((detail: D) =>
+    setForm((current) => onTrackLoaded(current, detail)),
+  )
+
   useEffect(() => {
     let active = true
     setTrackDetail(null)
@@ -51,14 +55,12 @@ export function useProposalForm<F extends Record<string, string>, D = Doc>({
       .then((detail) => {
         if (!active) return
         setTrackDetail(detail)
-        setForm((current) => onTrackLoaded(current, detail))
+        trackLoaded(detail)
       })
       .catch((requestError) => active && setError(errorMessage(requestError)))
     return () => {
       active = false
     }
-    // onTrackLoaded is a stable module-level function in every caller
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   const set =
