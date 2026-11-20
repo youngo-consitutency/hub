@@ -23,8 +23,11 @@ if [ "$existing" != "0" ] && [ "${FORCE:-}" != "1" ]; then
   exit 1
 fi
 
-pg pg_dump --format=custom --schema=public --no-owner --no-acl "$SOURCE_URL" |
-  pg pg_restore --no-owner --no-acl --clean --if-exists --exit-on-error --dbname="$TARGET_URL"
+# Supabase's Postgres adds column options that vanilla Postgres rejects; strip only those statements.
+# With FORCE=1 the old tables are replaced before the counts below are checked.
+pg pg_dump --format=plain --clean --if-exists --schema=public --no-owner --no-acl "$SOURCE_URL" |
+  awk -f "$(dirname "$0")/strip-pg-attver.awk" |
+  pg psql -q -v ON_ERROR_STOP=1 "$TARGET_URL"
 
 if diff <(tables "$SOURCE_URL") <(tables "$TARGET_URL"); then
   echo "copied: every table has the same row count"
