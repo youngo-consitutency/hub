@@ -86,7 +86,7 @@ The historical Intelligence proposal is not included in this public checkout; pr
 
 Production data lives in the Supabase project `youngo-hub` (Postgres, transaction pooler), served by the Vercel project `youngo-hub`. Local development uses `youngo_dev` on localhost. The old Neon project is retired and never a target.
 
-- The schema changes only through `src/db/migrations`. Production builds run `payload migrate` first (`scripts/ci/vercel-build.mjs`); previews never migrate.
+- The schema changes only through `src/db/migrations`. Production builds run `payload migrate` first (`scripts/ci/vercel-build.mjs`); previews migrate only their own database, and only with `HUB_MIGRATE_PREVIEW=1` on the Preview environment.
 - Before a risky or destructive migration, take a fresh backup (run the Database backup workflow, or `scripts/ops/copy-database.sh` into a scratch database). Restore steps are in the wiki (Backups).
 - The app trusts Supabase's CA through `DATABASE_CA`; never turn TLS verification off.
 - Agents do not write to production. Data scripts in `scripts/setup/` are dry runs unless given `--apply`, read `DATABASE_URL` from `.env.local` (check which database it names), and are run by a maintainer.
