@@ -18,6 +18,10 @@ jobs:
       AGE_PUBLIC_KEY: age1er9etlc8cgn9ytycmvsf4n8pcq275zjx9wdvrve2k80udmq2vg2sagfdjz
       PG_IMAGE: postgres:17-alpine
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
       - name: Install age
         run: sudo apt-get update -qq && sudo apt-get install -y -qq age
 
@@ -32,10 +36,10 @@ jobs:
           set -euo pipefail
           test -n "$DATABASE_URL" || { echo "BACKUP_DATABASE_URL is not set" >&2; exit 1; }
           file="hub-$(date -u +%F).sql.gz.age"
-          # plain SQL, minus the pg_attver column options only Supabase's Postgres understands
+          # plain SQL, minus the column options only Supabase's Postgres understands
           docker run --rm -e PGSSLROOTCERT=/ca.crt -v "$PWD/supabase-ca.crt:/ca.crt:ro" "$PG_IMAGE" \
             pg_dump --format=plain --clean --if-exists --schema=public --no-owner --no-acl "$DATABASE_URL?sslmode=verify-ca" |
-            grep -v 'SET (pg_attver' | gzip -9 | age -r "$AGE_PUBLIC_KEY" > "$file"
+            awk -f scripts/ops/strip-pg-attver.awk | gzip -9 | age -r "$AGE_PUBLIC_KEY" > "$file"
           test -s "$file"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
