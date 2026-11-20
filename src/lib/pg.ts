@@ -17,7 +17,7 @@ export function getPgPool(): pg.Pool | null {
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,
-      // TCP keepalive so idle connections survive proxies and Neon suspends.
+      // TCP keepalive so idle connections survive proxies and pooler timeouts.
       keepAlive: true,
     })
   return pool

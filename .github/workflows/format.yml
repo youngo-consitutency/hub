@@ -90,8 +90,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ github.head_ref }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           gh workflow run verify.yml --ref "$HEAD_REF"
-          gh workflow run neon-preview.yml --ref "$HEAD_REF" -f pr-number="$PR_NUMBER"
           gh workflow run format.yml --ref "$HEAD_REF"

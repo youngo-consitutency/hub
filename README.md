@@ -57,7 +57,7 @@ Colours, radii and spacing are design tokens in `design/tokens/` (editable in Fi
 
 ## Deployments
 
-Production runs on the `youngo-hub` Vercel project at [youngo-hub.vercel.app](https://youngo-hub.vercel.app). A production build applies pending migrations before building (`scripts/ci/vercel-build.mjs`), and a failed migration stops the deploy. Pull requests get Vercel previews backed by Neon database branches. Previews never send email or push and are kept out of search results; set `HUB_DELIVERY_DISABLED=true` to switch delivery off on any other deployment. The repository carries no data: content lives in the database.
+Production runs on the `youngo-hub` Vercel project at [youngo-hub.vercel.app](https://youngo-hub.vercel.app). A production build applies pending migrations before building (`scripts/ci/vercel-build.mjs`), and a failed migration stops the deploy. Pull requests get Vercel previews backed by a separate preview database. Previews never send email or push and are kept out of search results; set `HUB_DELIVERY_DISABLED=true` to switch delivery off on any other deployment. The repository carries no data: content lives in the database.
 
 ## Licence
 

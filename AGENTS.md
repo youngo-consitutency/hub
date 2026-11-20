@@ -84,10 +84,11 @@ The historical Intelligence proposal is not included in this public checkout; pr
 
 ## Production database
 
-Production data lives in the Neon Postgres database `hub` (the `production` branch), served by the Vercel project `youngo-hub`. Local development uses `youngo_dev` on localhost; the retired demo database `neondb` is never a target.
+Production data lives in the Supabase project `youngo-hub` (Postgres, transaction pooler), served by the Vercel project `youngo-hub`. Local development uses `youngo_dev` on localhost. The old Neon project is retired and never a target.
 
 - The schema changes only through `src/db/migrations`. Production builds run `payload migrate` first (`scripts/ci/vercel-build.mjs`); previews never migrate.
-- Before a risky or destructive migration, create a Neon branch named `pre-migrate-YYYY-MM-DD` from production.
+- Before a risky or destructive migration, take a fresh backup (run the Database backup workflow, or `scripts/ops/copy-database.sh` into a scratch database). Restore steps are in the wiki (Backups).
+- The app trusts Supabase's CA through `DATABASE_CA`; never turn TLS verification off.
 - Agents do not write to production. Data scripts in `scripts/setup/` are dry runs unless given `--apply`, read `DATABASE_URL` from `.env.local` (check which database it names), and are run by a maintainer.
 - The legacy Vite/Express hub (`Genn25369/YOUNGO-HUB`) has its own PostgreSQL on Railway. It is a content source for `scripts/setup/import-legacy-content.ts`, not a shared database.
 
