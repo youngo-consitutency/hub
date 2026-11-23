@@ -1,32 +1,9 @@
-'use client'
+import { loadPublicDocuments } from '../../../lib/publicDocuments'
+import { MemberProviders } from './MemberProviders'
 
-// Gate chain: AccountProvider → AccessGate → MemberGate → Shell → page.
-import { useEffect } from 'react'
-import { SWRConfig } from 'swr'
-import '../../../member/styles/app.css'
-import { AccessGate } from '../../../member/components/AccessGate'
-import { MemberGate } from '../../../member/components/MemberGate'
-import { AccountProvider } from '../../../member/lib/accountContext'
-import { disablePWAInDevelopment, initPWA } from '../../../member/lib/pwa'
-import { RouterProvider } from 'react-aria-components'
-import { navigate, RouterBridge } from '../../../member/lib/router'
+// The public pages are prerendered with their CMS copy; edits reach them within a minute.
+export const revalidate = 60
 
-export default function MemberLayout({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production') initPWA()
-    else disablePWAInDevelopment()
-  }, [])
-  // react aria links and menu items navigate through the app router
-  return (
-    <SWRConfig value={{ dedupingInterval: 5000, focusThrottleInterval: 60000, errorRetryCount: 3 }}>
-      <RouterBridge />
-      <RouterProvider navigate={(href) => navigate(href)}>
-        <AccountProvider>
-          <AccessGate>
-            <MemberGate>{children}</MemberGate>
-          </AccessGate>
-        </AccountProvider>
-      </RouterProvider>
-    </SWRConfig>
-  )
+export default async function MemberLayout({ children }: { children: React.ReactNode }) {
+  return <MemberProviders documents={await loadPublicDocuments()}>{children}</MemberProviders>
 }

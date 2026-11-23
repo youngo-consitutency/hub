@@ -133,7 +133,9 @@ export function useApi<T = Doc>(path: string | null, { keepPrevious = false } = 
   return {
     data: data ?? null,
     error: error ? error.message : null,
-    loading: isLoading,
+    // SWR flags the first revalidation as loading even when server-provided fallback data is
+    // already on screen; callers only want the skeleton while there is nothing to show
+    loading: isLoading && data === undefined,
     retry: () => mutate(),
   }
 }
