@@ -37,7 +37,16 @@ const nextConfig: NextConfig = {
     const headers = isIndexable()
       ? security
       : [...security, { key: 'X-Robots-Tag', value: 'noindex' }]
-    return [{ source: '/:path*', headers }]
+    return [
+      { source: '/:path*', headers },
+      // brand art and icons keep stable file names, so revalidate daily rather than per visit
+      ...['/brand/:path*', '/icons/:path*'].map((source) => ({
+        source,
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      })),
+    ]
   },
   async redirects() {
     return [

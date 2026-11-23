@@ -12,14 +12,9 @@ import { useEffect, useRef, useState } from 'react'
 import { apiPost, useApi, errorMessage, errorCode } from '../lib/api'
 import { A, Async, BackLink, Empty, PageHeader, Section, StatusChip } from '../components/ui'
 import { TbFileDescription as FileDescription, TbHistory as History } from 'react-icons/tb'
+import { fmtStamp } from '../lib/time'
 
-const formatDate = (value: string | null | undefined) =>
-  value
-    ? new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(new Date(value))
-    : 'Unknown date'
+const formatDate = (value: string | null | undefined) => (value ? fmtStamp(value) : 'Unknown date')
 
 function ProjectList() {
   const query = useApi<{ items: SubmissionProjectRow[] }>('/negotiations/projects')

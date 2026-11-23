@@ -45,7 +45,7 @@ export function SignInForm({
       </label>
       <Honeypot value={login.website} onChange={setLog('website')} />
       <Button type="submit" variant="primary" glow disabled={status === 'submitting'}>
-        {status === 'submitting' ? 'Signing in…' : 'Sign in & open hub'}
+        {status === 'submitting' ? 'Signing in…' : 'Open the hub'}
       </Button>
       <button
         type="button"

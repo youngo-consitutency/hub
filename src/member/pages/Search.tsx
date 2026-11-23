@@ -337,8 +337,8 @@ export function Search() {
       ) : (
         <Empty
           icon={SearchIcon}
-          title="Search the Hub"
-          body="Start typing to find records. Submit a question for a cited answer."
+          title="Start typing"
+          body="Find records as you type, or submit a question for a cited answer."
         />
       )}
 

@@ -1,7 +1,7 @@
 import type { IconType } from 'react-icons'
 import type { GroupDetail } from '../../shared/contracts'
 import type { DirectoryTopic } from '../../shared/contracts'
-import type { GroupSummary } from '../../shared/contracts'
+import type { GroupSummary, WorkspaceProgress } from '../../shared/contracts'
 import { usePeek } from '../lib/peek'
 import { CatalogueResults } from '../components/CatalogueResults'
 import { TbUsersGroup as GroupsIcon } from 'react-icons/tb'
@@ -26,6 +26,7 @@ import {
   TbSchool as GraduationCap,
   TbHeartHandshake as HeartHandshake,
   TbLeaf as Leaf,
+  TbCircleCheck as CircleCheck,
   TbSearch as Search,
   TbShieldCheck as ShieldCheck,
   TbTags as Tags,
@@ -52,6 +53,10 @@ export function Groups({ slug }: { slug?: string }) {
   const [descending, setDescending] = useState(false)
   const panel = usePeek<GroupDetail>('/groups', '/groups', slug)
   const query = useApi<{ items: GroupSummary[] }>('/groups')
+  const workspaces = useApi<{ items: WorkspaceProgress[] }>('/member/workspace')
+  const joined = new Set(
+    workspaces.data?.items.filter((item) => item.status === 'active').map((item) => item.wg_slug),
+  )
   const { doc: directory } = useDocument<{ topics?: DirectoryTopic[] }>('directory')
   const topicList = directory?.topics || []
   const topicLabel = (key: string | null | undefined) =>
@@ -59,7 +64,11 @@ export function Groups({ slug }: { slug?: string }) {
 
   return (
     <div>
-      <PageHeader icon={GroupsIcon} title="Working groups">
+      <PageHeader
+        icon={GroupsIcon}
+        title="Working groups"
+        description="Groups are where YOUNGO's work happens. Find the one that fits your interests and say hello."
+      >
         <PageSectionNav section="groups" />
       </PageHeader>
       <Async
@@ -67,7 +76,13 @@ export function Groups({ slug }: { slug?: string }) {
         skeletons={6}
         query={query}
         empty={(d) =>
-          d.items.length === 0 ? <Empty icon={Users} title="No working groups yet" /> : null
+          d.items.length === 0 ? (
+            <Empty
+              icon={Users}
+              title="No working groups yet"
+              body="New groups appear here as soon as they start."
+            />
+          ) : null
         }
       >
         {(data) => {
@@ -92,6 +107,8 @@ export function Groups({ slug }: { slug?: string }) {
             <GroupCard
               key={group.slug}
               group={group}
+              statusLabel={joined.has(group.slug) ? 'You’re in this group' : undefined}
+              statusIcon={joined.has(group.slug) ? CircleCheck : undefined}
               topicFilterState={(group.topic && topics[group.topic]) || 'neutral'}
               onTopicFilter={() => {
                 const topicKey = group.topic

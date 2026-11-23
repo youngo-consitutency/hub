@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 interface CatalogueOptions<T> {
   /** the text a search is matched against */
@@ -19,22 +19,18 @@ export function useCatalogue<T>(
   const [values, setValues] = useState<Record<string, string>>({})
   const [shown, setShown] = useState(pageSize)
 
-  const matches = useMemo(() => {
-    const needle = search.trim().toLowerCase()
-    const found = items.filter(
-      (item) =>
-        Object.entries(filters).every(([key, test]) => !values[key] || test(item, values[key])) &&
-        (!needle ||
-          text(item).some((part) =>
-            String(part ?? '')
-              .toLowerCase()
-              .includes(needle),
-          )),
-    )
-    return sort ? found.sort(sort) : found
-    // text, filters and sort are stable per call site
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, search, values])
+  const needle = search.trim().toLowerCase()
+  const matches = items.filter(
+    (item) =>
+      Object.entries(filters).every(([key, test]) => !values[key] || test(item, values[key])) &&
+      (!needle ||
+        text(item).some((part) =>
+          String(part ?? '')
+            .toLowerCase()
+            .includes(needle),
+        )),
+  )
+  if (sort) matches.sort(sort)
 
   // any change to what is searched or filtered starts again from the first page
   const setSearch = (value: string) => {

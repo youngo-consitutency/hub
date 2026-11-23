@@ -12,7 +12,7 @@ if (process.env.A11Y_EMAIL) {
   await page.getByLabel(/email/i).fill(process.env.A11Y_EMAIL)
   await page.getByLabel(/password/i).fill(process.env.A11Y_PASSWORD || '')
   await page
-    .getByRole('button', { name: /sign in/i })
+    .getByRole('button', { name: /open the hub/i })
     .last()
     .click()
   await page.waitForURL(/\/hub/)

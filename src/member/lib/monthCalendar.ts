@@ -1,3 +1,5 @@
+import { fmtDate } from './time'
+
 export interface CalendarMonth {
   year: number
   month: number
@@ -94,10 +96,16 @@ export function formatCalendarMonth({ year, month }: CalendarMonth) {
 }
 
 export function formatCalendarDay(key: string) {
+  return fmtDate(key)
+}
+
+/** Long form for screen readers; it keeps the day number a button shows so its name contains its label. */
+export function spokenCalendarDay(key: string) {
   return new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(`${key}T00:00:00Z`))
 }
