@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -79,7 +79,7 @@
 .noticeCopy {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -241,7 +241,7 @@
 .calendarWeekdays {
   padding: 0 1px 7px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 600;
   text-align: center;
   text-transform: uppercase;
@@ -308,7 +308,7 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 600;
 }
 
@@ -358,9 +358,14 @@
 }
 
 .calendarMore {
-  font-size: 12px;
+  font-size: var(--type-xs);
   color: var(--text-3);
   line-height: 1;
+}
+
+/* drawn by CSS so the button's visible text stays the day number its accessible name starts with */
+.calendarMore::before {
+  content: '+' attr(data-more) / '';
 }
 
 .calendarAgenda {
@@ -410,7 +415,7 @@
   color: var(--accent);
   background: transparent;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 650;
   cursor: pointer;
 }
@@ -449,14 +454,14 @@
 .calendarAgendaDate h3 {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .calendarAgendaDate span {
-  font-size: 12px;
+  font-size: var(--type-xs);
 }
 
 .calendarAgendaCards > .entityCard {
@@ -470,7 +475,7 @@
 }
 
 .calendarAgendaCards > .entityCard h3 {
-  font-size: 15px;
+  font-size: var(--type-base);
 }
 
 .calendarAgendaCards > .entityCard .entityCardHeader {
@@ -568,7 +573,7 @@
   .calendarDayNumber {
     width: 22px;
     height: 22px;
-    font-size: 12px;
+    font-size: var(--type-xs);
   }
 
   .calendarDots {

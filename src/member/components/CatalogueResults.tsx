@@ -5,14 +5,23 @@ import { TbLayoutGrid, TbList } from 'react-icons/tb'
 type View = 'grid' | 'list'
 
 /** Keeps the same records and actions across gallery cards and list layouts. */
-export function CatalogueResults({ count, children }: { count?: number; children?: ReactNode }) {
+export function CatalogueResults({
+  count,
+  quiet = false,
+  children,
+}: {
+  count?: number
+  /** the total is announced but not drawn, for pages whose sections already show counts */
+  quiet?: boolean
+  children?: ReactNode
+}) {
   const [view, setView] = useState<View>('grid')
   return (
     <div className="catalogueResults" data-view={view}>
       {/* cards are h3: give them the h2 they sit under */}
       <h2 className="srOnly">Results</h2>
       <div className="catalogueResultBar">
-        <p className="meta" role="status">
+        <p className={quiet ? 'srOnly' : 'meta'} role="status">
           {count} {count === 1 ? 'result' : 'results'}
         </p>
         <ToggleButtonGroup

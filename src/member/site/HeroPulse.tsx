@@ -11,7 +11,7 @@ export function HeroPulse() {
   return (
     <p className="dlLive heroPulse">
       <span>
-        Next call · {moment.day}, {moment.localTime} {moment.localZone}
+        Next call · {moment.stamp} {moment.localZone}
       </span>
       <A href={`/calendar/${next.slug}`}>{next.title}</A>
     </p>

@@ -12,7 +12,7 @@
   justify-content: center;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 0.875rem;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
 }
@@ -62,6 +62,14 @@
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--bg-raised) 45%, var(--bg-page));
+}
+
+/* a state label, not a document section, so it is a paragraph that keeps the h3 look */
+.emptyTitle {
+  font-size: var(--type-md);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.005em;
 }
 
 .emptyBody {
@@ -178,7 +186,7 @@
 }
 
 .searchResultTitle {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* Admin account operations */
@@ -241,7 +249,7 @@
 }
 
 .fieldLabel {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -354,7 +362,7 @@
   border-radius: 50%;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 12px;
+  font-size: var(--type-xs);
 }
 
 .workspaceIntroduction {
@@ -389,7 +397,7 @@
 .wgOnboardKicker {
   margin: 0;
   color: var(--jt-lime);
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 750;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -436,10 +444,6 @@
 
 .wgOnboard .authCheck {
   color: var(--jt-forest);
-}
-
-.wgOnboard .authCheck input {
-  accent-color: var(--jt-forest);
 }
 
 .wgOnboardFoot {
@@ -539,7 +543,7 @@
 
 .jtMark span {
   color: var(--jt-forest);
-  font-size: clamp(8px, 1.05cqw, 11px);
+  font-size: clamp(0.5rem, 1.05cqw, 0.6875rem);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -568,7 +572,7 @@
   padding-bottom: 0.7cqw;
   border-bottom: 3px solid var(--jt-lime);
   color: var(--jt-lime);
-  font-size: clamp(10px, 1.25cqw, 13px);
+  font-size: clamp(0.625rem, 1.25cqw, 0.8125rem);
   font-weight: 750;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -766,7 +770,7 @@
 }
 
 .jtMonths time {
-  font-size: clamp(8px, 0.95cqw, 11px);
+  font-size: clamp(0.5rem, 0.95cqw, 0.6875rem);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -830,7 +834,7 @@
 .jtCoverKicker {
   margin: 0 0 0.6cqw;
   color: var(--jt-lime);
-  font-size: clamp(11px, 1.3cqw, 14px);
+  font-size: clamp(0.6875rem, 1.3cqw, 0.875rem);
   font-weight: 750;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -920,7 +924,7 @@
   bottom: 2.2cqw;
   margin: 0;
   color: var(--jt-forest);
-  font-size: clamp(10px, 1.1cqw, 12px);
+  font-size: clamp(0.625rem, 1.1cqw, 0.75rem);
   font-weight: 750;
   letter-spacing: 0.08em;
 }
@@ -1093,7 +1097,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--type-xs);
   color: var(--text-3);
 }
 
@@ -1144,7 +1148,7 @@
   border-radius: var(--radius-control);
   background: var(--bg-raised);
   box-shadow: var(--shadow-card);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-1);
   margin-bottom: var(--space-2);
@@ -1239,7 +1243,7 @@ a.monogram:hover {
 }
 
 .groupOverviewCopy h2 {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 /* Buttons keep their natural size; the overview column hugs the actions. */
@@ -1287,7 +1291,7 @@ a.monogram:hover {
   gap: var(--space-2);
   padding: var(--space-3) var(--space-3) var(--space-2);
   color: var(--text-3);
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: 0.04em;
@@ -1312,7 +1316,7 @@ a.monogram:hover {
 }
 
 .groupResourceList .destinationResourceRow > strong {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.35;
 }
@@ -1402,7 +1406,7 @@ a.monogram:hover {
 }
 
 .coyNoticeHead h3 {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .coyTools {
@@ -1462,7 +1466,7 @@ a.monogram:hover {
 }
 
 .coyOrganiserCopy h3 {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .coyOrganiserEmail {
@@ -1512,7 +1516,7 @@ a.monogram:hover {
 
 /* ── Global Youth Statement ────────────────────────── */
 .eyebrow {
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1613,12 +1617,12 @@ a.monogram:hover {
 }
 
 .gysStepHeading h3 {
-  font-size: 15px;
+  font-size: var(--type-base);
   line-height: 1.25;
 }
 
 .gysStep > .meta {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.45;
 }
 
@@ -1649,7 +1653,7 @@ a.monogram:hover {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
@@ -1749,7 +1753,7 @@ a.monogram:hover {
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .gysSynthesisBullets {
@@ -1938,12 +1942,12 @@ a.monogram:hover {
 }
 
 .field > span {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--text-2);
 }
 
 .fieldError {
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 500;
   color: var(--danger);
   background: var(--danger-tint);
@@ -1954,7 +1958,7 @@ a.monogram:hover {
 
 .field.hasError .input,
 .input[aria-invalid='true'] {
-  border-color: var(--danger) !important;
+  border-color: var(--danger);
   background: color-mix(in srgb, var(--danger-tint) 55%, var(--bg-card));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
 }
@@ -1975,7 +1979,7 @@ a.monogram:hover {
   border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
   background: var(--danger-tint);
   color: var(--danger);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
 }
@@ -2134,7 +2138,7 @@ a.monogram:hover {
   margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-control);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .notificationNotice > svg {
@@ -2254,7 +2258,7 @@ a.monogram:hover {
 
 .helpActionCard h3,
 .helpPersonCard h3 {
-  font-size: 15px;
+  font-size: var(--type-base);
 }
 
 .helpActionCopy {
@@ -2302,7 +2306,7 @@ a.monogram:hover {
   border-radius: 999px;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 15px;
+  font-size: var(--type-base);
   font-weight: 700;
 }
 
@@ -2315,7 +2319,7 @@ a.monogram:hover {
 }
 
 .helpAboutStrip h2 {
-  font-size: 15px;
+  font-size: var(--type-base);
 }
 
 .helpAboutStrip .meta {
@@ -2540,7 +2544,7 @@ a.monogram:hover {
   border-radius: var(--radius-control);
   background: var(--bg-card);
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .agentSteps li.is-done {
@@ -2617,7 +2621,7 @@ a.monogram:hover {
   border-radius: var(--radius-control);
   background: var(--bg-raised);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .agentSecretValue code {

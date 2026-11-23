@@ -196,6 +196,9 @@ export function Privacy({ standalone = false }: PrivacyProps) {
   if (standalone) {
     return (
       <div className="mandateGate mandatePolicyGate privacyGate">
+        <a className="skipLink" href="#main">
+          Skip to the notice
+        </a>
         <div className="mandateShell">
           <header className="mandateHeader privacyGateHeader">
             <div className="gateBrand">
@@ -203,7 +206,7 @@ export function Privacy({ standalone = false }: PrivacyProps) {
             </div>
             <Header notice={notice} />
           </header>
-          <main className="mandateBody" id="main">
+          <main className="mandateBody" id="main" tabIndex={-1}>
             <div className="mandatePolicy privacyDocument">
               <Body notice={notice} policies={policies} />
             </div>

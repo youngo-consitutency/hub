@@ -114,6 +114,9 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
       aria-labelledby="mandate-title"
       aria-describedby="mandate-desc"
     >
+      <a className="skipLink" href="#mandate-body">
+        Skip to the policy
+      </a>
       <div className="mandateShell">
         <header className="mandateHeader">
           <div className="gateBrand">
@@ -151,7 +154,7 @@ export function MembershipMandateGate({ onComplete }: MembershipMandateGateProps
           <div className="mandateProgressBar" style={{ width: `${Math.round(progress * 100)}%` }} />
         </div>
 
-        <div className="mandateBody" ref={bodyRef} tabIndex={0}>
+        <div className="mandateBody" id="mandate-body" ref={bodyRef} tabIndex={0}>
           <section className="mandateAnalysis card">
             <div className="rowGap" style={{ marginBottom: 10 }}>
               <BookOpen size={18} strokeWidth={1.75} aria-hidden color="var(--accent)" />

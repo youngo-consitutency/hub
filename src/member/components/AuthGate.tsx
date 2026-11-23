@@ -287,6 +287,9 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
 
   return (
     <main className="mandateGate" data-auth-mode={mode} aria-labelledby="auth-title">
+      <a className="skipLink" href="#auth-body">
+        Skip to the form
+      </a>
       <div className="mandateShell authShell" data-auth-mode={mode}>
         <header className="mandateHeader">
           <div className="gateBrand">
@@ -301,17 +304,17 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
               )}
               <h1 id="auth-title">
                 {mode === 'register'
-                  ? 'Join YOUNGO Hub'
+                  ? 'Create your account'
                   : mode === 'forgot'
                     ? 'Reset password'
-                    : 'Sign in to YOUNGO Hub'}
+                    : 'Welcome back'}
               </h1>
               <p className="meta" style={{ marginTop: 6, maxWidth: 580 }}>
                 {mode === 'register'
                   ? 'Create an individual or organisation account.'
                   : mode === 'forgot'
                     ? 'Enter your account email. We’ll issue a one-time reset link (valid 1 hour).'
-                    : 'Welcome back. Sign in with the email you used to register.'}
+                    : 'Use the email you registered with.'}
               </p>
               <p className="authAboutRow">
                 <A href="/about" className="authAboutLink">
@@ -342,7 +345,7 @@ export function AuthGate({ onAuthenticated, initialMode = 'register' }: AuthGate
           )}
         </header>
 
-        <div className="mandateBody authBody">
+        <div className="mandateBody authBody" id="auth-body" tabIndex={-1}>
           {pendingEmail ? (
             <CheckYourEmail email={pendingEmail} onStartOver={() => setPendingEmail(null)} />
           ) : mode === 'forgot' ? (

@@ -485,7 +485,7 @@ export function LifecycleTiming({
             {!status && label !== 'Deadline' && (
               <span className="lifecycleTimingRelation">{label}</span>
             )}
-            {moment.day} · {moment.localTime} {moment.localZone}
+            {moment.stamp} {moment.localZone}
           </time>
         </div>
       )}
@@ -535,7 +535,7 @@ export function Empty({ icon: Icon, title, body, cta }: EmptyProps) {
           <Icon size={22} strokeWidth={1.75} aria-hidden />
         </div>
       )}
-      {title && <h3>{title}</h3>}
+      {title && <p className="emptyTitle">{title}</p>}
       {body && <p className="meta emptyBody">{body}</p>}
       {cta && <div className="emptyCta">{cta}</div>}
     </div>

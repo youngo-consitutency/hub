@@ -50,7 +50,7 @@
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -105,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--text-3);
   font-weight: 500;
   overflow: hidden;
@@ -146,7 +146,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   padding: 6px 10px;
   border-radius: var(--radius-control);
@@ -215,7 +215,7 @@
 
 .notionPeekTitle {
   font-family: var(--font-display);
-  font-size: 23px;
+  font-size: 1.4375rem;
   line-height: 1.25;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -226,7 +226,7 @@
 
 .notionPeekSubtitle {
   margin-top: 4px;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   color: var(--text-3);
   line-height: 1.4;
 }
@@ -248,7 +248,7 @@
   min-height: 34px;
   padding: 4px 8px;
   border-radius: var(--radius-chip);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   transition: background var(--motion-fast) var(--motion-ease);
 }
 
@@ -311,7 +311,7 @@
   gap: 7px;
   padding: 7px 14px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--text-2);
   background: transparent;
@@ -337,7 +337,7 @@
   border-radius: 999px;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 700;
 }
 
@@ -351,7 +351,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
   margin-bottom: var(--space-4);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.55;
   color: var(--text-1);
 }
@@ -392,7 +392,7 @@
 }
 
 .notionSectionHeading {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 700;
@@ -401,7 +401,7 @@
 }
 
 .notionBodyText {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   line-height: 1.6;
   color: var(--text-2);
   margin: 0 0 12px 0;
@@ -508,7 +508,7 @@
   grid-template-columns: 64px minmax(0, 1fr);
   gap: var(--space-2);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.45;
 }
 
@@ -525,7 +525,7 @@
   padding: 10px 12px;
   border-radius: var(--radius-control);
   color: var(--text-1);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -573,6 +573,11 @@
   border-bottom: 1px solid var(--border);
 }
 
+.paletteInputRow:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 .paletteInput {
   flex: 1;
   min-width: 0;
@@ -581,7 +586,7 @@
   outline: none;
   color: var(--text-1);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--type-base);
 }
 
 .paletteInput::placeholder {
@@ -620,7 +625,7 @@
 }
 
 .paletteTitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -628,7 +633,7 @@
 
 .kbd {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--type-xs);
   color: var(--text-3);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-chip);
@@ -659,7 +664,7 @@
   background: var(--bg-card);
   color: var(--text-1);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   box-shadow: var(--shadow-popover);
 }

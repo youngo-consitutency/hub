@@ -9,6 +9,7 @@ import { Button, Section, Empty, ErrorCard, PageHeader } from '../components/ui'
 import { DatePicker, SearchableSelect } from '../components/FormControls'
 import { NgoOpportunities } from '../components/NgoOpportunities'
 import { TbUserPlus as UserPlus } from 'react-icons/tb'
+import { fmtDate } from '../lib/time'
 
 export function NgoPortal() {
   const [panel, setPanel] = useState<'request' | 'invite' | null>(null)
@@ -197,9 +198,7 @@ export function NgoPortal() {
                     <h3 style={{ marginTop: 6 }}>{r.title}</h3>
                     <p className="meta">
                       {r.status}
-                      {r.deadline_at
-                        ? ` · due ${new Date(r.deadline_at).toLocaleDateString()}`
-                        : ''}
+                      {r.deadline_at ? ` · due ${fmtDate(r.deadline_at)}` : ''}
                     </p>
                   </div>
                   {data.permissions?.canWriteRequests && r.status === 'open' && (

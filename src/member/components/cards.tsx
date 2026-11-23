@@ -164,7 +164,7 @@ export function CardSchedule({ iso, label }: CardScheduleProps) {
       <div>
         <span className="entityCardMetaLabel">{label}</span>
         <span>
-          {moment.day} · {moment.localTime} {moment.localZone}
+          {moment.stamp} {moment.localZone}
         </span>
       </div>
     </div>
