@@ -8,6 +8,8 @@ interface ResourceCardProps<T extends ResourceCardData = ResourceSummary> {
   onReport?: (resource: T) => void
   onCorrect?: (resource: T) => void
   onReview?: (resource: T) => void
+  /** the group heading this card sits under, so the card does not repeat it as a chip */
+  groupLabel?: string
 }
 
 interface ResourceCatalogueProps {
@@ -76,6 +78,7 @@ import {
   Section,
   StatusChip,
 } from './ui'
+import { fmtDate } from '../lib/time'
 
 const PATHWAY_ICONS: Record<string, IconType> = {
   career: Briefcase,
@@ -208,8 +211,7 @@ interface ResourceSubmission {
   payload: Partial<ResourceDraft>
 }
 
-const checkedOn = (checkedAt: string | null) =>
-  checkedAt ? new Date(checkedAt).toLocaleDateString() : 'recently'
+const checkedOn = (checkedAt: string | null) => (checkedAt ? fmtDate(checkedAt) : 'recently')
 
 const NOT_CHECKED = 'Not yet checked'
 const CHECK_VALID_MS = 365 * 24 * 60 * 60 * 1000
@@ -219,7 +221,7 @@ const isChecked = (item: ResourceSummary) =>
   item.verification.checkedAt != null &&
   Date.now() - new Date(item.verification.checkedAt).getTime() < CHECK_VALID_MS
 
-function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
+function ResourceRow({ resource, onReport, onCorrect, groupLabel }: ResourceCardProps) {
   const { resourceTypes: RESOURCE_TYPES } = useContentOptions()
   const TypeIcon = TYPE_ICONS[resource.type] || BookOpen
   const v = resource.verification
@@ -246,9 +248,11 @@ function ResourceRow({ resource, onReport, onCorrect }: ResourceCardProps) {
         {resource.publisher && <p className="metaMuted">{resource.publisher}</p>}
         {resource.summary && <p className="meta resourceListSummary">{resource.summary}</p>}
         <div className="chipRow">
-          <FilterChip icon={TypeIcon} tone="accent">
-            {resourceLabel(RESOURCE_TYPES, resource.type)}
-          </FilterChip>
+          {resourceLabel(RESOURCE_TYPES, resource.type) !== groupLabel && (
+            <FilterChip icon={TypeIcon} tone="accent">
+              {resourceLabel(RESOURCE_TYPES, resource.type)}
+            </FilterChip>
+          )}
           {topics.slice(0, 3).map((topic) => (
             <FilterChip key={topic}>{topic}</FilterChip>
           ))}
@@ -376,7 +380,7 @@ export function ResourceCatalogue({
           {notice}
         </p>
       )}
-      <Section label={heading} meta={query.data ? `${items.length} listed` : null}>
+      <Section label={heading}>
         <CatalogToolbar
           search={{ label: 'Search resources', value: search, onChange: reset(setSearch) }}
           filters={
@@ -537,6 +541,7 @@ function ResourcePathwayGroup({ group, items, onReport, onCorrect }: ResourcePat
             resource={resource}
             onReport={onReport}
             onCorrect={onCorrect}
+            groupLabel={group.label}
           />
         ))}
       </ul>

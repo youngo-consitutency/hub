@@ -16,56 +16,6 @@
   gap: 20px;
 }
 
-/* Neutral "where you are" indicator — no pulse, distinct from a live pill. */
-
-/* Outside .mcConsole the hero has no flex gap to lean on. */
-
-/* The accent glow reads as a muddy halo on light — reserve it for dark. */
-
-.mcMetric {
-  padding: 10px 11px;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: var(--bg-raised);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.mcMetricIcon {
-  color: var(--text-3);
-}
-
-.mcMetric strong {
-  font-size: 26px;
-  line-height: 1;
-  letter-spacing: -0.035em;
-  color: var(--accent);
-}
-
-.mcMetric > span {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-
-a.mcMetricLink {
-  color: inherit;
-  text-decoration: none;
-}
-
-a.mcMetricLink:hover,
-a.mcMetricLink:focus-visible {
-  border-color: var(--border-strong);
-  background: var(--accent-tint);
-}
-
-.mcMetric-warn strong {
-  color: var(--warn);
-}
-
 .mcSection {
   display: flex;
   flex-direction: column;
@@ -81,7 +31,7 @@ a.mcMetricLink:focus-visible {
 
 .mcSectionHead h2 {
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: var(--type-base);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -91,7 +41,7 @@ a.mcMetricLink:focus-visible {
   align-items: center;
   gap: 6px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: var(--type-xs);
 }
 
 .mcWgTileTop {
@@ -102,7 +52,7 @@ a.mcMetricLink:focus-visible {
 
 .mcWgFocus {
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
   min-height: 2.8em;
 }
@@ -123,7 +73,7 @@ a.mcMetricLink:focus-visible {
   border: 1px solid var(--border);
   background: var(--bg-raised);
   color: var(--text-2);
-  font-size: 12px;
+  font-size: var(--type-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -142,14 +92,14 @@ a.mcMetricLink:focus-visible {
   margin-top: auto;
   padding-top: 8px;
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .mcFlash {
   margin: 0;
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -181,13 +131,13 @@ a.mcMetricLink:focus-visible {
 
 .mcQueueCopy strong {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .mcQueueMeta {
   margin-top: 3px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: var(--type-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,48 +165,6 @@ a.mcMetricLink:focus-visible {
   }
 }
 
-/* the three counts in Home's hero band */
-.homeMetrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--bg-card);
-  overflow: hidden;
-}
-.homeMetrics .mcMetric {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-1) var(--space-3);
-  padding: var(--space-4);
-  border-radius: 0;
-  background: transparent;
-}
-.homeMetrics .mcMetric + .mcMetric {
-  border-inline-start: 1px solid var(--border);
-}
-.homeMetrics .mcMetric strong {
-  font-size: 28px;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-.homeMetrics .mcMetric > span {
-  grid-column: 2;
-  font-size: 13px;
-  letter-spacing: 0;
-  text-transform: none;
-}
-@media (max-width: 480px) {
-  .homeMetrics .mcMetric {
-    padding: var(--space-3);
-    gap: var(--space-2);
-  }
-  .homeMetrics .mcMetric > span {
-    grid-column: 1 / -1;
-  }
-}
-
 /* Home: personal shortcuts in a fixed rail beside the feed once there is room */
 .homeColumns {
   display: grid;
@@ -264,7 +172,8 @@ a.mcMetricLink:focus-visible {
 }
 
 @container (min-width: 960px) {
-  .homeColumns {
+  /* the rail only takes a column when it has something in it */
+  .homeColumns:has(.homeSide > *) {
     grid-template-columns: minmax(0, 1fr) 320px;
     align-items: start;
   }

@@ -54,6 +54,7 @@ import {
   TbUserX as UserX,
   TbScale as Scale,
 } from 'react-icons/tb'
+import { formatDateOnly } from '../lib/time'
 
 const STATUS_LABELS: Record<string, string> = {
   registered: 'Registered',
@@ -104,21 +105,6 @@ function yesNo(value: boolean | string | null | undefined) {
   if (value === true || value === 'yes') return 'Yes'
   if (value === false || value === 'no') return 'No'
   return null
-}
-
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return null
-  const text = String(value)
-  const match = text.match(/^(\d{4}-\d{2}-\d{2})/)
-  if (!match) return text
-  const date = new Date(`${match[1]}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) return match[1]
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
 }
 
 function ResponseField({ label, children }: ResponseFieldProps) {
@@ -230,7 +216,9 @@ function ApplicationResponses({ item }: ApplicationResponsesProps) {
           <ResponseGroup title="Your details">
             <ResponseField label="Phone">{app.phone}</ResponseField>
             <ResponseField label="Gender">{gender}</ResponseField>
-            <ResponseField label="Date of birth">{formatDateOnly(app.dateOfBirth)}</ResponseField>
+            <ResponseField label="Date of birth">
+              {formatDateOnly(app.dateOfBirth, '')}
+            </ResponseField>
             <ResponseField label="Age band">{labelOf(AGE_LABELS, app.ageBand)}</ResponseField>
           </ResponseGroup>
         )}
@@ -430,7 +418,7 @@ function GuardianRequests({ items, onClosed }: GuardianRequestsProps) {
                 {item.guardianEmail}
               </a>
               <p className="metaMuted">
-                Sent {formatDateOnly(item.createdAt)} · confirmed: “{item.consentStatement}”
+                Sent {formatDateOnly(item.createdAt, '')} · confirmed: “{item.consentStatement}”
               </p>
               <div className="guardianRequestActions">
                 {confirming === item.id ? (

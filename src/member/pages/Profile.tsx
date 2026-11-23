@@ -50,7 +50,7 @@ export function Profile() {
       <PageHeader
         icon={ProfileIcon}
         title="Profile"
-        description="Your membership details, roles, and useful starting points."
+        description="How you appear to the community, your roles, and good places to start."
       />
 
       <div className="profileGrid">

@@ -8,17 +8,13 @@ import { useAccount } from '../lib/accountContext'
 import { apiDelete, apiPut, useApi, errorMessage } from '../lib/api'
 import { Async, BackLink, PageHeader, Section } from '../components/ui'
 import { TbBell as Bell, TbExternalLink as ExternalLink } from 'react-icons/tb'
+import { fmtDate, fmtStamp } from '../lib/time'
 
 function deadlineText(deadline: NegotiationCall['externalDeadline']) {
   if (!deadline.date) return 'Deadline not specified'
-  const date = new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${deadline.date}T00:00:00Z`))
+  const date = fmtDate(deadline.date)
   if (deadline.precision !== 'time') return `${date} · closing time not specified`
-  return `${date}, ${deadline.time} ${deadline.timezone}`
+  return `${deadline.time}, ${date} ${deadline.timezone}`
 }
 
 export function NegotiationDetail({ slug }: NegotiationDetailProps) {
@@ -134,13 +130,13 @@ export function NegotiationDetail({ slug }: NegotiationDetailProps) {
                         <p className="meta">
                           {document.versionCount} immutable{' '}
                           {document.versionCount === 1 ? 'version' : 'versions'} · retrieved{' '}
-                          {new Date(document.latestVersion.retrievedAt).toLocaleString()}
+                          {fmtStamp(document.latestVersion.retrievedAt)}
                         </p>
                         {document.health.coverageState !== 'current' && (
                           <p className="formError" role="status">
                             Coverage {document.health.coverageState}. Last successful check:{' '}
                             {document.health.lastSuccessfulCheckAt
-                              ? new Date(document.health.lastSuccessfulCheckAt).toLocaleString()
+                              ? fmtStamp(document.health.lastSuccessfulCheckAt)
                               : 'none recorded'}
                             .
                           </p>
