@@ -93,7 +93,7 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
-          import webpush from 'web-push';
+          import * as webpush from 'web-push';
           const keys = webpush.generateVAPIDKeys();
           fs.appendFileSync(process.env.GITHUB_ENV,
             `VAPID_PUBLIC_KEY=${keys.publicKey}\nVAPID_PRIVATE_KEY=${keys.privateKey}\nVAPID_SUBJECT=mailto:test@example.invalid\n`);

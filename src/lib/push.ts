@@ -1,4 +1,4 @@
-import webPush from 'web-push'
+import * as webPush from 'web-push'
 import { getPgPool } from './pg'
 import { toCamelCase } from './case'
 import { defaultEmailFrom } from './env'
