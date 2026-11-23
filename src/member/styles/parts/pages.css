@@ -66,9 +66,9 @@
 
 /* a state label, not a document section, so it is a paragraph that keeps the h3 look */
 .emptyTitle {
-  font-size: 1.0625rem;
+  font-size: var(--type-md);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: var(--lh-snug);
   letter-spacing: -0.005em;
 }
 
@@ -249,7 +249,7 @@
 }
 
 .fieldLabel {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -362,7 +362,7 @@
   border-radius: 50%;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .workspaceIntroduction {
@@ -397,7 +397,7 @@
 .wgOnboardKicker {
   margin: 0;
   color: var(--jt-lime);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 750;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1097,7 +1097,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   color: var(--text-3);
 }
 
@@ -1148,7 +1148,7 @@
   border-radius: var(--radius-control);
   background: var(--bg-raised);
   box-shadow: var(--shadow-card);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-1);
   margin-bottom: var(--space-2);
@@ -1291,7 +1291,7 @@ a.monogram:hover {
   gap: var(--space-2);
   padding: var(--space-3) var(--space-3) var(--space-2);
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: 0.04em;
@@ -1516,7 +1516,7 @@ a.monogram:hover {
 
 /* ── Global Youth Statement ────────────────────────── */
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1617,12 +1617,12 @@ a.monogram:hover {
 }
 
 .gysStepHeading h3 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   line-height: 1.25;
 }
 
 .gysStep > .meta {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   line-height: 1.45;
 }
 
@@ -1653,7 +1653,7 @@ a.monogram:hover {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
@@ -1753,7 +1753,7 @@ a.monogram:hover {
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .gysSynthesisBullets {
@@ -1942,12 +1942,12 @@ a.monogram:hover {
 }
 
 .field > span {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   color: var(--text-2);
 }
 
 .fieldError {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 500;
   color: var(--danger);
   background: var(--danger-tint);
@@ -2258,7 +2258,7 @@ a.monogram:hover {
 
 .helpActionCard h3,
 .helpPersonCard h3 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .helpActionCopy {
@@ -2306,7 +2306,7 @@ a.monogram:hover {
   border-radius: 999px;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   font-weight: 700;
 }
 
@@ -2319,7 +2319,7 @@ a.monogram:hover {
 }
 
 .helpAboutStrip h2 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .helpAboutStrip .meta {
@@ -2621,7 +2621,7 @@ a.monogram:hover {
   border-radius: var(--radius-control);
   background: var(--bg-raised);
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .agentSecretValue code {

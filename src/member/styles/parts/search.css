@@ -15,7 +15,7 @@
   border-radius: var(--radius-control);
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .intelligenceTrust > span {
@@ -45,7 +45,7 @@
 }
 
 .intelligenceAsk label {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -86,7 +86,7 @@
 .evidenceConfidence {
   padding: 5px 8px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   white-space: nowrap;
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -114,7 +114,7 @@
 
 .citationChip {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   text-decoration: none;
   color: var(--accent);
 }
@@ -125,7 +125,7 @@
   border-inline-start: 3px solid var(--warn);
   background: var(--warn-tint);
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .intelligenceActions {
@@ -174,7 +174,7 @@
   font-family: var(--font-mono);
   text-transform: uppercase;
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   letter-spacing: 0.04em;
 }
 

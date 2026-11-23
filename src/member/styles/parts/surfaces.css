@@ -31,7 +31,7 @@
 
 .mcSectionHead h2 {
   font-family: var(--font-ui);
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -41,7 +41,7 @@
   align-items: center;
   gap: 6px;
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .mcWgTileTop {
@@ -52,7 +52,7 @@
 
 .mcWgFocus {
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
   min-height: 2.8em;
 }
@@ -73,7 +73,7 @@
   border: 1px solid var(--border);
   background: var(--bg-raised);
   color: var(--text-2);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -92,14 +92,14 @@
   margin-top: auto;
   padding-top: 8px;
   color: var(--accent);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .mcFlash {
   margin: 0;
   color: var(--accent);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -137,7 +137,7 @@
 .mcQueueMeta {
   margin-top: 3px;
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

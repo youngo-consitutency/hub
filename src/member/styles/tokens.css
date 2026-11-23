@@ -45,6 +45,26 @@
   --motion-shift: 6px;
 
   --font-size-sm: 0.8125rem;
+
+  /* Size hierarchy. Body steps are fixed rem so they honour the user's text size; only the two
+     display steps are fluid, each capped at 2.5x its minimum so browser zoom still resizes them. */
+  --type-xs: 0.75rem;
+  --type-base: 0.9375rem;
+  --type-md: 1.0625rem;
+  --type-lg: 1.25rem;
+  --type-xl: clamp(1.5rem, 1.25rem + 1vw, 1.875rem);
+  --type-2xl: clamp(1.75rem, 1.3rem + 1.8vw, 2.375rem);
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-body: 1.5;
+
+  /* Space hierarchy, three tiers: stack (inside a component), --section-gap (between blocks on a
+     page) and --section-y (between page bands). Stack steps alias the generated --space scale. */
+  --stack-xs: var(--space-1);
+  --stack-sm: var(--space-2);
+  --stack-md: var(--space-4);
+  --stack-lg: var(--space-6);
+  --stack-xl: var(--space-8);
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --font-display: var(--font-ui);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
@@ -122,8 +142,8 @@ body {
   background: var(--bg-page);
   color: var(--text-1);
   font-family: var(--font-ui);
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  font-size: var(--type-base);
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -131,8 +151,8 @@ body {
 h1 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.5625rem;
-  line-height: 1.28;
+  font-size: var(--type-xl);
+  line-height: var(--lh-tight);
   letter-spacing: -0.015em;
   margin: 0;
 }
@@ -140,8 +160,8 @@ h1 {
 h2 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1.35;
+  font-size: var(--type-lg);
+  line-height: var(--lh-snug);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -149,10 +169,21 @@ h2 {
 h3 {
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 1rem;
-  line-height: 1.375;
+  font-size: var(--type-md);
+  line-height: var(--lh-snug);
   letter-spacing: -0.005em;
   margin: 0;
+}
+
+/* balanced headings avoid one-word last lines; set per element, never on `*` */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+:where(main, article) p {
+  text-wrap: pretty;
 }
 
 p {
@@ -173,17 +204,6 @@ input[type='radio'],
 input[type='range'],
 progress {
   accent-color: var(--accent);
-}
-
-/* balanced headings avoid one-word last lines; set per element, never on `*` */
-h1,
-h2,
-h3 {
-  text-wrap: balance;
-}
-
-:where(main, article) p {
-  text-wrap: pretty;
 }
 
 /* checkboxes: an outlined box that holds a cross when ticked, never a colour fill */

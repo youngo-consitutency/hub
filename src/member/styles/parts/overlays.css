@@ -105,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   color: var(--text-3);
   font-weight: 500;
   overflow: hidden;
@@ -146,7 +146,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   padding: 6px 10px;
   border-radius: var(--radius-control);
@@ -337,7 +337,7 @@
   border-radius: 999px;
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
 }
 
@@ -508,7 +508,7 @@
   grid-template-columns: 64px minmax(0, 1fr);
   gap: var(--space-2);
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   line-height: 1.45;
 }
 
@@ -586,7 +586,7 @@
   outline: none;
   color: var(--text-1);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .paletteInput::placeholder {
@@ -633,7 +633,7 @@
 
 .kbd {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   color: var(--text-3);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-chip);

@@ -32,7 +32,7 @@ h2,
   align-items: center;
   gap: 10px;
   color: var(--accent);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -140,7 +140,7 @@ h2,
   border-radius: var(--radius-pill);
   background: var(--live-tint);
   color: #365314;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -928,7 +928,7 @@ textarea:focus-visible {
 .paletteGroup {
   padding: var(--space-3) 14px var(--space-1);
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -997,7 +997,7 @@ textarea:focus-visible {
 
 .communityFeedFrom {
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
 }
 
@@ -1024,7 +1024,7 @@ textarea:focus-visible {
   margin: 0;
   max-inline-size: 60ch;
   color: color-mix(in srgb, currentcolor 82%, transparent);
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .communityFeedFrom {
@@ -1046,7 +1046,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 6px;
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .communityFeedItem {

@@ -43,7 +43,7 @@
 .siteFacts dt {
   grid-area: label;
   color: var(--on-deep-muted);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .heroArt {
@@ -175,7 +175,7 @@
 }
 
 .siteCoyCard h3 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   line-height: 1.3;
 }
 
@@ -301,7 +301,7 @@
 .siteFooterCol h2 {
   color: var(--on-deep-muted);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -366,7 +366,7 @@
 
 .siteSub > h3 {
   margin-bottom: var(--space-3);
-  font-size: 1.25rem;
+  font-size: var(--type-lg);
 }
 
 /* ── search on the public pages ── */
@@ -403,7 +403,7 @@
   background: transparent;
   color: var(--text-1);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .sitePublicSearch input::-webkit-search-cancel-button {
@@ -467,7 +467,7 @@
 
 .siteFaqItem h3 {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .siteFaqTrigger,
@@ -492,7 +492,7 @@
   content: counter(faq, decimal-leading-zero);
   color: var(--accent);
   font-family: var(--font-display);
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   font-weight: 700;
 }
 
@@ -559,7 +559,7 @@
 
 .siteTopicCount {
   color: var(--text-3);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -645,7 +645,7 @@
   justify-self: end;
   color: var(--text-3);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .siteCheck {

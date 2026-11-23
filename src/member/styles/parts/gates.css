@@ -150,7 +150,7 @@
 }
 
 .mandateSection h2 {
-  font-size: 1.0625rem;
+  font-size: var(--type-md);
   margin-bottom: 0;
 }
 
@@ -194,7 +194,7 @@
 }
 
 .privacyDataCategory h3 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
 }
 
 .privacyFields {
@@ -423,7 +423,7 @@ ul.mandateBulletGroup {
 
 .authAboutLink {
   color: var(--accent);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
 }
 
@@ -492,7 +492,7 @@ ul.mandateBulletGroup {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   margin-bottom: 0;
 }
 
@@ -816,7 +816,7 @@ ul.mandateBulletGroup {
 }
 
 .accountName {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--text-1);
   white-space: nowrap;
@@ -910,7 +910,7 @@ ul.mandateBulletGroup {
 }
 
 .ageIneligible h3 {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   color: var(--text-1);
 }
 
@@ -961,7 +961,7 @@ ul.mandateBulletGroup {
 }
 
 .guardianSubhead {
-  font-size: 0.9375rem;
+  font-size: var(--type-base);
   color: var(--text-1);
 }
 
