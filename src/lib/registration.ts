@@ -170,7 +170,22 @@ function privacyConsentFragment(notice: { PRIVACY_VERSION?: string; CONSENT_STAT
   }
 }
 
-export async function validateRegistration(req: PayloadRequest, body: Body) {
+/** The account record both branches produce once their fields validate. */
+type RegisteredAccount = Extract<
+  ReturnType<typeof organisationRegistration> | ReturnType<typeof individualRegistration>,
+  { data: object }
+>['data']
+
+/** One of: a bot caught by the honeypot, field errors to show, or the account record to create. */
+type RegistrationResult =
+  | { honeypot: true; fields?: undefined; data?: undefined }
+  | { fields: Fields; honeypot?: undefined; data?: undefined }
+  | { data: RegisteredAccount; honeypot?: undefined; fields?: undefined }
+
+export async function validateRegistration(
+  req: PayloadRequest,
+  body: Body,
+): Promise<RegistrationResult> {
   const [noticeDoc, optionsDoc] = await Promise.all([
     getDocument(req, 'privacy-notice'),
     getDocument(req, 'registration-options'),
@@ -205,174 +220,221 @@ export async function validateRegistration(req: PayloadRequest, body: Body) {
   if (privacyError) fields.privacyConsent = privacyError
   else privacy = privacyConsentFragment(notice!)
 
-  if (entityType === 'organization') {
-    const orgSchema = z
-      .object({
-        email: strTrim(z.string().toLowerCase().regex(EMAIL_RE, 'Please enter a valid email.')),
-        organizationName: strTrim(
-          z
-            .string()
-            .min(1, 'Full legal name of the organisation is required.')
-            .max(200, 'Organisation name is too long.'),
-        ),
-        isUnfcccAdmitted: yesNo().refine(
-          (v) => v !== null,
-          'Indicate whether this organisation is an admitted UNFCCC observer NGO.',
-        ),
-        orgMission: str(
-          z
-            .string()
-            .trim()
-            .refine(
-              (v) => !v || wordCount(v) <= WORD_LIMIT,
-              `Please keep the summary to ${WORD_LIMIT} words or fewer.`,
-            ),
-        ),
-        orgOperateIn: strTrim(z.string()),
-        orgWebsite: strOpt(),
-        orgSocial: strOpt(),
-        youthAffiliation: strOpt(),
-        dcpName: strOpt(),
-        dcpEmail: strEmailOpt(),
-        dcpPhone: strOpt(),
-        ycpName: strOpt(),
-        ycpEmail: strEmailOpt(),
-        ycpPhone: strOpt(),
-        region: z.preprocess(() => String(b.region || b.orgRegion || '').trim(), z.string()),
-        country: z.preprocess(() => String(b.orgCountry || b.country || '').trim(), z.string()),
-      })
-      .superRefine((v, ctx) => {
-        if (v.isUnfcccAdmitted === true) {
-          if (!allowed(opts.affiliations, v.youthAffiliation || '')) {
-            issue(ctx, 'youthAffiliation', 'Indicate affiliation with “youth” within the UNFCCC.')
-          }
-          if (!allowed(opts.regions, v.region)) {
+  const context: RegistrationContext = {
+    b,
+    opts,
+    fields,
+    agreements,
+    privacy,
+    password,
+    membershipTrack,
+    membershipPolicyVersion,
+  }
+  return entityType === 'organization'
+    ? organisationRegistration(context)
+    : individualRegistration(context)
+}
+
+/** What both registration branches share once the common checks have passed. */
+interface RegistrationContext {
+  b: Body
+  opts: ReturnType<typeof optionSets>
+  fields: Fields
+  agreements: ReturnType<typeof agreementFields>
+  privacy: ReturnType<typeof privacyConsentFragment> | null
+  password: string
+  membershipTrack: string
+  membershipPolicyVersion: string
+}
+
+/** Organisation registration: validates the organisation fields and shapes the account record. */
+function organisationRegistration({
+  b,
+  opts,
+  fields,
+  agreements,
+  privacy,
+  password,
+  membershipTrack,
+  membershipPolicyVersion,
+}: RegistrationContext) {
+  const orgSchema = z
+    .object({
+      email: strTrim(z.string().toLowerCase().regex(EMAIL_RE, 'Please enter a valid email.')),
+      organizationName: strTrim(
+        z
+          .string()
+          .min(1, 'Full legal name of the organisation is required.')
+          .max(200, 'Organisation name is too long.'),
+      ),
+      isUnfcccAdmitted: yesNo().refine(
+        (v) => v !== null,
+        'Indicate whether this organisation is an admitted UNFCCC observer NGO.',
+      ),
+      orgMission: str(
+        z
+          .string()
+          .trim()
+          .refine(
+            (v) => !v || wordCount(v) <= WORD_LIMIT,
+            `Please keep the summary to ${WORD_LIMIT} words or fewer.`,
+          ),
+      ),
+      orgOperateIn: strTrim(z.string()),
+      orgWebsite: strOpt(),
+      orgSocial: strOpt(),
+      youthAffiliation: strOpt(),
+      dcpName: strOpt(),
+      dcpEmail: strEmailOpt(),
+      dcpPhone: strOpt(),
+      ycpName: strOpt(),
+      ycpEmail: strEmailOpt(),
+      ycpPhone: strOpt(),
+      region: z.preprocess(() => String(b.region || b.orgRegion || '').trim(), z.string()),
+      country: z.preprocess(() => String(b.orgCountry || b.country || '').trim(), z.string()),
+    })
+    .superRefine((v, ctx) => {
+      if (v.isUnfcccAdmitted === true) {
+        if (!allowed(opts.affiliations, v.youthAffiliation || '')) {
+          issue(ctx, 'youthAffiliation', 'Indicate affiliation with “youth” within the UNFCCC.')
+        }
+        if (!allowed(opts.regions, v.region)) {
+          issue(
+            ctx,
+            'region',
+            'Select the UN region where the organisation is legally established.',
+          )
+        }
+        if (!v.country) {
+          issue(ctx, 'country', 'Country of legal establishment is required.')
+        }
+        if (!v.dcpName) {
+          issue(ctx, 'dcpName', "UNFCCC DCP's full name is required.")
+        }
+        if (!EMAIL_RE.test(v.dcpEmail || '')) {
+          issue(ctx, 'dcpEmail', "UNFCCC DCP's official email is required.")
+        }
+        if (!v.dcpPhone || !PHONE_RE.test(v.dcpPhone)) {
+          issue(ctx, 'dcpPhone', "UNFCCC DCP's phone (with country code) is required.")
+        }
+        const ycpPartial = v.ycpName || v.ycpEmail || v.ycpPhone
+        if (ycpPartial) {
+          if (!v.ycpName) {
             issue(
               ctx,
-              'region',
-              'Select the UN region where the organisation is legally established.',
+              'ycpName',
+              'YOUNGO Contact Point name is required if providing a contact point.',
             )
           }
-          if (!v.country) {
-            issue(ctx, 'country', 'Country of legal establishment is required.')
-          }
-          if (!v.dcpName) {
-            issue(ctx, 'dcpName', "UNFCCC DCP's full name is required.")
-          }
-          if (!EMAIL_RE.test(v.dcpEmail || '')) {
-            issue(ctx, 'dcpEmail', "UNFCCC DCP's official email is required.")
-          }
-          if (!v.dcpPhone || !PHONE_RE.test(v.dcpPhone)) {
-            issue(ctx, 'dcpPhone', "UNFCCC DCP's phone (with country code) is required.")
-          }
-          const ycpPartial = v.ycpName || v.ycpEmail || v.ycpPhone
-          if (ycpPartial) {
-            if (!v.ycpName) {
-              issue(
-                ctx,
-                'ycpName',
-                'YOUNGO Contact Point name is required if providing a contact point.',
-              )
-            }
-            if (!EMAIL_RE.test(v.ycpEmail || '')) {
-              issue(
-                ctx,
-                'ycpEmail',
-                'YOUNGO Contact Point email is required if providing a contact point.',
-              )
-            }
-            if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
-              issue(
-                ctx,
-                'ycpPhone',
-                'YOUNGO Contact Point phone is required if providing a contact point.',
-              )
-            }
-          }
-        } else if (v.isUnfcccAdmitted === false) {
-          if (!v.orgOperateIn) {
-            issue(ctx, 'orgOperateIn', 'Please describe regions/countries of operation.')
-          }
-          if (!v.ycpName) {
-            issue(ctx, 'ycpName', "YOUNGO Contact Point's full name is required.")
-          }
           if (!EMAIL_RE.test(v.ycpEmail || '')) {
-            issue(ctx, 'ycpEmail', "YOUNGO Contact Point's email is required.")
+            issue(
+              ctx,
+              'ycpEmail',
+              'YOUNGO Contact Point email is required if providing a contact point.',
+            )
           }
           if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
             issue(
               ctx,
               'ycpPhone',
-              "YOUNGO Contact Point's phone is required if providing a contact point.",
+              'YOUNGO Contact Point phone is required if providing a contact point.',
             )
           }
         }
-      })
+      } else if (v.isUnfcccAdmitted === false) {
+        if (!v.orgOperateIn) {
+          issue(ctx, 'orgOperateIn', 'Please describe regions/countries of operation.')
+        }
+        if (!v.ycpName) {
+          issue(ctx, 'ycpName', "YOUNGO Contact Point's full name is required.")
+        }
+        if (!EMAIL_RE.test(v.ycpEmail || '')) {
+          issue(ctx, 'ycpEmail', "YOUNGO Contact Point's email is required.")
+        }
+        if (!v.ycpPhone || !PHONE_RE.test(v.ycpPhone)) {
+          issue(
+            ctx,
+            'ycpPhone',
+            "YOUNGO Contact Point's phone is required if providing a contact point.",
+          )
+        }
+      }
+    })
 
-    const parsed = orgSchema.safeParse(b)
-    if (parsed.error) addIssues(parsed.error, fields)
-    if (Object.keys(fields).length) return { fields }
-    const v = parsed.data!
+  const parsed = orgSchema.safeParse(b)
+  if (parsed.error) addIssues(parsed.error, fields)
+  if (Object.keys(fields).length) return { fields }
+  const v = parsed.data!
 
-    const accountName = v.ycpName || v.dcpName || v.organizationName
-    const nameParts = accountName.split(/\s+/)
-    const firstName = nameParts[0] || v.organizationName
-    const lastName = nameParts.slice(1).join(' ') || (v.isUnfcccAdmitted ? 'DCP' : 'Contact')
+  const accountName = v.ycpName || v.dcpName || v.organizationName
+  const nameParts = accountName.split(/\s+/)
+  const firstName = nameParts[0] || v.organizationName
+  const lastName = nameParts.slice(1).join(' ') || (v.isUnfcccAdmitted ? 'DCP' : 'Contact')
 
-    return {
-      data: {
-        email: v.email,
-        password,
-        firstName,
-        lastName,
-        name: accountName,
-        entityType: 'organization',
-        membershipTrack,
-        phone: v.ycpPhone || v.dcpPhone || '',
-        gender: null,
-        genderOther: null,
-        ageBand: null,
-        dateOfBirth: null,
-        minorityGroups: [],
-        minorityOther: null,
-        region: v.region || null,
-        nationality: null,
-        country: v.country || '—',
-        motivation: null,
-        organizationName: v.organizationName,
-        organizationType: v.isUnfcccAdmitted ? 'unfccc_admitted' : 'non_admitted',
-        isUnfcccAdmitted: Boolean(v.isUnfcccAdmitted),
-        youthAffiliation: v.isUnfcccAdmitted ? v.youthAffiliation : null,
-        orgOperateIn: v.orgOperateIn || null,
-        orgWebsite: v.orgWebsite,
-        orgSocial: v.orgSocial,
-        orgMission: v.orgMission || null,
-        dcpName: v.isUnfcccAdmitted ? v.dcpName : null,
-        dcpEmail: v.isUnfcccAdmitted ? v.dcpEmail : null,
-        dcpPhone: v.isUnfcccAdmitted ? v.dcpPhone : null,
-        ycpName: v.ycpName,
-        ycpEmail: v.ycpEmail,
-        ycpPhone: v.ycpPhone,
-        under18: false,
-        guardianName: null,
-        guardianEmail: null,
-        guardianConsent: false,
-        ...agreements,
-        ...privacy,
-        coiDeclared: agreements.acceptCoiPolicy,
-        coiDetails: null,
-        policiesAccepted: true,
-        memberOfAccreditedNgo: Boolean(v.isUnfcccAdmitted),
-        membershipPolicyVersion,
-        constituencyWorkStatus: 'pending_onboarding',
-        memberStatus: 'pending_course',
-        role: 'member',
-        wgInterests: sanitizeWgInterests(b.wgInterests),
-      },
-    }
+  return {
+    data: {
+      email: v.email,
+      password,
+      firstName,
+      lastName,
+      name: accountName,
+      entityType: 'organization',
+      membershipTrack,
+      phone: v.ycpPhone || v.dcpPhone || '',
+      gender: null,
+      genderOther: null,
+      ageBand: null,
+      dateOfBirth: null,
+      minorityGroups: [],
+      minorityOther: null,
+      region: v.region || null,
+      nationality: null,
+      country: v.country || '—',
+      motivation: null,
+      organizationName: v.organizationName,
+      organizationType: v.isUnfcccAdmitted ? 'unfccc_admitted' : 'non_admitted',
+      isUnfcccAdmitted: Boolean(v.isUnfcccAdmitted),
+      youthAffiliation: v.isUnfcccAdmitted ? v.youthAffiliation : null,
+      orgOperateIn: v.orgOperateIn || null,
+      orgWebsite: v.orgWebsite,
+      orgSocial: v.orgSocial,
+      orgMission: v.orgMission || null,
+      dcpName: v.isUnfcccAdmitted ? v.dcpName : null,
+      dcpEmail: v.isUnfcccAdmitted ? v.dcpEmail : null,
+      dcpPhone: v.isUnfcccAdmitted ? v.dcpPhone : null,
+      ycpName: v.ycpName,
+      ycpEmail: v.ycpEmail,
+      ycpPhone: v.ycpPhone,
+      under18: false,
+      guardianName: null,
+      guardianEmail: null,
+      guardianConsent: false,
+      ...agreements,
+      ...privacy,
+      coiDeclared: agreements.acceptCoiPolicy,
+      coiDetails: null,
+      policiesAccepted: true,
+      memberOfAccreditedNgo: Boolean(v.isUnfcccAdmitted),
+      membershipPolicyVersion,
+      constituencyWorkStatus: 'pending_onboarding',
+      memberStatus: 'pending_course',
+      role: 'member',
+      wgInterests: sanitizeWgInterests(b.wgInterests),
+    },
   }
+}
 
-  // Individual registration
+/** Individual registration; non-organisation entities take this path. */
+function individualRegistration({
+  b,
+  opts,
+  fields,
+  agreements,
+  privacy,
+  password,
+  membershipTrack,
+  membershipPolicyVersion,
+}: RegistrationContext) {
   const indSchema = z
     .object({
       email: strTrim(

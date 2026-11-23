@@ -1,4 +1,6 @@
 {
-  "total": 0,
-  "perFile": {}
+  "total": 2,
+  "perFile": {
+    "src/lib/domain.ts": 2
+  }
 }
