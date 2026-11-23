@@ -77,7 +77,7 @@
 }
 
 .navSection {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -441,7 +441,7 @@
     background: transparent;
     color: var(--text-2);
     font: inherit;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
     cursor: pointer;
   }
 
@@ -655,7 +655,7 @@
 .profileSaveMessage {
   margin: 0;
   color: var(--success);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -665,7 +665,7 @@
   gap: 6px;
   margin-top: 4px;
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 
@@ -700,13 +700,13 @@
 
 .profileDetail dt {
   color: var(--text-3);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .profileDetail dd {
   margin: 0;
   color: var(--text-1);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 
@@ -786,7 +786,7 @@
 .profileInterestGroup h4 {
   margin: 0 0 var(--space-2);
   color: var(--text-3);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
 }
 
@@ -828,7 +828,7 @@ a.profileLink {
 
 .profileLink small {
   color: var(--text-2);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.4;
 }
 
@@ -1043,7 +1043,7 @@ a.profileLink {
   align-items: flex-start;
   gap: var(--space-2);
   color: var(--text-2);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
 }
 
@@ -1107,7 +1107,7 @@ a.profileLink {
   border-radius: var(--radius-chip);
   background: var(--accent-tint);
   color: var(--on-accent-tint);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
   text-decoration: none;
 }
@@ -1127,7 +1127,7 @@ a.profileLink {
   cursor: pointer;
   list-style: none;
   padding: 10px 12px;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -1149,7 +1149,7 @@ a.profileLink {
 
 .membershipResponseGroupTitle {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1157,7 +1157,7 @@ a.profileLink {
 }
 
 .membershipResponse dt {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 600;
   color: var(--text-3);
 }
