@@ -1,6 +1,5 @@
 /** Generates VAPID keys for Web Push. */
-// web-push is CommonJS — it has no named ESM exports, so take the default.
-import webPush from 'web-push'
+import * as webPush from 'web-push'
 
 const keys = webPush.generateVAPIDKeys()
 
