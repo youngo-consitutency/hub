@@ -835,6 +835,13 @@ a.resourceRow:hover {
   filter: brightness(0.96);
 }
 
+/* the individual `scale` property composes with any hover transform */
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active {
+    scale: 0.97;
+  }
+}
+
 .btn-primary {
   border-color: var(--accent);
   background: var(--accent);

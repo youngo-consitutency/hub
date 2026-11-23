@@ -399,6 +399,7 @@
   color: var(--text-1);
   text-decoration: none;
   transition:
+    transform var(--motion-standard) var(--motion-ease-out),
     border-color var(--motion-standard) var(--motion-ease),
     box-shadow var(--motion-standard) var(--motion-ease);
 }
@@ -473,6 +474,13 @@
   .ldCard:hover .ldArrow {
     transform: translate(3px, -3px);
     color: var(--accent);
+  }
+}
+
+/* whole-card links also lift; static panels share the glow but stay put */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a.ldCard:hover {
+    transform: translateY(-3px);
   }
 }
 

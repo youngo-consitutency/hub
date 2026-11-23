@@ -64,6 +64,14 @@
   background: color-mix(in srgb, var(--bg-raised) 45%, var(--bg-page));
 }
 
+/* a state label, not a document section, so it is a paragraph that keeps the h3 look */
+.emptyTitle {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+}
+
 .emptyBody {
   max-width: 320px;
 }

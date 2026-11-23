@@ -175,6 +175,17 @@ progress {
   accent-color: var(--accent);
 }
 
+/* balanced headings avoid one-word last lines; set per element, never on `*` */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+:where(main, article) p {
+  text-wrap: pretty;
+}
+
 /* checkboxes: an outlined box that holds a cross when ticked, never a colour fill */
 input[type='checkbox'] {
   appearance: none;
