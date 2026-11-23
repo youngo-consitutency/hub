@@ -19,10 +19,12 @@ function* walk(dir) {
 const perFile = {}
 let total = 0
 for (const file of walk(join(root, 'src'))) {
+  // forward slashes on every platform, so the definition check and the baseline keys match on Windows
+  const rel = file.slice(root.length + 1).replaceAll('\\', '/')
   const n = (readFileSync(file, 'utf8').match(/\bAnyValue\b/g) ?? []).length
   // the two definitions are not uses
-  const uses = /\/(lib\/types|lib\/domain)\.ts$/.test(file) ? Math.max(0, n - 3) : n
-  if (uses) perFile[file.slice(root.length + 1)] = uses
+  const uses = /(^|\/)(lib\/types|lib\/domain)\.ts$/.test(rel) ? Math.max(0, n - 3) : n
+  if (uses) perFile[rel] = uses
   total += uses
 }
 

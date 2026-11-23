@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   // `next dev` otherwise appends its own rules block to AGENTS.md on every run;
   // agent guidance lives in AGENTS.md and .agents/skills.
   agentRules: false,
+  // do not advertise the framework in every response
+  poweredByHeader: false,
   // Dockerfile and other self-hosted targets consume the standalone output.
   // Vercel and `next start` need the default output, so standalone is opt-in.
   output: process.env.STANDALONE_BUILD ? 'standalone' : undefined,
@@ -31,6 +33,11 @@ const nextConfig: NextConfig = {
       { key: 'X-Frame-Options', value: 'DENY' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      // the Hub uses none of these browser features, so no page or embedded frame may request them
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+      },
       { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
     ]
     // non-production builds keep out of search results, static microsite pages included
