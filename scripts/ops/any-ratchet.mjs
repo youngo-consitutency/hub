@@ -21,9 +21,11 @@ let total = 0
 for (const file of walk(join(root, 'src'))) {
   // forward slashes on every platform, so the definition check and the baseline keys match on Windows
   const rel = file.slice(root.length + 1).replaceAll('\\', '/')
-  const n = (readFileSync(file, 'utf8').match(/\bAnyValue\b/g) ?? []).length
-  // the two definitions are not uses
-  const uses = /(^|\/)(lib\/types|lib\/domain)\.ts$/.test(rel) ? Math.max(0, n - 3) : n
+  // the `export type AnyValue = any` declarations are not uses; every other occurrence is
+  const uses = readFileSync(file, 'utf8')
+    .split('\n')
+    .filter((line) => !/^\s*export type AnyValue\b/.test(line))
+    .reduce((n, line) => n + (line.match(/\bAnyValue\b/g) ?? []).length, 0)
   if (uses) perFile[rel] = uses
   total += uses
 }
