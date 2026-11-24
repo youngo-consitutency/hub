@@ -992,6 +992,7 @@ a.resourceRow:hover {
 .resourceListLink {
   display: inline-flex;
   align-items: baseline;
+  min-height: 24px;
   gap: var(--space-1);
   width: fit-content;
   max-width: 100%;

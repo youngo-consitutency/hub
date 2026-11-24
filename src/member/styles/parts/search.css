@@ -31,6 +31,8 @@
 }
 
 .intelligenceTrust small {
+  /* a bare <small> shrinks to 10.8px inside this 13px block */
+  font-size: var(--font-size-sm);
   opacity: 0.76;
 }
 

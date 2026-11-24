@@ -40,6 +40,8 @@ export function Statement() {
 
   return (
     <div>
+      {/* the loaded page brings its own heading; until then, and if the load fails, keep one */}
+      {!query.data && <PageHeader title="Global Youth Statement" />}
       <Async query={query} skeletons={4}>
         {(gys) => {
           const current = gys.current

@@ -33,8 +33,14 @@ export function Course() {
     course.retry()
   }
 
-  if (error) return <ErrorCard message={error} onRetry={load} />
-  if (!data) return <Skeletons n={4} />
+  // keep the page heading in every state, so a failed load is still a page with a title
+  if (error || !data)
+    return (
+      <div>
+        <PageHeader title="Membership course" />
+        {error ? <ErrorCard message={error} onRetry={load} /> : <Skeletons n={4} />}
+      </div>
+    )
 
   const mod = data.modules[moduleIdx]
   const lastModule = moduleIdx >= data.modules.length - 1
