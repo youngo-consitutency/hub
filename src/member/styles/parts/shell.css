@@ -662,6 +662,7 @@
 .profileEmail {
   display: flex;
   align-items: center;
+  min-height: 24px;
   gap: 6px;
   margin-top: 4px;
   color: var(--text-2);

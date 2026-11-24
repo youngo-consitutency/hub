@@ -47,7 +47,7 @@ export function ResourceIssues() {
     return <Locked {...(account.accessFailed ? ACCESS_FAILED : CHECKING_ACCESS)} />
   if (!account?.access?.capabilities?.includes('content.review'))
     return (
-      <Empty
+      <Locked
         title="Content Publisher access required"
         body="Content Publishers verify resource links and resolve reports. Members can report issues from the catalogue."
       />
